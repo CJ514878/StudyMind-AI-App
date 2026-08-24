@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        StudyMind AI — Dashboard
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     NAVIGATION
+========================= -->
+
+<nav class="navbar">
+
+    <h2 class="logo">
+        StudyMind AI
+    </h2>
+
+
+    <ul class="nav-links">
+
+        <li>
+            <a href="index.html">
+                Home
+            </a>
+        </li>
+
+        <li>
+            <a href="#calendar">
+                Calendar
+            </a>
+        </li>
+
+        <li>
+            <a href="#schedule">
+                Schedule
+            </a>
+        </li>
+
+    </ul>
+
+
+    <button
+        id="themeButton"
+        class="theme-button"
+    >
+        🌙 Dark Mode
+    </button>
+
+</nav>
+
+
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<main class="dashboard-page">
+
+
+<!-- DASHBOARD HEADER -->
+
+<div class="dashboard-heading">
+
+    <div>
+
+        <span class="eyebrow">
+            YOUR WORKSPACE
+        </span>
+
+        <h1>
+            My Study Dashboard
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Your personalized study plan,
+            progress and upcoming sessions.
+        </p>
+
+    </div>
+
+
+    <a
+        href="index.html#generator"
+        class="dashboard-action"
+    >
+        ＋ New Study Plan
+    </a>
+
+</div>
+
+
+<!-- =========================
+     STATISTICS
+========================= -->
+
+<section class="top-stats">
+
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            🕒
+        </span>
+
+        <div>
+
+            <p>
+                Weekly Hours
+            </p>
+
+            <h2 id="weeklyHours">
+                0
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            📅
+        </span>
+
+        <div>
+
+            <p>
+                Days Left
+            </p>
+
+            <h2 id="daysLeft">
+                0
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            🎯
+        </span>
+
+        <div>
+
+            <p>
+                Daily Goal
+            </p>
+
+            <h2 id="dailyGoal">
+                0 hrs
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            ⭐
+        </span>
+
+        <div>
+
+            <p>
+                Study Score
+            </p>
+
+            <h2 id="studyScore">
+                0
+            </h2>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     MAIN DASHBOARD
+========================= -->
+
+<section class="main-dashboard">
+
+
+<!-- =========================
+     LEFT PANEL
+========================= -->
+
+<div class="left-panel">
+
+
+<!-- PROGRESS -->
+
+<div class="panel-card progress-card">
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                OVERVIEW
+            </span>
+
+            <h2>
+                Progress Tracker
+            </h2>
+
+        </div>
+
+        <span class="card-badge">
+            LIVE
+        </span>
+
+    </div>
+
+
+    <div class="progress-circle">
+
+        <span id="progressPercent">
+            0%
+        </span>
+
+    </div>
+
+
+    <p id="progressCount">
+        0 of 0 subjects completed
+    </p>
+
+
+    <div class="progress-bar-container">
+
+        <div id="progressBar"></div>
+
+    </div>
+
+</div>
+
+
+
+<!-- SUBJECTS -->
+
+<div class="panel-card">
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                YOUR SUBJECTS
+            </span>
+
+            <h2>
+                📚 Subjects
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="subjectList"
+        class="subject-list"
+    >
+
+    </div>
+
+</div>
+
+
+
+<!-- STREAK + SCORE -->
+
+<div class="two-small-cards">
+
+
+    <div class="panel-card compact-card">
+
+        <span class="card-kicker">
+            CONSISTENCY
+        </span>
+
+        <h2>
+            🔥 Study Streak
+        </h2>
+
+        <h1 id="streak">
+            0 Days
+        </h1>
+
+        <p>
+            Keep building your momentum.
+        </p>
+
+    </div>
+
+
+    <div class="panel-card compact-card">
+
+        <span class="card-kicker">
+            PERFORMANCE
+        </span>
+
+        <h2>
+            ⭐ Study Score
+        </h2>
+
+        <h1 class="score-number">
+
+            <span id="scoreDisplay">
+                0
+            </span>
+
+            <small>
+                /100
+            </small>
+
+        </h1>
+
+
+        <p id="scoreMessage">
+            Start studying to build your score.
+        </p>
+
+
+        <div class="score-progress">
+
+            <div id="scoreProgressBar"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     AI ASSISTANT
+========================= -->
+
+<div class="panel-card ai-assistant-card">
+
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                INTELLIGENT SUPPORT
+            </span>
+
+            <h2>
+                🤖 StudyMind AI
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <p>
+        Get personalized help with your study
+        plan and progress.
+    </p>
+
+
+    <button
+        id="analyzeProgressButton"
+        class="primary-button full-button"
+    >
+        🔍 Analyze My Progress
+    </button>
+
+
+    <p
+        id="aiAdviceText"
+        class="ai-analysis-result"
+    >
+        Your personalized study analysis
+        will appear here.
+    </p>
+
+
+
+    <div class="ask-ai-section">
+
+        <h3>
+            💬 Ask StudyMind AI
+        </h3>
+
+        <p>
+            Ask anything about your study plan,
+            subjects or progress.
+        </p>
+
+
+        <textarea
+            id="aiQuestion"
+            placeholder="e.g. What should I study today?"
+            rows="3"
+        ></textarea>
+
+
+        <button
+            id="askAIButton"
+            class="secondary-button full-button"
+        >
+            🤖 Ask AI
+        </button>
+
+
+        <div
+            id="aiResponse"
+            class="ai-response"
+        >
+            AI responses will appear here.
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =========================
+     RIGHT PANEL
+========================= -->
+
+<div class="right-panel">
+
+
+<!-- =========================
+     CALENDAR
+========================= -->
+
+<div
+    class="calendar-panel"
+    id="calendar"
+>
+
+
+    <div class="calendar-title-row">
+
+        <div>
+
+            <span class="card-kicker">
+                PLAN AT A GLANCE
+            </span>
+
+            <h2>
+                📅 Study Calendar
+            </h2>
+
+        </div>
+
+
+        <div class="calendar-status">
+
+            <span></span>
+
+            Study plan active
+
+        </div>
+
+    </div>
+
+
+
+    <div class="calendar-header">
+
+        <button
+            id="previousMonth"
+            aria-label="Previous month"
+        >
+            ‹
+        </button>
+
+
+        <h2 id="calendarMonth">
+            Month Year
+        </h2>
+
+
+        <button
+            id="nextMonth"
+            aria-label="Next month"
+        >
+            ›
+        </button>
+
+    </div>
+
+
+
+    <div class="calendar-weekdays">
+
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+
+    </div>
+
+
+
+    <div
+        class="calendar-days"
+        id="calendarDays"
+    >
+    </div>
+
+
+
+    <!-- CALENDAR LEGEND -->
+
+    <div class="calendar-bottom">
+
+
+        <div class="calendar-legend">
+
+            <span>
+                <i class="legend-dot study-dot"></i>
+                Study Day
+            </span>
+
+            <span>
+                <i class="legend-dot completed-dot"></i>
+                Completed
+            </span>
+
+            <span>
+                <i class="legend-dot exam-dot"></i>
+                Test / Exam
+            </span>
+
+            <span>
+                <i class="legend-dot today-dot"></i>
+                Today
+            </span>
+
+            <span>
+                <i class="legend-dot break-dot"></i>
+                Break
+            </span>
+
+        </div>
+
+
+
+        <!-- NEXT BOOKING -->
+
+        <div class="next-session">
+
+            <div class="next-icon">
+                →
+            </div>
+
+
+            <div>
+
+                <span>
+                    Next Up
+                </span>
+
+                <strong id="nextBooking">
+                    No upcoming session yet
+                </strong>
+
+                <small id="nextBookingTime">
+                    Create a study plan to
+                    populate your calendar.
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     SCHEDULE
+========================= -->
+
+<div
+    class="panel-card schedule-card"
+    id="schedule"
+>
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                TODAY
+            </span>
+
+            <h2>
+                🗓️ Study Schedule
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="scheduleList"
+        class="schedule-list"
+    >
+
+        <div class="empty-schedule">
+            Your daily study sessions
+            will appear here.
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+</section>
+
+</main>
+
+
+<script src="dashboard.js"></script>
+
+</body>
+</html>
