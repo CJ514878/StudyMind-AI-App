@@ -13,6 +13,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+
         const { message } = req.body || {};
 
         if (!message || typeof message !== "string") {
@@ -21,36 +22,17 @@ module.exports = async function handler(req, res) {
             });
         }
 
-        if (message.length > 4000) {
-            return res.status(400).json({
-                error: "Your message is too long."
-            });
-        }
-
         const response = await client.responses.create({
-            model: "gpt-5.6-luna",
+            model: "gpt-5-mini",
             instructions: `
-You are StudyMind AI, an intelligent study assistant.
+You are StudyMind AI, a helpful AI study assistant.
 
-Help students with:
-- Understanding school subjects
-- Explaining difficult concepts
-- Creating study plans
-- Organizing study schedules
-- Preparing for examinations
-- Reviewing study progress
-- Choosing what to study
-- Developing effective study habits
+Help students understand subjects, prepare for exams,
+organize study plans, improve study habits, and answer
+questions about their academic work.
 
-Give clear, accurate, practical answers.
-
-Adapt explanations to the student's level.
-Use simple explanations when appropriate.
-For academic questions, show the reasoning clearly rather than
-just giving an unexplained answer.
-
-Be encouraging and professional.
-Do not pretend to know information that has not been provided.
+Give clear, accurate and understandable explanations.
+Be encouraging and practical.
 `,
             input: message
         });
@@ -60,10 +42,11 @@ Do not pretend to know information that has not been provided.
         });
 
     } catch (error) {
-        console.error("StudyMind AI error:", error);
+
+        console.error("StudyMind AI API error:", error);
 
         return res.status(500).json({
-            error: "StudyMind AI could not process your request right now."
+            error: "StudyMind AI could not process your request."
         });
     }
 };
