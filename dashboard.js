@@ -1343,7 +1343,7 @@ if (analyzeProgressButton) {
 
 
 /* =========================================
-   ASK AI
+   ASK STUDYMIND AI
 ========================================= */
 
 const askAIButton =
@@ -1366,13 +1366,17 @@ if (askAIButton) {
 
     askAIButton.addEventListener(
         "click",
-        () => {
+        async () => {
 
             const question =
                 aiQuestion
                     ? aiQuestion.value.trim()
                     : "";
 
+
+            /* -----------------------------
+               CHECK QUESTION
+            ----------------------------- */
 
             if (!question) {
 
@@ -1388,58 +1392,223 @@ if (askAIButton) {
             }
 
 
-            const subjects =
-                studyPlan.subjects || [];
+            /* -----------------------------
+               SHOW LOADING STATE
+            ----------------------------- */
 
+            askAIButton.disabled = true;
 
-            const firstSubject =
-                subjects.length > 0
-                    ? subjects[0]
-                    : "your subjects";
-
-
-            let response =
-                `Based on your current plan, I recommend starting with ${firstSubject}. Break your session into focused blocks, practice what you've learned, and review anything you find difficult.`;
-
-
-            const lowerQuestion =
-                question.toLowerCase();
-
-
-            if (
-                lowerQuestion.includes(
-                    "today"
-                )
-            ) {
-
-                response =
-                    subjects.length > 0
-                        ? `For today, start with ${firstSubject}. Study for your planned daily goal, then move to the next subject if you still have time.`
-                        : "Create a study plan first and I'll help you decide what to study today.";
-
-            }
-
-
-            if (
-                lowerQuestion.includes(
-                    "exam"
-                )
-            ) {
-
-                const remaining =
-                    calculateDaysLeft();
-
-
-                response =
-                    `You currently have ${remaining} day${remaining === 1 ? "" : "s"} until your exam. Focus on high-priority topics, active recall and practice questions rather than simply rereading notes.`;
-
-            }
+            askAIButton.textContent =
+                "⏳ Thinking...";
 
 
             if (aiResponse) {
 
                 aiResponse.textContent =
-                    response;
+                    "StudyMind AI is thinking...";
+
+            }
+
+
+            try {
+
+                /* -----------------------------
+                   COLLECT STUDY INFORMATION
+                ----------------------------- */
+
+                const subjects =
+                    studyPlan.subjects || [];
+
+                const hours =
+                    Number(
+                        studyPlan.studyHours
+                    ) || 0;
+
+                const examDate =
+                    studyPlan.examDate ||
+                    "No exam date set";
+
+                const remainingDays =
+                    calculateDaysLeft();
+
+                const totalSubjects =
+                    subjects.length;
+
+                const completed =
+                    completedSubjects.filter(
+                        subject =>
+                            subjects.includes(
+                                subject
+                            )
+                    ).length;
+
+
+                /* -----------------------------
+                   SEND REQUEST TO API
+                ----------------------------- */
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    message: `
+You are helping a student using StudyMind AI.
+
+STUDENT'S CURRENT STUDY INFORMATION:
+
+Subjects:
+${subjects.length > 0
+    ? subjects.join(", ")
+    : "No subjects available"}
+
+Daily study hours:
+${hours}
+
+Exam date:
+${examDate}
+
+Days remaining:
+${remainingDays}
+
+Subjects completed:
+${completed} of ${totalSubjects}
+
+STUDENT'S QUESTION:
+${question}
+
+Give the student a useful, clear and practical answer.
+
+Use their study information when relevant.
+If they ask what they should study today,
+give a specific recommendation based on their
+subjects and progress.
+
+Do not invent subjects, exam dates or progress
+that are not provided.
+
+Keep the answer readable and appropriately concise.
+`
+                                })
+                        }
+                    );
+
+
+                /* -----------------------------
+                   HANDLE API ERROR
+                ----------------------------- */
+
+                if (!response.ok) {
+
+                    let errorMessage =
+                        "Something went wrong.";
+
+                    try {
+
+                        const errorData =
+                            await response.json();
+
+                        if (
+                            errorData &&
+                            errorData.error
+                        ) {
+
+                            errorMessage =
+                                errorData.error;
+
+                        }
+
+                    }
+
+                    catch (error) {
+
+                        console.error(
+                            "Could not read API error:",
+                            error
+                        );
+
+                    }
+
+
+                    throw new Error(
+                        errorMessage
+                    );
+
+                }
+
+
+                /* -----------------------------
+                   GET AI RESPONSE
+                ----------------------------- */
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !data ||
+                    !data.reply
+                ) {
+
+                    throw new Error(
+                        "The AI returned an empty response."
+                    );
+
+                }
+
+
+                /* -----------------------------
+                   DISPLAY RESPONSE
+                ----------------------------- */
+
+                if (aiResponse) {
+
+                    aiResponse.textContent =
+                        data.reply;
+
+                }
+
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "StudyMind AI error:",
+                    error
+                );
+
+
+                if (aiResponse) {
+
+                    aiResponse.textContent =
+                        "Sorry, I couldn't connect to StudyMind AI right now. Please try again in a moment.";
+
+                }
+
+            }
+
+
+            finally {
+
+                /* -----------------------------
+                   RESTORE BUTTON
+                ----------------------------- */
+
+                askAIButton.disabled =
+                    false;
+
+                askAIButton.textContent =
+                    "🤖 Ask AI";
 
             }
 
@@ -1447,8 +1616,6 @@ if (askAIButton) {
     );
 
 }
-
-
 /* =========================================
    HELPERS
 ========================================= */
