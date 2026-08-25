@@ -1,3 +1,6 @@
+const FREE_QUESTION_LIMIT = 5;
+
+let aiQuestionCount = Number(localStorage.getItem("aiQuestionCount")) || 0;
 /* =========================================
    STUDYMIND AI — MAIN WEBSITE JAVASCRIPT
 ========================================= */
