@@ -83,10 +83,22 @@ let topicQuestions =
    TIMER DATA
 ========================================= */
 
-const DEFAULT_TIMER_SECONDS = 25 * 60;
+/*
+   The timer is NO LONGER automatically
+   set to 25 minutes.
 
-let timerSeconds =
-    DEFAULT_TIMER_SECONDS;
+   Instead, its duration is calculated from
+   the student's study plan.
+
+   Example:
+   2 study hours ÷ 2 subjects
+   = 1 hour per subject
+   = 60-minute timer.
+
+   Minimum session length: 30 minutes.
+*/
+
+let timerSeconds = 0;
 
 let timerInterval =
     null;
@@ -616,6 +628,8 @@ function renderCurrentTopic() {
 
         }
 
+
+        resetTimer();
 
         return;
 
@@ -1583,6 +1597,94 @@ function updateStudyScore() {
    TIMER
 ========================================= */
 
+/*
+   Calculate the timer duration from the
+   current study plan.
+
+   If studyHours = 2 and subjects = 2:
+
+   2 hours × 60 = 120 minutes
+   120 ÷ 2 subjects = 60 minutes
+
+   Minimum = 30 minutes.
+
+   If a timerMinutes value exists directly
+   in the study plan, that is used first.
+*/
+
+function getTimerDurationMinutes() {
+
+    const customTimer =
+        Number(
+            studyPlan.timerMinutes
+        );
+
+
+    if (
+        customTimer > 0
+    ) {
+
+        return Math.max(
+            1,
+            Math.round(
+                customTimer
+            )
+        );
+
+    }
+
+
+    const hours =
+        Number(
+            studyPlan.studyHours
+        ) || 0;
+
+
+    const subjects =
+        Array.isArray(
+            studyPlan.subjects
+        )
+            ? studyPlan.subjects.length
+            : 0;
+
+
+    if (
+        hours > 0 &&
+        subjects > 0
+    ) {
+
+        const calculatedMinutes =
+            Math.floor(
+                (
+                    hours * 60
+                ) /
+                subjects
+            );
+
+
+        return Math.max(
+            30,
+            calculatedMinutes
+        );
+
+    }
+
+
+    /*
+       If the study plan does not contain
+       enough information, use 30 minutes
+       instead of automatically using 25.
+    */
+
+    return 30;
+
+}
+
+
+/* =========================================
+   SETUP TIMER
+========================================= */
+
 function setupTimer() {
 
     if (!studyTimer) {
@@ -1590,7 +1692,7 @@ function setupTimer() {
     }
 
 
-    updateTimerDisplay();
+    resetTimer();
 
 
     if (startTimerButton) {
@@ -1795,11 +1897,30 @@ function resetTimer() {
         false;
 
 
+    /*
+       Get the correct duration from the
+       current study plan instead of using
+       a hard-coded 25-minute value.
+    */
+
+    const durationMinutes =
+        getTimerDurationMinutes();
+
+
     timerSeconds =
-        DEFAULT_TIMER_SECONDS;
+        durationMinutes * 60;
 
 
     updateTimerDisplay();
+
+
+    if (studyTimer) {
+
+        studyTimer.classList.remove(
+            "timer-finished"
+        );
+
+    }
 
 
     if (startTimerButton) {
@@ -1890,10 +2011,14 @@ function handleTimerFinished() {
     }
 
 
+    const durationMinutes =
+        getTimerDurationMinutes();
+
+
     if (topicCompletionMessage) {
 
         topicCompletionMessage.textContent =
-            "⏰ Your 25-minute study session is complete. If you have finished the topic, tick the box below.";
+            `⏰ Your ${durationMinutes}-minute study session is complete. If you have finished the topic, tick the box below.`;
 
     }
 
@@ -1906,7 +2031,7 @@ function handleTimerFinished() {
 
 
     alert(
-        "Your 25-minute study session is complete! 🎉"
+        `Your ${durationMinutes}-minute study session is complete! 🎉`
     );
 
 }
