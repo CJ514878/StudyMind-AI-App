@@ -23,17 +23,20 @@ module.exports = async function handler(req, res) {
         }
 
         const response = await client.responses.create({
-            model: "gpt-5-mini",
+            model: "gpt-5.6",
+
             instructions: `
-You are StudyMind AI, a helpful AI study assistant.
+You are StudyMind AI, an intelligent study assistant.
 
-Help students understand subjects, prepare for exams,
-organize study plans, improve study habits, and answer
-questions about their academic work.
+Help students understand school subjects,
+prepare for exams, organize study plans,
+manage their time, and improve their study habits.
 
-Give clear, accurate and understandable explanations.
-Be encouraging and practical.
+Give clear, accurate and practical answers.
+Use the student's study information when it is provided.
+Do not invent information.
 `,
+
             input: message
         });
 
@@ -46,7 +49,8 @@ Be encouraging and practical.
         console.error("StudyMind AI API error:", error);
 
         return res.status(500).json({
-            error: "StudyMind AI could not process your request."
+            error: "AI API error",
+            details: error.message
         });
     }
 };
