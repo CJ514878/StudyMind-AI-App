@@ -1297,8 +1297,14 @@ if (analyzeProgressButton) {
                     : 0;
 
 
-            const completed =
-                completedSubjects.length;
+         const subjects =
+    studyPlan.subjects || [];
+
+const completed =
+    completedSubjects.filter(
+        subject =>
+            subjects.includes(subject)
+    ).length;
 
 
             let message;
