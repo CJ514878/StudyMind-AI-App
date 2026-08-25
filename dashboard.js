@@ -1934,4 +1934,16 @@ function escapeHTML(value) {
    START DASHBOARD
 ========================================= */
 
-initializeDashboard();
+async function startDashboard() {
+
+    const authenticated =
+        await checkAuthentication();
+
+    if (!authenticated) {
+        return;
+    }
+
+    initializeDashboard();
+}
+
+startDashboard();
