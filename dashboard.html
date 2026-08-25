@@ -129,7 +129,6 @@
 
 <section class="top-stats">
 
-
     <div class="stat-card">
 
         <span class="stat-icon">
@@ -216,13 +215,28 @@
 </section>
 
 
+
 <!-- =========================
-     TOPIC STUDY SESSION
+     MAIN DASHBOARD
 ========================= -->
 
-<section
-    class="panel-card topic-study-card"
-    id="topicStudySection"
+<section class="main-dashboard">
+
+
+<!-- =========================
+     LEFT PANEL
+========================= -->
+
+<div class="left-panel">
+
+
+<!-- =========================
+     CURRENT TOPIC
+========================= -->
+
+<div
+    class="panel-card current-topic-card"
+    id="currentTopicSection"
 >
 
     <div class="card-heading">
@@ -243,61 +257,180 @@
             class="card-badge"
             id="topicStatusBadge"
         >
-            READY
+            IN PROGRESS
         </span>
 
     </div>
 
 
-    <div
-        id="topicStudyContent"
-        class="topic-study-content"
+    <div class="topic-progress-header">
+
+        <span id="topicPosition">
+            TOPIC 1 OF 1
+        </span>
+
+    </div>
+
+
+    <h1
+        id="currentTopicName"
+        class="current-topic-name"
     >
+        No topic available
+    </h1>
 
-        <div class="topic-session-empty">
 
-            <div class="topic-empty-icon">
-                📚
-            </div>
+    <p id="currentTopicDescription">
+        Create a study plan with topics to begin.
+    </p>
 
-            <h3>
-                No topic available yet
-            </h3>
 
-            <p>
-                Create a study plan with topics
-                to begin studying.
-            </p>
+    <!-- TIMER -->
 
-            <a
-                href="index.html#generator"
-                class="primary-button"
+    <div class="study-timer-box">
+
+        <span class="timer-label">
+            STUDY TIMER
+        </span>
+
+        <div
+            id="studyTimer"
+            class="study-timer"
+        >
+            25:00
+        </div>
+
+
+        <div class="timer-controls">
+
+            <button
+                id="startTimerButton"
+                class="timer-button timer-start"
             >
-                Create Study Plan
-            </a>
+                <span>▶</span>
+                Start Timer
+            </button>
+
+
+            <button
+                id="pauseTimerButton"
+                class="timer-button timer-pause"
+                disabled
+            >
+                <span>⏸</span>
+                Pause
+            </button>
+
+
+            <button
+                id="resetTimerButton"
+                class="timer-button timer-reset"
+            >
+                <span>↻</span>
+                Reset
+            </button>
 
         </div>
 
     </div>
 
-</section>
+
+    <!-- TOPIC COMPLETION -->
+
+    <div
+        id="topicCompletionArea"
+        class="topic-completion-area"
+    >
+
+        <label
+            class="topic-checkbox-label"
+            for="topicCompleteCheckbox"
+        >
+
+            <input
+                type="checkbox"
+                id="topicCompleteCheckbox"
+            >
+
+            <span class="custom-topic-checkbox">
+                ✓
+            </span>
+
+            <span class="topic-checkbox-text">
+                I have finished studying this topic
+            </span>
+
+        </label>
+
+
+        <p id="topicCompletionMessage">
+            Tick this box when you are done studying
+            this topic.
+        </p>
+
+    </div>
+
+
+    <!-- NEXT TOPIC -->
+
+    <div
+        id="nextTopicMessage"
+        class="next-topic-message"
+    >
+    </div>
+
+
+    <!-- FIVE QUESTIONS -->
+
+    <div
+        id="topicQuestionsSection"
+        class="topic-questions-section"
+        style="display:none;"
+    >
+
+        <div class="questions-heading">
+
+            <span class="card-kicker">
+                KNOWLEDGE CHECK
+            </span>
+
+            <h2>
+                🧠 Test Yourself
+            </h2>
+
+            <p>
+                StudyMind AI has prepared 5 questions
+                based on the topic you just studied.
+            </p>
+
+        </div>
+
+
+        <div id="topicQuestions">
+        </div>
+
+
+        <button
+            id="submitTopicQuestions"
+            class="primary-button full-button"
+        >
+            Submit Answers
+        </button>
+
+
+        <div
+            id="topicQuestionResult"
+            class="topic-question-result"
+        ></div>
+
+    </div>
+
+</div>
 
 
 <!-- =========================
-     MAIN DASHBOARD
+     PROGRESS
 ========================= -->
-
-<section class="main-dashboard">
-
-
-<!-- =========================
-     LEFT PANEL
-========================= -->
-
-<div class="left-panel">
-
-
-<!-- PROGRESS -->
 
 <div class="panel-card progress-card">
 
@@ -332,7 +465,7 @@
 
 
     <p id="progressCount">
-        0 of 0 subjects completed
+        0 of 0 topics completed
     </p>
 
 
@@ -345,7 +478,10 @@
 </div>
 
 
-<!-- TOPIC PROGRESS -->
+
+<!-- =========================
+     TOPICS
+========================= -->
 
 <div class="panel-card">
 
@@ -367,7 +503,7 @@
 
 
     <div
-        id="topicProgressList"
+        id="topicList"
         class="subject-list"
     >
     </div>
@@ -375,7 +511,10 @@
 </div>
 
 
-<!-- SUBJECTS -->
+
+<!-- =========================
+     SUBJECTS
+========================= -->
 
 <div class="panel-card">
 
@@ -400,13 +539,15 @@
         id="subjectList"
         class="subject-list"
     >
-
     </div>
 
 </div>
 
 
-<!-- STREAK + SCORE -->
+
+<!-- =========================
+     STREAK + SCORE
+========================= -->
 
 <div class="two-small-cards">
 
@@ -471,12 +612,12 @@
 </div>
 
 
+
 <!-- =========================
      AI ASSISTANT
 ========================= -->
 
 <div class="panel-card ai-assistant-card">
-
 
     <div class="card-heading">
 
@@ -516,6 +657,7 @@
         Your personalized study analysis
         will appear here.
     </p>
+
 
 
     <div class="ask-ai-section">
@@ -560,6 +702,7 @@
 </div>
 
 
+
 <!-- =========================
      RIGHT PANEL
 ========================= -->
@@ -575,7 +718,6 @@
     class="calendar-panel"
     id="calendar"
 >
-
 
     <div class="calendar-title-row">
 
@@ -603,6 +745,7 @@
     </div>
 
 
+
     <div class="calendar-header">
 
         <button
@@ -628,6 +771,7 @@
     </div>
 
 
+
     <div class="calendar-weekdays">
 
         <div>Sun</div>
@@ -641,6 +785,7 @@
     </div>
 
 
+
     <div
         class="calendar-days"
         id="calendarDays"
@@ -648,10 +793,8 @@
     </div>
 
 
-    <!-- CALENDAR LEGEND -->
 
     <div class="calendar-bottom">
-
 
         <div class="calendar-legend">
 
@@ -683,6 +826,7 @@
         </div>
 
 
+
         <div class="next-session">
 
             <div class="next-icon">
@@ -712,6 +856,7 @@
     </div>
 
 </div>
+
 
 
 <!-- =========================
@@ -758,54 +903,6 @@
 </div>
 
 </section>
-
-
-<!-- =========================
-     TOPIC QUIZ
-========================= -->
-
-<section
-    class="panel-card topic-quiz-card"
-    id="topicQuizSection"
-    style="display: none;"
->
-
-    <div class="card-heading">
-
-        <div>
-
-            <span class="card-kicker">
-                KNOWLEDGE CHECK
-            </span>
-
-            <h2>
-                🧠 Test Yourself
-            </h2>
-
-        </div>
-
-        <span class="card-badge">
-            5 QUESTIONS
-        </span>
-
-    </div>
-
-
-    <p>
-        You completed this topic. StudyMind AI has
-        prepared five questions based specifically
-        on what you just studied.
-    </p>
-
-
-    <div
-        id="topicQuizContent"
-        class="topic-quiz-content"
-    >
-    </div>
-
-</section>
-
 
 </main>
 
