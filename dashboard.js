@@ -1370,48 +1370,83 @@ const aiResponse =
 
 if (askAIButton) {
 
-   askAIButton.addEventListener(
-    "click",
-    async () => {
+    askAIButton.addEventListener(
+        "click",
+        async () => {
 
-        const question =
-            aiQuestion
-                ? aiQuestion.value.trim()
-                : "";
-
-        if (!question) {
-            return;
-        }
-
-        // =========================================
-        // FREE AI QUESTION LIMIT
-        // =========================================
-
-        if (aiQuestionCount >= FREE_QUESTION_LIMIT) {
-
-            aiResponse.innerHTML = `
-                <div class="ai-limit-message">
-                    <h3>You've reached your free limit</h3>
-                    <p>You have used all 5 free AI questions.</p>
-                    <p>Upgrade to StudyMind AI Premium to continue asking questions.</p>
-                </div>
-            `;
-
-            return;
-        }
-
-        // Count this question
-        aiQuestionCount++;
-
-        localStorage.setItem(
-            "aiQuestionCount",
-            aiQuestionCount
-        );
+            const question =
+                aiQuestion
+                    ? aiQuestion.value.trim()
+                    : "";
 
 
-            
+            /* -----------------------------
+               CHECK QUESTION
+            ----------------------------- */
+
+            if (!question) {
+
+                if (aiResponse) {
+
+                    aiResponse.textContent =
+                        "Please enter a question first.";
+
+                }
+
+                return;
 
             }
+
+
+            /* -----------------------------
+               CHECK FREE QUESTION LIMIT
+            ----------------------------- */
+
+            if (
+                aiQuestionCount >=
+                FREE_QUESTION_LIMIT
+            ) {
+
+                if (aiResponse) {
+
+                    aiResponse.innerHTML = `
+
+                        <div class="ai-limit-message">
+
+                            <h3>
+                                You've reached your free limit
+                            </h3>
+
+                            <p>
+                                You have used all 5 free AI questions.
+                            </p>
+
+                            <p>
+                                Upgrade to StudyMind AI Premium
+                                to continue asking questions.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+
+                return;
+
+            }
+
+
+            /* -----------------------------
+               COUNT QUESTION
+            ----------------------------- */
+
+            aiQuestionCount++;
+
+            localStorage.setItem(
+                "aiQuestionCount",
+                aiQuestionCount
+            );
 
 
             /* -----------------------------
@@ -1441,20 +1476,25 @@ if (askAIButton) {
                 const subjects =
                     studyPlan.subjects || [];
 
+
                 const hours =
                     Number(
                         studyPlan.studyHours
                     ) || 0;
 
+
                 const examDate =
                     studyPlan.examDate ||
                     "No exam date set";
 
+
                 const remainingDays =
                     calculateDaysLeft();
 
+
                 const totalSubjects =
                     subjects.length;
+
 
                 const completed =
                     completedSubjects.filter(
@@ -1534,10 +1574,12 @@ Keep the answer readable and appropriately concise.
                     let errorMessage =
                         "Something went wrong.";
 
+
                     try {
 
                         const errorData =
                             await response.json();
+
 
                         if (
                             errorData &&
@@ -1592,30 +1634,46 @@ Keep the answer readable and appropriately concise.
                    DISPLAY RESPONSE
                 ----------------------------- */
 
-               if (aiResponse) {
+                if (aiResponse) {
 
-    aiResponse.innerHTML =
-        renderAIResponse(data.reply);
-if (typeof renderMathInElement === "function") {
-    renderMathInElement(aiResponse, {
-        delimiters: [
-            {
-                left: "\\[",
-                right: "\\]",
-                display: true
-            },
-            {
-                left: "\\(",
-                right: "\\)",
-                display: false
+                    aiResponse.innerHTML =
+                        renderAIResponse(
+                            data.reply
+                        );
+
+
+                    if (
+                        typeof renderMathInElement ===
+                        "function"
+                    ) {
+
+                        renderMathInElement(
+                            aiResponse,
+                            {
+                                delimiters: [
+
+                                    {
+                                        left: "\\[",
+                                        right: "\\]",
+                                        display: true
+                                    },
+
+                                    {
+                                        left: "\\(",
+                                        right: "\\)",
+                                        display: false
+                                    }
+
+                                ]
+                            }
+                        );
+
+                    }
+
+                }
+
             }
-        ]
-    });
-}
-}
 
-
-            }
 
             catch (error) {
 
