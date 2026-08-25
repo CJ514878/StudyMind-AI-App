@@ -1437,17 +1437,7 @@ if (askAIButton) {
             }
 
 
-            /* -----------------------------
-               COUNT QUESTION
-            ----------------------------- */
-
-            aiQuestionCount++;
-
-            localStorage.setItem(
-                "aiQuestionCount",
-                aiQuestionCount
-            );
-
+           
 
             /* -----------------------------
                SHOW LOADING STATE
