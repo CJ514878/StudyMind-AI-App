@@ -1880,11 +1880,36 @@ function resetTimer() {
         false;
 
 
+    /*
+       Reset to the duration the user
+       previously selected.
+
+       It does NOT automatically go
+       back to 25 minutes.
+    */
+
+    selectedTimerSeconds =
+        Number(
+            localStorage.getItem(
+                "studyMindSelectedTimerSeconds"
+            )
+        ) || DEFAULT_TIMER_SECONDS;
+
+
     timerSeconds =
-        DEFAULT_TIMER_SECONDS;
+        selectedTimerSeconds;
 
 
     updateTimerDisplay();
+
+
+    if (studyTimer) {
+
+        studyTimer.classList.remove(
+            "timer-finished"
+        );
+
+    }
 
 
     if (startTimerButton) {
