@@ -905,8 +905,12 @@ function renderCalendar() {
                 : 0;
 
 
-        const completedTotal =
-            completedSubjects.length;
+       const completedTotal =
+    completedSubjects.filter(
+        subject =>
+            studyPlan.subjects &&
+            studyPlan.subjects.includes(subject)
+    ).length;
 
 
         if (
