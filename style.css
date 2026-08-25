@@ -1941,3 +1941,71 @@ body.light-mode #aiQuestion {
 .ai-response .math-block .katex {
     font-size: 1.15em;
 }
+/* =========================================
+   HOMEPAGE LOGIN / SIGN UP BUTTONS
+========================================= */
+
+.auth-home-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.home-login-button,
+.home-signup-button {
+    display: inline-block;
+    padding: 12px 26px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: 0.25s ease;
+}
+
+
+/* LOGIN */
+
+.home-login-button {
+    background: transparent;
+    color: white;
+    border: 1px solid #334155;
+}
+
+.home-login-button:hover {
+    background: #1e293b;
+}
+
+
+/* SIGN UP */
+
+.home-signup-button {
+    background: #22c55e;
+    color: white;
+    border: 1px solid #22c55e;
+}
+
+.home-signup-button:hover {
+    background: #16a34a;
+    border-color: #16a34a;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    .auth-home-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .home-login-button,
+    .home-signup-button {
+        text-align: center;
+    }
+
+}
+
