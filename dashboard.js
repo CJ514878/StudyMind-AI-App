@@ -1641,43 +1641,72 @@ function renderAIResponse(text) {
         return "";
     }
 
-    let html = text;
+    let html = String(text);
+
 
     /* =========================================
-       CLEAN UP RAW AI FORMATTING
+       NORMALIZE LATEX
     ========================================= */
 
-    /* Remove empty bullet points */
     html = html.replace(
-        /^\s*[-•]\s*$/gm,
-        ""
-    );
-
-    /* Remove excessive blank lines */
-    html = html.replace(
-        /\n{3,}/g,
-        "\n\n"
-    );
-
-    /* Fix escaped LaTeX brackets */
-    html = html.replace(
-        /\\\\\[/g,
+        /\\{2,}\[/g,
         "\\["
     );
 
     html = html.replace(
-        /\\\\\]/g,
+        /\\{2,}\]/g,
         "\\]"
     );
 
     html = html.replace(
-        /\\\\\(/g,
+        /\\{2,}\(/g,
         "\\("
     );
 
     html = html.replace(
-        /\\\\\)/g,
+        /\\{2,}\)/g,
         "\\)"
+    );
+
+
+    /* =========================================
+       REMOVE EMPTY BULLETS
+    ========================================= */
+
+    html = html.replace(
+        /^[ \t]*[-•*][ \t]*(?:\r?\n|$)/gm,
+        ""
+    );
+
+
+    /* =========================================
+       REMOVE BULLETS BEFORE FORMULAS
+       Example:
+       - 
+       \[
+       formula
+       \]
+
+       becomes:
+
+       \[
+       formula
+       \]
+    ========================================= */
+
+    html = html.replace(
+        /^[ \t]*[-•][ \t]*\r?\n(?=\\\[)/gm,
+        ""
+    );
+
+
+    /* =========================================
+       REMOVE EXCESSIVE BLANK LINES
+    ========================================= */
+
+    html = html.replace(
+        /\n[ \t]*\n[ \t]*\n+/g,
+        "\n\n"
     );
 
 
@@ -1696,22 +1725,17 @@ function renderAIResponse(text) {
     ========================================= */
 
     html = html.replace(
-        /\bm\/s\s*2\b/g,
+        /\bm\/s\s*\^?\s*2\b/g,
         "m/s²"
     );
 
     html = html.replace(
-        /\bm\/s\^2\b/g,
-        "m/s²"
-    );
-
-    html = html.replace(
-        /\bcm\/s\s*2\b/g,
+        /\bcm\/s\s*\^?\s*2\b/g,
         "cm/s²"
     );
 
     html = html.replace(
-        /\bkm\/h\s*2\b/g,
+        /\bkm\/h\s*\^?\s*2\b/g,
         "km/h²"
     );
 
@@ -1737,7 +1761,7 @@ function renderAIResponse(text) {
 
 
     /* =========================================
-       BOLD TEXT
+       BOLD
     ========================================= */
 
     html = html.replace(
@@ -1747,7 +1771,7 @@ function renderAIResponse(text) {
 
 
     /* =========================================
-       ITALIC TEXT
+       ITALIC
     ========================================= */
 
     html = html.replace(
@@ -1758,7 +1782,6 @@ function renderAIResponse(text) {
 
     /* =========================================
        REMOVE BACKTICKS
-       Example: `5 kg` → 5 kg
     ========================================= */
 
     html = html.replace(
@@ -1792,13 +1815,13 @@ function renderAIResponse(text) {
     ========================================= */
 
     html = html.replace(
-        /^\s*[-•]\s+(.*)$/gm,
+        /^[ \t]*[-•]\s+(.+)$/gm,
         "<li>$1</li>"
     );
 
 
     /* =========================================
-       WRAP CONSECUTIVE LIST ITEMS
+       WRAP BULLETS
     ========================================= */
 
     html = html.replace(
@@ -1808,32 +1831,19 @@ function renderAIResponse(text) {
 
 
     /* =========================================
-       CLEAN UP EXTRA WHITESPACE
-    ========================================= */
-
-    html = html.replace(
-        /[ \t]+\n/g,
-        "\n"
-    );
-
-
-    /* =========================================
        PARAGRAPHS
     ========================================= */
 
     html = html.replace(
-        /\n\n+/g,
+        /\n{2,}/g,
         "</p><p>"
     );
 
-    html =
-        "<p>" +
-        html +
-        "</p>";
+    html = "<p>" + html + "</p>";
 
 
     /* =========================================
-       DON'T WRAP HTML BLOCKS IN <p>
+       REMOVE <p> AROUND BLOCK ELEMENTS
     ========================================= */
 
     html = html.replace(
@@ -1868,7 +1878,7 @@ function renderAIResponse(text) {
 
 
     /* =========================================
-       SINGLE LINE BREAKS
+       LINE BREAKS
     ========================================= */
 
     html = html.replace(
@@ -1878,7 +1888,7 @@ function renderAIResponse(text) {
 
 
     /* =========================================
-       REMOVE EMPTY PARAGRAPHS
+       FINAL CLEANUP
     ========================================= */
 
     html = html.replace(
@@ -1889,6 +1899,16 @@ function renderAIResponse(text) {
     html = html.replace(
         /<p>\s*<br>\s*<\/p>/g,
         ""
+    );
+
+    html = html.replace(
+        /<ul>\s*<\/ul>/g,
+        ""
+    );
+
+    html = html.replace(
+        /<br>\s*<br>\s*<br>/g,
+        "<br><br>"
     );
 
 
