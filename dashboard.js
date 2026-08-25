@@ -1726,6 +1726,19 @@ function startTimer() {
         true;
 
 
+    /*
+       Save the current timer state so
+       refreshing the page doesn't
+       immediately return to the
+       originally selected duration.
+    */
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        timerSeconds
+    );
+
+
     if (startTimerButton) {
 
         startTimerButton.disabled =
@@ -1751,6 +1764,13 @@ function startTimer() {
 
                 timerSeconds--;
 
+
+                localStorage.setItem(
+                    "studyMindTimerSeconds",
+                    timerSeconds
+                );
+
+
                 updateTimerDisplay();
 
 
@@ -1760,6 +1780,13 @@ function startTimer() {
 
                     timerSeconds =
                         0;
+
+
+                    localStorage.setItem(
+                        "studyMindTimerSeconds",
+                        0
+                    );
+
 
                     stopTimer();
 
@@ -1772,7 +1799,6 @@ function startTimer() {
         );
 
 }
-
 
 /* =========================================
    PAUSE TIMER
