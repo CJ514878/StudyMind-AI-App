@@ -1,6 +1,9 @@
 const FREE_QUESTION_LIMIT = 5;
 
-let aiQuestionCount = Number(localStorage.getItem("aiQuestionCount")) || 0;
+let aiQuestionCount =
+    Number(localStorage.getItem("aiQuestionCount")) || 0;
+
+
 /* =========================================
    STUDYMIND AI — MAIN WEBSITE JAVASCRIPT
 ========================================= */
@@ -10,33 +13,58 @@ let aiQuestionCount = Number(localStorage.getItem("aiQuestionCount")) || 0;
    THEME
 ========================================= */
 
-const themeButton = document.getElementById("themeButton");
+const themeButton =
+    document.getElementById("themeButton");
+
 
 if (themeButton) {
 
-    const savedTheme = localStorage.getItem("studyMindTheme");
+    const savedTheme =
+        localStorage.getItem("studyMindTheme");
+
 
     if (savedTheme === "light") {
-        document.body.classList.add("light-mode");
-        themeButton.textContent = "☀️ Light Mode";
-    }
 
-    themeButton.addEventListener("click", () => {
-
-        document.body.classList.toggle("light-mode");
-
-        const isLight =
-            document.body.classList.contains("light-mode");
-
-        localStorage.setItem(
-            "studyMindTheme",
-            isLight ? "light" : "dark"
+        document.body.classList.add(
+            "light-mode"
         );
 
         themeButton.textContent =
-            isLight ? "☀️ Light Mode" : "🌙 Dark Mode";
+            "☀️ Light Mode";
 
-    });
+    }
+
+
+    themeButton.addEventListener(
+        "click",
+        () => {
+
+            document.body.classList.toggle(
+                "light-mode"
+            );
+
+
+            const isLight =
+                document.body.classList.contains(
+                    "light-mode"
+                );
+
+
+            localStorage.setItem(
+                "studyMindTheme",
+                isLight
+                    ? "light"
+                    : "dark"
+            );
+
+
+            themeButton.textContent =
+                isLight
+                    ? "☀️ Light Mode"
+                    : "🌙 Dark Mode";
+
+        }
+    );
 
 }
 
@@ -48,22 +76,29 @@ if (themeButton) {
 const startButton =
     document.getElementById("startButton");
 
+
 if (startButton) {
 
-    startButton.addEventListener("click", () => {
+    startButton.addEventListener(
+        "click",
+        () => {
 
-        const generator =
-            document.getElementById("generator");
+            const generator =
+                document.getElementById(
+                    "generator"
+                );
 
-        if (generator) {
 
-            generator.scrollIntoView({
-                behavior: "smooth"
-            });
+            if (generator) {
+
+                generator.scrollIntoView({
+                    behavior: "smooth"
+                });
+
+            }
 
         }
-
-    });
+    );
 
 }
 
@@ -76,92 +111,160 @@ const studyForm =
     document.getElementById("studyForm");
 
 const generateButton =
-    document.getElementById("generateButton");
+    document.getElementById(
+        "generateButton"
+    );
 
 const studyPlan =
-    document.getElementById("studyPlan");
+    document.getElementById(
+        "studyPlan"
+    );
 
 
 if (studyForm) {
 
-    studyForm.addEventListener("submit", function (event) {
+    studyForm.addEventListener(
+        "submit",
+        function (event) {
 
-        event.preventDefault();
-
-
-        const examType =
-            document.getElementById("examType").value;
-
-        const examDate =
-            document.getElementById("examDate").value;
-
-        const subjectsInput =
-            document.getElementById("subjects").value;
-
-        const studyHours =
-            document.getElementById("studyHours").value;
-
-        const difficulty =
-            document.getElementById("difficulty").value;
+            event.preventDefault();
 
 
-        if (
-            !examType ||
-            !examDate ||
-            !subjectsInput ||
-            !studyHours
-        ) {
-
-            alert(
-                "Please complete all required fields."
-            );
-
-            return;
-
-        }
+            const examType =
+                document.getElementById(
+                    "examType"
+                ).value;
 
 
-        const subjects = subjectsInput
-            .split(",")
-            .map(subject => subject.trim())
-            .filter(subject => subject.length > 0);
+            const examDate =
+                document.getElementById(
+                    "examDate"
+                ).value;
 
 
-        if (subjects.length === 0) {
-
-            alert(
-                "Please enter at least one subject."
-            );
-
-            return;
-
-        }
+            const subjectsInput =
+                document.getElementById(
+                    "subjects"
+                ).value;
 
 
-        generateButton.textContent =
-            "Generating Plan...";
+            const topicsInput =
+                document.getElementById(
+                    "topics"
+                ).value;
 
-        generateButton.disabled = true;
+
+            const studyHours =
+                document.getElementById(
+                    "studyHours"
+                ).value;
 
 
-        setTimeout(() => {
+            const difficulty =
+                document.getElementById(
+                    "difficulty"
+                ).value;
 
-            generateStudyPlan(
-                examType,
-                examDate,
-                subjects,
-                studyHours,
-                difficulty
-            );
+
+            if (
+                !examType ||
+                !examDate ||
+                !subjectsInput ||
+                !topicsInput ||
+                !studyHours
+            ) {
+
+                alert(
+                    "Please complete all required fields."
+                );
+
+                return;
+
+            }
+
+
+            const subjects =
+                subjectsInput
+                    .split(",")
+                    .map(
+                        subject =>
+                            subject.trim()
+                    )
+                    .filter(
+                        subject =>
+                            subject.length > 0
+                    );
+
+
+            const topics =
+                topicsInput
+                    .split(",")
+                    .map(
+                        topic =>
+                            topic.trim()
+                    )
+                    .filter(
+                        topic =>
+                            topic.length > 0
+                    );
+
+
+            if (subjects.length === 0) {
+
+                alert(
+                    "Please enter at least one subject."
+                );
+
+                return;
+
+            }
+
+
+            if (topics.length === 0) {
+
+                alert(
+                    "Please enter at least one topic."
+                );
+
+                return;
+
+            }
+
 
             generateButton.textContent =
-                "Generate My Plan";
+                "Generating Plan...";
 
-            generateButton.disabled = false;
 
-        }, 700);
+            generateButton.disabled =
+                true;
 
-    });
+
+            setTimeout(
+                () => {
+
+                    generateStudyPlan(
+                        examType,
+                        examDate,
+                        subjects,
+                        topics,
+                        studyHours,
+                        difficulty
+                    );
+
+
+                    generateButton.textContent =
+                        "Generate My Plan";
+
+
+                    generateButton.disabled =
+                        false;
+
+                },
+                700
+            );
+
+        }
+    );
 
 }
 
@@ -174,6 +277,7 @@ function generateStudyPlan(
     examType,
     examDate,
     subjects,
+    topics,
     studyHours,
     difficulty
 ) {
@@ -184,18 +288,26 @@ function generateStudyPlan(
     const exam =
         new Date(examDate);
 
+
     const today =
         new Date();
 
+
     const difference =
         exam - today;
+
 
     const daysLeft =
         Math.max(
             0,
             Math.ceil(
                 difference /
-                (1000 * 60 * 60 * 24)
+                (
+                    1000 *
+                    60 *
+                    60 *
+                    24
+                )
             )
         );
 
@@ -286,22 +398,30 @@ function generateStudyPlan(
 
             <div>
                 <span>Exam</span>
-                <strong>${examType}</strong>
+                <strong>
+                    ${escapeHTML(examType)}
+                </strong>
             </div>
 
             <div>
                 <span>Days Left</span>
-                <strong>${daysLeft}</strong>
+                <strong>
+                    ${daysLeft}
+                </strong>
             </div>
 
             <div>
                 <span>Daily Study</span>
-                <strong>${recommendedHours} hrs</strong>
+                <strong>
+                    ${recommendedHours} hrs
+                </strong>
             </div>
 
             <div>
                 <span>Subjects</span>
-                <strong>${subjectCount}</strong>
+                <strong>
+                    ${subjectCount}
+                </strong>
             </div>
 
         </div>
@@ -315,7 +435,8 @@ function generateStudyPlan(
 
             <div class="generated-subjects">
 
-                ${subjects.map((subject, index) => `
+                ${subjects.map(
+                    (subject, index) => `
 
                     <div class="generated-subject">
 
@@ -324,12 +445,40 @@ function generateStudyPlan(
                         </span>
 
                         <strong>
-                            ${subject}
+                            ${escapeHTML(subject)}
                         </strong>
 
                     </div>
 
-                `).join("")}
+                `
+                ).join("")}
+
+            </div>
+
+
+            <h3 style="margin-top: 30px;">
+                📖 Your Topics
+            </h3>
+
+            <div class="generated-subjects">
+
+                ${topics.map(
+                    (topic, index) => `
+
+                    <div class="generated-subject">
+
+                        <span>
+                            ${index + 1}
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(topic)}
+                        </strong>
+
+                    </div>
+
+                `
+                ).join("")}
 
             </div>
 
@@ -363,22 +512,55 @@ function generateStudyPlan(
     `;
 
 
-    studyPlan.classList.remove("hidden");
+    studyPlan.classList.remove(
+        "hidden"
+    );
 
+
+    /*
+     * Preserve the existing plan structure
+     * while adding topics.
+     */
 
     const planData = {
 
         examType,
+
         examDate,
+
         subjects,
-        studyHours: recommendedHours,
+
+        topics,
+
+        studyHours:
+            recommendedHours,
+
         difficulty,
+
         daysLeft,
 
         createdAt:
             new Date().toISOString()
 
     };
+
+
+    /*
+     * Reset topic progress because this
+     * is a brand-new study plan.
+     */
+
+    localStorage.removeItem(
+        "studyMindCompletedTopics"
+    );
+
+    localStorage.removeItem(
+        "studyMindCurrentTopicIndex"
+    );
+
+    localStorage.removeItem(
+        "studyMindQuiz"
+    );
 
 
     localStorage.setItem(
@@ -417,28 +599,76 @@ function openDashboard() {
 ========================================= */
 
 const examDateInput =
-    document.getElementById("examDate");
+    document.getElementById(
+        "examDate"
+    );
+
 
 if (examDateInput) {
 
     const today =
         new Date();
 
+
     const year =
         today.getFullYear();
+
 
     const month =
         String(
             today.getMonth() + 1
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
+
 
     const day =
         String(
             today.getDate()
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
 
 
     examDateInput.min =
         `${year}-${month}-${day}`;
+
+}
+
+
+/* =========================================
+   ESCAPE HTML
+========================================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
