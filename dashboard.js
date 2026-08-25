@@ -1570,12 +1570,12 @@ Keep the answer readable and appropriately concise.
                    DISPLAY RESPONSE
                 ----------------------------- */
 
-                if (aiResponse) {
+               if (aiResponse) {
 
-                    aiResponse.textContent =
-                        data.reply;
+    aiResponse.innerHTML =
+        renderAIResponse(data.reply);
 
-                }
+}
 
 
             }
