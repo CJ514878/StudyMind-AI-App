@@ -132,14 +132,31 @@ let topicQuestions =
    TIMER DATA
 ========================================= */
 
-const DEFAULT_TIMER_SECONDS =
-    25 * 60;
+/*
+   The timer duration selected by the user
+   on the previous page/session.
+
+   Falls back to 25 minutes if no duration
+   has ever been selected.
+*/
+
+const DEFAULT_TIMER_SECONDS = 25 * 60;
+
+let selectedTimerSeconds =
+    Number(
+        localStorage.getItem(
+            "studyMindSelectedTimerSeconds"
+        )
+    ) || DEFAULT_TIMER_SECONDS;
+
 
 let timerSeconds =
-    DEFAULT_TIMER_SECONDS;
+    selectedTimerSeconds;
+
 
 let timerInterval =
     null;
+
 
 let timerRunning =
     false;
