@@ -1641,51 +1641,73 @@ function renderAIResponse(text) {
         return "";
     }
 
-    let html = text;
+    let html = String(text);
 
-    /* Escape dangerous HTML first */
+    /* -----------------------------------------
+       NORMALIZE AI MATH SLASHES
+    ----------------------------------------- */
+
+    html = html.replace(/\\\\/g, "\\");
+
+
+    /* -----------------------------------------
+       ESCAPE HTML
+    ----------------------------------------- */
+
     html = html
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    /* Convert display math: \[ ... \] */
+
+    /* -----------------------------------------
+       DISPLAY MATH
+       \[ equation \]
+    ----------------------------------------- */
+
     html = html.replace(
         /\\\[([\s\S]*?)\\\]/g,
         '<div class="math-block">\\[$1\\]</div>'
     );
 
-    /* Convert inline math: \( ... \) */
+
+    /* -----------------------------------------
+       INLINE MATH
+       \( equation \)
+    ----------------------------------------- */
+
     html = html.replace(
         /\\\(([\s\S]*?)\\\)/g,
         '<span class="math-inline">\\($1\\)</span>'
     );
 
-    /* Convert bold Markdown */
+
+    /* -----------------------------------------
+       BOLD
+       **text**
+    ----------------------------------------- */
+
     html = html.replace(
         /\*\*(.*?)\*\*/g,
         "<strong>$1</strong>"
     );
 
-    /* Convert italic Markdown */
+
+    /* -----------------------------------------
+       INLINE CODE
+       `text`
+    ----------------------------------------- */
+
     html = html.replace(
-        /\*(.*?)\*/g,
-        "<em>$1</em>"
+        /`([^`]+)`/g,
+        "<code>$1</code>"
     );
 
-    /* Convert bullet points */
-    html = html.replace(
-        /^\s*[-•]\s+(.*)$/gm,
-        "<li>$1</li>"
-    );
 
-    /* Wrap consecutive list items */
-    html = html.replace(
-        /(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs,
-        "<ul>$1</ul>"
-    );
+    /* -----------------------------------------
+       HEADINGS
+    ----------------------------------------- */
 
-    /* Convert headings */
     html = html.replace(
         /^###\s+(.*)$/gm,
         "<h4>$1</h4>"
@@ -1701,16 +1723,56 @@ function renderAIResponse(text) {
         "<h2>$1</h2>"
     );
 
-    /* Convert line breaks */
+
+    /* -----------------------------------------
+       BULLET POINTS
+    ----------------------------------------- */
+
     html = html.replace(
-        /\n\n/g,
+        /^\s*[-•]\s+(.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    /* -----------------------------------------
+       REMOVE EMPTY BULLET POINTS
+    ----------------------------------------- */
+
+    html = html.replace(
+        /<li>\s*<\/li>/g,
+        ""
+    );
+
+
+    /* -----------------------------------------
+       WRAP LIST ITEMS
+    ----------------------------------------- */
+
+    html = html.replace(
+        /((?:<li>.*?<\/li>\s*)+)/gs,
+        "<ul>$1</ul>"
+    );
+
+
+    /* -----------------------------------------
+       PARAGRAPHS
+    ----------------------------------------- */
+
+    html = html.replace(
+        /\n{2,}/g,
         "<br><br>"
     );
+
+
+    /* -----------------------------------------
+       SINGLE LINE BREAKS
+    ----------------------------------------- */
 
     html = html.replace(
         /\n/g,
         "<br>"
     );
+
 
     return html;
 }
