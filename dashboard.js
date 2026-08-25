@@ -1,4 +1,31 @@
 /* =========================================
+   AUTHENTICATION CHECK
+========================================= */
+
+async function checkAuthentication() {
+
+    const {
+        data: { user },
+        error
+    } = await supabaseClient.auth.getUser();
+
+    if (error || !user) {
+
+        window.location.href = "login.html";
+
+        return false;
+    }
+
+    return true;
+}
+
+
+/* =========================================
+   START DASHBOARD ONLY IF LOGGED IN
+========================================= */
+
+checkAuthentication();
+/* =========================================
    STUDYMIND AI — DASHBOARD JAVASCRIPT
 ========================================= */
 
