@@ -1618,7 +1618,13 @@ Keep the answer readable and appropriately concise.
                     );
 
                 }
+// Count question only after a successful response
+aiQuestionCount++;
 
+localStorage.setItem(
+    "aiQuestionCount",
+    aiQuestionCount
+);
 
                 /* -----------------------------
                    DISPLAY RESPONSE
