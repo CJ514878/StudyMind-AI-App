@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Log In — StudyMind AI</title>
+
+    <link
+        rel="stylesheet"
+        href="auth.css"
+    >
+
+</head>
+
+
+<body>
+
+    <main class="auth-page">
+
+        <div class="auth-card">
+
+            <!-- LOGO -->
+
+            <div class="auth-logo">
+                StudyMind <span>AI</span>
+            </div>
+
+
+            <!-- HEADER -->
+
+            <div class="auth-header">
+
+                <h1>
+                    Welcome back
+                </h1>
+
+                <p>
+                    Log in to continue your learning journey.
+                </p>
+
+            </div>
+
+
+            <!-- LOGIN FORM -->
+
+            <form id="loginForm">
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="forgot-password">
+
+                    <a href="#">
+                        Forgot password?
+                    </a>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="auth-button"
+                >
+                    Log In
+                </button>
+
+            </form>
+
+
+            <!-- MESSAGE -->
+
+            <p
+                id="authMessage"
+                class="auth-message"
+            ></p>
+
+
+            <!-- SIGN UP LINK -->
+
+            <div class="auth-switch">
+
+                <span>
+                    Don't have an account?
+                </span>
+
+                <a href="signup.html">
+                    Sign up
+                </a>
+
+            </div>
+
+
+            <!-- BACK -->
+
+            <a
+                href="index.html"
+                class="back-link"
+            >
+                ← Back to StudyMind AI
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        const loginForm =
+            document.getElementById("loginForm");
+
+        const authMessage =
+            document.getElementById("authMessage");
+
+
+        loginForm.addEventListener(
+            "submit",
+            function(event) {
+
+                event.preventDefault();
+
+
+                const email =
+                    document.getElementById("email").value.trim();
+
+                const password =
+                    document.getElementById("password").value;
+
+
+                if (!email || !password) {
+
+                    authMessage.textContent =
+                        "Please enter your email and password.";
+
+                    authMessage.className =
+                        "auth-message error";
+
+                    return;
+
+                }
+
+
+                /*
+                    STAGE 1 ONLY
+
+                    Authentication will be connected
+                    to the backend in Stage 2.
+                */
+
+                authMessage.textContent =
+                    "Login form is ready. Authentication will be connected in Stage 2.";
+
+                authMessage.className =
+                    "auth-message success";
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
