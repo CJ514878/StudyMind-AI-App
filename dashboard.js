@@ -11,6 +11,12 @@ let studyPlan =
     JSON.parse(
         localStorage.getItem("studyMindPlan")
     );
+const FREE_QUESTION_LIMIT = 5;
+
+let aiQuestionCount =
+    Number(
+        localStorage.getItem("aiQuestionCount")
+    ) || 0;
 
 
 /* =========================================
@@ -1364,30 +1370,46 @@ const aiResponse =
 
 if (askAIButton) {
 
-    askAIButton.addEventListener(
-        "click",
-        async () => {
+   askAIButton.addEventListener(
+    "click",
+    async () => {
 
-            const question =
-                aiQuestion
-                    ? aiQuestion.value.trim()
-                    : "";
+        const question =
+            aiQuestion
+                ? aiQuestion.value.trim()
+                : "";
+
+        if (!question) {
+            return;
+        }
+
+        // =========================================
+        // FREE AI QUESTION LIMIT
+        // =========================================
+
+        if (aiQuestionCount >= FREE_QUESTION_LIMIT) {
+
+            aiResponse.innerHTML = `
+                <div class="ai-limit-message">
+                    <h3>You've reached your free limit</h3>
+                    <p>You have used all 5 free AI questions.</p>
+                    <p>Upgrade to StudyMind AI Premium to continue asking questions.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        // Count this question
+        aiQuestionCount++;
+
+        localStorage.setItem(
+            "aiQuestionCount",
+            aiQuestionCount
+        );
 
 
-            /* -----------------------------
-               CHECK QUESTION
-            ----------------------------- */
-
-            if (!question) {
-
-                if (aiResponse) {
-
-                    aiResponse.textContent =
-                        "Please enter a question first.";
-
-                }
-
-                return;
+            
 
             }
 
