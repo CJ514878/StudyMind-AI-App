@@ -1617,6 +1617,89 @@ Keep the answer readable and appropriately concise.
 
 }
 /* =========================================
+   RENDER AI RESPONSE
+========================================= */
+
+function renderAIResponse(text) {
+
+    if (!text) {
+        return "";
+    }
+
+    let html = text;
+
+    /* Escape dangerous HTML first */
+    html = html
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    /* Convert display math: \[ ... \] */
+    html = html.replace(
+        /\\\[([\s\S]*?)\\\]/g,
+        '<div class="math-block">\\[$1\\]</div>'
+    );
+
+    /* Convert inline math: \( ... \) */
+    html = html.replace(
+        /\\\(([\s\S]*?)\\\)/g,
+        '<span class="math-inline">\\($1\\)</span>'
+    );
+
+    /* Convert bold Markdown */
+    html = html.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+    /* Convert italic Markdown */
+    html = html.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+    /* Convert bullet points */
+    html = html.replace(
+        /^\s*[-•]\s+(.*)$/gm,
+        "<li>$1</li>"
+    );
+
+    /* Wrap consecutive list items */
+    html = html.replace(
+        /(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs,
+        "<ul>$1</ul>"
+    );
+
+    /* Convert headings */
+    html = html.replace(
+        /^###\s+(.*)$/gm,
+        "<h4>$1</h4>"
+    );
+
+    html = html.replace(
+        /^##\s+(.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    html = html.replace(
+        /^#\s+(.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    /* Convert line breaks */
+    html = html.replace(
+        /\n\n/g,
+        "<br><br>"
+    );
+
+    html = html.replace(
+        /\n/g,
+        "<br>"
+    );
+
+    return html;
+}
+/* =========================================
    HELPERS
 ========================================= */
 
