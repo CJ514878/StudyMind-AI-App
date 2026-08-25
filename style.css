@@ -2268,3 +2268,234 @@ body.light-mode #aiQuestion {
     }
 
 }
+/* =========================================
+   CONTACT SECTION
+========================================= */
+
+.contact-section {
+    padding: 100px 7%;
+    background: #0f172a;
+    color: white;
+}
+
+.contact-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.contact-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 50px;
+}
+
+.contact-header .section-label {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.contact-header h2 {
+    margin: 0 0 15px;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+}
+
+.contact-header p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+
+/* =========================================
+   CONTACT CARDS
+========================================= */
+
+.contact-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.contact-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    padding: 24px;
+
+    text-decoration: none;
+    color: white;
+
+    background: rgba(30, 41, 59, 0.75);
+
+    border: 1px solid rgba(96, 165, 250, 0.16);
+
+    border-radius: 20px;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-5px);
+
+    background: rgba(37, 99, 235, 0.10);
+
+    border-color: rgba(96, 165, 250, 0.45);
+
+    box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================
+   CONTACT ICON
+========================================= */
+
+.contact-icon {
+    width: 55px;
+    height: 55px;
+    min-width: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background: rgba(37, 99, 235, 0.15);
+
+    font-size: 24px;
+}
+
+
+/* =========================================
+   CONTACT TEXT
+========================================= */
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.contact-info span {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.contact-info strong {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.site-footer {
+    padding: 45px 7% 25px;
+    background: #020617;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    color: white;
+}
+
+.footer-content {
+    max-width: 1100px;
+    margin: 0 auto;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 30px;
+}
+
+.footer-brand h3 {
+    margin: 0 0 7px;
+    font-size: 21px;
+}
+
+.footer-brand p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #60a5fa;
+}
+
+.footer-bottom {
+    max-width: 1100px;
+    margin: 35px auto 0;
+    padding-top: 20px;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.10);
+
+    text-align: center;
+}
+
+.footer-bottom p {
+    margin: 0;
+    color: #475569;
+    font-size: 13px;
+}
+
+
+/* =========================================
+   CONTACT RESPONSIVE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .contact-section {
+        padding: 75px 5%;
+    }
+
+    .contact-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-links {
+        justify-content: center;
+    }
+
+}
