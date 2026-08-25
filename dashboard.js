@@ -1574,7 +1574,22 @@ Keep the answer readable and appropriately concise.
 
     aiResponse.innerHTML =
         renderAIResponse(data.reply);
-
+if (typeof renderMathInElement === "function") {
+    renderMathInElement(aiResponse, {
+        delimiters: [
+            {
+                left: "\\[",
+                right: "\\]",
+                display: true
+            },
+            {
+                left: "\\(",
+                right: "\\)",
+                display: false
+            }
+        ]
+    });
+}
 }
 
 
