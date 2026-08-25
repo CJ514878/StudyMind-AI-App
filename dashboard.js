@@ -1,11 +1,11 @@
 /* =========================================
    STUDYMIND AI — DASHBOARD JAVASCRIPT
-   VERSION: FREE AI LIMITS + AUTH PROTECTION
+   VERSION: FREE AI LIMITS + AUTH + FIXED TIMER
 ========================================= */
 
 
 /* =========================================
-   AUTHENTICATION CHECK
+   AUTHENTICATION
 ========================================= */
 
 let currentUser = null;
@@ -46,9 +46,7 @@ async function checkAuthentication() {
         isAuthenticated = false;
 
         return false;
-
     }
-
 }
 
 
@@ -70,11 +68,6 @@ let studyPlan =
 
 const FREE_QUESTION_LIMIT = 5;
 
-
-/*
-   Ask AI usage
-*/
-
 let aiQuestionCount =
     Number(
         localStorage.getItem(
@@ -83,14 +76,9 @@ let aiQuestionCount =
     ) || 0;
 
 
-/*
-   Topic question usage.
-
-   A topic gets ONE knowledge check
-   containing exactly 5 questions.
-
-   Once submitted, that topic is finished.
-*/
+/* =========================================
+   COMPLETED QUESTION TOPICS
+========================================= */
 
 let completedQuestionTopics =
     JSON.parse(
@@ -129,18 +117,248 @@ let topicQuestions =
 
 
 /* =========================================
-   TIMER DATA
+   COMPLETED SUBJECTS
 ========================================= */
 
-/*
-   The timer duration selected by the user
-   on the previous page/session.
+let completedSubjects =
+    JSON.parse(
+        localStorage.getItem(
+            "studyMindCompletedSubjects"
+        )
+    ) || [];
 
-   Falls back to 25 minutes if no duration
-   has ever been selected.
+
+/* =========================================
+   STUDY STREAK
+========================================= */
+
+let currentStreak =
+    Number(
+        localStorage.getItem(
+            "studyMindStreak"
+        )
+    ) || 0;
+
+
+/* =========================================
+   DEFAULT STUDY PLAN
+========================================= */
+
+if (!studyPlan) {
+
+    studyPlan = {
+
+        examType:
+            "No exam selected",
+
+        examDate:
+            null,
+
+        subjects:
+            [],
+
+        topics:
+            [],
+
+        studyHours:
+            0,
+
+        difficulty:
+            "balanced",
+
+        daysLeft:
+            0
+
+    };
+}
+
+
+/*
+   Older study plans may not contain topics.
 */
 
-const DEFAULT_TIMER_SECONDS = 25 * 60;
+if (
+    !Array.isArray(
+        studyPlan.topics
+    )
+) {
+
+    studyPlan.topics = [];
+
+}
+
+
+/* =========================================
+   DASHBOARD ELEMENTS
+========================================= */
+
+const weeklyHours =
+    document.getElementById(
+        "weeklyHours"
+    );
+
+const daysLeft =
+    document.getElementById(
+        "daysLeft"
+    );
+
+const dailyGoal =
+    document.getElementById(
+        "dailyGoal"
+    );
+
+const studyScore =
+    document.getElementById(
+        "studyScore"
+    );
+
+const subjectList =
+    document.getElementById(
+        "subjectList"
+    );
+
+const topicList =
+    document.getElementById(
+        "topicList"
+    );
+
+const progressPercent =
+    document.getElementById(
+        "progressPercent"
+    );
+
+const progressCount =
+    document.getElementById(
+        "progressCount"
+    );
+
+const progressBar =
+    document.getElementById(
+        "progressBar"
+    );
+
+const streak =
+    document.getElementById(
+        "streak"
+    );
+
+const scoreDisplay =
+    document.getElementById(
+        "scoreDisplay"
+    );
+
+const scoreProgressBar =
+    document.getElementById(
+        "scoreProgressBar"
+    );
+
+const scoreMessage =
+    document.getElementById(
+        "scoreMessage"
+    );
+
+const calendarDays =
+    document.getElementById(
+        "calendarDays"
+    );
+
+const calendarMonth =
+    document.getElementById(
+        "calendarMonth"
+    );
+
+const nextBooking =
+    document.getElementById(
+        "nextBooking"
+    );
+
+const nextBookingTime =
+    document.getElementById(
+        "nextBookingTime"
+    );
+
+const scheduleList =
+    document.getElementById(
+        "scheduleList"
+    );
+
+
+/* =========================================
+   CURRENT TOPIC ELEMENTS
+========================================= */
+
+const currentTopicName =
+    document.getElementById(
+        "currentTopicName"
+    );
+
+const currentTopicDescription =
+    document.getElementById(
+        "currentTopicDescription"
+    );
+
+const topicPosition =
+    document.getElementById(
+        "topicPosition"
+    );
+
+const topicStatusBadge =
+    document.getElementById(
+        "topicStatusBadge"
+    );
+
+const topicCompleteCheckbox =
+    document.getElementById(
+        "topicCompleteCheckbox"
+    );
+
+const topicCompletionMessage =
+    document.getElementById(
+        "topicCompletionMessage"
+    );
+
+const nextTopicMessage =
+    document.getElementById(
+        "nextTopicMessage"
+    );
+
+
+/* =========================================
+   TIMER ELEMENTS
+========================================= */
+
+const studyTimer =
+    document.getElementById(
+        "studyTimer"
+    );
+
+const startTimerButton =
+    document.getElementById(
+        "startTimerButton"
+    );
+
+const pauseTimerButton =
+    document.getElementById(
+        "pauseTimerButton"
+    );
+
+const resetTimerButton =
+    document.getElementById(
+        "resetTimerButton"
+    );
+
+
+/* =========================================
+   TIMER DATA — FIXED
+========================================= */
+
+const DEFAULT_TIMER_SECONDS =
+    25 * 60;
+
+
+/*
+   Duration selected by the user.
+*/
 
 let selectedTimerSeconds =
     Number(
@@ -150,8 +368,29 @@ let selectedTimerSeconds =
     ) || DEFAULT_TIMER_SECONDS;
 
 
+/*
+   Remaining timer seconds.
+*/
+
 let timerSeconds =
-    selectedTimerSeconds;
+    Number(
+        localStorage.getItem(
+            "studyMindTimerSeconds"
+        )
+    );
+
+
+if (
+    !Number.isFinite(
+        timerSeconds
+    ) ||
+    timerSeconds <= 0
+) {
+
+    timerSeconds =
+        selectedTimerSeconds;
+
+}
 
 
 let timerInterval =
@@ -160,6 +399,44 @@ let timerInterval =
 
 let timerRunning =
     false;
+
+
+/*
+   Exact timestamp when the timer
+   should finish.
+*/
+
+let timerEndTime =
+    Number(
+        localStorage.getItem(
+            "studyMindTimerEndTime"
+        )
+    ) || null;
+
+
+/* =========================================
+   QUESTIONS
+========================================= */
+
+const topicQuestionsSection =
+    document.getElementById(
+        "topicQuestionsSection"
+    );
+
+const topicQuestionsContainer =
+    document.getElementById(
+        "topicQuestions"
+    );
+
+const submitTopicQuestions =
+    document.getElementById(
+        "submitTopicQuestions"
+    );
+
+const topicQuestionResult =
+    document.getElementById(
+        "topicQuestionResult"
+    );
 
 
 /* =========================================
@@ -180,7 +457,10 @@ if (themeButton) {
         );
 
 
-    if (savedTheme === "light") {
+    if (
+        savedTheme ===
+        "light"
+    ) {
 
         document.body.classList.add(
             "light-mode"
@@ -224,293 +504,6 @@ if (themeButton) {
     );
 
 }
-
-
-/* =========================================
-   DEFAULT DATA
-========================================= */
-
-if (!studyPlan) {
-
-    studyPlan = {
-
-        examType:
-            "No exam selected",
-
-        examDate:
-            null,
-
-        subjects:
-            [],
-
-        topics:
-            [],
-
-        studyHours:
-            0,
-
-        difficulty:
-            "balanced",
-
-        daysLeft:
-            0
-
-    };
-
-}
-
-
-/*
-   Older study plans may not have topics.
-*/
-
-if (
-    !Array.isArray(
-        studyPlan.topics
-    )
-) {
-
-    studyPlan.topics = [];
-
-}
-
-
-/* =========================================
-   DASHBOARD ELEMENTS
-========================================= */
-
-const weeklyHours =
-    document.getElementById(
-        "weeklyHours"
-    );
-
-
-const daysLeft =
-    document.getElementById(
-        "daysLeft"
-    );
-
-
-const dailyGoal =
-    document.getElementById(
-        "dailyGoal"
-    );
-
-
-const studyScore =
-    document.getElementById(
-        "studyScore"
-    );
-
-
-const subjectList =
-    document.getElementById(
-        "subjectList"
-    );
-
-
-const topicList =
-    document.getElementById(
-        "topicList"
-    );
-
-
-const progressPercent =
-    document.getElementById(
-        "progressPercent"
-    );
-
-
-const progressCount =
-    document.getElementById(
-        "progressCount"
-    );
-
-
-const progressBar =
-    document.getElementById(
-        "progressBar"
-    );
-
-
-const streak =
-    document.getElementById(
-        "streak"
-    );
-
-
-const scoreDisplay =
-    document.getElementById(
-        "scoreDisplay"
-    );
-
-
-const scoreProgressBar =
-    document.getElementById(
-        "scoreProgressBar"
-    );
-
-
-const scoreMessage =
-    document.getElementById(
-        "scoreMessage"
-    );
-
-
-const calendarDays =
-    document.getElementById(
-        "calendarDays"
-    );
-
-
-const calendarMonth =
-    document.getElementById(
-        "calendarMonth"
-    );
-
-
-const nextBooking =
-    document.getElementById(
-        "nextBooking"
-    );
-
-
-const nextBookingTime =
-    document.getElementById(
-        "nextBookingTime"
-    );
-
-
-const scheduleList =
-    document.getElementById(
-        "scheduleList"
-    );
-
-
-/* =========================================
-   CURRENT TOPIC ELEMENTS
-========================================= */
-
-const currentTopicName =
-    document.getElementById(
-        "currentTopicName"
-    );
-
-
-const currentTopicDescription =
-    document.getElementById(
-        "currentTopicDescription"
-    );
-
-
-const topicPosition =
-    document.getElementById(
-        "topicPosition"
-    );
-
-
-const topicStatusBadge =
-    document.getElementById(
-        "topicStatusBadge"
-    );
-
-
-const topicCompleteCheckbox =
-    document.getElementById(
-        "topicCompleteCheckbox"
-    );
-
-
-const topicCompletionMessage =
-    document.getElementById(
-        "topicCompletionMessage"
-    );
-
-
-const nextTopicMessage =
-    document.getElementById(
-        "nextTopicMessage"
-    );
-
-
-/* =========================================
-   TIMER ELEMENTS
-========================================= */
-
-const studyTimer =
-    document.getElementById(
-        "studyTimer"
-    );
-
-
-const startTimerButton =
-    document.getElementById(
-        "startTimerButton"
-    );
-
-
-const pauseTimerButton =
-    document.getElementById(
-        "pauseTimerButton"
-    );
-
-
-const resetTimerButton =
-    document.getElementById(
-        "resetTimerButton"
-    );
-
-
-/* =========================================
-   QUESTIONS
-========================================= */
-
-const topicQuestionsSection =
-    document.getElementById(
-        "topicQuestionsSection"
-    );
-
-
-const topicQuestionsContainer =
-    document.getElementById(
-        "topicQuestions"
-    );
-
-
-const submitTopicQuestions =
-    document.getElementById(
-        "submitTopicQuestions"
-    );
-
-
-const topicQuestionResult =
-    document.getElementById(
-        "topicQuestionResult"
-    );
-
-
-/* =========================================
-   COMPLETED SUBJECTS
-========================================= */
-
-let completedSubjects =
-    JSON.parse(
-        localStorage.getItem(
-            "studyMindCompletedSubjects"
-        )
-    ) || [];
-
-
-/* =========================================
-   STUDY STREAK
-========================================= */
-
-let currentStreak =
-    Number(
-        localStorage.getItem(
-            "studyMindStreak"
-        )
-    ) || 0;
 
 
 /* =========================================
@@ -605,7 +598,6 @@ function calculateDaysLeft() {
     const today =
         new Date();
 
-
     const exam =
         new Date(
             studyPlan.examDate
@@ -632,7 +624,8 @@ function calculateDaysLeft() {
         0,
         Math.ceil(
             (
-                exam - today
+                exam -
+                today
             ) /
             (
                 1000 *
@@ -698,7 +691,8 @@ function renderCurrentTopic() {
 
 
     while (
-        currentTopicIndex < topics.length &&
+        currentTopicIndex <
+            topics.length &&
         completedTopics.includes(
             topics[currentTopicIndex]
         )
@@ -710,7 +704,8 @@ function renderCurrentTopic() {
 
 
     if (
-        currentTopicIndex >= topics.length
+        currentTopicIndex >=
+        topics.length
     ) {
 
         renderAllTopicsCompleted();
@@ -733,11 +728,7 @@ function renderCurrentTopic() {
     if (topicPosition) {
 
         topicPosition.textContent =
-            `TOPIC ${
-                currentTopicIndex + 1
-            } OF ${
-                topics.length
-            }`;
+            `TOPIC ${currentTopicIndex + 1} OF ${topics.length}`;
 
     }
 
@@ -818,6 +809,11 @@ function renderCurrentTopic() {
 
     }
 
+
+    /*
+       Start the next topic with the
+       user's selected timer duration.
+    */
 
     resetTimer();
 
@@ -962,12 +958,6 @@ function completeCurrentTopic() {
         topic;
 
 
-    /*
-       Generate the ONE and ONLY
-       5-question knowledge check
-       for this topic.
-    */
-
     generateQuestionsForTopic(
         finishedTopic
     );
@@ -1057,7 +1047,9 @@ function completeCurrentTopic() {
    CHECKBOX LISTENER
 ========================================= */
 
-if (topicCompleteCheckbox) {
+if (
+    topicCompleteCheckbox
+) {
 
     topicCompleteCheckbox.addEventListener(
         "change",
@@ -1103,18 +1095,13 @@ function renderTopics() {
     ) {
 
         topicList.innerHTML = `
-
             <div class="empty-state">
-
                 <span>📖</span>
-
                 <p>
                     No topics yet.
                     Create a study plan to begin.
                 </p>
-
             </div>
-
         `;
 
         return;
@@ -1123,7 +1110,10 @@ function renderTopics() {
 
 
     topics.forEach(
-        (topic, index) => {
+        (
+            topic,
+            index
+        ) => {
 
             const completed =
                 completedTopics.includes(
@@ -1166,7 +1156,6 @@ function renderTopics() {
 
 
             topicItem.innerHTML = `
-
                 <div class="subject-info">
 
                     <span
@@ -1212,7 +1201,6 @@ function renderTopics() {
                         "0"
                     )}
                 </span>
-
             `;
 
 
@@ -1227,7 +1215,7 @@ function renderTopics() {
 
 
 /* =========================================
-   SUBJECTS
+   RENDER SUBJECTS
 ========================================= */
 
 function renderSubjects() {
@@ -1252,18 +1240,13 @@ function renderSubjects() {
     ) {
 
         subjectList.innerHTML = `
-
             <div class="empty-state">
-
                 <span>📚</span>
-
                 <p>
                     No subjects yet.
                     Create a study plan to begin.
                 </p>
-
             </div>
-
         `;
 
         return;
@@ -1272,7 +1255,10 @@ function renderSubjects() {
 
 
     subjects.forEach(
-        (subject, index) => {
+        (
+            subject,
+            index
+        ) => {
 
             const completed =
                 completedSubjects.includes(
@@ -1300,7 +1286,6 @@ function renderSubjects() {
 
 
             subjectItem.innerHTML = `
-
                 <div class="subject-info">
 
                     <button
@@ -1347,7 +1332,6 @@ function renderSubjects() {
                         "0"
                     )}
                 </span>
-
             `;
 
 
@@ -1618,28 +1602,36 @@ function updateStudyScore() {
 
     if (scoreMessage) {
 
-        if (score === 0) {
+        if (
+            score === 0
+        ) {
 
             scoreMessage.textContent =
                 "Start studying to build your score.";
 
         }
 
-        else if (score < 40) {
+        else if (
+            score < 40
+        ) {
 
             scoreMessage.textContent =
                 "Good start. Keep building momentum.";
 
         }
 
-        else if (score < 70) {
+        else if (
+            score < 70
+        ) {
 
             scoreMessage.textContent =
                 "You're making solid progress.";
 
         }
 
-        else if (score < 100) {
+        else if (
+            score < 100
+        ) {
 
             scoreMessage.textContent =
                 "Great work. Keep going.";
@@ -1659,7 +1651,7 @@ function updateStudyScore() {
 
 
 /* =========================================
-   TIMER
+   TIMER SETUP — FIXED
 ========================================= */
 
 function setupTimer() {
@@ -1671,15 +1663,15 @@ function setupTimer() {
     }
 
 
-    /*
-       Restore the timer exactly where
-       the user left it.
+    selectedTimerSeconds =
+        Number(
+            localStorage.getItem(
+                "studyMindSelectedTimerSeconds"
+            )
+        ) || DEFAULT_TIMER_SECONDS;
 
-       If there is no saved countdown,
-       use the user's selected duration.
-    */
 
-    const savedTimerSeconds =
+    const savedSeconds =
         Number(
             localStorage.getItem(
                 "studyMindTimerSeconds"
@@ -1689,57 +1681,169 @@ function setupTimer() {
 
     if (
         Number.isFinite(
-            savedTimerSeconds
+            savedSeconds
         ) &&
-        savedTimerSeconds > 0
+        savedSeconds > 0
     ) {
 
         timerSeconds =
-            savedTimerSeconds;
+            savedSeconds;
 
     }
 
     else {
 
         timerSeconds =
-            Number(
-                localStorage.getItem(
-                    "studyMindSelectedTimerSeconds"
-                )
-            ) || DEFAULT_TIMER_SECONDS;
+            selectedTimerSeconds;
 
     }
 
 
+    const savedRunning =
+        localStorage.getItem(
+            "studyMindTimerRunning"
+        ) === "true";
+
+
+    timerEndTime =
+        Number(
+            localStorage.getItem(
+                "studyMindTimerEndTime"
+            )
+        ) || null;
+
+
+    /*
+       Recover a timer that was running
+       before refresh.
+    */
+
+    if (
+        savedRunning &&
+        timerEndTime
+    ) {
+
+        const remaining =
+            Math.ceil(
+                (
+                    timerEndTime -
+                    Date.now()
+                ) / 1000
+            );
+
+
+        if (
+            remaining > 0
+        ) {
+
+            timerSeconds =
+                remaining;
+
+            timerRunning =
+                true;
+
+            updateTimerDisplay();
+
+            startTimerInterval();
+
+            updateTimerButtons();
+
+            return;
+
+        }
+
+
+        /*
+           Timer finished while the
+           page wasn't open.
+        */
+
+        timerSeconds =
+            0;
+
+        timerRunning =
+            false;
+
+        localStorage.setItem(
+            "studyMindTimerSeconds",
+            "0"
+        );
+
+        localStorage.setItem(
+            "studyMindTimerRunning",
+            "false"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerEndTime"
+        );
+
+        updateTimerDisplay();
+
+        updateTimerButtons();
+
+        return;
+
+    }
+
+
+    timerRunning =
+        false;
+
+
     updateTimerDisplay();
 
+    updateTimerButtons();
 
-    if (startTimerButton) {
+
+    /*
+       Prevent duplicate event listeners.
+    */
+
+    if (
+        startTimerButton &&
+        !startTimerButton.dataset.timerReady
+    ) {
 
         startTimerButton.addEventListener(
             "click",
             startTimer
         );
 
+        startTimerButton.dataset.timerReady =
+            "true";
+
     }
 
 
-    if (pauseTimerButton) {
+    if (
+        pauseTimerButton &&
+        !pauseTimerButton.dataset.timerReady
+    ) {
 
         pauseTimerButton.addEventListener(
             "click",
             pauseTimer
         );
 
+        pauseTimerButton.dataset.timerReady =
+            "true";
+
     }
 
 
-    if (resetTimerButton) {
+    if (
+        resetTimerButton &&
+        !resetTimerButton.dataset.timerReady
+    ) {
 
         resetTimerButton.addEventListener(
             "click",
             resetTimer
         );
+
+        resetTimerButton.dataset.timerReady =
+            "true";
 
     }
 
@@ -1753,11 +1857,19 @@ function setupTimer() {
 function startTimer() {
 
     if (
-        timerRunning ||
-        timerSeconds <= 0
+        timerRunning
     ) {
 
         return;
+
+    }
+
+
+    if (
+        timerSeconds <= 0
+    ) {
+
+        resetTimer();
 
     }
 
@@ -1766,12 +1878,25 @@ function startTimer() {
         true;
 
 
-    /*
-       Save the current timer state so
-       refreshing the page doesn't
-       immediately return to the
-       originally selected duration.
-    */
+    timerEndTime =
+        Date.now() +
+        (
+            timerSeconds *
+            1000
+        );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "true"
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerEndTime",
+        timerEndTime
+    );
+
 
     localStorage.setItem(
         "studyMindTimerSeconds",
@@ -1779,30 +1904,47 @@ function startTimer() {
     );
 
 
-    if (startTimerButton) {
+    startTimerInterval();
 
-        startTimerButton.disabled =
-            true;
+    updateTimerButtons();
 
-        startTimerButton.innerHTML =
-            "<span>▶</span> Running...";
-
-    }
+}
 
 
-    if (pauseTimerButton) {
+/* =========================================
+   TIMER INTERVAL
+========================================= */
 
-        pauseTimerButton.disabled =
-            false;
+function startTimerInterval() {
 
-    }
+    clearInterval(
+        timerInterval
+    );
 
 
     timerInterval =
         setInterval(
             () => {
 
-                timerSeconds--;
+                if (
+                    !timerEndTime
+                ) {
+
+                    return;
+
+                }
+
+
+                timerSeconds =
+                    Math.max(
+                        0,
+                        Math.ceil(
+                            (
+                                timerEndTime -
+                                Date.now()
+                            ) / 1000
+                        )
+                    );
 
 
                 localStorage.setItem(
@@ -1818,27 +1960,16 @@ function startTimer() {
                     timerSeconds <= 0
                 ) {
 
-                    timerSeconds =
-                        0;
-
-
-                    localStorage.setItem(
-                        "studyMindTimerSeconds",
-                        0
-                    );
-
-
-                    stopTimer();
-
-                    handleTimerFinished();
+                    finishTimer();
 
                 }
 
             },
-            1000
+            250
         );
 
 }
+
 
 /* =========================================
    PAUSE TIMER
@@ -1846,9 +1977,29 @@ function startTimer() {
 
 function pauseTimer() {
 
-    if (!timerRunning) {
+    if (
+        !timerRunning
+    ) {
 
         return;
+
+    }
+
+
+    if (
+        timerEndTime
+    ) {
+
+        timerSeconds =
+            Math.max(
+                0,
+                Math.ceil(
+                    (
+                        timerEndTime -
+                        Date.now()
+                    ) / 1000
+                )
+            );
 
     }
 
@@ -1866,23 +2017,30 @@ function pauseTimer() {
         false;
 
 
-    if (startTimerButton) {
-
-        startTimerButton.disabled =
-            false;
-
-        startTimerButton.innerHTML =
-            "<span>▶</span> Resume";
-
-    }
+    timerEndTime =
+        null;
 
 
-    if (pauseTimerButton) {
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        timerSeconds
+    );
 
-        pauseTimerButton.disabled =
-            true;
 
-    }
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
 
 }
 
@@ -1906,23 +2064,75 @@ function stopTimer() {
         false;
 
 
-    if (startTimerButton) {
-
-        startTimerButton.disabled =
-            true;
-
-        startTimerButton.innerHTML =
-            "<span>✓</span> Timer Complete";
-
-    }
+    timerEndTime =
+        null;
 
 
-    if (pauseTimerButton) {
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
 
-        pauseTimerButton.disabled =
-            true;
 
-    }
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    updateTimerButtons();
+
+}
+
+
+/* =========================================
+   FINISH TIMER
+========================================= */
+
+function finishTimer() {
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
+        null;
+
+
+    timerSeconds =
+        0;
+
+
+    timerRunning =
+        false;
+
+
+    timerEndTime =
+        null;
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        "0"
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+    handleTimerFinished();
 
 }
 
@@ -1946,13 +2156,9 @@ function resetTimer() {
         false;
 
 
-    /*
-       Reset to the duration the user
-       previously selected.
+    timerEndTime =
+        null;
 
-       It does NOT automatically go
-       back to 25 minutes.
-    */
 
     selectedTimerSeconds =
         Number(
@@ -1966,7 +2172,21 @@ function resetTimer() {
         selectedTimerSeconds;
 
 
-    updateTimerDisplay();
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        timerSeconds
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
 
 
     if (studyTimer) {
@@ -1978,13 +2198,60 @@ function resetTimer() {
     }
 
 
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+}
+
+
+/* =========================================
+   UPDATE TIMER BUTTONS
+========================================= */
+
+function updateTimerButtons() {
+
     if (startTimerButton) {
 
         startTimerButton.disabled =
-            false;
+            timerRunning ||
+            timerSeconds <= 0;
 
-        startTimerButton.innerHTML =
-            "<span>▶</span> Start Timer";
+
+        if (
+            timerSeconds <= 0
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>✓</span> Timer Complete";
+
+        }
+
+        else if (
+            timerRunning
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Running...";
+
+        }
+
+        else if (
+            timerSeconds <
+            selectedTimerSeconds
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Resume";
+
+        }
+
+        else {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Start Timer";
+
+        }
 
     }
 
@@ -1992,7 +2259,7 @@ function resetTimer() {
     if (pauseTimerButton) {
 
         pauseTimerButton.disabled =
-            true;
+            !timerRunning;
 
     }
 
@@ -2012,28 +2279,42 @@ function updateTimerDisplay() {
     }
 
 
+    const safeSeconds =
+        Math.max(
+            0,
+            Number(
+                timerSeconds
+            ) || 0
+        );
+
+
     const minutes =
         Math.floor(
-            timerSeconds / 60
+            safeSeconds / 60
         );
 
 
     const seconds =
-        timerSeconds % 60;
+        safeSeconds % 60;
 
 
     studyTimer.textContent =
-        `${String(minutes).padStart(
+        `${String(
+            minutes
+        ).padStart(
             2,
             "0"
-        )}:${String(seconds).padStart(
+        )}:${String(
+            seconds
+        ).padStart(
             2,
             "0"
         )}`;
 
 
     if (
-        timerSeconds <= 60
+        safeSeconds > 0 &&
+        safeSeconds <= 60
     ) {
 
         studyTimer.classList.add(
@@ -2050,11 +2331,22 @@ function updateTimerDisplay() {
 
     }
 
+
+    if (
+        safeSeconds === 0
+    ) {
+
+        studyTimer.classList.add(
+            "timer-finished"
+        );
+
+    }
+
 }
 
 
 /* =========================================
-   TIMER FINISHED
+   TIMER FINISHED MESSAGE
 ========================================= */
 
 function handleTimerFinished() {
@@ -2068,10 +2360,17 @@ function handleTimerFinished() {
     }
 
 
+    const completedMinutes =
+        Math.round(
+            selectedTimerSeconds /
+            60
+        );
+
+
     if (topicCompletionMessage) {
 
         topicCompletionMessage.textContent =
-            "⏰ Your 25-minute study session is complete. If you have finished the topic, tick the box below.";
+            `⏰ Your ${completedMinutes}-minute study session is complete. If you have finished the topic, tick the box below.`;
 
     }
 
@@ -2084,14 +2383,14 @@ function handleTimerFinished() {
 
 
     alert(
-        "Your 25-minute study session is complete! 🎉"
+        `Your ${completedMinutes}-minute study session is complete! 🎉`
     );
 
 }
 
 
 /* =========================================
-   ATTRACTIVE TIMER STYLES
+   TIMER STYLES
 ========================================= */
 
 function injectTimerStyles() {
@@ -2161,6 +2460,7 @@ function injectTimerStyles() {
         }
 
         @keyframes timerPulse {
+
             0%, 100% {
                 opacity: 1;
                 transform: scale(1);
@@ -2170,9 +2470,11 @@ function injectTimerStyles() {
                 opacity: .65;
                 transform: scale(1.03);
             }
+
         }
 
         @keyframes timerFinished {
+
             0% {
                 transform: scale(1);
             }
@@ -2184,6 +2486,7 @@ function injectTimerStyles() {
             100% {
                 transform: scale(1);
             }
+
         }
 
         .timer-controls {
@@ -2499,7 +2802,7 @@ function renderCalendar() {
         calendarDate.getMonth();
 
 
-    const monthName =
+    calendarMonth.textContent =
         calendarDate.toLocaleDateString(
             "en-US",
             {
@@ -2507,10 +2810,6 @@ function renderCalendar() {
                 year: "numeric"
             }
         );
-
-
-    calendarMonth.textContent =
-        monthName;
 
 
     const firstDay =
@@ -2608,23 +2907,6 @@ function renderCalendar() {
 
 
         if (
-            studyPlan.examDate &&
-            current <=
-                new Date(
-                    studyPlan.examDate
-                ) &&
-            current >=
-                new Date()
-        ) {
-
-            day.classList.add(
-                "study-day"
-            );
-
-        }
-
-
-        if (
             studyPlan.examDate
         ) {
 
@@ -2632,6 +2914,38 @@ function renderCalendar() {
                 new Date(
                     studyPlan.examDate
                 );
+
+
+            const todayStart =
+                new Date();
+
+
+            todayStart.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            exam.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            if (
+                current >= todayStart &&
+                current <= exam
+            ) {
+
+                day.classList.add(
+                    "study-day"
+                );
+
+            }
 
 
             if (
@@ -2652,15 +2966,13 @@ function renderCalendar() {
         }
 
 
-        /* =========================================
-           FIXED COMPLETED-DAY LOGIC
+        /*
+           Only mark days completed when
+           the ENTIRE study plan is completed.
 
-           Removed the old:
-               date % 2 === 0
-
-           condition which caused every other
-           calendar day to appear completed.
-        ========================================= */
+           No artificial every-other-day
+           completion.
+        */
 
         const topicTotal =
             studyPlan.topics
@@ -2691,11 +3003,9 @@ function renderCalendar() {
 
 
         day.innerHTML = `
-
             <span class="day-number">
                 ${date}
             </span>
-
         `;
 
 
@@ -2754,7 +3064,6 @@ const previousMonth =
     document.getElementById(
         "previousMonth"
     );
-
 
 const nextMonth =
     document.getElementById(
@@ -2820,12 +3129,10 @@ function renderSchedule() {
     ) {
 
         scheduleList.innerHTML = `
-
             <div class="empty-schedule">
                 Your daily study sessions
                 will appear here.
             </div>
-
         `;
 
         return;
@@ -2856,7 +3163,10 @@ function renderSchedule() {
 
 
     subjects.forEach(
-        (subject, index) => {
+        (
+            subject,
+            index
+        ) => {
 
             const startHour =
                 16 +
@@ -2902,7 +3212,6 @@ function renderSchedule() {
 
 
             item.innerHTML = `
-
                 <div class="schedule-time">
 
                     ${formatTime(
@@ -2942,7 +3251,6 @@ function renderSchedule() {
                     </small>
 
                 </div>
-
             `;
 
 
@@ -2987,7 +3295,6 @@ function updateNextBooking() {
         nextBookingTime.textContent =
             "Create a study plan to populate your calendar.";
 
-
         return;
 
     }
@@ -2998,7 +3305,9 @@ function updateNextBooking() {
 
 
     const next =
-        new Date(now);
+        new Date(
+            now
+        );
 
 
     next.setHours(
@@ -3060,14 +3369,15 @@ const analyzeProgressButton =
         "analyzeProgressButton"
     );
 
-
 const aiAdviceText =
     document.getElementById(
         "aiAdviceText"
     );
 
 
-if (analyzeProgressButton) {
+if (
+    analyzeProgressButton
+) {
 
     analyzeProgressButton.addEventListener(
         "click",
@@ -3154,6 +3464,7 @@ async function generateQuestionsForTopic(
         showAILoginMessage(
             topicQuestionsContainer
         );
+
 
         if (topicQuestionsSection) {
 
@@ -3324,7 +3635,9 @@ The answer must be the zero-based number of the correct option.
 
 
         if (
-            !Array.isArray(questions) ||
+            !Array.isArray(
+                questions
+            ) ||
             questions.length < 5
         ) {
 
@@ -3342,17 +3655,18 @@ The answer must be the zero-based number of the correct option.
             );
 
 
-        topicQuestions =
-            {
-                topic:
-                    topic,
+        topicQuestions = {
 
-                questions:
-                    questions,
+            topic:
+                topic,
 
-                submitted:
-                    false
-            };
+            questions:
+                questions,
+
+            submitted:
+                false
+
+        };
 
 
         localStorage.setItem(
@@ -3369,7 +3683,6 @@ The answer must be the zero-based number of the correct option.
 
     }
 
-
     catch (error) {
 
         console.error(
@@ -3379,7 +3692,6 @@ The answer must be the zero-based number of the correct option.
 
 
         topicQuestionsContainer.innerHTML = `
-
             <div class="ai-response">
 
                 <p>
@@ -3395,7 +3707,6 @@ The answer must be the zero-based number of the correct option.
                 </button>
 
             </div>
-
         `;
 
 
@@ -3426,7 +3737,7 @@ The answer must be the zero-based number of the correct option.
 
 
 /* =========================================
-   RENDER FIVE QUESTIONS
+   RENDER TOPIC QUESTIONS
 ========================================= */
 
 function renderTopicQuestions(
@@ -3452,9 +3763,15 @@ function renderTopicQuestions(
 
 
     questionData.questions
-        .slice(0, 5)
+        .slice(
+            0,
+            5
+        )
         .forEach(
-            (question, index) => {
+            (
+                question,
+                index
+            ) => {
 
                 const questionBox =
                     document.createElement(
@@ -3475,7 +3792,6 @@ function renderTopicQuestions(
 
 
                 questionBox.innerHTML = `
-
                     <h4>
                         ${index + 1}.
                         ${escapeHTML(
@@ -3486,7 +3802,10 @@ function renderTopicQuestions(
                     <div>
 
                         ${options
-                            .slice(0, 4)
+                            .slice(
+                                0,
+                                4
+                            )
                             .map(
                                 (
                                     option,
@@ -3512,7 +3831,6 @@ function renderTopicQuestions(
                             .join("")}
 
                     </div>
-
                 `;
 
 
@@ -3524,7 +3842,9 @@ function renderTopicQuestions(
         );
 
 
-    if (submitTopicQuestions) {
+    if (
+        submitTopicQuestions
+    ) {
 
         submitTopicQuestions.disabled =
             false;
@@ -3541,7 +3861,9 @@ function renderTopicQuestions(
    SUBMIT TOPIC QUESTIONS
 ========================================= */
 
-if (submitTopicQuestions) {
+if (
+    submitTopicQuestions
+) {
 
     submitTopicQuestions.addEventListener(
         "click",
@@ -3586,7 +3908,10 @@ if (submitTopicQuestions) {
 
 
             topicQuestions.questions
-                .slice(0, 5)
+                .slice(
+                    0,
+                    5
+                )
                 .forEach(
                     (
                         question,
@@ -3605,9 +3930,7 @@ if (submitTopicQuestions) {
                             )[index];
 
 
-                        if (
-                            !selected
-                        ) {
+                        if (!selected) {
 
                             return;
 
@@ -3650,7 +3973,9 @@ if (submitTopicQuestions) {
                 answered < 5
             ) {
 
-                if (topicQuestionResult) {
+                if (
+                    topicQuestionResult
+                ) {
 
                     topicQuestionResult.innerHTML =
                         "⚠️ Please answer all 5 questions before submitting.";
@@ -3660,10 +3985,6 @@ if (submitTopicQuestions) {
                 return;
 
             }
-
-
-            const total =
-                5;
 
 
             topicQuestions.submitted =
@@ -3721,16 +4042,20 @@ if (submitTopicQuestions) {
                 "✓ Questions Completed";
 
 
-            if (topicQuestionResult) {
+            if (
+                topicQuestionResult
+            ) {
 
                 topicQuestionResult.innerHTML = `
                     🧠 You scored
                     <strong>
-                        ${score}/${total}
+                        ${score}/5
                     </strong>
-                    on the ${escapeHTML(
+                    on the
+                    ${escapeHTML(
                         topicQuestions.topic
-                    )} knowledge check.
+                    )}
+                    knowledge check.
 
                     <br><br>
 
@@ -3773,10 +4098,11 @@ function showTopicQuestionsFinished(
         "block";
 
 
-    if (topicQuestionsContainer) {
+    if (
+        topicQuestionsContainer
+    ) {
 
         topicQuestionsContainer.innerHTML = `
-
             <div class="ai-limit-message">
 
                 <h3>
@@ -3804,13 +4130,14 @@ function showTopicQuestionsFinished(
                 </button>
 
             </div>
-
         `;
 
     }
 
 
-    if (submitTopicQuestions) {
+    if (
+        submitTopicQuestions
+    ) {
 
         submitTopicQuestions.disabled =
             true;
@@ -3829,12 +4156,10 @@ const askAIButton =
         "askAIButton"
     );
 
-
 const aiQuestion =
     document.getElementById(
         "aiQuestion"
     );
-
 
 const aiResponse =
     document.getElementById(
@@ -3846,7 +4171,9 @@ const aiResponse =
    ASK AI EVENT
 ========================================= */
 
-if (askAIButton) {
+if (
+    askAIButton
+) {
 
     askAIButton.addEventListener(
         "click",
@@ -3954,11 +4281,14 @@ if (askAIButton) {
                         "/api/chat",
                         {
 
-                            method: "POST",
+                            method:
+                                "POST",
 
                             headers: {
+
                                 "Content-Type":
                                     "application/json"
+
                             },
 
                             body:
@@ -4137,7 +4467,6 @@ Keep the answer readable and appropriately concise.
 
             }
 
-
             catch (error) {
 
                 console.error(
@@ -4154,7 +4483,6 @@ Keep the answer readable and appropriately concise.
                 }
 
             }
-
 
             finally {
 
@@ -4225,12 +4553,15 @@ function setupAIAuthenticationUI() {
         }
 
 
-        if (submitTopicQuestions) {
+        if (
+            submitTopicQuestions
+        ) {
 
             submitTopicQuestions.disabled =
                 true;
 
         }
+
 
         return;
 
@@ -4273,7 +4604,6 @@ function showAILoginMessage(
 
 
     container.innerHTML = `
-
         <div class="ai-login-message">
 
             <h3>
@@ -4298,7 +4628,6 @@ function showAILoginMessage(
             </button>
 
         </div>
-
     `;
 
 }
@@ -4364,7 +4693,6 @@ function showAskAILimitMessage(
             </button>
 
         </div>
-
     `;
 
 
@@ -4500,7 +4828,6 @@ function openPremiumOffer() {
             </div>
 
         </div>
-
     `;
 
 
@@ -4630,9 +4957,8 @@ function renderAIResponse(
 
 
     const escape =
-        (str) => {
-
-            return str
+        str =>
+            String(str)
                 .replace(
                     /&/g,
                     "&amp;"
@@ -4654,8 +4980,6 @@ function renderAIResponse(
                     "&#039;"
                 );
 
-        };
-
 
     const mathBlocks =
         [];
@@ -4664,7 +4988,7 @@ function renderAIResponse(
     text =
         text.replace(
             /\\\[([\s\S]*?)\\\]/g,
-            function(match) {
+            match => {
 
                 const index =
                     mathBlocks.length;
@@ -4684,7 +5008,7 @@ function renderAIResponse(
     text =
         text.replace(
             /\\\(([\s\S]*?)\\\)/g,
-            function(match) {
+            match => {
 
                 const index =
                     mathBlocks.length;
@@ -4702,7 +5026,9 @@ function renderAIResponse(
 
 
     text =
-        escape(text);
+        escape(
+            text
+        );
 
 
     text =
@@ -4776,29 +5102,21 @@ function renderAIResponse(
 
 
     mathBlocks.forEach(
-        function(
+        (
             math,
             index
-        ) {
-
-            const blockPlaceholder =
-                `___MATH_BLOCK_${index}___`;
-
-
-            const inlinePlaceholder =
-                `___MATH_INLINE_${index}___`;
-
+        ) => {
 
             text =
                 text.replace(
-                    blockPlaceholder,
+                    `___MATH_BLOCK_${index}___`,
                     math
                 );
 
 
             text =
                 text.replace(
-                    inlinePlaceholder,
+                    `___MATH_INLINE_${index}___`,
                     math
                 );
 
@@ -4858,7 +5176,9 @@ function escapeHTML(
     value
 ) {
 
-    return String(value)
+    return String(
+        value
+    )
         .replace(
             /&/g,
             "&amp;"
@@ -4891,7 +5211,9 @@ function escapeJS(
     value
 ) {
 
-    return String(value)
+    return String(
+        value
+    )
         .replace(
             /\\/g,
             "\\\\"
