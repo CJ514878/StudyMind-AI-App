@@ -1671,6 +1671,46 @@ function setupTimer() {
     }
 
 
+    /*
+       Restore the timer exactly where
+       the user left it.
+
+       If there is no saved countdown,
+       use the user's selected duration.
+    */
+
+    const savedTimerSeconds =
+        Number(
+            localStorage.getItem(
+                "studyMindTimerSeconds"
+            )
+        );
+
+
+    if (
+        Number.isFinite(
+            savedTimerSeconds
+        ) &&
+        savedTimerSeconds > 0
+    ) {
+
+        timerSeconds =
+            savedTimerSeconds;
+
+    }
+
+    else {
+
+        timerSeconds =
+            Number(
+                localStorage.getItem(
+                    "studyMindSelectedTimerSeconds"
+                )
+            ) || DEFAULT_TIMER_SECONDS;
+
+    }
+
+
     updateTimerDisplay();
 
 
