@@ -111,7 +111,7 @@ if (signupForm) {
         setTimeout(() => {
 
             window.location.href =
-                "dashboard.html";
+                "home.html";
 
         }, 1000);
 
