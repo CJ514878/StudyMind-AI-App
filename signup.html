@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Sign Up — StudyMind AI</title>
+
+    <link
+        rel="stylesheet"
+        href="auth.css"
+    >
+
+</head>
+
+
+<body>
+
+    <main class="auth-page">
+
+        <div class="auth-card">
+
+            <!-- LOGO -->
+
+            <div class="auth-logo">
+                StudyMind <span>AI</span>
+            </div>
+
+
+            <!-- HEADER -->
+
+            <div class="auth-header">
+
+                <h1>
+                    Create your account
+                </h1>
+
+                <p>
+                    Start your personalized learning journey with StudyMind AI.
+                </p>
+
+            </div>
+
+
+            <!-- SIGN UP FORM -->
+
+            <form id="signupForm">
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Enter your name"
+                        autocomplete="name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Create a password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+
+                    <small>
+                        Password must be at least 8 characters.
+                    </small>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        placeholder="Confirm your password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="auth-button"
+                >
+                    Create Account
+                </button>
+
+            </form>
+
+
+            <!-- MESSAGE -->
+
+            <p
+                id="authMessage"
+                class="auth-message"
+            ></p>
+
+
+            <!-- LOGIN LINK -->
+
+            <div class="auth-switch">
+
+                <span>
+                    Already have an account?
+                </span>
+
+                <a href="login.html">
+                    Log in
+                </a>
+
+            </div>
+
+
+            <!-- BACK -->
+
+            <a
+                href="index.html"
+                class="back-link"
+            >
+                ← Back to StudyMind AI
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        const signupForm =
+            document.getElementById("signupForm");
+
+        const authMessage =
+            document.getElementById("authMessage");
+
+
+        signupForm.addEventListener(
+            "submit",
+            function(event) {
+
+                event.preventDefault();
+
+
+                const name =
+                    document.getElementById("name").value.trim();
+
+                const email =
+                    document.getElementById("email").value.trim();
+
+                const password =
+                    document.getElementById("password").value;
+
+                const confirmPassword =
+                    document.getElementById("confirmPassword").value;
+
+
+                if (password !== confirmPassword) {
+
+                    authMessage.textContent =
+                        "Passwords do not match.";
+
+                    authMessage.className =
+                        "auth-message error";
+
+                    return;
+
+                }
+
+
+                if (password.length < 8) {
+
+                    authMessage.textContent =
+                        "Password must be at least 8 characters.";
+
+                    authMessage.className =
+                        "auth-message error";
+
+                    return;
+
+                }
+
+
+                /*
+                    STAGE 1 ONLY
+
+                    Authentication will be connected
+                    to the backend in Stage 2.
+                */
+
+                authMessage.textContent =
+                    "Account form is ready. Authentication will be connected in Stage 2.";
+
+                authMessage.className =
+                    "auth-message success";
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
