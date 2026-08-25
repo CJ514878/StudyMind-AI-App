@@ -1,12 +1,40 @@
+/* =========================================
+   STUDYMIND AI — MAIN WEBSITE JAVASCRIPT
+   HOME PAGE: home.html
+   WELCOME PAGE: index.html
+========================================= */
+
+
+/* =========================================
+   FREE AI LIMITS
+========================================= */
+
 const FREE_QUESTION_LIMIT = 5;
+
+
+/*
+   Keep the AI question counter available
+   to dashboard.js as well.
+*/
 
 let aiQuestionCount =
     Number(localStorage.getItem("aiQuestionCount")) || 0;
 
 
 /* =========================================
-   STUDYMIND AI — MAIN WEBSITE JAVASCRIPT
+   AUTHENTICATION CHECK
 ========================================= */
+
+/*
+   We do NOT force authentication on the
+   welcome page.
+
+   The actual AI interaction restrictions
+   are handled by dashboard.js.
+
+   This page simply prepares the user to
+   enter the app after logging in.
+*/
 
 
 /* =========================================
@@ -23,11 +51,14 @@ if (themeButton) {
 
     if (savedTheme === "light") {
 
-        document.body.classList.add("light-mode");
+        document.body.classList.add(
+            "light-mode"
+        );
 
         themeButton.textContent =
             "☀️ Light Mode";
     }
+
 
     themeButton.addEventListener(
         "click",
@@ -37,22 +68,29 @@ if (themeButton) {
                 "light-mode"
             );
 
+
             const isLight =
                 document.body.classList.contains(
                     "light-mode"
                 );
 
+
             localStorage.setItem(
                 "studyMindTheme",
-                isLight ? "light" : "dark"
+                isLight
+                    ? "light"
+                    : "dark"
             );
+
 
             themeButton.textContent =
                 isLight
                     ? "☀️ Light Mode"
                     : "🌙 Dark Mode";
+
         }
     );
+
 }
 
 
@@ -70,7 +108,10 @@ if (startButton) {
         () => {
 
             const generator =
-                document.getElementById("generator");
+                document.getElementById(
+                    "generator"
+                );
+
 
             if (generator) {
 
@@ -91,13 +132,19 @@ if (startButton) {
 ========================================= */
 
 const studyForm =
-    document.getElementById("studyForm");
+    document.getElementById(
+        "studyForm"
+    );
 
 const generateButton =
-    document.getElementById("generateButton");
+    document.getElementById(
+        "generateButton"
+    );
 
 const studyPlan =
-    document.getElementById("studyPlan");
+    document.getElementById(
+        "studyPlan"
+    );
 
 
 if (studyForm) {
@@ -110,23 +157,44 @@ if (studyForm) {
 
 
             const examType =
-                document.getElementById("examType").value;
+                document.getElementById(
+                    "examType"
+                ).value;
+
 
             const examDate =
-                document.getElementById("examDate").value;
+                document.getElementById(
+                    "examDate"
+                ).value;
+
 
             const subjectsInput =
-                document.getElementById("subjects").value;
+                document.getElementById(
+                    "subjects"
+                ).value;
+
 
             const topicsInput =
-                document.getElementById("topics").value;
+                document.getElementById(
+                    "topics"
+                ).value;
+
 
             const studyHours =
-                document.getElementById("studyHours").value;
+                document.getElementById(
+                    "studyHours"
+                ).value;
+
 
             const difficulty =
-                document.getElementById("difficulty").value;
+                document.getElementById(
+                    "difficulty"
+                ).value;
 
+
+            /* -----------------------------
+               VALIDATION
+            ----------------------------- */
 
             if (
                 !examType ||
@@ -144,21 +212,43 @@ if (studyForm) {
             }
 
 
+            /* -----------------------------
+               SUBJECTS
+            ----------------------------- */
+
             const subjects =
                 subjectsInput
                     .split(",")
-                    .map(subject => subject.trim())
-                    .filter(subject => subject.length > 0);
+                    .map(
+                        subject =>
+                            subject.trim()
+                    )
+                    .filter(
+                        subject =>
+                            subject.length > 0
+                    );
 
+
+            /* -----------------------------
+               TOPICS
+            ----------------------------- */
 
             const topics =
                 topicsInput
                     .split(/[\n,]+/)
-                    .map(topic => topic.trim())
-                    .filter(topic => topic.length > 0);
+                    .map(
+                        topic =>
+                            topic.trim()
+                    )
+                    .filter(
+                        topic =>
+                            topic.length > 0
+                    );
 
 
-            if (subjects.length === 0) {
+            if (
+                subjects.length === 0
+            ) {
 
                 alert(
                     "Please enter at least one subject."
@@ -168,7 +258,9 @@ if (studyForm) {
             }
 
 
-            if (topics.length === 0) {
+            if (
+                topics.length === 0
+            ) {
 
                 alert(
                     "Please enter at least one topic."
@@ -178,11 +270,19 @@ if (studyForm) {
             }
 
 
-            generateButton.textContent =
-                "Generating Plan...";
+            /* -----------------------------
+               GENERATING STATE
+            ----------------------------- */
 
-            generateButton.disabled =
-                true;
+            if (generateButton) {
+
+                generateButton.textContent =
+                    "Generating Plan...";
+
+                generateButton.disabled =
+                    true;
+
+            }
 
 
             setTimeout(
@@ -198,11 +298,15 @@ if (studyForm) {
                     );
 
 
-                    generateButton.textContent =
-                        "Generate My Plan";
+                    if (generateButton) {
 
-                    generateButton.disabled =
-                        false;
+                        generateButton.textContent =
+                            "Generate My Plan";
+
+                        generateButton.disabled =
+                            false;
+
+                    }
 
                 },
                 700
@@ -227,14 +331,22 @@ function generateStudyPlan(
     difficulty
 ) {
 
-    if (!studyPlan) return;
+    if (!studyPlan) {
+        return;
+    }
 
+
+    /* -----------------------------------------
+       CALCULATE DAYS LEFT
+    ----------------------------------------- */
 
     const exam =
         new Date(examDate);
 
+
     const today =
         new Date();
+
 
     today.setHours(
         0,
@@ -242,6 +354,7 @@ function generateStudyPlan(
         0,
         0
     );
+
 
     exam.setHours(
         0,
@@ -265,11 +378,17 @@ function generateStudyPlan(
         );
 
 
+    /* -----------------------------------------
+       CALCULATE RECOMMENDED HOURS
+    ----------------------------------------- */
+
     let recommendedHours =
         Number(studyHours);
 
 
-    if (difficulty === "light") {
+    if (
+        difficulty === "light"
+    ) {
 
         recommendedHours =
             Math.max(
@@ -280,13 +399,19 @@ function generateStudyPlan(
     }
 
 
-    if (difficulty === "intensive") {
+    if (
+        difficulty === "intensive"
+    ) {
 
         recommendedHours =
             recommendedHours + 1;
 
     }
 
+
+    /* -----------------------------------------
+       SUBJECT COUNT
+    ----------------------------------------- */
 
     const subjectCount =
         subjects.length;
@@ -295,21 +420,27 @@ function generateStudyPlan(
     let recommendation;
 
 
-    if (subjectCount === 1) {
+    if (
+        subjectCount === 1
+    ) {
 
         recommendation =
             "Focus deeply on your subject and use regular practice sessions.";
 
     }
 
-    else if (subjectCount <= 3) {
+    else if (
+        subjectCount <= 3
+    ) {
 
         recommendation =
             "Rotate your subjects throughout the week while giving extra time to weaker areas.";
 
     }
 
-    else if (subjectCount <= 6) {
+    else if (
+        subjectCount <= 6
+    ) {
 
         recommendation =
             "Use a structured rotation so every subject receives consistent attention.";
@@ -324,9 +455,9 @@ function generateStudyPlan(
     }
 
 
-    /* -----------------------------------------
-       RESET OLD TOPIC PROGRESS
-    ----------------------------------------- */
+    /* =========================================
+       RESET PREVIOUS TOPIC PROGRESS
+    ========================================= */
 
     localStorage.removeItem(
         "studyMindCompletedTopics"
@@ -340,6 +471,10 @@ function generateStudyPlan(
         "studyMindTopicQuestions"
     );
 
+
+    /* =========================================
+       CREATE PLAN HTML
+    ========================================= */
 
     studyPlan.innerHTML = `
 
@@ -357,6 +492,7 @@ function generateStudyPlan(
 
             </div>
 
+
             <span class="plan-success">
                 ✓ Ready
             </span>
@@ -367,23 +503,54 @@ function generateStudyPlan(
         <div class="generated-plan-stats">
 
             <div>
-                <span>Exam</span>
-                <strong>${escapeHTML(examType)}</strong>
+
+                <span>
+                    Exam
+                </span>
+
+                <strong>
+                    ${escapeHTML(examType)}
+                </strong>
+
             </div>
 
-            <div>
-                <span>Days Left</span>
-                <strong>${daysLeft}</strong>
-            </div>
 
             <div>
-                <span>Daily Study</span>
-                <strong>${recommendedHours} hrs</strong>
+
+                <span>
+                    Days Left
+                </span>
+
+                <strong>
+                    ${daysLeft}
+                </strong>
+
             </div>
 
+
             <div>
-                <span>Subjects</span>
-                <strong>${subjectCount}</strong>
+
+                <span>
+                    Daily Study
+                </span>
+
+                <strong>
+                    ${recommendedHours} hrs
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Subjects
+                </span>
+
+                <strong>
+                    ${subjectCount}
+                </strong>
+
             </div>
 
         </div>
@@ -391,9 +558,11 @@ function generateStudyPlan(
 
         <div class="generated-plan-content">
 
+
             <h3>
                 📚 Your Subjects
             </h3>
+
 
             <div class="generated-subjects">
 
@@ -418,9 +587,12 @@ function generateStudyPlan(
             </div>
 
 
-            <h3 style="margin-top:25px;">
+            <h3
+                style="margin-top:25px;"
+            >
                 📖 Your Topics
             </h3>
+
 
             <div class="generated-subjects">
 
@@ -457,6 +629,7 @@ function generateStudyPlan(
 
             </div>
 
+
         </div>
 
 
@@ -474,10 +647,18 @@ function generateStudyPlan(
     `;
 
 
+    /* =========================================
+       SHOW PLAN
+    ========================================= */
+
     studyPlan.classList.remove(
         "hidden"
     );
 
+
+    /* =========================================
+       SAVE PLAN
+    ========================================= */
 
     const planData = {
 
@@ -514,6 +695,10 @@ function generateStudyPlan(
     );
 
 
+    /* =========================================
+       SCROLL TO GENERATED PLAN
+    ========================================= */
+
     window.scrollTo({
 
         top:
@@ -533,6 +718,11 @@ function generateStudyPlan(
 
 function openDashboard() {
 
+    /*
+       Dashboard remains protected by
+       dashboard.js authentication checks.
+    */
+
     window.location.href =
         "dashboard.html";
 
@@ -544,25 +734,37 @@ function openDashboard() {
 ========================================= */
 
 const examDateInput =
-    document.getElementById("examDate");
+    document.getElementById(
+        "examDate"
+    );
+
 
 if (examDateInput) {
 
     const today =
         new Date();
 
+
     const year =
         today.getFullYear();
+
 
     const month =
         String(
             today.getMonth() + 1
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
+
 
     const day =
         String(
             today.getDate()
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
 
 
     examDateInput.min =
@@ -578,25 +780,181 @@ if (examDateInput) {
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
         );
 
 }
+
+
+/* =========================================
+   GLOBAL AI LIMIT HELPERS
+========================================= */
+
+/*
+   These functions are available globally
+   so dashboard.js can use the same limit.
+*/
+
+
+function getAIQuestionCount() {
+
+    return Number(
+        localStorage.getItem(
+            "aiQuestionCount"
+        )
+    ) || 0;
+
+}
+
+
+function getRemainingAIQuestions() {
+
+    return Math.max(
+        0,
+        FREE_QUESTION_LIMIT -
+        getAIQuestionCount()
+    );
+
+}
+
+
+function hasFreeAIQuestionsLeft() {
+
+    return (
+        getRemainingAIQuestions() > 0
+    );
+
+}
+
+
+function recordAIQuestion() {
+
+    let count =
+        getAIQuestionCount();
+
+
+    if (
+        count >= FREE_QUESTION_LIMIT
+    ) {
+
+        return false;
+
+    }
+
+
+    count++;
+
+
+    localStorage.setItem(
+        "aiQuestionCount",
+        String(count)
+    );
+
+
+    aiQuestionCount =
+        count;
+
+
+    return true;
+
+}
+
+
+/* =========================================
+   PREMIUM MESSAGE
+========================================= */
+
+function showPremiumMessage() {
+
+    alert(
+        "You have used all 5 free AI questions. Explore Premium for unlimited AI access and more study features."
+    );
+
+}
+
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+function logoutStudyMind() {
+
+    /*
+       Remove the login state.
+
+       We deliberately DO NOT delete the
+       user's study plan or AI question count.
+    */
+
+    localStorage.removeItem(
+        "studyMindLoggedIn"
+    );
+
+
+    localStorage.removeItem(
+        "isLoggedIn"
+    );
+
+
+    localStorage.removeItem(
+        "currentUser"
+    );
+
+
+    /*
+       Return to the welcome page.
+    */
+
+    window.location.href =
+        "index.html";
+
+}
+
+
+/* =========================================
+   EXPOSE FUNCTIONS GLOBALLY
+========================================= */
+
+window.openDashboard =
+    openDashboard;
+
+window.getAIQuestionCount =
+    getAIQuestionCount;
+
+window.getRemainingAIQuestions =
+    getRemainingAIQuestions;
+
+window.hasFreeAIQuestionsLeft =
+    hasFreeAIQuestionsLeft;
+
+window.recordAIQuestion =
+    recordAIQuestion;
+
+window.showPremiumMessage =
+    showPremiumMessage;
+
+window.logoutStudyMind =
+    logoutStudyMind;
