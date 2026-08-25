@@ -1,5 +1,6 @@
 /* =========================================
    STUDYMIND AI — DASHBOARD JAVASCRIPT
+   VERSION: FREE AI LIMITS + AUTH PROTECTION
 ========================================= */
 
 
@@ -7,8 +8,8 @@
    AUTHENTICATION CHECK
 ========================================= */
 
-let authenticatedUser = null;
-
+let currentUser = null;
+let isAuthenticated = false;
 
 async function checkAuthentication() {
 
@@ -19,19 +20,16 @@ async function checkAuthentication() {
             error
         } = await supabaseClient.auth.getUser();
 
-
         if (error || !user) {
 
-            authenticatedUser = null;
-
-            window.location.href =
-                "login.html";
+            currentUser = null;
+            isAuthenticated = false;
 
             return false;
         }
 
-
-        authenticatedUser = user;
+        currentUser = user;
+        isAuthenticated = true;
 
         return true;
 
@@ -40,14 +38,12 @@ async function checkAuthentication() {
     catch (error) {
 
         console.error(
-            "Authentication error:",
+            "Authentication check failed:",
             error
         );
 
-        authenticatedUser = null;
-
-        window.location.href =
-            "login.html";
+        currentUser = null;
+        isAuthenticated = false;
 
         return false;
 
@@ -69,17 +65,15 @@ let studyPlan =
 
 
 /* =========================================
-   FREE LIMITS
+   FREE AI LIMIT
 ========================================= */
 
-const FREE_AI_QUESTION_LIMIT = 5;
-
-const TOPIC_QUESTION_LIMIT = 5;
+const FREE_QUESTION_LIMIT = 5;
 
 
-/* =========================================
-   AI QUESTION COUNT
-========================================= */
+/*
+   Ask AI usage
+*/
 
 let aiQuestionCount =
     Number(
@@ -87,6 +81,23 @@ let aiQuestionCount =
             "aiQuestionCount"
         )
     ) || 0;
+
+
+/*
+   Topic question usage.
+
+   A topic gets ONE knowledge check
+   containing exactly 5 questions.
+
+   Once submitted, that topic is finished.
+*/
+
+let completedQuestionTopics =
+    JSON.parse(
+        localStorage.getItem(
+            "studyMindCompletedQuestionTopics"
+        )
+    ) || [];
 
 
 /* =========================================
@@ -109,10 +120,6 @@ let currentTopicIndex =
     ) || 0;
 
 
-/* =========================================
-   TOPIC QUESTION DATA
-========================================= */
-
 let topicQuestions =
     JSON.parse(
         localStorage.getItem(
@@ -121,36 +128,15 @@ let topicQuestions =
     ) || null;
 
 
-/*
-   Stores topics whose five-question
-   knowledge check has already been completed.
-*/
-
-let completedTopicQuestionChecks =
-    JSON.parse(
-        localStorage.getItem(
-            "studyMindCompletedTopicQuestionChecks"
-        )
-    ) || {};
-
-
-/* =========================================
-   TOPIC QUESTION RESULTS
-========================================= */
-
-let topicQuestionResults =
-    JSON.parse(
-        localStorage.getItem(
-            "studyMindTopicQuestionResults"
-        )
-    ) || {};
-
-
 /* =========================================
    TIMER DATA
 ========================================= */
 
-let timerSeconds = 0;
+const DEFAULT_TIMER_SECONDS =
+    25 * 60;
+
+let timerSeconds =
+    DEFAULT_TIMER_SECONDS;
 
 let timerInterval =
     null;
@@ -540,6 +526,8 @@ function initializeDashboard() {
 
     injectTimerStyles();
 
+    setupAIAuthenticationUI();
+
 }
 
 
@@ -687,8 +675,6 @@ function renderCurrentTopic() {
         }
 
 
-        resetTimer();
-
         return;
 
     }
@@ -750,7 +736,7 @@ function renderCurrentTopic() {
     if (currentTopicDescription) {
 
         currentTopicDescription.textContent =
-            `Focus on this topic during your study session. When you finish, mark it as completed below.`;
+            "Focus on this topic during your study session. When you finish, mark it as completed below.";
 
     }
 
@@ -816,88 +802,7 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-       Set timer according to the actual
-       study-session length instead of
-       automatically using 25 minutes.
-    */
-
     resetTimer();
-
-}
-
-
-/* =========================================
-   GET STUDY SESSION MINUTES
-========================================= */
-
-function getStudySessionMinutes() {
-
-    const hours =
-        Number(
-            studyPlan.studyHours
-        ) || 0;
-
-
-    const subjects =
-        Array.isArray(
-            studyPlan.subjects
-        )
-            ? studyPlan.subjects.length
-            : 0;
-
-
-    /*
-       If the plan explicitly contains
-       a session length, use it.
-    */
-
-    if (
-        Number(
-            studyPlan.sessionMinutes
-        ) > 0
-    ) {
-
-        return Math.max(
-            1,
-            Number(
-                studyPlan.sessionMinutes
-            )
-        );
-
-    }
-
-
-    /*
-       Otherwise divide the daily study
-       hours across the selected subjects.
-    */
-
-    if (
-        hours > 0 &&
-        subjects > 0
-    ) {
-
-        return Math.max(
-            1,
-            Math.floor(
-                (
-                    hours * 60
-                ) /
-                subjects
-            )
-        );
-
-    }
-
-
-    /*
-       If there is no usable study-plan
-       duration, use 60 minutes rather
-       than automatically forcing 25.
-    */
-
-    return 60;
 
 }
 
@@ -982,16 +887,6 @@ function renderAllTopicsCompleted() {
 
 function completeCurrentTopic() {
 
-    if (!authenticatedUser) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-
     const topics =
         studyPlan.topics || [];
 
@@ -1010,7 +905,9 @@ function completeCurrentTopic() {
 
 
     if (!topic) {
+
         return;
+
     }
 
 
@@ -1037,7 +934,6 @@ function completeCurrentTopic() {
 
     stopTimer();
 
-
     updateProgress();
 
     updateStudyScore();
@@ -1047,6 +943,17 @@ function completeCurrentTopic() {
 
     const finishedTopic =
         topic;
+
+
+    /*
+       Generate the ONE and ONLY
+       5-question knowledge check
+       for this topic.
+    */
+
+    generateQuestionsForTopic(
+        finishedTopic
+    );
 
 
     currentTopicIndex++;
@@ -1100,7 +1007,9 @@ function completeCurrentTopic() {
                         Moving to your next topic:
                     </span>
                     <strong>
-                        ${escapeHTML(nextTopic)}
+                        ${escapeHTML(
+                            nextTopic
+                        )}
                     </strong>
                 </div>
             `;
@@ -1124,23 +1033,6 @@ function completeCurrentTopic() {
 
     }
 
-
-    /*
-       Generate the five-question knowledge
-       check only once for this topic.
-    */
-
-    if (
-        !completedTopicQuestionChecks[
-            finishedTopic
-        ]
-    ) {
-
-        generateQuestionsForTopic(
-            finishedTopic
-        );
-
-    }
 }
 
 
@@ -1175,7 +1067,9 @@ if (topicCompleteCheckbox) {
 function renderTopics() {
 
     if (!topicList) {
+
         return;
+
     }
 
 
@@ -1293,7 +1187,6 @@ function renderTopics() {
 
                 </div>
 
-
                 <span class="subject-number">
                     ${String(
                         index + 1
@@ -1323,7 +1216,9 @@ function renderTopics() {
 function renderSubjects() {
 
     if (!subjectList) {
+
         return;
+
     }
 
 
@@ -1427,7 +1322,6 @@ function renderSubjects() {
 
                 </div>
 
-
                 <span class="subject-number">
                     ${String(
                         index + 1
@@ -1479,16 +1373,6 @@ function renderSubjects() {
 function toggleSubject(
     subject
 ) {
-
-    if (!authenticatedUser) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
 
     if (
         completedSubjects.includes(
@@ -1764,7 +1648,9 @@ function updateStudyScore() {
 function setupTimer() {
 
     if (!studyTimer) {
+
         return;
+
     }
 
 
@@ -1808,16 +1694,6 @@ function setupTimer() {
 ========================================= */
 
 function startTimer() {
-
-    if (!authenticatedUser) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
 
     if (
         timerRunning ||
@@ -1888,7 +1764,9 @@ function startTimer() {
 function pauseTimer() {
 
     if (!timerRunning) {
+
         return;
+
     }
 
 
@@ -1985,26 +1863,8 @@ function resetTimer() {
         false;
 
 
-    /*
-       IMPORTANT:
-       The timer is no longer automatically
-       set to 25 minutes.
-
-       It uses the actual study-session
-       duration from the study plan.
-    */
-
     timerSeconds =
-        getStudySessionMinutes() * 60;
-
-
-    if (studyTimer) {
-
-        studyTimer.classList.remove(
-            "timer-finished"
-        );
-
-    }
+        DEFAULT_TIMER_SECONDS;
 
 
     updateTimerDisplay();
@@ -2038,7 +1898,9 @@ function resetTimer() {
 function updateTimerDisplay() {
 
     if (!studyTimer) {
+
         return;
+
     }
 
 
@@ -2063,8 +1925,7 @@ function updateTimerDisplay() {
 
 
     if (
-        timerSeconds <= 60 &&
-        timerSeconds > 0
+        timerSeconds <= 60
     ) {
 
         studyTimer.classList.add(
@@ -2102,7 +1963,7 @@ function handleTimerFinished() {
     if (topicCompletionMessage) {
 
         topicCompletionMessage.textContent =
-            "⏰ Your study session is complete. If you have finished the topic, tick the box below.";
+            "⏰ Your 25-minute study session is complete. If you have finished the topic, tick the box below.";
 
     }
 
@@ -2115,7 +1976,7 @@ function handleTimerFinished() {
 
 
     alert(
-        "Your study session is complete! 🎉"
+        "Your 25-minute study session is complete! 🎉"
     );
 
 }
@@ -2437,35 +2298,39 @@ function injectTimerStyles() {
             border-color: rgba(239, 68, 68, .5);
         }
 
-        .ai-premium-message {
+        .ai-limit-message,
+        .ai-login-message {
             margin-top: 15px;
-            padding: 18px;
-            border-radius: 16px;
-            background: rgba(37, 99, 235, .10);
-            border: 1px solid rgba(96, 165, 250, .25);
+            padding: 22px;
+            border-radius: 18px;
+            background: rgba(37, 99, 235, .08);
+            border: 1px solid rgba(96, 165, 250, .22);
         }
 
-        .ai-premium-message h3 {
+        .ai-limit-message h3,
+        .ai-login-message h3 {
             margin-top: 0;
         }
 
-        .ai-premium-message p {
-            opacity: .75;
-        }
-
         .premium-button {
-            margin-top: 10px;
+            margin-top: 12px;
             border: 0;
-            border-radius: 10px;
-            padding: 11px 18px;
+            border-radius: 12px;
+            padding: 12px 20px;
             background: #2563eb;
             color: white;
             font-weight: 700;
             cursor: pointer;
+            transition: .2s ease;
         }
 
         .premium-button:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+        }
+
+        .ai-locked {
+            opacity: .65;
+            pointer-events: none;
         }
 
         @media (max-width: 600px) {
@@ -2507,7 +2372,11 @@ function renderCalendar() {
     if (
         !calendarDays ||
         !calendarMonth
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     calendarDays.innerHTML =
@@ -2818,7 +2687,11 @@ if (nextMonth) {
 
 function renderSchedule() {
 
-    if (!scheduleList) return;
+    if (!scheduleList) {
+
+        return;
+
+    }
 
 
     const subjects =
@@ -2929,9 +2802,7 @@ function renderSchedule() {
 
                 </div>
 
-
                 <div class="schedule-line"></div>
-
 
                 <div class="schedule-details">
 
@@ -2977,7 +2848,11 @@ function updateNextBooking() {
     if (
         !nextBooking ||
         !nextBookingTime
-    ) return;
+    ) {
+
+        return;
+
+    }
 
 
     const subjects =
@@ -3081,15 +2956,12 @@ if (analyzeProgressButton) {
         "click",
         () => {
 
-            if (!authenticatedUser) {
-
-                window.location.href =
-                    "login.html";
-
-                return;
-
-            }
-
+            /*
+               Progress analysis is NOT an AI
+               request. It can still work without
+               login because it only uses local
+               study data.
+            */
 
             const topics =
                 studyPlan.topics || [];
@@ -3168,14 +3040,21 @@ async function generateQuestionsForTopic(
 ) {
 
     /*
-       Absolutely no AI interaction if
-       the user isn't authenticated.
+       LOGIN REQUIRED
     */
 
-    if (!authenticatedUser) {
+    if (!isAuthenticated) {
 
-        window.location.href =
-            "login.html";
+        showAILoginMessage(
+            topicQuestionsContainer
+        );
+
+        if (topicQuestionsSection) {
+
+            topicQuestionsSection.style.display =
+                "block";
+
+        }
 
         return;
 
@@ -3183,18 +3062,17 @@ async function generateQuestionsForTopic(
 
 
     /*
-       If this topic's five-question
-       knowledge check was already completed,
-       do NOT generate another set.
+       THIS TOPIC ALREADY USED ITS
+       ONE FREE 5-QUESTION KNOWLEDGE CHECK
     */
 
     if (
-        completedTopicQuestionChecks[
+        completedQuestionTopics.includes(
             topic
-        ]
+        )
     ) {
 
-        showCompletedTopicQuestionResult(
+        showTopicQuestionsFinished(
             topic
         );
 
@@ -3220,7 +3098,7 @@ async function generateQuestionsForTopic(
     topicQuestionsContainer.innerHTML = `
         <p>
             🤖 StudyMind AI is preparing
-            exactly 5 questions about
+            5 questions about
             <strong>
                 ${escapeHTML(topic)}
             </strong>...
@@ -3256,14 +3134,13 @@ async function generateQuestionsForTopic(
 You are StudyMind AI.
 
 Create exactly 5 educational multiple-choice questions
-for a secondary-school student who has just studied this topic:
+for a student who has just studied this topic:
 
 TOPIC:
 ${topic}
 
 Requirements:
 - Create exactly 5 questions.
-- There must NEVER be more than 5 questions.
 - Each question must have exactly 4 answer options.
 - Only one option should be correct.
 - Questions should test understanding, not just memorization.
@@ -3345,19 +3222,13 @@ The answer must be the zero-based number of the correct option.
         }
 
 
-        /*
-           Hard enforce the five-question
-           maximum even if the AI somehow
-           returns more.
-        */
-
         if (
             !Array.isArray(questions) ||
-            questions.length < TOPIC_QUESTION_LIMIT
+            questions.length < 5
         ) {
 
             throw new Error(
-                "The AI did not return exactly 5 questions."
+                "The AI did not return 5 questions."
             );
 
         }
@@ -3366,7 +3237,7 @@ The answer must be the zero-based number of the correct option.
         questions =
             questions.slice(
                 0,
-                TOPIC_QUESTION_LIMIT
+                5
             );
 
 
@@ -3376,7 +3247,10 @@ The answer must be the zero-based number of the correct option.
                     topic,
 
                 questions:
-                    questions
+                    questions,
+
+                submitted:
+                    false
             };
 
 
@@ -3414,9 +3288,7 @@ The answer must be the zero-based number of the correct option.
 
                 <button
                     class="secondary-button"
-                    onclick="generateQuestionsForTopic('${escapeJS(
-                        topic
-                    )}')"
+                    id="retryTopicQuestionsButton"
                 >
                     Try Again
                 </button>
@@ -3424,6 +3296,28 @@ The answer must be the zero-based number of the correct option.
             </div>
 
         `;
+
+
+        const retryButton =
+            document.getElementById(
+                "retryTopicQuestionsButton"
+            );
+
+
+        if (retryButton) {
+
+            retryButton.addEventListener(
+                "click",
+                () => {
+
+                    generateQuestionsForTopic(
+                        topic
+                    );
+
+                }
+            );
+
+        }
 
     }
 
@@ -3438,44 +3332,10 @@ function renderTopicQuestions(
     questionData
 ) {
 
-    if (!authenticatedUser) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-
     if (
         !questionData ||
         !questionData.questions
     ) {
-
-        return;
-
-    }
-
-
-    const topic =
-        questionData.topic;
-
-
-    /*
-       Never show another question set
-       after the knowledge check is done.
-    */
-
-    if (
-        completedTopicQuestionChecks[
-            topic
-        ]
-    ) {
-
-        showCompletedTopicQuestionResult(
-            topic
-        );
 
         return;
 
@@ -3490,84 +3350,83 @@ function renderTopicQuestions(
         "";
 
 
-    /*
-       Hard maximum of five questions.
-    */
+    questionData.questions
+        .slice(0, 5)
+        .forEach(
+            (question, index) => {
 
-    const questions =
-        questionData.questions.slice(
-            0,
-            TOPIC_QUESTION_LIMIT
+                const questionBox =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                questionBox.className =
+                    "topic-question";
+
+
+                const options =
+                    Array.isArray(
+                        question.options
+                    )
+                        ? question.options
+                        : [];
+
+
+                questionBox.innerHTML = `
+
+                    <h4>
+                        ${index + 1}.
+                        ${escapeHTML(
+                            question.question
+                        )}
+                    </h4>
+
+                    <div>
+
+                        ${options
+                            .slice(0, 4)
+                            .map(
+                                (
+                                    option,
+                                    optionIndex
+                                ) => `
+
+                                    <label>
+
+                                        <input
+                                            type="radio"
+                                            name="topic-question-${index}"
+                                            value="${optionIndex}"
+                                        >
+
+                                        ${escapeHTML(
+                                            option
+                                        )}
+
+                                    </label>
+
+                                `
+                            )
+                            .join("")}
+
+                    </div>
+
+                `;
+
+
+                topicQuestionsContainer.appendChild(
+                    questionBox
+                );
+
+            }
         );
 
 
-    questions.forEach(
-        (question, index) => {
-
-            const questionBox =
-                document.createElement(
-                    "div"
-                );
-
-
-            questionBox.className =
-                "topic-question";
-
-
-            const options =
-                Array.isArray(
-                    question.options
-                )
-                    ? question.options.slice(
-                        0,
-                        4
-                    )
-                    : [];
-
-
-            questionBox.innerHTML = `
-
-                <h4>
-                    ${index + 1}.
-                    ${escapeHTML(
-                        question.question
-                    )}
-                </h4>
-
-                <div>
-
-                    ${options.map(
-                        (option, optionIndex) => `
-
-                            <label>
-
-                                <input
-                                    type="radio"
-                                    name="topic-question-${index}"
-                                    value="${optionIndex}"
-                                >
-
-                                ${escapeHTML(
-                                    option
-                                )}
-
-                            </label>
-
-                        `
-                    ).join("")}
-
-                </div>
-
-            `;
-
-
-            topicQuestionsContainer.appendChild(
-                questionBox
-            );
-
-        }
-    );
-
+    /*
+       Make sure submit button is enabled
+       before the student answers.
+    */
 
     if (submitTopicQuestions) {
 
@@ -3576,88 +3435,6 @@ function renderTopicQuestions(
 
         submitTopicQuestions.textContent =
             "Submit Answers";
-
-    }
-
-}
-
-
-/* =========================================
-   SHOW COMPLETED QUESTION RESULT
-========================================= */
-
-function showCompletedTopicQuestionResult(
-    topic
-) {
-
-    if (!topicQuestionsSection) {
-        return;
-    }
-
-
-    topicQuestionsSection.style.display =
-        "block";
-
-
-    if (topicQuestionsContainer) {
-
-        topicQuestionsContainer.innerHTML = `
-
-            <div class="ai-premium-message">
-
-                <h3>
-                    ✓ Knowledge Check Completed
-                </h3>
-
-                <p>
-                    You have already completed the
-                    5-question knowledge check for
-                    <strong>
-                        ${escapeHTML(topic)}
-                    </strong>.
-                </p>
-
-                <p>
-                    You cannot retake this knowledge
-                    check in the free version.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-
-    if (topicQuestionResult) {
-
-        const result =
-            topicQuestionResults[
-                topic
-            ];
-
-
-        if (result) {
-
-            topicQuestionResult.innerHTML = `
-                🧠 Final score:
-                <strong>
-                    ${result.score}/${result.total}
-                </strong>
-            `;
-
-        }
-
-    }
-
-
-    if (submitTopicQuestions) {
-
-        submitTopicQuestions.disabled =
-            true;
-
-        submitTopicQuestions.textContent =
-            "Knowledge Check Completed";
 
     }
 
@@ -3674,10 +3451,15 @@ if (submitTopicQuestions) {
         "click",
         () => {
 
-            if (!authenticatedUser) {
+            /*
+               LOGIN REQUIRED
+            */
 
-                window.location.href =
-                    "login.html";
+            if (!isAuthenticated) {
+
+                showAILoginMessage(
+                    topicQuestionsContainer
+                );
 
                 return;
 
@@ -3694,23 +3476,15 @@ if (submitTopicQuestions) {
             }
 
 
-            const topic =
-                topicQuestions.topic;
-
-
             /*
-               Prevent a second submission.
+               If this knowledge check has already
+               been submitted, DO NOT allow another
+               attempt.
             */
 
             if (
-                completedTopicQuestionChecks[
-                    topic
-                ]
+                topicQuestions.submitted
             ) {
-
-                showCompletedTopicQuestionResult(
-                    topic
-                );
 
                 return;
 
@@ -3725,52 +3499,48 @@ if (submitTopicQuestions) {
                 0;
 
 
-            const questions =
-                topicQuestions.questions.slice(
-                    0,
-                    TOPIC_QUESTION_LIMIT
-                );
+            topicQuestions.questions
+                .slice(0, 5)
+                .forEach(
+                    (
+                        question,
+                        index
+                    ) => {
+
+                        const selected =
+                            document.querySelector(
+                                `input[name="topic-question-${index}"]:checked`
+                            );
 
 
-            questions.forEach(
-                (question, index) => {
-
-                    const selected =
-                        document.querySelector(
-                            `input[name="topic-question-${index}"]:checked`
-                        );
+                        const questionBox =
+                            document.querySelectorAll(
+                                ".topic-question"
+                            )[index];
 
 
-                    const questionBox =
-                        document.querySelectorAll(
-                            ".topic-question"
-                        )[index];
+                        if (
+                            !selected
+                        ) {
+
+                            return;
+
+                        }
 
 
-                    if (
-                        !selected
-                    ) {
-
-                        return;
-
-                    }
+                        answered++;
 
 
-                    answered++;
+                        if (
+                            Number(
+                                selected.value
+                            ) ===
+                            Number(
+                                question.answer
+                            )
+                        ) {
 
-
-                    if (
-                        Number(
-                            selected.value
-                        ) ===
-                        Number(
-                            question.answer
-                        )
-                    ) {
-
-                        score++;
-
-                        if (questionBox) {
+                            score++;
 
                             questionBox.classList.add(
                                 "question-correct"
@@ -3778,11 +3548,7 @@ if (submitTopicQuestions) {
 
                         }
 
-                    }
-
-                    else {
-
-                        if (questionBox) {
+                        else {
 
                             questionBox.classList.add(
                                 "question-wrong"
@@ -3791,30 +3557,21 @@ if (submitTopicQuestions) {
                         }
 
                     }
-
-                }
-            );
+                );
 
 
             /*
-               Require all five questions
-               to be answered before consuming
-               the one and only attempt.
+               Require all 5 questions to be answered.
             */
 
             if (
-                answered < TOPIC_QUESTION_LIMIT
+                answered < 5
             ) {
 
                 if (topicQuestionResult) {
 
-                    topicQuestionResult.innerHTML = `
-                        ⚠️ Please answer all
-                        <strong>
-                            5 questions
-                        </strong>
-                        before submitting.
-                    `;
+                    topicQuestionResult.innerHTML =
+                        "⚠️ Please answer all 5 questions before submitting.";
 
                 }
 
@@ -3824,52 +3581,49 @@ if (submitTopicQuestions) {
 
 
             const total =
-                TOPIC_QUESTION_LIMIT;
+                5;
 
 
             /*
-               Permanently mark this topic's
-               five-question test as completed.
+               Permanently finish this topic's
+               knowledge check.
             */
 
-            completedTopicQuestionChecks[
-                topic
-            ] = true;
-
-
-            topicQuestionResults[
-                topic
-            ] =
-                {
-                    score:
-                        score,
-
-                    total:
-                        total,
-
-                    completedAt:
-                        new Date().toISOString()
-                };
+            topicQuestions.submitted =
+                true;
 
 
             localStorage.setItem(
-                "studyMindCompletedTopicQuestionChecks",
+                "studyMindTopicQuestions",
                 JSON.stringify(
-                    completedTopicQuestionChecks
+                    topicQuestions
                 )
             );
 
 
+            if (
+                !completedQuestionTopics.includes(
+                    topicQuestions.topic
+                )
+            ) {
+
+                completedQuestionTopics.push(
+                    topicQuestions.topic
+                );
+
+            }
+
+
             localStorage.setItem(
-                "studyMindTopicQuestionResults",
+                "studyMindCompletedQuestionTopics",
                 JSON.stringify(
-                    topicQuestionResults
+                    completedQuestionTopics
                 )
             );
 
 
             /*
-               Lock the test permanently.
+               Disable every question.
             */
 
             document
@@ -3886,12 +3640,16 @@ if (submitTopicQuestions) {
                 );
 
 
+            /*
+               Disable submit permanently.
+            */
+
             submitTopicQuestions.disabled =
                 true;
 
 
             submitTopicQuestions.textContent =
-                "Knowledge Check Completed";
+                "✓ Questions Completed";
 
 
             if (topicQuestionResult) {
@@ -3902,31 +3660,21 @@ if (submitTopicQuestions) {
                         ${score}/${total}
                     </strong>
                     on the ${escapeHTML(
-                        topic
+                        topicQuestions.topic
                     )} knowledge check.
 
-                    <div class="ai-premium-message">
+                    <br><br>
 
-                        <h3>
-                            Want more practice?
-                        </h3>
+                    🎉 You've completed your
+                    5-question knowledge check
+                    for this topic.
 
-                        <p>
-                            You've completed your
-                            5 free questions for this topic.
-                            Explore StudyMind AI Premium
-                            for more practice questions.
-                        </p>
+                    <br>
 
-                        <button
-                            class="premium-button"
-                            type="button"
-                            onclick="showPremiumMessage()"
-                        >
-                            Explore Premium
-                        </button>
-
-                    </div>
+                    <strong>
+                        Want unlimited practice?
+                    </strong>
+                    Explore StudyMind AI Premium.
                 `;
 
             }
@@ -3938,75 +3686,67 @@ if (submitTopicQuestions) {
 
 
 /* =========================================
-   PREMIUM MESSAGE
+   TOPIC QUESTIONS FINISHED
 ========================================= */
 
-function showPremiumMessage() {
-
-    alert(
-        "StudyMind AI Premium will give you access to more practice questions and additional AI features. 🚀"
-    );
-
-}
-
-
-/* =========================================
-   CLEAN AI JSON
-========================================= */
-
-function cleanJSONResponse(
-    text
+function showTopicQuestionsFinished(
+    topic
 ) {
 
-    let cleaned =
-        String(text)
-            .trim();
+    if (!topicQuestionsSection) {
 
-
-    cleaned =
-        cleaned.replace(
-            /^```json\s*/i,
-            ""
-        );
-
-
-    cleaned =
-        cleaned.replace(
-            /^```\s*/i,
-            ""
-        );
-
-
-    cleaned =
-        cleaned.replace(
-            /\s*```$/i,
-            ""
-        );
-
-
-    const firstBracket =
-        cleaned.indexOf("[");
-
-
-    const lastBracket =
-        cleaned.lastIndexOf("]");
-
-
-    if (
-        firstBracket !== -1 &&
-        lastBracket !== -1
-    ) {
-
-        cleaned =
-            cleaned.substring(
-                firstBracket,
-                lastBracket + 1
-            );
+        return;
 
     }
 
 
-    return cleaned.trim();
+    topicQuestionsSection.style.display =
+        "block";
+
+
+    if (topicQuestionsContainer) {
+
+        topicQuestionsContainer.innerHTML = `
+
+            <div class="ai-limit-message">
+
+                <h3>
+                    🎉 Knowledge Check Completed
+                </h3>
+
+                <p>
+                    You've already completed the
+                    5-question knowledge check for
+                    <strong>
+                        ${escapeHTML(topic)}
+                    </strong>.
+                </p>
+
+                <p>
+                    There are no more free questions
+                    for this topic.
+                </p>
+
+                <button
+                    class="premium-button"
+                    onclick="openPremiumOffer()"
+                >
+                    💎 Explore Premium
+                </button>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if (submitTopicQuestions) {
+
+        submitTopicQuestions.disabled =
+            true;
+
+    }
 
 }
 
@@ -4033,6 +3773,10 @@ const aiResponse =
     );
 
 
+/* =========================================
+   ASK AI EVENT
+========================================= */
+
 if (askAIButton) {
 
     askAIButton.addEventListener(
@@ -4040,14 +3784,14 @@ if (askAIButton) {
         async () => {
 
             /*
-               No AI interaction for
-               unauthenticated users.
+               LOGIN CHECK
             */
 
-            if (!authenticatedUser) {
+            if (!isAuthenticated) {
 
-                window.location.href =
-                    "login.html";
+                showAILoginMessage(
+                    aiResponse
+                );
 
                 return;
 
@@ -4075,15 +3819,15 @@ if (askAIButton) {
 
 
             /*
-               HARD FIVE-QUESTION LIMIT.
+               FIVE QUESTIONS TOTAL
             */
 
             if (
                 aiQuestionCount >=
-                FREE_AI_QUESTION_LIMIT
+                FREE_QUESTION_LIMIT
             ) {
 
-                showAILimitMessage();
+                showAskAILimitMessage();
 
                 return;
 
@@ -4270,8 +4014,8 @@ Keep the answer readable and appropriately concise.
 
 
                 /*
-                   Count the question only after
-                   the AI successfully answers it.
+                   ONLY COUNT THE QUESTION
+                   AFTER A SUCCESSFUL AI RESPONSE.
                 */
 
                 aiQuestionCount++;
@@ -4327,21 +4071,16 @@ Keep the answer readable and appropriately concise.
                 /*
                    If this was the fifth successful
                    question, immediately show the
-                   Premium offer.
+                   Premium message below the answer.
                 */
 
                 if (
                     aiQuestionCount >=
-                    FREE_AI_QUESTION_LIMIT
+                    FREE_QUESTION_LIMIT
                 ) {
 
-                    setTimeout(
-                        () => {
-
-                            showAILimitMessage();
-
-                        },
-                        300
+                    showAskAILimitMessage(
+                        true
                     );
 
                 }
@@ -4376,6 +4115,25 @@ Keep the answer readable and appropriately concise.
                 askAIButton.textContent =
                     "🤖 Ask AI";
 
+
+                /*
+                   Lock the button if the fifth
+                   question has been used.
+                */
+
+                if (
+                    aiQuestionCount >=
+                    FREE_QUESTION_LIMIT
+                ) {
+
+                    askAIButton.disabled =
+                        true;
+
+                    askAIButton.textContent =
+                        "🔒 Free Limit Reached";
+
+                }
+
             }
 
         }
@@ -4385,46 +4143,444 @@ Keep the answer readable and appropriately concise.
 
 
 /* =========================================
-   SHOW AI LIMIT MESSAGE
+   AI AUTHENTICATION UI
 ========================================= */
 
-function showAILimitMessage() {
+function setupAIAuthenticationUI() {
 
-    if (!aiResponse) {
+    /*
+       If user is NOT logged in,
+       completely lock AI interactions.
+    */
+
+    if (!isAuthenticated) {
+
+        if (askAIButton) {
+
+            askAIButton.disabled =
+                true;
+
+            askAIButton.classList.add(
+                "ai-locked"
+            );
+
+            askAIButton.textContent =
+                "🔒 Login Required";
+
+        }
+
+
+        if (aiQuestion) {
+
+            aiQuestion.disabled =
+                true;
+
+            aiQuestion.placeholder =
+                "Login to use StudyMind AI";
+
+            aiQuestion.classList.add(
+                "ai-locked"
+            );
+
+        }
+
+
+        if (submitTopicQuestions) {
+
+            submitTopicQuestions.disabled =
+                true;
+
+        }
+
         return;
+
     }
 
 
-    aiResponse.innerHTML = `
+    /*
+       Logged in but already used all
+       five Ask AI questions.
+    */
 
-        <div class="ai-premium-message">
+    if (
+        aiQuestionCount >=
+        FREE_QUESTION_LIMIT
+    ) {
+
+        if (askAIButton) {
+
+            askAIButton.disabled =
+                true;
+
+            askAIButton.textContent =
+                "🔒 Free Limit Reached";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================
+   LOGIN MESSAGE
+========================================= */
+
+function showAILoginMessage(
+    container
+) {
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    container.innerHTML = `
+
+        <div class="ai-login-message">
 
             <h3>
-                🎯 You've used all 5 free AI questions
+                🔐 Login Required
             </h3>
 
             <p>
-                You've reached your free StudyMind AI
-                question limit.
+                You must be logged in to interact
+                with StudyMind AI.
             </p>
 
             <p>
-                Want to ask more questions?
-                Explore StudyMind AI Premium for
-                continued AI assistance.
+                Log in or create an account to
+                access AI-powered study assistance.
             </p>
 
             <button
                 class="premium-button"
-                type="button"
-                onclick="showPremiumMessage()"
+                onclick="window.location.href='login.html'"
             >
-                Explore Premium
+                🔑 Login
             </button>
 
         </div>
 
     `;
+
+}
+
+
+/* =========================================
+   ASK AI LIMIT MESSAGE
+========================================= */
+
+function showAskAILimitMessage(
+    afterAnswer = false
+) {
+
+    if (!aiResponse) {
+
+        return;
+
+    }
+
+
+    const currentAnswer =
+        afterAnswer
+            ? aiResponse.innerHTML
+            : "";
+
+
+    aiResponse.innerHTML = `
+
+        ${
+            currentAnswer
+                ? `
+                    <div class="ai-last-answer">
+                        ${currentAnswer}
+                    </div>
+
+                    <hr>
+                `
+                : ""
+        }
+
+        <div class="ai-limit-message">
+
+            <h3>
+                🎉 You've used all 5 free AI questions
+            </h3>
+
+            <p>
+                You've reached the free StudyMind AI
+                limit.
+            </p>
+
+            <p>
+                Want to keep asking questions,
+                get more practice and unlock
+                additional AI features?
+            </p>
+
+            <button
+                class="premium-button"
+                onclick="openPremiumOffer()"
+            >
+                💎 Explore Premium
+            </button>
+
+        </div>
+
+    `;
+
+
+    if (askAIButton) {
+
+        askAIButton.disabled =
+            true;
+
+        askAIButton.textContent =
+            "🔒 Free Limit Reached";
+
+    }
+
+
+    if (aiQuestion) {
+
+        aiQuestion.disabled =
+            true;
+
+    }
+
+}
+
+
+/* =========================================
+   PREMIUM OFFER
+========================================= */
+
+function openPremiumOffer() {
+
+    /*
+       For now this shows the Premium offer.
+       Later this can be connected to your
+       actual Premium/payment page.
+    */
+
+    const existing =
+        document.getElementById(
+            "studyMindPremiumModal"
+        );
+
+
+    if (existing) {
+
+        existing.remove();
+
+    }
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "studyMindPremiumModal";
+
+
+    modal.innerHTML = `
+
+        <div
+            style="
+                position:fixed;
+                inset:0;
+                background:rgba(0,0,0,.72);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                z-index:99999;
+                padding:20px;
+            "
+        >
+
+            <div
+                style="
+                    max-width:460px;
+                    width:100%;
+                    padding:32px;
+                    border-radius:24px;
+                    background:#0f172a;
+                    color:white;
+                    border:1px solid rgba(96,165,250,.25);
+                    box-shadow:0 25px 70px rgba(0,0,0,.45);
+                    text-align:center;
+                "
+            >
+
+                <div
+                    style="
+                        font-size:48px;
+                        margin-bottom:10px;
+                    "
+                >
+                    💎
+                </div>
+
+                <h2>
+                    Upgrade to StudyMind AI Premium
+                </h2>
+
+                <p
+                    style="
+                        opacity:.75;
+                        line-height:1.7;
+                    "
+                >
+                    You've reached your free AI limit.
+                    Premium will give you access to
+                    more AI questions and additional
+                    StudyMind AI features.
+                </p>
+
+                <button
+                    id="premiumComingSoonButton"
+                    class="premium-button"
+                    style="
+                        width:100%;
+                        margin-top:18px;
+                    "
+                >
+                    🚀 Explore Premium
+                </button>
+
+                <button
+                    id="closePremiumButton"
+                    style="
+                        margin-top:12px;
+                        background:transparent;
+                        border:0;
+                        color:#94a3b8;
+                        cursor:pointer;
+                        padding:10px;
+                    "
+                >
+                    Maybe Later
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    const closeButton =
+        document.getElementById(
+            "closePremiumButton"
+        );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            () => {
+
+                modal.remove();
+
+            }
+        );
+
+    }
+
+
+    const premiumButton =
+        document.getElementById(
+            "premiumComingSoonButton"
+        );
+
+
+    if (premiumButton) {
+
+        premiumButton.addEventListener(
+            "click",
+            () => {
+
+                alert(
+                    "Premium is coming soon! 🚀"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   CLEAN AI JSON
+========================================= */
+
+function cleanJSONResponse(
+    text
+) {
+
+    let cleaned =
+        String(text)
+            .trim();
+
+
+    cleaned =
+        cleaned.replace(
+            /^```json\s*/i,
+            ""
+        );
+
+
+    cleaned =
+        cleaned.replace(
+            /^```\s*/i,
+            ""
+        );
+
+
+    cleaned =
+        cleaned.replace(
+            /\s*```$/i,
+            ""
+        );
+
+
+    const firstBracket =
+        cleaned.indexOf("[");
+
+
+    const lastBracket =
+        cleaned.lastIndexOf("]");
+
+
+    if (
+        firstBracket !== -1 &&
+        lastBracket !== -1
+    ) {
+
+        cleaned =
+            cleaned.substring(
+                firstBracket,
+                lastBracket + 1
+            );
+
+    }
+
+
+    return cleaned.trim();
 
 }
 
@@ -4438,7 +4594,9 @@ function renderAIResponse(
 ) {
 
     if (!text) {
+
         return "";
+
     }
 
 
@@ -4482,9 +4640,11 @@ function renderAIResponse(
                 const index =
                     mathBlocks.length;
 
+
                 mathBlocks.push(
                     match
                 );
+
 
                 return `___MATH_BLOCK_${index}___`;
 
@@ -4500,9 +4660,11 @@ function renderAIResponse(
                 const index =
                     mathBlocks.length;
 
+
                 mathBlocks.push(
                     match
                 );
+
 
                 return `___MATH_INLINE_${index}___`;
 
@@ -4621,7 +4783,7 @@ function renderAIResponse(
 
 
 /* =========================================
-   HELPERS
+   FORMAT TIME
 ========================================= */
 
 function formatTime(
@@ -4643,7 +4805,8 @@ function formatTime(
         displayHour === 0
     ) {
 
-        displayHour = 12;
+        displayHour =
+            12;
 
     }
 
@@ -4723,20 +4886,14 @@ function escapeJS(
 async function startDashboard() {
 
     /*
-       Authentication happens BEFORE the
-       dashboard becomes interactive.
+       IMPORTANT:
+       We check authentication FIRST.
+       The dashboard itself can still load,
+       but AI interactions are locked unless
+       the user is authenticated.
     */
 
-    const authenticated =
-        await checkAuthentication();
-
-
-    if (!authenticated) {
-
-        return;
-
-    }
-
+    await checkAuthentication();
 
     initializeDashboard();
 
