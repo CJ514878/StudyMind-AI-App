@@ -1641,278 +1641,118 @@ function renderAIResponse(text) {
         return "";
     }
 
-    let html = String(text);
+    // Escape HTML so the AI cannot accidentally create unwanted HTML
+    const escapeHTML = (str) => {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
 
+    // Protect mathematical expressions before processing Markdown
+    const mathBlocks = [];
 
-    /* =========================================
-       NORMALIZE LATEX
-    ========================================= */
-
-    html = html.replace(
-        /\\{2,}\[/g,
-        "\\["
-    );
-
-    html = html.replace(
-        /\\{2,}\]/g,
-        "\\]"
-    );
-
-    html = html.replace(
-        /\\{2,}\(/g,
-        "\\("
-    );
-
-    html = html.replace(
-        /\\{2,}\)/g,
-        "\\)"
-    );
-
-
-    /* =========================================
-       REMOVE EMPTY BULLETS
-    ========================================= */
-
-    html = html.replace(
-        /^[ \t]*[-•*][ \t]*(?:\r?\n|$)/gm,
-        ""
-    );
-
-
-    /* =========================================
-       REMOVE BULLETS BEFORE FORMULAS
-       Example:
-       - 
-       \[
-       formula
-       \]
-
-       becomes:
-
-       \[
-       formula
-       \]
-    ========================================= */
-
-    html = html.replace(
-        /^[ \t]*[-•][ \t]*\r?\n(?=\\\[)/gm,
-        ""
-    );
-
-
-    /* =========================================
-       REMOVE EXCESSIVE BLANK LINES
-    ========================================= */
-
-    html = html.replace(
-        /\n[ \t]*\n[ \t]*\n+/g,
-        "\n\n"
-    );
-
-
-    /* =========================================
-       ESCAPE HTML
-    ========================================= */
-
-    html = html
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-
-    /* =========================================
-       SCIENTIFIC UNITS
-    ========================================= */
-
-    html = html.replace(
-        /\bm\/s\s*\^?\s*2\b/g,
-        "m/s²"
-    );
-
-    html = html.replace(
-        /\bcm\/s\s*\^?\s*2\b/g,
-        "cm/s²"
-    );
-
-    html = html.replace(
-        /\bkm\/h\s*\^?\s*2\b/g,
-        "km/h²"
-    );
-
-
-    /* =========================================
-       DISPLAY MATH
-    ========================================= */
-
-    html = html.replace(
+    text = text.replace(
         /\\\[([\s\S]*?)\\\]/g,
-        '<div class="math-block">\\[$1\\]</div>'
+        function (match) {
+            const index = mathBlocks.length;
+            mathBlocks.push(match);
+            return `___MATH_BLOCK_${index}___`;
+        }
     );
 
-
-    /* =========================================
-       INLINE MATH
-    ========================================= */
-
-    html = html.replace(
+    text = text.replace(
         /\\\(([\s\S]*?)\\\)/g,
-        '<span class="math-inline">\\($1\\)</span>'
+        function (match) {
+            const index = mathBlocks.length;
+            mathBlocks.push(match);
+            return `___MATH_INLINE_${index}___`;
+        }
     );
 
+    // Escape normal HTML
+    text = escapeHTML(text);
 
-    /* =========================================
-       BOLD
-    ========================================= */
-
-    html = html.replace(
+    // Bold
+    text = text.replace(
         /\*\*(.*?)\*\*/g,
         "<strong>$1</strong>"
     );
 
-
-    /* =========================================
-       ITALIC
-    ========================================= */
-
-    html = html.replace(
+    // Italic
+    text = text.replace(
         /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
         "<em>$1</em>"
     );
 
-
-    /* =========================================
-       REMOVE BACKTICKS
-    ========================================= */
-
-    html = html.replace(
-        /`([^`]+)`/g,
-        "$1"
-    );
-
-
-    /* =========================================
-       HEADINGS
-    ========================================= */
-
-    html = html.replace(
-        /^###\s+(.*)$/gm,
+    // Headings
+    text = text.replace(
+        /^### (.*)$/gm,
         "<h4>$1</h4>"
     );
 
-    html = html.replace(
-        /^##\s+(.*)$/gm,
+    text = text.replace(
+        /^## (.*)$/gm,
         "<h3>$1</h3>"
     );
 
-    html = html.replace(
-        /^#\s+(.*)$/gm,
+    text = text.replace(
+        /^# (.*)$/gm,
         "<h2>$1</h2>"
     );
 
-
-    /* =========================================
-       BULLET POINTS
-    ========================================= */
-
-    html = html.replace(
-        /^[ \t]*[-•]\s+(.+)$/gm,
-        "<li>$1</li>"
+    // Convert bullet lists cleanly
+    text = text.replace(
+        /(?:^|\n)[ \t]*[-*][ \t]+(.+)(?=\n|$)/g,
+        "\n<li>$1</li>"
     );
 
-
-    /* =========================================
-       WRAP BULLETS
-    ========================================= */
-
-    html = html.replace(
+    // Group consecutive list items into one <ul>
+    text = text.replace(
         /((?:<li>.*?<\/li>\s*)+)/gs,
         "<ul>$1</ul>"
     );
 
+    // Numbered lists
+    text = text.replace(
+        /(?:^|\n)[ \t]*\d+\.[ \t]+(.+)(?=\n|$)/g,
+        "\n<li>$1</li>"
+    );
 
-    /* =========================================
-       PARAGRAPHS
-    ========================================= */
-
-    html = html.replace(
+    // Convert remaining line breaks
+    text = text.replace(
         /\n{2,}/g,
-        "</p><p>"
+        "<br><br>"
     );
 
-    html = "<p>" + html + "</p>";
-
-
-    /* =========================================
-       REMOVE <p> AROUND BLOCK ELEMENTS
-    ========================================= */
-
-    html = html.replace(
-        /<p>\s*(<h[2-4]>)/g,
-        "$1"
-    );
-
-    html = html.replace(
-        /(<\/h[2-4]>)\s*<\/p>/g,
-        "$1"
-    );
-
-    html = html.replace(
-        /<p>\s*(<ul>)/g,
-        "$1"
-    );
-
-    html = html.replace(
-        /(<\/ul>)\s*<\/p>/g,
-        "$1"
-    );
-
-    html = html.replace(
-        /<p>\s*(<div class="math-block">)/g,
-        "$1"
-    );
-
-    html = html.replace(
-        /(<\/div>)\s*<\/p>/g,
-        "$1"
-    );
-
-
-    /* =========================================
-       LINE BREAKS
-    ========================================= */
-
-    html = html.replace(
+    text = text.replace(
         /\n/g,
         "<br>"
     );
 
+    // Restore mathematical expressions
+    mathBlocks.forEach(function (math, index) {
 
-    /* =========================================
-       FINAL CLEANUP
-    ========================================= */
+        const blockPlaceholder =
+            `___MATH_BLOCK_${index}___`;
 
-    html = html.replace(
-        /<p>\s*<\/p>/g,
-        ""
-    );
+        const inlinePlaceholder =
+            `___MATH_INLINE_${index}___`;
 
-    html = html.replace(
-        /<p>\s*<br>\s*<\/p>/g,
-        ""
-    );
+        text = text.replace(
+            blockPlaceholder,
+            math
+        );
 
-    html = html.replace(
-        /<ul>\s*<\/ul>/g,
-        ""
-    );
+        text = text.replace(
+            inlinePlaceholder,
+            math
+        );
+    });
 
-    html = html.replace(
-        /<br>\s*<br>\s*<br>/g,
-        "<br><br>"
-    );
-
-
-    return html;
+    return text;
 }
 /* =========================================
    HELPERS
