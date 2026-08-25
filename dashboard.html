@@ -18,19 +18,21 @@
         rel="stylesheet"
         href="style.css"
     >
-    <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
->
 
-<script
-    defer
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js">
-</script>
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+    >
+
     <script
-    defer
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js">
-</script>
+        defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js">
+    </script>
+
+    <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js">
+    </script>
 
 </head>
 
@@ -214,6 +216,72 @@
 </section>
 
 
+<!-- =========================
+     TOPIC STUDY SESSION
+========================= -->
+
+<section
+    class="panel-card topic-study-card"
+    id="topicStudySection"
+>
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                CURRENT STUDY SESSION
+            </span>
+
+            <h2>
+                📖 Topic Study
+            </h2>
+
+        </div>
+
+        <span
+            class="card-badge"
+            id="topicStatusBadge"
+        >
+            READY
+        </span>
+
+    </div>
+
+
+    <div
+        id="topicStudyContent"
+        class="topic-study-content"
+    >
+
+        <div class="topic-session-empty">
+
+            <div class="topic-empty-icon">
+                📚
+            </div>
+
+            <h3>
+                No topic available yet
+            </h3>
+
+            <p>
+                Create a study plan with topics
+                to begin studying.
+            </p>
+
+            <a
+                href="index.html#generator"
+                class="primary-button"
+            >
+                Create Study Plan
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
 
 <!-- =========================
      MAIN DASHBOARD
@@ -277,6 +345,35 @@
 </div>
 
 
+<!-- TOPIC PROGRESS -->
+
+<div class="panel-card">
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                TOPIC PROGRESS
+            </span>
+
+            <h2>
+                📖 Topics
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="topicProgressList"
+        class="subject-list"
+    >
+    </div>
+
+</div>
+
 
 <!-- SUBJECTS -->
 
@@ -307,7 +404,6 @@
     </div>
 
 </div>
-
 
 
 <!-- STREAK + SCORE -->
@@ -375,7 +471,6 @@
 </div>
 
 
-
 <!-- =========================
      AI ASSISTANT
 ========================= -->
@@ -423,7 +518,6 @@
     </p>
 
 
-
     <div class="ask-ai-section">
 
         <h3>
@@ -464,7 +558,6 @@
 
 
 </div>
-
 
 
 <!-- =========================
@@ -510,7 +603,6 @@
     </div>
 
 
-
     <div class="calendar-header">
 
         <button
@@ -536,7 +628,6 @@
     </div>
 
 
-
     <div class="calendar-weekdays">
 
         <div>Sun</div>
@@ -550,13 +641,11 @@
     </div>
 
 
-
     <div
         class="calendar-days"
         id="calendarDays"
     >
     </div>
-
 
 
     <!-- CALENDAR LEGEND -->
@@ -594,9 +683,6 @@
         </div>
 
 
-
-        <!-- NEXT BOOKING -->
-
         <div class="next-session">
 
             <div class="next-icon">
@@ -626,7 +712,6 @@
     </div>
 
 </div>
-
 
 
 <!-- =========================
@@ -674,11 +759,61 @@
 
 </section>
 
+
+<!-- =========================
+     TOPIC QUIZ
+========================= -->
+
+<section
+    class="panel-card topic-quiz-card"
+    id="topicQuizSection"
+    style="display: none;"
+>
+
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                KNOWLEDGE CHECK
+            </span>
+
+            <h2>
+                🧠 Test Yourself
+            </h2>
+
+        </div>
+
+        <span class="card-badge">
+            5 QUESTIONS
+        </span>
+
+    </div>
+
+
+    <p>
+        You completed this topic. StudyMind AI has
+        prepared five questions based specifically
+        on what you just studied.
+    </p>
+
+
+    <div
+        id="topicQuizContent"
+        class="topic-quiz-content"
+    >
+    </div>
+
+</section>
+
+
 </main>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="supabase.js"></script>
+
 <script src="dashboard.js"></script>
 
 </body>
