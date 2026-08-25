@@ -5,13 +5,11 @@
 const signupForm = document.getElementById("signupForm");
 const authMessage = document.getElementById("authMessage");
 
-
 if (signupForm) {
 
     signupForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
-
 
         const name =
             document.getElementById("name").value.trim();
@@ -29,18 +27,6 @@ if (signupForm) {
         /* ================================
            VALIDATION
         ================================= */
-
-        if (!name) {
-
-            authMessage.textContent =
-                "Please enter your name.";
-
-            authMessage.className =
-                "auth-message error";
-
-            return;
-        }
-
 
         if (password !== confirmPassword) {
 
@@ -67,7 +53,7 @@ if (signupForm) {
 
 
         /* ================================
-           CREATING ACCOUNT
+           CREATE ACCOUNT
         ================================= */
 
         authMessage.textContent =
@@ -85,11 +71,9 @@ if (signupForm) {
                 password: password,
 
                 options: {
-
                     data: {
                         name: name
                     }
-
                 }
 
             });
@@ -124,40 +108,10 @@ if (signupForm) {
             "auth-message success";
 
 
-        /*
-         * Supabase may require email confirmation.
-         * If confirmation is enabled, the user
-         * should log in after confirming their email.
-         */
-
-        if (data && data.user && !data.session) {
-
-            authMessage.textContent =
-                "Account created! Please check your email to confirm your account, then log in.";
-
-            authMessage.className =
-                "auth-message success";
-
-            setTimeout(() => {
-
-                window.location.href =
-                    "login.html";
-
-            }, 2500);
-
-            return;
-        }
-
-
-        /*
-         * If email confirmation is disabled,
-         * send the user directly to the home page.
-         */
-
         setTimeout(() => {
 
             window.location.href =
-                "home.html";
+                "dashboard.html";
 
         }, 1000);
 
