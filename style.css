@@ -1856,3 +1856,88 @@ body.light-mode #aiQuestion {
         align-items: flex-start;
     }
 }
+/* =========================================
+   AI RESPONSE — PROFESSIONAL NOTES STYLE
+========================================= */
+
+.ai-response {
+    margin-top: 18px;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 16px;
+    color: #cbd5e1;
+    font-size: 16px;
+    line-height: 1.75;
+    overflow-wrap: break-word;
+}
+
+.ai-response p {
+    margin: 0 0 16px;
+}
+
+.ai-response p:last-child {
+    margin-bottom: 0;
+}
+
+.ai-response strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.ai-response h2,
+.ai-response h3,
+.ai-response h4 {
+    color: #ffffff;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.ai-response h2 {
+    font-size: 22px;
+}
+
+.ai-response h3 {
+    font-size: 19px;
+}
+
+.ai-response h4 {
+    font-size: 17px;
+}
+
+.ai-response ul {
+    margin: 10px 0 18px;
+    padding-left: 24px;
+}
+
+.ai-response li {
+    margin: 8px 0;
+    padding-left: 4px;
+}
+
+.ai-response li::marker {
+    color: #60a5fa;
+}
+
+.ai-response .math-block {
+    margin: 20px 0;
+    padding: 18px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(96, 165, 250, 0.15);
+    border-radius: 12px;
+    overflow-x: auto;
+    text-align: center;
+}
+
+.ai-response .math-inline {
+    white-space: nowrap;
+}
+
+.ai-response .katex {
+    font-size: 1.05em;
+}
+
+.ai-response .math-block .katex {
+    font-size: 1.15em;
+}
