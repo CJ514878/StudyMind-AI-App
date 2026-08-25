@@ -542,3 +542,48 @@ body {
     }
 
 }
+/* =========================================
+   STUDYMIND AI — WELCOME PAGE
+========================================= */
+
+.welcome-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.welcome-actions .auth-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
+}
+
+.welcome-login-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 20px;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+    color: white;
+    background: transparent;
+    border: 1px solid #334155;
+    transition: 0.25s ease;
+}
+
+.welcome-login-button:hover {
+    background: #1e293b;
+}
+
+.welcome-note {
+    margin-top: 25px;
+    font-size: 14px;
+    color: #94a3b8;
+    text-align: center;
+}
+
