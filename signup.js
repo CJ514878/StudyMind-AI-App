@@ -5,112 +5,162 @@
 const signupForm = document.getElementById("signupForm");
 const authMessage = document.getElementById("authMessage");
 
-signupForm.addEventListener("submit", async function (event) {
 
-    event.preventDefault();
+if (signupForm) {
 
-    const name =
-        document.getElementById("name").value.trim();
+    signupForm.addEventListener("submit", async function (event) {
 
-    const email =
-        document.getElementById("email").value.trim();
-
-    const password =
-        document.getElementById("password").value;
-
-    const confirmPassword =
-        document.getElementById("confirmPassword").value;
+        event.preventDefault();
 
 
-    /* ================================
-       VALIDATION
-    ================================= */
+        const name =
+            document.getElementById("name").value.trim();
 
-    if (password !== confirmPassword) {
+        const email =
+            document.getElementById("email").value.trim();
+
+        const password =
+            document.getElementById("password").value;
+
+        const confirmPassword =
+            document.getElementById("confirmPassword").value;
+
+
+        /* ================================
+           VALIDATION
+        ================================= */
+
+        if (!name) {
+
+            authMessage.textContent =
+                "Please enter your name.";
+
+            authMessage.className =
+                "auth-message error";
+
+            return;
+        }
+
+
+        if (password !== confirmPassword) {
+
+            authMessage.textContent =
+                "Passwords do not match.";
+
+            authMessage.className =
+                "auth-message error";
+
+            return;
+        }
+
+
+        if (password.length < 8) {
+
+            authMessage.textContent =
+                "Password must be at least 8 characters.";
+
+            authMessage.className =
+                "auth-message error";
+
+            return;
+        }
+
+
+        /* ================================
+           CREATING ACCOUNT
+        ================================= */
 
         authMessage.textContent =
-            "Passwords do not match.";
+            "Creating your account...";
 
         authMessage.className =
-            "auth-message error";
-
-        return;
-    }
+            "auth-message";
 
 
-    if (password.length < 8) {
+        const { data, error } =
+            await supabaseClient.auth.signUp({
 
-        authMessage.textContent =
-            "Password must be at least 8 characters.";
+                email: email,
 
-        authMessage.className =
-            "auth-message error";
+                password: password,
 
-        return;
-    }
+                options: {
 
+                    data: {
+                        name: name
+                    }
 
-    /* ================================
-       CREATE ACCOUNT
-    ================================= */
-
-    authMessage.textContent =
-        "Creating your account...";
-
-    authMessage.className =
-        "auth-message";
-
-
-    const { data, error } =
-        await supabaseClient.auth.signUp({
-
-            email: email,
-
-            password: password,
-
-            options: {
-                data: {
-                    name: name
                 }
-            }
 
-        });
+            });
 
 
-    /* ================================
-       ERROR
-    ================================= */
+        /* ================================
+           ERROR
+        ================================= */
 
-    if (error) {
+        if (error) {
 
-        console.error(error);
+            console.error(error);
+
+            authMessage.textContent =
+                error.message;
+
+            authMessage.className =
+                "auth-message error";
+
+            return;
+        }
+
+
+        /* ================================
+           SUCCESS
+        ================================= */
 
         authMessage.textContent =
-            error.message;
+            "Account created successfully!";
 
         authMessage.className =
-            "auth-message error";
-
-        return;
-    }
+            "auth-message success";
 
 
-    /* ================================
-       SUCCESS
-    ================================= */
+        /*
+         * Supabase may require email confirmation.
+         * If confirmation is enabled, the user
+         * should log in after confirming their email.
+         */
 
-    authMessage.textContent =
-        "Account created successfully!";
+        if (data && data.user && !data.session) {
 
-    authMessage.className =
-        "auth-message success";
+            authMessage.textContent =
+                "Account created! Please check your email to confirm your account, then log in.";
+
+            authMessage.className =
+                "auth-message success";
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "login.html";
+
+            }, 2500);
+
+            return;
+        }
 
 
-    setTimeout(() => {
+        /*
+         * If email confirmation is disabled,
+         * send the user directly to the home page.
+         */
 
-        window.location.href =
-            "index.html";
+        setTimeout(() => {
 
-    }, 1000);
+            window.location.href =
+                "home.html";
 
-});
+        }, 1000);
+
+    });
+
+}
