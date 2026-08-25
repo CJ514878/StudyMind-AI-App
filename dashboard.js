@@ -2544,6 +2544,16 @@ function renderCalendar() {
         }
 
 
+        /* =========================================
+           FIXED COMPLETED-DAY LOGIC
+
+           Removed the old:
+               date % 2 === 0
+
+           condition which caused every other
+           calendar day to appear completed.
+        ========================================= */
+
         const topicTotal =
             studyPlan.topics
                 ? studyPlan.topics.length
@@ -2562,8 +2572,7 @@ function renderCalendar() {
 
         if (
             topicTotal > 0 &&
-            completedTotal === topicTotal &&
-            date % 2 === 0
+            completedTotal === topicTotal
         ) {
 
             day.classList.add(
@@ -2956,13 +2965,6 @@ if (analyzeProgressButton) {
         "click",
         () => {
 
-            /*
-               Progress analysis is NOT an AI
-               request. It can still work without
-               login because it only uses local
-               study data.
-            */
-
             const topics =
                 studyPlan.topics || [];
 
@@ -3039,10 +3041,6 @@ async function generateQuestionsForTopic(
     topic
 ) {
 
-    /*
-       LOGIN REQUIRED
-    */
-
     if (!isAuthenticated) {
 
         showAILoginMessage(
@@ -3060,11 +3058,6 @@ async function generateQuestionsForTopic(
 
     }
 
-
-    /*
-       THIS TOPIC ALREADY USED ITS
-       ONE FREE 5-QUESTION KNOWLEDGE CHECK
-    */
 
     if (
         completedQuestionTopics.includes(
@@ -3423,11 +3416,6 @@ function renderTopicQuestions(
         );
 
 
-    /*
-       Make sure submit button is enabled
-       before the student answers.
-    */
-
     if (submitTopicQuestions) {
 
         submitTopicQuestions.disabled =
@@ -3451,10 +3439,6 @@ if (submitTopicQuestions) {
         "click",
         () => {
 
-            /*
-               LOGIN REQUIRED
-            */
-
             if (!isAuthenticated) {
 
                 showAILoginMessage(
@@ -3475,12 +3459,6 @@ if (submitTopicQuestions) {
 
             }
 
-
-            /*
-               If this knowledge check has already
-               been submitted, DO NOT allow another
-               attempt.
-            */
 
             if (
                 topicQuestions.submitted
@@ -3560,10 +3538,6 @@ if (submitTopicQuestions) {
                 );
 
 
-            /*
-               Require all 5 questions to be answered.
-            */
-
             if (
                 answered < 5
             ) {
@@ -3583,11 +3557,6 @@ if (submitTopicQuestions) {
             const total =
                 5;
 
-
-            /*
-               Permanently finish this topic's
-               knowledge check.
-            */
 
             topicQuestions.submitted =
                 true;
@@ -3622,10 +3591,6 @@ if (submitTopicQuestions) {
             );
 
 
-            /*
-               Disable every question.
-            */
-
             document
                 .querySelectorAll(
                     "#topicQuestions input"
@@ -3639,10 +3604,6 @@ if (submitTopicQuestions) {
                     }
                 );
 
-
-            /*
-               Disable submit permanently.
-            */
 
             submitTopicQuestions.disabled =
                 true;
@@ -3783,10 +3744,6 @@ if (askAIButton) {
         "click",
         async () => {
 
-            /*
-               LOGIN CHECK
-            */
-
             if (!isAuthenticated) {
 
                 showAILoginMessage(
@@ -3817,10 +3774,6 @@ if (askAIButton) {
 
             }
 
-
-            /*
-               FIVE QUESTIONS TOTAL
-            */
 
             if (
                 aiQuestionCount >=
@@ -4013,11 +3966,6 @@ Keep the answer readable and appropriately concise.
                 }
 
 
-                /*
-                   ONLY COUNT THE QUESTION
-                   AFTER A SUCCESSFUL AI RESPONSE.
-                */
-
                 aiQuestionCount++;
 
 
@@ -4068,12 +4016,6 @@ Keep the answer readable and appropriately concise.
                 }
 
 
-                /*
-                   If this was the fifth successful
-                   question, immediately show the
-                   Premium message below the answer.
-                */
-
                 if (
                     aiQuestionCount >=
                     FREE_QUESTION_LIMIT
@@ -4116,11 +4058,6 @@ Keep the answer readable and appropriately concise.
                     "🤖 Ask AI";
 
 
-                /*
-                   Lock the button if the fifth
-                   question has been used.
-                */
-
                 if (
                     aiQuestionCount >=
                     FREE_QUESTION_LIMIT
@@ -4147,11 +4084,6 @@ Keep the answer readable and appropriately concise.
 ========================================= */
 
 function setupAIAuthenticationUI() {
-
-    /*
-       If user is NOT logged in,
-       completely lock AI interactions.
-    */
 
     if (!isAuthenticated) {
 
@@ -4196,11 +4128,6 @@ function setupAIAuthenticationUI() {
 
     }
 
-
-    /*
-       Logged in but already used all
-       five Ask AI questions.
-    */
 
     if (
         aiQuestionCount >=
@@ -4359,12 +4286,6 @@ function showAskAILimitMessage(
 ========================================= */
 
 function openPremiumOffer() {
-
-    /*
-       For now this shows the Premium offer.
-       Later this can be connected to your
-       actual Premium/payment page.
-    */
 
     const existing =
         document.getElementById(
@@ -4884,14 +4805,6 @@ function escapeJS(
 ========================================= */
 
 async function startDashboard() {
-
-    /*
-       IMPORTANT:
-       We check authentication FIRST.
-       The dashboard itself can still load,
-       but AI interactions are locked unless
-       the user is authenticated.
-    */
 
     await checkAuthentication();
 
