@@ -229,30 +229,33 @@ let currentStreak =
 
 if (!studyPlan || typeof studyPlan !== "object") {
 
-    studyPlan = {
+  const studyStartDate =
+    new Date().toISOString().split("T")[0];
 
-        examType:
-            "No exam selected",
+studyPlan = {
 
-        examDate:
-            null,
+    examType: examType,
 
-        subjects:
-            [],
+    examDate: examDate,
 
-        topics:
-            [],
+    subjects: subjects,
 
-        studyHours:
-            0,
+    topics: topics,
 
-        difficulty:
-            "balanced",
+    studyHours: studyHours,
 
-        daysLeft:
-            0
+    difficulty: difficulty,
 
-    };
+    daysLeft: daysLeft,
+
+    /*
+       The exact date this study plan
+       was generated.
+    */
+
+    studyStartDate: studyStartDate
+
+};
 
 }
 
