@@ -1759,9 +1759,15 @@ function isCalendarBreakDay(date) {
     const startDate =
         getStudyPlanStartDate();
 
-
     const currentDate =
         new Date(date);
+
+    startDate.setHours(
+        0,
+        0,
+        0,
+        0
+    );
 
     currentDate.setHours(
         0,
@@ -1772,8 +1778,8 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Dates before the study plan
-       are not part of the study cycle.
+       Before the study plan starts:
+       not a study day and not a break day.
     */
 
     if (
@@ -1787,29 +1793,29 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Exam date is never a break day.
+       The exam day itself is never
+       treated as a break day.
     */
 
     if (
         studyPlan.examDate
     ) {
 
-        const exam =
+        const examDate =
             new Date(
                 studyPlan.examDate
             );
 
-        exam.setHours(
+        examDate.setHours(
             0,
             0,
             0,
             0
         );
 
-
         if (
-            currentDate >=
-            exam
+            currentDate.getTime() ===
+            examDate.getTime()
         ) {
 
             return false;
@@ -1820,11 +1826,11 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Calculate how many days have
-       passed since the study plan began.
+       Calculate the number of days
+       since the study plan started.
     */
 
-    const difference =
+    const daysSinceStart =
         Math.floor(
             (
                 currentDate.getTime() -
@@ -1840,28 +1846,24 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Study cycle:
+       7-day cycle:
 
-       Day 0 → Study
-       Day 1 → Study
-       Day 2 → Study
-       Day 3 → Study
-       Day 4 → Study
-       Day 5 → Study
-       Day 6 → BREAK
+       0 = Study
+       1 = Study
+       2 = Study
+       3 = Study
+       4 = Study
+       5 = Study
+       6 = BREAK
 
-       Day 7 → Study
-       ...
-       Day 13 → BREAK
+       Then the cycle repeats.
     */
 
     return (
-        difference >= 0 &&
-        difference % 7 === 6
+        daysSinceStart % 7 === 6
     );
 
 }
-
 function renderCalendar() {
 
     if (
@@ -2012,20 +2014,154 @@ function renderCalendar() {
             );
 
 
-            if (
-                normalizedCurrent >=
-                planStart
-            ) {
+          /*
+   Mark study-plan days.
+*/
 
-                /*
-                   If an exam date exists,
-                   don't mark dates after it
-                   as study days.
-                */
+const planStart =
+    getStudyPlanStartDate();
 
-                if (
-                    studyPlan.examDate
-                ) {
+const normalizedCurrent =
+    new Date(current);
+
+normalizedCurrent.setHours(
+    0,
+    0,
+    0,
+    0
+);
+
+
+/*
+   Is this date inside the study plan?
+*/
+
+const isAfterPlanStart =
+    normalizedCurrent >=
+    planStart;
+
+
+/*
+   Check whether this is a break day.
+*/
+
+const isBreakDay =
+    isCalendarBreakDay(
+        normalizedCurrent
+    );
+
+
+/*
+   Check whether this is the exam day.
+*/
+
+let isExamDay =
+    false;
+
+if (
+    studyPlan.examDate
+) {
+
+    const exam =
+        new Date(
+            studyPlan.examDate
+        );
+
+    exam.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    isExamDay =
+        normalizedCurrent.getTime() ===
+        exam.getTime();
+
+}
+
+
+/*
+   STUDY DAY
+*/
+
+if (
+    isAfterPlanStart &&
+    !isBreakDay &&
+    !isExamDay
+) {
+
+    /*
+       Don't show study days after
+       the exam.
+    */
+
+    if (
+        !studyPlan.examDate ||
+        normalizedCurrent <=
+            new Date(
+                studyPlan.examDate
+            )
+    ) {
+
+        day.classList.add(
+            "study-day"
+        );
+
+    }
+
+}
+
+
+/*
+   EXAM DAY
+*/
+
+if (
+    isExamDay
+) {
+
+    day.classList.remove(
+        "study-day"
+    );
+
+    day.classList.remove(
+        "break-day"
+    );
+
+    day.classList.remove(
+        "completed-day"
+    );
+
+    day.classList.add(
+        "exam-day"
+    );
+
+}
+
+
+/*
+   BREAK DAY
+*/
+
+if (
+    isBreakDay &&
+    !isExamDay
+) {
+
+    day.classList.remove(
+        "study-day"
+    );
+
+    day.classList.remove(
+        "completed-day"
+    );
+
+    day.classList.add(
+        "break-day"
+    );
+
+}
 
                     const exam =
                         new Date(
