@@ -227,37 +227,80 @@ let currentStreak =
    DEFAULT STUDY PLAN
 ========================================= */
 
+const today =
+    new Date()
+        .toISOString()
+        .split("T")[0];
+
+
+/*
+   Create a default plan if none exists.
+*/
+
 if (!studyPlan || typeof studyPlan !== "object") {
 
     studyPlan = {
 
-        examType:
-            "No exam selected",
+    examType: examType,
 
-        examDate:
-            null,
+    examDate: examDate,
 
-        subjects:
-            [],
+    subjects: subjects,
 
-        topics:
-            [],
+    topics: topics,
 
-        studyHours:
-            0,
+    studyHours: studyHours,
 
-        difficulty:
-            "balanced",
+    difficulty: difficulty,
 
-        daysLeft:
-            0,
+    daysLeft: daysLeft,
 
-        studyStartDate:
-            null
+    studyStartDate:
+        new Date()
+            .toISOString()
+            .split("T")[0]
 
-    };
+};
+   localStorage.setItem(
+    "studyMindPlan",
+    JSON.stringify(
+        studyPlan
+    )
+);
+}
+
+
+/*
+   Make sure every generated/loaded plan
+   has the actual date it was created.
+
+   IMPORTANT:
+   We only add the date if it doesn't
+   already exist, so refreshing the
+   dashboard will NOT change the
+   original study start date.
+*/
+
+if (
+    !studyPlan.studyStartDate
+) {
+
+    studyPlan.studyStartDate =
+        today;
 
 }
+
+
+/*
+   Save the updated plan.
+*/
+
+localStorage.setItem(
+    "studyMindPlan",
+    JSON.stringify(
+        studyPlan
+    )
+);
 
 /* =========================================
    STUDY PLAN SAFETY
