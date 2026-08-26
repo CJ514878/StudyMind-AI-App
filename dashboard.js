@@ -1971,6 +1971,29 @@ function renderCalendar() {
                 );
 
             }
+           /*
+   Mark automatically scheduled break days.
+*/
+
+if (
+    isCalendarBreakDay(
+        current
+    )
+) {
+
+    day.classList.remove(
+        "study-day"
+    );
+
+    day.classList.remove(
+        "completed-day"
+    );
+
+    day.classList.add(
+        "break-day"
+    );
+
+}
 
         }
 
