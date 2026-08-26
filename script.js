@@ -2,7 +2,7 @@
    STUDYMIND AI — MAIN WEBSITE JAVASCRIPT
    HOME PAGE: home.html
    WELCOME PAGE: index.html
-   VERSION: AUTH + FREE AI LIMITS + PLAN SYNC
+   VERSION: FIXED PLAN + AI LIMIT + TIMER SYNC
 ========================================= */
 
 
@@ -54,13 +54,6 @@ if (themeButton) {
 
         themeButton.textContent =
             "☀️ Light Mode";
-
-    }
-
-    else {
-
-        themeButton.textContent =
-            "🌙 Dark Mode";
 
     }
 
@@ -204,7 +197,7 @@ if (studyForm) {
 
             const examType =
                 examTypeElement
-                    ? examTypeElement.value.trim()
+                    ? examTypeElement.value
                     : "";
 
 
@@ -245,8 +238,8 @@ if (studyForm) {
             if (
                 !examType ||
                 !examDate ||
-                !subjectsInput.trim() ||
-                !topicsInput.trim() ||
+                !subjectsInput ||
+                !topicsInput ||
                 !studyHours
             ) {
 
@@ -255,7 +248,6 @@ if (studyForm) {
                 );
 
                 return;
-
             }
 
 
@@ -302,7 +294,6 @@ if (studyForm) {
                 );
 
                 return;
-
             }
 
 
@@ -315,7 +306,6 @@ if (studyForm) {
                 );
 
                 return;
-
             }
 
 
@@ -337,43 +327,23 @@ if (studyForm) {
             setTimeout(
                 () => {
 
-                    try {
+                    generateStudyPlan(
+                        examType,
+                        examDate,
+                        subjects,
+                        topics,
+                        studyHours,
+                        difficulty
+                    );
 
-                        generateStudyPlan(
-                            examType,
-                            examDate,
-                            subjects,
-                            topics,
-                            studyHours,
-                            difficulty
-                        );
 
-                    }
+                    if (generateButton) {
 
-                    catch (error) {
+                        generateButton.textContent =
+                            "Generate My Plan";
 
-                        console.error(
-                            "Study plan generation error:",
-                            error
-                        );
-
-                        alert(
-                            "Something went wrong while generating your study plan."
-                        );
-
-                    }
-
-                    finally {
-
-                        if (generateButton) {
-
-                            generateButton.textContent =
-                                "Generate My Plan";
-
-                            generateButton.disabled =
-                                false;
-
-                        }
+                        generateButton.disabled =
+                            false;
 
                     }
 
@@ -401,19 +371,17 @@ function generateStudyPlan(
 ) {
 
     if (!studyPlan) {
-
         return;
-
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        CALCULATE DAYS LEFT
-    ----------------------------------------- */
+    ========================================= */
 
     const exam =
         new Date(
-            `${examDate}T00:00:00`
+            examDate
         );
 
 
@@ -456,9 +424,9 @@ function generateStudyPlan(
         );
 
 
-    /* -----------------------------------------
+    /* =========================================
        CALCULATE RECOMMENDED HOURS
-    ----------------------------------------- */
+    ========================================= */
 
     let recommendedHours =
         Number(
@@ -473,17 +441,10 @@ function generateStudyPlan(
         recommendedHours <= 0
     ) {
 
-        recommendedHours =
-            1;
+        recommendedHours = 1;
 
     }
 
-
-    /*
-       Difficulty adjusts the recommended
-       workload without changing the value
-       entered into the form itself.
-    */
 
     if (
         difficulty === "light"
@@ -508,9 +469,9 @@ function generateStudyPlan(
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        SUBJECT COUNT
-    ----------------------------------------- */
+    ========================================= */
 
     const subjectCount =
         subjects.length;
@@ -558,12 +519,6 @@ function generateStudyPlan(
        RESET PREVIOUS TOPIC PROGRESS
     ========================================= */
 
-    /*
-       A newly generated plan is a new study
-       plan, so old topic completion data
-       should not carry over.
-    */
-
     localStorage.removeItem(
         "studyMindCompletedTopics"
     );
@@ -585,22 +540,16 @@ function generateStudyPlan(
 
 
     /* =========================================
-       RESET TIMER STATE
+       RESET TIMER FOR NEW PLAN
     ========================================= */
-
-    /*
-       Do not allow an old running timer to
-       continue into a completely new plan.
-    */
 
     localStorage.removeItem(
         "studyMindTimerSeconds"
     );
 
 
-    localStorage.setItem(
-        "studyMindTimerRunning",
-        "false"
+    localStorage.removeItem(
+        "studyMindTimerRunning"
     );
 
 
@@ -609,65 +558,15 @@ function generateStudyPlan(
     );
 
 
+    localStorage.removeItem(
+        "studyMindSelectedTimerSeconds"
+    );
+
+
     /*
-       Keep the user's previously selected
-       timer duration if they already chose
-       one. Otherwise use the first subject
-       study duration as a sensible default.
+       Keep the user's selected timer duration
+       controlled by the dashboard.
     */
-
-    const existingTimerDuration =
-        Number(
-            localStorage.getItem(
-                "studyMindSelectedTimerSeconds"
-            )
-        );
-
-
-    if (
-        !Number.isFinite(
-            existingTimerDuration
-        ) ||
-        existingTimerDuration <= 0
-    ) {
-
-        /*
-           Store the study-hours value in
-           minutes only when no timer duration
-           has previously been selected.
-
-           This does NOT force the dashboard
-           timer to use this value forever;
-           the user can change the timer there.
-        */
-
-        const defaultSessionMinutes =
-            Math.max(
-                30,
-                Math.round(
-                    (
-                        Number(
-                            studyHours
-                        ) *
-                        60
-                    ) /
-                    Math.max(
-                        1,
-                        subjects.length
-                    )
-                )
-            );
-
-
-        localStorage.setItem(
-            "studyMindSelectedTimerSeconds",
-            String(
-                defaultSessionMinutes *
-                60
-            )
-        );
-
-    }
 
 
     /* =========================================
@@ -766,11 +665,12 @@ function generateStudyPlan(
 
             <div class="generated-subjects">
 
-                ${subjects.map(
-                    (
-                        subject,
-                        index
-                    ) => `
+                ${subjects
+                    .map(
+                        (
+                            subject,
+                            index
+                        ) => `
 
                     <div class="generated-subject">
 
@@ -787,7 +687,8 @@ function generateStudyPlan(
                     </div>
 
                 `
-                ).join("")}
+                    )
+                    .join("")}
 
             </div>
 
@@ -801,11 +702,12 @@ function generateStudyPlan(
 
             <div class="generated-subjects">
 
-                ${topics.map(
-                    (
-                        topic,
-                        index
-                    ) => `
+                ${topics
+                    .map(
+                        (
+                            topic,
+                            index
+                        ) => `
 
                     <div class="generated-subject">
 
@@ -822,7 +724,8 @@ function generateStudyPlan(
                     </div>
 
                 `
-                ).join("")}
+                    )
+                    .join("")}
 
             </div>
 
@@ -909,19 +812,6 @@ function generateStudyPlan(
     );
 
 
-    /*
-       Keep a simple timestamp so the dashboard
-       can tell that a new plan was generated.
-    */
-
-    localStorage.setItem(
-        "studyMindPlanUpdatedAt",
-        String(
-            Date.now()
-        )
-    );
-
-
     /* =========================================
        SCROLL TO GENERATED PLAN
     ========================================= */
@@ -947,9 +837,7 @@ function openDashboard() {
 
     /*
        Dashboard authentication is handled
-       by dashboard.js / Supabase.
-
-       We simply navigate to the dashboard.
+       by dashboard.js.
     */
 
     window.location.href =
@@ -1077,13 +965,6 @@ function hasFreeAIQuestionsLeft() {
 }
 
 
-/*
-   Record exactly one AI question.
-
-   dashboard.js can call this after a
-   successful API response.
-*/
-
 function recordAIQuestion() {
 
     let count =
@@ -1104,9 +985,7 @@ function recordAIQuestion() {
 
     localStorage.setItem(
         "aiQuestionCount",
-        String(
-            count
-        )
+        String(count)
     );
 
 
@@ -1141,10 +1020,6 @@ async function logoutStudyMind() {
     /*
        Sign out from Supabase if the client
        is available.
-
-       This is important because removing
-       localStorage alone does not actually
-       sign the user out of Supabase.
     */
 
     try {
@@ -1156,20 +1031,7 @@ async function logoutStudyMind() {
             supabaseClient.auth
         ) {
 
-            const {
-                error
-            } =
-                await supabaseClient.auth.signOut();
-
-
-            if (error) {
-
-                console.error(
-                    "Supabase logout error:",
-                    error
-                );
-
-            }
+            await supabaseClient.auth.signOut();
 
         }
 
@@ -1186,17 +1048,12 @@ async function logoutStudyMind() {
 
 
     /*
-       Remove old/local login state.
+       Remove local login flags.
 
        We deliberately DO NOT delete:
-       - study plan
+       - Study plan
        - AI question count
-       - theme
-       - timer preferences
-
-       This means the user's local study
-       data remains available when they
-       return.
+       - study progress
     */
 
     localStorage.removeItem(
@@ -1256,10 +1113,25 @@ window.logoutStudyMind =
     logoutStudyMind;
 
 
-/*
-   Keep the limit available globally so
-   dashboard.js can use the same value.
-*/
+/* =========================================
+   KEEP COUNTER SYNCHRONIZED
+========================================= */
 
-window.FREE_QUESTION_LIMIT =
-    FREE_QUESTION_LIMIT;
+window.addEventListener(
+    "storage",
+    event => {
+
+        if (
+            event.key ===
+            "aiQuestionCount"
+        ) {
+
+            aiQuestionCount =
+                Number(
+                    event.newValue
+                ) || 0;
+
+        }
+
+    }
+);
