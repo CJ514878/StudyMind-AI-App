@@ -234,51 +234,50 @@ const today =
 
 
 /*
-   Create a default plan if none exists.
+   Create a default study plan if no plan
+   has been saved yet.
 */
 
-if (!studyPlan || typeof studyPlan !== "object") {
+if (
+    !studyPlan ||
+    typeof studyPlan !== "object"
+) {
 
     studyPlan = {
 
-    examType: examType,
+        examType:
+            "No exam selected",
 
-    examDate: examDate,
+        examDate:
+            null,
 
-    subjects: subjects,
+        subjects:
+            [],
 
-    topics: topics,
+        topics:
+            [],
 
-    studyHours: studyHours,
+        studyHours:
+            0,
 
-    difficulty: difficulty,
+        difficulty:
+            "balanced",
 
-    daysLeft: daysLeft,
+        daysLeft:
+            0,
 
-    studyStartDate:
-        new Date()
-            .toISOString()
-            .split("T")[0]
+        studyStartDate:
+            today
 
-};
-   localStorage.setItem(
-    "studyMindPlan",
-    JSON.stringify(
-        studyPlan
-    )
-);
+    };
+
 }
 
 
 /*
-   Make sure every generated/loaded plan
-   has the actual date it was created.
-
-   IMPORTANT:
-   We only add the date if it doesn't
-   already exist, so refreshing the
-   dashboard will NOT change the
-   original study start date.
+   If an older study plan exists but does
+   not have a studyStartDate, add today's
+   date without changing existing dates.
 */
 
 if (
@@ -292,7 +291,7 @@ if (
 
 
 /*
-   Save the updated plan.
+   Save the plan.
 */
 
 localStorage.setItem(
@@ -301,7 +300,6 @@ localStorage.setItem(
         studyPlan
     )
 );
-
 /* =========================================
    STUDY PLAN SAFETY
 ========================================= */
