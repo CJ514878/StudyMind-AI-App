@@ -257,9 +257,9 @@ if (!studyPlan || typeof studyPlan !== "object") {
 }
 
 
-/*
-   Older study plans may not contain topics.
-*/
+/* =========================================
+   STUDY PLAN SAFETY
+========================================= */
 
 if (
     !Array.isArray(
@@ -271,10 +271,6 @@ if (
 
 }
 
-
-/*
-   Older study plans may not contain subjects.
-*/
 
 if (
     !Array.isArray(
@@ -504,8 +500,17 @@ const timerDurationSelect =
    TIMER DATA
 ========================================= */
 
+/*
+   DEFAULT SESSION IS NOW 60 MINUTES
+*/
+
 const DEFAULT_TIMER_SECONDS =
-    25 * 60;
+    60 * 60;
+
+
+/*
+   Load previously selected duration.
+*/
 
 let selectedTimerSeconds =
     Number(
@@ -513,6 +518,12 @@ let selectedTimerSeconds =
             "studyMindSelectedTimerSeconds"
         )
     );
+
+
+/*
+   If no valid saved duration exists,
+   use 60 minutes.
+*/
 
 if (
     !Number.isFinite(
@@ -527,12 +538,17 @@ if (
 }
 
 
+/*
+   Load saved timer seconds.
+*/
+
 let timerSeconds =
     Number(
         localStorage.getItem(
             "studyMindTimerSeconds"
         )
     );
+
 
 if (
     !Number.isFinite(
@@ -591,6 +607,31 @@ function setupTimer() {
     }
 
 
+    /*
+       If no duration has ever been saved,
+       use 60 minutes.
+    */
+
+    if (
+        !Number.isFinite(
+            selectedTimerSeconds
+        ) ||
+        selectedTimerSeconds <= 0
+    ) {
+
+        selectedTimerSeconds =
+            DEFAULT_TIMER_SECONDS;
+
+        localStorage.setItem(
+            "studyMindSelectedTimerSeconds",
+            String(
+                selectedTimerSeconds
+            )
+        );
+
+    }
+
+
     syncTimerDurationControl();
 
 
@@ -617,8 +658,8 @@ function setupTimer() {
 
 
     /*
-       If a timer was running before
-       page refresh, recover it.
+       Recover a timer that was running
+       before page refresh.
     */
 
     if (
@@ -854,10 +895,10 @@ function handleTimerDurationChange() {
     /*
        Values such as:
 
-       25
-       45
        60
        75
+       90
+       120
 
        are treated as MINUTES.
 
@@ -896,8 +937,8 @@ function handleTimerDurationChange() {
 
 
     /*
-       Changing duration resets the
-       current timer.
+       Changing the duration resets
+       the current timer.
     */
 
     clearInterval(
@@ -950,6 +991,14 @@ function handleTimerDurationChange() {
     updateTimerDisplay();
 
     updateTimerButtons();
+
+
+    /*
+       Update schedule when the user
+       changes their preferred session time.
+    */
+
+    renderSchedule();
 
 }
 
@@ -1246,6 +1295,13 @@ function stopTimer() {
 
 
     localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
+    localStorage.setItem(
         "studyMindTimerRunning",
         "false"
     );
@@ -1348,8 +1404,29 @@ function resetTimer() {
     }
 
 
+    if (
+        !Number.isFinite(
+            selectedTimerSeconds
+        ) ||
+        selectedTimerSeconds <= 0
+    ) {
+
+        selectedTimerSeconds =
+            DEFAULT_TIMER_SECONDS;
+
+    }
+
+
     timerSeconds =
         selectedTimerSeconds;
+
+
+    localStorage.setItem(
+        "studyMindSelectedTimerSeconds",
+        String(
+            selectedTimerSeconds
+        )
+    );
 
 
     localStorage.setItem(
@@ -1478,7 +1555,8 @@ function updateTimerDisplay() {
 
 
     const seconds =
-        safeSeconds % 60;
+        safeSeconds %
+        60;
 
 
     studyTimer.textContent =
@@ -2018,130 +2096,240 @@ function renderSchedule() {
         "";
 
 
+    /*
+       Total daily study time.
+    */
+
     const hours =
         Number(
             studyPlan.studyHours
-        ) || 1;
+        ) || 0;
 
 
-    const sessionMinutes =
+    const dailyMinutes =
         Math.max(
-            30,
-            Math.floor(
-                (
-                    hours *
-                    60
-                ) /
-                subjects.length
+            0,
+            Math.round(
+                hours * 60
             )
         );
 
 
-    subjects.forEach(
-        (
-            subject,
-            index
-        ) => {
+    if (
+        dailyMinutes <= 0
+    ) {
 
-            const startTotal =
-                (
-                    16 *
-                    60
-                ) +
-                (
-                    index *
-                    sessionMinutes
+        scheduleList.innerHTML = `
+            <div class="empty-schedule">
+                Your daily study sessions
+                will appear here.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    /*
+       Preferred session length comes
+       from the timer.
+
+       Default = 60 minutes.
+    */
+
+    const savedTimerSeconds =
+        Number(
+            localStorage.getItem(
+                "studyMindSelectedTimerSeconds"
+            )
+        );
+
+
+    const preferredSessionMinutes =
+        Number.isFinite(
+            savedTimerSeconds
+        ) &&
+        savedTimerSeconds > 0
+            ? Math.round(
+                savedTimerSeconds /
+                60
+            )
+            : 60;
+
+
+    /*
+       Never make a session longer than
+       the entire daily goal.
+    */
+
+    const firstSessionMinutes =
+        Math.min(
+            preferredSessionMinutes,
+            dailyMinutes
+        );
+
+
+    /*
+       Build the day's sessions.
+
+       Example:
+
+       2h goal + 60m preference
+
+       4:00–5:00
+       5:15–6:15
+    */
+
+    let remainingMinutes =
+        dailyMinutes;
+
+
+    let sessionIndex =
+        0;
+
+
+    let currentStartMinutes =
+        16 * 60;
+
+
+    while (
+        remainingMinutes > 0
+    ) {
+
+        const currentSessionMinutes =
+            sessionIndex === 0
+                ? firstSessionMinutes
+                : Math.min(
+                    preferredSessionMinutes,
+                    remainingMinutes
                 );
 
 
-            const startHour =
-                Math.floor(
-                    startTotal /
-                    60
-                );
+        const subject =
+            subjects[
+                sessionIndex %
+                subjects.length
+            ];
 
 
-            const startMinute =
-                startTotal %
-                60;
+        const startTotal =
+            currentStartMinutes;
 
 
-            const endTotal =
-                startTotal +
-                sessionMinutes;
+        const endTotal =
+            startTotal +
+            currentSessionMinutes;
 
 
-            const endHour =
-                Math.floor(
-                    endTotal /
-                    60
-                );
-
-
-            const endMinute =
-                endTotal %
-                60;
-
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "schedule-item";
-
-
-            item.innerHTML = `
-                <div class="schedule-time">
-
-                    ${formatTime(
-                        startHour,
-                        startMinute
-                    )}
-
-                    <span>
-                        ${formatTime(
-                            endHour,
-                            endMinute
-                        )}
-                    </span>
-
-                </div>
-
-                <div class="schedule-line"></div>
-
-                <div class="schedule-details">
-
-                    <span>
-                        ${
-                            index === 0
-                                ? "FOCUS SESSION"
-                                : "STUDY SESSION"
-                        }
-                    </span>
-
-                    <strong>
-                        ${escapeHTML(
-                            subject
-                        )}
-                    </strong>
-
-                    <small>
-                        ${sessionMinutes} minutes
-                    </small>
-
-                </div>
-            `;
-
-
-            scheduleList.appendChild(
-                item
+        const startHour =
+            Math.floor(
+                startTotal /
+                60
             );
 
+
+        const startMinute =
+            startTotal %
+            60;
+
+
+        const endHour =
+            Math.floor(
+                endTotal /
+                60
+            );
+
+
+        const endMinute =
+            endTotal %
+            60;
+
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+
+        item.className =
+            "schedule-item";
+
+
+        item.innerHTML = `
+            <div class="schedule-time">
+
+                ${formatTime(
+                    startHour,
+                    startMinute
+                )}
+
+                <span>
+                    ${formatTime(
+                        endHour,
+                        endMinute
+                    )}
+                </span>
+
+            </div>
+
+            <div class="schedule-line"></div>
+
+            <div class="schedule-details">
+
+                <span>
+                    ${
+                        sessionIndex === 0
+                            ? "FOCUS SESSION"
+                            : "STUDY SESSION"
+                    }
+                </span>
+
+                <strong>
+                    ${escapeHTML(
+                        subject
+                    )}
+                </strong>
+
+                <small>
+                    ${currentSessionMinutes} minutes
+                </small>
+
+            </div>
+        `;
+
+
+        scheduleList.appendChild(
+            item
+        );
+
+
+        remainingMinutes -=
+            currentSessionMinutes;
+
+
+        sessionIndex++;
+
+
+        /*
+           Add a 15-minute break between
+           study sessions.
+
+           No break is added after the
+           final session.
+        */
+
+        if (
+            remainingMinutes > 0
+        ) {
+
+            currentStartMinutes =
+                endTotal +
+                15;
+
         }
-    );
+
+    }
 
 }
 
@@ -2630,13 +2818,16 @@ function updateDashboardProgress() {
                     )
                 ) || 45;
 
+
             const circumference =
                 2 *
                 Math.PI *
                 radius;
 
+
             progressBar.style.strokeDasharray =
                 circumference;
+
 
             progressBar.style.strokeDashoffset =
                 circumference -
@@ -4829,6 +5020,36 @@ function initializeDashboard() {
 
         studyPlan.topics =
             [];
+
+    }
+
+
+    /*
+       Make sure a new installation
+       starts at 60 minutes.
+    */
+
+    const savedDuration =
+        Number(
+            localStorage.getItem(
+                "studyMindSelectedTimerSeconds"
+            )
+        );
+
+
+    if (
+        !Number.isFinite(
+            savedDuration
+        ) ||
+        savedDuration <= 0
+    ) {
+
+        localStorage.setItem(
+            "studyMindSelectedTimerSeconds",
+            String(
+                DEFAULT_TIMER_SECONDS
+            )
+        );
 
     }
 
