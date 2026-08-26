@@ -1671,22 +1671,59 @@ let calendarDate =
 ========================================= */
 
 /*
-   StudyMind AI gives the student one full
-   break day after every 6 study days.
+   StudyMind AI study cycle:
 
-   The first study day is based on today.
+   6 study days
+   1 break day
+   6 study days
+   1 break day
+   etc.
+
+   The cycle starts from the student's
+   actual study-plan start date.
 */
 
-function isCalendarBreakDay(date) {
+function getStudyPlanStartDate() {
 
-    if (
-        !studyPlan.examDate
-    ) {
+    /*
+       First try to use a saved start date.
+    */
 
-        return false;
+    if (studyPlan.studyStartDate) {
+
+        const start =
+            new Date(
+                studyPlan.studyStartDate
+            );
+
+        if (
+            !isNaN(
+                start.getTime()
+            )
+        ) {
+
+            start.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+            return start;
+
+        }
 
     }
 
+
+    /*
+       If the study plan doesn't already
+       have a start date, use today.
+
+       Save it so the cycle does not
+       shift every time the dashboard
+       is opened.
+    */
 
     const today =
         new Date();
@@ -1697,6 +1734,30 @@ function isCalendarBreakDay(date) {
         0,
         0
     );
+
+
+    studyPlan.studyStartDate =
+        today.toISOString()
+            .split("T")[0];
+
+
+    localStorage.setItem(
+        "studyMindPlan",
+        JSON.stringify(
+            studyPlan
+        )
+    );
+
+
+    return today;
+
+}
+
+
+function isCalendarBreakDay(date) {
+
+    const startDate =
+        getStudyPlanStartDate();
 
 
     const currentDate =
@@ -1711,12 +1772,13 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Days before today are not
-       automatically marked as breaks.
+       Dates before the study plan
+       are not part of the study cycle.
     */
 
     if (
-        currentDate < today
+        currentDate <
+        startDate
     ) {
 
         return false;
@@ -1725,37 +1787,48 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Exam date should never become
-       a break day.
+       Exam date is never a break day.
     */
 
-    const exam =
-        new Date(
-            studyPlan.examDate
-        );
-
-    exam.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-
     if (
-        currentDate >= exam
+        studyPlan.examDate
     ) {
 
-        return false;
+        const exam =
+            new Date(
+                studyPlan.examDate
+            );
+
+        exam.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+
+        if (
+            currentDate >=
+            exam
+        ) {
+
+            return false;
+
+        }
 
     }
 
+
+    /*
+       Calculate how many days have
+       passed since the study plan began.
+    */
 
     const difference =
         Math.floor(
             (
                 currentDate.getTime() -
-                today.getTime()
+                startDate.getTime()
             ) /
             (
                 1000 *
@@ -1767,13 +1840,19 @@ function isCalendarBreakDay(date) {
 
 
     /*
-       Every 7th day is a break.
+       Study cycle:
 
-       0–5 = study
-       6   = break
-       7–12 = study
-       13  = break
-       etc.
+       Day 0 → Study
+       Day 1 → Study
+       Day 2 → Study
+       Day 3 → Study
+       Day 4 → Study
+       Day 5 → Study
+       Day 6 → BREAK
+
+       Day 7 → Study
+       ...
+       Day 13 → BREAK
     */
 
     return (
