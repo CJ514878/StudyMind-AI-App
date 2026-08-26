@@ -1,8 +1,9 @@
+```css
 /* ============================================================
    STUDYMIND AI
    COMPLETE STYLE.CSS
    Professional Dark Navy UI
-   Upgraded Professional Button System
+   Upgraded Timer / Pause / Reset / Checkbox Controls
 ============================================================ */
 
 /* ============================================================
@@ -229,7 +230,13 @@ img {
 .home-signup-button,
 #themeButton,
 .calendar-header button,
-.subject-check {
+.subject-check,
+#timerButton,
+#pauseButton,
+#resetButton,
+.timer-button,
+.pause-button,
+.reset-button {
 
     -webkit-tap-highlight-color: transparent;
 
@@ -986,28 +993,41 @@ img {
 }
 
 
-/* PROFESSIONAL CHECK BUTTON */
+/* ============================================================
+   15. PROFESSIONAL CHECKBOX BUTTON
+============================================================ */
 
 .subject-check {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
 
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 
     flex-shrink: 0;
 
+    position: relative;
+
     border: 1px solid #334155;
 
-    background: #111b2d;
+    background:
+        linear-gradient(
+            180deg,
+            #17243a 0%,
+            #111b2d 100%
+        );
 
-    color: #94a3b8;
+    color: #64748b;
 
-    border-radius: 8px;
+    border-radius: 9px;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
     transition:
         background 0.2s ease,
@@ -1018,36 +1038,62 @@ img {
 }
 
 .subject-check:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #203454 0%,
+            #172a49 100%
+        );
+
     border-color: #3b82f6;
 
-    background: #172a49;
+    color: #dbeafe;
 
-    color: #ffffff;
-
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 
     box-shadow:
-        0 5px 14px rgba(37, 99, 235, 0.18);
+        0 8px 18px rgba(37, 99, 235, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .subject-check:active {
     transform: translateY(0);
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.16);
 }
 
 .subject-item.completed .subject-check {
     background:
         linear-gradient(
             180deg,
-            #4ade80,
-            #22c55e
+            #4ade80 0%,
+            #16a34a 100%
         );
 
-    border-color: #22c55e;
+    border-color: rgba(74, 222, 128, 0.55);
 
     color: #ffffff;
 
     box-shadow:
-        0 5px 14px rgba(34, 197, 94, 0.18);
+        0 7px 18px rgba(34, 197, 94, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.subject-item.completed .subject-check:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #86efac 0%,
+            #22c55e 100%
+        );
+
+    border-color: rgba(134, 239, 172, 0.65);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 9px 22px rgba(34, 197, 94, 0.28);
 }
 
 .subject-item.completed strong {
@@ -1057,7 +1103,7 @@ img {
 
 
 /* ============================================================
-   15. STREAK
+   16. STREAK
 ============================================================ */
 
 #streak {
@@ -1080,7 +1126,7 @@ img {
 
 
 /* ============================================================
-   16. STUDY SCORE
+   17. STUDY SCORE
 ============================================================ */
 
 .study-score-card {
@@ -1136,7 +1182,7 @@ img {
 
 
 /* ============================================================
-   17. AI ASSISTANT
+   18. AI ASSISTANT
 ============================================================ */
 
 .ai-assistant-card {
@@ -1250,7 +1296,7 @@ img {
 
 
 /* ============================================================
-   18. AI RESPONSE
+   19. AI RESPONSE
 ============================================================ */
 
 .ai-response {
@@ -1356,7 +1402,7 @@ img {
 
 
 /* ============================================================
-   19. LARGE CALENDAR
+   20. LARGE CALENDAR
 ============================================================ */
 
 .calendar-panel {
@@ -1380,7 +1426,7 @@ img {
 
 
 /* ============================================================
-   20. CALENDAR HEADER
+   21. CALENDAR HEADER
 ============================================================ */
 
 .calendar-header {
@@ -1408,9 +1454,6 @@ img {
 
     letter-spacing: -0.6px;
 }
-
-
-/* PROFESSIONAL CALENDAR NAV BUTTONS */
 
 .calendar-header button {
     width: 46px;
@@ -1458,7 +1501,7 @@ img {
 
 
 /* ============================================================
-   21. CALENDAR WEEKDAYS
+   22. CALENDAR WEEKDAYS
 ============================================================ */
 
 .calendar-weekdays {
@@ -1489,7 +1532,7 @@ img {
 
 
 /* ============================================================
-   22. CALENDAR GRID
+   23. CALENDAR GRID
 ============================================================ */
 
 .calendar-days {
@@ -1506,7 +1549,7 @@ img {
 
 
 /* ============================================================
-   23. CALENDAR DAY
+   24. CALENDAR DAY
 ============================================================ */
 
 .calendar-day {
@@ -1547,21 +1590,10 @@ img {
     font-weight: 700;
 }
 
-
-/* ============================================================
-   24. OTHER MONTH
-============================================================ */
-
 .calendar-day.other-month {
     opacity: 0.25;
-
     background: #0b1423;
 }
-
-
-/* ============================================================
-   25. TODAY
-============================================================ */
 
 .calendar-day.today {
     background:
@@ -1580,11 +1612,6 @@ img {
 .calendar-day.today .day-number {
     color: #60a5fa;
 }
-
-
-/* ============================================================
-   26. STUDY DAY
-============================================================ */
 
 .calendar-day.study-day {
     background:
@@ -1616,11 +1643,6 @@ img {
         0 0 8px rgba(59, 130, 246, 0.4);
 }
 
-
-/* ============================================================
-   27. COMPLETED DAY
-============================================================ */
-
 .calendar-day.completed-day {
     background:
         linear-gradient(
@@ -1646,11 +1668,6 @@ img {
 
     font-weight: 800;
 }
-
-
-/* ============================================================
-   28. EXAM DAY
-============================================================ */
 
 .calendar-day.exam-day {
     background:
@@ -1680,11 +1697,6 @@ img {
     letter-spacing: 0.8px;
 }
 
-
-/* ============================================================
-   29. BREAK DAY
-============================================================ */
-
 .calendar-day.break-day {
     background:
         linear-gradient(
@@ -1698,7 +1710,7 @@ img {
 
 
 /* ============================================================
-   30. CALENDAR LEGEND
+   25. CALENDAR LEGEND
 ============================================================ */
 
 .calendar-legend {
@@ -1767,14 +1779,12 @@ img {
 
 
 /* ============================================================
-   31. SCHEDULE
+   26. SCHEDULE
 ============================================================ */
 
 .schedule-list {
     display: flex;
-
     flex-direction: column;
-
     gap: 10px;
 }
 
@@ -1838,7 +1848,223 @@ img {
 
 
 /* ============================================================
-   32. CONTACT SECTION
+   27. PROFESSIONAL STUDY TIMER CONTROLS
+============================================================ */
+
+/* Timer / start button */
+
+#timerButton,
+.timer-button {
+    min-height: 44px;
+
+    padding: 10px 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px solid rgba(96, 165, 250, 0.28);
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #3b82f6 0%,
+            #2563eb 100%
+        );
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    letter-spacing: -0.1px;
+
+    box-shadow:
+        0 6px 18px rgba(37, 99, 235, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#timerButton:hover,
+.timer-button:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #60a5fa 0%,
+            #3b82f6 100%
+        );
+
+    border-color: rgba(147, 197, 253, 0.5);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 11px 25px rgba(37, 99, 235, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+#timerButton:active,
+.timer-button:active {
+    transform: translateY(0);
+
+    box-shadow:
+        0 5px 14px rgba(37, 99, 235, 0.18);
+}
+
+
+/* Pause */
+
+#pauseButton,
+.pause-button {
+    min-height: 44px;
+
+    padding: 10px 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #1b2940 0%,
+            #111b2d 100%
+        );
+
+    color: #dbeafe;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#pauseButton:hover,
+.pause-button:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #263a59 0%,
+            #172a49 100%
+        );
+
+    border-color: #3b82f6;
+
+    color: #ffffff;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 9px 20px rgba(37, 99, 235, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#pauseButton:active,
+.pause-button:active {
+    transform: translateY(0);
+
+    box-shadow:
+        0 4px 11px rgba(0, 0, 0, 0.18);
+}
+
+
+/* Reset */
+
+#resetButton,
+.reset-button {
+    min-height: 44px;
+
+    padding: 10px 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px solid rgba(148, 163, 184, 0.22);
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #172235 0%,
+            #0f1929 100%
+        );
+
+    color: #94a3b8;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#resetButton:hover,
+.reset-button:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #263246 0%,
+            #182437 100%
+        );
+
+    border-color: #64748b;
+
+    color: #f1f5f9;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 9px 20px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+#resetButton:active,
+.reset-button:active {
+    transform: translateY(0);
+
+    box-shadow:
+        0 4px 11px rgba(0, 0, 0, 0.15);
+}
+
+
+/* ============================================================
+   28. CONTACT SECTION
 ============================================================ */
 
 .contact-section {
@@ -1899,7 +2125,7 @@ img {
 
 
 /* ============================================================
-   33. CONTACT CARDS
+   29. CONTACT CARDS
 ============================================================ */
 
 .contact-cards {
@@ -2000,7 +2226,7 @@ img {
 
 
 /* ============================================================
-   34. FOOTER
+   30. FOOTER
 ============================================================ */
 
 .site-footer {
@@ -2085,7 +2311,7 @@ img {
 
 
 /* ============================================================
-   35. LIGHT MODE
+   31. LIGHT MODE
 ============================================================ */
 
 body.light-mode {
@@ -2215,7 +2441,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   36. TABLET — 1200px
+   32. TABLET — 1200px
 ============================================================ */
 
 @media (max-width: 1200px) {
@@ -2235,7 +2461,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   37. SMALL TABLET — 950px
+   33. SMALL TABLET — 950px
 ============================================================ */
 
 @media (max-width: 950px) {
@@ -2268,7 +2494,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   38. MOBILE — 700px
+   34. MOBILE — 700px
 ============================================================ */
 
 @media (max-width: 700px) {
@@ -2450,11 +2676,24 @@ body.light-mode .home-login-button {
     .footer-links {
         justify-content: center;
     }
+
+    /* Timer controls on smaller screens */
+
+    #timerButton,
+    #pauseButton,
+    #resetButton,
+    .timer-button,
+    .pause-button,
+    .reset-button {
+        min-height: 42px;
+        padding: 9px 14px;
+        font-size: 12px;
+    }
 }
 
 
 /* ============================================================
-   39. SMALL PHONE — 450px
+   35. SMALL PHONE — 450px
 ============================================================ */
 
 @media (max-width: 450px) {
@@ -2539,11 +2778,31 @@ body.light-mode .home-login-button {
     .primary-button {
         width: 100%;
     }
+
+    /* Compact timer controls */
+
+    #timerButton,
+    #pauseButton,
+    #resetButton,
+    .timer-button,
+    .pause-button,
+    .reset-button {
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: 9px;
+        font-size: 11px;
+    }
+
+    .subject-check {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+    }
 }
 
 
 /* ============================================================
-   40. EXTRA SMALL DEVICES
+   36. EXTRA SMALL DEVICES
 ============================================================ */
 
 @media (max-width: 360px) {
@@ -2584,4 +2843,16 @@ body.light-mode .home-login-button {
     .day-number {
         font-size: 10px;
     }
+
+    #timerButton,
+    #pauseButton,
+    #resetButton,
+    .timer-button,
+    .pause-button,
+    .reset-button {
+        min-height: 38px;
+        padding: 7px 10px;
+        font-size: 10px;
+    }
 }
+```
