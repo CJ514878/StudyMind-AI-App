@@ -1,9 +1,7 @@
-```css
 /* ============================================================
    STUDYMIND AI
    COMPLETE STYLE.CSS
    Professional Dark Navy UI
-   Upgraded Timer / Pause / Reset / Checkbox Controls
 ============================================================ */
 
 /* ============================================================
@@ -230,13 +228,7 @@ img {
 .home-signup-button,
 #themeButton,
 .calendar-header button,
-.subject-check,
-#timerButton,
-#pauseButton,
-#resetButton,
-.timer-button,
-.pause-button,
-.reset-button {
+.subject-check {
 
     -webkit-tap-highlight-color: transparent;
 
@@ -702,14 +694,6 @@ img {
     margin-bottom: 6px;
 }
 
-.dashboard-subtitle {
-    color: #718096;
-
-    font-size: 15px;
-
-    margin-bottom: 30px;
-}
-
 
 /* ============================================================
    10. DASHBOARD STATISTICS
@@ -994,116 +978,7 @@ img {
 
 
 /* ============================================================
-   15. PROFESSIONAL CHECKBOX BUTTON
-============================================================ */
-
-.subject-check {
-    width: 32px;
-    height: 32px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    position: relative;
-
-    border: 1px solid #334155;
-
-    background:
-        linear-gradient(
-            180deg,
-            #17243a 0%,
-            #111b2d 100%
-        );
-
-    color: #64748b;
-
-    border-radius: 9px;
-
-    font-size: 13px;
-    font-weight: 800;
-
-    box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.subject-check:hover {
-    background:
-        linear-gradient(
-            180deg,
-            #203454 0%,
-            #172a49 100%
-        );
-
-    border-color: #3b82f6;
-
-    color: #dbeafe;
-
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 8px 18px rgba(37, 99, 235, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.subject-check:active {
-    transform: translateY(0);
-
-    box-shadow:
-        0 4px 10px rgba(37, 99, 235, 0.16);
-}
-
-.subject-item.completed .subject-check {
-    background:
-        linear-gradient(
-            180deg,
-            #4ade80 0%,
-            #16a34a 100%
-        );
-
-    border-color: rgba(74, 222, 128, 0.55);
-
-    color: #ffffff;
-
-    box-shadow:
-        0 7px 18px rgba(34, 197, 94, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.subject-item.completed .subject-check:hover {
-    background:
-        linear-gradient(
-            180deg,
-            #86efac 0%,
-            #22c55e 100%
-        );
-
-    border-color: rgba(134, 239, 172, 0.65);
-
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 9px 22px rgba(34, 197, 94, 0.28);
-}
-
-.subject-item.completed strong {
-    text-decoration: line-through;
-    opacity: 0.5;
-}
-
-
-/* ============================================================
-   16. STREAK
+   15. STREAK
 ============================================================ */
 
 #streak {
@@ -1126,7 +1001,7 @@ img {
 
 
 /* ============================================================
-   17. STUDY SCORE
+   16. STUDY SCORE
 ============================================================ */
 
 .study-score-card {
@@ -1182,7 +1057,7 @@ img {
 
 
 /* ============================================================
-   18. AI ASSISTANT
+   17. AI ASSISTANT
 ============================================================ */
 
 .ai-assistant-card {
@@ -1296,7 +1171,7 @@ img {
 
 
 /* ============================================================
-   19. AI RESPONSE
+   18. AI RESPONSE
 ============================================================ */
 
 .ai-response {
@@ -1402,7 +1277,7 @@ img {
 
 
 /* ============================================================
-   20. LARGE CALENDAR
+   19. LARGE CALENDAR
 ============================================================ */
 
 .calendar-panel {
@@ -1426,7 +1301,7 @@ img {
 
 
 /* ============================================================
-   21. CALENDAR HEADER
+   20. CALENDAR HEADER
 ============================================================ */
 
 .calendar-header {
@@ -1501,7 +1376,7 @@ img {
 
 
 /* ============================================================
-   22. CALENDAR WEEKDAYS
+   21. CALENDAR WEEKDAYS
 ============================================================ */
 
 .calendar-weekdays {
@@ -1532,7 +1407,7 @@ img {
 
 
 /* ============================================================
-   23. CALENDAR GRID
+   22. CALENDAR GRID
 ============================================================ */
 
 .calendar-days {
@@ -1549,7 +1424,7 @@ img {
 
 
 /* ============================================================
-   24. CALENDAR DAY
+   23. CALENDAR DAY
 ============================================================ */
 
 .calendar-day {
@@ -1590,10 +1465,21 @@ img {
     font-weight: 700;
 }
 
+
+/* ============================================================
+   24. OTHER MONTH
+============================================================ */
+
 .calendar-day.other-month {
     opacity: 0.25;
+
     background: #0b1423;
 }
+
+
+/* ============================================================
+   25. TODAY
+============================================================ */
 
 .calendar-day.today {
     background:
@@ -1612,6 +1498,11 @@ img {
 .calendar-day.today .day-number {
     color: #60a5fa;
 }
+
+
+/* ============================================================
+   26. STUDY DAY
+============================================================ */
 
 .calendar-day.study-day {
     background:
@@ -1643,6 +1534,11 @@ img {
         0 0 8px rgba(59, 130, 246, 0.4);
 }
 
+
+/* ============================================================
+   27. COMPLETED DAY
+============================================================ */
+
 .calendar-day.completed-day {
     background:
         linear-gradient(
@@ -1668,6 +1564,11 @@ img {
 
     font-weight: 800;
 }
+
+
+/* ============================================================
+   28. EXAM DAY
+============================================================ */
 
 .calendar-day.exam-day {
     background:
@@ -1697,6 +1598,11 @@ img {
     letter-spacing: 0.8px;
 }
 
+
+/* ============================================================
+   29. BREAK DAY
+============================================================ */
+
 .calendar-day.break-day {
     background:
         linear-gradient(
@@ -1710,7 +1616,7 @@ img {
 
 
 /* ============================================================
-   25. CALENDAR LEGEND
+   30. CALENDAR LEGEND
 ============================================================ */
 
 .calendar-legend {
@@ -1769,7 +1675,8 @@ img {
     background: #f97316;
 }
 
-.today-color {
+.today-color,
+.today-dot {
     background: #60a5fa;
 }
 
@@ -1779,12 +1686,14 @@ img {
 
 
 /* ============================================================
-   26. SCHEDULE
+   31. SCHEDULE
 ============================================================ */
 
 .schedule-list {
     display: flex;
+
     flex-direction: column;
+
     gap: 10px;
 }
 
@@ -1848,27 +1757,125 @@ img {
 
 
 /* ============================================================
-   27. PROFESSIONAL STUDY TIMER CONTROLS
+   32. PROFESSIONAL STUDY TIMER
+   ONLY TIMER CONTROLS MODIFIED
 ============================================================ */
 
-/* Timer / start button */
+.study-timer-box {
+    margin-top: 24px;
 
-#timerButton,
+    padding: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(37, 99, 235, 0.08),
+            rgba(15, 23, 42, 0.35)
+        );
+
+    border: 1px solid #26364f;
+
+    border-radius: 14px;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.timer-label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #64748b;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+    text-transform: uppercase;
+
+    text-align: center;
+}
+
+.study-timer {
+    color: #f8fafc;
+
+    font-size: 42px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    letter-spacing: -1.5px;
+
+    text-align: center;
+
+    font-variant-numeric: tabular-nums;
+
+    margin: 8px 0 20px;
+
+    text-shadow:
+        0 0 20px rgba(96, 165, 250, 0.08);
+}
+
+.timer-controls {
+    display: grid;
+
+    grid-template-columns: 1.25fr 1fr 1fr;
+
+    gap: 9px;
+
+    width: 100%;
+}
+
 .timer-button {
-    min-height: 44px;
+    min-height: 42px;
 
-    padding: 10px 18px;
+    padding: 10px 12px;
 
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
-    gap: 8px;
+    gap: 7px;
 
-    border: 1px solid rgba(96, 165, 250, 0.28);
+    border-radius: 9px;
 
-    border-radius: 10px;
+    border: 1px solid #293952;
 
+    background: #17243a;
+
+    color: #cbd5e1;
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+    letter-spacing: -0.1px;
+
+    outline: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.timer-button span {
+    font-size: 11px;
+
+    line-height: 1;
+}
+
+.timer-start {
     background:
         linear-gradient(
             180deg,
@@ -1876,26 +1883,16 @@ img {
             #2563eb 100%
         );
 
+    border-color: rgba(96, 165, 250, 0.4);
+
     color: #ffffff;
 
-    font-size: 13px;
-    font-weight: 750;
-
-    letter-spacing: -0.1px;
-
     box-shadow:
-        0 6px 18px rgba(37, 99, 235, 0.18),
+        0 5px 16px rgba(37, 99, 235, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.12);
-
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
 }
 
-#timerButton:hover,
-.timer-button:hover {
+.timer-start:hover {
     background:
         linear-gradient(
             180deg,
@@ -1903,74 +1900,17 @@ img {
             #3b82f6 100%
         );
 
-    border-color: rgba(147, 197, 253, 0.5);
+    border-color: rgba(147, 197, 253, 0.55);
 
     transform: translateY(-2px);
 
     box-shadow:
-        0 11px 25px rgba(37, 99, 235, 0.28),
+        0 9px 22px rgba(37, 99, 235, 0.27),
         inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
-#timerButton:active,
-.timer-button:active {
-    transform: translateY(0);
-
-    box-shadow:
-        0 5px 14px rgba(37, 99, 235, 0.18);
-}
-
-
-/* Pause */
-
-#pauseButton,
-.pause-button {
-    min-height: 44px;
-
-    padding: 10px 18px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 8px;
-
-    border: 1px solid #334155;
-
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #1b2940 0%,
-            #111b2d 100%
-        );
-
-    color: #dbeafe;
-
-    font-size: 13px;
-    font-weight: 750;
-
-    box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-#pauseButton:hover,
-.pause-button:hover {
-    background:
-        linear-gradient(
-            180deg,
-            #263a59 0%,
-            #172a49 100%
-        );
+.timer-pause:hover:not(:disabled) {
+    background: #1e304c;
 
     border-color: #3b82f6;
 
@@ -1979,52 +1919,116 @@ img {
     transform: translateY(-2px);
 
     box-shadow:
-        0 9px 20px rgba(37, 99, 235, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        0 7px 18px rgba(37, 99, 235, 0.14);
 }
 
-#pauseButton:active,
-.pause-button:active {
+.timer-reset:hover {
+    background: #1e293b;
+
+    border-color: #475569;
+
+    color: #f1f5f9;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 18px rgba(0, 0, 0, 0.2);
+}
+
+.timer-button:active:not(:disabled) {
     transform: translateY(0);
 
     box-shadow:
-        0 4px 11px rgba(0, 0, 0, 0.18);
+        0 3px 9px rgba(0, 0, 0, 0.15);
+}
+
+.timer-button:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.42;
+
+    background: #111b2d;
+
+    border-color: #263449;
+
+    color: #64748b;
+
+    box-shadow: none;
 }
 
 
-/* Reset */
+/* ============================================================
+   33. PROFESSIONAL TOPIC CHECKBOX
+   ONLY TOPIC CHECKBOX MODIFIED
+============================================================ */
 
-#resetButton,
-.reset-button {
-    min-height: 44px;
+.topic-completion-area {
+    margin-top: 18px;
 
-    padding: 10px 18px;
+    padding: 16px;
 
-    display: inline-flex;
+    background: #0e1829;
+
+    border: 1px solid #1c2a40;
+
+    border-radius: 12px;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.topic-completion-area:hover {
+    border-color: #2d4770;
+}
+
+.topic-checkbox-label {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    cursor: pointer;
+
+    user-select: none;
+}
+
+.topic-checkbox-label input {
+    position: absolute;
+
+    opacity: 0;
+
+    width: 1px;
+    height: 1px;
+}
+
+.custom-topic-checkbox {
+    width: 24px;
+    height: 24px;
+
+    flex: 0 0 24px;
+
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    gap: 8px;
+    border: 1px solid #3b4c65;
 
-    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 7px;
 
-    border-radius: 10px;
+    background: #111b2d;
 
-    background:
-        linear-gradient(
-            180deg,
-            #172235 0%,
-            #0f1929 100%
-        );
-
-    color: #94a3b8;
+    color: transparent;
 
     font-size: 13px;
-    font-weight: 750;
+
+    font-weight: 900;
 
     box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        inset 0 1px 0 rgba(255, 255, 255, 0.035);
 
     transition:
         background 0.2s ease,
@@ -2034,37 +2038,78 @@ img {
         box-shadow 0.2s ease;
 }
 
-#resetButton:hover,
-.reset-button:hover {
+.topic-checkbox-label:hover .custom-topic-checkbox {
+    border-color: #60a5fa;
+
+    background: #172a49;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(37, 99, 235, 0.15);
+}
+
+.topic-checkbox-label input:focus-visible + .custom-topic-checkbox {
+    outline: 2px solid rgba(96, 165, 250, 0.55);
+
+    outline-offset: 3px;
+}
+
+.topic-checkbox-label input:checked + .custom-topic-checkbox {
     background:
         linear-gradient(
             180deg,
-            #263246 0%,
-            #182437 100%
+            #4ade80 0%,
+            #22c55e 100%
         );
 
-    border-color: #64748b;
+    border-color: #22c55e;
 
-    color: #f1f5f9;
-
-    transform: translateY(-2px);
+    color: #ffffff;
 
     box-shadow:
-        0 9px 20px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        0 6px 16px rgba(34, 197, 94, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+    transform: scale(1.02);
 }
 
-#resetButton:active,
-.reset-button:active {
-    transform: translateY(0);
+.topic-checkbox-text {
+    color: #cbd5e1;
 
-    box-shadow:
-        0 4px 11px rgba(0, 0, 0, 0.15);
+    font-size: 12px;
+
+    font-weight: 650;
+
+    line-height: 1.4;
+}
+
+.topic-completion-area:has(
+    .topic-checkbox-label input:checked
+) {
+    border-color: rgba(34, 197, 94, 0.28);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.06),
+            #0e1829
+        );
+}
+
+#topicCompletionMessage {
+    margin: 9px 0 0 35px;
+
+    color: #64748b;
+
+    font-size: 10px;
+
+    line-height: 1.5;
 }
 
 
 /* ============================================================
-   28. CONTACT SECTION
+   34. CONTACT SECTION
 ============================================================ */
 
 .contact-section {
@@ -2125,7 +2170,7 @@ img {
 
 
 /* ============================================================
-   29. CONTACT CARDS
+   35. CONTACT CARDS
 ============================================================ */
 
 .contact-cards {
@@ -2226,7 +2271,7 @@ img {
 
 
 /* ============================================================
-   30. FOOTER
+   36. FOOTER
 ============================================================ */
 
 .site-footer {
@@ -2311,7 +2356,7 @@ img {
 
 
 /* ============================================================
-   31. LIGHT MODE
+   37. LIGHT MODE
 ============================================================ */
 
 body.light-mode {
@@ -2441,7 +2486,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   32. TABLET — 1200px
+   38. TABLET — 1200px
 ============================================================ */
 
 @media (max-width: 1200px) {
@@ -2461,7 +2506,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   33. SMALL TABLET — 950px
+   39. SMALL TABLET — 950px
 ============================================================ */
 
 @media (max-width: 950px) {
@@ -2494,7 +2539,7 @@ body.light-mode .home-login-button {
 
 
 /* ============================================================
-   34. MOBILE — 700px
+   40. MOBILE — 700px
 ============================================================ */
 
 @media (max-width: 700px) {
@@ -2677,23 +2722,34 @@ body.light-mode .home-login-button {
         justify-content: center;
     }
 
-    /* Timer controls on smaller screens */
+    /* TIMER MOBILE */
 
-    #timerButton,
-    #pauseButton,
-    #resetButton,
-    .timer-button,
-    .pause-button,
-    .reset-button {
-        min-height: 42px;
-        padding: 9px 14px;
-        font-size: 12px;
+    .study-timer-box {
+        padding: 18px;
+    }
+
+    .study-timer {
+        font-size: 36px;
+    }
+
+    .timer-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .timer-button {
+        width: 100%;
+    }
+
+    #topicCompletionMessage {
+        margin-left: 0;
+        padding-left: 35px;
     }
 }
 
 
 /* ============================================================
-   35. SMALL PHONE — 450px
+   41. SMALL PHONE — 450px
 ============================================================ */
 
 @media (max-width: 450px) {
@@ -2779,30 +2835,18 @@ body.light-mode .home-login-button {
         width: 100%;
     }
 
-    /* Compact timer controls */
-
-    #timerButton,
-    #pauseButton,
-    #resetButton,
-    .timer-button,
-    .pause-button,
-    .reset-button {
-        min-height: 40px;
-        padding: 8px 12px;
-        border-radius: 9px;
-        font-size: 11px;
+    .study-timer {
+        font-size: 32px;
     }
 
-    .subject-check {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
+    .topic-checkbox-text {
+        font-size: 11px;
     }
 }
 
 
 /* ============================================================
-   36. EXTRA SMALL DEVICES
+   42. EXTRA SMALL DEVICES
 ============================================================ */
 
 @media (max-width: 360px) {
@@ -2843,16 +2887,5 @@ body.light-mode .home-login-button {
     .day-number {
         font-size: 10px;
     }
-
-    #timerButton,
-    #pauseButton,
-    #resetButton,
-    .timer-button,
-    .pause-button,
-    .reset-button {
-        min-height: 38px;
-        padding: 7px 10px;
-        font-size: 10px;
-    }
 }
-```
+
