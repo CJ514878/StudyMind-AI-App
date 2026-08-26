@@ -4,9 +4,8 @@
    Professional Dark Navy UI
 ============================================================ */
 
-
 /* ============================================================
-   1. GLOBAL
+   1. GLOBAL RESET
 ============================================================ */
 
 * {
@@ -21,7 +20,6 @@ html {
 
 body {
     min-height: 100vh;
-
     font-family:
         Inter,
         -apple-system,
@@ -32,7 +30,6 @@ body {
 
     background: #0b1220;
     color: #f8fafc;
-
     line-height: 1.6;
 }
 
@@ -48,8 +45,8 @@ button {
 }
 
 a {
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
 }
 
 img {
@@ -64,8 +61,7 @@ img {
 
 .navbar {
     width: 100%;
-    height: 74px;
-
+    min-height: 74px;
     padding: 0 6%;
 
     display: flex;
@@ -77,37 +73,31 @@ img {
     z-index: 1000;
 
     background: rgba(11, 18, 32, 0.94);
-
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 
     backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
 .logo {
     color: #ffffff;
-
     font-size: 23px;
     font-weight: 800;
-
     letter-spacing: -0.6px;
 }
 
 .nav-links {
     display: flex;
     align-items: center;
-
     gap: 30px;
-
     list-style: none;
 }
 
 .nav-links a {
     color: #94a3b8;
-
     font-size: 14px;
     font-weight: 600;
-
-    transition: 0.2s ease;
+    transition: color 0.2s ease;
 }
 
 .nav-links a:hover {
@@ -116,13 +106,10 @@ img {
 
 #themeButton {
     border: 1px solid #26344d;
-
     background: #111b2d;
-
     color: #cbd5e1;
 
     padding: 9px 15px;
-
     border-radius: 9px;
 
     font-size: 13px;
@@ -143,17 +130,16 @@ img {
 
 .hero {
     min-height: 680px;
-
     padding: 110px 7%;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    text-align: center;
-
     position: relative;
     overflow: hidden;
+
+    text-align: center;
 }
 
 .hero::before {
@@ -172,9 +158,11 @@ img {
     background: rgba(37, 99, 235, 0.12);
 
     filter: blur(100px);
+    pointer-events: none;
 }
 
 .hero-content {
+    width: 100%;
     max-width: 850px;
 
     position: relative;
@@ -185,7 +173,6 @@ img {
     color: #f8fafc;
 
     font-size: clamp(48px, 7vw, 82px);
-
     line-height: 1.03;
 
     letter-spacing: -3px;
@@ -212,7 +199,6 @@ img {
     border: none;
 
     background: #2563eb;
-
     color: #ffffff;
 
     padding: 14px 25px;
@@ -221,13 +207,15 @@ img {
 
     font-weight: 700;
 
-    transition: 0.2s ease;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .start-button:hover,
 .primary-button:hover {
     background: #3b82f6;
-
     transform: translateY(-2px);
 
     box-shadow:
@@ -236,12 +224,65 @@ img {
 
 
 /* ============================================================
-   4. FEATURES
+   4. AUTH BUTTONS
+============================================================ */
+
+.auth-home-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 15px;
+
+    margin-top: 25px;
+    margin-bottom: 20px;
+}
+
+.home-login-button,
+.home-signup-button {
+    display: inline-block;
+
+    padding: 12px 26px;
+
+    border-radius: 8px;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    transition: 0.25s ease;
+}
+
+.home-login-button {
+    background: transparent;
+    color: #ffffff;
+
+    border: 1px solid #334155;
+}
+
+.home-login-button:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+.home-signup-button {
+    background: #22c55e;
+    color: #ffffff;
+
+    border: 1px solid #22c55e;
+}
+
+.home-signup-button:hover {
+    background: #16a34a;
+    border-color: #16a34a;
+}
+
+
+/* ============================================================
+   5. FEATURES
 ============================================================ */
 
 .features {
     padding: 100px 7%;
-
     background: #0f192b;
 }
 
@@ -252,6 +293,7 @@ img {
     color: #f8fafc;
 
     font-size: 40px;
+    line-height: 1.2;
 
     letter-spacing: -1px;
 
@@ -260,11 +302,13 @@ img {
 
 .features > p,
 .how-it-works > p {
+    max-width: 700px;
+
+    margin: 0 auto 50px;
+
     text-align: center;
 
     color: #94a3b8;
-
-    margin-bottom: 50px;
 }
 
 .features-grid {
@@ -289,7 +333,9 @@ img {
 
     border-radius: 16px;
 
-    transition: 0.25s ease;
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease;
 }
 
 .feature-card:hover,
@@ -315,7 +361,7 @@ img {
 
 
 /* ============================================================
-   5. GENERATOR
+   6. GENERATOR
 ============================================================ */
 
 .generator-section {
@@ -324,7 +370,6 @@ img {
 
 .generator-container {
     width: min(850px, 100%);
-
     margin: auto;
 }
 
@@ -387,6 +432,10 @@ img {
     border-radius: 9px;
 
     outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
@@ -408,10 +457,11 @@ img {
     border-radius: 9px;
 
     background: #2563eb;
-
     color: #ffffff;
 
     font-weight: 700;
+
+    transition: background 0.2s ease;
 }
 
 .generate-button:hover {
@@ -420,12 +470,11 @@ img {
 
 
 /* ============================================================
-   6. HOW IT WORKS
+   7. HOW IT WORKS
 ============================================================ */
 
 .how-it-works {
     padding: 100px 7%;
-
     background: #0f192b;
 }
 
@@ -449,6 +498,15 @@ img {
     border: 1px solid rgba(148, 163, 184, 0.1);
 
     border-radius: 16px;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.35);
 }
 
 .step-number {
@@ -481,15 +539,8 @@ img {
 
 
 /* ============================================================
-   ============================================================
-   7. DASHBOARD
-   ============================================================
-   ============================================================ */
-
-
-/* ------------------------------------------------------------
-   DASHBOARD PAGE
------------------------------------------------------------- */
+   8. DASHBOARD
+============================================================ */
 
 .dashboard-page {
     width: min(1550px, 94%);
@@ -522,15 +573,14 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   TOP STATISTICS
------------------------------------------------------------- */
+/* ============================================================
+   9. DASHBOARD STATISTICS
+============================================================ */
 
 .top-stats {
     display: grid;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     gap: 16px;
 
@@ -550,12 +600,13 @@ img {
 
     border-radius: 14px;
 
-    transition: 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .stat-card:hover {
     border-color: #2d4770;
-
     transform: translateY(-2px);
 }
 
@@ -599,30 +650,22 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   MAIN DASHBOARD
------------------------------------------------------------- */
+/* ============================================================
+   10. MAIN DASHBOARD LAYOUT
+============================================================ */
 
 .main-dashboard {
     display: grid;
 
-    grid-template-columns:
-        310px
-        minmax(0, 1fr);
+    grid-template-columns: 310px minmax(0, 1fr);
 
     gap: 18px;
 
     align-items: start;
 }
 
-
-/* ------------------------------------------------------------
-   LEFT PANEL
------------------------------------------------------------- */
-
 .left-panel {
     display: flex;
-
     flex-direction: column;
 
     gap: 18px;
@@ -631,9 +674,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   GENERAL PANEL
------------------------------------------------------------- */
+/* ============================================================
+   11. GENERAL PANELS
+============================================================ */
 
 .panel-card,
 .calendar-panel {
@@ -663,9 +706,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   PROGRESS
------------------------------------------------------------- */
+/* ============================================================
+   12. PROGRESS CIRCLE
+============================================================ */
 
 .progress-circle {
     width: 150px;
@@ -747,13 +790,12 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   SUBJECTS
------------------------------------------------------------- */
+/* ============================================================
+   13. SUBJECTS
+============================================================ */
 
 .subject-list {
     display: flex;
-
     flex-direction: column;
 
     gap: 8px;
@@ -767,7 +809,6 @@ img {
     padding: 9px 10px;
 
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -777,7 +818,7 @@ img {
 
     border-radius: 9px;
 
-    transition: 0.2s ease;
+    transition: border-color 0.2s ease;
 }
 
 .subject-item:hover {
@@ -786,10 +827,11 @@ img {
 
 .subject-info {
     display: flex;
-
     align-items: center;
 
     gap: 9px;
+
+    min-width: 0;
 }
 
 .subject-info strong {
@@ -820,6 +862,8 @@ img {
     align-items: center;
     justify-content: center;
 
+    flex-shrink: 0;
+
     border: 1px solid #334155;
 
     background: transparent;
@@ -829,30 +873,29 @@ img {
     border-radius: 7px;
 
     font-size: 12px;
+
+    transition: 0.2s ease;
 }
 
 .subject-check:hover {
     border-color: #3b82f6;
-
     background: #172a49;
 }
 
 .subject-item.completed .subject-check {
     background: #22c55e;
-
     border-color: #22c55e;
 }
 
 .subject-item.completed strong {
     text-decoration: line-through;
-
     opacity: 0.5;
 }
 
 
-/* ------------------------------------------------------------
-   STREAK
------------------------------------------------------------- */
+/* ============================================================
+   14. STREAK
+============================================================ */
 
 #streak {
     color: #f8fafc;
@@ -873,13 +916,12 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   STUDY SCORE
------------------------------------------------------------- */
+/* ============================================================
+   15. STUDY SCORE
+============================================================ */
 
 .study-score-card {
     overflow: hidden;
-
     position: relative;
 }
 
@@ -931,7 +973,7 @@ img {
 
 
 /* ============================================================
-   AI ASSISTANT
+   16. AI ASSISTANT
 ============================================================ */
 
 .ai-assistant-card {
@@ -969,14 +1011,12 @@ img {
     border-radius: 8px;
 
     background: #2563eb;
-
     color: #ffffff;
 
     font-size: 12px;
-
     font-weight: 700;
 
-    transition: 0.2s ease;
+    transition: background 0.2s ease;
 }
 
 .ai-analyze-button:hover,
@@ -1056,29 +1096,115 @@ img {
     color: #475569;
 }
 
+
+/* ============================================================
+   17. AI RESPONSE
+============================================================ */
+
 .ai-response {
     min-height: 55px;
 
-    margin-top: 10px;
+    margin-top: 18px;
 
-    padding: 11px;
+    padding: 24px;
 
-    background: #0e1829;
+    background: rgba(15, 23, 42, 0.75);
 
-    border: 1px solid #1c2a40;
+    border: 1px solid rgba(148, 163, 184, 0.14);
 
-    border-radius: 8px;
+    border-radius: 16px;
 
-    color: #718096;
+    color: #cbd5e1;
 
-    font-size: 11px;
+    font-size: 16px;
+
+    line-height: 1.75;
+
+    overflow-wrap: break-word;
+}
+
+.ai-response p {
+    margin: 0 0 16px;
+}
+
+.ai-response p:last-child {
+    margin-bottom: 0;
+}
+
+.ai-response strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.ai-response h2,
+.ai-response h3,
+.ai-response h4 {
+    color: #ffffff;
+
+    margin-top: 22px;
+    margin-bottom: 10px;
+
+    line-height: 1.3;
+}
+
+.ai-response h2 {
+    font-size: 22px;
+}
+
+.ai-response h3 {
+    font-size: 19px;
+}
+
+.ai-response h4 {
+    font-size: 17px;
+}
+
+.ai-response ul,
+.ai-response ol {
+    margin: 10px 0 18px;
+    padding-left: 24px;
+}
+
+.ai-response li {
+    margin: 8px 0;
+    padding-left: 4px;
+}
+
+.ai-response li::marker {
+    color: #60a5fa;
+}
+
+.ai-response .math-block {
+    margin: 20px 0;
+
+    padding: 18px;
+
+    background: rgba(30, 41, 59, 0.7);
+
+    border: 1px solid rgba(96, 165, 250, 0.15);
+
+    border-radius: 12px;
+
+    overflow-x: auto;
+
+    text-align: center;
+}
+
+.ai-response .math-inline {
+    white-space: nowrap;
+}
+
+.ai-response .katex {
+    font-size: 1.05em;
+}
+
+.ai-response .math-block .katex {
+    font-size: 1.15em;
 }
 
 
 /* ============================================================
-   ============================================================
-   LARGE PROFESSIONAL CALENDAR
-   ============================================================
+   18. LARGE CALENDAR
 ============================================================ */
 
 .calendar-panel {
@@ -1095,26 +1221,22 @@ img {
         #121d30;
 }
 
-
-/* Calendar title */
-
 .calendar-panel > h2 {
     font-size: 18px;
-
     margin-bottom: 22px;
 }
 
 
-/* ------------------------------------------------------------
-   CALENDAR HEADER
------------------------------------------------------------- */
+/* ============================================================
+   19. CALENDAR HEADER
+============================================================ */
 
 .calendar-header {
     width: 100%;
 
     display: grid;
 
-    grid-template-columns: 46px 1fr 46px;
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
 
     align-items: center;
 
@@ -1165,14 +1287,14 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   WEEKDAYS
------------------------------------------------------------- */
+/* ============================================================
+   20. CALENDAR WEEKDAYS
+============================================================ */
 
 .calendar-weekdays {
     display: grid;
 
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
 
     gap: 8px;
 
@@ -1196,32 +1318,32 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   CALENDAR GRID
------------------------------------------------------------- */
+/* ============================================================
+   21. CALENDAR GRID
+============================================================ */
 
 .calendar-days {
+    width: 100%;
+
     display: grid;
 
     grid-template-columns: repeat(7, minmax(0, 1fr));
 
-    grid-auto-rows: minmax(100px, 1fr);
+    grid-auto-rows: minmax(105px, 1fr);
 
     gap: 8px;
-
-    width: 100%;
 }
 
 
-/* ------------------------------------------------------------
-   INDIVIDUAL DAY
------------------------------------------------------------- */
+/* ============================================================
+   22. CALENDAR DAY
+============================================================ */
 
 .calendar-day {
     position: relative;
 
     min-width: 0;
-    min-height: 100px;
+    min-height: 105px;
 
     padding: 12px;
 
@@ -1256,9 +1378,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   OTHER MONTH
------------------------------------------------------------- */
+/* ============================================================
+   23. OTHER MONTH
+============================================================ */
 
 .calendar-day.other-month {
     opacity: 0.25;
@@ -1267,9 +1389,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   TODAY
------------------------------------------------------------- */
+/* ============================================================
+   24. TODAY
+============================================================ */
 
 .calendar-day.today {
     background:
@@ -1290,9 +1412,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   STUDY DAY
------------------------------------------------------------- */
+/* ============================================================
+   25. STUDY DAY
+============================================================ */
 
 .calendar-day.study-day {
     background:
@@ -1325,9 +1447,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   COMPLETED
------------------------------------------------------------- */
+/* ============================================================
+   26. COMPLETED DAY
+============================================================ */
 
 .calendar-day.completed-day {
     background:
@@ -1356,9 +1478,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   EXAM
------------------------------------------------------------- */
+/* ============================================================
+   27. EXAM DAY
+============================================================ */
 
 .calendar-day.exam-day {
     background:
@@ -1389,9 +1511,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   BREAK DAY
------------------------------------------------------------- */
+/* ============================================================
+   28. BREAK DAY
+============================================================ */
 
 .calendar-day.break-day {
     background:
@@ -1405,9 +1527,9 @@ img {
 }
 
 
-/* ------------------------------------------------------------
-   CALENDAR LEGEND
------------------------------------------------------------- */
+/* ============================================================
+   29. CALENDAR LEGEND
+============================================================ */
 
 .calendar-legend {
     display: flex;
@@ -1475,7 +1597,7 @@ img {
 
 
 /* ============================================================
-   SCHEDULE
+   30. SCHEDULE
 ============================================================ */
 
 .schedule-list {
@@ -1489,7 +1611,7 @@ img {
 .schedule-item {
     display: grid;
 
-    grid-template-columns: 80px 3px 1fr;
+    grid-template-columns: 80px 3px minmax(0, 1fr);
 
     gap: 12px;
 
@@ -1514,6 +1636,10 @@ img {
     background: #2563eb;
 
     border-radius: 10px;
+}
+
+.schedule-details {
+    min-width: 0;
 }
 
 .schedule-details span {
@@ -1542,18 +1668,263 @@ img {
 
 
 /* ============================================================
-   LIGHT MODE
+   31. CONTACT SECTION
+============================================================ */
+
+.contact-section {
+    padding: 100px 7%;
+
+    background: #0f172a;
+
+    color: #ffffff;
+}
+
+.contact-container {
+    max-width: 1100px;
+
+    margin: 0 auto;
+}
+
+.contact-header {
+    max-width: 700px;
+
+    margin: 0 auto 50px;
+
+    text-align: center;
+}
+
+.contact-header .section-label {
+    display: inline-block;
+
+    margin-bottom: 12px;
+
+    color: #60a5fa;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+.contact-header h2 {
+    margin: 0 0 15px;
+
+    font-size: clamp(32px, 5vw, 48px);
+
+    font-weight: 800;
+
+    line-height: 1.15;
+}
+
+.contact-header p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 17px;
+
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   32. CONTACT CARDS
+============================================================ */
+
+.contact-cards {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 22px;
+
+    max-width: 850px;
+
+    margin: 0 auto;
+}
+
+.contact-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 24px;
+
+    color: #ffffff;
+
+    background: rgba(30, 41, 59, 0.75);
+
+    border: 1px solid rgba(96, 165, 250, 0.16);
+
+    border-radius: 20px;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-5px);
+
+    background: rgba(37, 99, 235, 0.1);
+
+    border-color: rgba(96, 165, 250, 0.45);
+
+    box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+.contact-icon {
+    width: 55px;
+    height: 55px;
+
+    min-width: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background: rgba(37, 99, 235, 0.15);
+
+    font-size: 24px;
+}
+
+.contact-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 0;
+}
+
+.contact-info span {
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+}
+
+.contact-info strong {
+    color: #ffffff;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    word-break: break-word;
+}
+
+
+/* ============================================================
+   33. FOOTER
+============================================================ */
+
+.site-footer {
+    padding: 45px 7% 25px;
+
+    background: #020617;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.12);
+
+    color: #ffffff;
+}
+
+.footer-content {
+    max-width: 1100px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 30px;
+}
+
+.footer-brand h3 {
+    margin: 0 0 7px;
+
+    font-size: 21px;
+}
+
+.footer-brand p {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+.footer-links {
+    display: flex;
+
+    gap: 25px;
+
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #60a5fa;
+}
+
+.footer-bottom {
+    max-width: 1100px;
+
+    margin: 35px auto 0;
+
+    padding-top: 20px;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.1);
+
+    text-align: center;
+}
+
+.footer-bottom p {
+    margin: 0;
+
+    color: #475569;
+
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   34. LIGHT MODE
 ============================================================ */
 
 body.light-mode {
     background: #f5f7fb;
-
     color: #0f172a;
 }
 
 body.light-mode .navbar {
     background: rgba(255, 255, 255, 0.95);
-
     border-color: #e2e8f0;
 }
 
@@ -1563,6 +1934,32 @@ body.light-mode .logo {
 
 body.light-mode .nav-links a {
     color: #475569;
+}
+
+body.light-mode .hero h1,
+body.light-mode .features > h2,
+body.light-mode .how-it-works > h2,
+body.light-mode .generator-container h2 {
+    color: #0f172a;
+}
+
+body.light-mode .features,
+body.light-mode .how-it-works {
+    background: #f1f5f9;
+}
+
+body.light-mode .feature-card,
+body.light-mode .feature-box,
+body.light-mode .step-card,
+body.light-mode .study-form {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+body.light-mode .feature-card h3,
+body.light-mode .feature-box h3,
+body.light-mode .step-card h3 {
+    color: #0f172a;
 }
 
 body.light-mode .dashboard-page > h1 {
@@ -1619,9 +2016,24 @@ body.light-mode #aiQuestion {
     border-color: #e2e8f0;
 }
 
+body.light-mode .contact-section {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+body.light-mode .contact-card {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #e2e8f0;
+}
+
+body.light-mode .contact-info strong {
+    color: #0f172a;
+}
+
 
 /* ============================================================
-   TABLET
+   35. TABLET — 1200px
 ============================================================ */
 
 @media (max-width: 1200px) {
@@ -1631,23 +2043,23 @@ body.light-mode #aiQuestion {
     }
 
     .calendar-days {
-        grid-auto-rows: minmax(85px, 1fr);
+        grid-auto-rows: minmax(90px, 1fr);
     }
 
     .calendar-day {
-        min-height: 85px;
+        min-height: 90px;
     }
 }
 
 
 /* ============================================================
-   SMALL TABLET
+   36. SMALL TABLET — 950px
 ============================================================ */
 
 @media (max-width: 950px) {
 
     .top-stats {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .main-dashboard {
@@ -1657,7 +2069,7 @@ body.light-mode #aiQuestion {
     .left-panel {
         display: grid;
 
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
         align-items: start;
     }
@@ -1665,18 +2077,21 @@ body.light-mode #aiQuestion {
     .calendar-panel {
         grid-column: 1 / -1;
     }
+
+    .features-grid,
+    .steps-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 
 /* ============================================================
-   MOBILE
+   37. MOBILE — 700px
 ============================================================ */
 
 @media (max-width: 700px) {
 
     .navbar {
-        height: auto;
-
         min-height: 70px;
 
         padding: 14px 5%;
@@ -1697,15 +2112,19 @@ body.light-mode #aiQuestion {
     }
 
     .hero {
-        padding: 80px 5%;
-
         min-height: 600px;
+
+        padding: 80px 5%;
     }
 
     .hero h1 {
         font-size: 47px;
 
         letter-spacing: -2px;
+    }
+
+    .hero p {
+        font-size: 16px;
     }
 
     .features,
@@ -1719,6 +2138,12 @@ body.light-mode #aiQuestion {
         grid-template-columns: 1fr;
     }
 
+    .features > h2,
+    .how-it-works > h2,
+    .generator-container h2 {
+        font-size: 32px;
+    }
+
     .dashboard-page {
         width: 92%;
 
@@ -1730,7 +2155,7 @@ body.light-mode #aiQuestion {
     }
 
     .top-stats {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
 
         gap: 10px;
     }
@@ -1754,7 +2179,7 @@ body.light-mode #aiQuestion {
     }
 
     .calendar-header {
-        grid-template-columns: 40px 1fr 40px;
+        grid-template-columns: 40px minmax(0, 1fr) 40px;
 
         gap: 8px;
     }
@@ -1810,14 +2235,72 @@ body.light-mode #aiQuestion {
     .calendar-legend {
         gap: 9px 15px;
     }
+
+    .auth-home-buttons {
+        flex-direction: column;
+
+        width: 100%;
+
+        align-items: stretch;
+    }
+
+    .home-login-button,
+    .home-signup-button {
+        text-align: center;
+    }
+
+    .contact-section {
+        padding: 75px 5%;
+    }
+
+    .contact-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-content {
+        flex-direction: column;
+
+        text-align: center;
+    }
+
+    .footer-links {
+        justify-content: center;
+    }
 }
 
 
 /* ============================================================
-   SMALL PHONE
+   38. SMALL PHONE — 450px
 ============================================================ */
 
 @media (max-width: 450px) {
+
+    .navbar {
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+
+    .logo {
+        font-size: 20px;
+    }
+
+    .nav-links {
+        gap: 13px;
+    }
+
+    .nav-links a {
+        font-size: 12px;
+    }
+
+    .hero h1 {
+        font-size: 39px;
+
+        letter-spacing: -1.5px;
+    }
+
+    .hero p {
+        font-size: 15px;
+    }
 
     .top-stats {
         grid-template-columns: 1fr;
@@ -1855,647 +2338,61 @@ body.light-mode #aiQuestion {
 
         align-items: flex-start;
     }
-}
-/* =========================================
-   AI RESPONSE — PROFESSIONAL NOTES STYLE
-========================================= */
 
-.ai-response {
-    margin-top: 18px;
-    padding: 24px;
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    border-radius: 16px;
-    color: #cbd5e1;
-    font-size: 16px;
-    line-height: 1.75;
-    overflow-wrap: break-word;
-}
+    .schedule-item {
+        grid-template-columns: 65px 3px minmax(0, 1fr);
 
-.ai-response p {
-    margin: 0 0 16px;
-}
-
-.ai-response p:last-child {
-    margin-bottom: 0;
-}
-
-.ai-response strong {
-    color: #ffffff;
-    font-weight: 700;
-}
-
-.ai-response h2,
-.ai-response h3,
-.ai-response h4 {
-    color: #ffffff;
-    margin-top: 22px;
-    margin-bottom: 10px;
-    line-height: 1.3;
-}
-
-.ai-response h2 {
-    font-size: 22px;
-}
-
-.ai-response h3 {
-    font-size: 19px;
-}
-
-.ai-response h4 {
-    font-size: 17px;
-}
-
-.ai-response ul {
-    margin: 10px 0 18px;
-    padding-left: 24px;
-}
-
-.ai-response li {
-    margin: 8px 0;
-    padding-left: 4px;
-}
-
-.ai-response li::marker {
-    color: #60a5fa;
-}
-
-.ai-response .math-block {
-    margin: 20px 0;
-    padding: 18px;
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(96, 165, 250, 0.15);
-    border-radius: 12px;
-    overflow-x: auto;
-    text-align: center;
-}
-
-.ai-response .math-inline {
-    white-space: nowrap;
-}
-
-.ai-response .katex {
-    font-size: 1.05em;
-}
-
-.ai-response .math-block .katex {
-    font-size: 1.15em;
-}
-/* =========================================
-   HOMEPAGE LOGIN / SIGN UP BUTTONS
-========================================= */
-
-.auth-home-buttons {
-    display: flex;
-    gap: 15px;
-    margin-top: 25px;
-    margin-bottom: 20px;
-    align-items: center;
-}
-
-.home-login-button,
-.home-signup-button {
-    display: inline-block;
-    padding: 12px 26px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 16px;
-    transition: 0.25s ease;
-}
-
-
-/* LOGIN */
-
-.home-login-button {
-    background: transparent;
-    color: white;
-    border: 1px solid #334155;
-}
-
-.home-login-button:hover {
-    background: #1e293b;
-}
-
-
-/* SIGN UP */
-
-.home-signup-button {
-    background: #22c55e;
-    color: white;
-    border: 1px solid #22c55e;
-}
-
-.home-signup-button:hover {
-    background: #16a34a;
-    border-color: #16a34a;
-}
-
-
-/* MOBILE */
-
-@media (max-width: 600px) {
-
-    .auth-home-buttons {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
+        gap: 8px;
     }
 
-    .home-login-button,
-    .home-signup-button {
-        text-align: center;
+    .ai-response {
+        padding: 17px;
+
+        font-size: 14px;
+    }
+}
+
+
+/* ============================================================
+   39. EXTRA SMALL DEVICES
+============================================================ */
+
+@media (max-width: 360px) {
+
+    .nav-links {
+        gap: 9px;
     }
 
-}
-
-/* =========================================
-   CONTACT SECTION
-========================================= */
-
-.contact-section {
-    padding: 100px 7%;
-    background: #0f172a;
-    color: white;
-}
-
-.contact-container {
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-.contact-header {
-    text-align: center;
-    max-width: 700px;
-    margin: 0 auto 50px;
-}
-
-.contact-header .section-label {
-    display: inline-block;
-    margin-bottom: 12px;
-    color: #60a5fa;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 2px;
-}
-
-.contact-header h2 {
-    margin: 0 0 15px;
-    font-size: clamp(32px, 5vw, 48px);
-    font-weight: 800;
-}
-
-.contact-header p {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 17px;
-    line-height: 1.7;
-}
-
-
-/* =========================================
-   CONTACT CARDS
-========================================= */
-
-.contact-cards {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 22px;
-    max-width: 850px;
-    margin: 0 auto;
-}
-
-.contact-card {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-
-    padding: 24px;
-
-    text-decoration: none;
-    color: white;
-
-    background: rgba(30, 41, 59, 0.75);
-
-    border: 1px solid rgba(96, 165, 250, 0.16);
-
-    border-radius: 20px;
-
-    transition:
-        transform 0.25s ease,
-        border-color 0.25s ease,
-        background 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-.contact-card:hover {
-    transform: translateY(-5px);
-
-    background: rgba(37, 99, 235, 0.10);
-
-    border-color: rgba(96, 165, 250, 0.45);
-
-    box-shadow:
-        0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-
-/* =========================================
-   CONTACT ICON
-========================================= */
-
-.contact-icon {
-    width: 55px;
-    height: 55px;
-
-    min-width: 55px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 15px;
-
-    background: rgba(37, 99, 235, 0.15);
-
-    font-size: 24px;
-}
-
-
-/* =========================================
-   CONTACT TEXT
-========================================= */
-
-.contact-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-
-.contact-info span {
-    color: #94a3b8;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    letter-spacing: 1px;
-
-    text-transform: uppercase;
-}
-
-.contact-info strong {
-    color: white;
-
-    font-size: 16px;
-
-    font-weight: 700;
-
-    word-break: break-word;
-}
-
-
-/* =========================================
-   FOOTER
-========================================= */
-
-.site-footer {
-    padding: 45px 7% 25px;
-
-    background: #020617;
-
-    border-top:
-        1px solid rgba(148, 163, 184, 0.12);
-
-    color: white;
-}
-
-.footer-content {
-    max-width: 1100px;
-
-    margin: 0 auto;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 30px;
-}
-
-.footer-brand h3 {
-    margin: 0 0 7px;
-
-    font-size: 21px;
-}
-
-.footer-brand p {
-    margin: 0;
-
-    color: #64748b;
-
-    font-size: 14px;
-}
-
-.footer-links {
-    display: flex;
-
-    gap: 25px;
-
-    flex-wrap: wrap;
-}
-
-.footer-links a {
-    color: #94a3b8;
-
-    text-decoration: none;
-
-    font-size: 14px;
-
-    transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-    color: #60a5fa;
-}
-
-.footer-bottom {
-    max-width: 1100px;
-
-    margin: 35px auto 0;
-
-    padding-top: 20px;
-
-    border-top:
-        1px solid rgba(148, 163, 184, 0.10);
-
-    text-align: center;
-}
-
-.footer-bottom p {
-    margin: 0;
-
-    color: #475569;
-
-    font-size: 13px;
-}
-
-
-/* =========================================
-   CONTACT RESPONSIVE
-========================================= */
-
-@media (max-width: 700px) {
-
-    .contact-section {
-        padding: 75px 5%;
+    .nav-links a {
+        font-size: 11px;
     }
 
-    .contact-cards {
-        grid-template-columns: 1fr;
+    .calendar-panel {
+        padding: 13px;
     }
 
-    .footer-content {
-        flex-direction: column;
-
-        text-align: center;
+    .calendar-header {
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
     }
 
-    .footer-links {
-        justify-content: center;
+    .calendar-header button {
+        width: 34px;
+        height: 34px;
+
+        font-size: 18px;
     }
 
-}
-/* =========================================
-   CONTACT SECTION
-========================================= */
-
-.contact-section {
-    padding: 100px 7%;
-    background: #0f172a;
-    color: white;
-}
-
-.contact-container {
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-.contact-header {
-    text-align: center;
-    max-width: 700px;
-    margin: 0 auto 50px;
-}
-
-.contact-header .section-label {
-    display: inline-block;
-    margin-bottom: 12px;
-    color: #60a5fa;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 2px;
-}
-
-.contact-header h2 {
-    margin: 0 0 15px;
-    font-size: clamp(32px, 5vw, 48px);
-    font-weight: 800;
-}
-
-.contact-header p {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 17px;
-    line-height: 1.7;
-}
-
-
-/* =========================================
-   CONTACT CARDS
-========================================= */
-
-.contact-cards {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 22px;
-    max-width: 850px;
-    margin: 0 auto;
-}
-
-.contact-card {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-
-    padding: 24px;
-
-    text-decoration: none;
-    color: white;
-
-    background: rgba(30, 41, 59, 0.75);
-
-    border: 1px solid rgba(96, 165, 250, 0.16);
-
-    border-radius: 20px;
-
-    transition:
-        transform 0.25s ease,
-        border-color 0.25s ease,
-        background 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-.contact-card:hover {
-    transform: translateY(-5px);
-
-    background: rgba(37, 99, 235, 0.10);
-
-    border-color: rgba(96, 165, 250, 0.45);
-
-    box-shadow:
-        0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-
-/* =========================================
-   CONTACT ICON
-========================================= */
-
-.contact-icon {
-    width: 55px;
-    height: 55px;
-    min-width: 55px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 15px;
-
-    background: rgba(37, 99, 235, 0.15);
-
-    font-size: 24px;
-}
-
-
-/* =========================================
-   CONTACT TEXT
-========================================= */
-
-.contact-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-
-.contact-info span {
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.contact-info strong {
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    word-break: break-word;
-}
-
-
-/* =========================================
-   FOOTER
-========================================= */
-
-.site-footer {
-    padding: 45px 7% 25px;
-    background: #020617;
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
-    color: white;
-}
-
-.footer-content {
-    max-width: 1100px;
-    margin: 0 auto;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 30px;
-}
-
-.footer-brand h3 {
-    margin: 0 0 7px;
-    font-size: 21px;
-}
-
-.footer-brand p {
-    margin: 0;
-    color: #64748b;
-    font-size: 14px;
-}
-
-.footer-links {
-    display: flex;
-    gap: 25px;
-    flex-wrap: wrap;
-}
-
-.footer-links a {
-    color: #94a3b8;
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-    color: #60a5fa;
-}
-
-.footer-bottom {
-    max-width: 1100px;
-    margin: 35px auto 0;
-    padding-top: 20px;
-
-    border-top:
-        1px solid rgba(148, 163, 184, 0.10);
-
-    text-align: center;
-}
-
-.footer-bottom p {
-    margin: 0;
-    color: #475569;
-    font-size: 13px;
-}
-
-
-/* =========================================
-   CONTACT RESPONSIVE
-========================================= */
-
-@media (max-width: 700px) {
-
-    .contact-section {
-        padding: 75px 5%;
+    .calendar-header h2 {
+        font-size: 17px;
     }
 
-    .contact-cards {
-        grid-template-columns: 1fr;
+    .calendar-day {
+        min-height: 46px;
+
+        padding: 5px;
     }
 
-    .footer-content {
-        flex-direction: column;
-        text-align: center;
+    .day-number {
+        font-size: 10px;
     }
-
-    .footer-links {
-        justify-content: center;
-    }
-
 }
