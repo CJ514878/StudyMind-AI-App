@@ -1992,29 +1992,19 @@ function renderCalendar() {
         }
 
 
-        if (
-            studyPlan.examDate
-        ) {
+            /*
+               Mark study-plan days.
+            */
 
-            const exam =
+            const planStart =
+                getStudyPlanStartDate();
+
+            const normalizedCurrent =
                 new Date(
-                    studyPlan.examDate
+                    current
                 );
 
-
-            const todayStart =
-                new Date();
-
-
-            todayStart.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-
-            exam.setHours(
+            normalizedCurrent.setHours(
                 0,
                 0,
                 0,
@@ -2023,59 +2013,116 @@ function renderCalendar() {
 
 
             if (
-                current >=
-                    todayStart &&
-                current <=
-                    exam
+                normalizedCurrent >=
+                planStart
             ) {
 
-                day.classList.add(
-                    "study-day"
-                );
+                /*
+                   If an exam date exists,
+                   don't mark dates after it
+                   as study days.
+                */
+
+                if (
+                    studyPlan.examDate
+                ) {
+
+                    const exam =
+                        new Date(
+                            studyPlan.examDate
+                        );
+
+                    exam.setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                    );
+
+
+                    if (
+                        normalizedCurrent <=
+                        exam
+                    ) {
+
+                        day.classList.add(
+                            "study-day"
+                        );
+
+                    }
+
+
+                    /*
+                       Exam day overrides
+                       the normal study day.
+                    */
+
+                    if (
+                        normalizedCurrent
+                            .toDateString() ===
+                        exam.toDateString()
+                    ) {
+
+                        day.classList.remove(
+                            "study-day"
+                        );
+
+                        day.classList.add(
+                            "exam-day"
+                        );
+
+                    }
+
+                }
+
+                else {
+
+                    /*
+                       No exam date:
+                       continue displaying the
+                       study cycle indefinitely.
+                    */
+
+                    day.classList.add(
+                        "study-day"
+                    );
+
+                }
 
             }
 
 
+            /*
+               Mark automatically scheduled
+               break days.
+
+               This is intentionally OUTSIDE
+               the exam-date condition.
+            */
+
             if (
-                current.toDateString() ===
-                exam.toDateString()
+                isCalendarBreakDay(
+                    current
+                )
             ) {
 
                 day.classList.remove(
                     "study-day"
                 );
 
-                day.classList.add(
+                day.classList.remove(
+                    "completed-day"
+                );
+
+                day.classList.remove(
                     "exam-day"
                 );
 
+                day.classList.add(
+                    "break-day"
+                );
+
             }
-           /*
-   Mark automatically scheduled break days.
-*/
-
-if (
-    isCalendarBreakDay(
-        current
-    )
-) {
-
-    day.classList.remove(
-        "study-day"
-    );
-
-    day.classList.remove(
-        "completed-day"
-    );
-
-    day.classList.add(
-        "break-day"
-    );
-
-}
-
-        }
-
 
         const topicTotal =
             studyPlan.topics
