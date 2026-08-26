@@ -2027,11 +2027,21 @@ if (
         }
 
 
-        day.innerHTML = `
-            <span class="day-number">
-                ${date}
-            </span>
-        `;
+    day.innerHTML = `
+    <span class="day-number">
+        ${date}
+    </span>
+
+    ${
+        day.classList.contains("break-day")
+            ? `
+                <span class="break-label">
+                    BREAK
+                </span>
+            `
+            : ""
+    }
+`;
 
 
         calendarDays.appendChild(
