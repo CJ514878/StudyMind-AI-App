@@ -1666,7 +1666,122 @@ function handleTimerFinished() {
 
 let calendarDate =
     new Date();
+/* =========================================
+   CALENDAR BREAK DAYS
+========================================= */
 
+/*
+   StudyMind AI gives the student one full
+   break day after every 6 study days.
+
+   The first study day is based on today.
+*/
+
+function isCalendarBreakDay(date) {
+
+    if (
+        !studyPlan.examDate
+    ) {
+
+        return false;
+
+    }
+
+
+    const today =
+        new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    const currentDate =
+        new Date(date);
+
+    currentDate.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    /*
+       Days before today are not
+       automatically marked as breaks.
+    */
+
+    if (
+        currentDate < today
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+       Exam date should never become
+       a break day.
+    */
+
+    const exam =
+        new Date(
+            studyPlan.examDate
+        );
+
+    exam.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    if (
+        currentDate >= exam
+    ) {
+
+        return false;
+
+    }
+
+
+    const difference =
+        Math.floor(
+            (
+                currentDate.getTime() -
+                today.getTime()
+            ) /
+            (
+                1000 *
+                60 *
+                60 *
+                24
+            )
+        );
+
+
+    /*
+       Every 7th day is a break.
+
+       0–5 = study
+       6   = break
+       7–12 = study
+       13  = break
+       etc.
+    */
+
+    return (
+        difference >= 0 &&
+        difference % 7 === 6
+    );
+
+}
 
 function renderCalendar() {
 
