@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
         });
     }
 
-    // Make sure the API key exists
+    // Check API key
     if (!process.env.OPENAI_API_KEY) {
         console.error("OPENAI_API_KEY is missing.");
 
@@ -72,13 +72,10 @@ FORMATTING RULES:
 3. NEVER create an empty bullet point.
 
 BAD:
-
 - Earth has gravity.
--
 - Gravity affects objects.
 
 GOOD:
-
 - Earth has gravity.
 - Gravity affects objects.
 
@@ -111,7 +108,8 @@ Examples:
 - metres: m
 - seconds: s
 
-9. When writing units inside mathematical equations, use LaTeX formatting where appropriate.
+9. When writing units inside mathematical equations,
+use LaTeX formatting where appropriate.
 
 Example:
 
@@ -121,13 +119,11 @@ g = 9.8\\ \\text{m/s}^2
 
 10. Do not use backticks around normal units or numbers.
 
-BAD:
-
-\\`10 kg\\`
-
-GOOD:
+For example, write:
 
 10 kg
+
+instead of putting 10 kg inside backticks.
 
 11. Use bold text sparingly for important terms.
 
@@ -166,9 +162,11 @@ Use the student's study information when it is provided.
 
 Do not invent information.
 
-If the student asks a simple question such as "1+1", answer it directly.
+If the student asks a simple question such as "1+1",
+answer it directly.
 
-If the student asks for help understanding something, teach it rather than simply giving an unexplained answer.
+If the student asks for help understanding something,
+teach it rather than simply giving an unexplained answer.
 `,
 
             input: message.trim()
@@ -181,12 +179,14 @@ If the student asks for help understanding something, teach it rather than simpl
 
     } catch (error) {
 
-        console.error("StudyMind AI API error:", error);
+        console.error(
+            "StudyMind AI API error:",
+            error
+        );
 
         return res.status(500).json({
             error: "AI API error",
             details: error.message || "Unknown error"
         });
-
     }
 };
