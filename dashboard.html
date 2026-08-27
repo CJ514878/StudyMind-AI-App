@@ -40,10 +40,6 @@
 <body>
 
 
-<!-- =========================
-     NAVIGATION
-========================= -->
-
 <nav class="navbar">
 
     <h2 class="logo">
@@ -84,14 +80,8 @@
 </nav>
 
 
-<!-- =========================
-     DASHBOARD
-========================= -->
-
 <main class="dashboard-page">
 
-
-<!-- DASHBOARD HEADER -->
 
 <div class="dashboard-heading">
 
@@ -122,10 +112,6 @@
 
 </div>
 
-
-<!-- =========================
-     STATISTICS
-========================= -->
 
 <section class="top-stats">
 
@@ -216,23 +202,11 @@
 
 
 
-<!-- =========================
-     MAIN DASHBOARD
-========================= -->
-
 <section class="main-dashboard">
 
 
-<!-- =========================
-     LEFT PANEL
-========================= -->
-
 <div class="left-panel">
 
-
-<!-- =========================
-     CURRENT TOPIC
-========================= -->
 
 <div
     class="panel-card current-topic-card"
@@ -285,17 +259,23 @@
     </p>
 
 
-    <!-- TIMER -->
-
     <div class="study-timer-box">
 
-        <span class="timer-label">
-            STUDY TIMER
-        </span>
+        <div class="timer-header-row">
+            <span class="timer-label">
+                STUDY TIMER
+            </span>
 
-      <div id="studyTimer" class="study-timer">
-    00:00
-</div>
+            <select id="timerDuration" class="timer-select">
+                <option value="25">25 mins (Pomodoro)</option>
+                <option value="45">45 mins</option>
+                <option value="60" selected>60 mins</option>
+            </select>
+        </div>
+
+        <div id="studyTimer" class="study-timer">
+            00:00
+        </div>
 
 
         <div class="timer-controls">
@@ -332,8 +312,6 @@
     </div>
 
 
-    <!-- TOPIC COMPLETION -->
-
     <div
         id="topicCompletionArea"
         class="topic-completion-area"
@@ -368,16 +346,12 @@
     </div>
 
 
-    <!-- NEXT TOPIC -->
-
     <div
         id="nextTopicMessage"
         class="next-topic-message"
     >
     </div>
 
-
-    <!-- FIVE QUESTIONS -->
 
     <div
         id="topicQuestionsSection"
@@ -424,10 +398,6 @@
 
 </div>
 
-
-<!-- =========================
-     PROGRESS
-========================= -->
 
 <div class="panel-card progress-card">
 
@@ -476,10 +446,6 @@
 
 
 
-<!-- =========================
-     TOPICS
-========================= -->
-
 <div class="panel-card">
 
     <div class="card-heading">
@@ -509,10 +475,6 @@
 
 
 
-<!-- =========================
-     SUBJECTS
-========================= -->
-
 <div class="panel-card">
 
     <div class="card-heading">
@@ -541,10 +503,6 @@
 </div>
 
 
-
-<!-- =========================
-     STREAK + SCORE
-========================= -->
 
 <div class="two-small-cards">
 
@@ -609,10 +567,58 @@
 </div>
 
 
+<div class="panel-card summarizer-card">
 
-<!-- =========================
-     AI ASSISTANT
-========================= -->
+    <div class="card-heading">
+
+        <div>
+
+            <span class="card-kicker">
+                AI TOOL
+            </span>
+
+            <h2>
+                📄 Document Summarizer
+            </h2>
+
+        </div>
+
+        <span id="summaryCountBadge" class="card-badge">
+            0/5 used
+        </span>
+
+    </div>
+
+
+    <p>
+        Paste study notes or text to generate an exam-tailored concise summary.
+    </p>
+
+
+    <textarea
+        id="summarizeInput"
+        placeholder="Paste study material or notes here..."
+        rows="4"
+    ></textarea>
+
+
+    <button
+        id="summarizeBtn"
+        class="primary-button full-button"
+    >
+        ✨ Summarize Notes
+    </button>
+
+
+    <div
+        id="summaryOutput"
+        class="ai-response"
+    >
+        Summarized key points will appear here.
+    </div>
+
+</div>
+
 
 <div class="panel-card ai-assistant-card">
 
@@ -629,6 +635,10 @@
             </h2>
 
         </div>
+
+        <span id="aiCountBadge" class="card-badge">
+            0/5 used
+        </span>
 
     </div>
 
@@ -700,16 +710,8 @@
 
 
 
-<!-- =========================
-     RIGHT PANEL
-========================= -->
-
 <div class="right-panel">
 
-
-<!-- =========================
-     CALENDAR
-========================= -->
 
 <div
     class="calendar-panel"
@@ -856,10 +858,6 @@
 
 
 
-<!-- =========================
-     SCHEDULE
-========================= -->
-
 <div
     class="panel-card schedule-card"
     id="schedule"
@@ -908,8 +906,6 @@
 
 <script src="supabase.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
 <script src="dashboard.js"></script>
 
 </body>
