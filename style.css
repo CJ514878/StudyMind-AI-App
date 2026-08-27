@@ -2888,4 +2888,26 @@ body.light-mode .home-login-button {
         font-size: 10px;
     }
 }
+/* =========================================
+   STUDYMIND AI — WIDER DOCUMENT SUMMARIZER
+========================================= */
 
+.summarizer-card {
+    width: 100%;
+}
+
+.summarizer-card textarea {
+    width: 100%;
+    min-height: 180px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.summarizer-card .primary-button {
+    width: 100%;
+}
+
+.summarizer-card .ai-response {
+    width: 100%;
+    box-sizing: border-box;
+}
