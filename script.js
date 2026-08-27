@@ -777,32 +777,41 @@ function generateStudyPlan(
 
     const planData = {
 
-        examType:
-            examType,
+    examType:
+        examType,
 
-        examDate:
-            examDate,
+    examDate:
+        examDate,
 
-        subjects:
-            subjects,
+    subjects:
+        subjects,
 
-        topics:
-            topics,
+    topics:
+        topics,
 
-        studyHours:
-            recommendedHours,
+    studyHours:
+        recommendedHours,
 
-        difficulty:
-            difficulty,
+    difficulty:
+        difficulty,
 
-        daysLeft:
-            daysLeft,
+    daysLeft:
+        daysLeft,
 
-        createdAt:
-            new Date().toISOString()
+    /*
+       The actual calendar date on which
+       this study plan was generated.
+    */
 
-    };
+    studyStartDate:
+        new Date()
+            .toISOString()
+            .split("T")[0],
 
+    createdAt:
+        new Date().toISOString()
+
+};
 
     localStorage.setItem(
         "studyMindPlan",
