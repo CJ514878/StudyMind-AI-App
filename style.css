@@ -2911,3 +2911,60 @@ body.light-mode .home-login-button {
     width: 100%;
     box-sizing: border-box;
 }
+/* =========================================
+   STUDYMIND AI — DOCUMENT SUMMARIZER WIDTH
+========================================= */
+
+.summarizer-card {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+.summarizer-card textarea {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-height: 180px;
+    box-sizing: border-box;
+}
+
+.summarizer-card .full-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Generated summary */
+#summaryOutput {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-top: 18px;
+    line-height: 1.7;
+}
+
+/* Make the generated summary use the available width */
+#summaryOutput .summary-result {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 22px;
+}
+
+/* Make summary text easier to read */
+#summaryOutput p,
+#summaryOutput ul,
+#summaryOutput li {
+    max-width: 100%;
+}
+
+#summaryOutput ul {
+    padding-left: 24px;
+}
+
+#summaryOutput li {
+    margin-bottom: 12px;
+}
