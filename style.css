@@ -2985,9 +2985,6 @@ body.light-mode .home-login-button {
 
 /* Move summarizer out visually from the left-panel
    and make it span both dashboard columns */
-.main-dashboard .left-panel {
-    display: contents;
-}
 
 .summarizer-card {
     grid-column: 1 / -1;
@@ -3031,4 +3028,39 @@ body.light-mode .home-login-button {
 #summaryOutput li {
     margin-bottom: 14px;
     line-height: 1.7;
+}
+/* =========================================
+   STUDYMIND AI — ASK AI INPUT FIX
+========================================= */
+
+.ask-ai-section {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ask-ai-section textarea#aiQuestion {
+    display: block;
+    width: 100%;
+    min-height: 100px;
+    height: 100px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    box-sizing: border-box;
+    resize: vertical;
+    visibility: visible;
+    opacity: 1;
+}
+
+.ask-ai-section .secondary-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#aiResponse {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 60px;
+    margin-top: 15px;
 }
