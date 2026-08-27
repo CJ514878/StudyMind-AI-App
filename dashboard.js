@@ -1,114 +1,103 @@
-/* =========================================================
+/* =========================================
    STUDYMIND AI — DASHBOARD JAVASCRIPT
-   FULL REPLACEMENT VERSION
-   Compatible with the supplied dashboard.html
-========================================================= */
+   FULL VERSION — MATCHED TO DASHBOARD.HTML
+========================================= */
 
 
-/* =========================================================
-   1. AUTHENTICATION
-========================================================= */
+/* =========================================
+   AUTHENTICATION & USER STATE
+========================================= */
 
 let currentUser = null;
 let isAuthenticated = false;
 
 async function checkAuthentication() {
+
     try {
+
         if (
-            typeof supabaseClient === "undefined" ||
-            !supabaseClient ||
-            !supabaseClient.auth
+            typeof supabaseClient !== "undefined" &&
+            supabaseClient.auth
         ) {
-            console.warn("Supabase client not available.");
-            return false;
+
+            const {
+                data: { user },
+                error
+            } = await supabaseClient.auth.getUser();
+
+            if (error || !user) {
+
+                currentUser = null;
+                isAuthenticated = false;
+
+                return false;
+            }
+
+            currentUser = user;
+            isAuthenticated = true;
+
+            return true;
         }
-
-        const {
-            data: { user },
-            error
-        } = await supabaseClient.auth.getUser();
-
-        if (error || !user) {
-            currentUser = null;
-            isAuthenticated = false;
-
-            /*
-                Do not immediately redirect here.
-                This prevents a blank page if Supabase
-                is still restoring the session.
-            */
-
-            return false;
-        }
-
-        currentUser = user;
-        isAuthenticated = true;
-
-        console.log("StudyMind AI: User authenticated.");
-
-        return true;
 
     } catch (error) {
+
         console.error(
-            "StudyMind AI authentication error:",
+            "Authentication check failed:",
             error
         );
-
-        currentUser = null;
-        isAuthenticated = false;
-
-        return false;
     }
+
+    currentUser = null;
+    isAuthenticated = false;
+
+    return false;
 }
 
 
-/* =========================================================
-   2. BASIC DATA
-========================================================= */
+/* =========================================
+   DATE
+========================================= */
 
-const todayDate = new Date();
-
-function getDateString(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-const todayStr = getDateString(todayDate);
+const todayStr =
+    new Date().toISOString().split("T")[0];
 
 
-/* =========================================================
-   3. STUDY PLAN
-========================================================= */
+/* =========================================
+   STUDY PLAN
+========================================= */
 
 let studyPlan = null;
 
 try {
-    const savedPlan = localStorage.getItem("studyMindPlan");
 
-    if (savedPlan) {
-        studyPlan = JSON.parse(savedPlan);
-    }
+    studyPlan =
+        JSON.parse(
+            localStorage.getItem("studyMindPlan")
+        );
+
 } catch (error) {
+
     console.error(
-        "Could not load StudyMind study plan:",
+        "Could not load study plan:",
         error
     );
 }
 
 
-/* ---------------------------------------------------------
-   Default Study Plan
---------------------------------------------------------- */
+/*
+   IMPORTANT:
+   Only use defaults if no plan exists.
+   This prevents the dashboard from
+   replacing the student's actual data.
+*/
 
 if (
     !studyPlan ||
-    typeof studyPlan !== "object" ||
-    Array.isArray(studyPlan)
+    typeof studyPlan !== "object"
 ) {
+
     studyPlan = {
+
         examType: "WAEC",
 
         examDate: null,
@@ -126,7 +115,7 @@ if (
                 name: "Algebraic Processes",
                 subject: "Mathematics",
                 description:
-                    "Quadratic equations and simultaneous linear equations.",
+                    "Quadratic equations and simultaneous linear equations",
                 status: "In Progress"
             },
 
@@ -135,7 +124,7 @@ if (
                 name: "Mechanics & Motion",
                 subject: "Physics",
                 description:
-                    "Newton's laws of motion and kinematics.",
+                    "Newton's laws of motion and kinematics",
                 status: "Not Started"
             },
 
@@ -144,7 +133,7 @@ if (
                 name: "Grammatical Structure",
                 subject: "English Language",
                 description:
-                    "Nouns, pronouns, and subject-verb agreement.",
+                    "Nouns, pronouns and verb agreements",
                 status: "Not Started"
             }
         ],
@@ -165,192 +154,202 @@ if (
 }
 
 
-/* ---------------------------------------------------------
-   Normalize Study Plan
---------------------------------------------------------- */
+/* =========================================
+   NORMALIZE STUDY PLAN DATA
+========================================= */
 
 if (!Array.isArray(studyPlan.subjects)) {
+
     studyPlan.subjects = [];
 }
 
 if (!Array.isArray(studyPlan.topics)) {
+
     studyPlan.topics = [];
 }
 
 if (!studyPlan.studyStartDate) {
+
     studyPlan.studyStartDate = todayStr;
 }
 
-if (!studyPlan.studyHours || Number(studyPlan.studyHours) <= 0) {
+if (
+    studyPlan.studyHours === undefined ||
+    studyPlan.studyHours === null
+) {
+
     studyPlan.studyHours = 2;
 }
 
+if (!studyPlan.examType) {
 
-/* ---------------------------------------------------------
-   Make sure every topic has an ID/status
---------------------------------------------------------- */
-
-studyPlan.topics = studyPlan.topics.map((topic, index) => {
-
-    if (!topic || typeof topic !== "object") {
-        return {
-            id: index + 1,
-            name: `Topic ${index + 1}`,
-            subject: "General",
-            description: "",
-            status: "Not Started"
-        };
-    }
-
-    return {
-        id: topic.id ?? index + 1,
-        name: topic.name || `Topic ${index + 1}`,
-        subject: topic.subject || "General",
-        description: topic.description || "",
-        status: topic.status || "Not Started"
-    };
-});
-
-
-function saveStudyPlan() {
-    localStorage.setItem(
-        "studyMindPlan",
-        JSON.stringify(studyPlan)
-    );
+    studyPlan.examType = "WAEC";
 }
 
+localStorage.setItem(
+    "studyMindPlan",
+    JSON.stringify(studyPlan)
+);
 
-/* =========================================================
-   4. USAGE LIMITS
-========================================================= */
+
+/* =========================================
+   FREE USAGE LIMITS
+========================================= */
 
 const FREE_LIMIT = 5;
 
+
+/* =========================================
+   AI QUESTION USAGE
+========================================= */
+
 let aiQuestionCount =
-    Number(localStorage.getItem("aiQuestionCount")) || 0;
+    Number(
+        localStorage.getItem(
+            "aiQuestionCount"
+        )
+    ) || 0;
+
+
+/* =========================================
+   SUMMARY USAGE
+========================================= */
 
 let summaryUsageCount =
-    Number(localStorage.getItem("summaryUsageCount")) || 0;
+    Number(
+        localStorage.getItem(
+            "summaryUsageCount"
+        )
+    ) || 0;
 
 
-/* =========================================================
-   5. TOPIC PROGRESS
-========================================================= */
+/* =========================================
+   PROGRESS DATA
+========================================= */
 
 let completedTopics = [];
 
 try {
-    const savedCompletedTopics =
+
+    completedTopics =
         JSON.parse(
             localStorage.getItem(
                 "studyMindCompletedTopics"
             )
-        );
+        ) || [];
 
-    if (Array.isArray(savedCompletedTopics)) {
-        completedTopics = savedCompletedTopics;
-    }
-} catch (error) {
+} catch {
+
     completedTopics = [];
 }
 
+if (!Array.isArray(completedTopics)) {
 
-/* ---------------------------------------------------------
-   Current Topic
---------------------------------------------------------- */
+    completedTopics = [];
+}
+
 
 let currentTopicIndex =
     Number(
         localStorage.getItem(
             "studyMindCurrentTopicIndex"
         )
-    );
+    ) || 0;
 
-if (
-    !Number.isInteger(currentTopicIndex) ||
-    currentTopicIndex < 0
-) {
-    currentTopicIndex = 0;
-}
-
-if (
-    studyPlan.topics.length > 0 &&
-    currentTopicIndex >= studyPlan.topics.length
-) {
-    currentTopicIndex = 0;
-}
-
-
-/* ---------------------------------------------------------
-   Study Streak
---------------------------------------------------------- */
 
 let currentStreak =
     Number(
-        localStorage.getItem("studyMindStreak")
+        localStorage.getItem(
+            "studyMindStreak"
+        )
     ) || 1;
 
 
-/* =========================================================
-   6. DOM ELEMENTS
-========================================================= */
+/* =========================================
+   DOM ELEMENTS
+========================================= */
 
 
-/* Dashboard Stats */
+/* ---------- Statistics ---------- */
 
 const weeklyHours =
-    document.getElementById("weeklyHours");
+    document.getElementById(
+        "weeklyHours"
+    );
 
 const daysLeft =
-    document.getElementById("daysLeft");
+    document.getElementById(
+        "daysLeft"
+    );
 
 const dailyGoal =
-    document.getElementById("dailyGoal");
+    document.getElementById(
+        "dailyGoal"
+    );
 
 const studyScore =
-    document.getElementById("studyScore");
-
-const streak =
-    document.getElementById("streak");
-
-
-/* Progress */
-
-const progressBar =
-    document.getElementById("progressBar");
-
-const progressPercent =
-    document.getElementById("progressPercent");
-
-const progressCount =
-    document.getElementById("progressCount");
-
-
-/* Score */
+    document.getElementById(
+        "studyScore"
+    );
 
 const scoreDisplay =
-    document.getElementById("scoreDisplay");
+    document.getElementById(
+        "scoreDisplay"
+    );
 
 const scoreProgressBar =
-    document.getElementById("scoreProgressBar");
+    document.getElementById(
+        "scoreProgressBar"
+    );
 
 const scoreMessage =
-    document.getElementById("scoreMessage");
+    document.getElementById(
+        "scoreMessage"
+    );
+
+const streak =
+    document.getElementById(
+        "streak"
+    );
 
 
-/* Subjects / Topics */
+/* ---------- Progress ---------- */
+
+const progressBar =
+    document.getElementById(
+        "progressBar"
+    );
+
+const progressPercent =
+    document.getElementById(
+        "progressPercent"
+    );
+
+const progressCount =
+    document.getElementById(
+        "progressCount"
+    );
+
+
+/* ---------- Subjects / Topics ---------- */
 
 const subjectList =
-    document.getElementById("subjectList");
+    document.getElementById(
+        "subjectList"
+    );
 
 const topicList =
-    document.getElementById("topicList");
+    document.getElementById(
+        "topicList"
+    );
 
 
-/* Current Topic */
+/* ---------- Current Topic ---------- */
 
 const currentTopicName =
-    document.getElementById("currentTopicName");
+    document.getElementById(
+        "currentTopicName"
+    );
 
 const currentTopicDescription =
     document.getElementById(
@@ -383,7 +382,7 @@ const nextTopicMessage =
     );
 
 
-/* Knowledge Check */
+/* ---------- Topic Questions ---------- */
 
 const topicQuestionsSection =
     document.getElementById(
@@ -406,15 +405,35 @@ const topicQuestionResult =
     );
 
 
-/* Schedule */
+/* ---------- Timer ---------- */
 
-const scheduleList =
+const studyTimer =
     document.getElementById(
-        "scheduleList"
+        "studyTimer"
+    );
+
+const startTimerButton =
+    document.getElementById(
+        "startTimerButton"
+    );
+
+const pauseTimerButton =
+    document.getElementById(
+        "pauseTimerButton"
+    );
+
+const resetTimerButton =
+    document.getElementById(
+        "resetTimerButton"
+    );
+
+const timerDurationSelect =
+    document.getElementById(
+        "timerDuration"
     );
 
 
-/* Calendar */
+/* ---------- Calendar ---------- */
 
 const calendarDays =
     document.getElementById(
@@ -447,35 +466,30 @@ const nextBookingTime =
     );
 
 
-/* Timer */
+/* ---------- Summarizer ---------- */
 
-const studyTimer =
+const summarizeBtn =
     document.getElementById(
-        "studyTimer"
+        "summarizeBtn"
     );
 
-const startTimerButton =
+const summarizeInput =
     document.getElementById(
-        "startTimerButton"
+        "summarizeInput"
     );
 
-const pauseTimerButton =
+const summaryOutput =
     document.getElementById(
-        "pauseTimerButton"
+        "summaryOutput"
     );
 
-const resetTimerButton =
+const summaryCountBadge =
     document.getElementById(
-        "resetTimerButton"
-    );
-
-const timerDurationSelect =
-    document.getElementById(
-        "timerDuration"
+        "summaryCountBadge"
     );
 
 
-/* AI */
+/* ---------- AI Assistant ---------- */
 
 const analyzeProgressButton =
     document.getElementById(
@@ -508,30 +522,7 @@ const aiCountBadge =
     );
 
 
-/* Summarizer */
-
-const summarizeInput =
-    document.getElementById(
-        "summarizeInput"
-    );
-
-const summarizeBtn =
-    document.getElementById(
-        "summarizeBtn"
-    );
-
-const summaryOutput =
-    document.getElementById(
-        "summaryOutput"
-    );
-
-const summaryCountBadge =
-    document.getElementById(
-        "summaryCountBadge"
-    );
-
-
-/* Theme */
+/* ---------- Theme ---------- */
 
 const themeButton =
     document.getElementById(
@@ -539,36 +530,27 @@ const themeButton =
     );
 
 
-/* =========================================================
-   7. DASHBOARD INITIALIZATION
-========================================================= */
+/* =========================================
+   DASHBOARD INITIALIZATION
+========================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        /*
-            Authentication is checked first,
-            but the dashboard is still allowed
-            to render locally if Supabase takes
-            time restoring the session.
-        */
-
         await checkAuthentication();
 
         renderMetrics();
 
-        renderSubjects();
-
-        renderTopics();
+        renderSubjectsAndTopics();
 
         renderCurrentTopic();
+
+        renderProgress();
 
         renderSchedule();
 
         renderCalendar();
-
-        setupCalendarNavigation();
 
         setupTimer();
 
@@ -576,375 +558,302 @@ document.addEventListener(
 
         setupTopicQuestions();
 
+        setupSummarizer();
+
         setupAskAI();
 
         setupProgressAnalysis();
 
-        setupSummarizer();
-
         setupTheme();
 
-        updateNextSession();
+        setupCalendarNavigation();
 
-        console.log(
-            "StudyMind AI dashboard initialized."
-        );
+        updateNextSession();
     }
 );
 
 
-/* =========================================================
-   8. METRICS
-========================================================= */
-
-function calculateCompletedTopics() {
-
-    return completedTopics.length;
-}
-
-
-function calculateProgress() {
-
-    const total =
-        studyPlan.topics.length;
-
-    const completed =
-        calculateCompletedTopics();
-
-    if (total === 0) {
-        return 0;
-    }
-
-    return Math.min(
-        100,
-        Math.round(
-            (completed / total) * 100
-        )
-    );
-}
-
-
-function calculateStudyScore() {
-
-    const progress =
-        calculateProgress();
-
-    const streakBonus =
-        Math.min(
-            currentStreak * 2,
-            20
-        );
-
-    return Math.min(
-        100,
-        Math.round(
-            progress * 0.8 +
-            streakBonus
-        )
-    );
-}
-
+/* =========================================
+   METRICS
+========================================= */
 
 function renderMetrics() {
 
     const hours =
-        Number(studyPlan.studyHours) || 2;
-
-    const calculatedScore =
-        calculateStudyScore();
-
+        Number(
+            studyPlan.studyHours
+        ) || 2;
 
     if (weeklyHours) {
+
         weeklyHours.textContent =
             `${hours * 6} hrs`;
     }
 
-
-    if (daysLeft) {
-
-        let remainingDays =
-            Number(studyPlan.daysLeft);
-
-        if (
-            studyPlan.examDate
-        ) {
-
-            const exam =
-                new Date(
-                    studyPlan.examDate +
-                    "T23:59:59"
-                );
-
-            const now =
-                new Date();
-
-            remainingDays =
-                Math.max(
-                    0,
-                    Math.ceil(
-                        (
-                            exam - now
-                        ) /
-                        86400000
-                    )
-                );
-        }
-
-        if (
-            !Number.isFinite(
-                remainingDays
-            )
-        ) {
-            remainingDays = 30;
-        }
-
-        daysLeft.textContent =
-            remainingDays;
-    }
-
-
     if (dailyGoal) {
+
         dailyGoal.textContent =
             `${hours} hrs/day`;
     }
 
-
-    if (studyScore) {
-        studyScore.textContent =
-            calculatedScore;
-    }
-
+    calculateDaysLeft();
 
     if (streak) {
+
         streak.textContent =
             `${currentStreak} Days 🔥`;
     }
 
+    calculateStudyScore();
+}
 
-    if (progressBar) {
 
-        progressBar.style.width =
-            `${calculateProgress()}%`;
+/* =========================================
+   CALCULATE DAYS LEFT
+========================================= */
+
+function calculateDaysLeft() {
+
+    if (!daysLeft) return;
+
+    if (!studyPlan.examDate) {
+
+        daysLeft.textContent =
+            studyPlan.daysLeft || 0;
+
+        return;
     }
 
+    const today =
+        new Date();
 
-    if (progressPercent) {
+    const exam =
+        new Date(
+            studyPlan.examDate
+        );
 
-        progressPercent.textContent =
-            `${calculateProgress()}%`;
-    }
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    exam.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    const difference =
+        exam - today;
+
+    const days =
+        Math.max(
+            0,
+            Math.ceil(
+                difference /
+                (1000 * 60 * 60 * 24)
+            )
+        );
+
+    daysLeft.textContent =
+        days;
+}
 
 
-    if (progressCount) {
+/* =========================================
+   SUBJECTS & TOPICS
+========================================= */
 
-        progressCount.textContent =
-            `${calculateCompletedTopics()} of ${studyPlan.topics.length} topics completed`;
-    }
+function renderSubjectsAndTopics() {
 
+    /* ---------- Subjects ---------- */
 
-    if (scoreDisplay) {
+    if (subjectList) {
 
-        scoreDisplay.textContent =
-            calculatedScore;
-    }
+        if (
+            studyPlan.subjects.length === 0
+        ) {
 
-
-    if (scoreProgressBar) {
-
-        scoreProgressBar.style.width =
-            `${calculatedScore}%`;
-    }
-
-
-    if (scoreMessage) {
-
-        if (calculatedScore >= 80) {
-
-            scoreMessage.textContent =
-                "Excellent consistency. Keep it going!";
-
-        } else if (calculatedScore >= 50) {
-
-            scoreMessage.textContent =
-                "Good progress. Keep building your momentum.";
+            subjectList.innerHTML =
+                "<p>No subjects added yet.</p>";
 
         } else {
 
-            scoreMessage.textContent =
-                "Start studying to build your score.";
+            subjectList.innerHTML =
+                studyPlan.subjects
+                    .map(
+                        subject => `
+                            <span class="badge badge-primary">
+                                ${escapeHTML(subject)}
+                            </span>
+                        `
+                    )
+                    .join("");
         }
     }
-}
 
 
-/* =========================================================
-   9. SUBJECTS
-========================================================= */
+    /* ---------- Topics ---------- */
 
-function renderSubjects() {
+    if (topicList) {
 
-    if (!subjectList) return;
+        if (
+            studyPlan.topics.length === 0
+        ) {
 
+            topicList.innerHTML =
+                "<p>No topics added yet.</p>";
 
-    if (
-        !studyPlan.subjects ||
-        studyPlan.subjects.length === 0
-    ) {
+        } else {
 
-        subjectList.innerHTML =
-            `<p>No subjects added yet.</p>`;
+            topicList.innerHTML =
+                studyPlan.topics
+                    .map(
+                        (topic, index) => {
 
-        return;
+                            const completed =
+                                isTopicCompleted(
+                                    topic,
+                                    index
+                                );
+
+                            return `
+                                <div
+                                    class="topic-card ${
+                                        index === currentTopicIndex
+                                            ? "active"
+                                            : ""
+                                    } ${
+                                        completed
+                                            ? "completed"
+                                            : ""
+                                    }"
+                                    data-topic-index="${index}"
+                                >
+
+                                    <strong>
+                                        ${escapeHTML(
+                                            topic.name ||
+                                            "Untitled Topic"
+                                        )}
+                                    </strong>
+
+                                    <small>
+                                        (${escapeHTML(
+                                            topic.subject ||
+                                            "General"
+                                        )})
+                                    </small>
+
+                                    <p>
+                                        ${escapeHTML(
+                                            topic.description ||
+                                            "Study this topic and complete the knowledge check."
+                                        )}
+                                    </p>
+
+                                    <span>
+                                        ${
+                                            completed
+                                                ? "Completed ✓"
+                                                : (
+                                                    topic.status ||
+                                                    "In Progress"
+                                                )
+                                        }
+                                    </span>
+
+                                </div>
+                            `;
+                        }
+                    )
+                    .join("");
+        }
     }
 
 
-    subjectList.innerHTML =
-        studyPlan.subjects
-            .map(subject => {
+    /* ---------- Click topic ---------- */
 
-                return `
-                    <div class="badge badge-primary">
-                        ${escapeHTML(subject)}
-                    </div>
-                `;
+    if (topicList) {
 
-            })
-            .join("");
-}
+        const cards =
+            topicList.querySelectorAll(
+                "[data-topic-index]"
+            );
 
+        cards.forEach(card => {
 
-/* =========================================================
-   10. TOPICS
-========================================================= */
+            card.addEventListener(
+                "click",
+                () => {
 
-function renderTopics() {
+                    const index =
+                        Number(
+                            card.dataset.topicIndex
+                        );
 
-    if (!topicList) return;
+                    currentTopicIndex =
+                        index;
 
-
-    if (
-        !studyPlan.topics ||
-        studyPlan.topics.length === 0
-    ) {
-
-        topicList.innerHTML = `
-            <div class="empty-topic">
-                No topics available yet.
-                Create a study plan to add topics.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    topicList.innerHTML =
-        studyPlan.topics
-            .map((topic, index) => {
-
-                const completed =
-                    isTopicCompleted(index);
-
-                return `
-                    <div
-                        class="topic-card
-                        ${index === currentTopicIndex ? "active" : ""}
-                        ${completed ? "completed" : ""}"
-                        data-topic-index="${index}"
-                        style="cursor:pointer;"
-                    >
-
-                        <div>
-                            <strong>
-                                ${escapeHTML(topic.name)}
-                            </strong>
-
-                            <small>
-                                (${escapeHTML(topic.subject)})
-                            </small>
-                        </div>
-
-                        <p>
-                            ${escapeHTML(topic.description)}
-                        </p>
-
-                        <span class="topic-status">
-                            ${
-                                completed
-                                    ? "✓ Completed"
-                                    : escapeHTML(
-                                        topic.status ||
-                                        "Not Started"
-                                    )
-                            }
-                        </span>
-
-                    </div>
-                `;
-
-            })
-            .join("");
-
-
-    /*
-        Clicking a topic makes it the current topic.
-    */
-
-    const cards =
-        topicList.querySelectorAll(
-            "[data-topic-index]"
-        );
-
-    cards.forEach(card => {
-
-        card.addEventListener(
-            "click",
-            () => {
-
-                const index =
-                    Number(
-                        card.dataset.topicIndex
+                    localStorage.setItem(
+                        "studyMindCurrentTopicIndex",
+                        String(
+                            currentTopicIndex
+                        )
                     );
 
-                selectTopic(index);
-            }
-        );
-    });
+                    renderSubjectsAndTopics();
+
+                    renderCurrentTopic();
+                }
+            );
+        });
+    }
 }
 
 
-/* =========================================================
-   11. CURRENT TOPIC
-========================================================= */
+/* =========================================
+   CURRENT TOPIC
+========================================= */
 
 function renderCurrentTopic() {
 
     if (
-        !studyPlan.topics ||
         studyPlan.topics.length === 0
     ) {
 
         if (currentTopicName) {
+
             currentTopicName.textContent =
                 "No topic available";
         }
 
         if (currentTopicDescription) {
+
             currentTopicDescription.textContent =
                 "Create a study plan with topics to begin.";
         }
 
-        if (topicStatusBadge) {
-            topicStatusBadge.textContent =
-                "NOT STARTED";
-        }
-
         if (topicPosition) {
+
             topicPosition.textContent =
                 "TOPIC 0 OF 0";
         }
 
         return;
+    }
+
+
+    if (
+        currentTopicIndex < 0 ||
+        currentTopicIndex >=
+        studyPlan.topics.length
+    ) {
+
+        currentTopicIndex = 0;
     }
 
 
@@ -954,19 +863,11 @@ function renderCurrentTopic() {
         ];
 
 
-    if (!topic) return;
-
-
-    const completed =
-        isTopicCompleted(
-            currentTopicIndex
-        );
-
-
     if (currentTopicName) {
 
         currentTopicName.textContent =
-            topic.name;
+            topic.name ||
+            "Untitled Topic";
     }
 
 
@@ -978,6 +879,24 @@ function renderCurrentTopic() {
     }
 
 
+    if (topicPosition) {
+
+        topicPosition.textContent =
+            `TOPIC ${
+                currentTopicIndex + 1
+            } OF ${
+                studyPlan.topics.length
+            }`;
+    }
+
+
+    const completed =
+        isTopicCompleted(
+            topic,
+            currentTopicIndex
+        );
+
+
     if (topicStatusBadge) {
 
         topicStatusBadge.textContent =
@@ -986,14 +905,7 @@ function renderCurrentTopic() {
                 : (
                     topic.status ||
                     "IN PROGRESS"
-                ).toUpperCase();
-    }
-
-
-    if (topicPosition) {
-
-        topicPosition.textContent =
-            `TOPIC ${currentTopicIndex + 1} OF ${studyPlan.topics.length}`;
+                );
     }
 
 
@@ -1008,44 +920,10 @@ function renderCurrentTopic() {
 
         topicCompletionMessage.textContent =
             completed
-                ? "Topic completed. Great work!"
+                ? "This topic has been completed. Great work!"
                 : "Tick this box when you are done studying this topic.";
     }
 
-
-    if (nextTopicMessage) {
-
-        if (completed) {
-
-            if (
-                currentTopicIndex <
-                studyPlan.topics.length - 1
-            ) {
-
-                nextTopicMessage.innerHTML =
-                    `Next up: <strong>${escapeHTML(
-                        studyPlan.topics[
-                            currentTopicIndex + 1
-                        ].name
-                    )}</strong>`;
-
-            } else {
-
-                nextTopicMessage.innerHTML =
-                    "🎉 You have completed every topic in this study plan!";
-            }
-
-        } else {
-
-            nextTopicMessage.innerHTML =
-                "";
-        }
-    }
-
-
-    /*
-        Hide knowledge check until a topic is completed.
-    */
 
     if (topicQuestionsSection) {
 
@@ -1054,61 +932,28 @@ function renderCurrentTopic() {
                 ? "block"
                 : "none";
     }
+
+
+    renderTopicQuestions();
 }
 
 
-function selectTopic(index) {
-
-    if (
-        index < 0 ||
-        index >= studyPlan.topics.length
-    ) {
-        return;
-    }
-
-
-    currentTopicIndex = index;
-
-
-    localStorage.setItem(
-        "studyMindCurrentTopicIndex",
-        String(currentTopicIndex)
-    );
-
-
-    renderTopics();
-
-    renderCurrentTopic();
-
-    generateTopicQuestions();
-}
-
-
-/* =========================================================
-   12. TOPIC COMPLETION
-========================================================= */
-
-function isTopicCompleted(index) {
-
-    return completedTopics.includes(index);
-}
-
+/* =========================================
+   TOPIC COMPLETION
+========================================= */
 
 function setupTopicCompletion() {
 
     if (!topicCompleteCheckbox) return;
 
-
     topicCompleteCheckbox.addEventListener(
         "change",
         () => {
 
-            const index =
-                currentTopicIndex;
-
             const topic =
-                studyPlan.topics[index];
-
+                studyPlan.topics[
+                    currentTopicIndex
+                ];
 
             if (!topic) return;
 
@@ -1119,1053 +964,324 @@ function setupTopicCompletion() {
 
                 if (
                     !completedTopics.includes(
-                        index
+                        currentTopicIndex
                     )
                 ) {
 
                     completedTopics.push(
-                        index
+                        currentTopicIndex
                     );
                 }
-
 
                 topic.status =
                     "Completed";
 
-
-                /*
-                    Remove duplicates.
-                */
-
-                completedTopics =
-                    [
-                        ...new Set(
-                            completedTopics
-                        )
-                    ];
-
-
-                /*
-                    Keep completed topic
-                    indexes sorted.
-                */
-
-                completedTopics.sort(
-                    (a, b) => a - b
+                localStorage.setItem(
+                    "studyMindCompletedTopics",
+                    JSON.stringify(
+                        completedTopics
+                    )
                 );
 
+                localStorage.setItem(
+                    "studyMindPlan",
+                    JSON.stringify(
+                        studyPlan
+                    )
+                );
+
+                currentStreak =
+                    Math.max(
+                        1,
+                        currentStreak + 1
+                    );
+
+                localStorage.setItem(
+                    "studyMindStreak",
+                    String(
+                        currentStreak
+                    )
+                );
 
                 if (topicCompletionMessage) {
 
                     topicCompletionMessage.textContent =
-                        "Topic completed. Great work!";
+                        "Excellent! Topic completed.";
                 }
 
+                renderProgress();
 
-                /*
-                    Move to next topic after
-                    the user has completed this one.
-                */
+                renderMetrics();
 
-                if (
-                    currentTopicIndex <
-                    studyPlan.topics.length - 1
-                ) {
+                renderSubjectsAndTopics();
 
-                    if (nextTopicMessage) {
+                renderCurrentTopic();
 
-                        nextTopicMessage.innerHTML =
-                            `✓ Completed! Next up: <strong>${escapeHTML(
-                                studyPlan.topics[
-                                    currentTopicIndex + 1
-                                ].name
-                            )}</strong>`;
-                    }
-
-                } else {
-
-                    if (nextTopicMessage) {
-
-                        nextTopicMessage.innerHTML =
-                            "🎉 You completed every topic in this study plan!";
-                    }
-                }
-
-
-                generateTopicQuestions();
-
+                moveToNextTopic();
 
             } else {
 
                 completedTopics =
                     completedTopics.filter(
-                        item =>
-                            item !== index
+                        index =>
+                            index !==
+                            currentTopicIndex
                     );
-
 
                 topic.status =
                     "In Progress";
 
-
-                if (topicCompletionMessage) {
-
-                    topicCompletionMessage.textContent =
-                        "Tick this box when you are done studying this topic.";
-                }
-
-
-                if (nextTopicMessage) {
-                    nextTopicMessage.innerHTML =
-                        "";
-                }
-            }
-
-
-            localStorage.setItem(
-                "studyMindCompletedTopics",
-                JSON.stringify(
-                    completedTopics
-                )
-            );
-
-
-            saveStudyPlan();
-
-            renderMetrics();
-
-            renderTopics();
-
-            renderCurrentTopic();
-
-            updateCalendar();
-
-            updateNextSession();
-        }
-    );
-}
-
-
-/* =========================================================
-   13. KNOWLEDGE CHECK
-========================================================= */
-
-function generateTopicQuestions() {
-
-    if (!topicQuestions) return;
-
-
-    const topic =
-        studyPlan.topics[
-            currentTopicIndex
-        ];
-
-
-    if (!topic) return;
-
-
-    /*
-        These are local questions for now.
-        They can later be replaced by a real
-        AI/API question generator.
-    */
-
-    const questions = [
-        {
-            question:
-                `What is the main idea you should understand when studying ${topic.name}?`,
-            options: [
-                "The fundamental concept and how it is applied",
-                "Only the topic's title",
-                "Nothing beyond memorization",
-                "Only unrelated examples"
-            ],
-            answer: 0
-        },
-
-        {
-            question:
-                `Which approach is most useful when studying ${topic.name}?`,
-            options: [
-                "Understand the concept and practise it",
-                "Skip all examples",
-                "Memorize without understanding",
-                "Avoid revision"
-            ],
-            answer: 0
-        },
-
-        {
-            question:
-                `Why should you practise questions on ${topic.name}?`,
-            options: [
-                "To test understanding and identify weak areas",
-                "To make studying longer",
-                "To avoid learning the topic",
-                "There is no reason"
-            ],
-            answer: 0
-        },
-
-        {
-            question:
-                `What should you do if you struggle with ${topic.name}?`,
-            options: [
-                "Review the concept and practise simpler examples",
-                "Immediately give up",
-                "Skip the entire subject",
-                "Ignore the difficulty"
-            ],
-            answer: 0
-        },
-
-        {
-            question:
-                `How can ${topic.name} help with exam preparation?`,
-            options: [
-                "It helps build knowledge needed to answer related questions",
-                "It guarantees every exam question",
-                "It removes the need to study",
-                "It replaces every other subject"
-            ],
-            answer: 0
-        }
-    ];
-
-
-    topicQuestions.innerHTML =
-        questions.map(
-            (question, index) => {
-
-                return `
-                    <div
-                        class="question-card"
-                        style="margin-bottom:20px;"
-                    >
-
-                        <h3>
-                            ${index + 1}.
-                            ${escapeHTML(
-                                question.question
-                            )}
-                        </h3>
-
-                        <div class="question-options">
-
-                            ${question.options
-                                .map(
-                                    (option, optionIndex) => {
-
-                                        return `
-                                            <label
-                                                style="
-                                                    display:block;
-                                                    margin:8px 0;
-                                                    cursor:pointer;
-                                                "
-                                            >
-
-                                                <input
-                                                    type="radio"
-                                                    name="topicQuestion${index}"
-                                                    value="${optionIndex}"
-                                                >
-
-                                                ${escapeHTML(
-                                                    option
-                                                )}
-
-                                            </label>
-                                        `;
-                                    }
-                                )
-                                .join("")}
-
-                        </div>
-
-                    </div>
-                `;
-            }
-        ).join("");
-
-
-    /*
-        Store answers temporarily on the section.
-    */
-
-    topicQuestions.dataset.answerKey =
-        JSON.stringify(
-            questions.map(
-                question =>
-                    question.answer
-            )
-        );
-}
-
-
-function setupTopicQuestions() {
-
-    if (!submitTopicQuestions) return;
-
-
-    submitTopicQuestions.addEventListener(
-        "click",
-        () => {
-
-            if (!topicQuestions) return;
-
-
-            const answerKey =
-                JSON.parse(
-                    topicQuestions.dataset.answerKey ||
-                    "[]"
+                localStorage.setItem(
+                    "studyMindCompletedTopics",
+                    JSON.stringify(
+                        completedTopics
+                    )
                 );
 
-
-            if (
-                answerKey.length === 0
-            ) {
-                generateTopicQuestions();
-                return;
-            }
-
-
-            let score = 0;
-
-            let answered = 0;
-
-
-            answerKey.forEach(
-                (correctAnswer, index) => {
-
-                    const selected =
-                        document.querySelector(
-                            `input[name="topicQuestion${index}"]:checked`
-                        );
-
-
-                    if (selected) {
-
-                        answered++;
-
-                        if (
-                            Number(
-                                selected.value
-                            ) ===
-                            correctAnswer
-                        ) {
-                            score++;
-                        }
-                    }
-                }
-            );
-
-
-            if (
-                answered < answerKey.length
-            ) {
-
-                alert(
-                    "Please answer all 5 questions before submitting."
+                localStorage.setItem(
+                    "studyMindPlan",
+                    JSON.stringify(
+                        studyPlan
+                    )
                 );
 
-                return;
-            }
+                renderProgress();
 
+                renderMetrics();
 
-            if (topicQuestionResult) {
+                renderSubjectsAndTopics();
 
-                const percentage =
-                    Math.round(
-                        (
-                            score /
-                            answerKey.length
-                        ) *
-                        100
-                    );
-
-
-                topicQuestionResult.innerHTML =
-                    `
-                        <div
-                            class="ai-box"
-                            style="margin-top:15px;"
-                        >
-
-                            <strong>
-                                Knowledge Check Result
-                            </strong>
-
-                            <p>
-                                You scored
-                                ${score}/${answerKey.length}
-                                (${percentage}%).
-                            </p>
-
-                            <p>
-                                ${
-                                    percentage >= 80
-                                        ? "Excellent work! 🎉"
-                                        : percentage >= 60
-                                            ? "Good work. Review the topic once more and keep practising."
-                                            : "Review the topic again and try another practice session."
-                                }
-                            </p>
-
-                        </div>
-                    `;
+                renderCurrentTopic();
             }
         }
     );
 }
 
 
-/* =========================================================
-   14. SCHEDULE
-========================================================= */
+/* =========================================
+   TOPIC COMPLETION CHECK
+========================================= */
 
-function renderSchedule() {
+function isTopicCompleted(
+    topic,
+    index
+) {
 
-    if (!scheduleList) return;
-
-
-    const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-    ];
+    return (
+        completedTopics.includes(index) ||
+        topic.status === "Completed"
+    );
+}
 
 
-    const today =
-        new Date();
+/* =========================================
+   MOVE TO NEXT TOPIC
+========================================= */
+
+function moveToNextTopic() {
+
+    const nextIndex =
+        currentTopicIndex + 1;
 
 
-    let html = "";
-
-
-    for (
-        let i = 0;
-        i < 7;
-        i++
+    if (
+        nextIndex <
+        studyPlan.topics.length
     ) {
 
-        const date =
-            new Date(today);
+        if (nextTopicMessage) {
+
+            nextTopicMessage.innerHTML =
+                `
+                <strong>✓ Topic completed!</strong>
+                <br>
+                Your next topic is
+                <strong>
+                    ${escapeHTML(
+                        studyPlan.topics[
+                            nextIndex
+                        ].name
+                    )}
+                </strong>.
+                `;
+        }
+
+        currentTopicIndex =
+            nextIndex;
+
+        localStorage.setItem(
+            "studyMindCurrentTopicIndex",
+            String(
+                currentTopicIndex
+            )
+        );
+
+    } else {
+
+        if (nextTopicMessage) {
+
+            nextTopicMessage.innerHTML =
+                `
+                <strong>🎉 All topics completed!</strong>
+                <br>
+                Excellent work. You have completed your current study plan.
+                `;
+        }
+    }
+}
 
 
-        date.setDate(
-            today.getDate() + i
+/* =========================================
+   PROGRESS
+========================================= */
+
+function renderProgress() {
+
+    const total =
+        studyPlan.topics.length;
+
+    const completed =
+        completedTopics.length;
+
+    const percentage =
+        total > 0
+            ? Math.round(
+                (
+                    completed /
+                    total
+                ) * 100
+            )
+            : 0;
+
+
+    if (progressBar) {
+
+        progressBar.style.width =
+            `${percentage}%`;
+    }
+
+
+    if (progressPercent) {
+
+        progressPercent.textContent =
+            `${percentage}%`;
+    }
+
+
+    if (progressCount) {
+
+        progressCount.textContent =
+            `${completed} of ${total} topics completed`;
+    }
+
+
+    calculateStudyScore();
+}
+
+
+/* =========================================
+   STUDY SCORE
+========================================= */
+
+function calculateStudyScore() {
+
+    const total =
+        studyPlan.topics.length;
+
+    const completed =
+        completedTopics.length;
+
+
+    let score = 0;
+
+
+    if (total > 0) {
+
+        score =
+            Math.round(
+                (
+                    completed /
+                    total
+                ) * 100
+            );
+    }
+
+
+    /* Add a small consistency component */
+
+    const consistencyBonus =
+        Math.min(
+            10,
+            Math.max(
+                0,
+                currentStreak - 1
+            )
         );
 
 
-        const dateString =
-            getDateString(date);
+    score =
+        Math.min(
+            100,
+            Math.round(
+                score * 0.9 +
+                consistencyBonus
+            )
+        );
 
 
-        const dayName =
-            days[
-                date.getDay()
-            ];
+    if (studyScore) {
+
+        studyScore.textContent =
+            score;
+    }
 
 
-        let type =
-            "Study Day";
+    if (scoreDisplay) {
+
+        scoreDisplay.textContent =
+            score;
+    }
 
 
-        let badgeClass =
-            "badge-study";
+    if (scoreProgressBar) {
+
+        scoreProgressBar.style.width =
+            `${score}%`;
+    }
 
 
-        /*
-            BREAK / REST DAYS
-            Sunday is a weekly break.
-        */
+    if (scoreMessage) {
 
-        if (
-            date.getDay() === 0
-        ) {
+        if (score >= 90) {
 
-            type =
-                "Break";
+            scoreMessage.textContent =
+                "Outstanding performance. Keep it up!";
 
-            badgeClass =
-                "badge-rest";
+        } else if (score >= 70) {
 
-        }
+            scoreMessage.textContent =
+                "Great progress. Keep pushing!";
 
+        } else if (score >= 40) {
 
-        /*
-            Exam day takes priority.
-        */
-
-        if (
-            studyPlan.examDate &&
-            dateString ===
-            studyPlan.examDate
-        ) {
-
-            type =
-                "Exam Day";
-
-            badgeClass =
-                "badge-exam";
-        }
-
-
-        /*
-            Test day.
-            Wednesday becomes the test day
-            unless it is an exam day.
-        */
-
-        else if (
-            date.getDay() === 3
-        ) {
-
-            type =
-                "Test Day";
-
-            badgeClass =
-                "badge-test";
-        }
-
-
-        let topicName =
-            "Revision Session";
-
-
-        if (
-            type !== "Break" &&
-            studyPlan.topics.length > 0
-        ) {
-
-            topicName =
-                studyPlan.topics[
-                    i %
-                    studyPlan.topics.length
-                ].name;
-        }
-
-
-        let description;
-
-
-        if (
-            type === "Break"
-        ) {
-
-            description =
-                "Take time off to recharge.";
-
-        } else if (
-            type === "Exam Day"
-        ) {
-
-            description =
-                "Exam day — stay calm and do your best.";
-
-        } else if (
-            type === "Test Day"
-        ) {
-
-            description =
-                "Review your work and test your understanding.";
+            scoreMessage.textContent =
+                "You're making progress. Stay consistent.";
 
         } else {
 
-            description =
-                topicName;
+            scoreMessage.textContent =
+                "Start studying to build your score.";
         }
-
-
-        html += `
-            <div
-                class="schedule-item align-center justify-between"
-                style="
-                    padding:10px;
-                    border-bottom:1px solid #eee;
-                    display:flex;
-                    gap:15px;
-                "
-            >
-
-                <div>
-
-                    <strong>
-                        ${dayName}
-                    </strong>
-
-                    <small>
-                        (${date.toLocaleDateString()})
-                    </small>
-
-                    <div>
-                        <small>
-                            ${escapeHTML(
-                                description
-                            )}
-                        </small>
-                    </div>
-
-                </div>
-
-                <span
-                    class="status-tag ${badgeClass}"
-                    style="
-                        padding:4px 8px;
-                        border-radius:4px;
-                        font-weight:bold;
-                    "
-                >
-                    ${type}
-                </span>
-
-            </div>
-        `;
-    }
-
-
-    scheduleList.innerHTML =
-        html;
-}
-
-
-/* =========================================================
-   15. CALENDAR
-========================================================= */
-
-let calendarViewDate =
-    new Date();
-
-
-function renderCalendar() {
-
-    if (
-        !calendarDays ||
-        !calendarMonth
-    ) {
-        return;
-    }
-
-
-    calendarDays.innerHTML =
-        "";
-
-
-    const year =
-        calendarViewDate.getFullYear();
-
-
-    const month =
-        calendarViewDate.getMonth();
-
-
-    calendarMonth.textContent =
-        calendarViewDate.toLocaleDateString(
-            "en-US",
-            {
-                month: "long",
-                year: "numeric"
-            }
-        );
-
-
-    const firstDay =
-        new Date(
-            year,
-            month,
-            1
-        ).getDay();
-
-
-    const daysInMonth =
-        new Date(
-            year,
-            month + 1,
-            0
-        ).getDate();
-
-
-    /*
-        Empty cells before first day.
-    */
-
-    for (
-        let i = 0;
-        i < firstDay;
-        i++
-    ) {
-
-        const empty =
-            document.createElement(
-                "div"
-            );
-
-        empty.className =
-            "calendar-day other-month";
-
-        calendarDays.appendChild(
-            empty
-        );
-    }
-
-
-    /*
-        Actual calendar days.
-    */
-
-    for (
-        let dateNumber = 1;
-        dateNumber <= daysInMonth;
-        dateNumber++
-    ) {
-
-        const dayDiv =
-            document.createElement(
-                "div"
-            );
-
-
-        dayDiv.className =
-            "calendar-day";
-
-
-        dayDiv.textContent =
-            dateNumber;
-
-
-        const cellDate =
-            new Date(
-                year,
-                month,
-                dateNumber
-            );
-
-
-        const dateString =
-            getDateString(
-                cellDate
-            );
-
-
-        /*
-            TODAY
-        */
-
-        if (
-            dateString === todayStr
-        ) {
-
-            dayDiv.classList.add(
-                "today"
-            );
-        }
-
-
-        /*
-            Determine day type.
-        */
-
-        const dayOfWeek =
-            cellDate.getDay();
-
-
-        /*
-            BREAK DAY
-            Sunday = Break
-        */
-
-        if (
-            dayOfWeek === 0
-        ) {
-
-            dayDiv.classList.add(
-                "break-day"
-            );
-
-            dayDiv.title =
-                "Break Day";
-        }
-
-
-        /*
-            TEST DAY
-            Wednesday
-        */
-
-        if (
-            dayOfWeek === 3
-        ) {
-
-            dayDiv.classList.add(
-                "test-day"
-            );
-
-            dayDiv.title =
-                "Test Day";
-        }
-
-
-        /*
-            EXAM DAY
-        */
-
-        if (
-            studyPlan.examDate &&
-            dateString ===
-            studyPlan.examDate
-        ) {
-
-            dayDiv.classList.add(
-                "exam-day"
-            );
-
-            dayDiv.title =
-                "Exam Day";
-        }
-
-
-        /*
-            Completed topics are represented
-            on study days.
-        */
-
-        if (
-            isStudyDay(cellDate) &&
-            hasCompletedActivityForDate(
-                dateString
-            )
-        ) {
-
-            dayDiv.classList.add(
-                "completed-day"
-            );
-        }
-
-
-        calendarDays.appendChild(
-            dayDiv
-        );
     }
 }
 
 
-function isStudyDay(date) {
-
-    /*
-        Sunday is the weekly break.
-    */
-
-    return date.getDay() !== 0;
-}
-
-
-function hasCompletedActivityForDate(
-    dateString
-) {
-
-    /*
-        At the moment, topic completion is
-        stored globally rather than per date.
-
-        Therefore we only mark dates up to
-        today's completed progress.
-
-        This avoids falsely marking future
-        dates as completed.
-    */
-
-    if (
-        dateString > todayStr
-    ) {
-        return false;
-    }
-
-
-    return (
-        completedTopics.length > 0
-    );
-}
-
-
-/* =========================================================
-   16. CALENDAR NAVIGATION
-========================================================= */
-
-function setupCalendarNavigation() {
-
-    if (previousMonth) {
-
-        previousMonth.addEventListener(
-            "click",
-            () => {
-
-                calendarViewDate =
-                    new Date(
-                        calendarViewDate.getFullYear(),
-                        calendarViewDate.getMonth() - 1,
-                        1
-                    );
-
-                renderCalendar();
-            }
-        );
-    }
-
-
-    if (nextMonth) {
-
-        nextMonth.addEventListener(
-            "click",
-            () => {
-
-                calendarViewDate =
-                    new Date(
-                        calendarViewDate.getFullYear(),
-                        calendarViewDate.getMonth() + 1,
-                        1
-                    );
-
-                renderCalendar();
-            }
-        );
-    }
-}
-
-
-function updateCalendar() {
-
-    renderCalendar();
-}
-
-
-/* =========================================================
-   17. NEXT SESSION
-========================================================= */
-
-function updateNextSession() {
-
-    if (
-        !nextBooking ||
-        !nextBookingTime
-    ) {
-        return;
-    }
-
-
-    const now =
-        new Date();
-
-
-    for (
-        let i = 0;
-        i < 14;
-        i++
-    ) {
-
-        const date =
-            new Date(now);
-
-
-        date.setDate(
-            now.getDate() + i
-        );
-
-
-        /*
-            Sunday = break.
-        */
-
-        if (
-            date.getDay() === 0
-        ) {
-            continue;
-        }
-
-
-        const dateString =
-            getDateString(date);
-
-
-        if (
-            studyPlan.examDate &&
-            dateString ===
-            studyPlan.examDate
-        ) {
-
-            nextBooking.textContent =
-                "Exam Day";
-
-
-            nextBookingTime.textContent =
-                date.toLocaleDateString(
-                    "en-US",
-                    {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric"
-                    }
-                );
-
-            return;
-        }
-
-
-        let topic =
-            "Revision Session";
-
-
-        if (
-            studyPlan.topics.length > 0
-        ) {
-
-            topic =
-                studyPlan.topics[
-                    i %
-                    studyPlan.topics.length
-                ].name;
-        }
-
-
-        nextBooking.textContent =
-            topic;
-
-
-        nextBookingTime.textContent =
-            date.toLocaleDateString(
-                "en-US",
-                {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric"
-                }
-            );
-
-
-        return;
-    }
-
-
-    nextBooking.textContent =
-        "No upcoming session yet";
-
-
-    nextBookingTime.textContent =
-        "Create a study plan to populate your calendar.";
-}
-
-
-/* =========================================================
-   18. STUDY TIMER
-========================================================= */
+/* =========================================
+   TIMER
+========================================= */
 
 const DEFAULT_TIMER_SECONDS =
     60 * 60;
-
 
 let selectedTimerSeconds =
     Number(
@@ -2175,7 +1291,6 @@ let selectedTimerSeconds =
     ) ||
     DEFAULT_TIMER_SECONDS;
 
-
 let timerSeconds =
     Number(
         localStorage.getItem(
@@ -2184,59 +1299,18 @@ let timerSeconds =
     ) ||
     selectedTimerSeconds;
 
+let timerInterval = null;
 
-let timerInterval =
-    null;
+let timerRunning = false;
 
-
-let timerRunning =
-    false;
+let timerEndTime = null;
 
 
-let timerEndTime =
-    null;
-
+/* ---------- Setup ---------- */
 
 function setupTimer() {
 
-    if (!studyTimer) {
-        return;
-    }
-
-
-    /*
-        Make sure select matches saved duration.
-    */
-
-    if (timerDurationSelect) {
-
-        const selectedMinutes =
-            Math.round(
-                selectedTimerSeconds /
-                60
-            );
-
-
-        const matchingOption =
-            Array.from(
-                timerDurationSelect.options
-            ).find(
-                option =>
-                    Number(
-                        option.value
-                    ) ===
-                    selectedMinutes
-            );
-
-
-        if (matchingOption) {
-
-            timerDurationSelect.value =
-                String(
-                    selectedMinutes
-                );
-        }
-    }
+    if (!studyTimer) return;
 
 
     updateTimerDisplay();
@@ -2267,23 +1341,27 @@ function setupTimer() {
 
     if (timerDurationSelect) {
 
+        timerDurationSelect.value =
+            Math.round(
+                selectedTimerSeconds /
+                60
+            );
+
+
         timerDurationSelect.addEventListener(
             "change",
-            () => {
+            event => {
 
                 const minutes =
                     Number(
-                        timerDurationSelect.value
+                        event.target.value
                     );
 
 
-                if (
-                    minutes > 0
-                ) {
+                if (minutes > 0) {
 
                     selectedTimerSeconds =
                         minutes * 60;
-
 
                     localStorage.setItem(
                         "studyMindSelectedTimerSeconds",
@@ -2291,7 +1369,6 @@ function setupTimer() {
                             selectedTimerSeconds
                         )
                     );
-
 
                     resetTimer();
                 }
@@ -2301,24 +1378,21 @@ function setupTimer() {
 }
 
 
+/* ---------- Start ---------- */
+
 function startTimer() {
 
-    if (timerRunning) {
-        return;
-    }
+    if (timerRunning) return;
 
 
-    if (
-        timerSeconds <= 0
-    ) {
+    if (timerSeconds <= 0) {
 
         timerSeconds =
             selectedTimerSeconds;
     }
 
 
-    timerRunning =
-        true;
+    timerRunning = true;
 
 
     timerEndTime =
@@ -2343,8 +1417,7 @@ function startTimer() {
                             (
                                 timerEndTime -
                                 Date.now()
-                            ) /
-                            1000
+                            ) / 1000
                         )
                     );
 
@@ -2368,28 +1441,17 @@ function startTimer() {
                         timerInterval
                     );
 
-
                     timerInterval =
                         null;
-
 
                     timerRunning =
                         false;
 
-
                     updateTimerButtons();
 
 
-                    /*
-                        Timer completion contributes
-                        to the streak/score.
-                    */
-
-                    registerStudySession();
-
-
                     alert(
-                        "⏰ Study Session Complete!\n\nGreat job maintaining your focus."
+                        "⏰ Study Session Complete! Great job maintaining focus."
                     );
                 }
 
@@ -2399,42 +1461,19 @@ function startTimer() {
 }
 
 
+/* ---------- Pause ---------- */
+
 function pauseTimer() {
 
-    if (!timerRunning) {
-        return;
-    }
+    if (!timerRunning) return;
 
 
     clearInterval(
         timerInterval
     );
 
-
     timerInterval =
         null;
-
-
-    /*
-        Save the remaining time
-        before stopping.
-    */
-
-    if (timerEndTime) {
-
-        timerSeconds =
-            Math.max(
-                0,
-                Math.ceil(
-                    (
-                        timerEndTime -
-                        Date.now()
-                    ) /
-                    1000
-                )
-            );
-    }
-
 
     timerRunning =
         false;
@@ -2448,11 +1487,11 @@ function pauseTimer() {
     );
 
 
-    updateTimerDisplay();
-
     updateTimerButtons();
 }
 
+
+/* ---------- Reset ---------- */
 
 function resetTimer() {
 
@@ -2460,14 +1499,11 @@ function resetTimer() {
         timerInterval
     );
 
-
     timerInterval =
         null;
 
-
     timerRunning =
         false;
-
 
     timerSeconds =
         selectedTimerSeconds;
@@ -2487,23 +1523,20 @@ function resetTimer() {
 }
 
 
+/* ---------- Display ---------- */
+
 function updateTimerDisplay() {
 
-    if (!studyTimer) {
-        return;
-    }
+    if (!studyTimer) return;
 
 
     const minutes =
         Math.floor(
-            timerSeconds /
-            60
+            timerSeconds / 60
         );
 
-
     const seconds =
-        timerSeconds %
-        60;
+        timerSeconds % 60;
 
 
     studyTimer.textContent =
@@ -2514,6 +1547,8 @@ function updateTimerDisplay() {
         ).padStart(2, "0")}`;
 }
 
+
+/* ---------- Buttons ---------- */
 
 function updateTimerButtons() {
 
@@ -2532,428 +1567,766 @@ function updateTimerButtons() {
 }
 
 
-/* =========================================================
-   19. STUDY SESSION TRACKING
-========================================================= */
+/* =========================================
+   TOPIC KNOWLEDGE CHECK
+========================================= */
 
-function registerStudySession() {
-
-    let sessions =
-        Number(
-            localStorage.getItem(
-                "studyMindCompletedSessions"
-            )
-        ) || 0;
+let generatedTopicQuestions = [];
 
 
-    sessions++;
+function setupTopicQuestions() {
 
+    if (submitTopicQuestions) {
 
-    localStorage.setItem(
-        "studyMindCompletedSessions",
-        String(sessions)
-    );
-
-
-    currentStreak =
-        Math.max(
-            1,
-            currentStreak
+        submitTopicQuestions.addEventListener(
+            "click",
+            submitQuestions
         );
-
-
-    currentStreak++;
-
-
-    localStorage.setItem(
-        "studyMindStreak",
-        String(
-            currentStreak
-        )
-    );
-
-
-    renderMetrics();
-}
-
-
-/* =========================================================
-   20. ASK AI
-========================================================= */
-
-function updateAiBadge() {
-
-    if (!aiCountBadge) {
-        return;
     }
-
-
-    aiCountBadge.textContent =
-        `${aiQuestionCount}/${FREE_LIMIT} used`;
 }
 
 
-function setupAskAI() {
+/* ---------- Generate Questions ---------- */
 
-    updateAiBadge();
-
+function renderTopicQuestions() {
 
     if (
-        !askAIButton ||
-        !aiQuestion
+        !topicQuestions ||
+        !topicQuestionsSection
     ) {
         return;
     }
 
 
-    askAIButton.addEventListener(
-        "click",
-        handleAskAI
-    );
+    const topic =
+        studyPlan.topics[
+            currentTopicIndex
+        ];
 
 
-    /*
-        Allow Ctrl + Enter to submit.
-    */
+    if (!topic) {
 
-    aiQuestion.addEventListener(
-        "keydown",
-        event => {
+        topicQuestionsSection.style.display =
+            "none";
+
+        return;
+    }
+
+
+    if (
+        !isTopicCompleted(
+            topic,
+            currentTopicIndex
+        )
+    ) {
+
+        topicQuestionsSection.style.display =
+            "none";
+
+        return;
+    }
+
+
+    topicQuestionsSection.style.display =
+        "block";
+
+
+    generatedTopicQuestions =
+        generateQuestions(
+            topic
+        );
+
+
+    topicQuestions.innerHTML =
+        generatedTopicQuestions
+            .map(
+                (question, index) => `
+                    <div
+                        class="topic-question"
+                        style="margin-bottom:20px;"
+                    >
+
+                        <p>
+                            <strong>
+                                ${index + 1}.
+                                ${escapeHTML(
+                                    question.question
+                                )}
+                            </strong>
+                        </p>
+
+                        ${question.options
+                            .map(
+                                (option, optionIndex) => `
+                                    <label
+                                        style="
+                                            display:block;
+                                            margin:8px 0;
+                                        "
+                                    >
+
+                                        <input
+                                            type="radio"
+                                            name="topicQuestion${index}"
+                                            value="${optionIndex}"
+                                        >
+
+                                        ${escapeHTML(
+                                            option
+                                        )}
+
+                                    </label>
+                                `
+                            )
+                            .join("")}
+
+                    </div>
+                `
+            )
+            .join("");
+}
+
+
+/* ---------- Questions ---------- */
+
+function generateQuestions(topic) {
+
+    const name =
+        topic.name ||
+        "this topic";
+
+
+    return [
+
+        {
+            question:
+                `What is the main idea you should understand about ${name}?`,
+
+            options: [
+                "The key principles and concepts",
+                "Only the topic's title",
+                "Nothing needs to be understood",
+                "Only memorizing the date"
+            ],
+
+            answer: 0
+        },
+
+        {
+            question:
+                `Which approach is best when studying ${name}?`,
+
+            options: [
+                "Understand the concepts and practise",
+                "Skip difficult sections",
+                "Only read the headings",
+                "Avoid questions"
+            ],
+
+            answer: 0
+        },
+
+        {
+            question:
+                `What should you do if you do not understand part of ${name}?`,
+
+            options: [
+                "Ask for an explanation and practise",
+                "Ignore it",
+                "Stop studying",
+                "Delete the topic"
+            ],
+
+            answer: 0
+        },
+
+        {
+            question:
+                `Why is practising questions useful for ${name}?`,
+
+            options: [
+                "It checks whether you can apply what you learned",
+                "It makes studying unnecessary",
+                "It replaces every lesson",
+                "It guarantees every exam question"
+            ],
+
+            answer: 0
+        },
+
+        {
+            question:
+                `What is a good final step after studying ${name}?`,
+
+            options: [
+                "Test yourself and review mistakes",
+                "Immediately forget the material",
+                "Avoid revision",
+                "Skip practice"
+            ],
+
+            answer: 0
+        }
+
+    ];
+}
+
+
+/* ---------- Submit Questions ---------- */
+
+function submitQuestions() {
+
+    if (
+        generatedTopicQuestions.length === 0
+    ) {
+        return;
+    }
+
+
+    let score = 0;
+
+
+    generatedTopicQuestions.forEach(
+        (question, index) => {
+
+            const selected =
+                document.querySelector(
+                    `input[name="topicQuestion${index}"]:checked`
+                );
+
 
             if (
-                event.ctrlKey &&
-                event.key === "Enter"
+                selected &&
+                Number(
+                    selected.value
+                ) === question.answer
             ) {
 
-                handleAskAI();
+                score++;
             }
         }
     );
 
 
-    updateAIAvailability();
+    if (topicQuestionResult) {
+
+        topicQuestionResult.innerHTML =
+            `
+                <strong>
+                    Knowledge Check Result:
+                    ${score}/${generatedTopicQuestions.length}
+                </strong>
+
+                <p>
+                    ${
+                        score ===
+                        generatedTopicQuestions.length
+                            ? "Excellent! You understand the topic very well. 🎉"
+                            : score >= 3
+                                ? "Good work! Review the questions you missed."
+                                : "Keep practising this topic and review the material again."
+                    }
+                </p>
+            `;
+    }
 }
 
 
-function handleAskAI() {
+/* =========================================
+   SCHEDULE
+========================================= */
 
-    if (
-        aiQuestionCount >=
-        FREE_LIMIT
+function renderSchedule() {
+
+    const scheduleList =
+        document.getElementById(
+            "scheduleList"
+        );
+
+
+    if (!scheduleList) return;
+
+
+    const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ];
+
+
+    const today =
+        new Date();
+
+
+    let html = "";
+
+
+    for (
+        let i = 0;
+        i < 7;
+        i++
     ) {
 
-        alert(
-            "🔒 You have reached your 5 free AI questions limit!\n\nPlease explore StudyMind AI Premium for unlimited AI assistance."
-        );
-
-        return;
-    }
+        const date =
+            new Date(
+                today
+            );
 
 
-    const question =
-        aiQuestion.value.trim();
-
-
-    if (!question) {
-
-        alert(
-            "Please enter a question first."
-        );
-
-        return;
-    }
-
-
-    aiQuestionCount++;
-
-
-    localStorage.setItem(
-        "aiQuestionCount",
-        String(
-            aiQuestionCount
-        )
-    );
-
-
-    updateAiBadge();
-
-
-    /*
-        Local contextual response.
-        This prevents the dashboard from
-        pretending that a real AI API is
-        connected when it isn't.
-    */
-
-    const response =
-        generateLocalAIResponse(
-            question
+        date.setDate(
+            today.getDate() + i
         );
 
 
-    if (aiResponse) {
+        const dateString =
+            date.toISOString()
+                .split("T")[0];
 
-        aiResponse.innerHTML =
+
+        const dayName =
+            days[
+                date.getDay()
+            ];
+
+
+        let type =
+            "Study Day";
+
+
+        let description =
+            "Revision Session";
+
+
+        let badgeClass =
+            "badge-study";
+
+
+        /* Exam day */
+
+        if (
+            studyPlan.examDate &&
+            dateString ===
+            studyPlan.examDate
+        ) {
+
+            type =
+                "Exam Day";
+
+            description =
+                "Exam day — stay calm and do your best.";
+
+            badgeClass =
+                "badge-exam";
+        }
+
+
+        /* Test day */
+
+        else if (
+            i === 3
+        ) {
+
+            type =
+                "Test Day";
+
+            description =
+                "Review your work and test your understanding.";
+
+            badgeClass =
+                "badge-test";
+        }
+
+
+        /* Rest day */
+
+        else if (
+            i === 6
+        ) {
+
+            type =
+                "Rest Day";
+
+            description =
+                "Take time off to recharge.";
+
+            badgeClass =
+                "badge-rest";
+        }
+
+
+        /* Normal study day */
+
+        else {
+
+            const topic =
+                studyPlan.topics[
+                    i %
+                    Math.max(
+                        studyPlan.topics.length,
+                        1
+                    )
+                ];
+
+
+            description =
+                topic
+                    ? topic.name
+                    : "Study Session";
+        }
+
+
+        html +=
             `
-                <div class="ai-box">
+                <div
+                    class="schedule-item align-center justify-between"
+                    style="
+                        padding:10px;
+                        border-bottom:1px solid #eee;
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                    "
+                >
 
-                    <strong>
-                        🤖 StudyMind AI
-                    </strong>
+                    <div>
 
-                    <p>
-                        ${response}
-                    </p>
+                        <strong>
+                            ${dayName}
+                        </strong>
+
+                        <small>
+                            (${date.toLocaleDateString()})
+                        </small>
+
+                        <div>
+                            <small>
+                                ${escapeHTML(
+                                    description
+                                )}
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <span
+                        class="status-tag ${badgeClass}"
+                        style="
+                            padding:4px 8px;
+                            border-radius:4px;
+                            font-weight:bold;
+                        "
+                    >
+                        ${type}
+                    </span>
 
                 </div>
             `;
     }
 
 
-    aiQuestion.value =
-        "";
-
-
-    updateAIAvailability();
+    scheduleList.innerHTML =
+        html;
 }
 
 
-function updateAIAvailability() {
+/* =========================================
+   CALENDAR
+========================================= */
 
-    if (!aiQuestion || !askAIButton) {
+let calendarDate =
+    new Date();
+
+
+function setupCalendarNavigation() {
+
+    if (previousMonth) {
+
+        previousMonth.addEventListener(
+            "click",
+            () => {
+
+                calendarDate.setMonth(
+                    calendarDate.getMonth() - 1
+                );
+
+                renderCalendar();
+            }
+        );
+    }
+
+
+    if (nextMonth) {
+
+        nextMonth.addEventListener(
+            "click",
+            () => {
+
+                calendarDate.setMonth(
+                    calendarDate.getMonth() + 1
+                );
+
+                renderCalendar();
+            }
+        );
+    }
+}
+
+
+function renderCalendar() {
+
+    if (
+        !calendarDays ||
+        !calendarMonth
+    ) {
+        return;
+    }
+
+
+    calendarDays.innerHTML =
+        "";
+
+
+    const year =
+        calendarDate.getFullYear();
+
+
+    const month =
+        calendarDate.getMonth();
+
+
+    const today =
+        new Date();
+
+
+    calendarMonth.textContent =
+        calendarDate.toLocaleDateString(
+            "en-US",
+            {
+                month: "long",
+                year: "numeric"
+            }
+        );
+
+
+    const firstDay =
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
+
+
+    const daysInMonth =
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
+
+
+    /* Empty cells */
+
+    for (
+        let i = 0;
+        i < firstDay;
+        i++
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "calendar-day other-month";
+
+        calendarDays.appendChild(
+            empty
+        );
+    }
+
+
+    /* Actual days */
+
+    for (
+        let date = 1;
+        date <= daysInMonth;
+        date++
+    ) {
+
+        const day =
+            document.createElement(
+                "div"
+            );
+
+
+        day.className =
+            "calendar-day";
+
+
+        day.textContent =
+            date;
+
+
+        const currentDate =
+            new Date(
+                year,
+                month,
+                date
+            );
+
+
+        const dateString =
+            `${year}-${String(
+                month + 1
+            ).padStart(2, "0")}-${String(
+                date
+            ).padStart(2, "0")}`;
+
+
+        /* Today */
+
+        if (
+            date ===
+            today.getDate() &&
+            month ===
+            today.getMonth() &&
+            year ===
+            today.getFullYear()
+        ) {
+
+            day.classList.add(
+                "today"
+            );
+        }
+
+
+        /* Exam */
+
+        if (
+            studyPlan.examDate &&
+            dateString ===
+            studyPlan.examDate
+        ) {
+
+            day.classList.add(
+                "exam-day"
+            );
+
+            day.title =
+                "Exam Day";
+        }
+
+
+        /*
+           Mark completed study days
+           based on completed topics.
+        */
+
+        if (
+            completedTopics.length > 0 &&
+            currentDate <= today
+        ) {
+
+            day.classList.add(
+                "completed-day"
+            );
+        }
+
+
+        /*
+           Add study-day class to
+           future dates inside plan.
+        */
+
+        if (
+            currentDate >=
+            new Date(
+                studyPlan.studyStartDate ||
+                todayStr
+            )
+        ) {
+
+            day.classList.add(
+                "study-day"
+            );
+        }
+
+
+        calendarDays.appendChild(
+            day
+        );
+    }
+
+
+    updateNextSession();
+}
+
+
+/* =========================================
+   NEXT SESSION
+========================================= */
+
+function updateNextSession() {
+
+    if (
+        !nextBooking ||
+        !nextBookingTime
+    ) {
         return;
     }
 
 
     if (
-        aiQuestionCount >=
-        FREE_LIMIT
+        studyPlan.topics.length === 0
     ) {
 
-        aiQuestion.disabled =
-            true;
+        nextBooking.textContent =
+            "No upcoming session yet";
 
+        nextBookingTime.textContent =
+            "Create a study plan to populate your calendar.";
 
-        askAIButton.disabled =
-            true;
-
-
-        askAIButton.textContent =
-            "Explore Premium for Unlimited AI";
-
-    } else {
-
-        aiQuestion.disabled =
-            false;
-
-
-        askAIButton.disabled =
-            false;
-
-
-        askAIButton.textContent =
-            "🤖 Ask AI";
+        return;
     }
-}
 
 
-function generateLocalAIResponse(
-    question
-) {
-
-    const lower =
-        question.toLowerCase();
-
-
-    const currentTopic =
+    const topic =
         studyPlan.topics[
             currentTopicIndex
         ];
 
 
-    if (
-        lower.includes("today")
-    ) {
-
-        return `
-            Based on your current study plan,
-            your focus should be
-            <strong>${escapeHTML(
-                currentTopic
-                    ? currentTopic.name
-                    : "your next available topic"
-            )}</strong>.
-            Aim for ${studyPlan.studyHours || 2}
-            hours of focused study today.
-        `;
-    }
+    const today =
+        new Date();
 
 
-    if (
-        lower.includes("progress") ||
-        lower.includes("doing")
-    ) {
-
-        return `
-            Your current study progress is
-            <strong>${calculateProgress()}%</strong>.
-            You have completed
-            <strong>${completedTopics.length}</strong>
-            of
-            <strong>${studyPlan.topics.length}</strong>
-            topics.
-        `;
-    }
+    nextBooking.textContent =
+        topic
+            ? topic.name
+            : "Study Session";
 
 
-    if (
-        lower.includes("subject")
-    ) {
-
-        return `
-            Your current subjects are:
-            <strong>${studyPlan.subjects
-                .map(
-                    subject =>
-                        escapeHTML(subject)
-                )
-                .join(", ")}</strong>.
-        `;
-    }
-
-
-    if (
-        lower.includes("topic")
-    ) {
-
-        return `
-            Your current topic is
-            <strong>${escapeHTML(
-                currentTopic
-                    ? currentTopic.name
-                    : "not set"
-            )}</strong>.
-            ${currentTopic
-                ? escapeHTML(
-                    currentTopic.description
-                )
-                : "Create a study plan to add topics."
+    nextBookingTime.textContent =
+        today.toLocaleDateString(
+            "en-US",
+            {
+                weekday: "long",
+                month: "long",
+                day: "numeric"
             }
-        `;
-    }
-
-
-    return `
-        Based on your
-        <strong>${escapeHTML(
-            studyPlan.examType ||
-            "exam"
-        )}</strong>
-        study plan, I recommend focusing on
-        <strong>${escapeHTML(
-            currentTopic
-                ? currentTopic.name
-                : "your next topic"
-        )}</strong>,
-        studying consistently, and using practice
-        questions to check your understanding.
-    `;
+        );
 }
 
 
-/* =========================================================
-   21. PROGRESS ANALYSIS
-========================================================= */
-
-function setupProgressAnalysis() {
-
-    if (
-        !analyzeProgressButton
-    ) {
-        return;
-    }
-
-
-    analyzeProgressButton.addEventListener(
-        "click",
-        () => {
-
-            const progress =
-                calculateProgress();
-
-
-            const total =
-                studyPlan.topics.length;
-
-
-            const completed =
-                completedTopics.length;
-
-
-            let advice;
-
-
-            if (
-                total === 0
-            ) {
-
-                advice =
-                    "Create a study plan with subjects and topics first.";
-
-            } else if (
-                progress >= 80
-            ) {
-
-                advice =
-                    `Excellent work! You have completed ${completed} of ${total} topics. Focus now on revision and practice questions.`;
-
-            } else if (
-                progress >= 50
-            ) {
-
-                advice =
-                    `You're making good progress at ${progress}%. Keep your study sessions consistent and concentrate on your remaining topics.`;
-
-            } else {
-
-                advice =
-                    `You are currently at ${progress}%. Focus on completing one topic at a time and maintain a consistent daily study routine.`;
-            }
-
-
-            if (aiAdviceText) {
-
-                aiAdviceText.innerHTML =
-                    `
-                        <strong>
-                            📊 Your Study Analysis
-                        </strong>
-
-                        <br><br>
-
-                        ${advice}
-                    `;
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   22. DOCUMENT SUMMARIZER
-========================================================= */
-
-function updateSummaryBadge() {
-
-    if (!summaryCountBadge) {
-        return;
-    }
-
-
-    summaryCountBadge.textContent =
-        `${summaryUsageCount}/${FREE_LIMIT} used`;
-}
-
+/* =========================================
+   DOCUMENT SUMMARIZER
+========================================= */
 
 function setupSummarizer() {
 
@@ -2970,15 +2343,22 @@ function setupSummarizer() {
 
     summarizeBtn.addEventListener(
         "click",
-        handleSummarize
+        handleSummarization
     );
-
-
-    updateSummaryAvailability();
 }
 
 
-function handleSummarize() {
+function updateSummaryBadge() {
+
+    if (summaryCountBadge) {
+
+        summaryCountBadge.textContent =
+            `${summaryUsageCount}/${FREE_LIMIT} used`;
+    }
+}
+
+
+function handleSummarization() {
 
     if (
         summaryUsageCount >=
@@ -2986,7 +2366,7 @@ function handleSummarize() {
     ) {
 
         alert(
-            "🔒 You have reached your 5 free document summaries limit!\n\nExplore StudyMind AI Premium for more summaries."
+            "🔒 You have reached your 5 free document summaries limit."
         );
 
         return;
@@ -3000,7 +2380,7 @@ function handleSummarize() {
     if (!content) {
 
         alert(
-            "Please paste your study material first."
+            "Please paste study material or notes first."
         );
 
         return;
@@ -3021,13 +2401,8 @@ function handleSummarize() {
     updateSummaryBadge();
 
 
-    const examContext =
-        studyPlan.examType ||
-        "WAEC";
-
-
     const summary =
-        createLocalSummary(
+        createSmartSummary(
             content
         );
 
@@ -3047,10 +2422,13 @@ function handleSummarize() {
 
                     <h4>
                         📋 Summary
-                        (Tailored for ${escapeHTML(
-                            examContext
+                        (Tailored for
+                        ${escapeHTML(
+                            studyPlan.examType ||
+                            "WAEC"
                         )})
                     </h4>
+
 
                     <p>
                         <strong>
@@ -3058,79 +2436,11 @@ function handleSummarize() {
                         </strong>
                     </p>
 
-                    <ul>
-                        ${summary
-                            .map(
-                                point =>
-                                    `<li>${escapeHTML(point)}</li>`
-                            )
-                            .join("")}
-                    </ul>
+
+                    ${summary}
 
                 </div>
             `;
-    }
-
-
-    updateSummaryAvailability();
-}
-
-
-function createLocalSummary(
-    content
-) {
-
-    /*
-        A lightweight local summary.
-        It extracts the first several meaningful
-        sentences instead of pretending a real
-        AI summarization API is connected.
-    */
-
-    const cleaned =
-        content
-            .replace(
-                /\s+/g,
-                " "
-            )
-            .trim();
-
-
-    const sentences =
-        cleaned
-            .split(
-                /(?<=[.!?])\s+/
-            )
-            .filter(
-                sentence =>
-                    sentence.length > 20
-            );
-
-
-    if (
-        sentences.length === 0
-    ) {
-
-        return [
-            "Review the main definitions and concepts in the material.",
-            "Identify important examples, formulas, and relationships.",
-            "Practise questions based on the material."
-        ];
-    }
-
-
-    return sentences
-        .slice(0, 5);
-}
-
-
-function updateSummaryAvailability() {
-
-    if (
-        !summarizeInput ||
-        !summarizeBtn
-    ) {
-        return;
     }
 
 
@@ -3142,33 +2452,859 @@ function updateSummaryAvailability() {
         summarizeInput.disabled =
             true;
 
-
         summarizeBtn.disabled =
             true;
 
-
-        summarizeBtn.textContent =
-            "Explore Premium for Unlimited Summaries";
-
-    } else {
-
-        summarizeInput.disabled =
-            false;
-
-
-        summarizeBtn.disabled =
-            false;
-
-
-        summarizeBtn.textContent =
-            "✨ Summarize Notes";
+        summarizeBtn.innerText =
+            "5 Free Summaries Used";
     }
 }
 
 
-/* =========================================================
-   23. THEME
-========================================================= */
+/* =========================================
+   SIMPLE SMART SUMMARIZER
+========================================= */
+
+function createSmartSummary(
+    text
+) {
+
+    /*
+       This creates a useful local summary
+       without pretending that it is an
+       external AI response.
+
+       Your real AI API can later replace
+       this function.
+    */
+
+
+    const cleaned =
+        text
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
+
+
+    const sentences =
+        cleaned.match(
+            /[^.!?]+[.!?]+/g
+        ) || [cleaned];
+
+
+    const selected =
+        sentences
+            .slice(
+                0,
+                Math.min(
+                    8,
+                    sentences.length
+                )
+            );
+
+
+    let html =
+        "<ul>";
+
+
+    selected.forEach(
+        sentence => {
+
+            html +=
+                `
+                    <li>
+                        ${escapeHTML(
+                            sentence.trim()
+                        )}
+                    </li>
+                `;
+        }
+    );
+
+
+    html +=
+        "</ul>";
+
+
+    return html;
+}
+
+
+/* =========================================
+   ASK STUDYMIND AI
+========================================= */
+
+let aiConversation = [];
+
+
+/* ---------- Setup ---------- */
+
+function setupAskAI() {
+
+    updateAiBadge();
+
+
+    if (
+        !askAIButton ||
+        !aiQuestion ||
+        !aiResponse
+    ) {
+        console.warn(
+            "Ask AI elements were not found."
+        );
+
+        return;
+    }
+
+
+    /* Restore previous conversation */
+
+    try {
+
+        aiConversation =
+            JSON.parse(
+                localStorage.getItem(
+                    "studyMindAiConversation"
+                )
+            ) || [];
+
+    } catch {
+
+        aiConversation = [];
+    }
+
+
+    if (
+        !Array.isArray(
+            aiConversation
+        )
+    ) {
+
+        aiConversation = [];
+    }
+
+
+    renderAIConversation();
+
+
+    /* Ask button */
+
+    askAIButton.addEventListener(
+        "click",
+        askStudyMindAI
+    );
+
+
+    /* Ctrl + Enter */
+
+    aiQuestion.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" &&
+                event.ctrlKey
+            ) {
+
+                event.preventDefault();
+
+                askStudyMindAI();
+            }
+        }
+    );
+}
+
+
+/* ---------- Badge ---------- */
+
+function updateAiBadge() {
+
+    if (aiCountBadge) {
+
+        aiCountBadge.textContent =
+            `${aiQuestionCount}/${FREE_LIMIT} used`;
+    }
+}
+
+
+/* ---------- Ask AI ---------- */
+
+function askStudyMindAI() {
+
+    if (
+        aiQuestionCount >=
+        FREE_LIMIT
+    ) {
+
+        alert(
+            "🔒 You have reached your 5 free AI questions limit."
+        );
+
+        return;
+    }
+
+
+    const question =
+        aiQuestion.value.trim();
+
+
+    if (!question) {
+
+        alert(
+            "Type a question first."
+        );
+
+        return;
+    }
+
+
+    aiQuestionCount++;
+
+
+    localStorage.setItem(
+        "aiQuestionCount",
+        String(
+            aiQuestionCount
+        )
+    );
+
+
+    updateAiBadge();
+
+
+    /* Add student message */
+
+    aiConversation.push({
+
+        role: "user",
+
+        message: question,
+
+        time:
+            new Date().toLocaleTimeString(
+                [],
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            )
+    });
+
+
+    /* Generate response */
+
+    const answer =
+        generateAIResponse(
+            question
+        );
+
+
+    aiConversation.push({
+
+        role: "ai",
+
+        message: answer,
+
+        time:
+            new Date().toLocaleTimeString(
+                [],
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            )
+    });
+
+
+    localStorage.setItem(
+        "studyMindAiConversation",
+        JSON.stringify(
+            aiConversation
+        )
+    );
+
+
+    aiQuestion.value =
+        "";
+
+
+    renderAIConversation();
+
+
+    if (
+        aiQuestionCount >=
+        FREE_LIMIT
+    ) {
+
+        aiQuestion.disabled =
+            true;
+
+        askAIButton.disabled =
+            true;
+
+        askAIButton.innerText =
+            "5 Free Questions Used";
+    }
+}
+
+
+/* =========================================
+   AI RESPONSE ENGINE
+========================================= */
+
+function generateAIResponse(
+    question
+) {
+
+    const lower =
+        question.toLowerCase();
+
+
+    const topics =
+        studyPlan.topics;
+
+
+    const subjects =
+        studyPlan.subjects;
+
+
+    const currentTopic =
+        topics[
+            currentTopicIndex
+        ];
+
+
+    /* ---------- Greeting ---------- */
+
+    if (
+        lower.includes("hello") ||
+        lower.includes("hi") ||
+        lower.includes("hey")
+    ) {
+
+        return `
+            Hello! 👋 I'm StudyMind AI.
+
+            I'm here to help you with your
+            study plan, subjects, topics,
+            revision and preparation.
+
+            What would you like help with?
+        `;
+    }
+
+
+    /* ---------- What should I study ---------- */
+
+    if (
+        lower.includes("what should i study") ||
+        lower.includes("what do i study") ||
+        lower.includes("study today") ||
+        lower.includes("study now")
+    ) {
+
+        if (currentTopic) {
+
+            return `
+                Based on your current study plan,
+                I recommend focusing on
+                <strong>${escapeHTML(
+                    currentTopic.name
+                )}</strong>.
+
+                ${
+                    currentTopic.description
+                        ? escapeHTML(
+                            currentTopic.description
+                        )
+                        : ""
+                }
+
+                Try studying it for
+                <strong>${
+                    studyPlan.studyHours || 2
+                } hours</strong>, then test yourself
+                using the knowledge check.
+            `;
+        }
+
+
+        return `
+            You don't currently have a topic
+            selected. Create a study plan first,
+            then I can help you decide what to
+            study.
+        `;
+    }
+
+
+    /* ---------- Progress ---------- */
+
+    if (
+        lower.includes("progress") ||
+        lower.includes("how am i doing") ||
+        lower.includes("how am i performing")
+    ) {
+
+        const total =
+            topics.length;
+
+        const completed =
+            completedTopics.length;
+
+        const percentage =
+            total > 0
+                ? Math.round(
+                    (
+                        completed /
+                        total
+                    ) * 100
+                )
+                : 0;
+
+
+        return `
+            You're currently at
+            <strong>${percentage}%</strong>
+            topic completion.
+
+            You've completed
+            <strong>${completed}</strong>
+            out of
+            <strong>${total}</strong>
+            topics.
+
+            Your current study streak is
+            <strong>${currentStreak} days 🔥</strong>.
+
+            ${
+                percentage >= 80
+                    ? "You're doing very well. Keep maintaining your consistency!"
+                    : percentage >= 40
+                        ? "You're making good progress. Focus on completing the next topic."
+                        : "Focus on completing one topic at a time and build consistency."
+            }
+        `;
+    }
+
+
+    /* ---------- Subjects ---------- */
+
+    if (
+        lower.includes("subjects") ||
+        lower.includes("subject do i have")
+    ) {
+
+        return `
+            Your current subjects are:
+
+            <br><br>
+
+            <strong>
+                ${subjects
+                    .map(
+                        escapeHTML
+                    )
+                    .join(
+                        ", "
+                    )}
+            </strong>
+
+            <br><br>
+
+            I can also help you decide which
+            subject to prioritize.
+        `;
+    }
+
+
+    /* ---------- Current topic ---------- */
+
+    if (
+        lower.includes("current topic") ||
+        lower.includes("topic am i") ||
+        lower.includes("studying now")
+    ) {
+
+        if (!currentTopic) {
+
+            return `
+                You don't currently have
+                a topic selected.
+            `;
+        }
+
+
+        return `
+            Your current topic is
+            <strong>${escapeHTML(
+                currentTopic.name
+            )}</strong>.
+
+            <br><br>
+
+            ${
+                currentTopic.description
+                    ? escapeHTML(
+                        currentTopic.description
+                    )
+                    : "Keep working through the topic and test your understanding."
+            }
+        `;
+    }
+
+
+    /* ---------- Exam ---------- */
+
+    if (
+        lower.includes("exam") ||
+        lower.includes("test date") ||
+        lower.includes("days left")
+    ) {
+
+        if (
+            studyPlan.examDate
+        ) {
+
+            return `
+                Your exam date is
+                <strong>${escapeHTML(
+                    studyPlan.examDate
+                )}</strong>.
+
+                <br><br>
+
+                You have
+                <strong>${daysLeft
+                    ? daysLeft.textContent
+                    : "some"
+                } days</strong>
+                remaining.
+
+                Stay consistent and focus on
+                understanding the topics rather
+                than trying to rush everything at once.
+            `;
+        }
+
+
+        return `
+            You haven't added an exam date
+            to your study plan yet.
+        `;
+    }
+
+
+    /* ---------- Help ---------- */
+
+    if (
+        lower.includes("help") ||
+        lower.includes("can you")
+    ) {
+
+        return `
+            Absolutely. I can help you with:
+
+            <ul>
+                <li>Planning what to study</li>
+                <li>Understanding your topics</li>
+                <li>Managing your study schedule</li>
+                <li>Preparing for tests and exams</li>
+                <li>Reviewing your progress</li>
+                <li>Explaining difficult concepts</li>
+                <li>Creating revision strategies</li>
+            </ul>
+
+            Ask me a specific study question
+            and I'll do my best to help.
+        `;
+    }
+
+
+    /* ---------- Motivation / consistency ---------- */
+
+    if (
+        lower.includes("motivat") ||
+        lower.includes("lazy") ||
+        lower.includes("focus")
+    ) {
+
+        return `
+            Try making the next step small.
+
+            Set your study timer, focus on your
+            current topic, and work through one
+            section at a time.
+
+            You don't need to finish everything
+            at once. Consistent progress adds up.
+        `;
+    }
+
+
+    /* ---------- Generic study response ---------- */
+
+    return `
+        That's a good question.
+
+        Based on your current
+        <strong>${escapeHTML(
+            studyPlan.examType ||
+            "study"
+        )}</strong>
+        plan, you're working with
+        <strong>${topics.length}</strong>
+        topics across
+        <strong>${subjects.length}</strong>
+        subjects.
+
+        ${
+            currentTopic
+                ? `
+                    <br><br>
+                    Your current focus is
+                    <strong>${escapeHTML(
+                        currentTopic.name
+                    )}</strong>.
+                `
+                : ""
+        }
+
+        <br><br>
+
+        For a more specific answer, tell me
+        the subject or topic you're asking about.
+    `;
+}
+
+
+/* =========================================
+   RENDER AI CONVERSATION
+========================================= */
+
+function renderAIConversation() {
+
+    if (!aiResponse) return;
+
+
+    if (
+        aiConversation.length === 0
+    ) {
+
+        aiResponse.innerHTML =
+            `
+                <div class="ai-message">
+
+                    <strong>
+                        🤖 StudyMind AI
+                    </strong>
+
+                    <p>
+                        Ask me anything about your
+                        study plan, subjects,
+                        progress or revision.
+                    </p>
+
+                </div>
+            `;
+
+        return;
+    }
+
+
+    aiResponse.innerHTML =
+        aiConversation
+            .map(
+                item => {
+
+                    if (
+                        item.role ===
+                        "user"
+                    ) {
+
+                        return `
+                            <div
+                                class="ai-message user-message"
+                                style="
+                                    margin:10px 0;
+                                    padding:10px;
+                                "
+                            >
+
+                                <strong>
+                                    You
+                                </strong>
+
+                                <p>
+                                    ${escapeHTML(
+                                        item.message
+                                    )}
+                                </p>
+
+                            </div>
+                        `;
+                    }
+
+
+                    return `
+                        <div
+                            class="ai-message assistant-message"
+                            style="
+                                margin:10px 0;
+                                padding:10px;
+                            "
+                        >
+
+                            <strong>
+                                🤖 StudyMind AI
+                            </strong>
+
+                            <div>
+                                ${item.message}
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+
+    /* Scroll to latest response */
+
+    aiResponse.scrollTop =
+        aiResponse.scrollHeight;
+}
+
+
+/* =========================================
+   ANALYZE MY PROGRESS
+========================================= */
+
+function setupProgressAnalysis() {
+
+    if (!analyzeProgressButton) {
+        return;
+    }
+
+
+    analyzeProgressButton.addEventListener(
+        "click",
+        analyzeProgress
+    );
+}
+
+
+function analyzeProgress() {
+
+    const total =
+        studyPlan.topics.length;
+
+    const completed =
+        completedTopics.length;
+
+
+    const percentage =
+        total > 0
+            ? Math.round(
+                (
+                    completed /
+                    total
+                ) * 100
+            )
+            : 0;
+
+
+    let message = "";
+
+
+    if (percentage === 100) {
+
+        message =
+            `
+                🎉 Excellent work!
+
+                You have completed your entire
+                study plan.
+
+                Consider revising the topics again
+                and using practice questions to
+                strengthen your understanding.
+            `;
+
+    } else if (percentage >= 70) {
+
+        message =
+            `
+                You're making excellent progress.
+
+                You're currently at
+                <strong>${percentage}%</strong>.
+
+                Focus on the remaining topics and
+                keep your study routine consistent.
+            `;
+
+    } else if (percentage >= 40) {
+
+        message =
+            `
+                You're making steady progress.
+
+                You're currently at
+                <strong>${percentage}%</strong>.
+
+                Focus on completing one topic at a
+                time rather than trying to study
+                everything simultaneously.
+            `;
+
+    } else {
+
+        message =
+            `
+                You are currently at
+                <strong>${percentage}%</strong>.
+
+                Focus on completing one topic at a
+                time and maintain a consistent daily
+                study routine.
+
+                Your next priority should be
+                <strong>${
+                    studyPlan.topics[
+                        currentTopicIndex
+                    ]
+                        ? studyPlan.topics[
+                            currentTopicIndex
+                        ].name
+                        : "your next topic"
+                }</strong>.
+            `;
+    }
+
+
+    if (aiAdviceText) {
+
+        aiAdviceText.innerHTML =
+            `
+                <strong>
+                    📊 Your Study Analysis
+                </strong>
+
+                <p>
+                    ${message}
+                </p>
+            `;
+    }
+}
+
+
+/* =========================================
+   THEME
+========================================= */
 
 function setupTheme() {
 
@@ -3193,11 +3329,6 @@ function setupTheme() {
 
         themeButton.textContent =
             "☀️ Light Mode";
-
-    } else {
-
-        themeButton.textContent =
-            "🌙 Dark Mode";
     }
 
 
@@ -3205,22 +3336,27 @@ function setupTheme() {
         "click",
         () => {
 
-            const isDark =
-                document.body.classList.toggle(
+            document.body.classList.toggle(
+                "dark-mode"
+            );
+
+
+            const dark =
+                document.body.classList.contains(
                     "dark-mode"
                 );
 
 
             localStorage.setItem(
                 "studyMindTheme",
-                isDark
+                dark
                     ? "dark"
                     : "light"
             );
 
 
             themeButton.textContent =
-                isDark
+                dark
                     ? "☀️ Light Mode"
                     : "🌙 Dark Mode";
         }
@@ -3228,21 +3364,17 @@ function setupTheme() {
 }
 
 
-/* =========================================================
-   24. ESCAPE HTML
-========================================================= */
+/* =========================================
+   HTML ESCAPE
+========================================= */
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-
-    return String(value)
+    return String(
+        value ?? ""
+    )
         .replace(
             /&/g,
             "&amp;"
@@ -3266,90 +3398,50 @@ function escapeHTML(value) {
 }
 
 
-/* =========================================================
-   25. KEEP DATA SAFE
-========================================================= */
+/* =========================================
+   KATEX SUPPORT
+========================================= */
+
+function renderMath() {
+
+    if (
+        typeof renderMathInElement !==
+        "undefined"
+    ) {
+
+        renderMathInElement(
+            document.body,
+            {
+                delimiters: [
+                    {
+                        left: "$$",
+                        right: "$$",
+                        display: true
+                    },
+                    {
+                        left: "$",
+                        right: "$",
+                        display: false
+                    }
+                ]
+            }
+        );
+    }
+}
+
+
+/* =========================================
+   FINAL INITIALIZATION
+========================================= */
 
 window.addEventListener(
-    "beforeunload",
+    "load",
     () => {
 
-        localStorage.setItem(
-            "studyMindPlan",
-            JSON.stringify(
-                studyPlan
-            )
-        );
-
-
-        localStorage.setItem(
-            "studyMindCompletedTopics",
-            JSON.stringify(
-                completedTopics
-            )
-        );
-
-
-        localStorage.setItem(
-            "studyMindCurrentTopicIndex",
-            String(
-                currentTopicIndex
-            )
-        );
-
-
-        localStorage.setItem(
-            "studyMindStreak",
-            String(
-                currentStreak
-            )
+        setTimeout(
+            renderMath,
+            300
         );
     }
 );
 
-
-/* =========================================================
-   26. SUPABASE AUTH STATE
-========================================================= */
-
-if (
-    typeof supabaseClient !==
-    "undefined" &&
-    supabaseClient.auth
-) {
-
-    supabaseClient.auth.onAuthStateChange(
-        (
-            event,
-            session
-        ) => {
-
-            if (session?.user) {
-
-                currentUser =
-                    session.user;
-
-                isAuthenticated =
-                    true;
-
-                console.log(
-                    "StudyMind AI auth:",
-                    event
-                );
-
-            } else {
-
-                currentUser =
-                    null;
-
-                isAuthenticated =
-                    false;
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   END OF DASHBOARD.JS
-========================================================= */
