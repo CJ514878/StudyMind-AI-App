@@ -2968,3 +2968,67 @@ body.light-mode .home-login-button {
 #summaryOutput li {
     margin-bottom: 12px;
 }
+/* =========================================
+   STUDYMIND AI — FULL-WIDTH DOCUMENT SUMMARIZER
+========================================= */
+
+/* Allow the summarizer to span the entire dashboard */
+.main-dashboard {
+    align-items: start;
+}
+
+.summarizer-card {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+/* Move summarizer out visually from the left-panel
+   and make it span both dashboard columns */
+.main-dashboard .left-panel {
+    display: contents;
+}
+
+.summarizer-card {
+    grid-column: 1 / -1;
+}
+
+/* Keep the summarizer content wide */
+.summarizer-card textarea {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-height: 200px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.summarizer-card .full-button {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#summaryOutput {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-top: 18px;
+    line-height: 1.7;
+}
+
+#summaryOutput .summary-result {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 24px;
+}
+
+#summaryOutput ul {
+    padding-left: 24px;
+}
+
+#summaryOutput li {
+    margin-bottom: 14px;
+    line-height: 1.7;
+}
