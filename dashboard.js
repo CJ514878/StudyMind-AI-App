@@ -7209,93 +7209,168 @@ async function safeJSON(
 
 /* =========================================================
    AI RESPONSE FORMATTER
-========================================================= */
+   ========================================================= */
 
-function renderAIResponse(
-    text
-) {
+function renderAIResponse(text) {
 
+    if (!text) {
+        return "";
+    }
+
+    /*
+       Escape normal HTML first so AI responses
+       cannot inject unwanted HTML.
+    */
+    let result = escapeHTML(text);
+
+    /*
+       Restore MathJax delimiters AFTER HTML escaping.
+       This allows equations such as:
+
+       \[ 1 + 1 = 2 \]
+
+       and
+
+       \( x + 2 = 5 \)
+
+       to reach MathJax correctly.
+    */
+
+    result = result.replace(
+        /\\\[/g,
+        "\\["
+    );
+
+    result = result.replace(
+        /\\\]/g,
+        "\\]"
+    );
+
+    result = result.replace(
+        /\\\(/g,
+        "\\("
+    );
+
+    result = result.replace(
+        /\\\)/g,
+        "\\)"
+    );
+
+    /*
+       Bold
+    */
+    result = result.replace(
+        /\*\*(.*?)\*\*/gs,
+        "<strong>$1</strong>"
+    );
+
+    /*
+       Italic
+    */
+    result = result.replace(
+        /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
+        "<em>$1</em>"
+    );
+
+    /*
+       Headings
+    */
+    result = result.replace(
+        /^### (.*)$/gm,
+        "<h4>$1</h4>"
+    );
+
+    result = result.replace(
+        /^## (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    result = result.replace(
+        /^# (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    /*
+       Bullet points
+    */
+    result = result.replace(
+        /(?:^|\n)[ \t]*[-*][ \t]+(.+)(?=\n|$)/g,
+        "\n<li>$1</li>"
+    );
+
+    /*
+       Wrap consecutive list items
+       in one unordered list.
+    */
+    result = result.replace(
+        /((?:<li>.*?<\/li>\s*)+)/gs,
+        "<ul>$1</ul>"
+    );
+
+    /*
+       Paragraph spacing
+    */
+    result = result.replace(
+        /\n{2,}/g,
+        "<br><br>"
+    );
+
+    /*
+       Normal line breaks
+    */
+    result = result.replace(
+        /\n/g,
+        "<br>"
+    );
+
+    return result;
+}
+
+
+/* =========================================================
+   MATH RENDERING
+   ========================================================= */
+
+function renderMath(container) {
+
+    if (!container) {
+        return;
+    }
+
+    /*
+       MathJax may not be loaded yet.
+       If it is available, typeset the AI response.
+    */
     if (
-        !text
+        window.MathJax &&
+        typeof window.MathJax.typesetPromise ===
+            "function"
     ) {
 
-        return "";
+        /*
+           Give the browser a moment to finish
+           inserting the AI response into the DOM.
+        */
+        requestAnimationFrame(() => {
+
+            window.MathJax
+                .typesetPromise([container])
+                .catch(error => {
+
+                    console.error(
+                        "Math rendering error:",
+                        error
+                    );
+
+                });
+
+        });
 
     }
 
-
-    let result =
-        escapeHTML(
-            text
-        );
-
-
-    result =
-        result.replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-
-    result =
-        result.replace(
-            /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
-            "<em>$1</em>"
-        );
-
-
-    result =
-        result.replace(
-            /^### (.*)$/gm,
-            "<h4>$1</h4>"
-        );
-
-
-    result =
-        result.replace(
-            /^## (.*)$/gm,
-            "<h3>$1</h3>"
-        );
-
-
-    result =
-        result.replace(
-            /^# (.*)$/gm,
-            "<h2>$1</h2>"
-        );
-
-
-    result =
-        result.replace(
-            /(?:^|\n)[ \t]*[-*][ \t]+(.+)(?=\n|$)/g,
-            "\n<li>$1</li>"
-        );
-
-
-    result =
-        result.replace(
-            /((?:<li>.*?<\/li>\s*)+)/gs,
-            "<ul>$1</ul>"
-        );
-
-
-    result =
-        result.replace(
-            /\n{2,}/g,
-            "<br><br>"
-        );
-
-
-    result =
-        result.replace(
-            /\n/g,
-            "<br>"
-        );
-
-
-    return result;
-
 }
+
+
 
 
 /* =========================================================
