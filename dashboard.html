@@ -1,906 +1,932 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>
-        StudyMind AI — Dashboard
-    </title>
+<title>
+    StudyMind AI — Dashboard
+</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+<link
+    rel="stylesheet"
+    href="style.css"
+>
 
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
-    >
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+>
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js">
-    </script>
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js">
+</script>
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js">
-    </script>
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js">
+</script>
+```
 
 </head>
 
-
 <body>
-
 
 <nav class="navbar">
 
-    <h2 class="logo">
-        StudyMind AI
-    </h2>
+```
+<h2 class="logo">
+    StudyMind AI
+</h2>
 
 
-    <ul class="nav-links">
+<ul class="nav-links">
 
-        <li>
-            <a href="home.html">
-                Home
-            </a>
-        </li>
+    <li>
+        <a href="home.html">
+            Home
+        </a>
+    </li>
 
-        <li>
-            <a href="#calendar">
-                Calendar
-            </a>
-        </li>
+    <li>
+        <a href="#calendar">
+            Calendar
+        </a>
+    </li>
 
-        <li>
-            <a href="#schedule">
-                Schedule
-            </a>
-        </li>
+    <li>
+        <a href="#schedule">
+            Schedule
+        </a>
+    </li>
 
-    </ul>
+</ul>
 
 
-    <button
-        id="themeButton"
-        class="theme-button"
-    >
-        🌙 Dark Mode
-    </button>
+<button
+    id="themeButton"
+    class="theme-button"
+>
+    🌙 Dark Mode
+</button>
+```
 
 </nav>
 
-
 <main class="dashboard-page">
-
 
 <div class="dashboard-heading">
 
-    <div>
+```
+<div>
 
-        <span class="eyebrow">
-            YOUR WORKSPACE
-        </span>
+    <span class="eyebrow">
+        YOUR WORKSPACE
+    </span>
 
-        <h1>
-            My Study Dashboard
-        </h1>
+    <h1>
+        My Study Dashboard
+    </h1>
 
-        <p class="dashboard-subtitle">
-            Your personalized study plan,
-            progress and upcoming sessions.
-        </p>
-
-    </div>
-
-
-    <a
-        href="home.html#generator"
-        class="dashboard-action"
-    >
-        ＋ New Study Plan
-    </a>
+    <p class="dashboard-subtitle">
+        Your personalized study plan,
+        progress and upcoming sessions.
+    </p>
 
 </div>
 
 
+<a
+    href="home.html#generator"
+    class="dashboard-action"
+>
+    ＋ New Study Plan
+</a>
+```
+
+</div>
+
 <section class="top-stats">
 
-    <div class="stat-card">
+```
+<div class="stat-card">
 
-        <span class="stat-icon">
-            🕒
-        </span>
+    <span class="stat-icon">
+        🕒
+    </span>
 
-        <div>
+    <div>
 
-            <p>
-                Weekly Hours
-            </p>
+        <p>
+            Weekly Hours
+        </p>
 
-            <h2 id="weeklyHours">
-                0
-            </h2>
-
-        </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-        <span class="stat-icon">
-            📅
-        </span>
-
-        <div>
-
-            <p>
-                Days Left
-            </p>
-
-            <h2 id="daysLeft">
-                0
-            </h2>
-
-        </div>
+        <h2 id="weeklyHours">
+            0
+        </h2>
 
     </div>
 
+</div>
 
-    <div class="stat-card">
 
-        <span class="stat-icon">
-            🎯
-        </span>
+<div class="stat-card">
 
-        <div>
+    <span class="stat-icon">
+        📅
+    </span>
 
-            <p>
-                Daily Goal
-            </p>
+    <div>
 
-            <h2 id="dailyGoal">
-                0 hrs
-            </h2>
+        <p>
+            Days Left
+        </p>
 
-        </div>
+        <h2 id="daysLeft">
+            0
+        </h2>
+
+    </div>
+
+</div>
+
+
+<div class="stat-card">
+
+    <span class="stat-icon">
+        🎯
+    </span>
+
+    <div>
+
+        <p>
+            Daily Goal
+        </p>
+
+        <h2 id="dailyGoal">
+            0 hrs
+        </h2>
 
     </div>
 
+</div>
 
-    <div class="stat-card">
 
-        <span class="stat-icon">
-            ⭐
-        </span>
+<div class="stat-card">
 
-        <div>
+    <span class="stat-icon">
+        ⭐
+    </span>
 
-            <p>
-                Study Score
-            </p>
+    <div>
 
-            <h2 id="studyScore">
-                0
-            </h2>
+        <p>
+            Study Score
+        </p>
 
-        </div>
+        <h2 id="studyScore">
+            0
+        </h2>
 
     </div>
+
+</div>
+```
 
 </section>
 
-
-
 <section class="main-dashboard">
 
-
 <div class="left-panel">
-
 
 <div
     class="panel-card current-topic-card"
     id="currentTopicSection"
 >
 
-    <div class="card-heading">
+```
+<div class="card-heading">
 
-        <div>
+    <div>
 
-            <span class="card-kicker">
-                CURRENT STUDY SESSION
-            </span>
-
-            <h2>
-                📖 Topic Study
-            </h2>
-
-        </div>
-
-        <span
-            class="card-badge"
-            id="topicStatusBadge"
-        >
-            IN PROGRESS
+        <span class="card-kicker">
+            CURRENT STUDY SESSION
         </span>
 
+        <h2>
+            📖 Topic Study
+        </h2>
+
     </div>
 
+    <span
+        class="card-badge"
+        id="topicStatusBadge"
+    >
+        IN PROGRESS
+    </span>
 
-    <div class="topic-progress-header">
+</div>
 
-        <span id="topicPosition">
-            TOPIC 1 OF 1
+
+<div class="topic-progress-header">
+
+    <span id="topicPosition">
+        TOPIC 1 OF 1
+    </span>
+
+</div>
+
+
+<h1
+    id="currentTopicName"
+    class="current-topic-name"
+>
+    No topic available
+</h1>
+
+
+<p id="currentTopicDescription">
+    Create a study plan with topics to begin.
+</p>
+
+
+<div class="study-timer-box">
+
+    <div class="timer-header-row">
+
+        <span class="timer-label">
+            STUDY TIMER
         </span>
 
-    </div>
-
-
-    <h1
-        id="currentTopicName"
-        class="current-topic-name"
-    >
-        No topic available
-    </h1>
-
-
-    <p id="currentTopicDescription">
-        Create a study plan with topics to begin.
-    </p>
-
-
-    <div class="study-timer-box">
-
-        <div class="timer-header-row">
-            <span class="timer-label">
-                STUDY TIMER
-            </span>
-
-            <select id="timerDuration" class="timer-select">
-                <option value="25">25 mins (Pomodoro)</option>
-                <option value="45">45 mins</option>
-                <option value="60" selected>60 mins</option>
-            </select>
-        </div>
-
-        <div id="studyTimer" class="study-timer">
-            00:00
-        </div>
-
-
-        <div class="timer-controls">
-
-            <button
-                id="startTimerButton"
-                class="timer-button timer-start"
-            >
-                <span>▶</span>
-                Start Timer
-            </button>
-
-
-            <button
-                id="pauseTimerButton"
-                class="timer-button timer-pause"
-                disabled
-            >
-                <span>⏸</span>
-                Pause
-            </button>
-
-
-            <button
-                id="resetTimerButton"
-                class="timer-button timer-reset"
-            >
-                <span>↻</span>
-                Reset
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <div
-        id="topicCompletionArea"
-        class="topic-completion-area"
-    >
-
-        <label
-            class="topic-checkbox-label"
-            for="topicCompleteCheckbox"
+        <select
+            id="timerDuration"
+            class="timer-select"
         >
+            <option value="25">
+                25 mins (Pomodoro)
+            </option>
 
-            <input
-                type="checkbox"
-                id="topicCompleteCheckbox"
-            >
+            <option value="45">
+                45 mins
+            </option>
 
-            <span class="custom-topic-checkbox">
-                ✓
-            </span>
+            <option value="60">
+                60 mins
+            </option>
 
-            <span class="topic-checkbox-text">
-                I have finished studying this topic
-            </span>
-
-        </label>
-
-
-        <p id="topicCompletionMessage">
-            Tick this box when you are done studying
-            this topic.
-        </p>
+        </select>
 
     </div>
 
 
     <div
-        id="nextTopicMessage"
-        class="next-topic-message"
+        id="studyTimer"
+        class="study-timer"
     >
+        25:00
     </div>
 
 
-    <div
-        id="topicQuestionsSection"
-        class="topic-questions-section"
-        style="display:none;"
-    >
-
-        <div class="questions-heading">
-
-            <span class="card-kicker">
-                KNOWLEDGE CHECK
-            </span>
-
-            <h2>
-                🧠 Test Yourself
-            </h2>
-
-            <p>
-                StudyMind AI has prepared 5 questions
-                based on the topic you just studied.
-            </p>
-
-        </div>
-
-
-        <div id="topicQuestions">
-        </div>
-
+    <div class="timer-controls">
 
         <button
-            id="submitTopicQuestions"
-            class="primary-button full-button"
+            id="startTimerButton"
+            class="timer-button timer-start"
         >
-            Submit Answers
+            <span>▶</span>
+            Start Timer
         </button>
 
 
-        <div
-            id="topicQuestionResult"
-            class="topic-question-result"
-        ></div>
+        <button
+            id="pauseTimerButton"
+            class="timer-button timer-pause"
+            disabled
+        >
+            <span>⏸</span>
+            Pause
+        </button>
+
+
+        <button
+            id="resetTimerButton"
+            class="timer-button timer-reset"
+        >
+            <span>↻</span>
+            Reset
+        </button>
 
     </div>
 
 </div>
 
+
+<div
+    id="topicCompletionArea"
+    class="topic-completion-area"
+>
+
+    <label
+        class="topic-checkbox-label"
+        for="topicCompleteCheckbox"
+    >
+
+        <input
+            type="checkbox"
+            id="topicCompleteCheckbox"
+        >
+
+        <span class="custom-topic-checkbox">
+            ✓
+        </span>
+
+        <span class="topic-checkbox-text">
+            I have finished studying this topic
+        </span>
+
+    </label>
+
+
+    <p id="topicCompletionMessage">
+        Tick this box when you are done studying
+        this topic.
+    </p>
+
+</div>
+
+
+<div
+    id="nextTopicMessage"
+    class="next-topic-message"
+>
+</div>
+
+
+<div
+    id="topicQuestionsSection"
+    class="topic-questions-section"
+    style="display:none;"
+>
+
+    <div class="questions-heading">
+
+        <span class="card-kicker">
+            KNOWLEDGE CHECK
+        </span>
+
+        <h2>
+            🧠 Test Yourself
+        </h2>
+
+        <p>
+            StudyMind AI has prepared 5 questions
+            based on the topic you just studied.
+        </p>
+
+    </div>
+
+
+    <div id="topicQuestions">
+    </div>
+
+
+    <button
+        id="submitTopicQuestions"
+        class="primary-button full-button"
+    >
+        Submit Answers
+    </button>
+
+
+    <div
+        id="topicQuestionResult"
+        class="topic-question-result"
+    ></div>
+
+</div>
+```
+
+</div>
 
 <div class="panel-card progress-card">
 
-    <div class="card-heading">
+```
+<div class="card-heading">
 
-        <div>
+    <div>
 
-            <span class="card-kicker">
-                OVERVIEW
-            </span>
-
-            <h2>
-                Progress Tracker
-            </h2>
-
-        </div>
-
-        <span class="card-badge">
-            LIVE
+        <span class="card-kicker">
+            OVERVIEW
         </span>
 
-    </div>
-
-
-    <div class="progress-circle">
-
-        <span id="progressPercent">
-            0%
-        </span>
+        <h2>
+            Progress Tracker
+        </h2>
 
     </div>
 
-
-    <p id="progressCount">
-        0 of 0 topics completed
-    </p>
-
-
-    <div class="progress-bar-container">
-
-        <div id="progressBar"></div>
-
-    </div>
+    <span class="card-badge">
+        LIVE
+    </span>
 
 </div>
 
 
+<div class="progress-circle">
+
+    <span id="progressPercent">
+        0%
+    </span>
+
+</div>
+
+
+<p id="progressCount">
+    0 of 0 topics completed
+</p>
+
+
+<div class="progress-bar-container">
+
+    <div id="progressBar"></div>
+
+</div>
+```
+
+</div>
 
 <div class="panel-card">
 
-    <div class="card-heading">
+```
+<div class="card-heading">
 
-        <div>
+    <div>
 
-            <span class="card-kicker">
-                TOPIC PROGRESS
-            </span>
+        <span class="card-kicker">
+            TOPIC PROGRESS
+        </span>
 
-            <h2>
-                📖 Topics
-            </h2>
+        <h2>
+            📖 Topics
+        </h2>
 
-        </div>
-
-    </div>
-
-
-    <div
-        id="topicList"
-        class="subject-list"
-    >
     </div>
 
 </div>
 
 
+<div
+    id="topicList"
+    class="subject-list"
+>
+</div>
+```
+
+</div>
 
 <div class="panel-card">
 
-    <div class="card-heading">
+```
+<div class="card-heading">
 
-        <div>
+    <div>
 
-            <span class="card-kicker">
-                YOUR SUBJECTS
-            </span>
+        <span class="card-kicker">
+            YOUR SUBJECTS
+        </span>
 
-            <h2>
-                📚 Subjects
-            </h2>
+        <h2>
+            📚 Subjects
+        </h2>
 
-        </div>
-
-    </div>
-
-
-    <div
-        id="subjectList"
-        class="subject-list"
-    >
     </div>
 
 </div>
 
 
+<div
+    id="subjectList"
+    class="subject-list"
+>
+</div>
+```
+
+</div>
 
 <div class="two-small-cards">
 
+```
+<div class="panel-card compact-card">
 
-    <div class="panel-card compact-card">
+    <span class="card-kicker">
+        CONSISTENCY
+    </span>
 
-        <span class="card-kicker">
-            CONSISTENCY
-        </span>
+    <h2>
+        🔥 Study Streak
+    </h2>
 
-        <h2>
-            🔥 Study Streak
-        </h2>
+    <h1 id="streak">
+        0 Days
+    </h1>
 
-        <h1 id="streak">
-            0 Days
-        </h1>
-
-        <p>
-            Keep building your momentum.
-        </p>
-
-    </div>
-
-
-    <div class="panel-card compact-card">
-
-        <span class="card-kicker">
-            PERFORMANCE
-        </span>
-
-        <h2>
-            ⭐ Study Score
-        </h2>
-
-        <h1 class="score-number">
-
-            <span id="scoreDisplay">
-                0
-            </span>
-
-            <small>
-                /100
-            </small>
-
-        </h1>
-
-
-        <p id="scoreMessage">
-            Start studying to build your score.
-        </p>
-
-
-        <div class="score-progress">
-
-            <div id="scoreProgressBar"></div>
-
-        </div>
-
-    </div>
+    <p>
+        Keep building your momentum.
+    </p>
 
 </div>
 
 
-<div class="panel-card summarizer-card">
+<div class="panel-card compact-card">
 
-    <div class="card-heading">
+    <span class="card-kicker">
+        PERFORMANCE
+    </span>
 
-        <div>
+    <h2>
+        ⭐ Study Score
+    </h2>
 
-            <span class="card-kicker">
-                AI TOOL
-            </span>
 
-            <h2>
-                📄 Document Summarizer
-            </h2>
+    <h1 class="score-number">
 
-        </div>
-
-        <span id="summaryCountBadge" class="card-badge">
-            0/5 used
+        <span id="scoreDisplay">
+            0
         </span>
+
+        <span class="score-total">
+            / 100
+        </span>
+
+    </h1>
+
+
+    <p id="scoreMessage">
+        Start studying to build your score.
+    </p>
+
+
+    <div class="score-progress">
+
+        <div id="scoreProgressBar"></div>
 
     </div>
 
+</div>
+```
+
+</div>
+
+<div class="panel-card summarizer-card">
+
+```
+<div class="card-heading">
+
+    <div>
+
+        <span class="card-kicker">
+            AI TOOL
+        </span>
+
+        <h2>
+            📄 Document Summarizer
+        </h2>
+
+    </div>
+
+    <span
+        id="summaryCountBadge"
+        class="card-badge"
+    >
+        0/5 used
+    </span>
+
+</div>
+
+
+<p>
+    Paste study notes or text to generate an
+    exam-tailored concise summary.
+</p>
+
+
+<textarea
+    id="summarizeInput"
+    placeholder="Paste study material or notes here..."
+    rows="4"
+></textarea>
+
+
+<button
+    id="summarizeBtn"
+    class="primary-button full-button"
+>
+    ✨ Summarize Notes
+</button>
+
+
+<div
+    id="summaryOutput"
+    class="ai-response"
+>
+    Summarized key points will appear here.
+</div>
+```
+
+</div>
+
+<div class="panel-card ai-assistant-card">
+
+```
+<div class="card-heading">
+
+    <div>
+
+        <span class="card-kicker">
+            INTELLIGENT SUPPORT
+        </span>
+
+        <h2>
+            🤖 StudyMind AI
+        </h2>
+
+    </div>
+
+    <span
+        id="aiCountBadge"
+        class="card-badge"
+    >
+        0/5 used
+    </span>
+
+</div>
+
+
+<p>
+    Get personalized help with your study
+    plan and progress.
+</p>
+
+
+<button
+    id="analyzeProgressButton"
+    class="primary-button full-button"
+>
+    🔍 Analyze My Progress
+</button>
+
+
+<p
+    id="aiAdviceText"
+    class="ai-analysis-result"
+>
+    Your personalized study analysis
+    will appear here.
+</p>
+
+
+
+<div class="ask-ai-section">
+
+    <h3>
+        💬 Ask StudyMind AI
+    </h3>
 
     <p>
-        Paste study notes or text to generate an exam-tailored concise summary.
+        Ask anything about your study plan,
+        subjects or progress.
     </p>
 
 
     <textarea
-        id="summarizeInput"
-        placeholder="Paste study material or notes here..."
-        rows="4"
+        id="aiQuestion"
+        placeholder="e.g. What should I study today?"
+        rows="3"
     ></textarea>
 
 
     <button
-        id="summarizeBtn"
-        class="primary-button full-button"
+        id="askAIButton"
+        class="secondary-button full-button"
     >
-        ✨ Summarize Notes
+        🤖 Ask AI
     </button>
 
 
     <div
-        id="summaryOutput"
+        id="aiResponse"
         class="ai-response"
     >
-        Summarized key points will appear here.
+        AI responses will appear here.
     </div>
 
 </div>
-
-
-<div class="panel-card ai-assistant-card">
-
-    <div class="card-heading">
-
-        <div>
-
-            <span class="card-kicker">
-                INTELLIGENT SUPPORT
-            </span>
-
-            <h2>
-                🤖 StudyMind AI
-            </h2>
-
-        </div>
-
-        <span id="aiCountBadge" class="card-badge">
-            0/5 used
-        </span>
-
-    </div>
-
-
-    <p>
-        Get personalized help with your study
-        plan and progress.
-    </p>
-
-
-    <button
-        id="analyzeProgressButton"
-        class="primary-button full-button"
-    >
-        🔍 Analyze My Progress
-    </button>
-
-
-    <p
-        id="aiAdviceText"
-        class="ai-analysis-result"
-    >
-        Your personalized study analysis
-        will appear here.
-    </p>
-
-
-
-    <div class="ask-ai-section">
-
-        <h3>
-            💬 Ask StudyMind AI
-        </h3>
-
-        <p>
-            Ask anything about your study plan,
-            subjects or progress.
-        </p>
-
-
-        <textarea
-            id="aiQuestion"
-            placeholder="e.g. What should I study today?"
-            rows="3"
-        ></textarea>
-
-
-        <button
-            id="askAIButton"
-            class="secondary-button full-button"
-        >
-            🤖 Ask AI
-        </button>
-
-
-        <div
-            id="aiResponse"
-            class="ai-response"
-        >
-            AI responses will appear here.
-        </div>
-
-    </div>
+```
 
 </div>
 
-
 </div>
-
-
 
 <div class="right-panel">
-
 
 <div
     class="calendar-panel"
     id="calendar"
 >
 
-    <div class="calendar-title-row">
+```
+<div class="calendar-title-row">
 
-        <div>
+    <div>
 
-            <span class="card-kicker">
-                PLAN AT A GLANCE
-            </span>
+        <span class="card-kicker">
+            PLAN AT A GLANCE
+        </span>
 
-            <h2>
-                📅 Study Calendar
-            </h2>
-
-        </div>
-
-
-        <div class="calendar-status">
-
-            <span></span>
-
-            Study plan active
-
-        </div>
-
-    </div>
-
-
-
-    <div class="calendar-header">
-
-        <button
-            id="previousMonth"
-            aria-label="Previous month"
-        >
-            ‹
-        </button>
-
-
-        <h2 id="calendarMonth">
-            Month Year
+        <h2>
+            📅 Study Calendar
         </h2>
 
-
-        <button
-            id="nextMonth"
-            aria-label="Next month"
-        >
-            ›
-        </button>
-
     </div>
 
 
+    <div class="calendar-status">
 
-    <div class="calendar-weekdays">
+        <span></span>
 
-        <div>Sun</div>
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
+        Study plan active
 
     </div>
 
+</div>
 
 
-    <div
-        class="calendar-days"
-        id="calendarDays"
+
+<div class="calendar-header">
+
+    <button
+        id="previousMonth"
+        aria-label="Previous month"
     >
-    </div>
+        ‹
+    </button>
+
+
+    <h2 id="calendarMonth">
+        Month Year
+    </h2>
+
+
+    <button
+        id="nextMonth"
+        aria-label="Next month"
+    >
+        ›
+    </button>
+
+</div>
 
 
 
-    <div class="calendar-bottom">
+<div class="calendar-weekdays">
 
-        <div class="calendar-legend">
-
-            <span>
-                <i class="legend-dot study-dot"></i>
-                Study Day
-            </span>
-
-            <span>
-                <i class="legend-dot completed-dot"></i>
-                Completed
-            </span>
-
-            <span>
-                <i class="legend-dot exam-dot"></i>
-                Test / Exam
-            </span>
-
-            <span>
-                <i class="legend-dot today-dot"></i>
-                Today
-            </span>
-
-            <span>
-                <i class="legend-dot break-dot"></i>
-                Break
-            </span>
-
-        </div>
-
-
-
-        <div class="next-session">
-
-            <div class="next-icon">
-                →
-            </div>
-
-
-            <div>
-
-                <span>
-                    Next Up
-                </span>
-
-                <strong id="nextBooking">
-                    No upcoming session yet
-                </strong>
-
-                <small id="nextBookingTime">
-                    Create a study plan to
-                    populate your calendar.
-                </small>
-
-            </div>
-
-        </div>
-
-    </div>
+    <div>Sun</div>
+    <div>Mon</div>
+    <div>Tue</div>
+    <div>Wed</div>
+    <div>Thu</div>
+    <div>Fri</div>
+    <div>Sat</div>
 
 </div>
 
 
 
 <div
-    class="panel-card schedule-card"
-    id="schedule"
+    class="calendar-days"
+    id="calendarDays"
 >
+</div>
 
-    <div class="card-heading">
 
-        <div>
 
-            <span class="card-kicker">
-                TODAY
-            </span>
+<div class="calendar-bottom">
 
-            <h2>
-                🗓️ Study Schedule
-            </h2>
+    <div class="calendar-legend">
 
-        </div>
+        <span>
+            <i class="legend-dot study-dot"></i>
+            Study Day
+        </span>
+
+        <span>
+            <i class="legend-dot completed-dot"></i>
+            Completed
+        </span>
+
+        <span>
+            <i class="legend-dot exam-dot"></i>
+            Test / Exam
+        </span>
+
+        <span>
+            <i class="legend-dot today-dot"></i>
+            Today
+        </span>
+
+        <span>
+            <i class="legend-dot break-dot"></i>
+            Break
+        </span>
 
     </div>
 
 
-    <div
-        id="scheduleList"
-        class="schedule-list"
-    >
 
-        <div class="empty-schedule">
-            Your daily study sessions
-            will appear here.
+    <div class="next-session">
+
+        <div class="next-icon">
+            →
+        </div>
+
+
+        <div>
+
+            <span>
+                Next Up
+            </span>
+
+            <strong id="nextBooking">
+                No upcoming session yet
+            </strong>
+
+            <small id="nextBookingTime">
+                Create a study plan to
+                populate your calendar.
+            </small>
+
         </div>
 
     </div>
 
 </div>
+```
 
+</div>
+
+<div
+    class="panel-card schedule-card"
+    id="schedule"
+>
+
+```
+<div class="card-heading">
+
+    <div>
+
+        <span class="card-kicker">
+            TODAY
+        </span>
+
+        <h2>
+            🗓️ Study Schedule
+        </h2>
+
+    </div>
+
+</div>
+
+
+<div
+    id="scheduleList"
+    class="schedule-list"
+>
+
+    <div class="empty-schedule">
+        Your daily study sessions
+        will appear here.
+    </div>
+
+</div>
+```
+
+</div>
 
 </div>
 
 </section>
 
 </main>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -909,4 +935,5 @@
 <script src="dashboard.js"></script>
 
 </body>
+
 </html>
