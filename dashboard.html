@@ -5,34 +5,47 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>
-        StudyMind AI — Dashboard
-    </title>
+    <title>StudyMind AI — Dashboard</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
-    >
+    <!-- other existing code -->
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js">
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [
+                    ["\\(", "\\)"]
+                ],
+                displayMath: [
+                    ["\\[", "\\]"]
+                ]
+            },
+            options: {
+                skipHtmlTags: [
+                    "script",
+                    "noscript",
+                    "style",
+                    "textarea",
+                    "pre",
+                    "code"
+                ]
+            }
+        };
     </script>
 
     <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js">
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+
+
+    <!-- Your dashboard JavaScript -->
+    <script src="dashboard.js"></script>
 
 </head>
 
