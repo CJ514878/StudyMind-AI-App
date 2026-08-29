@@ -13,10 +13,6 @@ const FREE_BATTLE_LIMIT = 5;
 const QUESTIONS_PER_BATTLE = 10;
 const QUESTION_TIME_LIMIT = 15;
 
-/* =========================================================
-STORAGE
-========================================================= */
-
 const STORAGE_KEYS = {
 
 ```
@@ -29,9 +25,6 @@ battlePoints:
 premium:
     "studyMindPremium",
 
-plan:
-    "studyMindPlan",
-
 theme:
     "studyMindTheme"
 ```
@@ -39,10 +32,10 @@ theme:
 };
 
 /* =========================================================
-SUBJECT DATABASE
+SUBJECTS + TOPICS
 ========================================================= */
 
-const SUBJECT_TOPICS = {
+const SUBJECT_DATABASE = {
 
 ```
 "Accounting": [
@@ -53,54 +46,83 @@ const SUBJECT_TOPICS = {
     "Trial Balance",
     "Cash Book",
     "Bank Reconciliation",
-    "Final Accounts",
     "Depreciation",
+    "Final Accounts",
     "Partnership Accounts"
 ],
 
+"Agricultural Science": [
+    "Introduction to Agriculture",
+    "Soil Science",
+    "Farm Tools",
+    "Crop Production",
+    "Crop Pests",
+    "Crop Diseases",
+    "Animal Husbandry",
+    "Animal Nutrition",
+    "Farm Management",
+    "Agricultural Economics"
+],
+
 "Biology": [
-    "Cell Biology",
-    "Classification",
+    "Cell Structure",
+    "Cell Division",
     "Nutrition",
     "Transport Systems",
     "Respiration",
     "Excretion",
-    "Coordination",
+    "Homeostasis",
     "Reproduction",
     "Genetics",
     "Evolution",
     "Ecology",
-    "Human Health"
+    "Classification",
+    "Microorganisms"
+],
+
+"Business Studies": [
+    "Introduction to Business",
+    "Office Practice",
+    "Communication",
+    "Business Documents",
+    "Trade",
+    "Banking",
+    "Insurance",
+    "Transportation",
+    "Entrepreneurship",
+    "Consumer Protection"
 ],
 
 "Chemistry": [
+    "Matter",
     "Atomic Structure",
     "Periodic Table",
     "Chemical Bonding",
     "Mole Concept",
-    "Stoichiometry",
-    "Acids and Bases",
-    "Redox Reactions",
-    "Electrochemistry",
+    "Chemical Reactions",
+    "Acids Bases and Salts",
     "Organic Chemistry",
-    "Chemical Equilibrium",
+    "Electrochemistry",
     "Rates of Reaction",
-    "Separation Techniques"
+    "Chemical Equilibrium",
+    "Metals",
+    "Non-Metals"
 ],
 
 "Computer Science": [
     "Computer Fundamentals",
+    "Hardware",
+    "Software",
+    "Operating Systems",
     "Data Representation",
     "Algorithms",
+    "Flowcharts",
     "Programming",
-    "Variables and Data Types",
-    "Control Structures",
-    "Arrays",
+    "Data Structures",
     "Databases",
     "Computer Networks",
     "Cybersecurity",
-    "Artificial Intelligence",
-    "Operating Systems"
+    "Artificial Intelligence"
 ],
 
 "Economics": [
@@ -110,42 +132,43 @@ const SUBJECT_TOPICS = {
     "Price Determination",
     "Elasticity",
     "Production",
+    "Cost and Revenue",
     "Market Structures",
     "National Income",
     "Inflation",
     "Unemployment",
-    "International Trade",
-    "Economic Development"
+    "Money and Banking",
+    "International Trade"
 ],
 
 "English Language": [
+    "Grammar",
     "Parts of Speech",
     "Sentence Structure",
     "Tenses",
-    "Subject-Verb Agreement",
     "Vocabulary",
     "Comprehension",
     "Summary Writing",
     "Essay Writing",
-    "Formal Letters",
-    "Informal Letters",
+    "Letter Writing",
     "Figures of Speech",
-    "Oral English"
+    "Oral English",
+    "Punctuation"
 ],
 
 "Further Mathematics": [
     "Algebra",
     "Functions",
-    "Sequences and Series",
-    "Binomial Expansion",
-    "Matrices",
-    "Vectors",
-    "Complex Numbers",
+    "Coordinate Geometry",
+    "Trigonometry",
     "Calculus",
     "Differentiation",
     "Integration",
-    "Coordinate Geometry",
-    "Probability"
+    "Vectors",
+    "Matrices",
+    "Probability",
+    "Statistics",
+    "Mechanics"
 ],
 
 "Geography": [
@@ -154,73 +177,71 @@ const SUBJECT_TOPICS = {
     "Weather and Climate",
     "Rocks",
     "Landforms",
-    "Rivers",
     "Soils",
     "Vegetation",
     "Population",
     "Settlement",
     "Agriculture",
-    "Industry"
+    "Industry",
+    "Transportation",
+    "Environmental Issues"
 ],
 
 "Government": [
-    "Meaning of Government",
+    "Introduction to Government",
     "Constitution",
     "Democracy",
     "Political Parties",
     "Electoral Systems",
-    "Separation of Powers",
-    "Rule of Law",
-    "Human Rights",
+    "Pressure Groups",
     "Public Opinion",
+    "Legislature",
+    "Executive",
+    "Judiciary",
     "Local Government",
-    "International Organizations",
-    "Nigerian Government"
+    "International Organizations"
 ],
 
 "History": [
     "Ancient Civilizations",
     "African History",
     "West African History",
-    "Nigerian History",
     "Colonialism",
     "Nationalism",
-    "Independence",
-    "World Wars",
+    "Independence Movements",
+    "World War I",
+    "World War II",
     "Cold War",
-    "Industrial Revolution",
-    "Historical Sources",
-    "Modern History"
+    "Modern History",
+    "Historical Sources"
 ],
 
 "Information Technology": [
+    "Information Systems",
     "Computer Hardware",
-    "Computer Software",
-    "Operating Systems",
+    "Software",
     "Internet",
+    "Web Technologies",
+    "Databases",
     "Networking",
     "Cybersecurity",
     "Digital Communication",
-    "Databases",
-    "Cloud Computing",
-    "Artificial Intelligence",
-    "Information Systems",
-    "Technology in Education"
+    "Data Management"
 ],
 
-"Literature": [
-    "Poetry",
+"Literature in English": [
     "Drama",
+    "Poetry",
     "Prose",
     "Plot",
     "Characterization",
     "Setting",
     "Theme",
-    "Point of View",
+    "Conflict",
+    "Figures of Speech",
     "Literary Devices",
-    "Tragedy",
-    "Comedy",
-    "African Literature"
+    "African Literature",
+    "Literary Analysis"
 ],
 
 "Mathematics": [
@@ -232,22 +253,22 @@ const SUBJECT_TOPICS = {
     "Algebra",
     "Linear Equations",
     "Quadratic Equations",
+    "Simultaneous Equations",
     "Geometry",
     "Mensuration",
     "Trigonometry",
     "Statistics",
     "Probability",
-    "Coordinate Geometry",
     "Sequences",
     "Vectors"
 ],
 
 "Physics": [
     "Measurement",
+    "Scalars and Vectors",
     "Motion",
     "Forces",
-    "Energy",
-    "Work and Power",
+    "Work Energy and Power",
     "Momentum",
     "Simple Machines",
     "Heat",
@@ -256,68 +277,59 @@ const SUBJECT_TOPICS = {
     "Light",
     "Electricity",
     "Magnetism",
-    "Electromagnetic Induction",
+    "Electromagnetism",
     "Atomic Physics"
 ],
 
-"Quantitative Reasoning": [
-    "Number Patterns",
-    "Arithmetic",
-    "Fractions",
-    "Percentages",
-    "Ratio",
-    "Proportion",
-    "Averages",
-    "Speed Distance Time",
-    "Profit and Loss",
-    "Probability",
-    "Geometry",
-    "Data Interpretation"
+"Physical Education": [
+    "Physical Fitness",
+    "Athletics",
+    "Football",
+    "Basketball",
+    "Volleyball",
+    "Swimming",
+    "Gymnastics",
+    "Sports Rules",
+    "First Aid",
+    "Nutrition and Fitness"
 ],
 
 "Religious Studies": [
     "Creation",
-    "Moral Teachings",
-    "Faith",
+    "Moral Values",
     "Leadership",
     "Justice",
     "Forgiveness",
-    "Responsibility",
-    "Family",
-    "Community",
-    "Peace",
+    "Faith",
+    "Prayer",
     "Religion and Society",
-    "Religious Leaders"
+    "Religious Teachings",
+    "Ethics"
 ],
 
 "Social Studies": [
     "Family",
     "Culture",
-    "Socialization",
+    "Society",
     "Citizenship",
     "Human Rights",
+    "Socialization",
     "Leadership",
-    "Conflict",
-    "Peace",
-    "Environment",
+    "Conflict Resolution",
     "Population",
-    "Social Problems",
-    "National Unity"
+    "Environmental Issues"
 ],
 
 "Technical Drawing": [
     "Drawing Instruments",
     "Geometric Construction",
-    "Lines and Angles",
     "Orthographic Projection",
     "Isometric Drawing",
-    "Scale Drawing",
-    "Sections",
-    "Loci",
-    "Mechanical Drawing",
-    "Building Drawing",
+    "Perspective Drawing",
+    "Sectional Views",
     "Dimensioning",
-    "Perspective"
+    "Scale Drawing",
+    "Engineering Drawing"
 ],
 
 "Visual Arts": [
@@ -328,37 +340,9 @@ const SUBJECT_TOPICS = {
     "Sculpture",
     "Printmaking",
     "Textiles",
-    "Graphic Design",
     "Art History",
     "African Art",
-    "Nigerian Art",
     "Art Appreciation"
-],
-
-"Yoruba": [
-    "Yoruba Grammar",
-    "Yoruba Vocabulary",
-    "Yoruba Literature",
-    "Yoruba Proverbs",
-    "Yoruba Culture",
-    "Yoruba History",
-    "Yoruba Oral Tradition",
-    "Yoruba Poetry",
-    "Yoruba Drama",
-    "Yoruba Folklore"
-],
-
-"General Knowledge": [
-    "Science",
-    "Geography",
-    "History",
-    "Technology",
-    "World Knowledge",
-    "African Knowledge",
-    "Nigerian Knowledge",
-    "Sports",
-    "Space",
-    "Environment"
 ]
 ```
 
@@ -381,17 +365,13 @@ let battlePoints = 0;
 let battleTimer =
 QUESTION_TIME_LIMIT;
 
-let battleTimerInterval =
-null;
+let battleTimerInterval = null;
 
-let answeringLocked =
-false;
+let answeringLocked = false;
 
-let battleActive =
-false;
+let battleActive = false;
 
-let generatingBattle =
-false;
+let generatingBattle = false;
 
 /* =========================================================
 DOM HELPER
@@ -401,6 +381,72 @@ function getElement(id) {
 
 ```
 return document.getElementById(id);
+```
+
+}
+
+/* =========================================================
+STORAGE
+========================================================= */
+
+function getBattleCount() {
+
+```
+return Number(
+    localStorage.getItem(
+        STORAGE_KEYS.battleCount
+    )
+) || 0;
+```
+
+}
+
+function setBattleCount(count) {
+
+```
+localStorage.setItem(
+    STORAGE_KEYS.battleCount,
+    String(count)
+);
+```
+
+}
+
+function getBattlePoints() {
+
+```
+return Number(
+    localStorage.getItem(
+        STORAGE_KEYS.battlePoints
+    )
+) || 0;
+```
+
+}
+
+function setBattlePoints(points) {
+
+```
+localStorage.setItem(
+    STORAGE_KEYS.battlePoints,
+    String(points)
+);
+```
+
+}
+
+function isPremiumUser() {
+
+```
+const premium =
+    localStorage.getItem(
+        STORAGE_KEYS.premium
+    );
+
+return (
+    premium === "true" ||
+    premium === "1"
+);
 ```
 
 }
@@ -422,21 +468,19 @@ battlePoints =
 
 loadTheme();
 
-loadSubjects();
-
 updateBattleStatus();
 
 updateLeaderboard();
 
-setupSubjectChange();
+loadSubjects();
 
-setupTopicChange();
+setupSubjectChange();
 ```
 
 }
 
 /* =========================================================
-SUBJECT LOADING
+LOAD SUBJECTS
 ========================================================= */
 
 function loadSubjects() {
@@ -470,35 +514,33 @@ subjectSelect.appendChild(
 );
 
 
-const subjects =
-    Object.keys(
-        SUBJECT_TOPICS
-    ).sort(
+Object.keys(
+    SUBJECT_DATABASE
+)
+    .sort(
         (a, b) =>
             a.localeCompare(b)
-    );
+    )
+    .forEach(
+        subject => {
 
+            const option =
+                document.createElement(
+                    "option"
+                );
 
-subjects.forEach(
-    subject => {
+            option.value =
+                subject;
 
-        const option =
-            document.createElement(
-                "option"
+            option.textContent =
+                subject;
+
+            subjectSelect.appendChild(
+                option
             );
 
-        option.value =
-            subject;
-
-        option.textContent =
-            subject;
-
-        subjectSelect.appendChild(
-            option
-        );
-
-    }
-);
+        }
+    );
 ```
 
 }
@@ -515,6 +557,17 @@ const subjectSelect =
         "battleSubject"
     );
 
+const topicSelect =
+    getElement(
+        "battleTopic"
+    );
+
+const startButton =
+    getElement(
+        "startBattleButton"
+    );
+
+
 if (!subjectSelect) {
     return;
 }
@@ -522,108 +575,22 @@ if (!subjectSelect) {
 
 subjectSelect.addEventListener(
     "change",
-    loadTopicsForSubject
-);
-```
+    () => {
 
-}
-
-/* =========================================================
-TOPIC LOADING
-========================================================= */
-
-function loadTopicsForSubject() {
-
-```
-const subjectSelect =
-    getElement(
-        "battleSubject"
-    );
-
-const topicSelect =
-    getElement(
-        "battleTopic"
-    );
+        const subject =
+            subjectSelect.value;
 
 
-if (
-    !subjectSelect ||
-    !topicSelect
-) {
-
-    return;
-
-}
+        if (!topicSelect) {
+            return;
+        }
 
 
-const subject =
-    subjectSelect.value;
+        topicSelect.innerHTML =
+            "";
 
 
-topicSelect.innerHTML =
-    "";
-
-
-if (!subject) {
-
-    topicSelect.disabled =
-        true;
-
-
-    const option =
-        document.createElement(
-            "option"
-        );
-
-    option.value =
-        "";
-
-    option.textContent =
-        "Choose a subject first";
-
-    topicSelect.appendChild(
-        option
-    );
-
-    return;
-
-}
-
-
-topicSelect.disabled =
-    false;
-
-
-const defaultOption =
-    document.createElement(
-        "option"
-    );
-
-defaultOption.value =
-    "";
-
-defaultOption.textContent =
-    "Choose a topic";
-
-topicSelect.appendChild(
-    defaultOption
-);
-
-
-const topics =
-    SUBJECT_TOPICS[
-        subject
-    ] || [];
-
-
-topics
-    .slice()
-    .sort(
-        (a, b) =>
-            a.localeCompare(b)
-    )
-    .forEach(
-        topic => {
+        if (!subject) {
 
             const option =
                 document.createElement(
@@ -631,104 +598,114 @@ topics
                 );
 
             option.value =
-                topic;
+                "";
 
             option.textContent =
-                topic;
+                "Choose a subject first";
 
             topicSelect.appendChild(
                 option
             );
 
+            topicSelect.disabled =
+                true;
+
+            if (startButton) {
+                startButton.disabled =
+                    true;
+            }
+
+            return;
+
         }
-    );
 
 
-updateStartButtonState();
-```
+        const defaultOption =
+            document.createElement(
+                "option"
+            );
 
-}
+        defaultOption.value =
+            "";
 
-/* =========================================================
-TOPIC CHANGE
-========================================================= */
+        defaultOption.textContent =
+            "Choose a topic";
 
-function setupTopicChange() {
-
-```
-const topicSelect =
-    getElement(
-        "battleTopic"
-    );
-
-if (!topicSelect) {
-    return;
-}
+        topicSelect.appendChild(
+            defaultOption
+        );
 
 
-topicSelect.addEventListener(
-    "change",
-    updateStartButtonState
-);
-```
-
-}
-
-/* =========================================================
-START BUTTON STATE
-========================================================= */
-
-function updateStartButtonState() {
-
-```
-const subjectSelect =
-    getElement(
-        "battleSubject"
-    );
-
-const topicSelect =
-    getElement(
-        "battleTopic"
-    );
-
-const button =
-    getElement(
-        "startBattleButton"
-    );
+        const topics =
+            SUBJECT_DATABASE[
+                subject
+            ] || [];
 
 
-if (
-    !button ||
-    generatingBattle
-) {
+        topics
+            .slice()
+            .sort(
+                (a, b) =>
+                    a.localeCompare(b)
+            )
+            .forEach(
+                topic => {
 
-    return;
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
 
-}
+                    option.value =
+                        topic;
+
+                    option.textContent =
+                        topic;
+
+                    topicSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
 
 
-if (
-    subjectSelect &&
-    topicSelect &&
-    subjectSelect.value &&
-    topicSelect.value
-) {
-
-    if (
-        isPremiumUser() ||
-        getBattleCount() <
-            FREE_BATTLE_LIMIT
-    ) {
-
-        button.disabled =
+        topicSelect.disabled =
             false;
 
+
+        if (startButton) {
+            startButton.disabled =
+                true;
+        }
+
     }
+);
 
-} else {
 
-    button.disabled =
-        false;
+if (topicSelect) {
+
+    topicSelect.addEventListener(
+        "change",
+        () => {
+
+            if (!startButton) {
+                return;
+            }
+
+
+            const canStart =
+                Boolean(
+                    subjectSelect.value &&
+                    topicSelect.value
+                );
+
+
+            startButton.disabled =
+                !canStart;
+
+        }
+    );
 
 }
 ```
@@ -777,18 +754,14 @@ const premiumCard =
 
 
 if (battlesUsed) {
-
     battlesUsed.textContent =
         used;
-
 }
 
 
 if (battleLimit) {
-
     battleLimit.textContent =
         FREE_BATTLE_LIMIT;
-
 }
 
 
@@ -806,10 +779,8 @@ if (isPremiumUser()) {
 
 
     if (premiumCard) {
-
         premiumCard.style.display =
             "none";
-
     }
 
 
@@ -820,17 +791,6 @@ if (isPremiumUser()) {
 
         computerModeButton.style.opacity =
             "1";
-
-    }
-
-
-    if (startBattleButton) {
-
-        startBattleButton.disabled =
-            false;
-
-        startBattleButton.textContent =
-            "⚔️ Start Battle";
 
     }
 
@@ -913,279 +873,18 @@ if (remaining <= 0) {
 
     }
 
-}
-```
-
-}
-
-/* =========================================================
-STUDY PLAN TOPICS
-========================================================= */
-
-function getTopicsFromStudyPlan() {
-
-```
-const topics = [];
-
-
-const possibleKeys = [
-
-    "studyMindPlan",
-
-    "studyMindStudyPlan",
-
-    "studyPlan",
-
-    "studyMindCurrentPlan"
-
-];
-
-
-let plan = null;
-
-
-for (
-    const key of possibleKeys
-) {
-
-    const raw =
-        localStorage.getItem(
-            key
-        );
-
-    if (!raw) {
-        continue;
-    }
-
-
-    try {
-
-        const parsed =
-            JSON.parse(
-                raw
-            );
-
-        if (parsed) {
-
-            plan =
-                parsed;
-
-            break;
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            `Could not parse ${key}`,
-            error
-        );
-
-    }
-
-}
-
-
-if (!plan) {
-
-    return topics;
-
-}
-
-
-collectTopics(
-    plan,
-    topics
-);
-
-
-return removeDuplicateTopics(
-    topics
-);
-```
-
-}
-
-/* =========================================================
-COLLECT STUDY PLAN TOPICS
-========================================================= */
-
-function collectTopics(
-data,
-topics
-) {
-
-```
-if (!data) {
-    return;
-}
-
-
-if (Array.isArray(data)) {
-
-    data.forEach(
-        item => {
-
-            collectTopics(
-                item,
-                topics
-            );
-
-        }
-    );
-
-    return;
-
-}
-
-
-if (
-    typeof data !==
-    "object"
-) {
-
-    return;
-
-}
-
-
-const topicProperties = [
-
-    "topic",
-
-    "topicName",
-
-    "title",
-
-    "name"
-
-];
-
-
-for (
-    const property of
-    topicProperties
-) {
-
     if (
-        typeof data[property] ===
-            "string" &&
-        data[property].trim()
+        startBattleButton &&
+        getElement("battleSubject")?.value &&
+        getElement("battleTopic")?.value
     ) {
 
-        const name =
-            data[property].trim();
-
-
-        if (
-            name.toLowerCase() !==
-            "untitled topic"
-        ) {
-
-            topics.push({
-
-                id:
-                    name
-                        .toLowerCase()
-                        .replace(
-                            /[^a-z0-9]+/g,
-                            "-"
-                        ),
-
-                name
-
-            });
-
-        }
-
-
-        break;
+        startBattleButton.disabled =
+            false;
 
     }
 
 }
-
-
-Object.keys(data)
-    .forEach(
-        key => {
-
-            const value =
-                data[key];
-
-
-            if (
-                value &&
-                typeof value ===
-                    "object"
-            ) {
-
-                if (
-                    ![
-                        "profile",
-                        "settings",
-                        "user",
-                        "metadata"
-                    ].includes(key)
-                ) {
-
-                    collectTopics(
-                        value,
-                        topics
-                    );
-
-                }
-
-            }
-
-        }
-    );
-```
-
-}
-
-/* =========================================================
-REMOVE DUPLICATES
-========================================================= */
-
-function removeDuplicateTopics(
-topics
-) {
-
-```
-const seen =
-    new Set();
-
-
-return topics.filter(
-    topic => {
-
-        const normalized =
-            topic.name
-                .trim()
-                .toLowerCase();
-
-
-        if (
-            seen.has(
-                normalized
-            )
-        ) {
-
-            return false;
-
-        }
-
-
-        seen.add(
-            normalized
-        );
-
-
-        return true;
-
-    }
-);
 ```
 
 }
@@ -1275,21 +974,16 @@ const difficultySelect =
 
 
 const subject =
-    subjectSelect
-        ? subjectSelect.value
-        : "";
+    subjectSelect?.value || "";
 
 
 const topic =
-    topicSelect
-        ? topicSelect.value
-        : "";
+    topicSelect?.value || "";
 
 
 const difficulty =
-    difficultySelect
-        ? difficultySelect.value
-        : "mixed";
+    difficultySelect?.value ||
+    "mixed";
 
 
 if (!subject) {
@@ -1332,9 +1026,7 @@ try {
 
 
     if (
-        !Array.isArray(
-            questions
-        ) ||
+        !Array.isArray(questions) ||
         questions.length <
             QUESTIONS_PER_BATTLE
     ) {
@@ -1400,26 +1092,18 @@ try {
 
 
     if (setup) {
-
         setup.hidden =
             true;
-
     }
-
 
     if (results) {
-
         results.hidden =
             true;
-
     }
 
-
     if (arena) {
-
         arena.hidden =
             false;
-
     }
 
 
@@ -1486,7 +1170,9 @@ const difficultyInstruction =
 const prompt = `
 ```
 
-You are StudyMind AI creating a competitive educational battle for a secondary-school student.
+You are StudyMind AI creating a competitive educational battle.
+
+The student is a secondary-school student.
 
 SUBJECT:
 ${subject}
@@ -1503,18 +1189,18 @@ Create exactly 10 high-quality multiple-choice questions.
 
 IMPORTANT REQUIREMENTS:
 
+* All 10 questions MUST be about the specified subject and topic.
 * Exactly 10 questions.
 * Exactly 4 options per question.
 * Only ONE option is correct.
-* Every question must genuinely test knowledge of ${topic}.
-* Every question must belong to the subject ${subject}.
-* Do not ask generic study-advice questions.
+* Questions must genuinely test knowledge.
+* Questions must NOT be generic study-advice questions.
 * Questions must be appropriate for a secondary-school student.
 * Mix conceptual, application and factual questions where appropriate.
 * Do not repeat questions.
 * Do not make the correct answer always option A.
 * Make incorrect options plausible but clearly incorrect.
-* Keep questions concise enough for a timed quiz.
+* Keep questions concise enough for a 15-second timed quiz.
 * Return ONLY valid JSON.
 * Do NOT use markdown.
 * Do NOT include explanations outside the JSON.
@@ -1535,12 +1221,13 @@ Return exactly this structure:
 ]
 
 The "answer" value MUST be the zero-based index of the correct option.
+
 `.trim();
 
 ```
 const response =
     await fetch(
-        "/api/ask-ai",
+        "/api/chat",
         {
 
             method:
@@ -1684,9 +1371,7 @@ try {
 
 
     if (
-        !Array.isArray(
-            parsed
-        )
+        !Array.isArray(parsed)
     ) {
 
         throw new Error(
@@ -1880,8 +1565,18 @@ if (questionText) {
 
 if (questionTopic) {
 
+    const subject =
+        getElement(
+            "battleSubject"
+        )?.value || "";
+
+    const topic =
+        getElement(
+            "battleTopic"
+        )?.value || "";
+
     questionTopic.textContent =
-        `${getSelectedSubject()} • ${getSelectedTopic()}`;
+        `${subject} • ${topic}`;
 
 }
 
@@ -1967,67 +1662,7 @@ startQuestionTimer();
 }
 
 /* =========================================================
-SELECTED SUBJECT
-========================================================= */
-
-function getSelectedSubject() {
-
-```
-const select =
-    getElement(
-        "battleSubject"
-    );
-
-
-if (
-    !select ||
-    select.selectedIndex < 0
-) {
-
-    return "";
-
-}
-
-
-return select.options[
-    select.selectedIndex
-].textContent;
-```
-
-}
-
-/* =========================================================
-SELECTED TOPIC
-========================================================= */
-
-function getSelectedTopic() {
-
-```
-const select =
-    getElement(
-        "battleTopic"
-    );
-
-
-if (
-    !select ||
-    select.selectedIndex < 0
-) {
-
-    return "";
-
-}
-
-
-return select.options[
-    select.selectedIndex
-].textContent;
-```
-
-}
-
-/* =========================================================
-TIMER
+QUESTION TIMER
 ========================================================= */
 
 function startQuestionTimer() {
@@ -2162,8 +1797,10 @@ buttons.forEach(
 
 
 if (
-    selectedIndex !== null &&
-    selectedIndex === correctIndex
+    selectedIndex !==
+        null &&
+    selectedIndex ===
+        correctIndex
 ) {
 
     playerScore++;
@@ -2171,9 +1808,11 @@ if (
 
     if (selectedButton) {
 
-        selectedButton.classList.add(
-            "correct"
-        );
+        selectedButton
+            .classList
+            .add(
+                "correct"
+            );
 
     }
 
@@ -2181,9 +1820,11 @@ if (
 
     if (selectedButton) {
 
-        selectedButton.classList.add(
-            "incorrect"
-        );
+        selectedButton
+            .classList
+            .add(
+                "incorrect"
+            );
 
     }
 
@@ -2194,12 +1835,15 @@ if (
             if (
                 Number(
                     button.dataset.originalIndex
-                ) === correctIndex
+                ) ===
+                correctIndex
             ) {
 
-                button.classList.add(
-                    "correct"
-                );
+                button
+                    .classList
+                    .add(
+                        "correct"
+                    );
 
             }
 
@@ -2245,13 +1889,11 @@ let chance =
     0.55;
 
 
-if (
-    difficultySelect
-) {
+if (difficultySelect) {
 
     if (
         difficultySelect.value ===
-            "easy"
+        "easy"
     ) {
 
         chance =
@@ -2259,7 +1901,7 @@ if (
 
     } else if (
         difficultySelect.value ===
-            "medium"
+        "medium"
     ) {
 
         chance =
@@ -2267,7 +1909,7 @@ if (
 
     } else if (
         difficultySelect.value ===
-            "hard"
+        "hard"
     ) {
 
         chance =
@@ -2309,18 +1951,14 @@ const computer =
 
 
 if (player) {
-
     player.textContent =
         playerScore;
-
 }
 
 
 if (computer) {
-
     computer.textContent =
         computerScore;
-
 }
 ```
 
@@ -2367,18 +2005,14 @@ const results =
 
 
 if (arena) {
-
     arena.hidden =
         true;
-
 }
 
 
 if (results) {
-
     results.hidden =
         false;
-
 }
 
 
@@ -2409,26 +2043,20 @@ const resultMessage =
 
 
 if (finalPlayerScore) {
-
     finalPlayerScore.textContent =
         playerScore;
-
 }
 
 
 if (finalComputerScore) {
-
     finalComputerScore.textContent =
         computerScore;
-
 }
 
 
 if (pointsElement) {
-
     pointsElement.textContent =
         `+${pointsEarned}`;
-
 }
 
 
@@ -2438,10 +2066,8 @@ if (
 ) {
 
     if (resultTitle) {
-
         resultTitle.textContent =
             "🏆 You Win!";
-
     }
 
 
@@ -2458,10 +2084,8 @@ if (
 ) {
 
     if (resultTitle) {
-
         resultTitle.textContent =
             "Keep Practising!";
-
     }
 
 
@@ -2475,10 +2099,8 @@ if (
 } else {
 
     if (resultTitle) {
-
         resultTitle.textContent =
             "🤝 It's a Draw!";
-
     }
 
 
@@ -2598,26 +2220,20 @@ const setup =
 
 
 if (arena) {
-
     arena.hidden =
         true;
-
 }
 
 
 if (results) {
-
     results.hidden =
         true;
-
 }
 
 
 if (setup) {
-
     setup.hidden =
         false;
-
 }
 
 
@@ -2634,6 +2250,9 @@ if (setup) {
     });
 
 }
+
+
+updateBattleStatus();
 ```
 
 }
@@ -2686,9 +2305,7 @@ message
 ) {
 
 ```
-alert(
-    message
-);
+alert(message);
 ```
 
 }
@@ -2781,69 +2398,24 @@ if (
 }
 
 
+const subject =
+    getElement(
+        "battleSubject"
+    )?.value || "";
+
+const topic =
+    getElement(
+        "battleTopic"
+    )?.value || "";
+
+
 button.disabled =
-    false;
+    !(subject && topic);
+
 
 button.textContent =
+    button.dataset.originalText ||
     "⚔️ Start Battle";
-```
-
-}
-
-/* =========================================================
-BATTLE COUNT
-========================================================= */
-
-function getBattleCount() {
-
-```
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battleCount
-    )
-) || 0;
-```
-
-}
-
-function setBattleCount(
-count
-) {
-
-```
-localStorage.setItem(
-    STORAGE_KEYS.battleCount,
-    String(count)
-);
-```
-
-}
-
-/* =========================================================
-BATTLE POINTS
-========================================================= */
-
-function getBattlePoints() {
-
-```
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battlePoints
-    )
-) || 0;
-```
-
-}
-
-function setBattlePoints(
-points
-) {
-
-```
-localStorage.setItem(
-    STORAGE_KEYS.battlePoints,
-    String(points)
-);
 ```
 
 }
@@ -2851,23 +2423,6 @@ localStorage.setItem(
 /* =========================================================
 PREMIUM
 ========================================================= */
-
-function isPremiumUser() {
-
-```
-const premium =
-    localStorage.getItem(
-        STORAGE_KEYS.premium
-    );
-
-
-return (
-    premium === "true" ||
-    premium === "1"
-);
-```
-
-}
 
 function openPremium() {
 
@@ -2922,10 +2477,7 @@ if (
     battlePoints >=
     1950
 ) {
-
-    rank =
-        3;
-
+    rank = 3;
 }
 
 
@@ -2933,10 +2485,7 @@ if (
     battlePoints >=
     2180
 ) {
-
-    rank =
-        2;
-
+    rank = 2;
 }
 
 
@@ -2944,10 +2493,7 @@ if (
     battlePoints >=
     2450
 ) {
-
-    rank =
-        1;
-
+    rank = 1;
 }
 
 
@@ -3138,9 +2684,7 @@ window.location.href =
 SHUFFLE
 ========================================================= */
 
-function shuffleArray(
-array
-) {
+function shuffleArray(array) {
 
 ```
 const result =
