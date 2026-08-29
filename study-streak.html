@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    StudyMind AI — Study Streak
+</title>
+
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+```
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
+
+<nav class="navbar">
+
+```
+<h2 class="logo">
+    StudyMind AI
+</h2>
+
+<ul class="nav-links">
+
+    <li>
+        <a href="home.html">
+            Home
+        </a>
+    </li>
+
+    <li>
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+    </li>
+
+    <li>
+        <a href="dashboard.html#calendar">
+            Calendar
+        </a>
+    </li>
+
+    <li>
+        <a href="dashboard.html#schedule">
+            Schedule
+        </a>
+    </li>
+
+    <li>
+        <a href="ai-support.html">
+            🤖 AI Support
+        </a>
+    </li>
+
+    <li>
+        <a href="summarizer.html">
+            📄 Summarizer
+        </a>
+    </li>
+
+    <li>
+        <a href="study-streak.html">
+            🔥 Study Streak
+        </a>
+    </li>
+
+    <li>
+        <a href="study-score.html">
+            ⭐ Study Score
+        </a>
+    </li>
+
+</ul>
+
+<button
+    id="themeButton"
+    class="theme-button"
+>
+    🌙 Dark Mode
+</button>
+```
+
+</nav>
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="dashboard-page">
+
+```
+<div class="dashboard-heading">
+
+    <div>
+
+        <span class="eyebrow">
+            YOUR CONSISTENCY
+        </span>
+
+        <h1>
+            🔥 Study Streak
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Keep studying consistently and build your streak.
+        </p>
+
+    </div>
+
+    <a
+        href="dashboard.html"
+        class="dashboard-action"
+    >
+        ← Back to Dashboard
+    </a>
+
+</div>
+
+
+<!-- =====================================================
+     STREAK HERO
+====================================================== -->
+
+<section class="top-stats">
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            🔥
+        </span>
+
+        <div>
+
+            <p>
+                Current Streak
+            </p>
+
+            <h2 id="streakNumber">
+                0 Days
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <span class="stat-icon">
+            📚
+        </span>
+
+        <div>
+
+            <p>
+                Study Activity
+            </p>
+
+            <h2 id="studyStreak">
+                0 Days
+            </h2>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     STREAK CONTENT
+====================================================== -->
+
+<section class="main-dashboard">
+
+    <div class="left-panel">
+
+        <div class="panel-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        CONSISTENCY
+                    </span>
+
+                    <h2>
+                        🔥 Your Study Streak
+                    </h2>
+
+                </div>
+
+                <span class="card-badge">
+                    LIVE
+                </span>
+
+            </div>
+
+
+            <div
+                class="progress-circle"
+                style="margin: 40px auto;"
+            >
+
+                <span id="streak">
+                    0 Days
+                </span>
+
+            </div>
+
+
+            <p
+                id="streakProgress"
+                style="text-align:center;"
+            >
+                0 day streak
+            </p>
+
+
+            <div class="progress-bar-container">
+
+                <div
+                    id="streakProgressBar"
+                    style="width:0%;"
+                >
+                </div>
+
+            </div>
+
+
+            <p style="text-align:center; margin-top:20px;">
+                Complete study sessions regularly to keep your streak growing.
+            </p>
+
+        </div>
+
+
+        <div class="panel-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        HOW IT WORKS
+                    </span>
+
+                    <h2>
+                        Build Your Streak
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p>
+                Your streak increases when you complete a study session.
+                Studying on consecutive days keeps the streak going.
+            </p>
+
+            <p>
+                If you miss a day, your next study session starts a new streak.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="right-panel">
+
+        <div class="panel-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        KEEP GOING
+                    </span>
+
+                    <h2>
+                        🎯 Study Consistently
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p>
+                Every study session counts. Stay consistent and keep
+                building your progress.
+            </p>
+
+            <a
+                href="dashboard.html"
+                class="primary-button full-button"
+                style="display:block; text-align:center; text-decoration:none;"
+            >
+                📖 Start Studying
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+```
+
+</main>
+
+<!-- =========================================================
+     SUPABASE
+========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
+<script src="supabase.js"></script>
+
+<!-- =========================================================
+     DASHBOARD JAVASCRIPT
+========================================================= -->
+
+<script src="dashboard.js"></script>
+
+</body>
+
+</html>
