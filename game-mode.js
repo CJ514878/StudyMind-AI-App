@@ -2426,7 +2426,7 @@ function openSummarizer() {
 function openStudyStreak() {
 
     window.location.href =
-        "streak.html";
+        "study-streak.html";
 
 }
 
