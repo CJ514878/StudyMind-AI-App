@@ -162,19 +162,10 @@
                 </span>
 
                 <h3>
-
-                    <span id="battlesUsed">
-                        0
-                    </span>
-
+                    <span id="battlesUsed">0</span>
                     /
-
-                    <span id="battleLimit">
-                        5
-                    </span>
-
+                    <span id="battleLimit">5</span>
                     battles used
-
                 </h3>
 
             </div>
@@ -218,9 +209,6 @@
 
         <div class="game-mode-grid">
 
-
-            <!-- VS COMPUTER -->
-
             <button
                 type="button"
                 class="game-mode-card featured-mode"
@@ -256,8 +244,6 @@
             </button>
 
 
-            <!-- 1V1 -->
-
             <button
                 type="button"
                 class="game-mode-card locked-mode"
@@ -292,8 +278,6 @@
             </button>
 
 
-            <!-- 2V2 -->
-
             <button
                 type="button"
                 class="game-mode-card locked-mode"
@@ -327,8 +311,6 @@
 
             </button>
 
-
-            <!-- TOURNAMENT -->
 
             <button
                 type="button"
@@ -390,8 +372,8 @@
                 </h2>
 
                 <p>
-                    Choose a subject and topic,
-                    then test yourself with 10 questions.
+                    Choose a subject, choose a topic
+                    and test yourself with 10 questions.
                 </p>
 
             </div>
@@ -411,7 +393,9 @@
         </div>
 
 
-        <!-- SUBJECT -->
+        <!-- =================================================
+             SUBJECT
+        ================================================== -->
 
         <div class="setup-options">
 
@@ -432,9 +416,14 @@
             </div>
 
 
-            <!-- TOPIC -->
+            <!-- =================================================
+                 TOPIC
+            ================================================== -->
 
-            <div class="setup-field">
+            <div
+                class="setup-field"
+                id="battleTopicField"
+            >
 
                 <label for="battleTopic">
                     Topic
@@ -454,7 +443,9 @@
             </div>
 
 
-            <!-- DIFFICULTY -->
+            <!-- =================================================
+                 DIFFICULTY
+            ================================================== -->
 
             <div class="setup-field">
 
@@ -492,6 +483,7 @@
             class="start-battle-button"
             id="startBattleButton"
             onclick="beginBattle()"
+            disabled
         >
             ⚔️ Start Battle
         </button>
@@ -575,8 +567,6 @@
         </div>
 
 
-        <!-- TIMER -->
-
         <div class="battle-timer">
 
             <span>
@@ -589,8 +579,6 @@
 
         </div>
 
-
-        <!-- QUESTION -->
 
         <div class="question-card">
 
@@ -619,7 +607,7 @@
 
 
     <!-- =================================================
-         RESULTS
+         BATTLE RESULTS
     ================================================== -->
 
     <section
