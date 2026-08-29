@@ -3064,3 +3064,815 @@ body.light-mode .home-login-button {
     min-height: 60px;
     margin-top: 15px;
 }
+/* =========================================================
+STUDYMIND AI — AI SUPPORT PAGE
+========================================================= */
+
+* {
+  box-sizing: border-box;
+  }
+
+html {
+scroll-behavior: smooth;
+}
+
+body {
+margin: 0;
+min-height: 100vh;
+font-family: Inter, Arial, Helvetica, sans-serif;
+background: #0b1220;
+color: #f8fafc;
+}
+
+/* =========================================================
+MAIN PAGE
+========================================================= */
+
+.ai-support-page {
+min-height: 100vh;
+background: #0b1220;
+}
+
+/* =========================================================
+NAVIGATION
+========================================================= */
+
+.ai-navbar {
+width: 100%;
+min-height: 72px;
+padding: 0 32px;
+
+```
+display: flex;
+align-items: center;
+justify-content: space-between;
+
+background: #111827;
+border-bottom: 1px solid #1f2937;
+
+position: sticky;
+top: 0;
+z-index: 1000;
+```
+
+}
+
+.ai-logo {
+margin: 0;
+font-size: 22px;
+font-weight: 800;
+color: #ffffff;
+}
+
+.ai-nav-links {
+display: flex;
+align-items: center;
+gap: 10px;
+flex-wrap: wrap;
+}
+
+.ai-nav-links button {
+border: none;
+background: transparent;
+
+```
+color: #cbd5e1;
+
+padding: 10px 13px;
+border-radius: 10px;
+
+font-size: 14px;
+font-weight: 600;
+
+cursor: pointer;
+
+transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+```
+
+}
+
+.ai-nav-links button:hover {
+background: #1e293b;
+color: #ffffff;
+transform: translateY(-1px);
+}
+
+.ai-nav-links .logout-button {
+color: #fca5a5;
+}
+
+.ai-nav-links .logout-button:hover {
+background: rgba(239, 68, 68, 0.12);
+color: #f87171;
+}
+
+/* =========================================================
+PAGE CONTAINER
+========================================================= */
+
+.ai-support-container {
+width: min(1200px, calc(100% - 40px));
+margin: 0 auto;
+padding: 50px 0 80px;
+}
+
+/* =========================================================
+HERO
+========================================================= */
+
+.ai-support-hero {
+text-align: center;
+margin-bottom: 35px;
+}
+
+.ai-support-hero .ai-icon {
+width: 72px;
+height: 72px;
+
+```
+margin: 0 auto 18px;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+border-radius: 20px;
+
+background: #1e293b;
+
+font-size: 34px;
+
+box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.25);
+```
+
+}
+
+.ai-support-hero h1 {
+margin: 0 0 12px;
+
+```
+font-size: clamp(32px, 5vw, 48px);
+line-height: 1.1;
+
+color: #ffffff;
+```
+
+}
+
+.ai-support-hero p {
+max-width: 700px;
+margin: 0 auto;
+
+```
+color: #94a3b8;
+
+font-size: 17px;
+line-height: 1.7;
+```
+
+}
+
+/* =========================================================
+AI USAGE BADGE
+========================================================= */
+
+.ai-usage-card {
+width: fit-content;
+max-width: 100%;
+
+```
+margin: 0 auto 35px;
+
+padding: 10px 16px;
+
+display: flex;
+align-items: center;
+gap: 10px;
+
+background: #111827;
+
+border: 1px solid #263244;
+border-radius: 999px;
+
+color: #cbd5e1;
+
+font-size: 14px;
+font-weight: 600;
+```
+
+}
+
+.ai-usage-card span {
+color: #a78bfa;
+}
+
+/* =========================================================
+QUICK ACTIONS
+========================================================= */
+
+.ai-quick-actions {
+display: grid;
+
+```
+grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+gap: 16px;
+
+margin-bottom: 30px;
+```
+
+}
+
+.ai-action-button {
+min-height: 125px;
+
+```
+padding: 22px;
+
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+justify-content: center;
+
+text-align: left;
+
+border: 1px solid #263244;
+border-radius: 18px;
+
+background: #111827;
+color: #ffffff;
+
+cursor: pointer;
+
+transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+```
+
+}
+
+.ai-action-button:hover {
+transform: translateY(-4px);
+
+```
+background: #172033;
+
+border-color: #64748b;
+
+box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.25);
+```
+
+}
+
+.ai-action-button:active {
+transform: translateY(-1px);
+}
+
+.ai-action-icon {
+font-size: 27px;
+margin-bottom: 10px;
+}
+
+.ai-action-button strong {
+display: block;
+
+```
+margin-bottom: 5px;
+
+font-size: 16px;
+```
+
+}
+
+.ai-action-button small {
+color: #94a3b8;
+
+```
+font-size: 13px;
+line-height: 1.5;
+```
+
+}
+
+/* =========================================================
+AI CHAT CARD
+========================================================= */
+
+.ai-chat-card {
+background: #111827;
+
+```
+border: 1px solid #263244;
+
+border-radius: 22px;
+
+overflow: hidden;
+
+box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.22);
+```
+
+}
+
+/* =========================================================
+CHAT HEADER
+========================================================= */
+
+.ai-chat-header {
+padding: 22px 25px;
+
+```
+display: flex;
+align-items: center;
+justify-content: space-between;
+
+border-bottom: 1px solid #263244;
+```
+
+}
+
+.ai-chat-title {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.ai-chat-title-icon {
+width: 42px;
+height: 42px;
+
+```
+display: flex;
+align-items: center;
+justify-content: center;
+
+border-radius: 12px;
+
+background: #1e293b;
+
+font-size: 20px;
+```
+
+}
+
+.ai-chat-title h2 {
+margin: 0;
+
+```
+font-size: 20px;
+color: #ffffff;
+```
+
+}
+
+.ai-chat-title p {
+margin: 3px 0 0;
+
+```
+color: #64748b;
+
+font-size: 12px;
+```
+
+}
+
+/* =========================================================
+RESPONSE AREA
+========================================================= */
+
+.ai-response {
+min-height: 220px;
+
+```
+padding: 28px;
+
+color: #cbd5e1;
+
+line-height: 1.8;
+
+font-size: 15px;
+
+overflow-wrap: anywhere;
+```
+
+}
+
+.ai-response:empty::before {
+content:
+"Ask StudyMind AI something about your studies...";
+color: #64748b;
+}
+
+.ai-response h2,
+.ai-response h3,
+.ai-response h4 {
+color: #ffffff;
+margin-top: 18px;
+}
+
+.ai-response strong {
+color: #ffffff;
+}
+
+.ai-response ul {
+padding-left: 22px;
+}
+
+.ai-response li {
+margin-bottom: 7px;
+}
+
+/* =========================================================
+QUESTION INPUT
+========================================================= */
+
+.ai-input-area {
+padding: 20px 24px 24px;
+
+```
+border-top: 1px solid #263244;
+```
+
+}
+
+.ai-input-wrapper {
+display: flex;
+gap: 12px;
+align-items: flex-end;
+}
+
+#aiQuestion {
+width: 100%;
+min-height: 56px;
+max-height: 180px;
+
+```
+padding: 16px 18px;
+
+resize: vertical;
+
+border: 1px solid #334155;
+border-radius: 14px;
+
+outline: none;
+
+background: #0b1220;
+color: #ffffff;
+
+font-family: inherit;
+font-size: 15px;
+
+transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+```
+
+}
+
+#aiQuestion::placeholder {
+color: #64748b;
+}
+
+#aiQuestion:focus {
+border-color: #64748b;
+
+```
+box-shadow:
+    0 0 0 3px rgba(100, 116, 139, 0.12);
+```
+
+}
+
+/* =========================================================
+ASK BUTTON
+========================================================= */
+
+#askAIButton {
+min-height: 56px;
+
+```
+padding: 0 22px;
+
+border: none;
+border-radius: 14px;
+
+background: #7c3aed;
+color: #ffffff;
+
+font-size: 15px;
+font-weight: 700;
+
+cursor: pointer;
+
+white-space: nowrap;
+
+transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+```
+
+}
+
+#askAIButton:hover:not(:disabled) {
+background: #6d28d9;
+transform: translateY(-2px);
+}
+
+#askAIButton:active:not(:disabled) {
+transform: translateY(0);
+}
+
+#askAIButton:disabled {
+cursor: not-allowed;
+opacity: 0.55;
+}
+
+/* =========================================================
+LIMIT MESSAGE
+========================================================= */
+
+.ai-limit-message {
+margin: 20px;
+
+```
+padding: 25px;
+
+text-align: center;
+
+background: #172033;
+
+border: 1px solid #334155;
+
+border-radius: 16px;
+```
+
+}
+
+.ai-limit-message h3 {
+margin-top: 0;
+
+```
+color: #ffffff;
+```
+
+}
+
+.ai-limit-message p {
+color: #94a3b8;
+line-height: 1.6;
+}
+
+/* =========================================================
+PREMIUM BUTTON
+========================================================= */
+
+.premium-button {
+border: none;
+
+```
+padding: 12px 20px;
+
+border-radius: 12px;
+
+background: #7c3aed;
+color: #ffffff;
+
+font-weight: 700;
+
+cursor: pointer;
+
+transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+```
+
+}
+
+.premium-button:hover {
+background: #6d28d9;
+transform: translateY(-2px);
+}
+
+/* =========================================================
+NAVIGATION SHORTCUTS
+========================================================= */
+
+.ai-page-shortcuts {
+display: grid;
+
+```
+grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+gap: 12px;
+
+margin-top: 30px;
+```
+
+}
+
+.ai-shortcut {
+min-height: 80px;
+
+```
+border: 1px solid #263244;
+border-radius: 14px;
+
+background: #111827;
+color: #cbd5e1;
+
+cursor: pointer;
+
+font-weight: 600;
+
+transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+```
+
+}
+
+.ai-shortcut:hover {
+background: #1e293b;
+color: #ffffff;
+transform: translateY(-2px);
+}
+
+/* =========================================================
+LIGHT MODE
+========================================================= */
+
+body.light-mode {
+background: #f8fafc;
+color: #0f172a;
+}
+
+body.light-mode .ai-support-page {
+background: #f8fafc;
+}
+
+body.light-mode .ai-navbar,
+body.light-mode .ai-chat-card,
+body.light-mode .ai-action-button,
+body.light-mode .ai-shortcut,
+body.light-mode .ai-usage-card {
+background: #ffffff;
+border-color: #e2e8f0;
+}
+
+body.light-mode .ai-logo,
+body.light-mode .ai-support-hero h1,
+body.light-mode .ai-chat-title h2,
+body.light-mode .ai-response h2,
+body.light-mode .ai-response h3,
+body.light-mode .ai-response h4 {
+color: #0f172a;
+}
+
+body.light-mode .ai-support-hero p,
+body.light-mode .ai-action-button small,
+body.light-mode .ai-chat-title p,
+body.light-mode .ai-response,
+body.light-mode .ai-usage-card {
+color: #64748b;
+}
+
+body.light-mode .ai-nav-links button {
+color: #475569;
+}
+
+body.light-mode .ai-nav-links button:hover {
+background: #f1f5f9;
+color: #0f172a;
+}
+
+body.light-mode .ai-action-button:hover,
+body.light-mode .ai-shortcut:hover {
+background: #f8fafc;
+}
+
+body.light-mode #aiQuestion {
+background: #f8fafc;
+color: #0f172a;
+border-color: #cbd5e1;
+}
+
+/* =========================================================
+RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+```
+.ai-navbar {
+    padding: 15px 20px;
+
+    align-items: flex-start;
+    gap: 15px;
+
+    flex-direction: column;
+}
+
+.ai-nav-links {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.ai-quick-actions {
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+}
+
+.ai-page-shortcuts {
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+}
+```
+
+}
+
+/* =========================================================
+RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+```
+.ai-support-container {
+    width: min(100% - 24px, 1200px);
+    padding: 35px 0 60px;
+}
+
+.ai-support-hero h1 {
+    font-size: 32px;
+}
+
+.ai-support-hero p {
+    font-size: 15px;
+}
+
+.ai-quick-actions {
+    grid-template-columns: 1fr;
+}
+
+.ai-page-shortcuts {
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+}
+
+.ai-chat-header {
+    padding: 18px;
+}
+
+.ai-response {
+    padding: 20px;
+    min-height: 180px;
+}
+
+.ai-input-area {
+    padding: 16px;
+}
+
+.ai-input-wrapper {
+    flex-direction: column;
+}
+
+#askAIButton {
+    width: 100%;
+}
+
+.ai-action-button {
+    min-height: 105px;
+}
+```
+
+}
+
+/* =========================================================
+SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+
+```
+.ai-page-shortcuts {
+    grid-template-columns: 1fr;
+}
+
+.ai-support-hero h1 {
+    font-size: 28px;
+}
+```
+
+}
