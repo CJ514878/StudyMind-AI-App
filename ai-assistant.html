@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    StudyMind AI — Intelligent Support
+</title>
+
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+
+
+<!-- =====================================================
+     MATHJAX CONFIGURATION
+====================================================== -->
+
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [
+                ["\\(", "\\)"]
+            ],
+            displayMath: [
+                ["\\[", "\\]"]
+            ]
+        },
+
+        options: {
+            skipHtmlTags: [
+                "script",
+                "noscript",
+                "style",
+                "textarea",
+                "pre",
+                "code"
+            ]
+        }
+    };
+</script>
+
+
+<script
+    async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+```
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
+
+<nav class="navbar">
+
+```
+<h2 class="logo">
+    StudyMind AI
+</h2>
+
+
+<ul class="nav-links">
+
+    <li>
+        <a href="home.html">
+            Home
+        </a>
+    </li>
+
+    <li>
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+    </li>
+
+    <li>
+        <a
+            href="ai-assistant.html"
+            class="active"
+        >
+            AI Assistant
+        </a>
+    </li>
+
+    <li>
+        <a href="summarizer.html">
+            Summarizer
+        </a>
+    </li>
+
+    <li>
+        <a href="streak.html">
+            Study Streak
+        </a>
+    </li>
+
+    <li>
+        <a href="score.html">
+            Study Score
+        </a>
+    </li>
+
+</ul>
+
+
+<button
+    id="themeButton"
+    class="theme-button"
+    type="button"
+>
+    🌙 Dark Mode
+</button>
+```
+
+</nav>
+
+<!-- =========================================================
+     MAIN PAGE
+========================================================= -->
+
+<main class="dashboard-page">
+
+```
+<!-- =====================================================
+     PAGE HEADER
+====================================================== -->
+
+<div class="dashboard-heading">
+
+    <div>
+
+        <span class="eyebrow">
+            INTELLIGENT SUPPORT
+        </span>
+
+        <h1>
+            🤖 StudyMind AI
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Get personalized help based on your
+            subjects, topics, progress and exam plan.
+        </p>
+
+    </div>
+
+
+    <a
+        href="dashboard.html"
+        class="dashboard-action"
+    >
+        ← Back to Dashboard
+    </a>
+
+</div>
+
+
+
+<!-- =====================================================
+     AI CONTENT
+====================================================== -->
+
+<section class="main-dashboard">
+
+
+    <div class="left-panel">
+
+
+        <!-- =============================================
+             PROGRESS ANALYSIS
+        ============================================== -->
+
+        <div class="panel-card ai-assistant-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        PERSONALIZED ANALYSIS
+                    </span>
+
+                    <h2>
+                        🔍 Analyze My Progress
+                    </h2>
+
+                </div>
+
+
+                <span
+                    id="aiCountBadge"
+                    class="card-badge"
+                >
+                    0/5 used
+                </span>
+
+            </div>
+
+
+            <p>
+                Let StudyMind AI analyze your
+                current study plan and give you
+                personalized advice.
+            </p>
+
+
+            <button
+                id="analyzeProgressButton"
+                class="primary-button full-button"
+                type="button"
+            >
+                🔍 Analyze My Progress
+            </button>
+
+
+            <div
+                id="aiAdviceText"
+                class="ai-analysis-result"
+            >
+                Your personalized study analysis
+                will appear here.
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             ASK AI
+        ============================================== -->
+
+        <div class="panel-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        AI STUDY ASSISTANT
+                    </span>
+
+                    <h2>
+                        💬 Ask StudyMind AI
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <p>
+                Ask questions about your subjects,
+                topics, progress, exam preparation,
+                or what you should study next.
+            </p>
+
+
+            <textarea
+                id="aiQuestion"
+                placeholder="e.g. What should I study today?"
+                rows="5"
+            ></textarea>
+
+
+            <button
+                id="askAIButton"
+                class="secondary-button full-button"
+                type="button"
+            >
+                🤖 Ask AI
+            </button>
+
+
+            <div
+                id="aiResponse"
+                class="ai-response"
+            >
+                AI responses will appear here.
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             AI HELP INFORMATION
+        ============================================== -->
+
+        <div class="panel-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        HOW IT WORKS
+                    </span>
+
+                    <h2>
+                        🧠 Personalized Assistance
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <p>
+                StudyMind AI uses the information
+                in your study plan to make its
+                answers more relevant to you.
+            </p>
+
+
+            <div class="dashboard-tool-links">
+
+
+                <div class="dashboard-tool-link">
+
+                    <span>
+                        📚
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Your Subjects
+                        </strong>
+
+                        <small>
+                            AI can use the subjects
+                            in your current study plan.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="dashboard-tool-link">
+
+                    <span>
+                        📖
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Your Topics
+                        </strong>
+
+                        <small>
+                            AI can help you understand
+                            your actual study topics.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="dashboard-tool-link">
+
+                    <span>
+                        📈
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Your Progress
+                        </strong>
+
+                        <small>
+                            AI can recommend what
+                            you should focus on next.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =================================================
+         RIGHT PANEL
+    ================================================== -->
+
+    <div class="right-panel">
+
+
+        <!-- =============================================
+             AI USAGE
+        ============================================== -->
+
+        <div class="panel-card">
+
+            <span class="card-kicker">
+                FREE PLAN
+            </span>
+
+
+            <h2>
+                💬 AI Questions
+            </h2>
+
+
+            <div class="progress-circle">
+
+                <span id="aiUsagePercent">
+                    0%
+                </span>
+
+            </div>
+
+
+            <p
+                id="aiUsageText"
+                style="text-align:center;"
+            >
+                0 of 5 free AI questions used.
+            </p>
+
+
+            <div class="progress-bar-container">
+
+                <div id="aiUsageProgressBar">
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             QUICK LINKS
+        ============================================== -->
+
+        <div class="panel-card">
+
+            <span class="card-kicker">
+                STUDYMIND
+            </span>
+
+
+            <h2>
+                ⚡ Quick Access
+            </h2>
+
+
+            <div class="dashboard-tool-links">
+
+
+                <a
+                    href="dashboard.html"
+                    class="dashboard-tool-link"
+                >
+
+                    <span>
+                        📊
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Dashboard
+                        </strong>
+
+                        <small>
+                            Return to your
+                            main study workspace.
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+
+                <a
+                    href="summarizer.html"
+                    class="dashboard-tool-link"
+                >
+
+                    <span>
+                        📄
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Summarizer
+                        </strong>
+
+                        <small>
+                            Summarize your
+                            study material.
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+
+                <a
+                    href="score.html"
+                    class="dashboard-tool-link"
+                >
+
+                    <span>
+                        ⭐
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Study Score
+                        </strong>
+
+                        <small>
+                            View your performance.
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+```
+
+</main>
+
+<!-- =========================================================
+     SUPABASE
+========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+<script src="supabase.js"></script>
+
+<!-- =========================================================
+     PAGE JAVASCRIPT
+========================================================= -->
+
+<script src="dashboard.js"></script>
+
+</body>
+
+</html>
