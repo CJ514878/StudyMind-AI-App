@@ -1038,7 +1038,7 @@ The "answer" value MUST be the zero-based index of the correct option.
 
 const response =
     await fetch(
-        "/api/chat",
+        "/api/ask-ai",
         {
 
             method:
