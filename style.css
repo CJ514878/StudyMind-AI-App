@@ -3094,79 +3094,328 @@ background: #0b1220;
 }
 
 /* =========================================================
-NAVIGATION
+STUDYMIND AI — PROFESSIONAL NAVIGATION
 ========================================================= */
 
 .ai-navbar {
 width: 100%;
-min-height: 72px;
-padding: 0 32px;
+min-height: 76px;
+padding: 0 36px;
 
 ```
 display: flex;
 align-items: center;
 justify-content: space-between;
 
-background: #111827;
-border-bottom: 1px solid #1f2937;
+background: rgba(15, 23, 42, 0.96);
+border-bottom: 1px solid #243044;
 
 position: sticky;
 top: 0;
 z-index: 1000;
+
+backdrop-filter: blur(14px);
+-webkit-backdrop-filter: blur(14px);
 ```
 
 }
 
+/* =========================================================
+LOGO
+========================================================= */
+
 .ai-logo {
 margin: 0;
-font-size: 22px;
+
+```
+font-size: 21px;
 font-weight: 800;
+letter-spacing: -0.3px;
+
 color: #ffffff;
+
+white-space: nowrap;
+```
+
 }
+
+/* =========================================================
+NAVIGATION CONTAINER
+========================================================= */
 
 .ai-nav-links {
 display: flex;
 align-items: center;
-gap: 10px;
-flex-wrap: wrap;
+gap: 8px;
 }
 
+/* =========================================================
+PROFESSIONAL NAV BUTTONS
+========================================================= */
+
 .ai-nav-links button {
-border: none;
-background: transparent;
+height: 42px;
 
 ```
-color: #cbd5e1;
+display: inline-flex;
+align-items: center;
+justify-content: center;
 
-padding: 10px 13px;
+padding: 0 15px;
+
+border: 1px solid transparent;
 border-radius: 10px;
 
-font-size: 14px;
+background: transparent;
+
+color: #aeb9ca;
+
+font-family: inherit;
+font-size: 13px;
 font-weight: 600;
 
 cursor: pointer;
 
+white-space: nowrap;
+
 transition:
     background 0.2s ease,
+    border-color 0.2s ease,
     color 0.2s ease,
     transform 0.2s ease;
 ```
 
 }
 
+/* =========================================================
+HOVER
+========================================================= */
+
 .ai-nav-links button:hover {
-background: #1e293b;
+background: #172033;
+
+```
+border-color: #2d3a4f;
+
 color: #ffffff;
+
 transform: translateY(-1px);
+```
+
 }
 
+/* =========================================================
+ACTIVE / CURRENT PAGE
+========================================================= */
+
+.ai-nav-links button.active {
+background: #1e293b;
+
+```
+border-color: #334155;
+
+color: #ffffff;
+
+box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.02);
+```
+
+}
+
+/* =========================================================
+NEW STUDY PLAN
+========================================================= */
+
+.ai-nav-links .new-plan-button {
+background: #7c3aed;
+
+```
+border-color: #8b5cf6;
+
+color: #ffffff;
+
+padding: 0 17px;
+
+box-shadow:
+    0 6px 18px rgba(124, 58, 237, 0.20);
+```
+
+}
+
+.ai-nav-links .new-plan-button:hover {
+background: #6d28d9;
+
+```
+border-color: #7c3aed;
+
+color: #ffffff;
+
+box-shadow:
+    0 8px 22px rgba(124, 58, 237, 0.28);
+```
+
+}
+
+/* =========================================================
+LOGOUT
+========================================================= */
+
 .ai-nav-links .logout-button {
+margin-left: 4px;
+
+```
 color: #fca5a5;
+
+border-color: rgba(239, 68, 68, 0.15);
+```
+
 }
 
 .ai-nav-links .logout-button:hover {
-background: rgba(239, 68, 68, 0.12);
+background: rgba(127, 29, 29, 0.18);
+
+```
+border-color: rgba(239, 68, 68, 0.30);
+
 color: #f87171;
+```
+
+}
+
+/* =========================================================
+NAVIGATION DIVIDER
+========================================================= */
+
+.ai-nav-divider {
+width: 1px;
+height: 26px;
+
+```
+margin: 0 4px;
+
+background: #263244;
+```
+
+}
+
+/* =========================================================
+MOBILE NAVIGATION
+========================================================= */
+
+@media (max-width: 1000px) {
+
+```
+.ai-navbar {
+    padding: 14px 22px;
+
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 14px;
+}
+
+.ai-logo {
+    text-align: center;
+}
+
+.ai-nav-links {
+    width: 100%;
+
+    justify-content: center;
+
+    overflow-x: auto;
+
+    padding-bottom: 3px;
+
+    scrollbar-width: none;
+}
+
+.ai-nav-links::-webkit-scrollbar {
+    display: none;
+}
+```
+
+}
+
+/* =========================================================
+SMALL MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+```
+.ai-navbar {
+    padding: 12px 14px;
+}
+
+.ai-nav-links {
+    justify-content: flex-start;
+
+    gap: 6px;
+}
+
+.ai-nav-links button {
+    height: 40px;
+
+    padding: 0 12px;
+
+    font-size: 12px;
+
+    border-radius: 9px;
+}
+
+.ai-nav-links .new-plan-button {
+    padding: 0 14px;
+}
+```
+
+}
+
+/* =========================================================
+LIGHT MODE NAVIGATION
+========================================================= */
+
+body.light-mode .ai-navbar {
+background: rgba(255, 255, 255, 0.96);
+
+```
+border-bottom-color: #e2e8f0;
+```
+
+}
+
+body.light-mode .ai-logo {
+color: #0f172a;
+}
+
+body.light-mode .ai-nav-links button {
+color: #64748b;
+}
+
+body.light-mode .ai-nav-links button:hover {
+background: #f1f5f9;
+
+```
+border-color: #e2e8f0;
+
+color: #0f172a;
+```
+
+}
+
+body.light-mode .ai-nav-links button.active {
+background: #f1f5f9;
+
+```
+border-color: #e2e8f0;
+
+color: #0f172a;
+```
+
+}
+
+body.light-mode .ai-nav-divider {
+background: #e2e8f0;
 }
 
 /* =========================================================
