@@ -27,17 +27,23 @@
 ====================================================== -->
 
 <script>
+
     window.MathJax = {
+
         tex: {
+
             inlineMath: [
                 ["\\(", "\\)"]
             ],
+
             displayMath: [
                 ["\\[", "\\]"]
             ]
+
         },
 
         options: {
+
             skipHtmlTags: [
                 "script",
                 "noscript",
@@ -46,8 +52,11 @@
                 "pre",
                 "code"
             ]
+
         }
+
     };
+
 </script>
 
 
@@ -85,33 +94,52 @@
         </a>
     </li>
 
+
     <li>
         <a href="dashboard.html">
             Dashboard
         </a>
     </li>
 
+
     <li>
-        <a href="ai-assistant.html">
-            AI Assistant
+        <a href="#calendar">
+            Calendar
         </a>
     </li>
+
+
+    <li>
+        <a href="#schedule">
+            Schedule
+        </a>
+    </li>
+
+
+    <li>
+        <a href="ai-support.html">
+            🤖 AI Support
+        </a>
+    </li>
+
 
     <li>
         <a href="summarizer.html">
-            Summarizer
+            📄 Summarizer
         </a>
     </li>
 
+
     <li>
-        <a href="streak.html">
-            Study Streak
+        <a href="study-streak.html">
+            🔥 Study Streak
         </a>
     </li>
 
+
     <li>
-        <a href="score.html">
-            Study Score
+        <a href="study-score.html">
+            ⭐ Study Score
         </a>
     </li>
 
@@ -121,7 +149,6 @@
 <button
     id="themeButton"
     class="theme-button"
-    type="button"
 >
     🌙 Dark Mode
 </button>
@@ -148,9 +175,11 @@
             YOUR WORKSPACE
         </span>
 
+
         <h1>
             My Study Dashboard
         </h1>
+
 
         <p class="dashboard-subtitle">
             Your personalized study plan,
@@ -186,11 +215,13 @@
             🕒
         </span>
 
+
         <div>
 
             <p>
                 Weekly Hours
             </p>
+
 
             <h2 id="weeklyHours">
                 0
@@ -210,11 +241,13 @@
             📅
         </span>
 
+
         <div>
 
             <p>
                 Days Left
             </p>
+
 
             <h2 id="daysLeft">
                 0
@@ -234,11 +267,13 @@
             🎯
         </span>
 
+
         <div>
 
             <p>
                 Daily Goal
             </p>
+
 
             <h2 id="dailyGoal">
                 0 hrs
@@ -252,11 +287,15 @@
 
     <!-- STUDY SCORE -->
 
-    <div class="stat-card">
+    <div
+        class="stat-card"
+        id="studyScoreCard"
+    >
 
         <span class="stat-icon">
             ⭐
         </span>
+
 
         <div>
 
@@ -264,16 +303,10 @@
                 Study Score
             </p>
 
+
             <h2 id="studyScore">
                 0
             </h2>
-
-            <a
-                href="score.html"
-                class="stat-link"
-            >
-                View Score
-            </a>
 
         </div>
 
@@ -299,7 +332,7 @@
 
 
         <!-- =============================================
-             CURRENT TOPIC
+             CURRENT STUDY TOPIC
         ============================================== -->
 
         <div
@@ -314,6 +347,7 @@
                     <span class="card-kicker">
                         CURRENT STUDY SESSION
                     </span>
+
 
                     <h2>
                         📖 Topic Study
@@ -384,9 +418,11 @@
                             25 mins (Pomodoro)
                         </option>
 
+
                         <option value="45">
                             45 mins
                         </option>
+
 
                         <option value="60">
                             60 mins
@@ -413,7 +449,6 @@
                     <button
                         id="startTimerButton"
                         class="timer-button timer-start"
-                        type="button"
                     >
 
                         <span>
@@ -429,7 +464,6 @@
                     <button
                         id="pauseTimerButton"
                         class="timer-button timer-pause"
-                        type="button"
                         disabled
                     >
 
@@ -446,7 +480,6 @@
                     <button
                         id="resetTimerButton"
                         class="timer-button timer-reset"
-                        type="button"
                     >
 
                         <span>
@@ -483,9 +516,11 @@
                         id="topicCompleteCheckbox"
                     >
 
+
                     <span class="custom-topic-checkbox">
                         ✓
                     </span>
+
 
                     <span class="topic-checkbox-text">
                         I have finished studying
@@ -528,9 +563,11 @@
                         KNOWLEDGE CHECK
                     </span>
 
+
                     <h2>
                         🧠 Test Yourself
                     </h2>
+
 
                     <p>
                         StudyMind AI has prepared
@@ -548,7 +585,6 @@
                 <button
                     id="submitTopicQuestions"
                     class="primary-button full-button"
-                    type="button"
                 >
                     Submit Answers
                 </button>
@@ -580,11 +616,13 @@
                         OVERVIEW
                     </span>
 
+
                     <h2>
                         Progress Tracker
                     </h2>
 
                 </div>
+
 
                 <span class="card-badge">
                     LIVE
@@ -635,6 +673,7 @@
                         TOPIC PROGRESS
                     </span>
 
+
                     <h2>
                         📖 Topics
                     </h2>
@@ -668,6 +707,7 @@
                         YOUR SUBJECTS
                     </span>
 
+
                     <h2>
                         📚 Subjects
                     </h2>
@@ -685,6 +725,110 @@
 
         </div>
 
+
+
+        <!-- =============================================
+             DAILY CHALLENGES
+        ============================================== -->
+
+        <div
+            class="panel-card daily-challenges-card"
+            id="dailyChallenges"
+        >
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="card-kicker">
+                        DAILY CHALLENGE
+                    </span>
+
+
+                    <h2>
+                        🏆 Today's Challenge
+                    </h2>
+
+                </div>
+
+
+                <span
+                    id="dailyChallengeBadge"
+                    class="card-badge"
+                >
+                    TODAY
+                </span>
+
+            </div>
+
+
+            <p id="dailyChallengeText">
+                Complete today's study challenge
+                to build your consistency.
+            </p>
+
+
+            <div
+                id="dailyChallengeContent"
+                class="daily-challenge-content"
+            >
+
+                <h3 id="dailyChallengeTitle">
+                    📚 Start Your Study Session
+                </h3>
+
+
+                <p id="dailyChallengeDescription">
+                    Study your current topic
+                    using the timer and complete
+                    today's knowledge check.
+                </p>
+
+
+                <div class="daily-challenge-progress">
+
+                    <span>
+                        Challenge Progress
+                    </span>
+
+
+                    <strong id="dailyChallengeProgress">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-bar-container">
+
+                    <div
+                        id="dailyChallengeProgressBar"
+                    >
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="dailyChallengeButton"
+                    class="primary-button full-button"
+                >
+                    🚀 Start Challenge
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             STUDY SCHEDULE
+             
+             Kept here as requested.
+             The actual schedule also appears in
+             the right-hand column below.
+        ============================================== -->
 
     </div>
 
@@ -714,6 +858,7 @@
                         PLAN AT A GLANCE
                     </span>
 
+
                     <h2>
                         📅 Study Calendar
                     </h2>
@@ -737,7 +882,6 @@
 
                 <button
                     id="previousMonth"
-                    type="button"
                     aria-label="Previous month"
                 >
                     ‹
@@ -751,7 +895,6 @@
 
                 <button
                     id="nextMonth"
-                    type="button"
                     aria-label="Next month"
                 >
                     ›
@@ -767,25 +910,31 @@
                     Sun
                 </div>
 
+
                 <div>
                     Mon
                 </div>
+
 
                 <div>
                     Tue
                 </div>
 
+
                 <div>
                     Wed
                 </div>
+
 
                 <div>
                     Thu
                 </div>
 
+
                 <div>
                     Fri
                 </div>
+
 
                 <div>
                     Sat
@@ -805,42 +954,75 @@
 
             <div class="calendar-bottom">
 
+
                 <div class="calendar-legend">
 
+
                     <span>
-                        <i class="legend-dot study-dot"></i>
+
+                        <i
+                            class="legend-dot study-dot"
+                        ></i>
+
                         Study Day
+
                     </span>
 
 
+
                     <span>
-                        <i class="legend-dot completed-dot"></i>
+
+                        <i
+                            class="legend-dot completed-dot"
+                        ></i>
+
                         Completed
+
                     </span>
 
 
+
                     <span>
-                        <i class="legend-dot exam-dot"></i>
+
+                        <i
+                            class="legend-dot exam-dot"
+                        ></i>
+
                         Test / Exam
+
                     </span>
 
 
+
                     <span>
-                        <i class="legend-dot today-dot"></i>
+
+                        <i
+                            class="legend-dot today-dot"
+                        ></i>
+
                         Today
+
                     </span>
+
 
 
                     <span>
-                        <i class="legend-dot break-dot"></i>
+
+                        <i
+                            class="legend-dot break-dot"
+                        ></i>
+
                         Break
+
                     </span>
+
 
                 </div>
 
 
 
                 <div class="next-session">
+
 
                     <div class="next-icon">
                         →
@@ -866,7 +1048,9 @@
 
                     </div>
 
+
                 </div>
+
 
             </div>
 
@@ -890,6 +1074,7 @@
                     <span class="card-kicker">
                         TODAY
                     </span>
+
 
                     <h2>
                         🗓️ Study Schedule
@@ -920,15 +1105,16 @@
              QUICK ACCESS
         ============================================== -->
 
-        <div class="panel-card dashboard-tools-card">
+        <div class="panel-card quick-access-card">
 
             <div class="card-heading">
 
                 <div>
 
                     <span class="card-kicker">
-                        STUDYMIND TOOLS
+                        STUDY TOOLS
                     </span>
+
 
                     <h2>
                         ⚡ Quick Access
@@ -939,30 +1125,27 @@
             </div>
 
 
-            <div class="dashboard-tool-links">
+
+            <div class="quick-access-grid">
 
 
                 <a
-                    href="ai-assistant.html"
-                    class="dashboard-tool-link"
+                    href="ai-support.html"
+                    class="quick-access-item"
                 >
 
                     <span>
                         🤖
                     </span>
 
-                    <div>
+                    <strong>
+                        AI Support
+                    </strong>
 
-                        <strong>
-                            Intelligent Support
-                        </strong>
-
-                        <small>
-                            Ask AI and analyze
-                            your study progress.
-                        </small>
-
-                    </div>
+                    <small>
+                        Get personalized
+                        study help
+                    </small>
 
                 </a>
 
@@ -970,77 +1153,65 @@
 
                 <a
                     href="summarizer.html"
-                    class="dashboard-tool-link"
+                    class="quick-access-item"
                 >
 
                     <span>
                         📄
                     </span>
 
-                    <div>
+                    <strong>
+                        Summarizer
+                    </strong>
 
-                        <strong>
-                            Document Summarizer
-                        </strong>
-
-                        <small>
-                            Turn your notes into
-                            useful revision summaries.
-                        </small>
-
-                    </div>
+                    <small>
+                        Summarize your
+                        study notes
+                    </small>
 
                 </a>
 
 
 
                 <a
-                    href="streak.html"
-                    class="dashboard-tool-link"
+                    href="study-streak.html"
+                    class="quick-access-item"
                 >
 
                     <span>
                         🔥
                     </span>
 
-                    <div>
+                    <strong>
+                        Study Streak
+                    </strong>
 
-                        <strong>
-                            Study Streak
-                        </strong>
-
-                        <small>
-                            Track your consistency
-                            and study momentum.
-                        </small>
-
-                    </div>
+                    <small>
+                        Track your
+                        consistency
+                    </small>
 
                 </a>
 
 
 
                 <a
-                    href="score.html"
-                    class="dashboard-tool-link"
+                    href="study-score.html"
+                    class="quick-access-item"
                 >
 
                     <span>
                         ⭐
                     </span>
 
-                    <div>
+                    <strong>
+                        Study Score
+                    </strong>
 
-                        <strong>
-                            Study Score
-                        </strong>
-
-                        <small>
-                            View your detailed
-                            performance score.
-                        </small>
-
-                    </div>
+                    <small>
+                        View your
+                        performance
+                    </small>
 
                 </a>
 
