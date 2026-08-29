@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    StudyMind AI — AI Support
+</title>
+
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+```
+
+</head>
+
+<body>
+
+```
+<!-- =====================================================
+     NAVIGATION
+====================================================== -->
+
+<nav class="navbar">
+
+    <div class="logo">
+        StudyMind AI
+    </div>
+
+    <div class="nav-links">
+
+        <button
+            type="button"
+            onclick="openHome()"
+        >
+            Home
+        </button>
+
+        <button
+            type="button"
+            onclick="openNewStudyPlan()"
+        >
+            + New Study Plan
+        </button>
+
+        <button
+            type="button"
+            onclick="openSummarizer()"
+        >
+            Summarizer
+        </button>
+
+        <button
+            type="button"
+            onclick="openStudyStreak()"
+        >
+            Study Streak
+        </button>
+
+        <button
+            type="button"
+            onclick="openStudyScore()"
+        >
+            Study Score
+        </button>
+
+        <button
+            type="button"
+            id="themeButton"
+        >
+            🌙 Dark Mode
+        </button>
+
+        <button
+            type="button"
+            onclick="logoutStudyMind()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</nav>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
+
+<main class="dashboard-container">
+
+    <!-- PAGE HEADER -->
+
+    <section class="dashboard-header">
+
+        <span class="section-label">
+            🤖 AI STUDY SUPPORT
+        </span>
+
+        <h1>
+            StudyMind AI
+        </h1>
+
+        <p>
+            Get personalized help based on your
+            study plan, progress, subjects and topics.
+        </p>
+
+    </section>
+
+
+    <!-- =================================================
+         PROGRESS ANALYSIS
+    ================================================== -->
+
+    <section class="dashboard-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <span class="section-label">
+                    📊 PROGRESS ANALYSIS
+                </span>
+
+                <h2>
+                    How am I doing?
+                </h2>
+
+            </div>
+
+            <span
+                class="ai-badge"
+                id="aiCountBadge"
+            >
+                0/5 used
+            </span>
+
+        </div>
+
+
+        <p>
+            StudyMind AI can analyze your current
+            study progress and give you practical
+            advice on what to focus on next.
+        </p>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="analyzeProgressButton"
+        >
+            🔍 Analyze My Progress
+        </button>
+
+
+        <div
+            class="ai-response"
+            id="aiAdviceText"
+        >
+            Click "Analyze My Progress" to get
+            personalized study advice.
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         ASK AI
+    ================================================== -->
+
+    <section class="dashboard-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <span class="section-label">
+                    🤖 AI ASSISTANT
+                </span>
+
+                <h2>
+                    Ask StudyMind AI
+                </h2>
+
+            </div>
+
+            <span
+                class="ai-badge"
+                id="aiCountBadge"
+            >
+                0/5 used
+            </span>
+
+        </div>
+
+
+        <p>
+            Ask questions about your subjects,
+            topics, revision and study plan.
+        </p>
+
+
+        <textarea
+            id="aiQuestion"
+            rows="5"
+            placeholder="Ask anything about your study plan..."
+        ></textarea>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="askAIButton"
+        >
+            🤖 Ask AI
+        </button>
+
+
+        <div
+            class="ai-response"
+            id="aiResponse"
+        >
+            Your AI response will appear here.
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         QUICK QUESTIONS
+    ================================================== -->
+
+    <section class="dashboard-card">
+
+        <span class="section-label">
+            💡 QUICK HELP
+        </span>
+
+        <h2>
+            Try asking...
+        </h2>
+
+
+        <div class="quick-question-grid">
+
+            <button
+                type="button"
+                onclick="useQuickQuestion('What should I study next based on my progress?')"
+            >
+                📚 What should I study next?
+            </button>
+
+
+            <button
+                type="button"
+                onclick="useQuickQuestion('Which topics should I focus on most?')"
+            >
+                🎯 Which topics should I focus on?
+            </button>
+
+
+            <button
+                type="button"
+                onclick="useQuickQuestion('Help me revise my current topic.')"
+            >
+                🧠 Help me revise my current topic
+            </button>
+
+
+            <button
+                type="button"
+                onclick="useQuickQuestion('How can I improve my study progress?')"
+            >
+                📈 How can I improve?
+            </button>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =====================================================
+     SUPABASE
+====================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="supabase.js"></script>
+
+<script src="dashboard.js"></script>
+
+
+<!-- =====================================================
+     QUICK QUESTION SCRIPT
+====================================================== -->
+
+<script>
+
+    function useQuickQuestion(question) {
+
+        const input =
+            document.getElementById("aiQuestion");
+
+        if (!input) {
+            return;
+        }
+
+        input.value =
+            question;
+
+        input.focus();
+
+    }
+
+</script>
+```
+
+</body>
+
+</html>
