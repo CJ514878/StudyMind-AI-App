@@ -15,7 +15,7 @@ const QUESTION_TIME_LIMIT = 15;
 
 const STORAGE_KEYS = {
 
-```
+
 battleCount:
     "studyMindGameBattleCount",
 
@@ -27,7 +27,7 @@ premium:
 
 theme:
     "studyMindTheme"
-```
+
 
 };
 
@@ -37,7 +37,7 @@ SUBJECTS + TOPICS
 
 const SUBJECT_DATABASE = {
 
-```
+
 "Accounting": [
     "Introduction to Accounting",
     "Accounting Concepts",
@@ -344,7 +344,7 @@ const SUBJECT_DATABASE = {
     "African Art",
     "Art Appreciation"
 ]
-```
+
 
 };
 
@@ -379,9 +379,9 @@ DOM HELPER
 
 function getElement(id) {
 
-```
+
 return document.getElementById(id);
-```
+
 
 }
 
@@ -391,53 +391,53 @@ STORAGE
 
 function getBattleCount() {
 
-```
+
 return Number(
     localStorage.getItem(
         STORAGE_KEYS.battleCount
     )
 ) || 0;
-```
+
 
 }
 
 function setBattleCount(count) {
 
-```
+
 localStorage.setItem(
     STORAGE_KEYS.battleCount,
     String(count)
 );
-```
+
 
 }
 
 function getBattlePoints() {
 
-```
+
 return Number(
     localStorage.getItem(
         STORAGE_KEYS.battlePoints
     )
 ) || 0;
-```
+
 
 }
 
 function setBattlePoints(points) {
 
-```
+
 localStorage.setItem(
     STORAGE_KEYS.battlePoints,
     String(points)
 );
-```
+
 
 }
 
 function isPremiumUser() {
 
-```
+
 const premium =
     localStorage.getItem(
         STORAGE_KEYS.premium
@@ -447,7 +447,7 @@ return (
     premium === "true" ||
     premium === "1"
 );
-```
+
 
 }
 
@@ -462,7 +462,7 @@ initializeGameMode
 
 function initializeGameMode() {
 
-```
+
 battlePoints =
     getBattlePoints();
 
@@ -475,7 +475,7 @@ updateLeaderboard();
 loadSubjects();
 
 setupSubjectChange();
-```
+
 
 }
 
@@ -485,7 +485,7 @@ LOAD SUBJECTS
 
 function loadSubjects() {
 
-```
+
 const subjectSelect =
     getElement(
         "battleSubject"
@@ -541,7 +541,7 @@ Object.keys(
 
         }
     );
-```
+
 
 }
 
@@ -551,7 +551,7 @@ SUBJECT CHANGE
 
 function setupSubjectChange() {
 
-```
+
 const subjectSelect =
     getElement(
         "battleSubject"
@@ -708,7 +708,7 @@ if (topicSelect) {
     );
 
 }
-```
+
 
 }
 
@@ -718,7 +718,7 @@ BATTLE STATUS
 
 function updateBattleStatus() {
 
-```
+
 const used =
     getBattleCount();
 
@@ -885,7 +885,7 @@ if (remaining <= 0) {
     }
 
 }
-```
+
 
 }
 
@@ -895,7 +895,7 @@ START COMPUTER BATTLE
 
 function startComputerBattle() {
 
-```
+
 if (
     !isPremiumUser() &&
     getBattleCount() >=
@@ -928,7 +928,7 @@ if (setup) {
     });
 
 }
-```
+
 
 }
 
@@ -938,7 +938,7 @@ BEGIN BATTLE
 
 async function beginBattle() {
 
-```
+
 if (generatingBattle) {
     return;
 }
@@ -1146,7 +1146,7 @@ try {
     restoreStartButton();
 
 }
-```
+
 
 }
 
@@ -1160,7 +1160,7 @@ topic,
 difficulty
 ) {
 
-```
+
 const difficultyInstruction =
     difficulty === "mixed"
         ? "Use a balanced mixture of easy, medium and challenging questions."
@@ -1168,7 +1168,7 @@ const difficultyInstruction =
 
 
 const prompt = `
-```
+
 
 You are StudyMind AI creating a competitive educational battle.
 
@@ -1224,7 +1224,7 @@ The "answer" value MUST be the zero-based index of the correct option.
 
 `.trim();
 
-```
+
 const response =
     await fetch(
         "/api/chat",
@@ -1303,7 +1303,7 @@ validateBattleQuestions(
 
 
 return questions;
-```
+
 
 }
 
@@ -1315,7 +1315,7 @@ function parseAIQuestionJSON(
 responseText
 ) {
 
-````
+
 let cleaned =
     String(
         responseText
@@ -1397,7 +1397,7 @@ try {
     );
 
 }
-````
+
 
 }
 
@@ -1409,7 +1409,7 @@ function validateBattleQuestions(
 questions
 ) {
 
-```
+
 if (
     !Array.isArray(
         questions
@@ -1493,7 +1493,7 @@ questions
 
         }
     );
-```
+
 
 }
 
@@ -1503,7 +1503,7 @@ SHOW QUESTION
 
 function showQuestion() {
 
-```
+
 if (
     currentQuestionIndex >=
     battleQuestions.length
@@ -1657,7 +1657,7 @@ shuffledAnswers.forEach(
 
 
 startQuestionTimer();
-```
+
 
 }
 
@@ -1667,7 +1667,7 @@ QUESTION TIMER
 
 function startQuestionTimer() {
 
-```
+
 clearInterval(
     battleTimerInterval
 );
@@ -1709,7 +1709,7 @@ battleTimerInterval =
         },
         1000
     );
-```
+
 
 }
 
@@ -1719,7 +1719,7 @@ TIMER DISPLAY
 
 function updateTimerDisplay() {
 
-```
+
 const timer =
     getElement(
         "battleTimer"
@@ -1735,7 +1735,7 @@ if (timer) {
         );
 
 }
-```
+
 
 }
 
@@ -1748,7 +1748,7 @@ selectedIndex,
 selectedButton
 ) {
 
-```
+
 if (
     answeringLocked ||
     !battleActive
@@ -1868,7 +1868,7 @@ setTimeout(
     },
     850
 );
-```
+
 
 }
 
@@ -1878,7 +1878,7 @@ COMPUTER TURN
 
 function computerTakeTurn() {
 
-```
+
 const difficultySelect =
     getElement(
         "battleDifficulty"
@@ -1928,7 +1928,7 @@ if (
     computerScore++;
 
 }
-```
+
 
 }
 
@@ -1938,7 +1938,7 @@ UPDATE SCORES
 
 function updateScores() {
 
-```
+
 const player =
     getElement(
         "playerScore"
@@ -1960,7 +1960,7 @@ if (computer) {
     computer.textContent =
         computerScore;
 }
-```
+
 
 }
 
@@ -1970,7 +1970,7 @@ FINISH BATTLE
 
 function finishBattle() {
 
-```
+
 battleActive =
     false;
 
@@ -2132,7 +2132,7 @@ if (results) {
     });
 
 }
-```
+
 
 }
 
@@ -2142,7 +2142,7 @@ POINTS
 
 function calculateBattlePoints() {
 
-```
+
 let points =
     playerScore * 10;
 
@@ -2165,7 +2165,7 @@ if (
 
 
 return points;
-```
+
 
 }
 
@@ -2175,7 +2175,7 @@ RESET BATTLE
 
 function resetBattle() {
 
-```
+
 clearInterval(
     battleTimerInterval
 );
@@ -2253,7 +2253,7 @@ if (setup) {
 
 
 updateBattleStatus();
-```
+
 
 }
 
@@ -2263,7 +2263,7 @@ PREMIUM MESSAGE
 
 function showPremiumMessage() {
 
-```
+
 const premiumCard =
     getElement(
         "premiumBattleCard"
@@ -2292,7 +2292,7 @@ if (premiumCard) {
 alert(
     "You've used all 5 free battles. Upgrade to Premium to continue playing unlimited battles."
 );
-```
+
 
 }
 
@@ -2304,9 +2304,9 @@ function showBattleSetupMessage(
 message
 ) {
 
-```
+
 alert(message);
-```
+
 
 }
 
@@ -2318,7 +2318,7 @@ function showBattleGenerationError(
 error
 ) {
 
-```
+
 const message =
     error?.message ||
     "StudyMind AI could not create the battle right now.";
@@ -2327,7 +2327,7 @@ const message =
 alert(
     `${message}\n\nPlease try again in a moment.`
 );
-```
+
 
 }
 
@@ -2337,7 +2337,7 @@ START BUTTON LOADING
 
 function setStartButtonLoading() {
 
-```
+
 const button =
     getElement(
         "startBattleButton"
@@ -2359,7 +2359,7 @@ button.dataset.originalText =
 
 button.textContent =
     "🤖 StudyMind AI is creating your battle...";
-```
+
 
 }
 
@@ -2369,7 +2369,7 @@ RESTORE START BUTTON
 
 function restoreStartButton() {
 
-```
+
 const button =
     getElement(
         "startBattleButton"
@@ -2416,7 +2416,7 @@ button.disabled =
 button.textContent =
     button.dataset.originalText ||
     "⚔️ Start Battle";
-```
+
 
 }
 
@@ -2426,10 +2426,10 @@ PREMIUM
 
 function openPremium() {
 
-```
+
 window.location.href =
     "premium.html";
-```
+
 
 }
 
@@ -2439,7 +2439,7 @@ LEADERBOARD
 
 function updateLeaderboard() {
 
-```
+
 battlePoints =
     getBattlePoints();
 
@@ -2511,7 +2511,7 @@ if (rankSpan) {
             : "—";
 
 }
-```
+
 
 }
 
@@ -2521,7 +2521,7 @@ THEME
 
 function loadTheme() {
 
-```
+
 const theme =
     localStorage.getItem(
         STORAGE_KEYS.theme
@@ -2541,13 +2541,13 @@ if (
 
 
 updateThemeButton();
-```
+
 
 }
 
 function toggleGameTheme() {
 
-```
+
 document.body.classList.toggle(
     "light-mode"
 );
@@ -2568,13 +2568,13 @@ localStorage.setItem(
 
 
 updateThemeButton();
-```
+
 
 }
 
 function updateThemeButton() {
 
-```
+
 const button =
     getElement(
         "themeButton"
@@ -2596,7 +2596,7 @@ button.textContent =
     light
         ? "☀️ Light Mode"
         : "🌙 Dark Mode";
-```
+
 
 }
 
@@ -2606,52 +2606,52 @@ NAVIGATION
 
 function openHome() {
 
-```
+
 window.location.href =
     "home.html";
-```
+
 
 }
 
 function openNewStudyPlan() {
 
-```
+
 window.location.href =
     "index.html";
-```
+
 
 }
 
 function openSummarizer() {
 
-```
+
 window.location.href =
     "summarizer.html";
-```
+
 
 }
 
 function openStudyStreak() {
 
-```
+
 window.location.href =
     "study-streak.html";
-```
+
 
 }
 
 function openStudyScore() {
 
-```
+
 window.location.href =
     "study-score.html";
-```
+
 
 }
 
 function logoutStudyMind() {
 
-```
+
 if (
     typeof window.supabaseClient !==
         "undefined" &&
@@ -2676,7 +2676,7 @@ if (
 
 window.location.href =
     "login.html";
-```
+
 
 }
 
@@ -2685,8 +2685,8 @@ SHUFFLE
 ========================================================= */
 
 function shuffleArray(array) {
+    
 
-```
 const result =
     [...array];
 
@@ -2718,7 +2718,7 @@ for (
 
 
 return result;
-```
+
 
 }
 
