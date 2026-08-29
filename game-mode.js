@@ -13,12 +13,355 @@ const FREE_BATTLE_LIMIT = 5;
 const QUESTIONS_PER_BATTLE = 10;
 const QUESTION_TIME_LIMIT = 15;
 
+/* =========================================================
+STORAGE
+========================================================= */
+
 const STORAGE_KEYS = {
-battleCount: "studyMindGameBattleCount",
-battlePoints: "studyMindBattlePoints",
-premium: "studyMindPremium",
-plan: "studyMindPlan",
-theme: "studyMindTheme"
+
+```
+battleCount:
+    "studyMindGameBattleCount",
+
+battlePoints:
+    "studyMindBattlePoints",
+
+premium:
+    "studyMindPremium",
+
+plan:
+    "studyMindPlan",
+
+theme:
+    "studyMindTheme"
+```
+
+};
+
+/* =========================================================
+SUBJECT DATABASE
+========================================================= */
+
+const SUBJECT_TOPICS = {
+
+```
+"Accounting": [
+    "Introduction to Accounting",
+    "Accounting Concepts",
+    "Double Entry",
+    "Ledger Accounts",
+    "Trial Balance",
+    "Cash Book",
+    "Bank Reconciliation",
+    "Final Accounts",
+    "Depreciation",
+    "Partnership Accounts"
+],
+
+"Biology": [
+    "Cell Biology",
+    "Classification",
+    "Nutrition",
+    "Transport Systems",
+    "Respiration",
+    "Excretion",
+    "Coordination",
+    "Reproduction",
+    "Genetics",
+    "Evolution",
+    "Ecology",
+    "Human Health"
+],
+
+"Chemistry": [
+    "Atomic Structure",
+    "Periodic Table",
+    "Chemical Bonding",
+    "Mole Concept",
+    "Stoichiometry",
+    "Acids and Bases",
+    "Redox Reactions",
+    "Electrochemistry",
+    "Organic Chemistry",
+    "Chemical Equilibrium",
+    "Rates of Reaction",
+    "Separation Techniques"
+],
+
+"Computer Science": [
+    "Computer Fundamentals",
+    "Data Representation",
+    "Algorithms",
+    "Programming",
+    "Variables and Data Types",
+    "Control Structures",
+    "Arrays",
+    "Databases",
+    "Computer Networks",
+    "Cybersecurity",
+    "Artificial Intelligence",
+    "Operating Systems"
+],
+
+"Economics": [
+    "Basic Economic Concepts",
+    "Demand",
+    "Supply",
+    "Price Determination",
+    "Elasticity",
+    "Production",
+    "Market Structures",
+    "National Income",
+    "Inflation",
+    "Unemployment",
+    "International Trade",
+    "Economic Development"
+],
+
+"English Language": [
+    "Parts of Speech",
+    "Sentence Structure",
+    "Tenses",
+    "Subject-Verb Agreement",
+    "Vocabulary",
+    "Comprehension",
+    "Summary Writing",
+    "Essay Writing",
+    "Formal Letters",
+    "Informal Letters",
+    "Figures of Speech",
+    "Oral English"
+],
+
+"Further Mathematics": [
+    "Algebra",
+    "Functions",
+    "Sequences and Series",
+    "Binomial Expansion",
+    "Matrices",
+    "Vectors",
+    "Complex Numbers",
+    "Calculus",
+    "Differentiation",
+    "Integration",
+    "Coordinate Geometry",
+    "Probability"
+],
+
+"Geography": [
+    "Map Reading",
+    "Physical Geography",
+    "Weather and Climate",
+    "Rocks",
+    "Landforms",
+    "Rivers",
+    "Soils",
+    "Vegetation",
+    "Population",
+    "Settlement",
+    "Agriculture",
+    "Industry"
+],
+
+"Government": [
+    "Meaning of Government",
+    "Constitution",
+    "Democracy",
+    "Political Parties",
+    "Electoral Systems",
+    "Separation of Powers",
+    "Rule of Law",
+    "Human Rights",
+    "Public Opinion",
+    "Local Government",
+    "International Organizations",
+    "Nigerian Government"
+],
+
+"History": [
+    "Ancient Civilizations",
+    "African History",
+    "West African History",
+    "Nigerian History",
+    "Colonialism",
+    "Nationalism",
+    "Independence",
+    "World Wars",
+    "Cold War",
+    "Industrial Revolution",
+    "Historical Sources",
+    "Modern History"
+],
+
+"Information Technology": [
+    "Computer Hardware",
+    "Computer Software",
+    "Operating Systems",
+    "Internet",
+    "Networking",
+    "Cybersecurity",
+    "Digital Communication",
+    "Databases",
+    "Cloud Computing",
+    "Artificial Intelligence",
+    "Information Systems",
+    "Technology in Education"
+],
+
+"Literature": [
+    "Poetry",
+    "Drama",
+    "Prose",
+    "Plot",
+    "Characterization",
+    "Setting",
+    "Theme",
+    "Point of View",
+    "Literary Devices",
+    "Tragedy",
+    "Comedy",
+    "African Literature"
+],
+
+"Mathematics": [
+    "Number Systems",
+    "Fractions",
+    "Decimals",
+    "Percentages",
+    "Ratio and Proportion",
+    "Algebra",
+    "Linear Equations",
+    "Quadratic Equations",
+    "Geometry",
+    "Mensuration",
+    "Trigonometry",
+    "Statistics",
+    "Probability",
+    "Coordinate Geometry",
+    "Sequences",
+    "Vectors"
+],
+
+"Physics": [
+    "Measurement",
+    "Motion",
+    "Forces",
+    "Energy",
+    "Work and Power",
+    "Momentum",
+    "Simple Machines",
+    "Heat",
+    "Waves",
+    "Sound",
+    "Light",
+    "Electricity",
+    "Magnetism",
+    "Electromagnetic Induction",
+    "Atomic Physics"
+],
+
+"Quantitative Reasoning": [
+    "Number Patterns",
+    "Arithmetic",
+    "Fractions",
+    "Percentages",
+    "Ratio",
+    "Proportion",
+    "Averages",
+    "Speed Distance Time",
+    "Profit and Loss",
+    "Probability",
+    "Geometry",
+    "Data Interpretation"
+],
+
+"Religious Studies": [
+    "Creation",
+    "Moral Teachings",
+    "Faith",
+    "Leadership",
+    "Justice",
+    "Forgiveness",
+    "Responsibility",
+    "Family",
+    "Community",
+    "Peace",
+    "Religion and Society",
+    "Religious Leaders"
+],
+
+"Social Studies": [
+    "Family",
+    "Culture",
+    "Socialization",
+    "Citizenship",
+    "Human Rights",
+    "Leadership",
+    "Conflict",
+    "Peace",
+    "Environment",
+    "Population",
+    "Social Problems",
+    "National Unity"
+],
+
+"Technical Drawing": [
+    "Drawing Instruments",
+    "Geometric Construction",
+    "Lines and Angles",
+    "Orthographic Projection",
+    "Isometric Drawing",
+    "Scale Drawing",
+    "Sections",
+    "Loci",
+    "Mechanical Drawing",
+    "Building Drawing",
+    "Dimensioning",
+    "Perspective"
+],
+
+"Visual Arts": [
+    "Elements of Art",
+    "Principles of Design",
+    "Drawing",
+    "Painting",
+    "Sculpture",
+    "Printmaking",
+    "Textiles",
+    "Graphic Design",
+    "Art History",
+    "African Art",
+    "Nigerian Art",
+    "Art Appreciation"
+],
+
+"Yoruba": [
+    "Yoruba Grammar",
+    "Yoruba Vocabulary",
+    "Yoruba Literature",
+    "Yoruba Proverbs",
+    "Yoruba Culture",
+    "Yoruba History",
+    "Yoruba Oral Tradition",
+    "Yoruba Poetry",
+    "Yoruba Drama",
+    "Yoruba Folklore"
+],
+
+"General Knowledge": [
+    "Science",
+    "Geography",
+    "History",
+    "Technology",
+    "World Knowledge",
+    "African Knowledge",
+    "Nigerian Knowledge",
+    "Sports",
+    "Space",
+    "Environment"
+]
+```
+
 };
 
 /* =========================================================
@@ -26,90 +369,39 @@ GAME STATE
 ========================================================= */
 
 let battleQuestions = [];
+
 let currentQuestionIndex = 0;
 
 let playerScore = 0;
+
 let computerScore = 0;
+
 let battlePoints = 0;
 
-let battleTimer = QUESTION_TIME_LIMIT;
-let battleTimerInterval = null;
+let battleTimer =
+QUESTION_TIME_LIMIT;
 
-let answeringLocked = false;
-let battleActive = false;
-let generatingBattle = false;
+let battleTimerInterval =
+null;
+
+let answeringLocked =
+false;
+
+let battleActive =
+false;
+
+let generatingBattle =
+false;
 
 /* =========================================================
 DOM HELPER
 ========================================================= */
 
 function getElement(id) {
+
+```
 return document.getElementById(id);
-}
-
-/* =========================================================
-STORAGE
-========================================================= */
-
-function getBattleCount() {
-
-
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battleCount
-    )
-) || 0;
-
-
-}
-
-function setBattleCount(count) {
-
-
-localStorage.setItem(
-    STORAGE_KEYS.battleCount,
-    String(count)
-);
-
-
-}
-
-function getBattlePoints() {
-
-
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battlePoints
-    )
-) || 0;
-
-
-}
-
-function setBattlePoints(points) {
-
-
-localStorage.setItem(
-    STORAGE_KEYS.battlePoints,
-    String(points)
-);
-
-
-}
-
-function isPremiumUser() {
-
-
-const premium =
-    localStorage.getItem(
-        STORAGE_KEYS.premium
-    );
-
-return (
-    premium === "true" ||
-    premium === "1"
-);
-
+```
 
 }
 
@@ -124,20 +416,322 @@ initializeGameMode
 
 function initializeGameMode() {
 
-
+```
 battlePoints =
     getBattlePoints();
 
 loadTheme();
 
+loadSubjects();
+
 updateBattleStatus();
 
 updateLeaderboard();
 
-loadTopics();
+setupSubjectChange();
 
 setupTopicChange();
+```
 
+}
+
+/* =========================================================
+SUBJECT LOADING
+========================================================= */
+
+function loadSubjects() {
+
+```
+const subjectSelect =
+    getElement(
+        "battleSubject"
+    );
+
+if (!subjectSelect) {
+    return;
+}
+
+
+subjectSelect.innerHTML = "";
+
+
+const defaultOption =
+    document.createElement(
+        "option"
+    );
+
+defaultOption.value = "";
+
+defaultOption.textContent =
+    "Choose a subject";
+
+subjectSelect.appendChild(
+    defaultOption
+);
+
+
+const subjects =
+    Object.keys(
+        SUBJECT_TOPICS
+    ).sort(
+        (a, b) =>
+            a.localeCompare(b)
+    );
+
+
+subjects.forEach(
+    subject => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            subject;
+
+        option.textContent =
+            subject;
+
+        subjectSelect.appendChild(
+            option
+        );
+
+    }
+);
+```
+
+}
+
+/* =========================================================
+SUBJECT CHANGE
+========================================================= */
+
+function setupSubjectChange() {
+
+```
+const subjectSelect =
+    getElement(
+        "battleSubject"
+    );
+
+if (!subjectSelect) {
+    return;
+}
+
+
+subjectSelect.addEventListener(
+    "change",
+    loadTopicsForSubject
+);
+```
+
+}
+
+/* =========================================================
+TOPIC LOADING
+========================================================= */
+
+function loadTopicsForSubject() {
+
+```
+const subjectSelect =
+    getElement(
+        "battleSubject"
+    );
+
+const topicSelect =
+    getElement(
+        "battleTopic"
+    );
+
+
+if (
+    !subjectSelect ||
+    !topicSelect
+) {
+
+    return;
+
+}
+
+
+const subject =
+    subjectSelect.value;
+
+
+topicSelect.innerHTML =
+    "";
+
+
+if (!subject) {
+
+    topicSelect.disabled =
+        true;
+
+
+    const option =
+        document.createElement(
+            "option"
+        );
+
+    option.value =
+        "";
+
+    option.textContent =
+        "Choose a subject first";
+
+    topicSelect.appendChild(
+        option
+    );
+
+    return;
+
+}
+
+
+topicSelect.disabled =
+    false;
+
+
+const defaultOption =
+    document.createElement(
+        "option"
+    );
+
+defaultOption.value =
+    "";
+
+defaultOption.textContent =
+    "Choose a topic";
+
+topicSelect.appendChild(
+    defaultOption
+);
+
+
+const topics =
+    SUBJECT_TOPICS[
+        subject
+    ] || [];
+
+
+topics
+    .slice()
+    .sort(
+        (a, b) =>
+            a.localeCompare(b)
+    )
+    .forEach(
+        topic => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                topic;
+
+            option.textContent =
+                topic;
+
+            topicSelect.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+updateStartButtonState();
+```
+
+}
+
+/* =========================================================
+TOPIC CHANGE
+========================================================= */
+
+function setupTopicChange() {
+
+```
+const topicSelect =
+    getElement(
+        "battleTopic"
+    );
+
+if (!topicSelect) {
+    return;
+}
+
+
+topicSelect.addEventListener(
+    "change",
+    updateStartButtonState
+);
+```
+
+}
+
+/* =========================================================
+START BUTTON STATE
+========================================================= */
+
+function updateStartButtonState() {
+
+```
+const subjectSelect =
+    getElement(
+        "battleSubject"
+    );
+
+const topicSelect =
+    getElement(
+        "battleTopic"
+    );
+
+const button =
+    getElement(
+        "startBattleButton"
+    );
+
+
+if (
+    !button ||
+    generatingBattle
+) {
+
+    return;
+
+}
+
+
+if (
+    subjectSelect &&
+    topicSelect &&
+    subjectSelect.value &&
+    topicSelect.value
+) {
+
+    if (
+        isPremiumUser() ||
+        getBattleCount() <
+            FREE_BATTLE_LIMIT
+    ) {
+
+        button.disabled =
+            false;
+
+    }
+
+} else {
+
+    button.disabled =
+        false;
+
+}
+```
 
 }
 
@@ -147,43 +741,56 @@ BATTLE STATUS
 
 function updateBattleStatus() {
 
-
+```
 const used =
     getBattleCount();
 
 const battlesUsed =
-    getElement("battlesUsed");
+    getElement(
+        "battlesUsed"
+    );
 
 const battleLimit =
-    getElement("battleLimit");
+    getElement(
+        "battleLimit"
+    );
 
 const battleStatusText =
-    getElement("battleStatusText");
+    getElement(
+        "battleStatusText"
+    );
 
 const computerModeButton =
-    getElement("computerModeButton");
+    getElement(
+        "computerModeButton"
+    );
 
 const startBattleButton =
-    getElement("startBattleButton");
+    getElement(
+        "startBattleButton"
+    );
 
 const premiumCard =
-    getElement("premiumBattleCard");
+    getElement(
+        "premiumBattleCard"
+    );
 
 
 if (battlesUsed) {
-    battlesUsed.textContent = used;
+
+    battlesUsed.textContent =
+        used;
+
 }
 
 
 if (battleLimit) {
+
     battleLimit.textContent =
         FREE_BATTLE_LIMIT;
+
 }
 
-
-/* =========================================
-   PREMIUM USER
-========================================= */
 
 if (isPremiumUser()) {
 
@@ -199,7 +806,10 @@ if (isPremiumUser()) {
 
 
     if (premiumCard) {
-        premiumCard.style.display = "none";
+
+        premiumCard.style.display =
+            "none";
+
     }
 
 
@@ -226,12 +836,9 @@ if (isPremiumUser()) {
 
 
     return;
+
 }
 
-
-/* =========================================
-   FREE USER
-========================================= */
 
 const remaining =
     Math.max(
@@ -288,8 +895,10 @@ if (remaining <= 0) {
 
 
     if (premiumCard) {
+
         premiumCard.style.display =
             "grid";
+
     }
 
 } else {
@@ -304,149 +913,8 @@ if (remaining <= 0) {
 
     }
 
-
-    if (startBattleButton) {
-
-        startBattleButton.disabled =
-            false;
-
-    }
-
 }
-
-
-}
-
-/* =========================================================
-TOPIC LOADING
-========================================================= */
-
-function loadTopics() {
-
-
-const select =
-    getElement("battleTopic");
-
-if (!select) {
-    return;
-}
-
-
-select.innerHTML = "";
-
-
-const defaultOption =
-    document.createElement("option");
-
-defaultOption.value = "";
-
-defaultOption.textContent =
-    "Choose a topic";
-
-select.appendChild(
-    defaultOption
-);
-
-
-const topics =
-    getTopicsFromStudyPlan();
-
-
-if (!topics.length) {
-
-    const option =
-        document.createElement("option");
-
-    option.value =
-        "general";
-
-    option.textContent =
-        "General Knowledge";
-
-    select.appendChild(
-        option
-    );
-
-    return;
-
-}
-
-
-topics.forEach(
-    (topic, index) => {
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-        option.value =
-            topic.id ||
-            `topic-${index}`;
-
-        option.textContent =
-            topic.name;
-
-        select.appendChild(
-            option
-        );
-
-    }
-);
-
-
-}
-
-/* =========================================================
-TOPIC CHANGE
-========================================================= */
-
-function setupTopicChange() {
-
-
-const select =
-    getElement("battleTopic");
-
-if (!select) {
-    return;
-}
-
-
-select.addEventListener(
-    "change",
-    () => {
-
-        const button =
-            getElement(
-                "startBattleButton"
-            );
-
-        if (!button) {
-            return;
-        }
-
-
-        if (
-            select.value &&
-            !generatingBattle
-        ) {
-
-            if (
-                isPremiumUser() ||
-                getBattleCount() <
-                    FREE_BATTLE_LIMIT
-            ) {
-
-                button.disabled =
-                    false;
-
-            }
-
-        }
-
-    }
-);
-
+```
 
 }
 
@@ -456,15 +924,22 @@ STUDY PLAN TOPICS
 
 function getTopicsFromStudyPlan() {
 
-
+```
 const topics = [];
 
+
 const possibleKeys = [
+
     "studyMindPlan",
+
     "studyMindStudyPlan",
+
     "studyPlan",
+
     "studyMindCurrentPlan"
+
 ];
+
 
 let plan = null;
 
@@ -474,7 +949,9 @@ for (
 ) {
 
     const raw =
-        localStorage.getItem(key);
+        localStorage.getItem(
+            key
+        );
 
     if (!raw) {
         continue;
@@ -484,7 +961,9 @@ for (
     try {
 
         const parsed =
-            JSON.parse(raw);
+            JSON.parse(
+                raw
+            );
 
         if (parsed) {
 
@@ -508,7 +987,9 @@ for (
 
 
 if (!plan) {
+
     return topics;
+
 }
 
 
@@ -521,12 +1002,12 @@ collectTopics(
 return removeDuplicateTopics(
     topics
 );
-
+```
 
 }
 
 /* =========================================================
-COLLECT TOPICS
+COLLECT STUDY PLAN TOPICS
 ========================================================= */
 
 function collectTopics(
@@ -534,7 +1015,7 @@ data,
 topics
 ) {
 
-
+```
 if (!data) {
     return;
 }
@@ -569,10 +1050,15 @@ if (
 
 
 const topicProperties = [
+
     "topic",
+
     "topicName",
+
     "title",
+
     "name"
+
 ];
 
 
@@ -654,19 +1140,19 @@ Object.keys(data)
 
         }
     );
-
+```
 
 }
 
 /* =========================================================
-REMOVE DUPLICATE TOPICS
+REMOVE DUPLICATES
 ========================================================= */
 
 function removeDuplicateTopics(
 topics
 ) {
 
-
+```
 const seen =
     new Set();
 
@@ -681,7 +1167,9 @@ return topics.filter(
 
 
         if (
-            seen.has(normalized)
+            seen.has(
+                normalized
+            )
         ) {
 
             return false;
@@ -698,7 +1186,7 @@ return topics.filter(
 
     }
 );
-
+```
 
 }
 
@@ -708,7 +1196,7 @@ START COMPUTER BATTLE
 
 function startComputerBattle() {
 
-
+```
 if (
     !isPremiumUser() &&
     getBattleCount() >=
@@ -741,7 +1229,7 @@ if (setup) {
     });
 
 }
-
+```
 
 }
 
@@ -751,7 +1239,7 @@ BEGIN BATTLE
 
 async function beginBattle() {
 
-
+```
 if (generatingBattle) {
     return;
 }
@@ -770,6 +1258,11 @@ if (
 }
 
 
+const subjectSelect =
+    getElement(
+        "battleSubject"
+    );
+
 const topicSelect =
     getElement(
         "battleTopic"
@@ -781,18 +1274,15 @@ const difficultySelect =
     );
 
 
-const selectedTopic =
-    topicSelect
-        ? topicSelect.value
+const subject =
+    subjectSelect
+        ? subjectSelect.value
         : "";
 
 
-const selectedTopicName =
-    topicSelect &&
-    topicSelect.selectedIndex >= 0
-        ? topicSelect.options[
-            topicSelect.selectedIndex
-        ].textContent.trim()
+const topic =
+    topicSelect
+        ? topicSelect.value
         : "";
 
 
@@ -802,7 +1292,18 @@ const difficulty =
         : "mixed";
 
 
-if (!selectedTopic) {
+if (!subject) {
+
+    showBattleSetupMessage(
+        "Please choose a subject before starting your battle."
+    );
+
+    return;
+
+}
+
+
+if (!topic) {
 
     showBattleSetupMessage(
         "Please choose a topic before starting your battle."
@@ -813,18 +1314,9 @@ if (!selectedTopic) {
 }
 
 
-if (!selectedTopicName) {
+generatingBattle =
+    true;
 
-    showBattleSetupMessage(
-        "The selected topic could not be identified."
-    );
-
-    return;
-
-}
-
-
-generatingBattle = true;
 
 setStartButtonLoading();
 
@@ -833,13 +1325,16 @@ try {
 
     const questions =
         await generateAIBattleQuestions(
-            selectedTopicName,
+            subject,
+            topic,
             difficulty
         );
 
 
     if (
-        !Array.isArray(questions) ||
+        !Array.isArray(
+            questions
+        ) ||
         questions.length <
             QUESTIONS_PER_BATTLE
     ) {
@@ -874,11 +1369,6 @@ try {
         false;
 
 
-    /*
-       Count the battle only after AI
-       successfully generates all questions.
-    */
-
     if (
         !isPremiumUser()
     ) {
@@ -910,17 +1400,26 @@ try {
 
 
     if (setup) {
-        setup.hidden = true;
+
+        setup.hidden =
+            true;
+
     }
 
 
     if (results) {
-        results.hidden = true;
+
+        results.hidden =
+            true;
+
     }
 
 
     if (arena) {
-        arena.hidden = false;
+
+        arena.hidden =
+            false;
+
     }
 
 
@@ -963,20 +1462,21 @@ try {
     restoreStartButton();
 
 }
-
+```
 
 }
 
 /* =========================================================
-AI BATTLE QUESTION GENERATION
+AI QUESTION GENERATION
 ========================================================= */
 
 async function generateAIBattleQuestions(
+subject,
 topic,
 difficulty
 ) {
 
-
+```
 const difficultyInstruction =
     difficulty === "mixed"
         ? "Use a balanced mixture of easy, medium and challenging questions."
@@ -984,11 +1484,12 @@ const difficultyInstruction =
 
 
 const prompt = `
+```
 
+You are StudyMind AI creating a competitive educational battle for a secondary-school student.
 
-You are StudyMind AI creating a competitive educational battle.
-
-The student is a secondary-school student.
+SUBJECT:
+${subject}
 
 TOPIC:
 ${topic}
@@ -998,16 +1499,17 @@ ${difficulty}
 
 ${difficultyInstruction}
 
-Create exactly 10 high-quality multiple-choice questions about the topic.
+Create exactly 10 high-quality multiple-choice questions.
 
 IMPORTANT REQUIREMENTS:
 
 * Exactly 10 questions.
 * Exactly 4 options per question.
 * Only ONE option is correct.
-* Questions must genuinely test knowledge of the selected topic.
-* Questions must NOT be generic study-advice questions.
-* Questions should be appropriate for a secondary-school student.
+* Every question must genuinely test knowledge of ${topic}.
+* Every question must belong to the subject ${subject}.
+* Do not ask generic study-advice questions.
+* Questions must be appropriate for a secondary-school student.
 * Mix conceptual, application and factual questions where appropriate.
 * Do not repeat questions.
 * Do not make the correct answer always option A.
@@ -1035,7 +1537,7 @@ Return exactly this structure:
 The "answer" value MUST be the zero-based index of the correct option.
 `.trim();
 
-
+```
 const response =
     await fetch(
         "/api/ask-ai",
@@ -1063,7 +1565,8 @@ const response =
     );
 
 
-let data = null;
+let data =
+    null;
 
 
 try {
@@ -1073,7 +1576,8 @@ try {
 
 } catch {
 
-    data = null;
+    data =
+        null;
 
 }
 
@@ -1082,7 +1586,7 @@ if (!response.ok) {
 
     throw new Error(
         data?.error ||
-        `StudyMind AI server error (${response.status}).`
+        "The StudyMind AI server returned an error."
     );
 
 }
@@ -1090,9 +1594,7 @@ if (!response.ok) {
 
 if (
     !data ||
-    typeof data.reply !==
-        "string" ||
-    !data.reply.trim()
+    !data.reply
 ) {
 
     throw new Error(
@@ -1114,7 +1616,7 @@ validateBattleQuestions(
 
 
 return questions;
-
+```
 
 }
 
@@ -1126,7 +1628,7 @@ function parseAIQuestionJSON(
 responseText
 ) {
 
-
+````
 let cleaned =
     String(
         responseText
@@ -1182,7 +1684,9 @@ try {
 
 
     if (
-        !Array.isArray(parsed)
+        !Array.isArray(
+            parsed
+        )
     ) {
 
         throw new Error(
@@ -1198,7 +1702,8 @@ try {
 
     console.error(
         "AI question JSON parse error:",
-        error
+        error,
+        responseText
     );
 
 
@@ -1207,19 +1712,19 @@ try {
     );
 
 }
-
+````
 
 }
 
 /* =========================================================
-VALIDATE BATTLE QUESTIONS
+VALIDATE QUESTIONS
 ========================================================= */
 
 function validateBattleQuestions(
 questions
 ) {
 
-
+```
 if (
     !Array.isArray(
         questions
@@ -1256,8 +1761,7 @@ questions
             if (
                 !question ||
                 typeof question.question !==
-                    "string" ||
-                !question.question.trim()
+                    "string"
             ) {
 
                 throw new Error(
@@ -1282,25 +1786,6 @@ questions
             }
 
 
-            question.options.forEach(
-                (option, optionIndex) => {
-
-                    if (
-                        typeof option !==
-                            "string" ||
-                        !option.trim()
-                    ) {
-
-                        throw new Error(
-                            `Question ${index + 1}, option ${optionIndex + 1} is invalid.`
-                        );
-
-                    }
-
-                }
-            );
-
-
             const answer =
                 Number(
                     question.answer
@@ -1323,7 +1808,7 @@ questions
 
         }
     );
-
+```
 
 }
 
@@ -1333,14 +1818,7 @@ SHOW QUESTION
 
 function showQuestion() {
 
-
-if (
-    !battleActive
-) {
-    return;
-}
-
-
+```
 if (
     currentQuestionIndex >=
     battleQuestions.length
@@ -1403,21 +1881,13 @@ if (questionText) {
 if (questionTopic) {
 
     questionTopic.textContent =
-        question.topic ||
-        getSelectedTopicName() ||
-        "Study Topic";
+        `${getSelectedSubject()} • ${getSelectedTopic()}`;
 
 }
 
 
 if (!answerGrid) {
-
-    console.error(
-        "StudyMind AI: #answerGrid was not found."
-    );
-
     return;
-
 }
 
 
@@ -1470,21 +1940,16 @@ shuffledAnswers.forEach(
 
 
         button.dataset.originalIndex =
-            String(
-                answer.originalIndex
-            );
+            answer.originalIndex;
 
 
         button.addEventListener(
             "click",
-            () => {
-
+            () =>
                 handleAnswer(
                     answer.originalIndex,
                     button
-                );
-
-            }
+                )
         );
 
 
@@ -1497,17 +1962,47 @@ shuffledAnswers.forEach(
 
 
 startQuestionTimer();
-
+```
 
 }
 
 /* =========================================================
-SELECTED TOPIC NAME
+SELECTED SUBJECT
 ========================================================= */
 
-function getSelectedTopicName() {
+function getSelectedSubject() {
+
+```
+const select =
+    getElement(
+        "battleSubject"
+    );
 
 
+if (
+    !select ||
+    select.selectedIndex < 0
+) {
+
+    return "";
+
+}
+
+
+return select.options[
+    select.selectedIndex
+].textContent;
+```
+
+}
+
+/* =========================================================
+SELECTED TOPIC
+========================================================= */
+
+function getSelectedTopic() {
+
+```
 const select =
     getElement(
         "battleTopic"
@@ -1524,22 +2019,20 @@ if (
 }
 
 
-return (
-    select.options[
-        select.selectedIndex
-    ]?.textContent || ""
-).trim();
-
+return select.options[
+    select.selectedIndex
+].textContent;
+```
 
 }
 
 /* =========================================================
-QUESTION TIMER
+TIMER
 ========================================================= */
 
 function startQuestionTimer() {
 
-
+```
 clearInterval(
     battleTimerInterval
 );
@@ -1556,27 +2049,14 @@ battleTimerInterval =
     setInterval(
         () => {
 
-            if (
-                !battleActive ||
-                answeringLocked
-            ) {
-
-                clearInterval(
-                    battleTimerInterval
-                );
-
-                return;
-
-            }
-
-
             battleTimer--;
 
             updateTimerDisplay();
 
 
             if (
-                battleTimer <= 0
+                battleTimer <=
+                0
             ) {
 
                 clearInterval(
@@ -1594,7 +2074,7 @@ battleTimerInterval =
         },
         1000
     );
-
+```
 
 }
 
@@ -1604,7 +2084,7 @@ TIMER DISPLAY
 
 function updateTimerDisplay() {
 
-
+```
 const timer =
     getElement(
         "battleTimer"
@@ -1620,7 +2100,7 @@ if (timer) {
         );
 
 }
-
+```
 
 }
 
@@ -1633,7 +2113,7 @@ selectedIndex,
 selectedButton
 ) {
 
-
+```
 if (
     answeringLocked ||
     !battleActive
@@ -1659,15 +2139,6 @@ const question =
     ];
 
 
-if (!question) {
-
-    finishBattle();
-
-    return;
-
-}
-
-
 const correctIndex =
     Number(
         question.answer
@@ -1690,24 +2161,19 @@ buttons.forEach(
 );
 
 
-const isCorrect =
+if (
     selectedIndex !== null &&
-    selectedIndex ===
-        correctIndex;
-
-
-if (isCorrect) {
+    selectedIndex === correctIndex
+) {
 
     playerScore++;
 
 
     if (selectedButton) {
 
-        selectedButton
-            .classList
-            .add(
-                "correct"
-            );
+        selectedButton.classList.add(
+            "correct"
+        );
 
     }
 
@@ -1715,11 +2181,9 @@ if (isCorrect) {
 
     if (selectedButton) {
 
-        selectedButton
-            .classList
-            .add(
-                "incorrect"
-            );
+        selectedButton.classList.add(
+            "incorrect"
+        );
 
     }
 
@@ -1730,15 +2194,12 @@ if (isCorrect) {
             if (
                 Number(
                     button.dataset.originalIndex
-                ) ===
-                correctIndex
+                ) === correctIndex
             ) {
 
-                button
-                    .classList
-                    .add(
-                        "correct"
-                    );
+                button.classList.add(
+                    "correct"
+                );
 
             }
 
@@ -1756,11 +2217,6 @@ updateScores();
 setTimeout(
     () => {
 
-        if (!battleActive) {
-            return;
-        }
-
-
         currentQuestionIndex++;
 
         showQuestion();
@@ -1768,7 +2224,7 @@ setTimeout(
     },
     850
 );
-
+```
 
 }
 
@@ -1778,7 +2234,7 @@ COMPUTER TURN
 
 function computerTakeTurn() {
 
-
+```
 const difficultySelect =
     getElement(
         "battleDifficulty"
@@ -1789,7 +2245,9 @@ let chance =
     0.55;
 
 
-if (difficultySelect) {
+if (
+    difficultySelect
+) {
 
     if (
         difficultySelect.value ===
@@ -1828,7 +2286,7 @@ if (
     computerScore++;
 
 }
-
+```
 
 }
 
@@ -1838,7 +2296,7 @@ UPDATE SCORES
 
 function updateScores() {
 
-
+```
 const player =
     getElement(
         "playerScore"
@@ -1864,7 +2322,7 @@ if (computer) {
         computerScore;
 
 }
-
+```
 
 }
 
@@ -1874,14 +2332,7 @@ FINISH BATTLE
 
 function finishBattle() {
 
-
-if (
-    !battleActive
-) {
-    return;
-}
-
-
+```
 battleActive =
     false;
 
@@ -1916,14 +2367,18 @@ const results =
 
 
 if (arena) {
+
     arena.hidden =
         true;
+
 }
 
 
 if (results) {
+
     results.hidden =
         false;
+
 }
 
 
@@ -2055,7 +2510,7 @@ if (results) {
     });
 
 }
-
+```
 
 }
 
@@ -2065,7 +2520,7 @@ POINTS
 
 function calculateBattlePoints() {
 
-
+```
 let points =
     playerScore * 10;
 
@@ -2088,7 +2543,7 @@ if (
 
 
 return points;
-
+```
 
 }
 
@@ -2098,7 +2553,7 @@ RESET BATTLE
 
 function resetBattle() {
 
-
+```
 clearInterval(
     battleTimerInterval
 );
@@ -2116,9 +2571,6 @@ playerScore =
 computerScore =
     0;
 
-battleTimer =
-    QUESTION_TIME_LIMIT;
-
 battleActive =
     false;
 
@@ -2127,8 +2579,6 @@ answeringLocked =
 
 
 updateScores();
-
-updateTimerDisplay();
 
 
 const arena =
@@ -2148,24 +2598,27 @@ const setup =
 
 
 if (arena) {
+
     arena.hidden =
         true;
+
 }
 
 
 if (results) {
+
     results.hidden =
         true;
+
 }
 
 
 if (setup) {
+
     setup.hidden =
         false;
+
 }
-
-
-updateBattleStatus();
 
 
 if (setup) {
@@ -2181,7 +2634,7 @@ if (setup) {
     });
 
 }
-
+```
 
 }
 
@@ -2191,7 +2644,7 @@ PREMIUM MESSAGE
 
 function showPremiumMessage() {
 
-
+```
 const premiumCard =
     getElement(
         "premiumBattleCard"
@@ -2220,23 +2673,23 @@ if (premiumCard) {
 alert(
     "You've used all 5 free battles. Upgrade to Premium to continue playing unlimited battles."
 );
-
+```
 
 }
 
 /* =========================================================
-BATTLE SETUP MESSAGE
+SETUP MESSAGE
 ========================================================= */
 
 function showBattleSetupMessage(
 message
 ) {
 
-
+```
 alert(
     message
 );
-
+```
 
 }
 
@@ -2248,7 +2701,7 @@ function showBattleGenerationError(
 error
 ) {
 
-
+```
 const message =
     error?.message ||
     "StudyMind AI could not create the battle right now.";
@@ -2257,7 +2710,7 @@ const message =
 alert(
     `${message}\n\nPlease try again in a moment.`
 );
-
+```
 
 }
 
@@ -2267,7 +2720,7 @@ START BUTTON LOADING
 
 function setStartButtonLoading() {
 
-
+```
 const button =
     getElement(
         "startBattleButton"
@@ -2284,12 +2737,12 @@ button.disabled =
 
 
 button.dataset.originalText =
-    "⚔️ Start Battle";
+    button.textContent;
 
 
 button.textContent =
     "🤖 StudyMind AI is creating your battle...";
-
+```
 
 }
 
@@ -2299,7 +2752,7 @@ RESTORE START BUTTON
 
 function restoreStartButton() {
 
-
+```
 const button =
     getElement(
         "startBattleButton"
@@ -2333,7 +2786,65 @@ button.disabled =
 
 button.textContent =
     "⚔️ Start Battle";
+```
 
+}
+
+/* =========================================================
+BATTLE COUNT
+========================================================= */
+
+function getBattleCount() {
+
+```
+return Number(
+    localStorage.getItem(
+        STORAGE_KEYS.battleCount
+    )
+) || 0;
+```
+
+}
+
+function setBattleCount(
+count
+) {
+
+```
+localStorage.setItem(
+    STORAGE_KEYS.battleCount,
+    String(count)
+);
+```
+
+}
+
+/* =========================================================
+BATTLE POINTS
+========================================================= */
+
+function getBattlePoints() {
+
+```
+return Number(
+    localStorage.getItem(
+        STORAGE_KEYS.battlePoints
+    )
+) || 0;
+```
+
+}
+
+function setBattlePoints(
+points
+) {
+
+```
+localStorage.setItem(
+    STORAGE_KEYS.battlePoints,
+    String(points)
+);
+```
 
 }
 
@@ -2341,12 +2852,29 @@ button.textContent =
 PREMIUM
 ========================================================= */
 
+function isPremiumUser() {
+
+```
+const premium =
+    localStorage.getItem(
+        STORAGE_KEYS.premium
+    );
+
+
+return (
+    premium === "true" ||
+    premium === "1"
+);
+```
+
+}
+
 function openPremium() {
 
-
+```
 window.location.href =
     "premium.html";
-
+```
 
 }
 
@@ -2356,7 +2884,7 @@ LEADERBOARD
 
 function updateLeaderboard() {
 
-
+```
 battlePoints =
     getBattlePoints();
 
@@ -2437,7 +2965,7 @@ if (rankSpan) {
             : "—";
 
 }
-
+```
 
 }
 
@@ -2447,7 +2975,7 @@ THEME
 
 function loadTheme() {
 
-
+```
 const theme =
     localStorage.getItem(
         STORAGE_KEYS.theme
@@ -2467,13 +2995,13 @@ if (
 
 
 updateThemeButton();
-
+```
 
 }
 
 function toggleGameTheme() {
 
-
+```
 document.body.classList.toggle(
     "light-mode"
 );
@@ -2494,13 +3022,13 @@ localStorage.setItem(
 
 
 updateThemeButton();
-
+```
 
 }
 
 function updateThemeButton() {
 
-
+```
 const button =
     getElement(
         "themeButton"
@@ -2522,7 +3050,7 @@ button.textContent =
     light
         ? "☀️ Light Mode"
         : "🌙 Dark Mode";
-
+```
 
 }
 
@@ -2532,80 +3060,77 @@ NAVIGATION
 
 function openHome() {
 
-
+```
 window.location.href =
     "home.html";
-
+```
 
 }
 
 function openNewStudyPlan() {
 
-
+```
 window.location.href =
     "index.html";
-
+```
 
 }
 
 function openSummarizer() {
 
-
+```
 window.location.href =
     "summarizer.html";
-
+```
 
 }
 
 function openStudyStreak() {
 
-
+```
 window.location.href =
     "study-streak.html";
-
+```
 
 }
 
 function openStudyScore() {
 
-
+```
 window.location.href =
     "study-score.html";
-
+```
 
 }
 
-/* =========================================================
-LOGOUT
-========================================================= */
+function logoutStudyMind() {
 
-async function logoutStudyMind() {
+```
+if (
+    typeof window.supabaseClient !==
+        "undefined" &&
+    window.supabaseClient
+) {
 
+    window.supabaseClient.auth
+        .signOut()
+        .finally(
+            () => {
 
-try {
+                window.location.href =
+                    "login.html";
 
-    if (
-        window.supabaseClient &&
-        window.supabaseClient.auth
-    ) {
+            }
+        );
 
-        await window.supabaseClient.auth.signOut();
-
-    }
-
-} catch (error) {
-
-    console.error(
-        "StudyMind logout error:",
-        error
-    );
+    return;
 
 }
 
 
 window.location.href =
     "login.html";
-
+```
 
 }
 
@@ -2617,7 +3142,7 @@ function shuffleArray(
 array
 ) {
 
-
+```
 const result =
     [...array];
 
@@ -2649,7 +3174,7 @@ for (
 
 
 return result;
-
+```
 
 }
 
