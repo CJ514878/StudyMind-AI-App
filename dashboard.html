@@ -21,6 +21,7 @@
     href="style.css"
 >
 
+
 <!-- =====================================================
      MATHJAX CONFIGURATION
 ====================================================== -->
@@ -48,6 +49,7 @@
         }
     };
 </script>
+
 
 <!-- =====================================================
      MATHJAX
@@ -78,17 +80,20 @@
 <ul class="nav-links">
 
     <li>
-        <a
-            href="dashboard.html"
-            class="active"
-        >
+        <a href="home.html">
+            Home
+        </a>
+    </li>
+
+    <li>
+        <a href="dashboard.html">
             Dashboard
         </a>
     </li>
 
     <li>
-        <a href="ai-support.html">
-            AI Support
+        <a href="ai-assistant.html">
+            AI Assistant
         </a>
     </li>
 
@@ -100,7 +105,7 @@
 
     <li>
         <a href="streak.html">
-            Streak
+            Study Streak
         </a>
     </li>
 
@@ -245,7 +250,7 @@
 
 
 
-    <!-- STUDY SCORE SUMMARY -->
+    <!-- STUDY SCORE -->
 
     <div class="stat-card">
 
@@ -262,6 +267,13 @@
             <h2 id="studyScore">
                 0
             </h2>
+
+            <a
+                href="score.html"
+                class="stat-link"
+            >
+                View Score
+            </a>
 
         </div>
 
@@ -492,8 +504,6 @@
 
 
 
-            <!-- NEXT TOPIC -->
-
             <div
                 id="nextTopicMessage"
                 class="next-topic-message"
@@ -576,7 +586,6 @@
 
                 </div>
 
-
                 <span class="card-badge">
                     LIVE
                 </span>
@@ -613,7 +622,7 @@
 
 
         <!-- =============================================
-             TOPIC PROGRESS
+             TOPICS
         ============================================== -->
 
         <div class="panel-card">
@@ -675,7 +684,6 @@
             </div>
 
         </div>
-
 
 
     </div>
@@ -755,13 +763,33 @@
 
             <div class="calendar-weekdays">
 
-                <div>Sun</div>
-                <div>Mon</div>
-                <div>Tue</div>
-                <div>Wed</div>
-                <div>Thu</div>
-                <div>Fri</div>
-                <div>Sat</div>
+                <div>
+                    Sun
+                </div>
+
+                <div>
+                    Mon
+                </div>
+
+                <div>
+                    Tue
+                </div>
+
+                <div>
+                    Wed
+                </div>
+
+                <div>
+                    Thu
+                </div>
+
+                <div>
+                    Fri
+                </div>
+
+                <div>
+                    Sat
+                </div>
 
             </div>
 
@@ -892,7 +920,7 @@
              QUICK ACCESS
         ============================================== -->
 
-        <div class="panel-card quick-access-card">
+        <div class="panel-card dashboard-tools-card">
 
             <div class="card-heading">
 
@@ -911,25 +939,30 @@
             </div>
 
 
-            <div class="quick-access-grid">
+            <div class="dashboard-tool-links">
 
 
                 <a
-                    href="ai-support.html"
-                    class="quick-access-item"
+                    href="ai-assistant.html"
+                    class="dashboard-tool-link"
                 >
 
                     <span>
                         🤖
                     </span>
 
-                    <strong>
-                        AI Support
-                    </strong>
+                    <div>
 
-                    <small>
-                        Get personalized study help
-                    </small>
+                        <strong>
+                            Intelligent Support
+                        </strong>
+
+                        <small>
+                            Ask AI and analyze
+                            your study progress.
+                        </small>
+
+                    </div>
 
                 </a>
 
@@ -937,20 +970,25 @@
 
                 <a
                     href="summarizer.html"
-                    class="quick-access-item"
+                    class="dashboard-tool-link"
                 >
 
                     <span>
                         📄
                     </span>
 
-                    <strong>
-                        Summarizer
-                    </strong>
+                    <div>
 
-                    <small>
-                        Turn notes into revision summaries
-                    </small>
+                        <strong>
+                            Document Summarizer
+                        </strong>
+
+                        <small>
+                            Turn your notes into
+                            useful revision summaries.
+                        </small>
+
+                    </div>
 
                 </a>
 
@@ -958,20 +996,25 @@
 
                 <a
                     href="streak.html"
-                    class="quick-access-item"
+                    class="dashboard-tool-link"
                 >
 
                     <span>
                         🔥
                     </span>
 
-                    <strong>
-                        Study Streak
-                    </strong>
+                    <div>
 
-                    <small>
-                        Track your consistency
-                    </small>
+                        <strong>
+                            Study Streak
+                        </strong>
+
+                        <small>
+                            Track your consistency
+                            and study momentum.
+                        </small>
+
+                    </div>
 
                 </a>
 
@@ -979,20 +1022,25 @@
 
                 <a
                     href="score.html"
-                    class="quick-access-item"
+                    class="dashboard-tool-link"
                 >
 
                     <span>
                         ⭐
                     </span>
 
-                    <strong>
-                        Study Score
-                    </strong>
+                    <div>
 
-                    <small>
-                        See your performance
-                    </small>
+                        <strong>
+                            Study Score
+                        </strong>
+
+                        <small>
+                            View your detailed
+                            performance score.
+                        </small>
+
+                    </div>
 
                 </a>
 
