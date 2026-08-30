@@ -582,96 +582,132 @@ function setupOneVOneSubjectListener() {
    POPULATE TOPICS
 ========================================================= */
 
-function populateTopicSelect(
-    subjectId,
-    topicId,
-    buttonId
-) {
 
-    const subject =
-        $(subjectId);
+function populateTopics(subjectSelect, topicSelect) {
 
-    const topic =
-        $(topicId);
-
-    const button =
-        $(buttonId);
-
-    if (!subject || !topic) return;
-
-    topic.innerHTML = "";
-
-    if (!subject.value) {
-
-        topic.disabled = true;
-
-        topic.innerHTML = `
-            <option value="">
-                Choose a subject first
-            </option>
-        `;
-
-        if (button) {
-            button.disabled = true;
-        }
-
+    if (!topicSelect) {
         return;
     }
 
-    const topics =
-        getTopicsForSubject(
-            subject.value
-        );
+    topicSelect.innerHTML = "";
 
-    if (!topics.length) {
+    const selectedSubject =
+        subjectSelect?.value?.trim() || "";
 
-        topic.disabled = false;
-
-        topic.innerHTML = `
-            <option value="">
-                All topics
-            </option>
-        `;
-
-        if (button) {
-            button.disabled = false;
-        }
-
-        return;
-    }
-
-    topic.disabled = false;
-
-    topic.innerHTML = `
-        <option value="">
-            Choose a topic
-        </option>
-    `;
-
-    topics.forEach(topicName => {
+    if (!selectedSubject) {
 
         const option =
             document.createElement("option");
 
-        option.value = topicName;
-        option.textContent = topicName;
+        option.value = "";
+        option.textContent =
+            "Choose a subject first";
 
-        topic.appendChild(option);
+        topicSelect.appendChild(option);
+
+        topicSelect.disabled = true;
+
+        return;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * NORMALIZE SUBJECT NAMES
+     *
+     * The study-plan generator may save "Math",
+     * while the Game Mode database uses "Mathematics".
+     * ---------------------------------------------------------
+     */
+
+    const subjectAliases = {
+
+        "math": "Mathematics",
+        "mathematics": "Mathematics",
+
+        "english": "English Language",
+        "english language": "English Language",
+
+        "computer": "Computer Science",
+        "computer science": "Computer Science",
+
+        "ict": "Information Technology",
+        "information technology": "Information Technology",
+
+        "agric": "Agricultural Science",
+        "agricultural science": "Agricultural Science",
+
+        "business": "Business Studies",
+        "business studies": "Business Studies",
+
+        "lit": "Literature in English",
+        "literature": "Literature in English",
+        "literature in english": "Literature in English",
+
+        "pe": "Physical Education",
+        "physical education": "Physical Education"
+    };
+
+    const normalizedKey =
+        selectedSubject
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+
+    const databaseSubject =
+        subjectAliases[normalizedKey] ||
+        Object.keys(SUBJECT_DATABASE).find(
+            subject =>
+                subject.toLowerCase() === normalizedKey
+        );
+
+    /*
+     * ---------------------------------------------------------
+     * GET TOPICS
+     * ---------------------------------------------------------
+     */
+
+    const topics =
+        databaseSubject
+            ? SUBJECT_DATABASE[databaseSubject]
+            : [];
+
+    /*
+     * ---------------------------------------------------------
+     * DEFAULT OPTION
+     * ---------------------------------------------------------
+     */
+
+    const defaultOption =
+        document.createElement("option");
+
+    defaultOption.value = "";
+    defaultOption.textContent =
+        topics.length
+            ? "Choose a topic"
+            : "No topics available";
+
+    topicSelect.appendChild(defaultOption);
+
+    /*
+     * ---------------------------------------------------------
+     * ADD TOPICS
+     * ---------------------------------------------------------
+     */
+
+    topics.forEach(topic => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = topic;
+        option.textContent = topic;
+
+        topicSelect.appendChild(option);
+
     });
 
-    if (button) {
-        button.disabled = true;
-
-        topic.addEventListener(
-            "change",
-            () => {
-
-                button.disabled =
-                    !topic.value;
-            },
-            { once: false }
-        );
-    }
+    topicSelect.disabled =
+        topics.length === 0;
 }
 
 
