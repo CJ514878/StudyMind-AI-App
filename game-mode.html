@@ -1,10 +1,8 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
-```
 <meta charset="UTF-8">
 
 <meta
@@ -25,18 +23,14 @@
     rel="stylesheet"
     href="game-mode.css"
 >
-```
 
 </head>
+
 
 <body>
 
 <div class="game-page">
 
-```
-<!-- =================================================
-     NAVIGATION
-================================================== -->
 
 <nav class="game-navbar">
 
@@ -110,750 +104,998 @@
 </nav>
 
 
-<!-- =================================================
-     MAIN CONTENT
-================================================== -->
-
 <main class="game-container">
 
 
-    <!-- =================================================
-         HERO
-    ================================================== -->
+<section class="game-hero">
 
-    <section class="game-hero">
+    <div class="game-hero-icon">
+        ⚔️
+    </div>
 
-        <div class="game-hero-icon">
-            ⚔️
+    <span class="game-label">
+        STUDYMIND BATTLE ARENA
+    </span>
+
+    <h1>
+        Learn. Compete. Win.
+    </h1>
+
+    <p>
+        Challenge your knowledge, answer questions,
+        earn points and climb the leaderboard.
+    </p>
+
+</section>
+
+
+<section class="battle-status-card">
+
+    <div class="battle-status-left">
+
+        <div class="status-icon">
+            🎮
         </div>
 
-        <span class="game-label">
-            STUDYMIND BATTLE ARENA
+        <div>
+
+            <span class="status-label">
+                FREE BATTLES
+            </span>
+
+            <h3>
+                <span id="battlesUsed">0</span>
+                /
+                <span id="battleLimit">5</span>
+                battles used
+            </h3>
+
+        </div>
+
+    </div>
+
+    <div class="battle-status-right">
+
+        <span id="battleStatusText">
+            5 battles remaining
         </span>
 
-        <h1>
-            Learn. Compete. Win.
-        </h1>
+    </div>
+
+</section>
+
+
+<section class="game-section">
+
+    <div class="section-heading">
+
+        <span class="game-label">
+            🎮 GAME MODES
+        </span>
+
+        <h2>
+            Choose your battle
+        </h2>
 
         <p>
-            Challenge your knowledge, answer questions,
-            earn points and climb the leaderboard.
+            Battle the computer or challenge another
+            StudyMind student in real time.
         </p>
 
-    </section>
+    </div>
 
 
-    <!-- =================================================
-         FREE BATTLE STATUS
-    ================================================== -->
+    <div class="game-mode-grid">
 
-    <section class="battle-status-card">
 
-        <div class="battle-status-left">
+        <!-- COMPUTER -->
 
-            <div class="status-icon">
-                🎮
+        <button
+            type="button"
+            class="game-mode-card featured-mode"
+            id="computerModeButton"
+            onclick="startComputerBattle()"
+        >
+
+            <div class="mode-icon">
+                🤖
             </div>
 
-            <div>
+            <div class="mode-content">
 
-                <span class="status-label">
-                    FREE BATTLES
+                <span class="mode-tag">
+                    AVAILABLE
                 </span>
 
                 <h3>
-                    <span id="battlesUsed">0</span>
-                    /
-                    <span id="battleLimit">5</span>
-                    battles used
+                    You vs Computer
                 </h3>
+
+                <p>
+                    Test your knowledge against
+                    an AI opponent.
+                </p>
+
+                <span class="mode-action">
+                    Start Battle →
+                </span>
 
             </div>
 
-        </div>
-
-        <div class="battle-status-right">
-
-            <span id="battleStatusText">
-                5 battles remaining
-            </span>
-
-        </div>
-
-    </section>
+        </button>
 
 
-    <!-- =================================================
-         GAME MODES
-    ================================================== -->
+        <!-- 1V1 -->
 
-    <section class="game-section">
+        <button
+            type="button"
+            class="game-mode-card featured-mode one-v-one-card"
+            id="oneVOneModeButton"
+            onclick="startOneVOneMode()"
+        >
 
-        <div class="section-heading">
+            <div class="mode-icon">
+                ⚔️
+            </div>
+
+            <div class="mode-content">
+
+                <span class="mode-tag">
+                    LIVE
+                </span>
+
+                <h3>
+                    1v1 Battle
+                </h3>
+
+                <p>
+                    Challenge another StudyMind
+                    student in a real-time battle.
+                </p>
+
+                <span class="mode-action">
+                    Find Opponent →
+                </span>
+
+            </div>
+
+        </button>
+
+
+        <!-- 2V2 -->
+
+        <button
+            type="button"
+            class="game-mode-card locked-mode"
+            disabled
+        >
+
+            <div class="mode-icon">
+                👥
+            </div>
+
+            <div class="mode-content">
+
+                <span class="mode-tag">
+                    COMING SOON
+                </span>
+
+                <h3>
+                    2v2 Team Battle
+                </h3>
+
+                <p>
+                    Team up with another student
+                    and compete together.
+                </p>
+
+                <span class="mode-action">
+                    Coming Soon
+                </span>
+
+            </div>
+
+        </button>
+
+
+        <!-- TOURNAMENT -->
+
+        <button
+            type="button"
+            class="game-mode-card locked-mode"
+            disabled
+        >
+
+            <div class="mode-icon">
+                🏆
+            </div>
+
+            <div class="mode-content">
+
+                <span class="mode-tag">
+                    COMING SOON
+                </span>
+
+                <h3>
+                    Tournaments
+                </h3>
+
+                <p>
+                    Compete through multiple rounds
+                    and fight for the top spot.
+                </p>
+
+                <span class="mode-action">
+                    Coming Soon
+                </span>
+
+            </div>
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     COMPUTER SETUP
+===================================================== -->
+
+<section
+    class="battle-setup-card"
+    id="battleSetup"
+>
+
+    <div class="setup-header">
+
+        <div>
 
             <span class="game-label">
-                🎮 GAME MODES
+                🤖 COMPUTER BATTLE
             </span>
 
             <h2>
-                Choose your battle
+                Prepare for battle
             </h2>
 
             <p>
-                Start with a quick solo battle and
-                more competitive modes will be added soon.
+                Choose a subject, topic and difficulty.
+                You will answer 10 questions.
             </p>
 
         </div>
 
+        <div class="question-count">
 
-        <div class="game-mode-grid">
+            <strong>
+                10
+            </strong>
 
-            <button
-                type="button"
-                class="game-mode-card featured-mode"
-                id="computerModeButton"
-                onclick="startComputerBattle()"
-            >
-
-                <div class="mode-icon">
-                    🤖
-                </div>
-
-                <div class="mode-content">
-
-                    <span class="mode-tag">
-                        AVAILABLE
-                    </span>
-
-                    <h3>
-                        You vs Computer
-                    </h3>
-
-                    <p>
-                        Test your knowledge against
-                        an AI opponent.
-                    </p>
-
-                    <span class="mode-action">
-                        Start Battle →
-                    </span>
-
-                </div>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="game-mode-card locked-mode"
-                disabled
-            >
-
-                <div class="mode-icon">
-                    ⚔️
-                </div>
-
-                <div class="mode-content">
-
-                    <span class="mode-tag">
-                        COMING SOON
-                    </span>
-
-                    <h3>
-                        1v1 Battle
-                    </h3>
-
-                    <p>
-                        Compete directly against another
-                        StudyMind student.
-                    </p>
-
-                    <span class="mode-action">
-                        Coming Soon
-                    </span>
-
-                </div>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="game-mode-card locked-mode"
-                disabled
-            >
-
-                <div class="mode-icon">
-                    👥
-                </div>
-
-                <div class="mode-content">
-
-                    <span class="mode-tag">
-                        COMING SOON
-                    </span>
-
-                    <h3>
-                        2v2 Team Battle
-                    </h3>
-
-                    <p>
-                        Team up with another student
-                        and compete together.
-                    </p>
-
-                    <span class="mode-action">
-                        Coming Soon
-                    </span>
-
-                </div>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="game-mode-card locked-mode"
-                disabled
-            >
-
-                <div class="mode-icon">
-                    🏆
-                </div>
-
-                <div class="mode-content">
-
-                    <span class="mode-tag">
-                        COMING SOON
-                    </span>
-
-                    <h3>
-                        Tournaments
-                    </h3>
-
-                    <p>
-                        Compete through multiple rounds
-                        and fight for the top spot.
-                    </p>
-
-                    <span class="mode-action">
-                        Coming Soon
-                    </span>
-
-                </div>
-
-            </button>
+            <span>
+                Questions
+            </span>
 
         </div>
 
-    </section>
+    </div>
 
 
-    <!-- =================================================
-         BATTLE SETUP
-    ================================================== -->
+    <div class="setup-options">
 
-    <section
-        class="battle-setup-card"
-        id="battleSetup"
+        <div class="setup-field">
+
+            <label for="battleSubject">
+                Subject
+            </label>
+
+            <select id="battleSubject">
+
+                <option value="">
+                    Choose a subject
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div
+            class="setup-field"
+            id="battleTopicField"
+        >
+
+            <label for="battleTopic">
+                Topic
+            </label>
+
+            <select
+                id="battleTopic"
+                disabled
+            >
+
+                <option value="">
+                    Choose a subject first
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="setup-field">
+
+            <label for="battleDifficulty">
+                Difficulty
+            </label>
+
+            <select id="battleDifficulty">
+
+                <option value="mixed">
+                    Mixed
+                </option>
+
+                <option value="easy">
+                    Easy
+                </option>
+
+                <option value="medium">
+                    Medium
+                </option>
+
+                <option value="hard">
+                    Hard
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="start-battle-button"
+        id="startBattleButton"
+        onclick="beginBattle()"
+        disabled
     >
+        ⚔️ Start Battle
+    </button>
 
-        <div class="setup-header">
+</section>
 
-            <div>
 
-                <span class="game-label">
-                    ⚔️ QUICK BATTLE
-                </span>
+<!-- =====================================================
+     1V1 SETUP
+===================================================== -->
 
-                <h2>
-                    Prepare for battle
-                </h2>
+<section
+    class="one-v-one-setup"
+    id="oneVOneSetup"
+    hidden
+>
 
-                <p>
-                    Choose a subject, choose a topic
-                    and test yourself with 10 questions.
-                </p>
+    <div class="one-v-one-heading">
 
-            </div>
+        <div>
 
-            <div class="question-count">
+            <span class="game-label">
+                ⚔️ LIVE 1v1
+            </span>
 
-                <strong>
-                    10
-                </strong>
+            <h2>
+                Challenge another student
+            </h2>
 
-                <span>
-                    Questions
-                </span>
+            <p>
+                Select your battle settings and
+                find an opponent online.
+            </p>
 
-            </div>
+        </div>
+
+        <div class="live-badge">
+            <span></span>
+            LIVE
+        </div>
+
+    </div>
+
+
+    <div class="setup-options">
+
+        <div class="setup-field">
+
+            <label for="oneVOneSubject">
+                Subject
+            </label>
+
+            <select id="oneVOneSubject">
+
+                <option value="">
+                    Choose a subject
+                </option>
+
+            </select>
 
         </div>
 
 
-        <!-- =================================================
-             SUBJECT
-        ================================================== -->
+        <div class="setup-field">
 
-        <div class="setup-options">
+            <label for="oneVOneTopic">
+                Topic
+            </label>
 
-            <div class="setup-field">
-
-                <label for="battleSubject">
-                    Subject
-                </label>
-
-                <select id="battleSubject">
-
-                    <option value="">
-                        Choose a subject
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <!-- =================================================
-                 TOPIC
-            ================================================== -->
-
-            <div
-                class="setup-field"
-                id="battleTopicField"
+            <select
+                id="oneVOneTopic"
+                disabled
             >
 
-                <label for="battleTopic">
-                    Topic
-                </label>
+                <option value="">
+                    Choose a subject first
+                </option>
 
-                <select
-                    id="battleTopic"
-                    disabled
-                >
-
-                    <option value="">
-                        Choose a subject first
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <!-- =================================================
-                 DIFFICULTY
-            ================================================== -->
-
-            <div class="setup-field">
-
-                <label for="battleDifficulty">
-                    Difficulty
-                </label>
-
-                <select id="battleDifficulty">
-
-                    <option value="mixed">
-                        Mixed
-                    </option>
-
-                    <option value="easy">
-                        Easy
-                    </option>
-
-                    <option value="medium">
-                        Medium
-                    </option>
-
-                    <option value="hard">
-                        Hard
-                    </option>
-
-                </select>
-
-            </div>
+            </select>
 
         </div>
 
+
+        <div class="setup-field">
+
+            <label for="oneVOneDifficulty">
+                Difficulty
+            </label>
+
+            <select id="oneVOneDifficulty">
+
+                <option value="mixed">
+                    Mixed
+                </option>
+
+                <option value="easy">
+                    Easy
+                </option>
+
+                <option value="medium">
+                    Medium
+                </option>
+
+                <option value="hard">
+                    Hard
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <div class="one-v-one-actions">
 
         <button
             type="button"
             class="start-battle-button"
-            id="startBattleButton"
-            onclick="beginBattle()"
+            id="findOpponentButton"
+            onclick="findOneVOneOpponent()"
             disabled
         >
-            ⚔️ Start Battle
+            ⚔️ Find Opponent
         </button>
 
-    </section>
+        <button
+            type="button"
+            class="secondary-battle-button"
+            onclick="cancelOneVOne()"
+        >
+            Cancel
+        </button>
+
+    </div>
 
 
-    <!-- =================================================
-         BATTLE ARENA
-    ================================================== -->
-
-    <section
-        class="battle-arena"
-        id="battleArena"
+    <div
+        class="matchmaking-status"
+        id="matchmakingStatus"
         hidden
     >
 
-        <div class="battle-header">
+        <div class="matchmaking-spinner">
+            ⚔️
+        </div>
 
-            <div class="player-card">
+        <h3 id="matchmakingTitle">
+            Looking for an opponent...
+        </h3>
 
-                <div class="player-avatar">
-                    👤
-                </div>
+        <p id="matchmakingMessage">
+            Stay here while StudyMind searches
+            for another student.
+        </p>
 
-                <div>
+        <button
+            type="button"
+            class="secondary-battle-button"
+            onclick="cancelOneVOne()"
+        >
+            Cancel Search
+        </button>
 
-                    <span>
-                        YOU
-                    </span>
+    </div>
 
-                    <strong id="playerScore">
-                        0
-                    </strong>
+</section>
 
-                </div>
 
+<!-- =====================================================
+     1V1 ARENA
+===================================================== -->
+
+<section
+    class="battle-arena one-v-one-arena"
+    id="oneVOneArena"
+    hidden
+>
+
+    <div class="battle-header">
+
+        <div class="player-card">
+
+            <div class="player-avatar">
+                👤
             </div>
 
-
-            <div class="battle-round">
+            <div>
 
                 <span>
-                    QUESTION
+                    YOU
                 </span>
 
-                <strong>
-
-                    <span id="currentQuestionNumber">
-                        1
-                    </span>
-
-                    /
-                    10
-
+                <strong id="oneVOnePlayerScore">
+                    0
                 </strong>
-
-            </div>
-
-
-            <div class="player-card opponent-card">
-
-                <div>
-
-                    <span>
-                        COMPUTER
-                    </span>
-
-                    <strong id="computerScore">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="player-avatar">
-                    🤖
-                </div>
 
             </div>
 
         </div>
 
 
-        <div class="battle-timer">
+        <div class="battle-round">
 
             <span>
-                TIME
+                QUESTION
             </span>
 
-            <strong id="battleTimer">
-                15
+            <strong>
+
+                <span id="oneVOneQuestionNumber">
+                    1
+                </span>
+
+                /
+                10
+
             </strong>
 
         </div>
 
 
-        <div class="question-card">
+        <div class="player-card opponent-card">
 
-            <span
-                class="question-topic"
-                id="battleQuestionTopic"
-            >
-                Topic
-            </span>
+            <div>
 
-            <h2 id="battleQuestion">
-                Question will appear here.
-            </h2>
-
-
-            <div
-                class="answer-grid"
-                id="answerGrid"
-            >
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         BATTLE RESULTS
-    ================================================== -->
-
-    <section
-        class="battle-results"
-        id="battleResults"
-        hidden
-    >
-
-        <div class="results-icon">
-            🏆
-        </div>
-
-        <span class="game-label">
-            BATTLE COMPLETE
-        </span>
-
-        <h2 id="battleResultTitle">
-            Battle Complete
-        </h2>
-
-        <p id="battleResultMessage">
-            Your results are ready.
-        </p>
-
-
-        <div class="result-score-grid">
-
-            <div class="result-score-card">
-
-                <span>
-                    YOUR SCORE
+                <span id="oneVOneOpponentName">
+                    OPPONENT
                 </span>
 
-                <strong id="finalPlayerScore">
+                <strong id="oneVOneOpponentScore">
                     0
                 </strong>
 
             </div>
 
+            <div class="player-avatar">
+                👤
+            </div>
 
-            <div class="result-score-card">
+        </div>
+
+    </div>
+
+
+    <div class="online-status-row">
+
+        <span>
+            <i class="online-dot"></i>
+            Opponent connected
+        </span>
+
+        <span id="oneVOneSyncStatus">
+            Synchronized
+        </span>
+
+    </div>
+
+
+    <div class="battle-timer">
+
+        <span>
+            TIME
+        </span>
+
+        <strong id="oneVOneTimer">
+            15
+        </strong>
+
+    </div>
+
+
+    <div class="question-card">
+
+        <span
+            class="question-topic"
+            id="oneVOneQuestionTopic"
+        >
+            Topic
+        </span>
+
+        <h2 id="oneVOneQuestion">
+            Question will appear here.
+        </h2>
+
+
+        <div
+            class="answer-grid"
+            id="oneVOneAnswerGrid"
+        >
+        </div>
+
+    </div>
+
+
+    <div
+        class="waiting-for-opponent"
+        id="waitingForOpponent"
+        hidden
+    >
+        Waiting for your opponent to answer...
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     COMPUTER ARENA
+===================================================== -->
+
+<section
+    class="battle-arena"
+    id="battleArena"
+    hidden
+>
+
+    <div class="battle-header">
+
+        <div class="player-card">
+
+            <div class="player-avatar">
+                👤
+            </div>
+
+            <div>
+
+                <span>
+                    YOU
+                </span>
+
+                <strong id="playerScore">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="battle-round">
+
+            <span>
+                QUESTION
+            </span>
+
+            <strong>
+
+                <span id="currentQuestionNumber">
+                    1
+                </span>
+
+                /
+                10
+
+            </strong>
+
+        </div>
+
+
+        <div class="player-card opponent-card">
+
+            <div>
 
                 <span>
                     COMPUTER
                 </span>
 
-                <strong id="finalComputerScore">
+                <strong id="computerScore">
                     0
                 </strong>
 
             </div>
 
-
-            <div class="result-score-card">
-
-                <span>
-                    POINTS EARNED
-                </span>
-
-                <strong id="pointsEarned">
-                    +0
-                </strong>
-
+            <div class="player-avatar">
+                🤖
             </div>
 
         </div>
 
+    </div>
 
-        <button
-            type="button"
-            class="start-battle-button"
-            onclick="resetBattle()"
+
+    <div class="battle-timer">
+
+        <span>
+            TIME
+        </span>
+
+        <strong id="battleTimer">
+            15
+        </strong>
+
+    </div>
+
+
+    <div class="question-card">
+
+        <span
+            class="question-topic"
+            id="battleQuestionTopic"
         >
-            ⚔️ Play Again
-        </button>
+            Topic
+        </span>
 
-    </section>
+        <h2 id="battleQuestion">
+            Question will appear here.
+        </h2>
 
 
-    <!-- =================================================
-         LEADERBOARD
-    ================================================== -->
+        <div
+            class="answer-grid"
+            id="answerGrid"
+        >
+        </div>
 
-    <section class="leaderboard-section">
+    </div>
 
-        <div class="section-heading">
+</section>
 
-            <span class="game-label">
-                🏆 LEADERBOARD
+
+<!-- =====================================================
+     RESULTS
+===================================================== -->
+
+<section
+    class="battle-results"
+    id="battleResults"
+    hidden
+>
+
+    <div class="results-icon">
+        🏆
+    </div>
+
+    <span class="game-label">
+        BATTLE COMPLETE
+    </span>
+
+    <h2 id="battleResultTitle">
+        Battle Complete
+    </h2>
+
+    <p id="battleResultMessage">
+        Your results are ready.
+    </p>
+
+
+    <div class="result-score-grid">
+
+        <div class="result-score-card">
+
+            <span>
+                YOUR SCORE
             </span>
 
-            <h2>
-                Top StudyMind players
-            </h2>
-
-            <p>
-                Earn more battle points and climb
-                the rankings.
-            </p>
+            <strong id="finalPlayerScore">
+                0
+            </strong>
 
         </div>
 
 
-        <div class="leaderboard-card">
+        <div class="result-score-card">
 
-            <div class="leaderboard-row leaderboard-header">
+            <span id="finalOpponentLabel">
+                COMPUTER
+            </span>
 
-                <span>
-                    Rank
-                </span>
+            <strong id="finalComputerScore">
+                0
+            </strong>
 
-                <span>
-                    Player
-                </span>
+        </div>
 
-                <span>
-                    Points
-                </span>
 
-            </div>
+        <div class="result-score-card">
 
+            <span>
+                POINTS EARNED
+            </span>
+
+            <strong id="pointsEarned">
+                +0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="start-battle-button"
+        onclick="resetBattle()"
+    >
+        ⚔️ Play Again
+    </button>
+
+</section>
+
+
+<!-- =====================================================
+     LEADERBOARD
+===================================================== -->
+
+<section class="leaderboard-section">
+
+    <div class="section-heading">
+
+        <span class="game-label">
+            🏆 LEADERBOARD
+        </span>
+
+        <h2>
+            Top StudyMind players
+        </h2>
+
+        <p>
+            Earn more battle points and climb
+            the rankings.
+        </p>
+
+    </div>
+
+
+    <div class="leaderboard-card">
+
+        <div class="leaderboard-row leaderboard-header">
+
+            <span>
+                Rank
+            </span>
+
+            <span>
+                Player
+            </span>
+
+            <span>
+                Points
+            </span>
+
+        </div>
+
+
+        <div
+            id="leaderboardRows"
+        >
 
             <div class="leaderboard-row">
-
-                <span>
-                    🥇 1
-                </span>
-
-                <span>
-                    Study Champion
-                </span>
-
-                <strong>
-                    2,450
-                </strong>
-
-            </div>
-
-
-            <div class="leaderboard-row">
-
-                <span>
-                    🥈 2
-                </span>
-
-                <span>
-                    Knowledge Master
-                </span>
-
-                <strong>
-                    2,180
-                </strong>
-
-            </div>
-
-
-            <div class="leaderboard-row">
-
-                <span>
-                    🥉 3
-                </span>
-
-                <span>
-                    Brain Builder
-                </span>
-
-                <strong>
-                    1,950
-                </strong>
-
-            </div>
-
-
-            <div
-                class="leaderboard-row your-rank"
-                id="yourLeaderboardRank"
-            >
 
                 <span>
                     —
                 </span>
 
                 <span>
-                    You
+                    Loading...
                 </span>
 
-                <strong id="yourBattlePoints">
-                    0
+                <strong>
+                    —
                 </strong>
 
             </div>
 
         </div>
 
-    </section>
 
+        <div
+            class="leaderboard-row your-rank"
+            id="yourLeaderboardRank"
+        >
 
-    <!-- =================================================
-         PREMIUM
-    ================================================== -->
-
-    <section
-        class="premium-battle-card"
-        id="premiumBattleCard"
-    >
-
-        <div class="premium-icon">
-            ⭐
-        </div>
-
-        <div>
-
-            <span class="game-label">
-                STUDYMIND PREMIUM
+            <span>
+                —
             </span>
 
-            <h2>
-                Keep competing without limits
-            </h2>
+            <span>
+                You
+            </span>
 
-            <p>
-                Free users get 5 battles.
-                Premium members can play unlimited
-                battles and compete more often.
-            </p>
+            <strong id="yourBattlePoints">
+                0
+            </strong>
 
         </div>
 
-        <button
-            type="button"
-            class="premium-button"
-            onclick="openPremium()"
-        >
-            ⭐ Go Premium
-        </button>
+    </div>
 
-    </section>
+</section>
+
+
+<!-- =====================================================
+     PREMIUM
+===================================================== -->
+
+<section
+    class="premium-battle-card"
+    id="premiumBattleCard"
+>
+
+    <div class="premium-icon">
+        ⭐
+    </div>
+
+    <div>
+
+        <span class="game-label">
+            STUDYMIND PREMIUM
+        </span>
+
+        <h2>
+            Keep competing without limits
+        </h2>
+
+        <p>
+            Free users get 5 battles.
+            Premium members can play unlimited
+            battles and compete more often.
+        </p>
+
+    </div>
+
+    <button
+        type="button"
+        class="premium-button"
+        onclick="openPremium()"
+    >
+        ⭐ Go Premium
+    </button>
+
+</section>
 
 </main>
-```
 
 </div>
 
-<!-- =====================================================
-     SUPABASE
-====================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
