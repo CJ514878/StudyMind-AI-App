@@ -5,6 +5,7 @@
 
 "use strict";
 
+
 /* =========================================================
    CONFIGURATION
 ========================================================= */
@@ -19,8 +20,174 @@ const GAME_STORAGE = {
     theme: "studyMindTheme"
 };
 
+
+/* =========================================================
+   GAME MODE SUBJECT / TOPIC DATABASE
+========================================================= */
+
+const SUBJECT_DATABASE = {
+
+    "Mathematics": [
+        "Number Systems",
+        "Fractions",
+        "Decimals",
+        "Percentages",
+        "Ratio and Proportion",
+        "Algebra",
+        "Linear Equations",
+        "Quadratic Equations",
+        "Simultaneous Equations",
+        "Geometry",
+        "Mensuration",
+        "Trigonometry",
+        "Statistics",
+        "Probability",
+        "Sequences",
+        "Vectors"
+    ],
+
+    "English Language": [
+        "Grammar",
+        "Parts of Speech",
+        "Tenses",
+        "Sentence Structure",
+        "Comprehension",
+        "Vocabulary",
+        "Figures of Speech",
+        "Writing",
+        "Summary Writing"
+    ],
+
+    "Physics": [
+        "Measurement",
+        "Motion",
+        "Forces",
+        "Work, Energy and Power",
+        "Heat",
+        "Waves",
+        "Light",
+        "Sound",
+        "Electricity",
+        "Magnetism"
+    ],
+
+    "Chemistry": [
+        "Atomic Structure",
+        "Periodic Table",
+        "Chemical Bonding",
+        "Mole Concept",
+        "Chemical Reactions",
+        "Acids, Bases and Salts",
+        "Organic Chemistry",
+        "Electrochemistry",
+        "Rates of Reaction"
+    ],
+
+    "Biology": [
+        "Cell Biology",
+        "Nutrition",
+        "Transport Systems",
+        "Respiration",
+        "Excretion",
+        "Reproduction",
+        "Genetics",
+        "Ecology",
+        "Evolution"
+    ],
+
+    "Computer Science": [
+        "Computer Hardware",
+        "Computer Software",
+        "Data Representation",
+        "Algorithms",
+        "Programming",
+        "Databases",
+        "Networks",
+        "Cybersecurity"
+    ],
+
+    "Agricultural Science": [
+        "Farm Management",
+        "Soil Science",
+        "Crop Production",
+        "Animal Production",
+        "Farm Tools",
+        "Agricultural Economics",
+        "Pest Management"
+    ],
+
+    "Business Studies": [
+        "Business Ownership",
+        "Trade",
+        "Marketing",
+        "Banking",
+        "Insurance",
+        "Accounting",
+        "Office Practice",
+        "Entrepreneurship"
+    ],
+
+    "Literature in English": [
+        "Prose",
+        "Poetry",
+        "Drama",
+        "Literary Devices",
+        "Characterization",
+        "Themes",
+        "Plot and Structure"
+    ]
+};
+
+
+/* =========================================================
+   SUBJECT ALIASES
+========================================================= */
+
+const SUBJECT_ALIASES = {
+
+    "math": "Mathematics",
+    "maths": "Mathematics",
+    "mathematics": "Mathematics",
+
+    "english": "English Language",
+    "english language": "English Language",
+
+    "physics": "Physics",
+
+    "chem": "Chemistry",
+    "chemistry": "Chemistry",
+
+    "bio": "Biology",
+    "biology": "Biology",
+
+    "computer": "Computer Science",
+    "computer science": "Computer Science",
+
+    "cs": "Computer Science",
+
+    "ict": "Computer Science",
+    "information technology": "Computer Science",
+
+    "agric": "Agricultural Science",
+    "agricultural science": "Agricultural Science",
+
+    "business": "Business Studies",
+    "business studies": "Business Studies",
+
+    "lit": "Literature in English",
+    "literature": "Literature in English",
+    "literature in english": "Literature in English"
+};
+
+
+/* =========================================================
+   BATTLE STATE
+========================================================= */
+
 let battleState = {
+
     mode: "computer",
+
     subject: "",
     topic: "",
     difficulty: "mixed",
@@ -49,42 +216,17 @@ function $(id) {
 
 
 /* =========================================================
-   LOCAL STORAGE
-========================================================= */
-
-function getBattlesUsed() {
-    return Number(localStorage.getItem(GAME_STORAGE.battlesUsed) || 0);
-}
-
-function setBattlesUsed(value) {
-    localStorage.setItem(
-        GAME_STORAGE.battlesUsed,
-        String(Math.max(0, value))
-    );
-}
-
-function getBattlePoints() {
-    return Number(localStorage.getItem(GAME_STORAGE.battlePoints) || 0);
-}
-
-function setBattlePoints(value) {
-    localStorage.setItem(
-        GAME_STORAGE.battlePoints,
-        String(Math.max(0, value))
-    );
-}
-
-
-/* =========================================================
    INITIALIZATION
 ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
     updateBattleLimitUI();
+
     loadStudyPlanSubjects();
 
     setupComputerSubjectListener();
+
     setupOneVOneSubjectListener();
 
     updateThemeButton();
@@ -98,48 +240,137 @@ document.addEventListener("DOMContentLoaded", () => {
    BATTLE LIMIT
 ========================================================= */
 
-function hasBattleAvailable() {
-    return getBattlesUsed() < FREE_BATTLE_LIMIT;
+function getBattlesUsed() {
+
+    return Number(
+        localStorage.getItem(
+            GAME_STORAGE.battlesUsed
+        ) || 0
+    );
 }
+
+
+function setBattlesUsed(value) {
+
+    localStorage.setItem(
+        GAME_STORAGE.battlesUsed,
+        String(
+            Math.max(0, value)
+        )
+    );
+}
+
+
+function getBattlePoints() {
+
+    return Number(
+        localStorage.getItem(
+            GAME_STORAGE.battlePoints
+        ) || 0
+    );
+}
+
+
+function setBattlePoints(value) {
+
+    localStorage.setItem(
+        GAME_STORAGE.battlePoints,
+        String(
+            Math.max(0, value)
+        )
+    );
+}
+
+
+function hasBattleAvailable() {
+
+    return (
+        getBattlesUsed() <
+        FREE_BATTLE_LIMIT
+    );
+}
+
 
 function updateBattleLimitUI() {
 
-    const used = getBattlesUsed();
-    const remaining = Math.max(
-        0,
-        FREE_BATTLE_LIMIT - used
-    );
+    const used =
+        getBattlesUsed();
+
+    const remaining =
+        Math.max(
+            0,
+            FREE_BATTLE_LIMIT - used
+        );
 
     if ($("battlesUsed")) {
-        $("battlesUsed").textContent = used;
+
+        $("battlesUsed").textContent =
+            used;
     }
 
     if ($("battleLimit")) {
-        $("battleLimit").textContent = FREE_BATTLE_LIMIT;
+
+        $("battleLimit").textContent =
+            FREE_BATTLE_LIMIT;
     }
 
     if ($("battleStatusText")) {
 
-        if (remaining > 0) {
-
-            $("battleStatusText").textContent =
-                `${remaining} battle${remaining === 1 ? "" : "s"} remaining`;
-
-        } else {
-
-            $("battleStatusText").textContent =
-                "No free battles remaining";
-
-        }
+        $("battleStatusText").textContent =
+            remaining > 0
+                ? `${remaining} battle${remaining === 1 ? "" : "s"} remaining`
+                : "No free battles remaining";
     }
 
-    const premiumCard = $("premiumBattleCard");
+    const premiumCard =
+        $("premiumBattleCard");
 
     if (premiumCard) {
 
         premiumCard.style.display =
-            remaining === 0 ? "flex" : "";
+            remaining === 0
+                ? "flex"
+                : "";
     }
+}
+
+
+/* =========================================================
+   SUBJECT NORMALIZATION
+========================================================= */
+
+function normalizeSubjectName(subject) {
+
+    if (!subject) {
+        return "";
+    }
+
+    const cleaned =
+        String(subject)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+
+    if (
+        SUBJECT_ALIASES[cleaned]
+    ) {
+
+        return SUBJECT_ALIASES[cleaned];
+    }
+
+    const exactMatch =
+        Object.keys(SUBJECT_DATABASE)
+            .find(
+                databaseSubject =>
+                    databaseSubject
+                        .toLowerCase() ===
+                    cleaned
+            );
+
+    return (
+        exactMatch ||
+        String(subject).trim()
+    );
 }
 
 
@@ -149,12 +380,12 @@ function updateBattleLimitUI() {
 
 function loadStudyPlanSubjects() {
 
-    const subjectSelects = [
+    const selects = [
         $("battleSubject"),
         $("oneVOneSubject")
     ].filter(Boolean);
 
-    subjectSelects.forEach(select => {
+    selects.forEach(select => {
 
         select.innerHTML = `
             <option value="">
@@ -167,13 +398,19 @@ function loadStudyPlanSubjects() {
         try {
 
             const rawPlan =
-                localStorage.getItem("studyMindPlan");
+                localStorage.getItem(
+                    "studyMindPlan"
+                );
 
             if (rawPlan) {
 
-                const plan = JSON.parse(rawPlan);
+                const plan =
+                    JSON.parse(rawPlan);
 
-                subjects = extractSubjectsFromPlan(plan);
+                subjects =
+                    extractSubjectsFromPlan(
+                        plan
+                    );
             }
 
         } catch (error) {
@@ -184,9 +421,10 @@ function loadStudyPlanSubjects() {
             );
         }
 
-        /*
-         * Fallback to any subject data stored elsewhere.
-         */
+
+        /* -------------------------------------------------
+           FALLBACK STORAGE KEYS
+        ------------------------------------------------- */
 
         if (!subjects.length) {
 
@@ -196,23 +434,34 @@ function loadStudyPlanSubjects() {
                 "studyPlan"
             ];
 
-            for (const key of possibleKeys) {
+            for (
+                const key of possibleKeys
+            ) {
 
                 try {
 
                     const raw =
-                        localStorage.getItem(key);
+                        localStorage.getItem(
+                            key
+                        );
 
-                    if (!raw) continue;
+                    if (!raw) {
+                        continue;
+                    }
 
-                    const parsed = JSON.parse(raw);
+                    const parsed =
+                        JSON.parse(raw);
 
                     const found =
-                        extractSubjectsFromPlan(parsed);
+                        extractSubjectsFromPlan(
+                            parsed
+                        );
 
                     if (found.length) {
 
-                        subjects = found;
+                        subjects =
+                            found;
+
                         break;
                     }
 
@@ -220,28 +469,85 @@ function loadStudyPlanSubjects() {
             }
         }
 
-        /*
-         * Remove duplicates.
-         */
 
-        subjects = [
-            ...new Map(
-                subjects.map(subject => [
-                    subject.name.toLowerCase(),
-                    subject
-                ])
-            ).values()
-        ];
+        /* -------------------------------------------------
+           IF NOTHING WAS FOUND, USE DATABASE SUBJECTS
+        ------------------------------------------------- */
+
+        if (!subjects.length) {
+
+            subjects =
+                Object.keys(
+                    SUBJECT_DATABASE
+                ).map(name => ({
+                    name,
+                    topics:
+                        SUBJECT_DATABASE[name]
+                }));
+        }
+
+
+        /* -------------------------------------------------
+           REMOVE DUPLICATES
+        ------------------------------------------------- */
+
+        const uniqueSubjects = [];
+
+        const seen =
+            new Set();
 
         subjects.forEach(subject => {
 
+            if (!subject?.name) {
+                return;
+            }
+
+            const normalized =
+                normalizeSubjectName(
+                    subject.name
+                );
+
+            const key =
+                normalized.toLowerCase();
+
+            if (seen.has(key)) {
+                return;
+            }
+
+            seen.add(key);
+
+            uniqueSubjects.push({
+
+                name:
+                    String(subject.name)
+                        .trim(),
+
+                topics:
+                    subject.topics || []
+            });
+        });
+
+
+        /* -------------------------------------------------
+           ADD SUBJECTS
+        ------------------------------------------------- */
+
+        uniqueSubjects.forEach(subject => {
+
             const option =
-                document.createElement("option");
+                document.createElement(
+                    "option"
+                );
 
-            option.value = subject.name;
-            option.textContent = subject.name;
+            option.value =
+                subject.name;
 
-            select.appendChild(option);
+            option.textContent =
+                subject.name;
+
+            select.appendChild(
+                option
+            );
         });
     });
 }
@@ -255,51 +561,82 @@ function extractSubjectsFromPlan(plan) {
 
     const results = [];
 
-    if (!plan) return results;
+    if (!plan) {
+        return results;
+    }
 
-    /*
-     * Handle arrays directly.
-     */
+
+    /* -------------------------------------------------
+       ARRAY
+    ------------------------------------------------- */
 
     if (Array.isArray(plan)) {
 
         plan.forEach(item => {
 
-            if (typeof item === "string") {
+            if (
+                typeof item ===
+                "string"
+            ) {
 
                 results.push({
                     name: item,
                     topics: []
                 });
 
-            } else if (item && typeof item === "object") {
+                return;
+            }
+
+
+            if (
+                item &&
+                typeof item ===
+                "object"
+            ) {
 
                 const name =
                     item.subject ||
+                    item.subjectName ||
                     item.name ||
                     item.title;
 
                 if (name) {
 
                     results.push({
-                        name: String(name),
+
+                        name:
+                            String(name),
+
                         topics:
                             item.topics ||
                             item.topicList ||
+                            item.contents ||
                             []
                     });
                 }
             }
+
         });
 
         return results;
     }
 
-    /*
-     * Handle normal study-plan objects.
-     */
+
+    /* -------------------------------------------------
+       OBJECT
+    ------------------------------------------------- */
+
+    if (
+        typeof plan !==
+        "object"
+    ) {
+
+        return results;
+    }
+
 
     const possibleArrays = [
+
         plan.subjects,
         plan.subjectList,
         plan.plan,
@@ -308,32 +645,42 @@ function extractSubjectsFromPlan(plan) {
         plan.timetable
     ];
 
-    for (const array of possibleArrays) {
+
+    possibleArrays.forEach(array => {
 
         if (Array.isArray(array)) {
 
             results.push(
-                ...extractSubjectsFromPlan(array)
+                ...extractSubjectsFromPlan(
+                    array
+                )
             );
         }
-    }
+    });
 
-    /*
-     * Some StudyMind plans may store subjects
-     * as object keys.
-     */
+
+    /* -------------------------------------------------
+       SUBJECTS OBJECT
+    ------------------------------------------------- */
 
     if (
         plan.subjects &&
-        typeof plan.subjects === "object" &&
-        !Array.isArray(plan.subjects)
+        typeof plan.subjects ===
+        "object" &&
+        !Array.isArray(
+            plan.subjects
+        )
     ) {
 
-        Object.entries(plan.subjects).forEach(
+        Object.entries(
+            plan.subjects
+        ).forEach(
             ([name, data]) => {
 
                 results.push({
+
                     name,
+
                     topics:
                         data?.topics ||
                         data?.topicList ||
@@ -344,60 +691,94 @@ function extractSubjectsFromPlan(plan) {
         );
     }
 
+
     return results;
 }
 
 
 /* =========================================================
-   GET SUBJECT TOPICS
+   GET TOPICS FOR SUBJECT
 ========================================================= */
 
-function getTopicsForSubject(subjectName) {
+function getTopicsForSubject(
+    subjectName
+) {
 
-    if (!subjectName) return [];
+    if (!subjectName) {
+        return [];
+    }
 
-    const topics = [];
+    const normalizedSubject =
+        normalizeSubjectName(
+            subjectName
+        );
+
+    const planTopics = [];
 
     try {
 
-        const raw =
-            localStorage.getItem("studyMindPlan");
+        const rawPlan =
+            localStorage.getItem(
+                "studyMindPlan"
+            );
 
-        if (raw) {
+        if (rawPlan) {
 
-            const plan = JSON.parse(raw);
+            const plan =
+                JSON.parse(rawPlan);
 
             findTopicsForSubject(
                 plan,
                 subjectName,
-                topics
+                planTopics
             );
+
         }
 
     } catch (error) {
 
         console.warn(
-            "Could not read topics:",
+            "Could not read study plan topics:",
             error
         );
     }
 
-    /*
-     * Remove duplicate topic names.
-     */
+
+    /* -------------------------------------------------
+       USE STUDY PLAN TOPICS IF THEY EXIST
+    ------------------------------------------------- */
+
+    const cleanedPlanTopics =
+        cleanTopicList(
+            planTopics
+        );
+
+    if (
+        cleanedPlanTopics.length
+    ) {
+
+        return cleanedPlanTopics;
+    }
+
+
+    /* -------------------------------------------------
+       OTHERWISE USE BUILT-IN TOPICS
+    ------------------------------------------------- */
+
+    const databaseTopics =
+        SUBJECT_DATABASE[
+            normalizedSubject
+        ] || [];
+
 
     return [
-        ...new Set(
-            topics
-                .map(topic => String(topic).trim())
-                .filter(Boolean)
-        )
+        ...databaseTopics
     ];
 }
 
 
 /* =========================================================
-   FIND TOPICS
+   FIND TOPICS IN STUDY PLAN
 ========================================================= */
 
 function findTopicsForSubject(
@@ -406,7 +787,10 @@ function findTopicsForSubject(
     output
 ) {
 
-    if (!value) return;
+    if (!value) {
+        return;
+    }
+
 
     if (Array.isArray(value)) {
 
@@ -414,18 +798,24 @@ function findTopicsForSubject(
 
             if (
                 item &&
-                typeof item === "object"
+                typeof item ===
+                "object"
             ) {
 
                 const name =
                     item.subject ||
+                    item.subjectName ||
                     item.name ||
                     item.title;
 
                 if (
                     name &&
-                    String(name).toLowerCase() ===
-                    subjectName.toLowerCase()
+                    normalizeSubjectName(
+                        name
+                    ).toLowerCase() ===
+                    normalizeSubjectName(
+                        subjectName
+                    ).toLowerCase()
                 ) {
 
                     addTopics(
@@ -436,29 +826,42 @@ function findTopicsForSubject(
                     );
                 }
 
+
                 findTopicsForSubject(
                     item,
                     subjectName,
                     output
                 );
             }
+
         });
 
         return;
     }
 
+
     if (
-        typeof value !== "object"
-    ) return;
+        typeof value !==
+        "object"
+    ) {
+
+        return;
+    }
+
 
     const name =
         value.subject ||
         value.subjectName;
 
+
     if (
         name &&
-        String(name).toLowerCase() ===
-        subjectName.toLowerCase()
+        normalizeSubjectName(
+            name
+        ).toLowerCase() ===
+        normalizeSubjectName(
+            subjectName
+        ).toLowerCase()
     ) {
 
         addTopics(
@@ -469,20 +872,24 @@ function findTopicsForSubject(
         );
     }
 
-    Object.values(value).forEach(child => {
 
-        if (
-            child &&
-            typeof child === "object"
-        ) {
+    Object.values(value)
+        .forEach(child => {
 
-            findTopicsForSubject(
-                child,
-                subjectName,
-                output
-            );
-        }
-    });
+            if (
+                child &&
+                typeof child ===
+                "object"
+            ) {
+
+                findTopicsForSubject(
+                    child,
+                    subjectName,
+                    output
+                );
+            }
+
+        });
 }
 
 
@@ -490,41 +897,95 @@ function findTopicsForSubject(
    ADD TOPICS
 ========================================================= */
 
-function addTopics(value, output) {
+function addTopics(
+    value,
+    output
+) {
 
-    if (!value) return;
+    if (!value) {
+        return;
+    }
+
 
     if (Array.isArray(value)) {
 
         value.forEach(item => {
 
-            if (typeof item === "string") {
+            if (
+                typeof item ===
+                "string"
+            ) {
 
                 output.push(item);
 
             } else if (
                 item &&
-                typeof item === "object"
+                typeof item ===
+                "object"
             ) {
 
-                const name =
+                const topic =
                     item.topic ||
+                    item.topicName ||
                     item.name ||
                     item.title;
 
-                if (name) {
-                    output.push(String(name));
+                if (topic) {
+
+                    output.push(
+                        String(topic)
+                    );
                 }
             }
+
         });
 
         return;
     }
 
-    if (typeof value === "string") {
 
-        output.push(value);
+    if (
+        typeof value ===
+        "string"
+    ) {
+
+        /*
+         * Support comma-separated topic lists.
+         */
+
+        value
+            .split(",")
+            .forEach(topic => {
+
+                if (topic.trim()) {
+
+                    output.push(
+                        topic.trim()
+                    );
+                }
+            });
     }
+}
+
+
+/* =========================================================
+   CLEAN TOPIC LIST
+========================================================= */
+
+function cleanTopicList(
+    topics
+) {
+
+    return [
+        ...new Set(
+            topics
+                .map(topic =>
+                    String(topic)
+                        .trim()
+                )
+                .filter(Boolean)
+        )
+    ];
 }
 
 
@@ -537,7 +998,9 @@ function setupComputerSubjectListener() {
     const subject =
         $("battleSubject");
 
-    if (!subject) return;
+    if (!subject) {
+        return;
+    }
 
     subject.addEventListener(
         "change",
@@ -548,6 +1011,7 @@ function setupComputerSubjectListener() {
                 "battleTopic",
                 "startBattleButton"
             );
+
         }
     );
 }
@@ -562,7 +1026,9 @@ function setupOneVOneSubjectListener() {
     const subject =
         $("oneVOneSubject");
 
-    if (!subject) return;
+    if (!subject) {
+        return;
+    }
 
     subject.addEventListener(
         "change",
@@ -573,141 +1039,218 @@ function setupOneVOneSubjectListener() {
                 "oneVOneTopic",
                 "findOpponentButton"
             );
+
         }
     );
 }
 
 
 /* =========================================================
-   POPULATE TOPICS
+   POPULATE TOPIC SELECT
+   THIS FIXES THE ORIGINAL ERROR
 ========================================================= */
 
+function populateTopicSelect(
+    subjectId,
+    topicId,
+    buttonId
+) {
 
-function populateTopics(subjectSelect, topicSelect) {
+    const subjectSelect =
+        $(subjectId);
 
-    if (!topicSelect) {
+    const topicSelect =
+        $(topicId);
+
+    const button =
+        $(buttonId);
+
+
+    if (
+        !subjectSelect ||
+        !topicSelect
+    ) {
+
         return;
     }
 
+
     topicSelect.innerHTML = "";
 
+
     const selectedSubject =
-        subjectSelect?.value?.trim() || "";
+        subjectSelect.value
+            ?.trim() || "";
+
+
+    /* -------------------------------------------------
+       NO SUBJECT
+    ------------------------------------------------- */
 
     if (!selectedSubject) {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
         option.value = "";
+
         option.textContent =
             "Choose a subject first";
 
-        topicSelect.appendChild(option);
+        topicSelect.appendChild(
+            option
+        );
 
-        topicSelect.disabled = true;
+        topicSelect.disabled =
+            true;
+
+        if (button) {
+            button.disabled = true;
+        }
 
         return;
     }
 
-    /*
-     * ---------------------------------------------------------
-     * NORMALIZE SUBJECT NAMES
-     *
-     * The study-plan generator may save "Math",
-     * while the Game Mode database uses "Mathematics".
-     * ---------------------------------------------------------
-     */
 
-    const subjectAliases = {
-
-        "math": "Mathematics",
-        "mathematics": "Mathematics",
-
-        "english": "English Language",
-        "english language": "English Language",
-
-        "computer": "Computer Science",
-        "computer science": "Computer Science",
-
-        "ict": "Information Technology",
-        "information technology": "Information Technology",
-
-        "agric": "Agricultural Science",
-        "agricultural science": "Agricultural Science",
-
-        "business": "Business Studies",
-        "business studies": "Business Studies",
-
-        "lit": "Literature in English",
-        "literature": "Literature in English",
-        "literature in english": "Literature in English",
-
-        "pe": "Physical Education",
-        "physical education": "Physical Education"
-    };
-
-    const normalizedKey =
-        selectedSubject
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim();
-
-    const databaseSubject =
-        subjectAliases[normalizedKey] ||
-        Object.keys(SUBJECT_DATABASE).find(
-            subject =>
-                subject.toLowerCase() === normalizedKey
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * GET TOPICS
-     * ---------------------------------------------------------
-     */
+    /* -------------------------------------------------
+       GET TOPICS
+    ------------------------------------------------- */
 
     const topics =
-        databaseSubject
-            ? SUBJECT_DATABASE[databaseSubject]
-            : [];
+        getTopicsForSubject(
+            selectedSubject
+        );
 
-    /*
-     * ---------------------------------------------------------
-     * DEFAULT OPTION
-     * ---------------------------------------------------------
-     */
+
+    /* -------------------------------------------------
+       TOPIC SELECT DEFAULT
+    ------------------------------------------------- */
 
     const defaultOption =
-        document.createElement("option");
+        document.createElement(
+            "option"
+        );
 
     defaultOption.value = "";
+
     defaultOption.textContent =
         topics.length
             ? "Choose a topic"
             : "No topics available";
 
-    topicSelect.appendChild(defaultOption);
+    topicSelect.appendChild(
+        defaultOption
+    );
 
-    /*
-     * ---------------------------------------------------------
-     * ADD TOPICS
-     * ---------------------------------------------------------
-     */
+
+    /* -------------------------------------------------
+       ADD TOPICS
+    ------------------------------------------------- */
 
     topics.forEach(topic => {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
-        option.value = topic;
-        option.textContent = topic;
+        option.value =
+            topic;
 
-        topicSelect.appendChild(option);
+        option.textContent =
+            topic;
 
+        topicSelect.appendChild(
+            option
+        );
     });
+
 
     topicSelect.disabled =
         topics.length === 0;
+
+
+    if (button) {
+
+        button.disabled = true;
+
+        /*
+         * Remove old listeners safely by cloning.
+         */
+
+        const newTopicSelect =
+            topicSelect.cloneNode(true);
+
+        topicSelect.parentNode.replaceChild(
+            newTopicSelect,
+            topicSelect
+        );
+
+        newTopicSelect.addEventListener(
+            "change",
+            () => {
+
+                button.disabled =
+                    !newTopicSelect.value;
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   BACKWARDS COMPATIBILITY
+   Allows older HTML/JS to call populateTopics()
+========================================================= */
+
+function populateTopics(
+    subjectSelect,
+    topicSelect
+) {
+
+    let subjectElement =
+        subjectSelect;
+
+    let topicElement =
+        topicSelect;
+
+
+    if (
+        typeof subjectSelect ===
+        "string"
+    ) {
+
+        subjectElement =
+            $(subjectSelect);
+    }
+
+
+    if (
+        typeof topicSelect ===
+        "string"
+    ) {
+
+        topicElement =
+            $(topicSelect);
+    }
+
+
+    if (
+        !subjectElement ||
+        !topicElement
+    ) {
+
+        return;
+    }
+
+
+    populateTopicSelect(
+        subjectElement.id,
+        topicElement.id,
+        null
+    );
 }
 
 
@@ -724,12 +1267,17 @@ function startComputerBattle() {
         return;
     }
 
-    battleState.mode = "computer";
+
+    battleState.mode =
+        "computer";
+
 
     showComputerSetup();
 
+
     const setup =
         $("battleSetup");
+
 
     if (setup) {
 
@@ -762,11 +1310,26 @@ function showComputerSetup() {
     const results =
         $("battleResults");
 
-    if (setup) setup.hidden = false;
-    if (oneVOneSetup) oneVOneSetup.hidden = true;
-    if (arena) arena.hidden = true;
-    if (oneVOneArena) oneVOneArena.hidden = true;
-    if (results) results.hidden = true;
+
+    if (setup) {
+        setup.hidden = false;
+    }
+
+    if (oneVOneSetup) {
+        oneVOneSetup.hidden = true;
+    }
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    if (oneVOneArena) {
+        oneVOneArena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = true;
+    }
 }
 
 
@@ -783,15 +1346,22 @@ async function beginBattle() {
         return;
     }
 
+
     const subject =
-        $("battleSubject")?.value || "";
+        $("battleSubject")
+            ?.value || "";
+
 
     const topic =
-        $("battleTopic")?.value || "";
+        $("battleTopic")
+            ?.value || "";
+
 
     const difficulty =
-        $("battleDifficulty")?.value ||
+        $("battleDifficulty")
+            ?.value ||
         "mixed";
+
 
     if (!subject) {
 
@@ -802,6 +1372,7 @@ async function beginBattle() {
         return;
     }
 
+
     if (!topic) {
 
         alert(
@@ -811,7 +1382,9 @@ async function beginBattle() {
         return;
     }
 
+
     battleState = {
+
         mode: "computer",
 
         subject,
@@ -819,33 +1392,37 @@ async function beginBattle() {
         difficulty,
 
         questions: [],
+
         currentQuestion: 0,
 
         playerScore: 0,
         opponentScore: 0,
 
-        timer: QUESTION_TIME_SECONDS,
+        timer:
+            QUESTION_TIME_SECONDS,
+
         timerInterval: null,
 
         answering: false,
+
         battleActive: false
     };
+
 
     const button =
         $("startBattleButton");
 
+
     if (button) {
 
         button.disabled = true;
+
         button.textContent =
             "⚔️ Generating Battle...";
     }
 
-    try {
 
-        /*
-         * Generate the questions from the AI server.
-         */
+    try {
 
         const questions =
             await generateBattleQuestions(
@@ -854,9 +1431,13 @@ async function beginBattle() {
                 difficulty
             );
 
+
         if (
-            !Array.isArray(questions) ||
-            questions.length < QUESTIONS_PER_BATTLE
+            !Array.isArray(
+                questions
+            ) ||
+            questions.length <
+            QUESTIONS_PER_BATTLE
         ) {
 
             throw new Error(
@@ -864,24 +1445,29 @@ async function beginBattle() {
             );
         }
 
+
         battleState.questions =
             questions.slice(
                 0,
                 QUESTIONS_PER_BATTLE
             );
 
+
         /*
-         * Count the battle only after
-         * successfully generating it.
+         * Only count the battle
+         * after successful generation.
          */
 
         setBattlesUsed(
             getBattlesUsed() + 1
         );
 
+
         updateBattleLimitUI();
 
+
         startComputerArena();
+
 
     } catch (error) {
 
@@ -890,16 +1476,20 @@ async function beginBattle() {
             error
         );
 
+
         alert(
             "The computer battle could not start.\n\n" +
             error.message
         );
 
+
     } finally {
 
         if (button) {
 
-            button.disabled = false;
+            button.disabled =
+                false;
+
             button.textContent =
                 "⚔️ Start Battle";
         }
@@ -918,8 +1508,7 @@ async function generateBattleQuestions(
 ) {
 
     const prompt = `
-Create exactly ${QUESTIONS_PER_BATTLE} multiple-choice
-study questions for a student.
+Create exactly ${QUESTIONS_PER_BATTLE} multiple-choice study questions.
 
 Subject: ${subject}
 Topic: ${topic}
@@ -927,7 +1516,7 @@ Difficulty: ${difficulty}
 
 Return ONLY valid JSON.
 
-Use this exact structure:
+Use exactly this structure:
 
 {
   "questions": [
@@ -949,85 +1538,97 @@ Rules:
 
 - Exactly 10 questions.
 - Exactly 4 options per question.
-- "answer" must be the zero-based index of the correct option.
+- answer must be the zero-based index of the correct option.
+- Questions must be based specifically on the selected subject and topic.
 - No markdown.
 - No code fences.
 - No extra text outside the JSON.
 `;
 
-    /*
-     * IMPORTANT FIX:
-     *
-     * Do NOT immediately call response.json().
-     *
-     * We read the server response as text first.
-     * This lets us handle JSON, text errors, HTML errors,
-     * and OpenAI-style response formats safely.
-     */
 
     const endpoints = [
         "/api/chat",
         "/api/ask-ai"
     ];
 
+
     let lastError =
         "The AI server did not return a usable response.";
 
-    for (const endpoint of endpoints) {
+
+    for (
+        const endpoint of endpoints
+    ) {
 
         try {
 
             const response =
-                await fetch(endpoint, {
+                await fetch(
+                    endpoint,
+                    {
 
-                    method: "POST",
+                        method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
 
-                    body: JSON.stringify({
-                        message: prompt,
-                        prompt: prompt,
+                        body:
+                            JSON.stringify({
 
-                        subject,
-                        topic,
-                        difficulty,
+                                message:
+                                    prompt,
 
-                        mode: "game",
-                        type: "game_questions",
+                                prompt:
+                                    prompt,
 
-                        questionCount:
-                            QUESTIONS_PER_BATTLE
-                    })
-                });
+                                subject,
+
+                                topic,
+
+                                difficulty,
+
+                                mode:
+                                    "game",
+
+                                type:
+                                    "game_questions",
+
+                                questionCount:
+                                    QUESTIONS_PER_BATTLE
+                            })
+                    }
+                );
+
 
             /*
-             * Read as text FIRST.
+             * Read text first.
              */
 
             const rawText =
                 await response.text();
+
 
             console.log(
                 `AI response from ${endpoint}:`,
                 rawText
             );
 
-            /*
-             * HTTP error.
-             */
 
             if (!response.ok) {
 
                 let serverMessage =
                     rawText;
 
+
                 try {
 
                     const errorJson =
-                        JSON.parse(rawText);
+                        JSON.parse(
+                            rawText
+                        );
+
 
                     serverMessage =
                         extractServerError(
@@ -1035,7 +1636,9 @@ Rules:
                         ) ||
                         rawText;
 
+
                 } catch (_) {}
+
 
                 lastError =
                     `${endpoint} returned HTTP ${response.status}: ` +
@@ -1043,18 +1646,14 @@ Rules:
                         serverMessage
                     );
 
-                /*
-                 * Try the next endpoint.
-                 */
 
                 continue;
             }
 
-            /*
-             * Empty response.
-             */
 
-            if (!rawText.trim()) {
+            if (
+                !rawText.trim()
+            ) {
 
                 lastError =
                     `${endpoint} returned an empty response.`;
@@ -1062,53 +1661,33 @@ Rules:
                 continue;
             }
 
-            /*
-             * Parse the response safely.
-             */
 
-            const parsed =
+            let payload =
                 safelyParseJSON(
                     rawText
                 );
 
-            /*
-             * If the whole response is not JSON,
-             * try extracting JSON embedded inside it.
-             */
-
-            let payload =
-                parsed;
 
             if (!payload) {
 
-                const extracted =
+                payload =
                     extractJSONFromText(
                         rawText
                     );
-
-                payload =
-                    extracted;
             }
 
-            /*
-             * Convert the server payload into
-             * the question array.
-             */
 
             const questions =
                 extractQuestionsFromResponse(
                     payload
                 );
 
-            /*
-             * If we got valid questions,
-             * return them.
-             */
 
             const normalized =
                 normalizeQuestions(
                     questions
                 );
+
 
             if (
                 normalized.length >=
@@ -1121,31 +1700,6 @@ Rules:
                 );
             }
 
-            /*
-             * If the payload itself was just a
-             * JSON array.
-             */
-
-            if (
-                Array.isArray(payload)
-            ) {
-
-                const arrayQuestions =
-                    normalizeQuestions(
-                        payload
-                    );
-
-                if (
-                    arrayQuestions.length >=
-                    QUESTIONS_PER_BATTLE
-                ) {
-
-                    return arrayQuestions.slice(
-                        0,
-                        QUESTIONS_PER_BATTLE
-                    );
-                }
-            }
 
             lastError =
                 `${endpoint} returned data, but it did not contain ` +
@@ -1158,11 +1712,13 @@ Rules:
                 error
             );
 
+
             lastError =
                 `${endpoint} request failed: ` +
                 error.message;
         }
     }
+
 
     throw new Error(
         "AI server error.\n\n" +
@@ -1177,11 +1733,16 @@ Rules:
 
 function safelyParseJSON(text) {
 
-    if (!text) return null;
+    if (!text) {
+        return null;
+    }
+
 
     try {
 
-        return JSON.parse(text);
+        return JSON.parse(
+            text
+        );
 
     } catch (_) {
 
@@ -1196,36 +1757,42 @@ function safelyParseJSON(text) {
 
 function extractJSONFromText(text) {
 
-    if (!text) return null;
+    if (!text) {
+        return null;
+    }
+
 
     let cleaned =
         text.trim();
 
-    /*
-     * Remove markdown fences.
-     */
 
     cleaned =
         cleaned
-            .replace(/^```json\s*/i, "")
-            .replace(/^```\s*/i, "")
-            .replace(/\s*```$/i, "")
+            .replace(
+                /^```json\s*/i,
+                ""
+            )
+            .replace(
+                /^```\s*/i,
+                ""
+            )
+            .replace(
+                /\s*```$/i,
+                ""
+            )
             .trim();
 
-    /*
-     * Try direct JSON again.
-     */
 
     const direct =
-        safelyParseJSON(cleaned);
+        safelyParseJSON(
+            cleaned
+        );
+
 
     if (direct) {
         return direct;
     }
 
-    /*
-     * Find the first object.
-     */
 
     const objectStart =
         cleaned.indexOf("{");
@@ -1233,30 +1800,26 @@ function extractJSONFromText(text) {
     const objectEnd =
         cleaned.lastIndexOf("}");
 
+
     if (
         objectStart !== -1 &&
         objectEnd > objectStart
     ) {
 
-        const objectText =
-            cleaned.slice(
-                objectStart,
-                objectEnd + 1
-            );
-
         const object =
             safelyParseJSON(
-                objectText
+                cleaned.slice(
+                    objectStart,
+                    objectEnd + 1
+                )
             );
+
 
         if (object) {
             return object;
         }
     }
 
-    /*
-     * Find the first array.
-     */
 
     const arrayStart =
         cleaned.indexOf("[");
@@ -1264,26 +1827,26 @@ function extractJSONFromText(text) {
     const arrayEnd =
         cleaned.lastIndexOf("]");
 
+
     if (
         arrayStart !== -1 &&
         arrayEnd > arrayStart
     ) {
 
-        const arrayText =
-            cleaned.slice(
-                arrayStart,
-                arrayEnd + 1
-            );
-
         const array =
             safelyParseJSON(
-                arrayText
+                cleaned.slice(
+                    arrayStart,
+                    arrayEnd + 1
+                )
             );
+
 
         if (array) {
             return array;
         }
     }
+
 
     return null;
 }
@@ -1293,13 +1856,23 @@ function extractJSONFromText(text) {
    EXTRACT SERVER ERROR
 ========================================================= */
 
-function extractServerError(data) {
+function extractServerError(
+    data
+) {
 
-    if (!data) return "";
+    if (!data) {
+        return "";
+    }
 
-    if (typeof data === "string") {
+
+    if (
+        typeof data ===
+        "string"
+    ) {
+
         return data;
     }
+
 
     return (
         data.error?.message ||
@@ -1320,52 +1893,61 @@ function extractQuestionsFromResponse(
     payload
 ) {
 
-    if (!payload) return [];
+    if (!payload) {
+        return [];
+    }
 
-    /*
-     * Direct array.
-     */
 
-    if (Array.isArray(payload)) {
+    if (
+        Array.isArray(
+            payload
+        )
+    ) {
+
         return payload;
     }
 
-    /*
-     * Standard StudyMind format.
-     */
 
-    if (Array.isArray(payload.questions)) {
+    if (
+        Array.isArray(
+            payload.questions
+        )
+    ) {
+
         return payload.questions;
     }
 
-    /*
-     * Common API wrappers.
-     */
 
     if (
         payload.data &&
-        Array.isArray(payload.data.questions)
+        Array.isArray(
+            payload.data.questions
+        )
     ) {
 
         return payload.data.questions;
     }
 
+
     if (
         payload.result &&
-        Array.isArray(payload.result.questions)
+        Array.isArray(
+            payload.result.questions
+        )
     ) {
 
         return payload.result.questions;
     }
 
+
     /*
-     * OpenAI-style response:
-     *
-     * { choices: [{ message: { content: "..." }}] }
+     * OpenAI-style response.
      */
 
     if (
-        Array.isArray(payload.choices)
+        Array.isArray(
+            payload.choices
+        )
     ) {
 
         const content =
@@ -1373,12 +1955,17 @@ function extractQuestionsFromResponse(
                 ?.message
                 ?.content;
 
-        if (typeof content === "string") {
+
+        if (
+            typeof content ===
+            "string"
+        ) {
 
             const nested =
                 extractJSONFromText(
                     content
                 );
+
 
             return extractQuestionsFromResponse(
                 nested
@@ -1386,24 +1973,29 @@ function extractQuestionsFromResponse(
         }
     }
 
-    /*
-     * Some APIs return output text.
-     */
 
     const text =
         payload.text ||
         payload.content ||
         payload.output;
 
-    if (typeof text === "string") {
+
+    if (
+        typeof text ===
+        "string"
+    ) {
 
         const nested =
-            extractJSONFromText(text);
+            extractJSONFromText(
+                text
+            );
+
 
         return extractQuestionsFromResponse(
             nested
         );
     }
+
 
     return [];
 }
@@ -1417,66 +2009,92 @@ function normalizeQuestions(
     questions
 ) {
 
-    if (!Array.isArray(questions)) {
+    if (
+        !Array.isArray(
+            questions
+        )
+    ) {
+
         return [];
     }
+
 
     return questions
         .map(question => {
 
             if (
                 !question ||
-                typeof question !== "object"
+                typeof question !==
+                "object"
             ) {
+
                 return null;
             }
+
 
             const questionText =
                 question.question ||
                 question.questionText ||
                 question.text;
 
+
             let options =
                 question.options ||
                 question.choices ||
                 question.answers;
 
-            if (!Array.isArray(options)) {
+
+            if (
+                !Array.isArray(
+                    options
+                )
+            ) {
+
                 return null;
             }
 
+
             options =
-                options.map(option => {
+                options
+                    .map(option => {
 
-                    if (
-                        typeof option === "string"
-                    ) {
-                        return option;
-                    }
+                        if (
+                            typeof option ===
+                            "string"
+                        ) {
 
-                    if (
-                        option &&
-                        typeof option === "object"
-                    ) {
+                            return option;
+                        }
 
-                        return (
-                            option.text ||
-                            option.label ||
-                            option.answer ||
-                            ""
-                        );
-                    }
 
-                    return "";
-                })
-                .filter(Boolean);
+                        if (
+                            option &&
+                            typeof option ===
+                            "object"
+                        ) {
+
+                            return (
+                                option.text ||
+                                option.label ||
+                                option.answer ||
+                                ""
+                            );
+                        }
+
+
+                        return "";
+                    })
+                    .filter(Boolean);
+
 
             if (
                 !questionText ||
                 options.length !== 4
             ) {
+
                 return null;
             }
+
 
             let answer =
                 question.answer ??
@@ -1484,43 +2102,55 @@ function normalizeQuestions(
                 question.correct ??
                 question.answerIndex;
 
-            /*
-             * Convert A/B/C/D into indexes.
-             */
 
             if (
-                typeof answer === "string"
+                typeof answer ===
+                "string"
             ) {
 
                 const trimmed =
                     answer.trim();
 
+
                 const letter =
                     trimmed
                         .toUpperCase()
-                        .replace(/[.)]/g, "");
+                        .replace(
+                            /[.)]/g,
+                            ""
+                        );
+
 
                 if (
                     ["A", "B", "C", "D"]
-                        .includes(letter)
+                        .includes(
+                            letter
+                        )
                 ) {
 
                     answer =
-                        ["A", "B", "C", "D"]
-                            .indexOf(letter);
+                        [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                        ].indexOf(
+                            letter
+                        );
 
                 } else if (
                     !Number.isNaN(
-                        Number(trimmed)
+                        Number(
+                            trimmed
+                        )
                     )
                 ) {
 
                     answer =
-                        Number(trimmed);
+                        Number(
+                            trimmed
+                        );
 
-                    /*
-                     * Handle 1-4 based answers.
-                     */
 
                     if (
                         answer >= 1 &&
@@ -1532,11 +2162,15 @@ function normalizeQuestions(
                 }
             }
 
+
             answer =
                 Number(answer);
 
+
             if (
-                !Number.isInteger(answer) ||
+                !Number.isInteger(
+                    answer
+                ) ||
                 answer < 0 ||
                 answer > 3
             ) {
@@ -1544,10 +2178,13 @@ function normalizeQuestions(
                 return null;
             }
 
+
             return {
 
                 question:
-                    String(questionText),
+                    String(
+                        questionText
+                    ),
 
                 options,
 
@@ -1585,17 +2222,40 @@ function startComputerArena() {
     const results =
         $("battleResults");
 
-    if (setup) setup.hidden = true;
-    if (oneVOneSetup) oneVOneSetup.hidden = true;
-    if (oneVOneArena) oneVOneArena.hidden = true;
-    if (results) results.hidden = true;
-    if (arena) arena.hidden = false;
 
-    battleState.battleActive = true;
+    if (setup) {
+        setup.hidden = true;
+    }
 
-    battleState.currentQuestion = 0;
-    battleState.playerScore = 0;
-    battleState.opponentScore = 0;
+    if (oneVOneSetup) {
+        oneVOneSetup.hidden = true;
+    }
+
+    if (oneVOneArena) {
+        oneVOneArena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = true;
+    }
+
+    if (arena) {
+        arena.hidden = false;
+    }
+
+
+    battleState.battleActive =
+        true;
+
+    battleState.currentQuestion =
+        0;
+
+    battleState.playerScore =
+        0;
+
+    battleState.opponentScore =
+        0;
+
 
     updateComputerScores();
 
@@ -1611,10 +2271,12 @@ function showComputerQuestion() {
 
     stopBattleTimer();
 
+
     const question =
         battleState.questions[
             battleState.currentQuestion
         ];
+
 
     if (!question) {
 
@@ -1623,72 +2285,105 @@ function showComputerQuestion() {
         return;
     }
 
-    battleState.answering = false;
+
+    battleState.answering =
+        false;
+
 
     const number =
         battleState.currentQuestion + 1;
 
+
     if ($("currentQuestionNumber")) {
+
         $("currentQuestionNumber")
-            .textContent = number;
+            .textContent =
+            number;
     }
+
 
     if ($("battleQuestionTopic")) {
+
         $("battleQuestionTopic")
             .textContent =
-                battleState.topic;
+            battleState.topic;
     }
 
+
     if ($("battleQuestion")) {
+
         $("battleQuestion")
             .textContent =
-                question.question;
+            question.question;
     }
+
 
     const answerGrid =
         $("answerGrid");
 
-    if (!answerGrid) return;
+
+    if (!answerGrid) {
+        return;
+    }
+
 
     answerGrid.innerHTML = "";
+
 
     question.options.forEach(
         (option, index) => {
 
             const button =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
-            button.type = "button";
-            button.className = "answer-button";
-            button.textContent = option;
+
+            button.type =
+                "button";
+
+            button.className =
+                "answer-button";
+
+            button.textContent =
+                option;
+
 
             button.addEventListener(
                 "click",
-                () => answerComputerQuestion(
-                    index
-                )
+                () =>
+                    answerComputerQuestion(
+                        index
+                    )
             );
 
-            answerGrid.appendChild(button);
+
+            answerGrid.appendChild(
+                button
+            );
         }
     );
+
 
     startBattleTimer();
 }
 
 
 /* =========================================================
-   COMPUTER TIMER
+   TIMER
 ========================================================= */
 
 function startBattleTimer() {
 
     stopBattleTimer();
 
+
     battleState.timer =
         QUESTION_TIME_SECONDS;
 
+
     updateBattleTimer();
+
 
     battleState.timerInterval =
         setInterval(() => {
@@ -1696,6 +2391,7 @@ function startBattleTimer() {
             battleState.timer--;
 
             updateBattleTimer();
+
 
             if (
                 battleState.timer <= 0
@@ -1720,7 +2416,8 @@ function stopBattleTimer() {
             battleState.timerInterval
         );
 
-        battleState.timerInterval = null;
+        battleState.timerInterval =
+            null;
     }
 }
 
@@ -1731,16 +2428,16 @@ function updateBattleTimer() {
 
         $("battleTimer")
             .textContent =
-                Math.max(
-                    0,
-                    battleState.timer
-                );
+            Math.max(
+                0,
+                battleState.timer
+            );
     }
 }
 
 
 /* =========================================================
-   ANSWER COMPUTER QUESTION
+   ANSWER QUESTION
 ========================================================= */
 
 function answerComputerQuestion(
@@ -1751,38 +2448,52 @@ function answerComputerQuestion(
         battleState.answering ||
         !battleState.battleActive
     ) {
+
         return;
     }
 
-    battleState.answering = true;
+
+    battleState.answering =
+        true;
+
 
     stopBattleTimer();
+
 
     const question =
         battleState.questions[
             battleState.currentQuestion
         ];
 
-    if (!question) return;
+
+    if (!question) {
+        return;
+    }
+
 
     const buttons =
         document.querySelectorAll(
             "#answerGrid .answer-button"
         );
 
+
     buttons.forEach(
         (button, index) => {
 
-            button.disabled = true;
+            button.disabled =
+                true;
+
 
             if (
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
                     "correct"
                 );
             }
+
 
             if (
                 index === selectedIndex &&
@@ -1796,28 +2507,29 @@ function answerComputerQuestion(
         }
     );
 
+
     if (
-        selectedIndex === question.answer
+        selectedIndex ===
+        question.answer
     ) {
 
-        battleState.playerScore += 10;
+        battleState.playerScore +=
+            10;
 
     } else {
-
-        /*
-         * The computer gets a small chance
-         * to score when the player misses.
-         */
 
         if (
             Math.random() < 0.65
         ) {
 
-            battleState.opponentScore += 10;
+            battleState.opponentScore +=
+                10;
         }
     }
 
+
     updateComputerScores();
+
 
     setTimeout(() => {
 
@@ -1839,29 +2551,38 @@ function handleComputerTimeout() {
         battleState.answering ||
         !battleState.battleActive
     ) {
+
         return;
     }
 
-    battleState.answering = true;
+
+    battleState.answering =
+        true;
+
 
     const question =
         battleState.questions[
             battleState.currentQuestion
         ];
 
+
     const buttons =
         document.querySelectorAll(
             "#answerGrid .answer-button"
         );
 
+
     buttons.forEach(
         (button, index) => {
 
-            button.disabled = true;
+            button.disabled =
+                true;
+
 
             if (
                 question &&
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
@@ -1871,13 +2592,13 @@ function handleComputerTimeout() {
         }
     );
 
-    /*
-     * Computer scores when time runs out.
-     */
 
-    battleState.opponentScore += 10;
+    battleState.opponentScore +=
+        10;
+
 
     updateComputerScores();
+
 
     setTimeout(() => {
 
@@ -1897,13 +2618,16 @@ function updateComputerScores() {
 
     if ($("playerScore")) {
 
-        $("playerScore").textContent =
+        $("playerScore")
+            .textContent =
             battleState.playerScore;
     }
 
+
     if ($("computerScore")) {
 
-        $("computerScore").textContent =
+        $("computerScore")
+            .textContent =
             battleState.opponentScore;
     }
 }
@@ -1917,7 +2641,10 @@ function finishComputerBattle() {
 
     stopBattleTimer();
 
-    battleState.battleActive = false;
+
+    battleState.battleActive =
+        false;
+
 
     const arena =
         $("battleArena");
@@ -1925,8 +2652,15 @@ function finishComputerBattle() {
     const results =
         $("battleResults");
 
-    if (arena) arena.hidden = true;
-    if (results) results.hidden = false;
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = false;
+    }
+
 
     const player =
         battleState.playerScore;
@@ -1934,77 +2668,105 @@ function finishComputerBattle() {
     const computer =
         battleState.opponentScore;
 
+
     let points = 0;
-    let title = "Battle Complete";
+
+    let title =
+        "Battle Complete";
+
     let message = "";
+
 
     if (player > computer) {
 
-        title = "🏆 Victory!";
+        title =
+            "🏆 Victory!";
+
         message =
             "Excellent work! You defeated the computer.";
 
-        points = player + 25;
+        points =
+            player + 25;
 
-    } else if (player < computer) {
+    } else if (
+        player < computer
+    ) {
 
-        title = "Keep Studying!";
+        title =
+            "Keep Studying!";
+
         message =
             "The computer won this round. Review the topic and try again.";
 
-        points = player;
+        points =
+            player;
 
     } else {
 
-        title = "🤝 Draw!";
+        title =
+            "🤝 Draw!";
+
         message =
             "You and the computer finished with the same score.";
 
-        points = player + 10;
+        points =
+            player + 10;
     }
 
-    const currentPoints =
-        getBattlePoints();
 
     setBattlePoints(
-        currentPoints + points
+        getBattlePoints() +
+        points
     );
+
 
     if ($("battleResultTitle")) {
 
         $("battleResultTitle")
-            .textContent = title;
+            .textContent =
+            title;
     }
+
 
     if ($("battleResultMessage")) {
 
         $("battleResultMessage")
-            .textContent = message;
+            .textContent =
+            message;
     }
+
 
     if ($("finalPlayerScore")) {
 
         $("finalPlayerScore")
-            .textContent = player;
+            .textContent =
+            player;
     }
+
 
     if ($("finalComputerScore")) {
 
         $("finalComputerScore")
-            .textContent = computer;
+            .textContent =
+            computer;
     }
+
 
     if ($("pointsEarned")) {
 
         $("pointsEarned")
-            .textContent = `+${points}`;
+            .textContent =
+            `+${points}`;
     }
+
 
     if ($("finalOpponentLabel")) {
 
         $("finalOpponentLabel")
-            .textContent = "COMPUTER";
+            .textContent =
+            "COMPUTER";
     }
+
 
     updateLeaderboardUI();
 }
@@ -2018,7 +2780,10 @@ function resetBattle() {
 
     stopBattleTimer();
 
-    battleState.battleActive = false;
+
+    battleState.battleActive =
+        false;
+
 
     const arena =
         $("battleArena");
@@ -2026,12 +2791,21 @@ function resetBattle() {
     const results =
         $("battleResults");
 
-    if (arena) arena.hidden = true;
-    if (results) results.hidden = true;
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = true;
+    }
+
 
     showComputerSetup();
 
+
     updateBattleLimitUI();
+
 
     window.scrollTo({
         top: 0,
@@ -2046,7 +2820,9 @@ function resetBattle() {
 
 function startOneVOneMode() {
 
-    battleState.mode = "1v1";
+    battleState.mode =
+        "1v1";
+
 
     const setup =
         $("battleSetup");
@@ -2063,11 +2839,27 @@ function startOneVOneMode() {
     const results =
         $("battleResults");
 
-    if (setup) setup.hidden = true;
-    if (oneVOneSetup) oneVOneSetup.hidden = false;
-    if (arena) arena.hidden = true;
-    if (oneVOneArena) oneVOneArena.hidden = true;
-    if (results) results.hidden = true;
+
+    if (setup) {
+        setup.hidden = true;
+    }
+
+    if (oneVOneSetup) {
+        oneVOneSetup.hidden = false;
+    }
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    if (oneVOneArena) {
+        oneVOneArena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = true;
+    }
+
 
     if (oneVOneSetup) {
 
@@ -2092,11 +2884,15 @@ function findOneVOneOpponent() {
         return;
     }
 
+
     const subject =
-        $("oneVOneSubject")?.value;
+        $("oneVOneSubject")
+            ?.value;
 
     const topic =
-        $("oneVOneTopic")?.value;
+        $("oneVOneTopic")
+            ?.value;
+
 
     if (!subject || !topic) {
 
@@ -2107,27 +2903,24 @@ function findOneVOneOpponent() {
         return;
     }
 
+
     const status =
         $("matchmakingStatus");
+
 
     if (status) {
         status.hidden = false;
     }
 
+
     const button =
         $("findOpponentButton");
+
 
     if (button) {
         button.disabled = true;
     }
 
-    /*
-     * The real-time Supabase matchmaking system
-     * can be connected here once the database
-     * policies are configured correctly.
-     *
-     * For now we do not fake an opponent.
-     */
 
     if ($("matchmakingTitle")) {
 
@@ -2135,6 +2928,7 @@ function findOneVOneOpponent() {
             .textContent =
             "Looking for an opponent...";
     }
+
 
     if ($("matchmakingMessage")) {
 
@@ -2154,25 +2948,31 @@ function cancelOneVOne() {
     const status =
         $("matchmakingStatus");
 
+
     if (status) {
         status.hidden = true;
     }
 
+
     const button =
         $("findOpponentButton");
 
+
     if (button) {
+
         button.disabled =
             !(
-                $("oneVOneSubject")?.value &&
-                $("oneVOneTopic")?.value
+                $("oneVOneSubject")
+                    ?.value &&
+                $("oneVOneTopic")
+                    ?.value
             );
     }
 }
 
 
 /* =========================================================
-   ONE-V-ONE ARENA PLACEHOLDER
+   1V1 ARENA
 ========================================================= */
 
 function startOneVOneArena() {
@@ -2183,8 +2983,14 @@ function startOneVOneArena() {
     const arena =
         $("oneVOneArena");
 
-    if (setup) setup.hidden = true;
-    if (arena) arena.hidden = false;
+
+    if (setup) {
+        setup.hidden = true;
+    }
+
+    if (arena) {
+        arena.hidden = false;
+    }
 }
 
 
@@ -2197,21 +3003,23 @@ function updateLeaderboardUI() {
     const points =
         getBattlePoints();
 
+
     if ($("yourBattlePoints")) {
 
         $("yourBattlePoints")
-            .textContent = points;
+            .textContent =
+            points;
     }
+
 
     const rows =
         $("leaderboardRows");
 
-    if (!rows) return;
 
-    /*
-     * Until a real shared leaderboard is connected,
-     * show the user's local score.
-     */
+    if (!rows) {
+        return;
+    }
+
 
     rows.innerHTML = `
         <div class="leaderboard-row">
@@ -2221,12 +3029,15 @@ function updateLeaderboardUI() {
         </div>
     `;
 
+
     if ($("yourLeaderboardRank")) {
 
         $("yourLeaderboardRank")
             .querySelector("span")
             ?.replaceChildren(
-                document.createTextNode("1")
+                document.createTextNode(
+                    "1"
+                )
             );
     }
 }
@@ -2277,21 +3088,6 @@ function openStudyScore() {
 
 function openPremium() {
 
-    /*
-     * Use the existing premium route if available.
-     */
-
-    const possiblePages = [
-        "premium.html",
-        "pricing.html"
-    ];
-
-    /*
-     * If your project does not yet have a premium page,
-     * display a professional message instead of sending
-     * the user to a broken page.
-     */
-
     alert(
         "Premium will give you unlimited Game Mode battles."
     );
@@ -2307,7 +3103,8 @@ async function logoutStudyMind() {
     try {
 
         if (
-            typeof supabase !== "undefined" &&
+            typeof supabase !==
+                "undefined" &&
             supabase.auth
         ) {
 
@@ -2322,9 +3119,11 @@ async function logoutStudyMind() {
         );
     }
 
+
     localStorage.removeItem(
         "studyMindCurrentUser"
     );
+
 
     window.location.href =
         "index.html";
@@ -2340,16 +3139,19 @@ function toggleGameTheme() {
     const body =
         document.body;
 
+
     const current =
         body.classList.contains(
             "light-mode"
         );
+
 
     if (current) {
 
         body.classList.remove(
             "light-mode"
         );
+
 
         localStorage.setItem(
             GAME_STORAGE.theme,
@@ -2362,11 +3164,13 @@ function toggleGameTheme() {
             "light-mode"
         );
 
+
         localStorage.setItem(
             GAME_STORAGE.theme,
             "light"
         );
     }
+
 
     updateThemeButton();
 }
@@ -2377,12 +3181,17 @@ function updateThemeButton() {
     const button =
         $("themeButton");
 
-    if (!button) return;
+
+    if (!button) {
+        return;
+    }
+
 
     const isLight =
         document.body.classList.contains(
             "light-mode"
         );
+
 
     button.textContent =
         isLight
@@ -2401,6 +3210,7 @@ function updateThemeButton() {
         localStorage.getItem(
             GAME_STORAGE.theme
         );
+
 
     if (saved === "light") {
 
@@ -2421,26 +3231,36 @@ function cleanErrorMessage(
 ) {
 
     if (!message) {
+
         return "Unknown server error.";
     }
 
+
     let text =
         String(message)
-            .replace(/<[^>]*>/g, " ")
-            .replace(/\s+/g, " ")
+            .replace(
+                /<[^>]*>/g,
+                " "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
             .trim();
 
-    /*
-     * Prevent a huge HTML error page from
-     * flooding the alert.
-     */
 
-    if (text.length > 500) {
+    if (
+        text.length > 500
+    ) {
 
         text =
-            text.slice(0, 500) +
+            text.slice(
+                0,
+                500
+            ) +
             "...";
     }
+
 
     return text;
 }
@@ -2448,7 +3268,6 @@ function cleanErrorMessage(
 
 /* =========================================================
    GLOBAL EXPORTS
-   Required because the HTML uses onclick=""
 ========================================================= */
 
 window.startComputerBattle =
@@ -2465,6 +3284,9 @@ window.findOneVOneOpponent =
 
 window.cancelOneVOne =
     cancelOneVOne;
+
+window.startOneVOneArena =
+    startOneVOneArena;
 
 window.resetBattle =
     resetBattle;
@@ -2492,4 +3314,10 @@ window.logoutStudyMind =
 
 window.toggleGameTheme =
     toggleGameTheme;
+
+window.populateTopics =
+    populateTopics;
+
+window.populateTopicSelect =
+    populateTopicSelect;
 
