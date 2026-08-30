@@ -1,2784 +1,1140 @@
 /* =========================================================
-STUDYMIND AI — GAME MODE
-AI-POWERED BATTLE SYSTEM
+   STUDYMIND AI — 1v1 BATTLE DATABASE
 ========================================================= */
 
-"use strict";
+create extension if not exists pgcrypto;
+
 
 /* =========================================================
-SETTINGS
+   MATCHES
 ========================================================= */
 
-const FREE_BATTLE_LIMIT = 5;
-const QUESTIONS_PER_BATTLE = 10;
-const QUESTION_TIME_LIMIT = 15;
+create table if not exists public.game_matches (
 
-const STORAGE_KEYS = {
+    id uuid primary key default gen_random_uuid(),
 
+    subject text not null,
 
-battleCount:
-    "studyMindGameBattleCount",
+    topic text not null,
 
-battlePoints:
-    "studyMindBattlePoints",
-
-premium:
-    "studyMindPremium",
-
-theme:
-    "studyMindTheme"
-
-
-};
-
-/* =========================================================
-SUBJECTS + TOPICS
-========================================================= */
-
-const SUBJECT_DATABASE = {
-
-    "Accounting": [
-        "Introduction to Accounting",
-        "Accounting Concepts",
-        "Double Entry",
-        "Ledger Accounts",
-        "Trial Balance",
-        "Cash Book",
-        "Bank Reconciliation",
-        "Depreciation",
-        "Final Accounts",
-        "Partnership Accounts"
-    ],
-
-    "Agricultural Science": [
-        "Introduction to Agriculture",
-        "Soil Science",
-        "Farm Tools",
-        "Crop Production",
-        "Crop Pests",
-        "Crop Diseases",
-        "Animal Husbandry",
-        "Animal Nutrition",
-        "Farm Management",
-        "Agricultural Economics"
-    ],
-
-    "Biology": [
-        "Cell Structure",
-        "Cell Division",
-        "Nutrition",
-        "Transport Systems",
-        "Respiration",
-        "Excretion",
-        "Homeostasis",
-        "Reproduction",
-        "Genetics",
-        "Evolution",
-        "Ecology",
-        "Classification",
-        "Microorganisms"
-    ],
-
-    "Business Studies": [
-        "Introduction to Business",
-        "Office Practice",
-        "Communication",
-        "Business Documents",
-        "Trade",
-        "Banking",
-        "Insurance",
-        "Transportation",
-        "Entrepreneurship",
-        "Consumer Protection"
-    ],
-
-    "Chemistry": [
-        "Matter",
-        "Atomic Structure",
-        "Periodic Table",
-        "Chemical Bonding",
-        "Mole Concept",
-        "Chemical Reactions",
-        "Acids Bases and Salts",
-        "Organic Chemistry",
-        "Electrochemistry",
-        "Rates of Reaction",
-        "Chemical Equilibrium",
-        "Metals",
-        "Non-Metals"
-    ],
-
-    "Computer Science": [
-        "Computer Fundamentals",
-        "Hardware",
-        "Software",
-        "Operating Systems",
-        "Data Representation",
-        "Algorithms",
-        "Flowcharts",
-        "Programming",
-        "Data Structures",
-        "Databases",
-        "Computer Networks",
-        "Cybersecurity",
-        "Artificial Intelligence"
-    ],
-
-    "Economics": [
-        "Basic Economic Concepts",
-        "Demand",
-        "Supply",
-        "Price Determination",
-        "Elasticity",
-        "Production",
-        "Cost and Revenue",
-        "Market Structures",
-        "National Income",
-        "Inflation",
-        "Unemployment",
-        "Money and Banking",
-        "International Trade"
-    ],
-
-    "English Language": [
-        "Grammar",
-        "Parts of Speech",
-        "Sentence Structure",
-        "Tenses",
-        "Vocabulary",
-        "Comprehension",
-        "Summary Writing",
-        "Essay Writing",
-        "Letter Writing",
-        "Figures of Speech",
-        "Oral English",
-        "Punctuation"
-    ],
-
-    "Further Mathematics": [
-        "Algebra",
-        "Functions",
-        "Coordinate Geometry",
-        "Trigonometry",
-        "Calculus",
-        "Differentiation",
-        "Integration",
-        "Vectors",
-        "Matrices",
-        "Probability",
-        "Statistics",
-        "Mechanics"
-    ],
-
-    "Geography": [
-        "Map Reading",
-        "Physical Geography",
-        "Weather and Climate",
-        "Rocks",
-        "Landforms",
-        "Soils",
-        "Vegetation",
-        "Population",
-        "Settlement",
-        "Agriculture",
-        "Industry",
-        "Transportation",
-        "Environmental Issues"
-    ],
-
-    /* =====================================================
-       GENERAL KNOWLEDGE
-       ===================================================== */
-
-    "General Knowledge": [
-        "World History",
-        "African History",
-        "Geography",
-        "Countries and Capitals",
-        "Science",
-        "Technology",
-        "Space and Astronomy",
-        "Environment",
-        "Sports",
-        "Arts and Culture",
-        "Literature",
-        "Famous People",
-        "Inventions and Discoveries",
-        "World Organizations",
-        "Current Affairs",
-        "Nigeria",
-        "Africa",
-        "World Records",
-        "Health and Human Body",
-        "General Trivia"
-    ],
-
-    "Government": [
-        "Introduction to Government",
-        "Constitution",
-        "Democracy",
-        "Political Parties",
-        "Electoral Systems",
-        "Pressure Groups",
-        "Public Opinion",
-        "Legislature",
-        "Executive",
-        "Judiciary",
-        "Local Government",
-        "International Organizations"
-    ],
-
-    "History": [
-        "Ancient Civilizations",
-        "African History",
-        "West African History",
-        "Colonialism",
-        "Nationalism",
-        "Independence Movements",
-        "World War I",
-        "World War II",
-        "Cold War",
-        "Modern History",
-        "Historical Sources"
-    ],
-
-    "Information Technology": [
-        "Information Systems",
-        "Computer Hardware",
-        "Software",
-        "Internet",
-        "Web Technologies",
-        "Databases",
-        "Networking",
-        "Cybersecurity",
-        "Digital Communication",
-        "Data Management"
-    ],
-
-    "Literature in English": [
-        "Drama",
-        "Poetry",
-        "Prose",
-        "Plot",
-        "Characterization",
-        "Setting",
-        "Theme",
-        "Conflict",
-        "Figures of Speech",
-        "Literary Devices",
-        "African Literature",
-        "Literary Analysis"
-    ],
-
-    "Mathematics": [
-        "Number Systems",
-        "Fractions",
-        "Decimals",
-        "Percentages",
-        "Ratio and Proportion",
-        "Algebra",
-        "Linear Equations",
-        "Quadratic Equations",
-        "Simultaneous Equations",
-        "Geometry",
-        "Mensuration",
-        "Trigonometry",
-        "Statistics",
-        "Probability",
-        "Sequences",
-        "Vectors"
-    ],
-
-    "Physical Education": [
-        "Physical Fitness",
-        "Athletics",
-        "Football",
-        "Basketball",
-        "Volleyball",
-        "Swimming",
-        "Gymnastics",
-        "Sports Rules",
-        "First Aid",
-        "Nutrition and Fitness"
-    ],
-
-    "Physics": [
-        "Measurement",
-        "Scalars and Vectors",
-        "Motion",
-        "Forces",
-        "Work Energy and Power",
-        "Momentum",
-        "Simple Machines",
-        "Heat",
-        "Waves",
-        "Sound",
-        "Light",
-        "Electricity",
-        "Magnetism",
-        "Electromagnetism",
-        "Atomic Physics"
-    ],
-
-    "Religious Studies": [
-        "Creation",
-        "Moral Values",
-        "Leadership",
-        "Justice",
-        "Forgiveness",
-        "Faith",
-        "Prayer",
-        "Religion and Society",
-        "Religious Teachings",
-        "Ethics"
-    ],
-
-    "Social Studies": [
-        "Family",
-        "Culture",
-        "Society",
-        "Citizenship",
-        "Human Rights",
-        "Socialization",
-        "Leadership",
-        "Conflict Resolution",
-        "Population",
-        "Environmental Issues"
-    ],
-
-    "Technical Drawing": [
-        "Drawing Instruments",
-        "Geometric Construction",
-        "Orthographic Projection",
-        "Isometric Drawing",
-        "Perspective Drawing",
-        "Sectional Views",
-        "Dimensioning",
-        "Scale Drawing",
-        "Engineering Drawing"
-    ],
-
-    "Visual Arts": [
-        "Elements of Art",
-        "Principles of Design",
-        "Drawing",
-        "Painting",
-        "Sculpture",
-        "Printmaking",
-        "Textiles",
-        "Art History",
-        "African Art",
-        "Art Appreciation"
-    ]
-
-};
-/* =========================================================
-GAME STATE
-========================================================= */
-
-let battleQuestions = [];
-
-let currentQuestionIndex = 0;
-
-let playerScore = 0;
-
-let computerScore = 0;
-
-let battlePoints = 0;
-
-let battleTimer =
-QUESTION_TIME_LIMIT;
-
-let battleTimerInterval = null;
-
-let answeringLocked = false;
-
-let battleActive = false;
-
-let generatingBattle = false;
-
-/* =========================================================
-DOM HELPER
-========================================================= */
-
-function getElement(id) {
-
-
-return document.getElementById(id);
-
-
-}
-
-/* =========================================================
-STORAGE
-========================================================= */
-
-function getBattleCount() {
-
-
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battleCount
-    )
-) || 0;
-
-
-}
-
-function setBattleCount(count) {
-
-
-localStorage.setItem(
-    STORAGE_KEYS.battleCount,
-    String(count)
-);
-
-
-}
-
-function getBattlePoints() {
-
-
-return Number(
-    localStorage.getItem(
-        STORAGE_KEYS.battlePoints
-    )
-) || 0;
-
-
-}
-
-function setBattlePoints(points) {
-
-
-localStorage.setItem(
-    STORAGE_KEYS.battlePoints,
-    String(points)
-);
-
-
-}
-
-function isPremiumUser() {
-
-
-const premium =
-    localStorage.getItem(
-        STORAGE_KEYS.premium
-    );
-
-return (
-    premium === "true" ||
-    premium === "1"
-);
-
-
-}
-
-/* =========================================================
-INITIALIZATION
-========================================================= */
-
-document.addEventListener(
-"DOMContentLoaded",
-initializeGameMode
-);
-
-function initializeGameMode() {
-
-
-battlePoints =
-    getBattlePoints();
-
-loadTheme();
-
-updateBattleStatus();
-
-updateLeaderboard();
-
-loadSubjects();
-
-setupSubjectChange();
-
-
-}
-
-/* =========================================================
-LOAD SUBJECTS
-========================================================= */
-
-function loadSubjects() {
-
-
-const subjectSelect =
-    getElement(
-        "battleSubject"
-    );
-
-if (!subjectSelect) {
-    return;
-}
-
-
-subjectSelect.innerHTML = "";
-
-
-const defaultOption =
-    document.createElement(
-        "option"
-    );
-
-defaultOption.value = "";
-
-defaultOption.textContent =
-    "Choose a subject";
-
-subjectSelect.appendChild(
-    defaultOption
-);
-
-
-Object.keys(
-    SUBJECT_DATABASE
-)
-    .sort(
-        (a, b) =>
-            a.localeCompare(b)
-    )
-    .forEach(
-        subject => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                subject;
-
-            option.textContent =
-                subject;
-
-            subjectSelect.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-}
-
-/* =========================================================
-SUBJECT CHANGE
-========================================================= */
-
-function setupSubjectChange() {
-
-
-const subjectSelect =
-    getElement(
-        "battleSubject"
-    );
-
-const topicSelect =
-    getElement(
-        "battleTopic"
-    );
-
-const startButton =
-    getElement(
-        "startBattleButton"
-    );
-
-
-if (!subjectSelect) {
-    return;
-}
-
-
-subjectSelect.addEventListener(
-    "change",
-    () => {
-
-        const subject =
-            subjectSelect.value;
-
-
-        if (!topicSelect) {
-            return;
-        }
-
-
-        topicSelect.innerHTML =
-            "";
-
-
-        if (!subject) {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                "";
-
-            option.textContent =
-                "Choose a subject first";
-
-            topicSelect.appendChild(
-                option
-            );
-
-            topicSelect.disabled =
-                true;
-
-            if (startButton) {
-                startButton.disabled =
-                    true;
-            }
-
-            return;
-
-        }
-
-
-        const defaultOption =
-            document.createElement(
-                "option"
-            );
-
-        defaultOption.value =
-            "";
-
-        defaultOption.textContent =
-            "Choose a topic";
-
-        topicSelect.appendChild(
-            defaultOption
-        );
-
-
-        const topics =
-            SUBJECT_DATABASE[
-                subject
-            ] || [];
-
-
-        topics
-            .slice()
-            .sort(
-                (a, b) =>
-                    a.localeCompare(b)
+    difficulty text not null
+        check (
+            difficulty in (
+                'mixed',
+                'easy',
+                'medium',
+                'hard'
             )
-            .forEach(
-                topic => {
+        ),
 
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
+    status text not null default 'waiting'
+        check (
+            status in (
+                'waiting',
+                'starting',
+                'active',
+                'finished',
+                'cancelled'
+            )
+        ),
 
-                    option.value =
-                        topic;
+    question_set jsonb,
 
-                    option.textContent =
-                        topic;
+    current_question integer not null default 0,
 
-                    topicSelect.appendChild(
-                        option
-                    );
+    question_started_at timestamptz,
 
-                }
-            );
+    created_by uuid not null
+        references auth.users(id)
+        on delete cascade,
 
+    created_at timestamptz not null default now(),
 
-        topicSelect.disabled =
-            false;
+    started_at timestamptz,
 
+    finished_at timestamptz
 
-        if (startButton) {
-            startButton.disabled =
-                true;
-        }
-
-    }
 );
 
 
-if (topicSelect) {
-
-    topicSelect.addEventListener(
-        "change",
-        () => {
-
-            if (!startButton) {
-                return;
-            }
-
-
-            const canStart =
-                Boolean(
-                    subjectSelect.value &&
-                    topicSelect.value
-                );
-
-
-            startButton.disabled =
-                !canStart;
-
-        }
-    );
-
-}
-
-
-}
-
 /* =========================================================
-BATTLE STATUS
+   PLAYERS
 ========================================================= */
 
-function updateBattleStatus() {
+create table if not exists public.game_match_players (
 
+    id uuid primary key default gen_random_uuid(),
 
-const used =
-    getBattleCount();
+    match_id uuid not null
+        references public.game_matches(id)
+        on delete cascade,
 
-const battlesUsed =
-    getElement(
-        "battlesUsed"
-    );
+    user_id uuid not null
+        references auth.users(id)
+        on delete cascade,
 
-const battleLimit =
-    getElement(
-        "battleLimit"
-    );
+    player_number integer not null
+        check (
+            player_number in (1, 2)
+        ),
 
-const battleStatusText =
-    getElement(
-        "battleStatusText"
-    );
+    display_name text,
 
-const computerModeButton =
-    getElement(
-        "computerModeButton"
-    );
+    score integer not null default 0,
 
-const startBattleButton =
-    getElement(
-        "startBattleButton"
-    );
+    answered_question integer not null default -1,
 
-const premiumCard =
-    getElement(
-        "premiumBattleCard"
-    );
+    finished boolean not null default false,
 
+    joined_at timestamptz not null default now(),
 
-if (battlesUsed) {
-    battlesUsed.textContent =
-        used;
-}
+    unique(match_id, user_id),
 
+    unique(match_id, player_number)
 
-if (battleLimit) {
-    battleLimit.textContent =
-        FREE_BATTLE_LIMIT;
-}
-
-
-if (isPremiumUser()) {
-
-    if (battleStatusText) {
-
-        battleStatusText.textContent =
-            "Unlimited battles available";
-
-        battleStatusText.style.color =
-            "#22c55e";
-
-    }
-
-
-    if (premiumCard) {
-        premiumCard.style.display =
-            "none";
-    }
-
-
-    if (computerModeButton) {
-
-        computerModeButton.disabled =
-            false;
-
-        computerModeButton.style.opacity =
-            "1";
-
-    }
-
-
-    return;
-
-}
-
-
-const remaining =
-    Math.max(
-        0,
-        FREE_BATTLE_LIMIT - used
-    );
-
-
-if (battleStatusText) {
-
-    if (remaining > 0) {
-
-        battleStatusText.textContent =
-            `${remaining} battle${remaining === 1 ? "" : "s"} remaining`;
-
-        battleStatusText.style.color =
-            "#22c55e";
-
-    } else {
-
-        battleStatusText.textContent =
-            "Free battle limit reached";
-
-        battleStatusText.style.color =
-            "#f59e0b";
-
-    }
-
-}
-
-
-if (remaining <= 0) {
-
-    if (computerModeButton) {
-
-        computerModeButton.disabled =
-            true;
-
-        computerModeButton.style.opacity =
-            "0.5";
-
-    }
-
-
-    if (startBattleButton) {
-
-        startBattleButton.disabled =
-            true;
-
-        startBattleButton.textContent =
-            "🔒 Free Battles Used";
-
-    }
-
-
-    if (premiumCard) {
-
-        premiumCard.style.display =
-            "grid";
-
-    }
-
-} else {
-
-    if (computerModeButton) {
-
-        computerModeButton.disabled =
-            false;
-
-        computerModeButton.style.opacity =
-            "1";
-
-    }
-
-    if (
-        startBattleButton &&
-        getElement("battleSubject")?.value &&
-        getElement("battleTopic")?.value
-    ) {
-
-        startBattleButton.disabled =
-            false;
-
-    }
-
-}
-
-
-}
-
-/* =========================================================
-START COMPUTER BATTLE
-========================================================= */
-
-function startComputerBattle() {
-
-
-if (
-    !isPremiumUser() &&
-    getBattleCount() >=
-        FREE_BATTLE_LIMIT
-) {
-
-    showPremiumMessage();
-
-    return;
-
-}
-
-
-const setup =
-    getElement(
-        "battleSetup"
-    );
-
-
-if (setup) {
-
-    setup.scrollIntoView({
-
-        behavior:
-            "smooth",
-
-        block:
-            "center"
-
-    });
-
-}
-
-
-}
-
-/* =========================================================
-BEGIN BATTLE
-========================================================= */
-
-async function beginBattle() {
-
-
-if (generatingBattle) {
-    return;
-}
-
-
-if (
-    !isPremiumUser() &&
-    getBattleCount() >=
-        FREE_BATTLE_LIMIT
-) {
-
-    showPremiumMessage();
-
-    return;
-
-}
-
-
-const subjectSelect =
-    getElement(
-        "battleSubject"
-    );
-
-const topicSelect =
-    getElement(
-        "battleTopic"
-    );
-
-const difficultySelect =
-    getElement(
-        "battleDifficulty"
-    );
-
-
-const subject =
-    subjectSelect?.value || "";
-
-
-const topic =
-    topicSelect?.value || "";
-
-
-const difficulty =
-    difficultySelect?.value ||
-    "mixed";
-
-
-if (!subject) {
-
-    showBattleSetupMessage(
-        "Please choose a subject before starting your battle."
-    );
-
-    return;
-
-}
-
-
-if (!topic) {
-
-    showBattleSetupMessage(
-        "Please choose a topic before starting your battle."
-    );
-
-    return;
-
-}
-
-
-generatingBattle =
-    true;
-
-
-setStartButtonLoading();
-
-
-try {
-
-    const questions =
-        await generateAIBattleQuestions(
-            subject,
-            topic,
-            difficulty
-        );
-
-
-    if (
-        !Array.isArray(questions) ||
-        questions.length <
-            QUESTIONS_PER_BATTLE
-    ) {
-
-        throw new Error(
-            "StudyMind AI did not return enough valid questions."
-        );
-
-    }
-
-
-    battleQuestions =
-        questions.slice(
-            0,
-            QUESTIONS_PER_BATTLE
-        );
-
-
-    currentQuestionIndex =
-        0;
-
-    playerScore =
-        0;
-
-    computerScore =
-        0;
-
-    battleActive =
-        true;
-
-    answeringLocked =
-        false;
-
-
-    if (
-        !isPremiumUser()
-    ) {
-
-        setBattleCount(
-            getBattleCount() + 1
-        );
-
-    }
-
-
-    updateBattleStatus();
-
-
-    const setup =
-        getElement(
-            "battleSetup"
-        );
-
-    const arena =
-        getElement(
-            "battleArena"
-        );
-
-    const results =
-        getElement(
-            "battleResults"
-        );
-
-
-    if (setup) {
-        setup.hidden =
-            true;
-    }
-
-    if (results) {
-        results.hidden =
-            true;
-    }
-
-    if (arena) {
-        arena.hidden =
-            false;
-    }
-
-
-    updateScores();
-
-    showQuestion();
-
-
-    if (arena) {
-
-        arena.scrollIntoView({
-
-            behavior:
-                "smooth",
-
-            block:
-                "start"
-
-        });
-
-    }
-
-} catch (error) {
-
-    console.error(
-        "Battle generation error:",
-        error
-    );
-
-
-    showBattleGenerationError(
-        error
-    );
-
-} finally {
-
-    generatingBattle =
-        false;
-
-    restoreStartButton();
-
-}
-
-
-}
-
-/* =========================================================
-AI QUESTION GENERATION
-========================================================= */
-
-async function generateAIBattleQuestions(
-subject,
-topic,
-difficulty
-) {
-
-
-const difficultyInstruction =
-    difficulty === "mixed"
-        ? "Use a balanced mixture of easy, medium and challenging questions."
-        : `Make all questions ${difficulty} difficulty.`;
-
-
-const prompt = `
-
-
-You are StudyMind AI creating a competitive educational battle.
-
-The student is a secondary-school student.
-
-SUBJECT:
-${subject}
-
-TOPIC:
-${topic}
-
-DIFFICULTY:
-${difficulty}
-
-${difficultyInstruction}
-
-Create exactly 10 high-quality multiple-choice questions.
-
-IMPORTANT REQUIREMENTS:
-
-* All 10 questions MUST be about the specified subject and topic.
-* Exactly 10 questions.
-* Exactly 4 options per question.
-* Only ONE option is correct.
-* Questions must genuinely test knowledge.
-* Questions must NOT be generic study-advice questions.
-* Questions must be appropriate for a secondary-school student.
-* Mix conceptual, application and factual questions where appropriate.
-* Do not repeat questions.
-* Do not make the correct answer always option A.
-* Make incorrect options plausible but clearly incorrect.
-* Keep questions concise enough for a 15-second timed quiz.
-* Return ONLY valid JSON.
-* Do NOT use markdown.
-* Do NOT include explanations outside the JSON.
-
-Return exactly this structure:
-
-[
-{
-"question": "Question text",
-"options": [
-"Option A",
-"Option B",
-"Option C",
-"Option D"
-],
-"answer": 0
-}
-]
-
-The "answer" value MUST be the zero-based index of the correct option.
-
-`.trim();
-
-
-const response =
-    await fetch(
-        "/api/chat",
-        {
-
-            method:
-                "POST",
-
-            headers: {
-
-                "Content-Type":
-                    "application/json"
-
-            },
-
-            body:
-                JSON.stringify({
-
-                    message:
-                        prompt
-
-                })
-
-        }
-    );
-
-
-let data =
-    null;
-
-
-try {
-
-    data =
-        await response.json();
-
-} catch {
-
-    data =
-        null;
-
-}
-
-
-if (!response.ok) {
-
-    throw new Error(
-        data?.error ||
-        "The StudyMind AI server returned an error."
-    );
-
-}
-
-
-if (
-    !data ||
-    !data.reply
-) {
-
-    throw new Error(
-        "StudyMind AI returned an empty response."
-    );
-
-}
-
-
-const questions =
-    parseAIQuestionJSON(
-        data.reply
-    );
-
-
-validateBattleQuestions(
-    questions
 );
 
 
-return questions;
-
-
-}
-
 /* =========================================================
-PARSE AI JSON
+   ANSWERS
 ========================================================= */
 
-function parseAIQuestionJSON(
-responseText
-) {
+create table if not exists public.game_match_answers (
 
+    id uuid primary key default gen_random_uuid(),
 
-let cleaned =
-    String(
-        responseText
-    ).trim();
+    match_id uuid not null
+        references public.game_matches(id)
+        on delete cascade,
 
+    user_id uuid not null
+        references auth.users(id)
+        on delete cascade,
 
-cleaned =
-    cleaned
-        .replace(
-            /^```json\s*/i,
-            ""
-        )
-        .replace(
-            /^```\s*/i,
-            ""
-        )
-        .replace(
-            /\s*```$/i,
-            ""
-        )
-        .trim();
+    question_number integer not null
+        check (
+            question_number >= 0
+            and question_number < 10
+        ),
 
+    selected_answer integer,
 
-const firstBracket =
-    cleaned.indexOf("[");
+    correct boolean not null default false,
 
-const lastBracket =
-    cleaned.lastIndexOf("]");
+    answer_time_ms integer,
 
+    created_at timestamptz not null default now(),
 
-if (
-    firstBracket !== -1 &&
-    lastBracket !== -1 &&
-    lastBracket >
-        firstBracket
-) {
+    unique(match_id, user_id, question_number)
 
-    cleaned =
-        cleaned.slice(
-            firstBracket,
-            lastBracket + 1
-        );
+);
 
-}
-
-
-try {
-
-    const parsed =
-        JSON.parse(
-            cleaned
-        );
-
-
-    if (
-        !Array.isArray(parsed)
-    ) {
-
-        throw new Error(
-            "AI response was not an array."
-        );
-
-    }
-
-
-    return parsed;
-
-} catch (error) {
-
-    console.error(
-        "AI question JSON parse error:",
-        error,
-        responseText
-    );
-
-
-    throw new Error(
-        "StudyMind AI returned invalid question data. Please try the battle again."
-    );
-
-}
-
-
-}
 
 /* =========================================================
-VALIDATE QUESTIONS
+   LEADERBOARD
 ========================================================= */
 
-function validateBattleQuestions(
-questions
-) {
+create table if not exists public.game_leaderboard (
+
+    user_id uuid primary key
+        references auth.users(id)
+        on delete cascade,
+
+    display_name text,
+
+    battle_points integer not null default 0,
+
+    wins integer not null default 0,
+
+    losses integer not null default 0,
+
+    draws integer not null default 0,
+
+    battles_played integer not null default 0,
+
+    updated_at timestamptz not null default now()
+
+);
 
 
-if (
-    !Array.isArray(
-        questions
+/* =========================================================
+   INDEXES
+========================================================= */
+
+create index if not exists
+game_matches_status_idx
+on public.game_matches(status);
+
+create index if not exists
+game_matches_created_by_idx
+on public.game_matches(created_by);
+
+create index if not exists
+game_match_players_match_idx
+on public.game_match_players(match_id);
+
+create index if not exists
+game_match_players_user_idx
+on public.game_match_players(user_id);
+
+create index if not exists
+game_match_answers_match_idx
+on public.game_match_answers(match_id);
+
+create index if not exists
+game_match_answers_user_idx
+on public.game_match_answers(user_id);
+
+
+/* =========================================================
+   ROW LEVEL SECURITY
+========================================================= */
+
+alter table public.game_matches
+enable row level security;
+
+alter table public.game_match_players
+enable row level security;
+
+alter table public.game_match_answers
+enable row level security;
+
+alter table public.game_leaderboard
+enable row level security;
+
+
+/* =========================================================
+   MATCH POLICIES
+========================================================= */
+
+drop policy if exists
+"Players can view their matches"
+on public.game_matches;
+
+create policy
+"Players can view their matches"
+on public.game_matches
+for select
+to authenticated
+using (
+
+    created_by = (select auth.uid())
+
+    or exists (
+        select 1
+        from public.game_match_players p
+        where p.match_id = game_matches.id
+        and p.user_id = (select auth.uid())
     )
-) {
 
-    throw new Error(
-        "Invalid question list."
-    );
+);
 
-}
-
-
-if (
-    questions.length <
-    QUESTIONS_PER_BATTLE
-) {
-
-    throw new Error(
-        `Only ${questions.length} questions were generated. 10 are required.`
-    );
-
-}
-
-
-questions
-    .slice(
-        0,
-        QUESTIONS_PER_BATTLE
-    )
-    .forEach(
-        (question, index) => {
-
-            if (
-                !question ||
-                typeof question.question !==
-                    "string"
-            ) {
-
-                throw new Error(
-                    `Question ${index + 1} is invalid.`
-                );
-
-            }
-
-
-            if (
-                !Array.isArray(
-                    question.options
-                ) ||
-                question.options.length !==
-                    4
-            ) {
-
-                throw new Error(
-                    `Question ${index + 1} must have exactly 4 answer options.`
-                );
-
-            }
-
-
-            const answer =
-                Number(
-                    question.answer
-                );
-
-
-            if (
-                !Number.isInteger(
-                    answer
-                ) ||
-                answer < 0 ||
-                answer > 3
-            ) {
-
-                throw new Error(
-                    `Question ${index + 1} has an invalid correct answer.`
-                );
-
-            }
-
-        }
-    );
-
-
-}
 
 /* =========================================================
-SHOW QUESTION
+   PLAYER POLICIES
 ========================================================= */
 
-function showQuestion() {
+drop policy if exists
+"Players can view match players"
+on public.game_match_players;
+
+create policy
+"Players can view match players"
+on public.game_match_players
+for select
+to authenticated
+using (
+
+    exists (
+        select 1
+        from public.game_match_players me
+        where me.match_id = game_match_players.match_id
+        and me.user_id = (select auth.uid())
+    )
+
+    or exists (
+        select 1
+        from public.game_matches m
+        where m.id = game_match_players.match_id
+        and m.created_by = (select auth.uid())
+    )
+
+);
 
 
-if (
-    currentQuestionIndex >=
-    battleQuestions.length
-) {
+drop policy if exists
+"Users can insert themselves into matches"
+on public.game_match_players;
 
-    finishBattle();
+create policy
+"Users can insert themselves into matches"
+on public.game_match_players
+for insert
+to authenticated
+with check (
 
-    return;
+    user_id = (select auth.uid())
 
-}
-
-
-const question =
-    battleQuestions[
-        currentQuestionIndex
-    ];
+);
 
 
-answeringLocked =
-    false;
+/* =========================================================
+   ANSWER POLICIES
+========================================================= */
+
+drop policy if exists
+"Players can view match answers"
+on public.game_match_answers;
+
+create policy
+"Players can view match answers"
+on public.game_match_answers
+for select
+to authenticated
+using (
+
+    exists (
+        select 1
+        from public.game_match_players p
+        where p.match_id = game_match_answers.match_id
+        and p.user_id = (select auth.uid())
+    )
+
+);
 
 
-const questionNumber =
-    getElement(
-        "currentQuestionNumber"
+drop policy if exists
+"Users can submit their own answers"
+on public.game_match_answers;
+
+create policy
+"Users can submit their own answers"
+on public.game_match_answers
+for insert
+to authenticated
+with check (
+
+    user_id = (select auth.uid())
+
+    and exists (
+        select 1
+        from public.game_match_players p
+        where p.match_id = game_match_answers.match_id
+        and p.user_id = (select auth.uid())
+    )
+
+);
+
+
+/* =========================================================
+   LEADERBOARD POLICIES
+========================================================= */
+
+drop policy if exists
+"Authenticated users can view leaderboard"
+on public.game_leaderboard;
+
+create policy
+"Authenticated users can view leaderboard"
+on public.game_leaderboard
+for select
+to authenticated
+using (true);
+
+
+/* =========================================================
+   RPC — CREATE MATCH
+========================================================= */
+
+create or replace function public.create_game_match(
+
+    p_subject text,
+
+    p_topic text,
+
+    p_difficulty text,
+
+    p_display_name text default null
+
+)
+
+returns uuid
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_match_id uuid;
+
+    v_user_id uuid;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
+
+    if v_user_id is null then
+
+        raise exception
+            'You must be logged in to play 1v1.';
+
+    end if;
+
+
+    insert into public.game_matches (
+
+        subject,
+
+        topic,
+
+        difficulty,
+
+        status,
+
+        created_by
+
+    )
+
+    values (
+
+        p_subject,
+
+        p_topic,
+
+        p_difficulty,
+
+        'waiting',
+
+        v_user_id
+
+    )
+
+    returning id into v_match_id;
+
+
+    insert into public.game_match_players (
+
+        match_id,
+
+        user_id,
+
+        player_number,
+
+        display_name
+
+    )
+
+    values (
+
+        v_match_id,
+
+        v_user_id,
+
+        1,
+
+        nullif(trim(p_display_name), '')
+
     );
 
-const questionText =
-    getElement(
-        "battleQuestion"
+
+    return v_match_id;
+
+end;
+
+$$;
+
+
+/* =========================================================
+   RPC — JOIN MATCH
+========================================================= */
+
+create or replace function public.join_game_match(
+
+    p_match_id uuid,
+
+    p_display_name text default null
+
+)
+
+returns integer
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_user_id uuid;
+
+    v_player_number integer;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
+
+
+    if v_user_id is null then
+
+        raise exception
+            'You must be logged in to join a 1v1 battle.';
+
+    end if;
+
+
+    if exists (
+
+        select 1
+
+        from public.game_match_players
+
+        where match_id = p_match_id
+
+        and user_id = v_user_id
+
+    ) then
+
+        select player_number
+
+        into v_player_number
+
+        from public.game_match_players
+
+        where match_id = p_match_id
+
+        and user_id = v_user_id;
+
+        return v_player_number;
+
+    end if;
+
+
+    if not exists (
+
+        select 1
+
+        from public.game_matches
+
+        where id = p_match_id
+
+        and status = 'waiting'
+
+    ) then
+
+        raise exception
+            'This match is no longer available.';
+
+    end if;
+
+
+    if exists (
+
+        select 1
+
+        from public.game_match_players
+
+        where match_id = p_match_id
+
+        and player_number = 2
+
+    ) then
+
+        raise exception
+            'This match is already full.';
+
+    end if;
+
+
+    insert into public.game_match_players (
+
+        match_id,
+
+        user_id,
+
+        player_number,
+
+        display_name
+
+    )
+
+    values (
+
+        p_match_id,
+
+        v_user_id,
+
+        2,
+
+        nullif(trim(p_display_name), '')
+
     );
 
-const questionTopic =
-    getElement(
-        "battleQuestionTopic"
-    );
 
-const answerGrid =
-    getElement(
-        "answerGrid"
-    );
+    update public.game_matches
+
+    set status = 'starting'
+
+    where id = p_match_id;
 
 
-if (questionNumber) {
+    return 2;
 
-    questionNumber.textContent =
-        currentQuestionIndex + 1;
+end;
 
-}
-
-
-if (questionText) {
-
-    questionText.textContent =
-        question.question;
-
-}
+$$;
 
 
-if (questionTopic) {
+/* =========================================================
+   RPC — UPDATE MATCH
+========================================================= */
 
-    const subject =
-        getElement(
-            "battleSubject"
-        )?.value || "";
+create or replace function public.update_game_match(
 
-    const topic =
-        getElement(
-            "battleTopic"
-        )?.value || "";
+    p_match_id uuid,
 
-    questionTopic.textContent =
-        `${subject} • ${topic}`;
+    p_status text default null,
 
-}
+    p_question_set jsonb default null,
 
+    p_current_question integer default null,
 
-if (!answerGrid) {
-    return;
-}
+    p_question_started_at timestamptz default null
 
+)
 
-answerGrid.innerHTML =
-    "";
+returns boolean
 
+language plpgsql
 
-const answerObjects =
-    question.options
-        .slice(
-            0,
-            4
-        )
-        .map(
-            (answer, index) => ({
+security definer
 
-                text:
-                    answer,
+set search_path = ''
 
-                originalIndex:
-                    index
+as $$
 
-            })
-        );
+declare
+
+    v_user_id uuid;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
 
 
-const shuffledAnswers =
-    shuffleArray(
-        answerObjects
-    );
+    if not exists (
+
+        select 1
+
+        from public.game_match_players
+
+        where match_id = p_match_id
+        and user_id = v_user_id
+
+        and player_number = 1
+
+    ) then
+
+        raise exception
+            'Only player 1 can control match state.';
+
+    end if;
 
 
-shuffledAnswers.forEach(
-    (answer, index) => {
+    update public.game_matches
 
-        const button =
-            document.createElement(
-                "button"
-            );
+    set
 
+        status =
+            coalesce(
+                p_status,
+                status
+            ),
 
-        button.type =
-            "button";
+        question_set =
+            coalesce(
+                p_question_set,
+                question_set
+            ),
 
-        button.className =
-            "answer-button";
+        current_question =
+            coalesce(
+                p_current_question,
+                current_question
+            ),
 
-        button.textContent =
-            `${String.fromCharCode(65 + index)}. ${answer.text}`;
+        question_started_at =
+            coalesce(
+                p_question_started_at,
+                question_started_at
+            ),
 
-
-        button.dataset.originalIndex =
-            answer.originalIndex;
-
-
-        button.addEventListener(
-            "click",
-            () =>
-                handleAnswer(
-                    answer.originalIndex,
-                    button
+        started_at =
+            case
+                when p_status = 'active'
+                then coalesce(
+                    started_at,
+                    now()
                 )
-        );
+                else started_at
+            end,
+
+        finished_at =
+            case
+                when p_status = 'finished'
+                then now()
+                else finished_at
+            end
+
+    where id = p_match_id;
 
 
-        answerGrid.appendChild(
-            button
-        );
+    return true;
 
-    }
-);
+end;
 
+$$;
 
-startQuestionTimer();
-
-
-}
 
 /* =========================================================
-QUESTION TIMER
+   RPC — UPDATE PLAYER SCORE
 ========================================================= */
 
-function startQuestionTimer() {
+create or replace function public.record_game_answer(
+
+    p_match_id uuid,
+
+    p_question_number integer,
+
+    p_selected_answer integer,
+
+    p_correct boolean,
+
+    p_answer_time_ms integer
+
+)
+
+returns boolean
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_user_id uuid;
+
+    v_player_number integer;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
 
 
-clearInterval(
-    battleTimerInterval
-);
+    select player_number
+    into v_player_number
+
+    from public.game_match_players
+
+    where match_id = p_match_id
+
+    and user_id = v_user_id;
 
 
-battleTimer =
-    QUESTION_TIME_LIMIT;
+    if v_player_number is null then
+
+        raise exception
+            'You are not part of this match.';
+
+    end if;
 
 
-updateTimerDisplay();
+    insert into public.game_match_answers (
+
+        match_id,
+
+        user_id,
+
+        question_number,
+
+        selected_answer,
+
+        correct,
+
+        answer_time_ms
+
+    )
+
+    values (
+
+        p_match_id,
+
+        v_user_id,
+
+        p_question_number,
+
+        p_selected_answer,
+
+        p_correct,
+
+        p_answer_time_ms
+
+    )
+
+    on conflict (
+        match_id,
+        user_id,
+        question_number
+    )
+
+    do nothing;
 
 
-battleTimerInterval =
-    setInterval(
-        () => {
+    update public.game_match_players
 
-            battleTimer--;
+    set
 
-            updateTimerDisplay();
+        score =
+            score +
+            case
+                when p_correct
+                then 1
+                else 0
+            end,
 
+        answered_question =
+            greatest(
+                answered_question,
+                p_question_number
+            )
 
-            if (
-                battleTimer <=
-                0
-            ) {
+    where match_id = p_match_id
 
-                clearInterval(
-                    battleTimerInterval
-                );
-
-
-                handleAnswer(
-                    null,
-                    null
-                );
-
-            }
-
-        },
-        1000
-    );
+    and user_id = v_user_id;
 
 
-}
+    return true;
+
+end;
+
+$$;
+
 
 /* =========================================================
-TIMER DISPLAY
+   RPC — FINISH PLAYER
 ========================================================= */
 
-function updateTimerDisplay() {
+create or replace function public.finish_game_player(
+
+    p_match_id uuid
+
+)
+
+returns boolean
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_user_id uuid;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
 
 
-const timer =
-    getElement(
-        "battleTimer"
-    );
+    update public.game_match_players
+
+    set finished = true
+
+    where match_id = p_match_id
+
+    and user_id = v_user_id;
 
 
-if (timer) {
+    return true;
 
-    timer.textContent =
-        Math.max(
-            0,
-            battleTimer
-        );
+end;
 
-}
+$$;
 
-
-}
 
 /* =========================================================
-HANDLE ANSWER
+   RPC — CANCEL MATCH
 ========================================================= */
 
-function handleAnswer(
-selectedIndex,
-selectedButton
-) {
+create or replace function public.cancel_game_match(
+
+    p_match_id uuid
+
+)
+
+returns boolean
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_user_id uuid;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
 
 
-if (
-    answeringLocked ||
-    !battleActive
-) {
+    update public.game_matches
 
-    return;
+    set status = 'cancelled'
 
-}
+    where id = p_match_id
 
+    and exists (
 
-answeringLocked =
-    true;
+        select 1
 
+        from public.game_match_players p
 
-clearInterval(
-    battleTimerInterval
-);
+        where p.match_id = id
 
+        and p.user_id = v_user_id
 
-const question =
-    battleQuestions[
-        currentQuestionIndex
-    ];
-
-
-const correctIndex =
-    Number(
-        question.answer
     );
 
 
-const buttons =
-    document.querySelectorAll(
-        "#answerGrid .answer-button"
-    );
+    return true;
 
+end;
 
-buttons.forEach(
-    button => {
+$$;
 
-        button.disabled =
-            true;
-
-    }
-);
-
-
-if (
-    selectedIndex !==
-        null &&
-    selectedIndex ===
-        correctIndex
-) {
-
-    playerScore++;
-
-
-    if (selectedButton) {
-
-        selectedButton
-            .classList
-            .add(
-                "correct"
-            );
-
-    }
-
-} else {
-
-    if (selectedButton) {
-
-        selectedButton
-            .classList
-            .add(
-                "incorrect"
-            );
-
-    }
-
-
-    buttons.forEach(
-        button => {
-
-            if (
-                Number(
-                    button.dataset.originalIndex
-                ) ===
-                correctIndex
-            ) {
-
-                button
-                    .classList
-                    .add(
-                        "correct"
-                    );
-
-            }
-
-        }
-    );
-
-}
-
-
-computerTakeTurn();
-
-updateScores();
-
-
-setTimeout(
-    () => {
-
-        currentQuestionIndex++;
-
-        showQuestion();
-
-    },
-    850
-);
-
-
-}
 
 /* =========================================================
-COMPUTER TURN
+   RPC — UPDATE LEADERBOARD
 ========================================================= */
 
-function computerTakeTurn() {
+create or replace function public.record_game_result(
+
+    p_display_name text,
+
+    p_points integer,
+
+    p_result text
+
+)
+
+returns boolean
+
+language plpgsql
+
+security definer
+
+set search_path = ''
+
+as $$
+
+declare
+
+    v_user_id uuid;
+
+begin
+
+    v_user_id :=
+        (select auth.uid());
 
 
-const difficultySelect =
-    getElement(
-        "battleDifficulty"
-    );
+    if v_user_id is null then
+
+        raise exception
+            'Authentication required.';
+
+    end if;
 
 
-let chance =
-    0.55;
+    insert into public.game_leaderboard (
+
+        user_id,
+
+        display_name,
+
+        battle_points,
+
+        wins,
+
+        losses,
+
+        draws,
+
+        battles_played
+
+    )
+
+    values (
+
+        v_user_id,
+
+        nullif(trim(p_display_name), ''),
+
+        greatest(p_points, 0),
+
+        case when p_result = 'win' then 1 else 0 end,
+
+        case when p_result = 'loss' then 1 else 0 end,
+
+        case when p_result = 'draw' then 1 else 0 end,
+
+        1
+
+    )
+
+    on conflict (user_id)
+
+    do update set
+
+        display_name =
+            coalesce(
+                excluded.display_name,
+                public.game_leaderboard.display_name
+            ),
+
+        battle_points =
+            public.game_leaderboard.battle_points
+            + excluded.battle_points,
+
+        wins =
+            public.game_leaderboard.wins
+            + excluded.wins,
+
+        losses =
+            public.game_leaderboard.losses
+            + excluded.losses,
+
+        draws =
+            public.game_leaderboard.draws
+            + excluded.draws,
+
+        battles_played =
+            public.game_leaderboard.battles_played
+            + 1,
+
+        updated_at =
+            now();
 
 
-if (difficultySelect) {
+    return true;
 
-    if (
-        difficultySelect.value ===
-        "easy"
-    ) {
+end;
 
-        chance =
-            0.45;
+$$;
 
-    } else if (
-        difficultySelect.value ===
-        "medium"
-    ) {
-
-        chance =
-            0.55;
-
-    } else if (
-        difficultySelect.value ===
-        "hard"
-    ) {
-
-        chance =
-            0.70;
-
-    }
-
-}
-
-
-if (
-    Math.random() <
-    chance
-) {
-
-    computerScore++;
-
-}
-
-
-}
 
 /* =========================================================
-UPDATE SCORES
+   FUNCTION PERMISSIONS
 ========================================================= */
 
-function updateScores() {
+grant execute
+on function public.create_game_match(
+    text,
+    text,
+    text,
+    text
+)
+to authenticated;
 
 
-const player =
-    getElement(
-        "playerScore"
-    );
-
-const computer =
-    getElement(
-        "computerScore"
-    );
+grant execute
+on function public.join_game_match(
+    uuid,
+    text
+)
+to authenticated;
 
 
-if (player) {
-    player.textContent =
-        playerScore;
-}
+grant execute
+on function public.update_game_match(
+    uuid,
+    text,
+    jsonb,
+    integer,
+    timestamptz
+)
+to authenticated;
 
 
-if (computer) {
-    computer.textContent =
-        computerScore;
-}
+grant execute
+on function public.record_game_answer(
+    uuid,
+    integer,
+    integer,
+    boolean,
+    integer
+)
+to authenticated;
 
 
-}
+grant execute
+on function public.finish_game_player(
+    uuid
+)
+to authenticated;
+
+
+grant execute
+on function public.cancel_game_match(
+    uuid
+)
+to authenticated;
+
+
+grant execute
+on function public.record_game_result(
+    text,
+    integer,
+    text
+)
+to authenticated;
+
 
 /* =========================================================
-FINISH BATTLE
+   REALTIME
 ========================================================= */
 
-function finishBattle() {
+alter publication supabase_realtime
+add table public.game_matches;
 
+alter publication supabase_realtime
+add table public.game_match_players;
 
-battleActive =
-    false;
+alter publication supabase_realtime
+add table public.game_match_answers;
 
-
-clearInterval(
-    battleTimerInterval
-);
-
-
-const pointsEarned =
-    calculateBattlePoints();
-
-
-battlePoints +=
-    pointsEarned;
-
-
-setBattlePoints(
-    battlePoints
-);
-
-
-const arena =
-    getElement(
-        "battleArena"
-    );
-
-const results =
-    getElement(
-        "battleResults"
-    );
-
-
-if (arena) {
-    arena.hidden =
-        true;
-}
-
-
-if (results) {
-    results.hidden =
-        false;
-}
-
-
-const finalPlayerScore =
-    getElement(
-        "finalPlayerScore"
-    );
-
-const finalComputerScore =
-    getElement(
-        "finalComputerScore"
-    );
-
-const pointsElement =
-    getElement(
-        "pointsEarned"
-    );
-
-const resultTitle =
-    getElement(
-        "battleResultTitle"
-    );
-
-const resultMessage =
-    getElement(
-        "battleResultMessage"
-    );
-
-
-if (finalPlayerScore) {
-    finalPlayerScore.textContent =
-        playerScore;
-}
-
-
-if (finalComputerScore) {
-    finalComputerScore.textContent =
-        computerScore;
-}
-
-
-if (pointsElement) {
-    pointsElement.textContent =
-        `+${pointsEarned}`;
-}
-
-
-if (
-    playerScore >
-    computerScore
-) {
-
-    if (resultTitle) {
-        resultTitle.textContent =
-            "🏆 You Win!";
-    }
-
-
-    if (resultMessage) {
-
-        resultMessage.textContent =
-            `Excellent work! You scored ${playerScore} out of ${QUESTIONS_PER_BATTLE} and defeated the computer.`;
-
-    }
-
-} else if (
-    playerScore <
-    computerScore
-) {
-
-    if (resultTitle) {
-        resultTitle.textContent =
-            "Keep Practising!";
-    }
-
-
-    if (resultMessage) {
-
-        resultMessage.textContent =
-            `You scored ${playerScore} out of ${QUESTIONS_PER_BATTLE}. Review the topic and try again when another battle is available.`;
-
-    }
-
-} else {
-
-    if (resultTitle) {
-        resultTitle.textContent =
-            "🤝 It's a Draw!";
-    }
-
-
-    if (resultMessage) {
-
-        resultMessage.textContent =
-            `You and the computer both scored ${playerScore}.`;
-
-    }
-
-}
-
-
-updateLeaderboard();
-
-updateBattleStatus();
-
-
-if (results) {
-
-    results.scrollIntoView({
-
-        behavior:
-            "smooth",
-
-        block:
-            "center"
-
-    });
-
-}
-
-
-}
-
-/* =========================================================
-POINTS
-========================================================= */
-
-function calculateBattlePoints() {
-
-
-let points =
-    playerScore * 10;
-
-
-if (
-    playerScore >
-    computerScore
-) {
-
-    points += 25;
-
-} else if (
-    playerScore ===
-    computerScore
-) {
-
-    points += 10;
-
-}
-
-
-return points;
-
-
-}
-
-/* =========================================================
-RESET BATTLE
-========================================================= */
-
-function resetBattle() {
-
-
-clearInterval(
-    battleTimerInterval
-);
-
-
-battleQuestions =
-    [];
-
-currentQuestionIndex =
-    0;
-
-playerScore =
-    0;
-
-computerScore =
-    0;
-
-battleActive =
-    false;
-
-answeringLocked =
-    false;
-
-
-updateScores();
-
-
-const arena =
-    getElement(
-        "battleArena"
-    );
-
-const results =
-    getElement(
-        "battleResults"
-    );
-
-const setup =
-    getElement(
-        "battleSetup"
-    );
-
-
-if (arena) {
-    arena.hidden =
-        true;
-}
-
-
-if (results) {
-    results.hidden =
-        true;
-}
-
-
-if (setup) {
-    setup.hidden =
-        false;
-}
-
-
-if (setup) {
-
-    setup.scrollIntoView({
-
-        behavior:
-            "smooth",
-
-        block:
-            "center"
-
-    });
-
-}
-
-
-updateBattleStatus();
-
-
-}
-
-/* =========================================================
-PREMIUM MESSAGE
-========================================================= */
-
-function showPremiumMessage() {
-
-
-const premiumCard =
-    getElement(
-        "premiumBattleCard"
-    );
-
-
-if (premiumCard) {
-
-    premiumCard.style.display =
-        "grid";
-
-
-    premiumCard.scrollIntoView({
-
-        behavior:
-            "smooth",
-
-        block:
-            "center"
-
-    });
-
-}
-
-
-alert(
-    "You've used all 5 free battles. Upgrade to Premium to continue playing unlimited battles."
-);
-
-
-}
-
-/* =========================================================
-SETUP MESSAGE
-========================================================= */
-
-function showBattleSetupMessage(
-message
-) {
-
-
-alert(message);
-
-
-}
-
-/* =========================================================
-AI ERROR
-========================================================= */
-
-function showBattleGenerationError(
-error
-) {
-
-
-const message =
-    error?.message ||
-    "StudyMind AI could not create the battle right now.";
-
-
-alert(
-    `${message}\n\nPlease try again in a moment.`
-);
-
-
-}
-
-/* =========================================================
-START BUTTON LOADING
-========================================================= */
-
-function setStartButtonLoading() {
-
-
-const button =
-    getElement(
-        "startBattleButton"
-    );
-
-
-if (!button) {
-    return;
-}
-
-
-button.disabled =
-    true;
-
-
-button.dataset.originalText =
-    button.textContent;
-
-
-button.textContent =
-    "🤖 StudyMind AI is creating your battle...";
-
-
-}
-
-/* =========================================================
-RESTORE START BUTTON
-========================================================= */
-
-function restoreStartButton() {
-
-
-const button =
-    getElement(
-        "startBattleButton"
-    );
-
-
-if (!button) {
-    return;
-}
-
-
-if (
-    !isPremiumUser() &&
-    getBattleCount() >=
-        FREE_BATTLE_LIMIT
-) {
-
-    button.disabled =
-        true;
-
-    button.textContent =
-        "🔒 Free Battles Used";
-
-    return;
-
-}
-
-
-const subject =
-    getElement(
-        "battleSubject"
-    )?.value || "";
-
-const topic =
-    getElement(
-        "battleTopic"
-    )?.value || "";
-
-
-button.disabled =
-    !(subject && topic);
-
-
-button.textContent =
-    button.dataset.originalText ||
-    "⚔️ Start Battle";
-
-
-}
-
-/* =========================================================
-PREMIUM
-========================================================= */
-
-function openPremium() {
-
-
-window.location.href =
-    "premium.html";
-
-
-}
-
-/* =========================================================
-LEADERBOARD
-========================================================= */
-
-function updateLeaderboard() {
-
-
-battlePoints =
-    getBattlePoints();
-
-
-const pointsElement =
-    getElement(
-        "yourBattlePoints"
-    );
-
-
-if (pointsElement) {
-
-    pointsElement.textContent =
-        battlePoints.toLocaleString();
-
-}
-
-
-const rankElement =
-    getElement(
-        "yourLeaderboardRank"
-    );
-
-
-if (!rankElement) {
-    return;
-}
-
-
-let rank =
-    4;
-
-
-if (
-    battlePoints >=
-    1950
-) {
-    rank = 3;
-}
-
-
-if (
-    battlePoints >=
-    2180
-) {
-    rank = 2;
-}
-
-
-if (
-    battlePoints >=
-    2450
-) {
-    rank = 1;
-}
-
-
-const rankSpan =
-    rankElement.querySelector(
-        "span:first-child"
-    );
-
-
-if (rankSpan) {
-
-    rankSpan.textContent =
-        rank <= 3
-            ? `#${rank}`
-            : "—";
-
-}
-
-
-}
-
-/* =========================================================
-THEME
-========================================================= */
-
-function loadTheme() {
-
-
-const theme =
-    localStorage.getItem(
-        STORAGE_KEYS.theme
-    );
-
-
-if (
-    theme ===
-    "light"
-) {
-
-    document.body.classList.add(
-        "light-mode"
-    );
-
-}
-
-
-updateThemeButton();
-
-
-}
-
-function toggleGameTheme() {
-
-
-document.body.classList.toggle(
-    "light-mode"
-);
-
-
-const light =
-    document.body.classList.contains(
-        "light-mode"
-    );
-
-
-localStorage.setItem(
-    STORAGE_KEYS.theme,
-    light
-        ? "light"
-        : "dark"
-);
-
-
-updateThemeButton();
-
-
-}
-
-function updateThemeButton() {
-
-
-const button =
-    getElement(
-        "themeButton"
-    );
-
-
-if (!button) {
-    return;
-}
-
-
-const light =
-    document.body.classList.contains(
-        "light-mode"
-    );
-
-
-button.textContent =
-    light
-        ? "☀️ Light Mode"
-        : "🌙 Dark Mode";
-
-
-}
-
-/* =========================================================
-NAVIGATION
-========================================================= */
-
-function openHome() {
-
-
-window.location.href =
-    "home.html";
-
-
-}
-
-function openNewStudyPlan() {
-
-
-window.location.href =
-    "index.html";
-
-
-}
-
-function openSummarizer() {
-
-
-window.location.href =
-    "summarizer.html";
-
-
-}
-
-function openStudyStreak() {
-
-
-window.location.href =
-    "study-streak.html";
-
-
-}
-
-function openStudyScore() {
-
-
-window.location.href =
-    "study-score.html";
-
-
-}
-
-function logoutStudyMind() {
-
-
-if (
-    typeof window.supabaseClient !==
-        "undefined" &&
-    window.supabaseClient
-) {
-
-    window.supabaseClient.auth
-        .signOut()
-        .finally(
-            () => {
-
-                window.location.href =
-                    "login.html";
-
-            }
-        );
-
-    return;
-
-}
-
-
-window.location.href =
-    "login.html";
-
-
-}
-
-/* =========================================================
-SHUFFLE
-========================================================= */
-
-function shuffleArray(array) {
-    
-
-const result =
-    [...array];
-
-
-for (
-    let i =
-        result.length - 1;
-    i > 0;
-    i--
-) {
-
-    const j =
-        Math.floor(
-            Math.random() *
-            (i + 1)
-        );
-
-
-    [
-        result[i],
-        result[j]
-    ] =
-    [
-        result[j],
-        result[i]
-    ];
-
-}
-
-
-return result;
-
-
-}
-
-/* =========================================================
-GLOBAL FUNCTIONS
-========================================================= */
-
-window.startComputerBattle =
-startComputerBattle;
-
-window.beginBattle =
-beginBattle;
-
-window.resetBattle =
-resetBattle;
-
-window.openPremium =
-openPremium;
-
-window.toggleGameTheme =
-toggleGameTheme;
-
-window.openHome =
-openHome;
-
-window.openNewStudyPlan =
-openNewStudyPlan;
-
-window.openSummarizer =
-openSummarizer;
-
-window.openStudyStreak =
-openStudyStreak;
-
-window.openStudyScore =
-openStudyScore;
-
-window.logoutStudyMind =
-logoutStudyMind;
+alter publication supabase_realtime
+add table public.game_leaderboard;
