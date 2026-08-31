@@ -3689,6 +3689,10 @@ try {
 
     const user =
         await getCurrentUser();
+   console.log("CURRENT 1V1 USER:", {
+    id: user?.id,
+    email: user?.email
+});
 
     if (!user || !user.id) {
         throw new Error(
