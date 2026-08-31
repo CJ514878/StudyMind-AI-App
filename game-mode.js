@@ -3467,7 +3467,18 @@ function startOneVOneMode() {
 /* =========================================================
    FIND 1V1 OPPONENT
 ========================================================= */
+function clearOneVOnePolling() {
 
+    if (oneVOnePolling) {
+
+        clearInterval(
+            oneVOnePolling
+        );
+
+        oneVOnePolling =
+            null;
+    }
+}
 async function findOneVOneOpponent() {
 
     if (
