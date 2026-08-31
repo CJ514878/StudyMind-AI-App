@@ -4811,6 +4811,7 @@ async function joinExistingMatch(match) {
 }
 
 
+
 /* =========================================================
    CHECK 1V1 MATCH PLAYERS
 ========================================================= */
@@ -4833,14 +4834,18 @@ async function checkMatchPlayers() {
 
     try {
 
+        /*
+         * -----------------------------------------------------
+         * GET ALL PLAYERS IN THIS MATCH
+         * -----------------------------------------------------
+         */
+
         const {
             data: players,
-            error
+            error: playersError
         } =
             await client
-                .from(
-                    "game_match_players"
-                )
+                .from("game_match_players")
                 .select(
                     "match_id,user_id,player_number,display_name"
                 )
@@ -4855,106 +4860,106 @@ async function checkMatchPlayers() {
                     }
                 );
 
-        if (error) {
+        if (playersError) {
 
             console.error(
                 "Could not check 1v1 players:",
-                error
+                playersError
             );
 
             return;
         }
 
+        const matchPlayers =
+            Array.isArray(players)
+                ? players
+                : [];
+
         console.log(
             "1v1 players:",
-            players
+            matchPlayers
         );
 
         /*
-         * Nobody has joined yet.
+         * -----------------------------------------------------
+         * WAIT FOR PLAYER 2
+         * -----------------------------------------------------
          */
 
         if (
-            !players ||
-            players.length < 2
+            matchPlayers.length <
+            2
         ) {
 
             updateMatchmakingText(
                 "Looking for an opponent...",
-                "Your battle room is ready. Searching for another student with the same settings."
+                "Your battle room is ready. Searching for another student..."
             );
 
             return;
         }
 
         /*
-         * Two players are now present.
+         * -----------------------------------------------------
+         * TWO PLAYERS FOUND
+         * -----------------------------------------------------
          */
 
         console.log(
             "🎮 TWO PLAYERS FOUND!",
-            players
+            matchPlayers
         );
 
         /*
-         * Stop matchmaking polling.
+         * -----------------------------------------------------
+         * IDENTIFY CURRENT PLAYER
+         * -----------------------------------------------------
          */
 
-        if (
-            typeof clearOneVOnePolling ===
-            "function"
-        ) {
+        try {
 
-            clearOneVOnePolling();
+            const user =
+                await getCurrentUser();
 
-        } else if (
-            oneVOnePolling
-        ) {
+            if (user?.id) {
 
-            clearInterval(
-                oneVOnePolling
-            );
-
-            oneVOnePolling =
-                null;
-        }
-
-        /*
-         * Make sure we know our player number.
-         */
-
-        const user =
-            await getCurrentUser();
-
-        if (user) {
-
-            const me =
-                players.find(
-                    player =>
-                        player.user_id ===
-                        user.id
-                );
-
-            if (me) {
-
-                oneVOnePlayerNumber =
-                    Number(
-                        me.player_number
+                const currentPlayer =
+                    matchPlayers.find(
+                        player =>
+                            player.user_id ===
+                            user.id
                     );
 
-                oneVOneMyName =
-                    me.display_name ||
-                    oneVOneMyName;
+                if (currentPlayer) {
+
+                    oneVOnePlayerNumber =
+                        Number(
+                            currentPlayer.player_number
+                        );
+
+                    oneVOneMyName =
+                        currentPlayer.display_name ||
+                        oneVOneMyName;
+
+                    console.log(
+                        "Current 1v1 player number:",
+                        oneVOnePlayerNumber
+                    );
+                }
             }
+
+        } catch (userError) {
+
+            console.warn(
+                "Could not identify current 1v1 player:",
+                userError
+            );
         }
 
-        updateMatchmakingText(
-            "Opponent found! ⚔️",
-            "Both players are ready. Preparing your battle..."
-        );
-
         /*
-         * Ask the database for the current match.
+         * -----------------------------------------------------
+         * LOAD CURRENT MATCH
+         * -----------------------------------------------------
          */
 
         const {
@@ -4962,15 +4967,13 @@ async function checkMatchPlayers() {
             error: matchError
         } =
             await client
-                .from(
-                    "game_matches"
-                )
+                .from("game_matches")
                 .select("*")
                 .eq(
                     "id",
                     oneVOneMatchId
                 )
-                .single();
+                .maybeSingle();
 
         if (matchError) {
 
@@ -4982,9 +4985,25 @@ async function checkMatchPlayers() {
             return;
         }
 
+        if (!match) {
+
+            console.error(
+                "1v1 match no longer exists:",
+                oneVOneMatchId
+            );
+
+            return;
+        }
+
+        console.log(
+            "Current 1v1 match status:",
+            match.status
+        );
+
         /*
-         * If the database has already moved the match
-         * to active, start immediately.
+         * -----------------------------------------------------
+         * MATCH IS ALREADY ACTIVE
+         * -----------------------------------------------------
          */
 
         if (
@@ -4992,92 +5011,339 @@ async function checkMatchPlayers() {
             "active"
         ) {
 
-            activateOneVOneMatch(
-                match
+            console.log(
+                "🎮 1v1 match is ACTIVE."
+            );
+
+            clearOneVOnePolling();
+
+            oneVOneActive =
+                true;
+
+            updateMatchmakingText(
+                "Battle starting! ⚔️",
+                "Your 1v1 battle is ready."
+            );
+
+            /*
+             * Start the arena only once.
+             */
+
+            if (
+                !window.oneVOneArenaStarted
+            ) {
+
+                window.oneVOneArenaStarted =
+                    true;
+
+                setTimeout(
+                    function () {
+
+                        startOneVOneArena();
+
+                    },
+                    500
+                );
+            }
+
+            return;
+        }
+
+        /*
+         * -----------------------------------------------------
+         * MATCH IS FINISHED / CANCELLED
+         * -----------------------------------------------------
+         */
+
+        if (
+            match.status === "finished" ||
+            match.status === "cancelled"
+        ) {
+
+            console.warn(
+                "1v1 match is no longer playable:",
+                match.status
+            );
+
+            clearOneVOnePolling();
+
+            oneVOneActive =
+                false;
+
+            updateMatchmakingText(
+                "Match unavailable",
+                "This battle is no longer available."
             );
 
             return;
         }
 
         /*
-         * If it is still starting, the Player 1 side
-         * is responsible for activating it.
+         * -----------------------------------------------------
+         * TWO PLAYERS + STARTING
+         * -----------------------------------------------------
          */
 
         if (
             match.status ===
-            "starting" &&
-            oneVOnePlayerNumber === 1
+            "starting"
         ) {
 
-            console.log(
-                "Player 1 activating 1v1 match."
+            updateMatchmakingText(
+                "Opponent found! ⚔️",
+                "Both players are connected. Starting the battle..."
             );
 
-            const {
-                data: activatedMatch,
-                error:
-                    activateError
-            } =
-                await client.rpc(
-                    "start_game_match",
-                    {
-                        p_match_id:
-                            oneVOneMatchId
-                    }
+            /*
+             * -------------------------------------------------
+             * PLAYER 1 ACTIVATES THE MATCH
+             * -------------------------------------------------
+             */
+
+            if (
+                oneVOnePlayerNumber ===
+                1
+            ) {
+
+                console.log(
+                    "Player 1 activating 1v1 match..."
                 );
 
-            if (activateError) {
+                const {
+                    data: activatedMatch,
+                    error: activateError
+                } =
+                    await client.rpc(
+                        "start_game_match",
+                        {
+                            p_match_id:
+                                oneVOneMatchId
+                        }
+                    );
 
-                console.error(
-                    "Could not activate 1v1 match:",
-                    activateError
+                if (activateError) {
+
+                    console.warn(
+                        "start_game_match returned an error:",
+                        activateError
+                    );
+
+                    /*
+                     * Another client may have activated
+                     * the match at almost the same time.
+                     *
+                     * Re-read the database instead of
+                     * immediately failing.
+                     */
+
+                    const {
+                        data: latestMatch,
+                        error: latestError
+                    } =
+                        await client
+                            .from("game_matches")
+                            .select("*")
+                            .eq(
+                                "id",
+                                oneVOneMatchId
+                            )
+                            .maybeSingle();
+
+                    if (latestError) {
+
+                        console.warn(
+                            "Could not re-check 1v1 match:",
+                            latestError
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        latestMatch?.status ===
+                        "active"
+                    ) {
+
+                        console.log(
+                            "1v1 match became active while checking."
+                        );
+
+                        oneVOneActive =
+                            true;
+
+                        clearOneVOnePolling();
+
+                        if (
+                            !window.oneVOneArenaStarted
+                        ) {
+
+                            window.oneVOneArenaStarted =
+                                true;
+
+                            setTimeout(
+                                function () {
+
+                                    startOneVOneArena();
+
+                                },
+                                500
+                            );
+                        }
+
+                    } else {
+
+                        console.log(
+                            "1v1 match is still:",
+                            latestMatch?.status
+                        );
+                    }
+
+                    return;
+                }
+
+                /*
+                 * RPC successfully activated the match.
+                 */
+
+                console.log(
+                    "✅ 1v1 match activated:",
+                    activatedMatch
                 );
 
                 /*
-                 * Another client may already have
-                 * activated it. Check again.
+                 * If the RPC returns the updated match,
+                 * start immediately.
+                 */
+
+                if (
+                    activatedMatch?.status ===
+                    "active"
+                ) {
+
+                    oneVOneActive =
+                        true;
+
+                    clearOneVOnePolling();
+
+                    if (
+                        !window.oneVOneArenaStarted
+                    ) {
+
+                        window.oneVOneArenaStarted =
+                            true;
+
+                        setTimeout(
+                            function () {
+
+                                startOneVOneArena();
+
+                            },
+                            500
+                        );
+                    }
+
+                    return;
+                }
+
+                /*
+                 * Some RPC implementations return only
+                 * an ID/object. Re-read the match.
                  */
 
                 const {
-                    data: latestMatch
+                    data: refreshedMatch
                 } =
                     await client
-                        .from(
-                            "game_matches"
-                        )
+                        .from("game_matches")
                         .select("*")
                         .eq(
                             "id",
                             oneVOneMatchId
                         )
-                        .single();
+                        .maybeSingle();
 
                 if (
-                    latestMatch?.status ===
+                    refreshedMatch?.status ===
                     "active"
                 ) {
 
-                    activateOneVOneMatch(
-                        latestMatch
+                    console.log(
+                        "✅ Database confirms 1v1 is active."
+                    );
+
+                    oneVOneActive =
+                        true;
+
+                    clearOneVOnePolling();
+
+                    if (
+                        !window.oneVOneArenaStarted
+                    ) {
+
+                        window.oneVOneArenaStarted =
+                            true;
+
+                        setTimeout(
+                            function () {
+
+                                startOneVOneArena();
+
+                            },
+                            500
+                        );
+                    }
+
+                } else {
+
+                    console.log(
+                        "Player 1 activated request completed. Waiting for active status..."
                     );
                 }
 
                 return;
             }
 
-            console.log(
-                "1v1 match activated:",
-                activatedMatch
+            /*
+             * -------------------------------------------------
+             * PLAYER 2 WAITS
+             * -------------------------------------------------
+             */
+
+            if (
+                oneVOnePlayerNumber ===
+                2
+            ) {
+
+                console.log(
+                    "Player 2 waiting for Player 1 to activate the match..."
+                );
+
+                return;
+            }
+
+            /*
+             * -------------------------------------------------
+             * UNKNOWN PLAYER NUMBER
+             * -------------------------------------------------
+             */
+
+            console.warn(
+                "Two players found, but current player number is unknown."
             );
 
-            if (activatedMatch) {
-
-                activateOneVOneMatch(
-                    activatedMatch
-                );
-            }
+            return;
         }
+
+        /*
+         * -----------------------------------------------------
+         * UNEXPECTED STATUS
+         * -----------------------------------------------------
+         */
+
+        console.warn(
+            "Unexpected 1v1 match status:",
+            match.status
+        );
 
     } catch (error) {
 
@@ -5087,6 +5353,8 @@ async function checkMatchPlayers() {
         );
     }
 }
+
+
 /* =========================================================
    SUBSCRIBE TO 1V1 MATCH
 ========================================================= */
