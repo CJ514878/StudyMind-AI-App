@@ -5491,7 +5491,1295 @@ oneVOneMatchId = matchId;
 
     return channel;
 }
+/* =========================================================
+   ACTIVATE 1V1 MATCH
+========================================================= */
 
+async function activateOneVOneMatch(match) {
+
+    if (!match) {
+        console.warn(
+            "activateOneVOneMatch called without a match."
+        );
+        return;
+    }
+
+    console.log(
+        "🎮 activateOneVOneMatch() called:",
+        match
+    );
+
+    /*
+     * Make sure the match belongs to the current
+     * 1v1 session.
+     */
+
+    if (
+        oneVOneMatchId &&
+        match.id &&
+        String(match.id) !==
+        String(oneVOneMatchId)
+    ) {
+
+        console.warn(
+            "Ignoring active match that does not belong to current 1v1 session."
+        );
+
+        return;
+    }
+
+    oneVOneMatchId =
+        match.id ||
+        oneVOneMatchId;
+
+    oneVOneActive =
+        true;
+
+    clearOneVOnePolling();
+
+    /*
+     * Prevent duplicate realtime events from
+     * opening the arena repeatedly.
+     */
+
+    if (
+        window.oneVOneArenaStarted
+    ) {
+
+        console.log(
+            "1v1 arena has already been started."
+        );
+
+        return;
+    }
+
+    window.oneVOneArenaStarted =
+        true;
+
+    updateMatchmakingText(
+        "Battle starting! ⚔️",
+        "Your 1v1 match is active. Get ready!"
+    );
+
+    console.log(
+        "1v1 match activated"
+    );
+
+    /*
+     * Give both clients a moment to finish
+     * receiving the player/realtime updates.
+     */
+
+    setTimeout(
+        async function () {
+
+            try {
+
+                await startOneVOneArena();
+
+            } catch (error) {
+
+                console.error(
+                    "Could not start 1v1 arena:",
+                    error
+                );
+
+                /*
+                 * Allow another realtime event to
+                 * attempt the arena if something
+                 * failed during startup.
+                 */
+
+                window.oneVOneArenaStarted =
+                    false;
+
+                updateMatchmakingText(
+                    "Could not start battle",
+                    error?.message ||
+                    "The 1v1 arena could not be opened."
+                );
+
+            }
+
+        },
+        500
+    );
+}
+
+
+/* =========================================================
+   START 1V1 ARENA
+========================================================= */
+
+async function startOneVOneArena() {
+
+    console.log(
+        "🎮 startOneVOneArena() called."
+    );
+
+    /*
+     * -----------------------------------------------------
+     * STOP MATCHMAKING
+     * -----------------------------------------------------
+     */
+
+    clearOneVOnePolling();
+
+    /*
+     * -----------------------------------------------------
+     * SHOW 1V1 ARENA
+     * -----------------------------------------------------
+     */
+
+    const setup =
+        $("battleSetup");
+
+    const oneVOneSetup =
+        $("oneVOneSetup");
+
+    const computerArena =
+        $("battleArena");
+
+    const oneVOneArena =
+        $("oneVOneArena");
+
+    const results =
+        $("battleResults");
+
+    if (setup) {
+        setup.hidden = true;
+    }
+
+    if (oneVOneSetup) {
+        oneVOneSetup.hidden = true;
+    }
+
+    if (computerArena) {
+        computerArena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = true;
+    }
+
+    if (oneVOneArena) {
+        oneVOneArena.hidden = false;
+
+        oneVOneArena.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    } else {
+
+        console.error(
+            "❌ #oneVOneArena was not found in game-mode.html."
+        );
+
+        throw new Error(
+            "The 1v1 arena element (#oneVOneArena) is missing from game-mode.html."
+        );
+    }
+
+    /*
+     * -----------------------------------------------------
+     * MARK 1V1 AS ACTIVE
+     * -----------------------------------------------------
+     */
+
+    oneVOneActive =
+        true;
+
+    /*
+     * -----------------------------------------------------
+     * RESET 1V1 STATE
+     * -----------------------------------------------------
+     */
+
+    oneVOneResultsRecorded =
+        false;
+
+    oneVOneAnsweredQuestions =
+        new Set();
+
+    /*
+     * Create the local 1v1 battle state.
+     */
+
+    battleState = {
+
+        mode:
+            "1v1",
+
+        subject:
+            oneVOneSubjectValue(),
+
+        topic:
+            oneVOneTopicValue(),
+
+        difficulty:
+            oneVOneDifficultyValue(),
+
+        questions:
+            [],
+
+        currentQuestion:
+            0,
+
+        playerScore:
+            0,
+
+        opponentScore:
+            0,
+
+        timer:
+            QUESTION_TIME_SECONDS,
+
+        timerInterval:
+            null,
+
+        answering:
+            false,
+
+        battleActive:
+            true
+    };
+
+    /*
+     * -----------------------------------------------------
+     * UPDATE 1V1 PLAYER LABELS
+     * -----------------------------------------------------
+     */
+
+    updateOneVOnePlayerLabels();
+
+    /*
+     * -----------------------------------------------------
+     * LOAD QUESTIONS
+     * -----------------------------------------------------
+     */
+
+    updateOneVOneArenaMessage(
+        "Preparing your questions..."
+    );
+
+    try {
+
+        const questions =
+            await generateBattleQuestions(
+                battleState.subject,
+                battleState.topic,
+                battleState.difficulty
+            );
+
+        if (
+            !Array.isArray(questions) ||
+            questions.length <
+            QUESTIONS_PER_BATTLE
+        ) {
+
+            throw new Error(
+                "The AI did not return enough questions for the 1v1 battle."
+            );
+        }
+
+        battleState.questions =
+            questions.slice(
+                0,
+                QUESTIONS_PER_BATTLE
+            );
+
+    } catch (error) {
+
+        console.error(
+            "1v1 question generation failed:",
+            error
+        );
+
+        /*
+         * Do not leave the user stuck on a blank arena.
+         */
+
+        battleState.battleActive =
+            false;
+
+        window.oneVOneArenaStarted =
+            false;
+
+        updateOneVOneArenaMessage(
+            "Could not prepare the battle questions."
+        );
+
+        throw error;
+    }
+
+    /*
+     * -----------------------------------------------------
+     * DISPLAY FIRST QUESTION
+     * -----------------------------------------------------
+     */
+
+    showOneVOneQuestion();
+
+    console.log(
+        "✅ 1v1 arena opened successfully."
+    );
+}
+
+
+/* =========================================================
+   1V1 SELECTED SUBJECT
+========================================================= */
+
+function oneVOneSubjectValue() {
+
+    return normalizeSubjectName(
+        $("oneVOneSubject")?.value?.trim() ||
+        ""
+    );
+}
+
+
+/* =========================================================
+   1V1 SELECTED TOPIC
+========================================================= */
+
+function oneVOneTopicValue() {
+
+    return (
+        $("oneVOneTopic")?.value?.trim() ||
+        ""
+    );
+}
+
+
+/* =========================================================
+   1V1 SELECTED DIFFICULTY
+========================================================= */
+
+function oneVOneDifficultyValue() {
+
+    return (
+        $("oneVOneDifficulty")?.value ||
+        "mixed"
+    );
+}
+
+
+/* =========================================================
+   1V1 PLAYER LABELS
+========================================================= */
+
+function updateOneVOnePlayerLabels() {
+
+    /*
+     * Possible player-name elements used by the arena.
+     */
+
+    const playerOneName =
+        getElement(
+            "oneVOnePlayerOneName"
+        );
+
+    const playerTwoName =
+        getElement(
+            "oneVOnePlayerTwoName"
+        );
+
+    const opponentName =
+        getElement(
+            "oneVOneOpponentName"
+        );
+
+    /*
+     * Try to identify the two players from
+     * the current database match.
+     *
+     * The realtime player list is checked
+     * separately when available.
+     */
+
+    if (
+        playerOneName &&
+        !playerOneName.textContent.trim()
+    ) {
+
+        playerOneName.textContent =
+            "Player 1";
+    }
+
+    if (
+        playerTwoName &&
+        !playerTwoName.textContent.trim()
+    ) {
+
+        playerTwoName.textContent =
+            "Player 2";
+    }
+
+    if (opponentName) {
+
+        opponentName.textContent =
+            oneVOnePlayerNumber === 1
+                ? "Player 2"
+                : "Player 1";
+    }
+
+    /*
+     * Reuse the existing score elements if
+     * the 1v1 arena contains them.
+     */
+
+    const playerScore =
+        getElement(
+            "oneVOnePlayerScore"
+        );
+
+    const opponentScore =
+        getElement(
+            "oneVOneOpponentScore"
+        );
+
+    if (playerScore) {
+        playerScore.textContent =
+            "0";
+    }
+
+    if (opponentScore) {
+        opponentScore.textContent =
+            "0";
+    }
+}
+
+
+/* =========================================================
+   1V1 ARENA MESSAGE
+========================================================= */
+
+function updateOneVOneArenaMessage(
+    message
+) {
+
+    const candidates = [
+        "oneVOneArenaMessage",
+        "oneVOneStatusMessage",
+        "oneVOneBattleStatus",
+        "oneVOneQuestionStatus"
+    ];
+
+    for (
+        const id of candidates
+    ) {
+
+        const element =
+            getElement(id);
+
+        if (element) {
+
+            element.textContent =
+                message;
+
+            return;
+        }
+    }
+}
+
+
+/* =========================================================
+   SHOW 1V1 QUESTION
+========================================================= */
+
+function showOneVOneQuestion() {
+
+    stopOneVOneTimer();
+
+    const question =
+        battleState.questions[
+            battleState.currentQuestion
+        ];
+
+    /*
+     * Battle finished.
+     */
+
+    if (!question) {
+
+        finishOneVOneBattle();
+
+        return;
+    }
+
+    battleState.answering =
+        false;
+
+    const questionNumber =
+        battleState.currentQuestion +
+        1;
+
+    /*
+     * Question number.
+     */
+
+    const numberElements = [
+        "oneVOneQuestionNumber",
+        "oneVOneCurrentQuestionNumber"
+    ];
+
+    numberElements.forEach(
+        id => {
+
+            const element =
+                getElement(id);
+
+            if (element) {
+
+                element.textContent =
+                    questionNumber;
+            }
+        }
+    );
+
+    /*
+     * Topic.
+     */
+
+    const topicElements = [
+        "oneVOneQuestionTopic",
+        "oneVOneBattleTopic"
+    ];
+
+    topicElements.forEach(
+        id => {
+
+            const element =
+                getElement(id);
+
+            if (element) {
+
+                element.textContent =
+                    battleState.topic;
+            }
+        }
+    );
+
+    /*
+     * Question text.
+     */
+
+    const questionElements = [
+        "oneVOneQuestion",
+        "oneVOneBattleQuestion"
+    ];
+
+    let questionElement =
+        null;
+
+    for (
+        const id of questionElements
+    ) {
+
+        const element =
+            getElement(id);
+
+        if (element) {
+
+            questionElement =
+                element;
+
+            break;
+        }
+    }
+
+    if (questionElement) {
+
+        questionElement.textContent =
+            question.question;
+    }
+
+    /*
+     * Find the 1v1 answer grid.
+     */
+
+    let answerGrid =
+        getElement(
+            "oneVOneAnswerGrid"
+        );
+
+    if (!answerGrid) {
+
+        /*
+         * Fall back to the normal battle answer
+         * grid if the HTML uses the same component.
+         */
+
+        answerGrid =
+            getElement(
+                "answerGrid"
+            );
+    }
+
+    if (!answerGrid) {
+
+        throw new Error(
+            "The 1v1 answer grid is missing from game-mode.html."
+        );
+    }
+
+    answerGrid.innerHTML =
+        "";
+
+    question.options.forEach(
+        function (
+            option,
+            index
+        ) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "answer-button";
+
+            button.textContent =
+                option;
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    answerOneVOneQuestion(
+                        index
+                    );
+
+                }
+            );
+
+            answerGrid.appendChild(
+                button
+            );
+        }
+    );
+
+    /*
+     * Update score display.
+     */
+
+    updateOneVOneScores();
+
+    /*
+     * Start timer.
+     */
+
+    startOneVOneTimer();
+}
+
+
+/* =========================================================
+   1V1 TIMER
+========================================================= */
+
+function startOneVOneTimer() {
+
+    stopOneVOneTimer();
+
+    battleState.timer =
+        QUESTION_TIME_SECONDS;
+
+    updateOneVOneTimer();
+
+    battleState.timerInterval =
+        setInterval(
+            function () {
+
+                if (
+                    !battleState.battleActive
+                ) {
+
+                    stopOneVOneTimer();
+
+                    return;
+                }
+
+                battleState.timer--;
+
+                updateOneVOneTimer();
+
+                if (
+                    battleState.timer <=
+                    0
+                ) {
+
+                    stopOneVOneTimer();
+
+                    handleOneVOneTimeout();
+                }
+
+            },
+            1000
+        );
+}
+
+
+/* =========================================================
+   STOP 1V1 TIMER
+========================================================= */
+
+function stopOneVOneTimer() {
+
+    if (
+        battleState?.timerInterval
+    ) {
+
+        clearInterval(
+            battleState.timerInterval
+        );
+
+        battleState.timerInterval =
+            null;
+    }
+}
+
+
+/* =========================================================
+   UPDATE 1V1 TIMER
+========================================================= */
+
+function updateOneVOneTimer() {
+
+    const timerElements = [
+        "oneVOneTimer",
+        "oneVOneBattleTimer"
+    ];
+
+    for (
+        const id of timerElements
+    ) {
+
+        const element =
+            getElement(id);
+
+        if (element) {
+
+            element.textContent =
+                Math.max(
+                    0,
+                    battleState.timer
+                );
+
+            return;
+        }
+    }
+}
+
+
+/* =========================================================
+   ANSWER 1V1 QUESTION
+========================================================= */
+
+function answerOneVOneQuestion(
+    selectedIndex
+) {
+
+    if (
+        battleState.answering ||
+        !battleState.battleActive
+    ) {
+
+        return;
+    }
+
+    battleState.answering =
+        true;
+
+    stopOneVOneTimer();
+
+    const question =
+        battleState.questions[
+            battleState.currentQuestion
+        ];
+
+    if (!question) {
+        return;
+    }
+
+    let answerGrid =
+        getElement(
+            "oneVOneAnswerGrid"
+        );
+
+    if (!answerGrid) {
+
+        answerGrid =
+            getElement(
+                "answerGrid"
+            );
+    }
+
+    const buttons =
+        answerGrid
+            ? answerGrid.querySelectorAll(
+                ".answer-button"
+            )
+            : [];
+
+    buttons.forEach(
+        function (
+            button,
+            index
+        ) {
+
+            button.disabled =
+                true;
+
+            if (
+                index ===
+                question.answer
+            ) {
+
+                button.classList.add(
+                    "correct"
+                );
+            }
+
+            if (
+                index ===
+                selectedIndex &&
+                index !==
+                question.answer
+            ) {
+
+                button.classList.add(
+                    "incorrect"
+                );
+            }
+        }
+    );
+
+    /*
+     * Record this question locally.
+     */
+
+    oneVOneAnsweredQuestions.add(
+        battleState.currentQuestion
+    );
+
+    /*
+     * Score the current player.
+     *
+     * The opponent's actual score will eventually
+     * be synchronized through the match system.
+     */
+
+    if (
+        selectedIndex ===
+        question.answer
+    ) {
+
+        battleState.playerScore +=
+            10;
+    }
+
+    updateOneVOneScores();
+
+    /*
+     * Move to next question.
+     */
+
+    setTimeout(
+        function () {
+
+            if (
+                !battleState.battleActive
+            ) {
+
+                return;
+            }
+
+            battleState.currentQuestion++;
+
+            showOneVOneQuestion();
+
+        },
+        900
+    );
+}
+
+
+/* =========================================================
+   1V1 TIMEOUT
+========================================================= */
+
+function handleOneVOneTimeout() {
+
+    if (
+        battleState.answering ||
+        !battleState.battleActive
+    ) {
+
+        return;
+    }
+
+    battleState.answering =
+        true;
+
+    const question =
+        battleState.questions[
+            battleState.currentQuestion
+        ];
+
+    let answerGrid =
+        getElement(
+            "oneVOneAnswerGrid"
+        );
+
+    if (!answerGrid) {
+
+        answerGrid =
+            getElement(
+                "answerGrid"
+            );
+    }
+
+    const buttons =
+        answerGrid
+            ? answerGrid.querySelectorAll(
+                ".answer-button"
+            )
+            : [];
+
+    buttons.forEach(
+        function (
+            button,
+            index
+        ) {
+
+            button.disabled =
+                true;
+
+            if (
+                question &&
+                index ===
+                question.answer
+            ) {
+
+                button.classList.add(
+                    "correct"
+                );
+            }
+        }
+    );
+
+    /*
+     * A timeout gives the opponent the point.
+     */
+
+    battleState.opponentScore +=
+        10;
+
+    updateOneVOneScores();
+
+    setTimeout(
+        function () {
+
+            if (
+                !battleState.battleActive
+            ) {
+
+                return;
+            }
+
+            battleState.currentQuestion++;
+
+            showOneVOneQuestion();
+
+        },
+        900
+    );
+}
+
+
+/* =========================================================
+   UPDATE 1V1 SCORES
+========================================================= */
+
+function updateOneVOneScores() {
+
+    /*
+     * Generic score elements.
+     */
+
+    const playerScore =
+        getElement(
+            "oneVOnePlayerScore"
+        );
+
+    const opponentScore =
+        getElement(
+            "oneVOneOpponentScore"
+        );
+
+    if (playerScore) {
+
+        playerScore.textContent =
+            battleState.playerScore;
+    }
+
+    if (opponentScore) {
+
+        opponentScore.textContent =
+            battleState.opponentScore;
+    }
+
+    /*
+     * If the existing battle score elements are
+     * shared with 1v1, update those too.
+     */
+
+    const normalPlayerScore =
+        getElement(
+            "playerScore"
+        );
+
+    const normalOpponentScore =
+        getElement(
+            "computerScore"
+        );
+
+    if (
+        normalPlayerScore &&
+        battleState.mode ===
+        "1v1"
+    ) {
+
+        normalPlayerScore.textContent =
+            battleState.playerScore;
+    }
+
+    if (
+        normalOpponentScore &&
+        battleState.mode ===
+        "1v1"
+    ) {
+
+        normalOpponentScore.textContent =
+            battleState.opponentScore;
+    }
+}
+
+
+/* =========================================================
+   FINISH 1V1 BATTLE
+========================================================= */
+
+function finishOneVOneBattle() {
+
+    stopOneVOneTimer();
+
+    battleState.battleActive =
+        false;
+
+    oneVOneActive =
+        false;
+
+    const arena =
+        getElement(
+            "oneVOneArena"
+        );
+
+    const results =
+        getElement(
+            "battleResults"
+        );
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    if (results) {
+        results.hidden = false;
+    }
+
+    const player =
+        battleState.playerScore;
+
+    const opponent =
+        battleState.opponentScore;
+
+    let title =
+        "1v1 Battle Complete";
+
+    let message =
+        "Great work!";
+
+    let points =
+        player;
+
+    if (
+        player >
+        opponent
+    ) {
+
+        title =
+            "🏆 Victory!";
+
+        message =
+            "You won the 1v1 battle!";
+
+        points =
+            player + 25;
+
+    } else if (
+        player <
+        opponent
+    ) {
+
+        title =
+            "Keep Studying!";
+
+        message =
+            "Your opponent won this round. Review the topic and try again.";
+
+    } else {
+
+        title =
+            "🤝 Draw!";
+
+        message =
+            "Both players finished with the same score.";
+
+        points =
+            player + 10;
+    }
+
+    /*
+     * Award points only once.
+     */
+
+    if (
+        !oneVOneResultsRecorded
+    ) {
+
+        oneVOneResultsRecorded =
+            true;
+
+        setBattlePoints(
+            getBattlePoints() +
+            points
+        );
+
+        /*
+         * Count the completed battle.
+         */
+
+        setBattlesUsed(
+            getBattlesUsed() + 1
+        );
+    }
+
+    if ($("battleResultTitle")) {
+
+        $("battleResultTitle")
+            .textContent =
+            title;
+    }
+
+    if ($("battleResultMessage")) {
+
+        $("battleResultMessage")
+            .textContent =
+            message;
+    }
+
+    if ($("finalPlayerScore")) {
+
+        $("finalPlayerScore")
+            .textContent =
+            player;
+    }
+
+    if ($("finalComputerScore")) {
+
+        $("finalComputerScore")
+            .textContent =
+            opponent;
+    }
+
+    if ($("pointsEarned")) {
+
+        $("pointsEarned")
+            .textContent =
+            `+${points}`;
+    }
+
+    if ($("finalOpponentLabel")) {
+
+        $("finalOpponentLabel")
+            .textContent =
+            "OPPONENT";
+    }
+
+    updateLeaderboardUI();
+
+    console.log(
+        "🏁 1v1 battle finished:",
+        {
+            player,
+            opponent,
+            points
+        }
+    );
+}
+
+
+/* =========================================================
+   RESET 1V1 ARENA
+========================================================= */
+
+function resetOneVOneArena() {
+
+    stopOneVOneTimer();
+
+    clearOneVOnePolling();
+
+    battleState.battleActive =
+        false;
+
+    oneVOneActive =
+        false;
+
+    oneVOneMatchId =
+        null;
+
+    oneVOnePlayerNumber =
+        null;
+
+    oneVOneResultsRecorded =
+        false;
+
+    oneVOneAnsweredQuestions =
+        new Set();
+
+    window.oneVOneArenaStarted =
+        false;
+
+    cleanupOneVOneConnection();
+
+    const arena =
+        getElement(
+            "oneVOneArena"
+        );
+
+    if (arena) {
+        arena.hidden = true;
+    }
+
+    startOneVOneMode();
+}
 /* =========================================================
    PREMIUM MESSAGE FALLBACK
 ========================================================= */
