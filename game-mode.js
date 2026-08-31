@@ -4700,7 +4700,7 @@ async function subscribeToOneVOne(matchId) {
             "Supabase client is not available."
         );
     }
-
+oneVOneMatchId = matchId;
     await cleanupOneVOneConnection();
 
     console.log(
