@@ -3570,15 +3570,30 @@ async function checkMatchPlayers() {
      * which side they are on.
      */
 
-    const currentPlayer =
-        players.find(
-            player =>
-                player.user_id ===
-                (
-                    oneVOneUserId ||
-                    null
-                )
-        );
+   let currentPlayer = null;
+
+try {
+
+    const currentUser =
+        await getCurrentUser();
+
+    if (currentUser?.id) {
+
+        currentPlayer =
+            players.find(
+                player =>
+                    player.user_id ===
+                    currentUser.id
+            );
+    }
+
+} catch (userError) {
+
+    console.warn(
+        "Could not identify current 1v1 player:",
+        userError
+    );
+}
 
     if (currentPlayer) {
 
