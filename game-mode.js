@@ -3470,199 +3470,183 @@ function startOneVOneMode() {
 
 async function findOneVOneOpponent() {
 
-    /*
-     * Do not start another search if one is already active.
-     */
-
-    if (
-        oneVOneMatchId ||
-        oneVOnePolling
-    ) {
-
-        return;
-    }
-
-    /*
-     * FREE LIMIT
-     */
-
     if (
         !isPremiumUser() &&
-        getBattleCount() >=
-        FREE_BATTLE_LIMIT
+        getBattleCount() >= FREE_BATTLE_LIMIT
     ) {
-
         showPremiumMessage();
-
         return;
     }
 
-    const subject =
-        getElement(
-            "oneVOneSubject"
-        )?.value?.trim() || "";
-
-    const topic =
-        getElement(
-            "oneVOneTopic"
-        )?.value?.trim() || "";
-
-    const difficulty =
-        getElement(
-            "oneVOneDifficulty"
-        )?.value ||
-        "mixed";
-
-    if (!subject || !topic) {
-
-        alert(
-            "Choose a subject and topic first."
-        );
-
+    if (oneVOneMatchId) {
         return;
     }
-
-    let user;
-    let client;
 
     try {
 
-        user =
+        const user =
             await getCurrentUser();
 
-        client =
-            getSupabase();
-
-    } catch (error) {
-
-        console.error(
-            "1v1 authentication error:",
-            error
-        );
-
-        alert(
-            error?.message ||
-            "Please log in before playing 1v1."
-        );
-
-        return;
-    }
-
-    oneVOneMyName =
-        getDisplayName(
-            user
-        );
-
-    showMatchmaking();
-
-    oneVOneMatchmakingStartedAt =
-        Date.now();
-
-    oneVOneActive =
-        false;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    /*
-     * =====================================================
-     * FIND WAITING MATCH
-     * =====================================================
-     */
-
-    async function findWaitingMatch() {
-
-        const {
-            data,
-            error
-        } =
-            await client
-                .from(
-                    "game_matches"
-                )
-                .select("*")
-                .eq(
-                    "status",
-                    "waiting"
-                )
-                .eq(
-                    "subject",
-                    subject
-                )
-                .eq(
-                    "topic",
-                    topic
-                )
-                .eq(
-                    "difficulty",
-                    difficulty
-                )
-                .neq(
-                    "created_by",
-                    user.id
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:
-                            true
-                    }
-                )
-                .limit(1);
-
-        if (error) {
-            throw error;
+        if (!user || !user.id) {
+            throw new Error(
+                "You must be logged in to play 1v1."
+            );
         }
 
-        return data?.[0] || null;
-    }
+        const subject =
+            $("oneVOneSubject")?.value?.trim() || "";
 
-    try {
+        const topic =
+            $("oneVOneTopic")?.value?.trim() || "";
+
+        const difficulty =
+            $("oneVOneDifficulty")?.value || "mixed";
+
+        if (!subject || !topic) {
+
+            alert(
+                "Choose a subject and topic first."
+            );
+
+            return;
+        }
+
+        oneVOneMyName =
+            getDisplayName(user);
+
+        showMatchmaking();
+
+        const supabaseClient =
+            getSupabase();
 
         /*
-         * =================================================
-         * STEP 1
-         * LOOK FOR AN EXISTING PLAYER
-         * =================================================
+         * =====================================================
+         * FIND EXISTING WAITING MATCH
+         * =====================================================
          */
 
+        const {
+            data: waitingMatches,
+            error: searchError
+        } =
+            await supabaseClient
+                .from("game_matches")
+                .select("*")
+                .eq("status", "waiting")
+                .eq("subject", subject)
+                .eq("topic", topic)
+                .eq("difficulty", difficulty)
+                .neq("created_by", user.id)
+                .order("created_at", {
+                    ascending: true
+                })
+                .limit(1);
+
+        if (searchError) {
+            throw searchError;
+        }
+
         const existingMatch =
-            await findWaitingMatch();
+            waitingMatches?.[0] || null;
+
+        /*
+         * =====================================================
+         * ANOTHER PLAYER IS WAITING
+         * =====================================================
+         */
 
         if (existingMatch) {
 
-            console.log(
-                "Found waiting opponent:",
-                existingMatch
+            updateMatchmakingText(
+                "Opponent found! ⚔️",
+                "Joining the battle..."
             );
 
-            await joinExistingMatch(
-                existingMatch
+            const {
+                data: joinedMatch,
+                error: joinError
+            } =
+                await supabaseClient.rpc(
+                    "join_game_match",
+                    {
+                        p_match_id:
+                            existingMatch.id,
+
+                        p_display_name:
+                            oneVOneMyName
+                    }
+                );
+
+            if (joinError) {
+                throw joinError;
+            }
+
+            const matchId =
+                normalizeMatchId(
+                    joinedMatch
+                ) ||
+                existingMatch.id;
+
+            oneVOneMatchId =
+                matchId;
+
+            oneVOnePlayerNumber =
+                2;
+
+            oneVOneResultsRecorded =
+                false;
+
+            oneVOneAnsweredQuestions =
+                new Set();
+
+            await subscribeToOneVOne(
+                matchId
+            );
+
+            updateMatchmakingText(
+                "Opponent found! ⚔️",
+                "Both players are connected. Starting the battle..."
+            );
+
+            /*
+             * Give realtime/database updates a moment
+             * to reach both players.
+             */
+
+            setTimeout(
+                async function () {
+
+                    try {
+
+                        await checkMatchPlayers();
+
+                    } catch (error) {
+
+                        console.error(
+                            "Could not start joined 1v1:",
+                            error
+                        );
+
+                    }
+
+                },
+                500
             );
 
             return;
         }
 
         /*
-         * =================================================
-         * STEP 2
-         * CREATE OUR WAITING MATCH
-         * =================================================
+         * =====================================================
+         * NO OPPONENT — CREATE WAITING ROOM
+         * =====================================================
          */
-
-        updateMatchmakingText(
-            "Creating battle room...",
-            "StudyMind is preparing your 1v1 room."
-        );
 
         const {
             data: createdMatch,
             error: createError
         } =
-            await client.rpc(
+            await supabaseClient.rpc(
                 "create_game_match",
                 {
                     p_subject:
@@ -3680,43 +3664,29 @@ async function findOneVOneOpponent() {
             );
 
         if (createError) {
-
             throw createError;
         }
-
-        console.log(
-            "create_game_match response:",
-            createdMatch
-        );
 
         oneVOneMatchId =
             normalizeMatchId(
                 createdMatch
             );
 
-        if (
-            !oneVOneMatchId
-        ) {
+        if (!oneVOneMatchId) {
 
             throw new Error(
-                "The battle room was created, but Supabase did not return a match ID."
+                "The battle room was created but no match ID was returned."
             );
         }
 
         oneVOnePlayerNumber =
             1;
 
-        console.log(
-            "Created 1v1 match:",
-            oneVOneMatchId
-        );
+        oneVOneResultsRecorded =
+            false;
 
-        /*
-         * =================================================
-         * STEP 3
-         * SUBSCRIBE TO OUR MATCH
-         * =================================================
-         */
+        oneVOneAnsweredQuestions =
+            new Set();
 
         await subscribeToOneVOne(
             oneVOneMatchId
@@ -3724,23 +3694,274 @@ async function findOneVOneOpponent() {
 
         updateMatchmakingText(
             "Looking for an opponent...",
-            "Your battle room is ready. Waiting for another student."
+            "Your battle room is ready. Searching for another student..."
         );
 
         /*
-         * =================================================
-         * STEP 4
-         * START POLLING
-         * =================================================
+         * =====================================================
+         * POLL FOR OPPONENT
+         * =====================================================
          */
 
-        startOneVOnePolling(
-            client,
-            user,
-            subject,
-            topic,
-            difficulty
+        clearInterval(
+            oneVOnePolling
         );
+
+        oneVOneMatchmakingStartedAt =
+            Date.now();
+
+        oneVOnePolling =
+            setInterval(
+                async function () {
+
+                    if (
+                        !oneVOneMatchId ||
+                        oneVOneActive
+                    ) {
+
+                        return;
+                    }
+
+                    /*
+                     * -------------------------------------------------
+                     * TIMEOUT
+                     * -------------------------------------------------
+                     */
+
+                    if (
+                        Date.now() -
+                        oneVOneMatchmakingStartedAt >=
+                        MATCH_TIMEOUT
+                    ) {
+
+                        clearInterval(
+                            oneVOnePolling
+                        );
+
+                        oneVOnePolling =
+                            null;
+
+                        updateMatchmakingText(
+                            "Still waiting...",
+                            "No opponent has joined yet. You can keep waiting or cancel the search."
+                        );
+
+                        return;
+                    }
+
+                    try {
+
+                        /*
+                         * -------------------------------------------------
+                         * CHECK OUR MATCH
+                         * -------------------------------------------------
+                         */
+
+                        await checkMatchPlayers();
+
+                        if (
+                            !oneVOneMatchId ||
+                            oneVOneActive
+                        ) {
+
+                            return;
+                        }
+
+                        /*
+                         * -------------------------------------------------
+                         * LOOK FOR ANOTHER WAITING MATCH
+                         * -------------------------------------------------
+                         */
+
+                        const {
+                            data: otherMatches,
+                            error: otherSearchError
+                        } =
+                            await supabaseClient
+                                .from("game_matches")
+                                .select("*")
+                                .eq("status", "waiting")
+                                .eq("subject", subject)
+                                .eq("topic", topic)
+                                .eq("difficulty", difficulty)
+                                .neq("created_by", user.id)
+                                .neq("id", oneVOneMatchId)
+                                .order("created_at", {
+                                    ascending: true
+                                })
+                                .limit(1);
+
+                        if (otherSearchError) {
+
+                            console.warn(
+                                "Waiting-match search error:",
+                                otherSearchError
+                            );
+
+                            return;
+                        }
+
+                        const otherMatch =
+                            otherMatches?.[0] || null;
+
+                        if (!otherMatch) {
+                            return;
+                        }
+
+                        /*
+                         * -------------------------------------------------
+                         * STOP POLLING BEFORE JOINING
+                         * -------------------------------------------------
+                         */
+
+                        clearInterval(
+                            oneVOnePolling
+                        );
+
+                        oneVOnePolling =
+                            null;
+
+                        const oldMatchId =
+                            oneVOneMatchId;
+
+                        /*
+                         * -------------------------------------------------
+                         * JOIN THE OTHER PLAYER'S MATCH
+                         * -------------------------------------------------
+                         */
+
+                        updateMatchmakingText(
+                            "Opponent found! ⚔️",
+                            "Joining the opponent's battle room..."
+                        );
+
+                        const {
+                            data: joinedMatch,
+                            error: joinError
+                        } =
+                            await supabaseClient.rpc(
+                                "join_game_match",
+                                {
+                                    p_match_id:
+                                        otherMatch.id,
+
+                                    p_display_name:
+                                        oneVOneMyName
+                                }
+                            );
+
+                        if (joinError) {
+
+                            console.warn(
+                                "Could not join that waiting match:",
+                                joinError
+                            );
+
+                            /*
+                             * Another player may have taken it.
+                             * Continue searching using our original room.
+                             */
+
+                            oneVOneMatchId =
+                                oldMatchId;
+
+                            oneVOnePolling =
+                                setInterval(
+                                    arguments.callee,
+                                    MATCHMAKING_INTERVAL
+                                );
+
+                            return;
+                        }
+
+                        /*
+                         * -------------------------------------------------
+                         * CANCEL OUR OLD DUPLICATE ROOM
+                         * -------------------------------------------------
+                         */
+
+                        try {
+
+                            await supabaseClient.rpc(
+                                "cancel_game_match",
+                                {
+                                    p_match_id:
+                                        oldMatchId
+                                }
+                            );
+
+                        } catch (cancelError) {
+
+                            console.warn(
+                                "Could not cancel old waiting room:",
+                                cancelError
+                            );
+                        }
+
+                        await cleanupOneVOneConnection();
+
+                        /*
+                         * -------------------------------------------------
+                         * USE THE MATCH WE JOINED
+                         * -------------------------------------------------
+                         */
+
+                        oneVOneMatchId =
+                            normalizeMatchId(
+                                joinedMatch
+                            ) ||
+                            otherMatch.id;
+
+                        oneVOnePlayerNumber =
+                            2;
+
+                        oneVOneResultsRecorded =
+                            false;
+
+                        oneVOneAnsweredQuestions =
+                            new Set();
+
+                        await subscribeToOneVOne(
+                            oneVOneMatchId
+                        );
+
+                        updateMatchmakingText(
+                            "Opponent found! ⚔️",
+                            "Both players are connected. Starting the battle..."
+                        );
+
+                        setTimeout(
+                            async function () {
+
+                                try {
+
+                                    await checkMatchPlayers();
+
+                                } catch (error) {
+
+                                    console.error(
+                                        "Could not start 1v1 after joining:",
+                                        error
+                                    );
+
+                                }
+
+                            },
+                            500
+                        );
+
+                    } catch (pollingError) {
+
+                        console.error(
+                            "1v1 matchmaking polling error:",
+                            pollingError
+                        );
+
+                    }
+
+                },
+                MATCHMAKING_INTERVAL
+            );
 
     } catch (error) {
 
@@ -3748,6 +3969,13 @@ async function findOneVOneOpponent() {
             "1v1 matchmaking error:",
             error
         );
+
+        clearInterval(
+            oneVOnePolling
+        );
+
+        oneVOnePolling =
+            null;
 
         await cleanupOneVOneConnection();
 
@@ -3757,1453 +3985,14 @@ async function findOneVOneOpponent() {
         oneVOnePlayerNumber =
             null;
 
-        oneVOnePolling =
-            null;
-
-        oneVOneActive =
-            false;
-
         hideMatchmaking();
 
         alert(
             error?.message ||
-            "Could not start 1v1 matchmaking."
+            "Could not start matchmaking."
         );
     }
 }
-
-/* =========================================================
-   START POLLING
-========================================================= */
-
-function startOneVOnePolling(
-    client,
-    user,
-    subject,
-    topic,
-    difficulty
-) {
-
-    clearOneVOnePolling();
-
-    oneVOnePolling =
-        setInterval(
-            async function () {
-
-                if (
-                    !oneVOneMatchId ||
-                    oneVOneActive
-                ) {
-
-                    return;
-                }
-
-                /*
-                 * TIMEOUT
-                 */
-
-                if (
-                    Date.now() -
-                    oneVOneMatchmakingStartedAt >=
-                    MATCH_TIMEOUT
-                ) {
-
-                    clearOneVOnePolling();
-
-                    updateMatchmakingText(
-                        "Still waiting...",
-                        "No opponent has joined yet. You can keep waiting or cancel the search."
-                    );
-
-                    return;
-                }
-
-                try {
-
-                    /*
-                     * =========================================
-                     * CHECK OUR OWN MATCH
-                     * =========================================
-                     */
-
-                    const {
-                        data: ownMatch,
-                        error: ownMatchError
-                    } =
-                        await client
-                            .from(
-                                "game_matches"
-                            )
-                            .select("*")
-                            .eq(
-                                "id",
-                                oneVOneMatchId
-                            )
-                            .maybeSingle();
-
-                    if (ownMatchError) {
-
-                        console.warn(
-                            "Could not check own match:",
-                            ownMatchError
-                        );
-
-                    } else if (
-                        ownMatch
-                    ) {
-
-                        console.log(
-                            "Current match:",
-                            ownMatch
-                        );
-
-                        /*
-                         * If the database has changed the match
-                         * to active, somebody joined us.
-                         */
-
-                        if (
-                            ownMatch.status ===
-                            "active"
-                        ) {
-
-                            clearOneVOnePolling();
-
-                            await activateOneVOneMatch(
-                                ownMatch
-                            );
-
-                            return;
-                        }
-
-                        /*
-                         * If match has finished/cancelled,
-                         * stop polling.
-                         */
-
-                        if (
-                            ownMatch.status ===
-                            "cancelled" ||
-                            ownMatch.status ===
-                            "completed"
-                        ) {
-
-                            clearOneVOnePolling();
-
-                            return;
-                        }
-                    }
-
-                    /*
-                     * =========================================
-                     * CHECK PLAYERS
-                     * =========================================
-                     */
-
-                    await checkMatchPlayers();
-
-                    if (
-                        oneVOneActive
-                    ) {
-
-                        clearOneVOnePolling();
-
-                        return;
-                    }
-
-                    /*
-                     * =========================================
-                     * LOOK FOR ANOTHER WAITING ROOM
-                     * =========================================
-                     */
-
-                    const {
-                        data: otherMatches,
-                        error: otherError
-                    } =
-                        await client
-                            .from(
-                                "game_matches"
-                            )
-                            .select("*")
-                            .eq(
-                                "status",
-                                "waiting"
-                            )
-                            .eq(
-                                "subject",
-                                subject
-                            )
-                            .eq(
-                                "topic",
-                                topic
-                            )
-                            .eq(
-                                "difficulty",
-                                difficulty
-                            )
-                            .neq(
-                                "created_by",
-                                user.id
-                            )
-                            .order(
-                                "created_at",
-                                {
-                                    ascending:
-                                        true
-                                }
-                            )
-                            .limit(1);
-
-                    if (otherError) {
-
-                        console.warn(
-                            "Could not search other rooms:",
-                            otherError
-                        );
-
-                        return;
-                    }
-
-                    const otherMatch =
-                        otherMatches?.[0];
-
-                    if (!otherMatch) {
-
-                        return;
-                    }
-
-                    /*
-                     * Never join our own room.
-                     */
-
-                    if (
-                        String(
-                            otherMatch.id
-                        ) ===
-                        String(
-                            oneVOneMatchId
-                        )
-                    ) {
-
-                        return;
-                    }
-
-                    /*
-                     * =========================================
-                     * JOIN OTHER ROOM
-                     * =========================================
-                     */
-
-                    console.log(
-                        "Found another waiting room:",
-                        otherMatch.id
-                    );
-
-                    clearOneVOnePolling();
-
-                    await cleanupOneVOneConnection();
-
-                    oneVOneMatchId =
-                        null;
-
-                    oneVOnePlayerNumber =
-                        null;
-
-                    try {
-
-                        await joinExistingMatch(
-                            otherMatch
-                        );
-
-                    } catch (joinError) {
-
-                        console.warn(
-                            "Opponent room was already taken:",
-                            joinError
-                        );
-
-                        oneVOneMatchId =
-                            null;
-
-                        oneVOnePlayerNumber =
-                            null;
-
-                        /*
-                         * Start searching again.
-                         */
-
-                        setTimeout(
-                            function () {
-
-                                findOneVOneOpponent();
-
-                            },
-                            500
-                        );
-                    }
-
-                } catch (error) {
-
-                    console.error(
-                        "1v1 polling error:",
-                        error
-                    );
-                }
-
-            },
-            MATCHMAKING_INTERVAL
-        );
-}
-
-/* =========================================================
-   CLEAR POLLING
-========================================================= */
-
-function clearOneVOnePolling() {
-
-    if (
-        oneVOnePolling
-    ) {
-
-        clearInterval(
-            oneVOnePolling
-        );
-
-        oneVOnePolling =
-            null;
-    }
-}
-
-/* =========================================================
-   JOIN EXISTING MATCH
-========================================================= */
-
-async function joinExistingMatch(
-    match
-) {
-
-    if (!match?.id) {
-
-        throw new Error(
-            "Invalid battle room."
-        );
-    }
-
-    const client =
-        getSupabase();
-
-    const user =
-        await getCurrentUser();
-
-    updateMatchmakingText(
-        "Opponent found! ⚔️",
-        "Joining the battle room..."
-    );
-
-    /*
-     * Use the database RPC so that two players cannot
-     * accidentally become Player 2 at the same time.
-     */
-
-    const {
-        data,
-        error
-    } =
-        await client.rpc(
-            "join_game_match",
-            {
-                p_match_id:
-                    match.id,
-
-                p_display_name:
-                    oneVOneMyName ||
-                    getDisplayName(user)
-            }
-        );
-
-    if (error) {
-
-        throw error;
-    }
-
-    console.log(
-        "join_game_match response:",
-        data
-    );
-
-    oneVOneMatchId =
-        normalizeMatchId(
-            data
-        ) ||
-        match.id;
-
-    oneVOnePlayerNumber =
-        2;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    await subscribeToOneVOne(
-        oneVOneMatchId
-    );
-
-    /*
-     * Get the latest match state.
-     */
-
-    const {
-        data: updatedMatch,
-        error: matchError
-    } =
-        await client
-            .from(
-                "game_matches"
-            )
-            .select("*")
-            .eq(
-                "id",
-                oneVOneMatchId
-            )
-            .maybeSingle();
-
-    if (matchError) {
-
-        console.warn(
-            "Could not load joined match:",
-            matchError
-        );
-    }
-
-    if (
-        updatedMatch &&
-        updatedMatch.status ===
-        "active"
-    ) {
-
-        await activateOneVOneMatch(
-            updatedMatch
-        );
-
-        return;
-    }
-
-    /*
-     * Give the first player time to update the match.
-     */
-
-    updateMatchmakingText(
-        "Opponent found! ⚔️",
-        "Both players are connected. Starting the battle..."
-    );
-
-    /*
-     * Poll briefly for active state.
-     */
-
-    waitForActiveOneVOneMatch();
-}
-
-/* =========================================================
-   WAIT FOR ACTIVE MATCH
-========================================================= */
-
-function waitForActiveOneVOneMatch() {
-
-    clearOneVOnePolling();
-
-    const started =
-        Date.now();
-
-    oneVOnePolling =
-        setInterval(
-            async function () {
-
-                if (
-                    oneVOneActive
-                ) {
-
-                    clearOneVOnePolling();
-
-                    return;
-                }
-
-                if (
-                    !oneVOneMatchId
-                ) {
-
-                    clearOneVOnePolling();
-
-                    return;
-                }
-
-                if (
-                    Date.now() -
-                    started >
-                    30000
-                ) {
-
-                    clearOneVOnePolling();
-
-                    updateMatchmakingText(
-                        "Waiting for battle to start...",
-                        "The opponent is connected. StudyMind is preparing the match."
-                    );
-
-                    return;
-                }
-
-                try {
-
-                    const client =
-                        getSupabase();
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await client
-                            .from(
-                                "game_matches"
-                            )
-                            .select("*")
-                            .eq(
-                                "id",
-                                oneVOneMatchId
-                            )
-                            .maybeSingle();
-
-                    if (error) {
-
-                        return;
-                    }
-
-                    if (
-                        data?.status ===
-                        "active"
-                    ) {
-
-                        clearOneVOnePolling();
-
-                        await activateOneVOneMatch(
-                            data
-                        );
-                    }
-
-                } catch (error) {
-
-                    console.warn(
-                        "Waiting for active match failed:",
-                        error
-                    );
-                }
-
-            },
-            1000
-        );
-}
-
-/* =========================================================
-   CHECK MATCH PLAYERS
-========================================================= */
-
-async function checkMatchPlayers() {
-
-    if (!oneVOneMatchId) {
-        return;
-    }
-
-    const client =
-        getSupabase();
-
-    /*
-     * First check the match itself.
-     */
-
-    const {
-        data: match,
-        error: matchError
-    } =
-        await client
-            .from(
-                "game_matches"
-            )
-            .select("*")
-            .eq(
-                "id",
-                oneVOneMatchId
-            )
-            .maybeSingle();
-
-    if (matchError) {
-
-        console.warn(
-            "Match check error:",
-            matchError
-        );
-
-        return;
-    }
-
-    if (!match) {
-        return;
-    }
-
-    if (
-        match.status ===
-        "active"
-    ) {
-
-        await activateOneVOneMatch(
-            match
-        );
-
-        return;
-    }
-
-    /*
-     * Also inspect game_match_players.
-     */
-
-    const {
-        data: players,
-        error: playersError
-    } =
-        await client
-            .from(
-                "game_match_players"
-            )
-            .select("*")
-            .eq(
-                "match_id",
-                oneVOneMatchId
-            )
-            .order(
-                "player_number",
-                {
-                    ascending:
-                        true
-                }
-            );
-
-    if (playersError) {
-
-        /*
-         * Do not crash matchmaking if RLS temporarily prevents
-         * reading the player rows. The match status remains the
-         * primary source of truth.
-         */
-
-        console.warn(
-            "Could not read match players:",
-            playersError
-        );
-
-        return;
-    }
-
-    console.log(
-        "Match players:",
-        players
-    );
-
-    if (
-        players &&
-        players.length >= 2
-    ) {
-
-        await activateOneVOneMatch(
-            match
-        );
-    }
-}
-
-/* =========================================================
-   ACTIVATE 1V1 MATCH
-========================================================= */
-
-async function activateOneVOneMatch(
-    match
-) {
-
-    if (
-        oneVOneActive
-    ) {
-
-        return;
-    }
-
-    oneVOneActive =
-        true;
-
-    clearOneVOnePolling();
-
-    updateMatchmakingText(
-        "Battle starting! ⚔️",
-        "Your opponent has joined. Get ready!"
-    );
-
-    /*
-     * Give realtime/database updates a moment to settle.
-     */
-
-    setTimeout(
-        function () {
-
-            startOneVOneArena();
-
-            loadOneVOneBattle(
-                match
-            );
-
-        },
-        700
-    );
-}
-
-/* =========================================================
-   LOAD 1V1 BATTLE
-========================================================= */
-
-async function loadOneVOneBattle(
-    match
-) {
-
-    console.log(
-        "Starting 1v1 battle:",
-        match
-    );
-
-    /*
-     * IMPORTANT:
-     *
-     * The match needs questions.
-     *
-     * Player 1 generates the questions.
-     * Player 2 receives the same questions from the database.
-     */
-
-    try {
-
-        if (
-            oneVOnePlayerNumber ===
-            1
-        ) {
-
-            updateMatchmakingText(
-                "Preparing questions...",
-                "StudyMind is generating the battle questions."
-            );
-
-            const questions =
-                await generateBattleQuestions(
-                    match.subject,
-                    match.topic,
-                    match.difficulty
-                );
-
-            battleState.mode =
-                "1v1";
-
-            battleState.subject =
-                match.subject;
-
-            battleState.topic =
-                match.topic;
-
-            battleState.difficulty =
-                match.difficulty;
-
-            battleState.questions =
-                questions;
-
-            battleState.currentQuestion =
-                0;
-
-            battleState.playerScore =
-                0;
-
-            battleState.opponentScore =
-                0;
-
-            battleState.battleActive =
-                true;
-
-            /*
-             * Store questions in the match.
-             */
-
-            const client =
-                getSupabase();
-
-            const {
-                error
-            } =
-                await client
-                    .from(
-                        "game_matches"
-                    )
-                    .update({
-                        questions:
-                            questions,
-
-                        status:
-                            "active"
-                    })
-                    .eq(
-                        "id",
-                        oneVOneMatchId
-                    );
-
-            if (error) {
-
-                console.warn(
-                    "Could not save questions to match:",
-                    error
-                );
-            }
-
-            showOneVOneQuestion();
-
-        } else {
-
-            /*
-             * Player 2 waits for Player 1's questions.
-             */
-
-            await waitForOneVOneQuestions();
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Could not start 1v1 battle:",
-            error
-        );
-
-        alert(
-            error?.message ||
-            "Could not start the 1v1 battle."
-        );
-    }
-}
-
-/* =========================================================
-   PLAYER 2 — WAIT FOR QUESTIONS
-========================================================= */
-
-function waitForOneVOneQuestions() {
-
-    clearOneVOnePolling();
-
-    const started =
-        Date.now();
-
-    updateMatchmakingText(
-        "Battle ready! ⚔️",
-        "Waiting for the questions to load..."
-    );
-
-    oneVOnePolling =
-        setInterval(
-            async function () {
-
-                if (
-                    !oneVOneMatchId
-                ) {
-
-                    clearOneVOnePolling();
-
-                    return;
-                }
-
-                if (
-                    Date.now() -
-                    started >
-                    30000
-                ) {
-
-                    clearOneVOnePolling();
-
-                    console.warn(
-                        "Timed out waiting for questions."
-                    );
-
-                    return;
-                }
-
-                try {
-
-                    const client =
-                        getSupabase();
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await client
-                            .from(
-                                "game_matches"
-                            )
-                            .select("*")
-                            .eq(
-                                "id",
-                                oneVOneMatchId
-                            )
-                            .maybeSingle();
-
-                    if (error) {
-                        return;
-                    }
-
-                    if (
-                        Array.isArray(
-                            data?.questions
-                        ) &&
-                        data.questions.length >=
-                        QUESTIONS_PER_BATTLE
-                    ) {
-
-                        clearOneVOnePolling();
-
-                        battleState.mode =
-                            "1v1";
-
-                        battleState.subject =
-                            data.subject;
-
-                        battleState.topic =
-                            data.topic;
-
-                        battleState.difficulty =
-                            data.difficulty;
-
-                        battleState.questions =
-                            normalizeQuestions(
-                                data.questions
-                            );
-
-                        battleState.currentQuestion =
-                            0;
-
-                        battleState.playerScore =
-                            0;
-
-                        battleState.opponentScore =
-                            0;
-
-                        battleState.battleActive =
-                            true;
-
-                        showOneVOneQuestion();
-                    }
-
-                } catch (error) {
-
-                    console.warn(
-                        "Question polling error:",
-                        error
-                    );
-                }
-
-            },
-            1000
-        );
-}
-
-/* =========================================================
-   SHOW 1V1 QUESTION
-========================================================= */
-
-function showOneVOneQuestion() {
-
-    if (
-        !battleState.battleActive
-    ) {
-
-        return;
-    }
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    if (!question) {
-
-        finishOneVOneBattle();
-
-        return;
-    }
-
-    const number =
-        battleState.currentQuestion +
-        1;
-
-    if (
-        $("oneVOneQuestionNumber")
-    ) {
-
-        $("oneVOneQuestionNumber")
-            .textContent =
-            number;
-    }
-
-    if (
-        $("oneVOneQuestion")
-    ) {
-
-        $("oneVOneQuestion")
-            .textContent =
-            question.question;
-    }
-
-    if (
-        $("oneVOneTopicDisplay")
-    ) {
-
-        $("oneVOneTopicDisplay")
-            .textContent =
-            battleState.topic;
-    }
-
-    const answerGrid =
-        $("oneVOneAnswerGrid");
-
-    if (!answerGrid) {
-
-        console.warn(
-            "oneVOneAnswerGrid element not found."
-        );
-
-        return;
-    }
-
-    answerGrid.innerHTML =
-        "";
-
-    question.options.forEach(
-        function (
-            option,
-            index
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.className =
-                "answer-button";
-
-            button.textContent =
-                option;
-
-            button.addEventListener(
-                "click",
-                function () {
-
-                    answerOneVOneQuestion(
-                        index
-                    );
-
-                }
-            );
-
-            answerGrid.appendChild(
-                button
-            );
-        }
-    );
-
-    updateOneVOneScores();
-}
-
-/* =========================================================
-   ANSWER 1V1 QUESTION
-========================================================= */
-
-async function answerOneVOneQuestion(
-    selectedIndex
-) {
-
-    const questionIndex =
-        battleState.currentQuestion;
-
-    if (
-        oneVOneAnsweredQuestions.has(
-            questionIndex
-        )
-    ) {
-
-        return;
-    }
-
-    oneVOneAnsweredQuestions.add(
-        questionIndex
-    );
-
-    const question =
-        battleState.questions[
-            questionIndex
-        ];
-
-    if (!question) {
-        return;
-    }
-
-    const buttons =
-        document.querySelectorAll(
-            "#oneVOneAnswerGrid .answer-button"
-        );
-
-    buttons.forEach(
-        function (
-            button,
-            index
-        ) {
-
-            button.disabled =
-                true;
-
-            if (
-                index ===
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-
-            if (
-                index ===
-                selectedIndex &&
-                index !==
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "incorrect"
-                );
-            }
-        }
-    );
-
-    if (
-        selectedIndex ===
-        question.answer
-    ) {
-
-        battleState.playerScore +=
-            10;
-    }
-
-    updateOneVOneScores();
-
-    /*
-     * Save answer to the database.
-     */
-
-    try {
-
-        const client =
-            getSupabase();
-
-        await client.rpc(
-            "submit_game_answer",
-            {
-                p_match_id:
-                    oneVOneMatchId,
-
-                p_question_index:
-                    questionIndex,
-
-                p_answer_index:
-                    selectedIndex,
-
-                p_player_number:
-                    oneVOnePlayerNumber,
-
-                p_is_correct:
-                    selectedIndex ===
-                    question.answer
-            }
-        );
-
-    } catch (error) {
-
-        /*
-         * If this RPC is not yet present, the local battle
-         * still continues. The error is logged so it is easy
-         * to identify the database function later.
-         */
-
-        console.warn(
-            "Could not submit 1v1 answer to Supabase:",
-            error
-        );
-    }
-
-    setTimeout(
-        function () {
-
-            battleState.currentQuestion++;
-
-            showOneVOneQuestion();
-
-        },
-        700
-    );
-}
-
-/* =========================================================
-   UPDATE 1V1 SCORES
-========================================================= */
-
-function updateOneVOneScores() {
-
-    if (
-        $("oneVOnePlayerScore")
-    ) {
-
-        $("oneVOnePlayerScore")
-            .textContent =
-            battleState.playerScore;
-    }
-
-    if (
-        $("oneVOneOpponentScore")
-    ) {
-
-        $("oneVOneOpponentScore")
-            .textContent =
-            battleState.opponentScore;
-    }
-
-    /*
-     * Also support alternative IDs if your HTML uses them.
-     */
-
-    if (
-        $("oneVOneScore")
-    ) {
-
-        $("oneVOneScore")
-            .textContent =
-            battleState.playerScore;
-    }
-
-    if (
-        $("oneVOneOpponent")
-    ) {
-
-        $("oneVOneOpponent")
-            .textContent =
-            battleState.opponentScore;
-    }
-}
-
-/* =========================================================
-   FINISH 1V1
-========================================================= */
-
-async function finishOneVOneBattle() {
-
-    if (
-        oneVOneResultsRecorded
-    ) {
-
-        return;
-    }
-
-    oneVOneResultsRecorded =
-        true;
-
-    battleState.battleActive =
-        false;
-
-    clearOneVOnePolling();
-
-    let points = 0;
-
-    let title =
-        "Battle Complete";
-
-    let message =
-        "";
-
-    const player =
-        battleState.playerScore;
-
-    const opponent =
-        battleState.opponentScore;
-
-    if (
-        player >
-        opponent
-    ) {
-
-        title =
-            "🏆 Victory!";
-
-        message =
-            "Excellent work! You defeated your opponent.";
-
-        points =
-            player + 25;
-
-    } else if (
-        player <
-        opponent
-    ) {
-
-        title =
-            "Keep Studying!";
-
-        message =
-            "Your opponent won this round. Review the topic and try again.";
-
-        points =
-            player;
-
-    } else {
-
-        title =
-            "🤝 Draw!";
-
-        message =
-            "Both players finished with the same score.";
-
-        points =
-            player + 10;
-    }
-
-    setBattlePoints(
-        getBattlePoints() +
-        points
-    );
-
-    if (
-        $("oneVOneResultTitle")
-    ) {
-
-        $("oneVOneResultTitle")
-            .textContent =
-            title;
-    }
-
-    if (
-        $("oneVOneResultMessage")
-    ) {
-
-        $("oneVOneResultMessage")
-            .textContent =
-            message;
-    }
-
-    if (
-        $("oneVOneFinalPlayerScore")
-    ) {
-
-        $("oneVOneFinalPlayerScore")
-            .textContent =
-            player;
-    }
-
-    if (
-        $("oneVOneFinalOpponentScore")
-    ) {
-
-        $("oneVOneFinalOpponentScore")
-            .textContent =
-            opponent;
-    }
-
-    if (
-        $("oneVOnePointsEarned")
-    ) {
-
-        $("oneVOnePointsEarned")
-            .textContent =
-            `+${points}`;
-    }
-
-    /*
-     * Count the battle once.
-     */
-
-    if (
-        !isPremiumUser()
-    ) {
-
-        setBattlesUsed(
-            getBattlesUsed() + 1
-        );
-
-        updateBattleLimitUI();
-    }
-
-    updateLeaderboardUI();
-
-    /*
-     * Tell Supabase the match is complete.
-     */
-
-    try {
-
-        const client =
-            getSupabase();
-
-        await client
-            .from(
-                "game_matches"
-            )
-            .update({
-                status:
-                    "completed"
-            })
-            .eq(
-                "id",
-                oneVOneMatchId
-            );
-
-    } catch (error) {
-
-        console.warn(
-            "Could not mark 1v1 match completed:",
-            error
-        );
-    }
-
-    /*
-     * Show the normal results panel if your HTML uses it.
-     */
-
-    const arena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = false;
-    }
-
-    cleanupOneVOneConnection();
-}
-
 /* =========================================================
    CANCEL 1V1
 ========================================================= */
