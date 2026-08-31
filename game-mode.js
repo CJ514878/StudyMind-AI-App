@@ -4412,6 +4412,235 @@ async function cleanupOneVOneConnection() {
     }
 }
 /* =========================================================
+   JOIN EXISTING 1V1 MATCH
+========================================================= */
+
+async function joinExistingMatch(match) {
+
+    const client = getSupabase();
+
+    if (!client) {
+        throw new Error(
+            "Supabase client is not available."
+        );
+    }
+
+    if (!match || !match.id) {
+        throw new Error(
+            "Invalid match."
+        );
+    }
+
+    try {
+
+        /*
+         * Get the currently logged-in user.
+         */
+
+        const user =
+            await getCurrentUser();
+
+        if (!user) {
+            throw new Error(
+                "You must be logged in to join a 1v1 match."
+            );
+        }
+
+        /*
+         * Get the student's display name.
+         *
+         * Use the same name already used elsewhere
+         * in Game Mode when possible.
+         */
+
+        let displayName =
+            user.user_metadata?.display_name ||
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split("@")[0] ||
+            "Player";
+
+        /*
+         * Save the match ID immediately.
+         */
+
+        oneVOneMatchId =
+            match.id;
+
+        /*
+         * Make sure we are not already in this match.
+         */
+
+        const {
+            data: existingPlayer,
+            error: existingPlayerError
+        } =
+            await client
+                .from("game_match_players")
+                .select(
+                    "user_id,player_number,display_name"
+                )
+                .eq(
+                    "match_id",
+                    match.id
+                )
+                .eq(
+                    "user_id",
+                    user.id
+                )
+                .maybeSingle();
+
+        if (existingPlayerError) {
+
+            console.error(
+                "Could not check existing 1v1 player:",
+                existingPlayerError
+            );
+
+            throw existingPlayerError;
+        }
+
+        /*
+         * If we are already in the match, simply
+         * reconnect to it.
+         */
+
+        if (existingPlayer) {
+
+            console.log(
+                "Already joined this 1v1 match:",
+                existingPlayer
+            );
+
+            oneVOnePlayerNumber =
+                Number(
+                    existingPlayer.player_number
+                );
+
+            oneVOneMyName =
+                existingPlayer.display_name ||
+                displayName;
+
+            updateMatchmakingText(
+                "Rejoining battle... ⚔️",
+                "Connecting you to your opponent."
+            );
+
+            await subscribeToOneVOne(
+                match.id
+            );
+
+            return existingPlayer;
+        }
+
+        /*
+         * Join through the SECURITY DEFINER RPC.
+         *
+         * This is important because the database function
+         * handles the protected game_match_players insert.
+         */
+
+        console.log(
+            "Joining existing 1v1 match:",
+            match.id
+        );
+
+        const {
+            data: joinedMatch,
+            error: joinError
+        } =
+            await client.rpc(
+                "join_game_match",
+                {
+                    p_match_id:
+                        match.id,
+                    p_display_name:
+                        displayName
+                }
+            );
+
+        if (joinError) {
+
+            console.error(
+                "join_game_match error:",
+                joinError
+            );
+
+            throw joinError;
+        }
+
+        console.log(
+            "Successfully joined 1v1 match:",
+            joinedMatch
+        );
+
+        /*
+         * The database function returns player_number = 2
+         * for the joining player.
+         */
+
+        if (
+            joinedMatch &&
+            joinedMatch.player_number
+        ) {
+
+            oneVOnePlayerNumber =
+                Number(
+                    joinedMatch.player_number
+                );
+        } else {
+
+            oneVOnePlayerNumber =
+                2;
+        }
+
+        oneVOneMyName =
+            displayName;
+
+        updateMatchmakingText(
+            "Opponent found! ⚔️",
+            "Both players are ready. Preparing your battle..."
+        );
+
+        /*
+         * Subscribe AFTER joining so we immediately receive
+         * any subsequent match/player updates.
+         */
+
+        await subscribeToOneVOne(
+            match.id
+        );
+
+        /*
+         * Check immediately in case the database has
+         * already changed the match to starting.
+         */
+
+        await checkMatchPlayers();
+
+        return joinedMatch;
+
+    } catch (error) {
+
+        console.error(
+            "joinExistingMatch error:",
+            error
+        );
+
+        updateMatchmakingText(
+            "Could not join match",
+            cleanErrorMessage(
+                error?.message ||
+                error
+            )
+        );
+
+        throw error;
+    }
+}
+
+
+/* =========================================================
    CHECK 1V1 MATCH PLAYERS
 ========================================================= */
 
