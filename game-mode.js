@@ -3479,6 +3479,182 @@ function clearOneVOnePolling() {
             null;
     }
 }
+async function checkMatchPlayers() {
+
+    if (!oneVOneMatchId) {
+        return;
+    }
+
+    const supabaseClient =
+        getSupabase();
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("game_match_players")
+            .select("*")
+            .eq(
+                "match_id",
+                oneVOneMatchId
+            )
+            .order(
+                "player_number",
+                {
+                    ascending: true
+                }
+            );
+
+    if (error) {
+        throw error;
+    }
+
+    const players =
+        Array.isArray(data)
+            ? data
+            : [];
+
+    console.log(
+        "1v1 players:",
+        players
+    );
+
+    /*
+     * -----------------------------------------------------
+     * WAITING FOR PLAYER 2
+     * -----------------------------------------------------
+     */
+
+    if (players.length < 2) {
+
+        updateMatchmakingText(
+            "Looking for an opponent...",
+            "Your battle room is ready. Searching for another student..."
+        );
+
+        return;
+    }
+
+    /*
+     * -----------------------------------------------------
+     * TWO PLAYERS FOUND
+     * -----------------------------------------------------
+     */
+
+    console.log(
+        "1v1 opponent found:",
+        players
+    );
+
+    clearOneVOnePolling();
+
+    const playerOne =
+        players.find(
+            player =>
+                Number(
+                    player.player_number
+                ) === 1
+        );
+
+    const playerTwo =
+        players.find(
+            player =>
+                Number(
+                    player.player_number
+                ) === 2
+        );
+
+    /*
+     * Make sure the current player knows
+     * which side they are on.
+     */
+
+    const currentPlayer =
+        players.find(
+            player =>
+                player.user_id ===
+                (
+                    oneVOneUserId ||
+                    null
+                )
+        );
+
+    if (currentPlayer) {
+
+        oneVOnePlayerNumber =
+            Number(
+                currentPlayer.player_number
+            );
+    }
+
+    /*
+     * -----------------------------------------------------
+     * MATCH IS READY
+     * -----------------------------------------------------
+     */
+
+    oneVOneActive =
+        true;
+
+    updateMatchmakingText(
+        "Opponent found! ⚔️",
+        "Both players are connected. Starting the battle..."
+    );
+
+    /*
+     * Update database status from
+     * starting → active.
+     *
+     * Only Player 1 attempts this.
+     * The other player will receive the
+     * realtime update.
+     */
+
+    if (
+        oneVOnePlayerNumber === 1
+    ) {
+
+        try {
+
+            await supabaseClient
+                .from("game_matches")
+                .update({
+                    status: "active"
+                })
+                .eq(
+                    "id",
+                    oneVOneMatchId
+                )
+                .eq(
+                    "status",
+                    "starting"
+                );
+
+        } catch (statusError) {
+
+            console.warn(
+                "Could not activate 1v1 match:",
+                statusError
+            );
+        }
+    }
+
+    /*
+     * -----------------------------------------------------
+     * START ARENA
+     * -----------------------------------------------------
+     */
+
+    setTimeout(
+        function () {
+
+            startOneVOneArena();
+
+        },
+        700
+    );
+}
 async function findOneVOneOpponent() {
 
     if (
