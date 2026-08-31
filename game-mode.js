@@ -4196,6 +4196,130 @@ async function findOneVOneOpponent() {
     }
 }
 /* =========================================================
+   JOIN EXISTING 1V1 MATCH
+========================================================= */
+
+async function joinExistingMatch(match) {
+
+    if (!match || !match.id) {
+        throw new Error("Invalid match.");
+    }
+
+    const supabaseClient =
+        getSupabase();
+
+    const user =
+        await getCurrentUser();
+
+    if (!user || !user.id) {
+        throw new Error(
+            "You must be logged in to join a battle."
+        );
+    }
+
+    const displayName =
+        getDisplayName(user);
+
+    console.log(
+        "Joining existing 1v1 match:",
+        match.id
+    );
+
+    /*
+     * Call the database function that safely
+     * adds Player 2 to the match.
+     */
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.rpc(
+            "join_game_match",
+            {
+                p_match_id:
+                    match.id,
+
+                p_display_name:
+                    displayName
+            }
+        );
+
+    if (error) {
+
+        console.error(
+            "join_game_match error:",
+            error
+        );
+
+        throw error;
+    }
+
+    console.log(
+        "Successfully joined 1v1 match:",
+        data
+    );
+
+    oneVOneMatchId =
+        match.id;
+
+    oneVOnePlayerNumber =
+        2;
+
+    oneVOneResultsRecorded =
+        false;
+
+    oneVOneAnsweredQuestions =
+        new Set();
+
+    /*
+     * Stop matchmaking polling.
+     */
+
+    if (
+        typeof clearOneVOnePolling ===
+        "function"
+    ) {
+
+        clearOneVOnePolling();
+
+    } else if (
+        oneVOnePolling
+    ) {
+
+        clearInterval(
+            oneVOnePolling
+        );
+
+        oneVOnePolling =
+            null;
+    }
+
+    /*
+     * Subscribe to the match.
+     */
+
+    await subscribeToOneVOne(
+        oneVOneMatchId
+    );
+
+    /*
+     * The database function changes the match
+     * to "starting". The realtime subscription
+     * will handle the transition into the arena.
+     */
+
+    updateMatchmakingText(
+        "Opponent found! ⚔️",
+        "Your opponent has joined. Preparing the battle..."
+    );
+
+    console.log(
+        "1v1 Player 2 ready:",
+        oneVOneMatchId
+    );
+}
+/* =========================================================
    CANCEL 1V1
 ========================================================= */
 
@@ -4660,6 +4784,9 @@ window.startOneVOneMode =
 
 window.findOneVOneOpponent =
     findOneVOneOpponent;
+
+window.joinExistingMatch =
+    joinExistingMatch;
 
 window.cancelOneVOne =
     cancelOneVOne;
