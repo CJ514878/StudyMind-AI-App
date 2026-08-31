@@ -3147,59 +3147,580 @@ function startOneVOneMode() {
    FIND 1V1 OPPONENT
 ========================================================= */
 
-function findOneVOneOpponent() {
+async function findOneVOneOpponent() {
 
-    if (!hasBattleAvailable()) {
+    if (
+        !isPremiumUser() &&
+        getBattleCount() >= FREE_BATTLE_LIMIT
+    ) {
 
-        openPremium();
-
+        showPremiumMessage();
         return;
+
     }
 
-    const subject =
-        $("oneVOneSubject")
-            ?.value;
 
-    const topic =
-        $("oneVOneTopic")
-            ?.value;
+    if (oneVOneMatchId) {
 
-    if (!subject || !topic) {
+        return;
 
-        alert(
-            "Please choose a subject and topic."
+    }
+
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+
+        const subject =
+            getElement(
+                "oneVOneSubject"
+            )?.value?.trim() || "";
+
+
+        const topic =
+            getElement(
+                "oneVOneTopic"
+            )?.value?.trim() || "";
+
+
+        const difficulty =
+            getElement(
+                "oneVOneDifficulty"
+            )?.value || "mixed";
+
+
+        if (
+            !subject ||
+            !topic
+        ) {
+
+            alert(
+                "Choose a subject and topic first."
+            );
+
+            return;
+
+        }
+
+
+        oneVOneMyName =
+            getDisplayName(
+                user
+            );
+
+
+        showMatchmaking();
+
+
+        const supabase =
+            getSupabase();
+
+
+        /*
+         * -----------------------------------------------------
+         * FIND A WAITING OPPONENT
+         * -----------------------------------------------------
+         *
+         * This function is deliberately reused after creating
+         * our own room.
+         *
+         * That fixes the race condition where two students
+         * press Find Opponent at almost the same time.
+         */
+
+        const findWaitingMatch =
+            async () => {
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabase
+                        .from(
+                            "game_matches"
+                        )
+                        .select("*")
+                        .eq(
+                            "status",
+                            "waiting"
+                        )
+                        .eq(
+                            "subject",
+                            subject
+                        )
+                        .eq(
+                            "topic",
+                            topic
+                        )
+                        .eq(
+                            "difficulty",
+                            difficulty
+                        )
+                        .neq(
+                            "created_by",
+                            user.id
+                        )
+                        .order(
+                            "created_at",
+                            {
+                                ascending:
+                                    true
+                            }
+                        )
+                        .limit(1);
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                return (
+                    data?.[0] ||
+                    null
+                );
+
+            };
+
+
+        /*
+         * -----------------------------------------------------
+         * FIRST SEARCH
+         * -----------------------------------------------------
+         */
+
+        const existingMatch =
+            await findWaitingMatch();
+
+
+        if (
+            existingMatch
+        ) {
+
+            await joinExistingMatch(
+                existingMatch
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * -----------------------------------------------------
+         * NO OPPONENT FOUND
+         * CREATE PLAYER 1 ROOM
+         * -----------------------------------------------------
+         */
+
+        const {
+            data: createdMatch,
+            error: createError
+        } =
+            await supabase.rpc(
+                "create_game_match",
+                {
+
+                    p_subject:
+                        subject,
+
+                    p_topic:
+                        topic,
+
+                    p_difficulty:
+                        difficulty,
+
+                    p_display_name:
+                        oneVOneMyName
+
+                }
+            );
+
+
+        if (createError) {
+
+            throw createError;
+
+        }
+
+
+        oneVOneMatchId =
+            normalizeMatchId(
+                createdMatch
+            );
+
+
+        if (
+            !oneVOneMatchId
+        ) {
+
+            throw new Error(
+                "The battle room was created but no match ID was returned."
+            );
+
+        }
+
+
+        oneVOnePlayerNumber =
+            1;
+
+
+        oneVOneResultsRecorded =
+            false;
+
+
+        oneVOneAnsweredQuestions =
+            new Set();
+
+
+        await subscribeToOneVOne(
+            oneVOneMatchId
         );
 
-        return;
+
+        updateMatchmakingText(
+
+            "Looking for an opponent...",
+
+            "Your battle room is ready. Searching for another student with the same settings."
+
+        );
+
+
+        /*
+         * -----------------------------------------------------
+         * IMPORTANT MATCHMAKING FIX
+         * -----------------------------------------------------
+         *
+         * We do NOT only wait for someone to join our room.
+         *
+         * We also keep looking for another waiting room.
+         *
+         * Example:
+         *
+         * Student A creates Room A
+         * Student B creates Room B
+         *
+         * Previously:
+         *
+         * A -> waits in Room A
+         * B -> waits in Room B
+         *
+         * Nobody joins anybody.
+         *
+         * Now:
+         *
+         * A sees Room B -> joins B
+         * OR
+         * B sees Room A -> joins A
+         *
+         * The database RPC safely decides which player
+         * becomes Player 2.
+         */
+
+        clearInterval(
+            oneVOnePolling
+        );
+
+
+        oneVOneMatchmakingStartedAt =
+            Date.now();
+
+
+        oneVOnePolling =
+            setInterval(
+
+                async () => {
+
+                    if (
+                        !oneVOneMatchId ||
+                        oneVOneActive
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * -------------------------------------------------
+                     * TIMEOUT
+                     * -------------------------------------------------
+                     */
+
+                    if (
+                        Date.now() -
+                        oneVOneMatchmakingStartedAt >=
+                        MATCH_TIMEOUT
+                    ) {
+
+                        clearInterval(
+                            oneVOnePolling
+                        );
+
+
+                        oneVOnePolling =
+                            null;
+
+
+                        updateMatchmakingText(
+
+                            "Still waiting...",
+
+                            "No opponent has joined yet. You can keep waiting or cancel the search."
+
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        /*
+                         * -------------------------------------------------
+                         * CHECK OUR OWN ROOM
+                         * -------------------------------------------------
+                         */
+
+                        await checkMatchPlayers();
+
+
+                        if (
+                            !oneVOneMatchId ||
+                            oneVOneActive
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * -------------------------------------------------
+                         * CHECK OTHER WAITING ROOMS
+                         * -------------------------------------------------
+                         */
+
+                        const otherMatch =
+                            await findWaitingMatch();
+
+
+                        if (
+                            !otherMatch
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Never try to join our own room.
+                         */
+
+                        if (
+                            otherMatch.id ===
+                            oneVOneMatchId
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * -------------------------------------------------
+                         * FOUND ANOTHER WAITING ROOM
+                         * -------------------------------------------------
+                         */
+
+                        const ownMatchId =
+                            oneVOneMatchId;
+
+
+                        clearInterval(
+                            oneVOnePolling
+                        );
+
+
+                        oneVOnePolling =
+                            null;
+
+
+                        /*
+                         * Cancel our duplicate waiting room.
+                         *
+                         * If another player has already joined our
+                         * room between the SELECT and this RPC,
+                         * cancel_game_match may fail. That's okay.
+                         */
+
+                        try {
+
+                            await supabase.rpc(
+
+                                "cancel_game_match",
+
+                                {
+
+                                    p_match_id:
+                                        ownMatchId
+
+                                }
+
+                            );
+
+                        } catch (
+                            cancelError
+                        ) {
+
+                            console.warn(
+
+                                "Could not cancel duplicate waiting room:",
+
+                                cancelError
+
+                            );
+
+                        }
+
+
+                        /*
+                         * Disconnect from our old room.
+                         */
+
+                        await cleanupOneVOneConnection();
+
+
+                        oneVOneMatchId =
+                            null;
+
+
+                        oneVOnePlayerNumber =
+                            null;
+
+
+                        /*
+                         * -------------------------------------------------
+                         * JOIN THE OTHER PLAYER
+                         * -------------------------------------------------
+                         */
+
+                        try {
+
+                            await joinExistingMatch(
+                                otherMatch
+                            );
+
+                        } catch (
+                            joinError
+                        ) {
+
+                            console.warn(
+
+                                "That opponent was already taken. Searching again...",
+
+                                joinError
+
+                            );
+
+
+                            oneVOneMatchId =
+                                null;
+
+
+                            oneVOnePlayerNumber =
+                                null;
+
+
+                            await cleanupOneVOneConnection();
+
+
+                            /*
+                             * Give the other client a moment to finish
+                             * its own join before searching again.
+                             */
+
+                            setTimeout(
+
+                                () => {
+
+                                    findOneVOneOpponent();
+
+                                },
+
+                                300
+
+                            );
+
+                        }
+
+
+                    } catch (
+                        pollingError
+                    ) {
+
+                        console.error(
+
+                            "1v1 matchmaking polling error:",
+
+                            pollingError
+
+                        );
+
+                    }
+
+                },
+
+                MATCHMAKING_INTERVAL
+
+            );
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+
+            "1v1 matchmaking error:",
+
+            error
+
+        );
+
+
+        await cleanupOneVOneConnection();
+
+
+        oneVOneMatchId =
+            null;
+
+
+        oneVOnePlayerNumber =
+            null;
+
+
+        hideMatchmaking();
+
+
+        alert(
+
+            error?.message ||
+
+            "Could not start matchmaking."
+
+        );
+
     }
 
-    const status =
-        $("matchmakingStatus");
-
-    if (status) {
-        status.hidden = false;
-    }
-
-    const button =
-        $("findOpponentButton");
-
-    if (button) {
-        button.disabled = true;
-    }
-
-    if ($("matchmakingTitle")) {
-
-        $("matchmakingTitle")
-            .textContent =
-            "Looking for an opponent...";
-    }
-
-    if ($("matchmakingMessage")) {
-
-        $("matchmakingMessage")
-            .textContent =
-            "StudyMind is searching for another student.";
-    }
 }
 
 /* =========================================================
