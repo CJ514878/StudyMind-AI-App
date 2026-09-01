@@ -7475,12 +7475,22 @@ async function updateLeaderboardUI() {
         );
 
 
-    } catch (error) {
+ } catch (error) {
 
-        console.error(
-            "GLOBAL LEADERBOARD ERROR:",
-            error
-        );
+    console.error(
+        "GLOBAL LEADERBOARD ERROR:",
+        error
+    );
+
+    alert(
+        "Leaderboard error:\n\n" +
+        (
+            error?.message ||
+            error?.details ||
+            error?.hint ||
+            JSON.stringify(error)
+        )
+    );
 
 
         /* -----------------------------------------------
