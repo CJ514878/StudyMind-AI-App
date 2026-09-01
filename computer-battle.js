@@ -8,7 +8,6 @@
 const QUESTIONS_PER_BATTLE = 10;
 const QUESTION_TIME_LIMIT = 15;
 
-// Change this ONLY if your deployed API uses a different route.
 const AI_QUESTION_ENDPOINT = "/api/generate-questions";
 
 /* =========================================================
@@ -50,7 +49,6 @@ function battleElement(id) {
 
 /* =========================================================
    FALLBACK QUESTIONS
-   Used if the AI server fails.
 ========================================================= */
 
 const FALLBACK_QUESTIONS = [
@@ -59,67 +57,56 @@ const FALLBACK_QUESTIONS = [
         options: ["50", "55", "60", "65"],
         answer: 2
     },
-
     {
         question: "What is the square root of 81?",
         options: ["7", "8", "9", "10"],
         answer: 2
     },
-
     {
         question: "What is 3/4 expressed as a decimal?",
         options: ["0.25", "0.5", "0.75", "0.8"],
         answer: 2
     },
-
     {
         question: "What is 15 + 27?",
         options: ["32", "40", "42", "45"],
         answer: 2
     },
-
     {
         question: "What is 100 ÷ 4?",
         options: ["20", "25", "30", "40"],
         answer: 1
     },
-
     {
         question: "What is 7²?",
         options: ["14", "21", "42", "49"],
         answer: 3
     },
-
     {
         question: "What is the next number in 2, 4, 6, 8, ...?",
         options: ["9", "10", "11", "12"],
         answer: 1
     },
-
     {
         question: "What is 30% of 100?",
         options: ["3", "10", "30", "70"],
         answer: 2
     },
-
     {
         question: "If x + 6 = 14, what is x?",
         options: ["6", "7", "8", "9"],
         answer: 2
     },
-
     {
         question: "How many degrees are in a full circle?",
         options: ["90°", "180°", "270°", "360°"],
         answer: 3
     },
-
     {
         question: "What is 9 × 9?",
         options: ["72", "81", "90", "99"],
         answer: 1
     },
-
     {
         question: "What is half of 50?",
         options: ["15", "20", "25", "30"],
@@ -151,7 +138,10 @@ function shuffleArray(array) {
     const result = [...array];
 
     for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
 
         [result[i], result[j]] =
             [result[j], result[i]];
@@ -165,24 +155,41 @@ function shuffleArray(array) {
 ========================================================= */
 
 function getStudyPlan() {
+
     const possibleKeys = [
         "studyMindPlan",
         "studyPlan",
-        "currentStudyPlan"
+        "currentStudyPlan",
+        "studyMindStudyPlan",
+        "generatedStudyPlan"
     ];
 
     for (const key of possibleKeys) {
-        const raw = localStorage.getItem(key);
 
-        if (!raw) continue;
+        const raw =
+            localStorage.getItem(key);
+
+        if (!raw) {
+            continue;
+        }
 
         try {
-            const parsed = JSON.parse(raw);
+
+            const parsed =
+                JSON.parse(raw);
 
             if (parsed) {
+
+                console.log(
+                    `Computer Battle: Study plan loaded from ${key}`,
+                    parsed
+                );
+
                 return parsed;
             }
+
         } catch (error) {
+
             console.warn(
                 `Could not parse ${key}:`,
                 error
@@ -190,79 +197,245 @@ function getStudyPlan() {
         }
     }
 
+    console.warn(
+        "Computer Battle: No study plan found in localStorage."
+    );
+
     return null;
 }
 
 /* =========================================================
+   SUBJECT NAME DETECTION
+========================================================= */
+
+function getSubjectName(item) {
+
+    if (
+        !item ||
+        typeof item !== "object"
+    ) {
+        return "";
+    }
+
+    const possibleNames = [
+        item.subject,
+        item.subjectName,
+        item.subject_name,
+        item.name
+    ];
+
+    for (const value of possibleNames) {
+
+        if (
+            typeof value === "string" &&
+            value.trim()
+        ) {
+            return value.trim();
+        }
+    }
+
+    return "";
+}
+
+/* =========================================================
+   TOPIC NAME DETECTION
+========================================================= */
+
+function getTopicName(item) {
+
+    if (
+        !item ||
+        typeof item !== "object"
+    ) {
+        return "";
+    }
+
+    const possibleNames = [
+        item.topic,
+        item.topicName,
+        item.topic_name,
+        item.name,
+        item.title
+    ];
+
+    for (const value of possibleNames) {
+
+        if (
+            typeof value === "string" &&
+            value.trim()
+        ) {
+            return value.trim();
+        }
+    }
+
+    return "";
+}
+
+/* =========================================================
    EXTRACT SUBJECTS
+   More robust than the previous version.
+
+   This recursively searches the complete study plan,
+   so it can handle subjects stored inside nested objects.
 ========================================================= */
 
 function extractSubjects(plan) {
+
     const subjects = [];
+    const visited = new WeakSet();
 
     function addSubject(value) {
-        if (!value) return;
-
-        const subject =
-            String(value).trim();
 
         if (
-            subject &&
-            !subjects.includes(subject)
+            typeof value !== "string"
+        ) {
+            return;
+        }
+
+        const subject =
+            value.trim();
+
+        if (
+            !subject ||
+            subject.length > 100
+        ) {
+            return;
+        }
+
+        if (
+            !subjects.some(
+                existing =>
+                    normalizeBattleText(existing) ===
+                    normalizeBattleText(subject)
+            )
         ) {
             subjects.push(subject);
         }
     }
 
-    function inspect(item) {
-        if (!item) return;
+    function inspect(node) {
 
-        if (typeof item === "string") {
-            addSubject(item);
+        if (!node) {
             return;
         }
 
-        if (typeof item !== "object") {
+        if (
+            typeof node === "string"
+        ) {
             return;
         }
 
-        addSubject(
-            item.subject ||
-            item.subjectName
-        );
-    }
+        if (
+            typeof node !== "object"
+        ) {
+            return;
+        }
 
-    if (Array.isArray(plan)) {
-        plan.forEach(inspect);
-    }
+        if (visited.has(node)) {
+            return;
+        }
 
-    if (
-        plan &&
-        typeof plan === "object"
-    ) {
-        const collections = [
-            plan.subjects,
-            plan.studySubjects,
-            plan.schedule,
-            plan.timetable
-        ];
+        visited.add(node);
 
-        collections.forEach(collection => {
-            if (Array.isArray(collection)) {
-                collection.forEach(inspect);
+        /*
+           Direct subject fields.
+        */
+
+        addSubject(node.subject);
+        addSubject(node.subjectName);
+        addSubject(node.subject_name);
+
+        /*
+           Arrays and nested objects.
+        */
+
+        if (Array.isArray(node)) {
+
+            node.forEach(item => {
+                inspect(item);
+            });
+
+            return;
+        }
+
+        Object.keys(node).forEach(key => {
+
+            const value =
+                node[key];
+
+            /*
+               These keys are very likely to
+               contain actual subject records.
+            */
+
+            const keyLower =
+                key.toLowerCase();
+
+            if (
+                keyLower === "subjects" ||
+                keyLower === "studysubjects" ||
+                keyLower === "study_subjects"
+            ) {
+
+                if (Array.isArray(value)) {
+
+                    value.forEach(item => {
+
+                        if (
+                            typeof item === "string"
+                        ) {
+                            addSubject(item);
+                        } else {
+                            const name =
+                                getSubjectName(
+                                    item
+                                );
+
+                            addSubject(name);
+
+                            inspect(item);
+                        }
+                    });
+
+                    return;
+                }
+            }
+
+            /*
+               Continue recursively through
+               every nested object.
+            */
+
+            if (
+                value &&
+                typeof value === "object"
+            ) {
+                inspect(value);
             }
         });
     }
+
+    inspect(plan);
+
+    console.log(
+        "Computer Battle subjects:",
+        subjects
+    );
 
     return subjects;
 }
 
 /* =========================================================
-   EXTRACT TOPICS
+   EXTRACT TOPICS FOR SELECTED SUBJECT
 ========================================================= */
 
-function extractTopics(plan, selectedSubject) {
+function extractTopics(
+    plan,
+    selectedSubject
+) {
+
     const topics = [];
+    const visited = new WeakSet();
 
     const target =
         normalizeBattleText(
@@ -270,102 +443,362 @@ function extractTopics(plan, selectedSubject) {
         );
 
     function addTopic(value) {
-        if (!value) return;
-
-        const topic =
-            String(value).trim();
 
         if (
-            topic &&
-            !topics.includes(topic)
+            typeof value !== "string"
+        ) {
+            return;
+        }
+
+        const topic =
+            value.trim();
+
+        if (
+            !topic ||
+            topic.length > 150
+        ) {
+            return;
+        }
+
+        if (
+            !topics.some(
+                existing =>
+                    normalizeBattleText(existing) ===
+                    normalizeBattleText(topic)
+            )
         ) {
             topics.push(topic);
         }
     }
 
-    function inspect(item) {
+    function subjectMatches(item) {
+
         if (
             !item ||
             typeof item !== "object"
         ) {
-            return;
+            return false;
         }
 
         const itemSubject =
             normalizeBattleText(
-                item.subject ||
-                item.subjectName ||
-                ""
+                getSubjectName(item)
             );
 
+        /*
+           If the object explicitly has a subject,
+           require it to match.
+
+           If it doesn't have a subject field,
+           allow inspection because the topic may
+           belong to a parent subject object.
+        */
+
+        if (!itemSubject) {
+            return true;
+        }
+
+        return (
+            !target ||
+            itemSubject === target
+        );
+    }
+
+    function inspect(node) {
+
+        if (!node) {
+            return;
+        }
+
         if (
-            target &&
-            itemSubject &&
-            itemSubject !== target
+            typeof node !== "object"
         ) {
             return;
         }
 
-        if (Array.isArray(item.topics)) {
-            item.topics.forEach(topic => {
-                if (typeof topic === "string") {
-                    addTopic(topic);
-                } else if (
-                    topic &&
-                    typeof topic === "object"
-                ) {
-                    addTopic(
-                        topic.topic ||
-                        topic.name ||
-                        topic.title
-                    );
-                }
-            });
+        if (visited.has(node)) {
+            return;
         }
 
-        if (Array.isArray(item.topicList)) {
-            item.topicList.forEach(topic => {
-                if (typeof topic === "string") {
-                    addTopic(topic);
-                } else if (
-                    topic &&
-                    typeof topic === "object"
-                ) {
-                    addTopic(
-                        topic.topic ||
-                        topic.name ||
-                        topic.title
-                    );
-                }
+        visited.add(node);
+
+        if (Array.isArray(node)) {
+
+            node.forEach(item => {
+                inspect(item);
             });
+
+            return;
         }
 
-        addTopic(item.topic);
-        addTopic(item.topicName);
-    }
+        const nodeSubject =
+            normalizeBattleText(
+                getSubjectName(node)
+            );
 
-    if (Array.isArray(plan)) {
-        plan.forEach(inspect);
-    }
+        /*
+           If this is a subject object and it
+           does not match the selected subject,
+           don't collect its topics.
+        */
 
-    if (
-        plan &&
-        typeof plan === "object"
-    ) {
-        [
-            plan.subjects,
-            plan.studySubjects,
-            plan.schedule,
-            plan.timetable,
-            plan.topics
-        ].forEach(collection => {
-            if (Array.isArray(collection)) {
-                collection.forEach(inspect);
+        const isSubjectObject =
+            Boolean(
+                nodeSubject
+            );
+
+        const matches =
+            !isSubjectObject ||
+            nodeSubject === target;
+
+        if (matches) {
+
+            /*
+               Direct topic fields.
+            */
+
+            addTopic(node.topic);
+            addTopic(node.topicName);
+            addTopic(node.topic_name);
+
+            /*
+               Topics arrays.
+            */
+
+            const topicCollections = [
+                node.topics,
+                node.topicList,
+                node.topic_list
+            ];
+
+            topicCollections.forEach(
+                collection => {
+
+                    if (
+                        !Array.isArray(collection)
+                    ) {
+                        return;
+                    }
+
+                    collection.forEach(
+                        topicItem => {
+
+                            if (
+                                typeof topicItem ===
+                                "string"
+                            ) {
+
+                                addTopic(
+                                    topicItem
+                                );
+
+                            } else if (
+                                topicItem &&
+                                typeof topicItem ===
+                                "object"
+                            ) {
+
+                                addTopic(
+                                    topicItem.topic
+                                );
+
+                                addTopic(
+                                    topicItem.topicName
+                                );
+
+                                addTopic(
+                                    topicItem.name
+                                );
+
+                                addTopic(
+                                    topicItem.title
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+        }
+
+        /*
+           Continue searching nested objects.
+        */
+
+        Object.keys(node).forEach(key => {
+
+            const value =
+                node[key];
+
+            if (
+                value &&
+                typeof value === "object"
+            ) {
+
+                /*
+                   Don't accidentally collect a topic
+                   from a different explicitly-labelled
+                   subject.
+                */
+
+                if (
+                    Array.isArray(value)
+                ) {
+
+                    value.forEach(item => {
+
+                        if (
+                            item &&
+                            typeof item === "object"
+                        ) {
+
+                            if (
+                                subjectMatches(item)
+                            ) {
+                                inspect(item);
+                            }
+
+                        } else {
+                            inspect(item);
+                        }
+                    });
+
+                } else {
+
+                    inspect(value);
+                }
             }
         });
     }
 
+    inspect(plan);
+
+    console.log(
+        `Computer Battle topics for ${selectedSubject}:`,
+        topics
+    );
+
     return topics;
+}
+
+/* =========================================================
+   FALLBACK TOPICS
+========================================================= */
+
+function getFallbackTopics(subject) {
+
+    const normalized =
+        normalizeBattleText(
+            subject
+        );
+
+    if (
+        normalized.includes("math") ||
+        normalized.includes("mathematics")
+    ) {
+
+        return [
+            "Algebra",
+            "Geometry",
+            "Percentages",
+            "Number",
+            "Statistics"
+        ];
+    }
+
+    if (
+        normalized.includes("physics")
+    ) {
+
+        return [
+            "Motion",
+            "Forces",
+            "Energy",
+            "Waves",
+            "Electricity"
+        ];
+    }
+
+    if (
+        normalized.includes("chemistry")
+    ) {
+
+        return [
+            "Atomic Structure",
+            "Chemical Bonding",
+            "Acids and Bases",
+            "Periodic Table",
+            "Chemical Reactions"
+        ];
+    }
+
+    if (
+        normalized.includes("biology")
+    ) {
+
+        return [
+            "Cell Biology",
+            "Nutrition",
+            "Respiration",
+            "Genetics",
+            "Ecology"
+        ];
+    }
+
+    if (
+        normalized.includes("economics")
+    ) {
+
+        return [
+            "Demand and Supply",
+            "Production",
+            "Market",
+            "National Income",
+            "Inflation"
+        ];
+    }
+
+    if (
+        normalized.includes("government")
+    ) {
+
+        return [
+            "Democracy",
+            "Constitution",
+            "Political Parties",
+            "Citizenship",
+            "Government Institutions"
+        ];
+    }
+
+    if (
+        normalized.includes("geography")
+    ) {
+
+        return [
+            "Weather and Climate",
+            "Population",
+            "Resources",
+            "Map Reading",
+            "Environmental Issues"
+        ];
+    }
+
+    if (
+        normalized.includes("english")
+    ) {
+
+        return [
+            "Grammar",
+            "Comprehension",
+            "Vocabulary",
+            "Parts of Speech",
+            "Sentence Structure"
+        ];
+    }
+
+    return [
+        "General Knowledge"
+    ];
 }
 
 /* =========================================================
@@ -373,57 +806,98 @@ function extractTopics(plan, selectedSubject) {
 ========================================================= */
 
 function loadBattleSetup() {
+
     const subjectSelect =
-        battleElement("subjectSelect");
+        battleElement(
+            "subjectSelect"
+        );
 
     const topicSelect =
-        battleElement("topicSelect");
+        battleElement(
+            "topicSelect"
+        );
 
     if (
         !subjectSelect ||
         !topicSelect
     ) {
+        console.error(
+            "Computer Battle setup elements were not found."
+        );
+
         return;
     }
 
+    subjectSelect.innerHTML =
+        `<option value="">Loading subjects...</option>`;
+
+    topicSelect.innerHTML =
+        `<option value="">Select a subject first</option>`;
+
+    const plan =
+        getStudyPlan();
+
     let subjects =
-        extractSubjects(
-            getStudyPlan()
-        );
+        extractSubjects(plan);
 
     /*
-       If the study plan doesn't contain
-       subjects, keep Math as the default
-       instead of leaving the selector empty.
+       If the study plan is unavailable,
+       use Math so the battle page remains usable.
     */
 
     if (!subjects.length) {
-        subjects = ["Math"];
+
+        console.warn(
+            "No subjects found in study plan. Using Math fallback."
+        );
+
+        subjects = [
+            "Math"
+        ];
     }
 
     subjectSelect.innerHTML =
-        subjects.map(subject => `
-            <option value="${escapeHTML(subject)}">
-                ${escapeHTML(subject)}
-            </option>
-        `).join("");
+        `<option value="">Select a subject</option>` +
+        subjects
+            .map(
+                subject => `
+                    <option value="${escapeHTML(subject)}">
+                        ${escapeHTML(subject)}
+                    </option>
+                `
+            )
+            .join("");
+
+    /*
+       Automatically select the first actual
+       subject so the topic dropdown can populate.
+    */
 
     subjectSelect.value =
         subjects[0];
 
     updateTopicOptions();
+
+    console.log(
+        "Computer Battle setup loaded successfully."
+    );
 }
 
 /* =========================================================
-   UPDATE TOPICS WHEN SUBJECT CHANGES
+   UPDATE TOPICS
 ========================================================= */
 
 function updateTopicOptions() {
+
     const subjectSelect =
-        battleElement("subjectSelect");
+        battleElement(
+            "subjectSelect"
+        );
 
     const topicSelect =
-        battleElement("topicSelect");
+        battleElement(
+            "topicSelect"
+        );
 
     if (
         !subjectSelect ||
@@ -433,48 +907,63 @@ function updateTopicOptions() {
     }
 
     const subject =
-        subjectSelect.value;
+        subjectSelect.value.trim();
+
+    if (!subject) {
+
+        topicSelect.innerHTML =
+            `<option value="">Select a subject first</option>`;
+
+        return;
+    }
+
+    topicSelect.innerHTML =
+        `<option value="">Loading topics...</option>`;
+
+    const plan =
+        getStudyPlan();
 
     let topics =
         extractTopics(
-            getStudyPlan(),
+            plan,
             subject
         );
 
     /*
-       If the current study plan doesn't
-       contain topics, give Math sensible
-       topic choices.
+       If the plan doesn't contain topics
+       in a recognizable structure, use
+       subject-specific fallback topics.
     */
 
     if (!topics.length) {
-        const normalized =
-            normalizeBattleText(
+
+        topics =
+            getFallbackTopics(
                 subject
             );
-
-        if (
-            normalized.includes("math") ||
-            normalized.includes("mathematics")
-        ) {
-            topics = [
-                "Algebra",
-                "Geometry",
-                "Percentages"
-            ];
-        } else {
-            topics = [
-                "General Knowledge"
-            ];
-        }
     }
 
     topicSelect.innerHTML =
-        topics.map(topic => `
-            <option value="${escapeHTML(topic)}">
-                ${escapeHTML(topic)}
-            </option>
-        `).join("");
+        `<option value="">Select a topic</option>` +
+        topics
+            .map(
+                topic => `
+                    <option value="${escapeHTML(topic)}">
+                        ${escapeHTML(topic)}
+                    </option>
+                `
+            )
+            .join("");
+
+    /*
+       Automatically select the first topic.
+    */
+
+    if (topics.length) {
+
+        topicSelect.value =
+            topics[0];
+    }
 }
 
 /* =========================================================
@@ -482,22 +971,34 @@ function updateTopicOptions() {
 ========================================================= */
 
 function showBattleError(message) {
-    const element =
-        battleElement("battleError");
 
-    if (!element) return;
+    const element =
+        battleElement(
+            "battleError"
+        );
+
+    if (!element) {
+        return;
+    }
 
     element.textContent =
         message;
 
-    element.classList.add("active");
+    element.classList.add(
+        "active"
+    );
 }
 
 function hideBattleError() {
-    const element =
-        battleElement("battleError");
 
-    if (!element) return;
+    const element =
+        battleElement(
+            "battleError"
+        );
+
+    if (!element) {
+        return;
+    }
 
     element.textContent = "";
 
@@ -511,11 +1012,16 @@ function hideBattleError() {
 ========================================================= */
 
 function showLoading() {
+
     const setup =
-        battleElement("battleSetup");
+        battleElement(
+            "battleSetup"
+        );
 
     const loading =
-        battleElement("battleLoading");
+        battleElement(
+            "battleLoading"
+        );
 
     if (setup) {
         setup.style.display =
@@ -530,8 +1036,11 @@ function showLoading() {
 }
 
 function hideLoading() {
+
     const loading =
-        battleElement("battleLoading");
+        battleElement(
+            "battleLoading"
+        );
 
     if (loading) {
         loading.classList.remove(
@@ -545,6 +1054,7 @@ function hideLoading() {
 ========================================================= */
 
 async function startComputerBattle() {
+
     if (
         computerBattleState.battleActive
     ) {
@@ -569,6 +1079,7 @@ async function startComputerBattle() {
         );
 
     if (!subject) {
+
         showBattleError(
             "Please select a subject."
         );
@@ -577,6 +1088,7 @@ async function startComputerBattle() {
     }
 
     if (!topic) {
+
         showBattleError(
             "Please select a topic."
         );
@@ -585,14 +1097,15 @@ async function startComputerBattle() {
     }
 
     /*
-       Use the hub's existing battle-count
-       function when available.
+       FREE BATTLE LIMIT
     */
 
     if (
-        typeof getBattleCount === "function" &&
+        typeof getBattleCount ===
+            "function" &&
         getBattleCount() >= 5
     ) {
+
         showBattleError(
             "You have used all 5 free battles. Upgrade to Premium to continue."
         );
@@ -601,7 +1114,10 @@ async function startComputerBattle() {
     }
 
     if (startButton) {
-        startButton.disabled = true;
+
+        startButton.disabled =
+            true;
+
         startButton.textContent =
             "Preparing Battle...";
     }
@@ -615,13 +1131,15 @@ async function startComputerBattle() {
     showLoading();
 
     try {
+
         let questions = [];
 
         /*
-           Try the AI first.
+           Ask the AI to generate the questions.
         */
 
         try {
+
             const aiResponse =
                 await requestAIQuestions(
                     subject,
@@ -633,7 +1151,12 @@ async function startComputerBattle() {
                     aiResponse
                 );
 
+            console.log(
+                `AI returned ${questions.length} valid questions.`
+            );
+
         } catch (aiError) {
+
             console.warn(
                 "AI question generation failed:",
                 aiError
@@ -641,15 +1164,15 @@ async function startComputerBattle() {
         }
 
         /*
-           If the AI doesn't return at least
-           10 valid questions, use fallback
-           questions so the battle can still run.
+           Fallback only if AI could not
+           provide the required 10 questions.
         */
 
         if (
             questions.length <
             QUESTIONS_PER_BATTLE
         ) {
+
             console.warn(
                 "Using fallback battle questions."
             );
@@ -666,15 +1189,26 @@ async function startComputerBattle() {
                 QUESTIONS_PER_BATTLE
             );
 
-        computerBattleState.currentQuestionIndex = 0;
-        computerBattleState.playerScore = 0;
-        computerBattleState.computerScore = 0;
+        computerBattleState.currentQuestionIndex =
+            0;
+
+        computerBattleState.playerScore =
+            0;
+
+        computerBattleState.computerScore =
+            0;
+
         computerBattleState.timeRemaining =
             QUESTION_TIME_LIMIT;
 
-        computerBattleState.questionLocked = false;
-        computerBattleState.battleActive = true;
-        computerBattleState.battleCompleted = false;
+        computerBattleState.questionLocked =
+            false;
+
+        computerBattleState.battleActive =
+            true;
+
+        computerBattleState.battleCompleted =
+            false;
 
         hideLoading();
 
@@ -685,6 +1219,7 @@ async function startComputerBattle() {
         displayCurrentQuestion();
 
     } catch (error) {
+
         console.error(
             "Could not start computer battle:",
             error
@@ -703,7 +1238,10 @@ async function startComputerBattle() {
         }
 
         if (startButton) {
-            startButton.disabled = false;
+
+            startButton.disabled =
+                false;
+
             startButton.textContent =
                 "⚔️ Start Battle";
         }
@@ -722,6 +1260,7 @@ async function requestAIQuestions(
     subject,
     topic
 ) {
+
     const response =
         await fetch(
             AI_QUESTION_ENDPOINT,
@@ -734,10 +1273,25 @@ async function requestAIQuestions(
                 },
 
                 body: JSON.stringify({
+
+                    /*
+                       IMPORTANT:
+                       These fields tell the API that
+                       this is a Game Mode request.
+                    */
+
+                    mode: "game",
+
+                    type: "game_questions",
+
                     subject,
+
                     topic,
 
                     numberOfQuestions:
+                        QUESTIONS_PER_BATTLE,
+
+                    questionCount:
                         QUESTIONS_PER_BATTLE,
 
                     difficulty:
@@ -752,22 +1306,39 @@ async function requestAIQuestions(
             }
         );
 
-    if (!response.ok) {
+    let data = null;
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (error) {
+
         throw new Error(
+            "AI server did not return valid JSON."
+        );
+    }
+
+    if (!response.ok) {
+
+        console.error(
+            "AI server error:",
+            data
+        );
+
+        throw new Error(
+            data?.error ||
             `AI server returned HTTP ${response.status}`
         );
     }
 
-    const data =
-        await response.json();
-
     /*
-       Support several common API response shapes.
+       Main expected response:
+       {
+           questions: [...]
+       }
     */
-
-    if (Array.isArray(data)) {
-        return data;
-    }
 
     if (
         data &&
@@ -775,8 +1346,13 @@ async function requestAIQuestions(
             data.questions
         )
     ) {
+
         return data.questions;
     }
+
+    /*
+       Support nested responses.
+    */
 
     if (
         data &&
@@ -785,7 +1361,19 @@ async function requestAIQuestions(
             data.data.questions
         )
     ) {
+
         return data.data.questions;
+    }
+
+    /*
+       Support direct array response.
+    */
+
+    if (
+        Array.isArray(data)
+    ) {
+
+        return data;
     }
 
     throw new Error(
@@ -800,12 +1388,16 @@ async function requestAIQuestions(
 function normalizeQuestions(
     questions
 ) {
-    if (!Array.isArray(questions)) {
+
+    if (
+        !Array.isArray(questions)
+    ) {
         return [];
     }
 
     return questions
         .map(item => {
+
             if (
                 !item ||
                 typeof item !== "object"
@@ -833,10 +1425,13 @@ function normalizeQuestions(
             options =
                 options
                     .map(option => {
+
                         if (
                             option &&
-                            typeof option === "object"
+                            typeof option ===
+                                "object"
                         ) {
+
                             return String(
                                 option.text ||
                                 option.answer ||
@@ -851,12 +1446,9 @@ function normalizeQuestions(
                     })
                     .filter(Boolean);
 
-            /*
-               Battle questions must have
-               exactly four answer choices.
-            */
-
-            if (options.length !== 4) {
+            if (
+                options.length !== 4
+            ) {
                 return null;
             }
 
@@ -867,12 +1459,14 @@ function normalizeQuestions(
                 item.correctIndex;
 
             /*
-               Convert A/B/C/D into indexes.
+               Convert A/B/C/D.
             */
 
             if (
-                typeof answer === "string"
+                typeof answer ===
+                "string"
             ) {
+
                 const clean =
                     answer
                         .trim()
@@ -888,11 +1482,14 @@ function normalizeQuestions(
                 if (
                     letters.includes(clean)
                 ) {
+
                     answer =
                         letters.indexOf(
                             clean
                         );
+
                 } else {
+
                     const matchingIndex =
                         options.findIndex(
                             option =>
@@ -905,8 +1502,10 @@ function normalizeQuestions(
                         );
 
                     if (
-                        matchingIndex !== -1
+                        matchingIndex !==
+                        -1
                     ) {
+
                         answer =
                             matchingIndex;
                     }
@@ -925,6 +1524,7 @@ function normalizeQuestions(
             }
 
             return {
+
                 question:
                     String(
                         question
@@ -934,6 +1534,7 @@ function normalizeQuestions(
 
                 answer
             };
+
         })
         .filter(Boolean);
 }
@@ -943,6 +1544,7 @@ function normalizeQuestions(
 ========================================================= */
 
 function createFallbackQuestions() {
+
     const shuffled =
         shuffleArray(
             FALLBACK_QUESTIONS
@@ -950,14 +1552,11 @@ function createFallbackQuestions() {
 
     const result = [];
 
-    /*
-       Guarantee exactly 10 questions.
-    */
-
     while (
         result.length <
         QUESTIONS_PER_BATTLE
     ) {
+
         const source =
             shuffled[
                 result.length %
@@ -965,6 +1564,7 @@ function createFallbackQuestions() {
             ];
 
         result.push({
+
             question:
                 source.question,
 
@@ -984,6 +1584,7 @@ function createFallbackQuestions() {
 ========================================================= */
 
 function showBattleScreen() {
+
     const setup =
         battleElement(
             "battleSetup"
@@ -1033,6 +1634,7 @@ function showBattleScreen() {
 ========================================================= */
 
 function displayCurrentQuestion() {
+
     clearTimer();
 
     computerBattleState.questionLocked =
@@ -1047,7 +1649,9 @@ function displayCurrentQuestion() {
         ];
 
     if (!question) {
+
         finishComputerBattle();
+
         return;
     }
 
@@ -1082,30 +1686,37 @@ function displayCurrentQuestion() {
         );
 
     if (roundNumber) {
+
         roundNumber.textContent =
             `Question ${index + 1} of ${QUESTIONS_PER_BATTLE}`;
     }
 
     if (questionTopic) {
+
         questionTopic.textContent =
             `${computerBattleState.selectedSubject} • ${computerBattleState.selectedTopic}`;
     }
 
     if (questionText) {
+
         questionText.textContent =
             question.question;
     }
 
     if (feedback) {
-        feedback.textContent = "";
+
+        feedback.textContent =
+            "";
     }
 
     if (progress) {
+
         progress.style.width =
             `${(index / QUESTIONS_PER_BATTLE) * 100}%`;
     }
 
     if (answerGrid) {
+
         answerGrid.innerHTML = "";
 
         const letters = [
@@ -1117,6 +1728,7 @@ function displayCurrentQuestion() {
 
         letters.forEach(
             (letter, optionIndex) => {
+
                 const button =
                     document.createElement(
                         "button"
@@ -1170,10 +1782,12 @@ function displayCurrentQuestion() {
 ========================================================= */
 
 function startTimer() {
+
     clearTimer();
 
     computerBattleState.timerInterval =
         setInterval(() => {
+
             computerBattleState.timeRemaining--;
 
             updateTimerDisplay();
@@ -1181,17 +1795,21 @@ function startTimer() {
             if (
                 computerBattleState.timeRemaining <= 0
             ) {
+
                 clearTimer();
 
                 handleTimeout();
             }
+
         }, 1000);
 }
 
 function clearTimer() {
+
     if (
         computerBattleState.timerInterval
     ) {
+
         clearInterval(
             computerBattleState.timerInterval
         );
@@ -1202,6 +1820,7 @@ function clearTimer() {
 }
 
 function updateTimerDisplay() {
+
     const number =
         battleElement(
             "timerNumber"
@@ -1213,6 +1832,7 @@ function updateTimerDisplay() {
         );
 
     if (number) {
+
         number.textContent =
             Math.max(
                 0,
@@ -1221,6 +1841,7 @@ function updateTimerDisplay() {
     }
 
     if (container) {
+
         container.classList.toggle(
             "warning",
             computerBattleState.timeRemaining <= 7
@@ -1240,6 +1861,7 @@ function updateTimerDisplay() {
 function submitAnswer(
     selectedIndex
 ) {
+
     if (
         !computerBattleState.battleActive ||
         computerBattleState.questionLocked
@@ -1257,13 +1879,16 @@ function submitAnswer(
             computerBattleState.currentQuestionIndex
         ];
 
-    if (!question) return;
+    if (!question) {
+        return;
+    }
 
     const correct =
         selectedIndex ===
         question.answer;
 
     if (correct) {
+
         computerBattleState.playerScore++;
     }
 
@@ -1281,13 +1906,16 @@ function submitAnswer(
     updateScoreDisplay();
 
     setTimeout(() => {
+
         if (
             computerBattleState.battleActive
         ) {
+
             computerTakeTurn(
                 correct
             );
         }
+
     }, 700);
 }
 
@@ -1296,6 +1924,7 @@ function submitAnswer(
 ========================================================= */
 
 function handleTimeout() {
+
     if (
         !computerBattleState.battleActive ||
         computerBattleState.questionLocked
@@ -1311,7 +1940,9 @@ function handleTimeout() {
             computerBattleState.currentQuestionIndex
         ];
 
-    if (!question) return;
+    if (!question) {
+        return;
+    }
 
     markAnswers(
         -1,
@@ -1323,13 +1954,16 @@ function handleTimeout() {
     );
 
     setTimeout(() => {
+
         if (
             computerBattleState.battleActive
         ) {
+
             computerTakeTurn(
                 false
             );
         }
+
     }, 700);
 }
 
@@ -1341,12 +1975,14 @@ function markAnswers(
     selectedIndex,
     correctIndex
 ) {
+
     document
         .querySelectorAll(
             ".answer-button"
         )
         .forEach(
             (button, index) => {
+
                 button.disabled =
                     true;
 
@@ -1354,17 +1990,17 @@ function markAnswers(
                     index ===
                     correctIndex
                 ) {
+
                     button.classList.add(
                         "correct"
                     );
                 }
 
                 if (
-                    index ===
-                        selectedIndex &&
-                    selectedIndex !==
-                        correctIndex
+                    index === selectedIndex &&
+                    selectedIndex !== correctIndex
                 ) {
+
                     button.classList.add(
                         "incorrect"
                     );
@@ -1376,12 +2012,14 @@ function markAnswers(
 function showAnswerFeedback(
     message
 ) {
+
     const feedback =
         battleElement(
             "battleFeedback"
         );
 
     if (feedback) {
+
         feedback.textContent =
             message;
     }
@@ -1394,16 +2032,12 @@ function showAnswerFeedback(
 function computerTakeTurn(
     playerWasCorrect
 ) {
+
     if (
         !computerBattleState.battleActive
     ) {
         return;
     }
-
-    /*
-       The computer is deliberately imperfect.
-       This keeps the battle competitive.
-    */
 
     const correctChance =
         playerWasCorrect
@@ -1414,17 +2048,21 @@ function computerTakeTurn(
         Math.random() <
         correctChance
     ) {
+
         computerBattleState.computerScore++;
     }
 
     updateScoreDisplay();
 
     setTimeout(() => {
+
         if (
             computerBattleState.battleActive
         ) {
+
             moveToNextQuestion();
         }
+
     }, 450);
 }
 
@@ -1433,6 +2071,7 @@ function computerTakeTurn(
 ========================================================= */
 
 function moveToNextQuestion() {
+
     if (
         !computerBattleState.battleActive
     ) {
@@ -1445,6 +2084,7 @@ function moveToNextQuestion() {
         computerBattleState.currentQuestionIndex >=
         QUESTIONS_PER_BATTLE
     ) {
+
         finishComputerBattle();
 
         return;
@@ -1458,6 +2098,7 @@ function moveToNextQuestion() {
 ========================================================= */
 
 function updateScoreDisplay() {
+
     const player =
         battleElement(
             "playerScore"
@@ -1469,11 +2110,13 @@ function updateScoreDisplay() {
         );
 
     if (player) {
+
         player.textContent =
             computerBattleState.playerScore;
     }
 
     if (computer) {
+
         computer.textContent =
             computerBattleState.computerScore;
     }
@@ -1487,19 +2130,21 @@ function calculateBattlePoints(
     result,
     playerScore
 ) {
+
     let points = 0;
 
     if (result === "win") {
+
         points = 100;
+
     } else if (result === "draw") {
+
         points = 50;
+
     } else {
+
         points = 20;
     }
-
-    /*
-       +5 points for every correct answer.
-    */
 
     points +=
         (Number(playerScore) || 0) * 5;
@@ -1512,6 +2157,7 @@ function calculateBattlePoints(
 ========================================================= */
 
 async function finishComputerBattle() {
+
     if (
         computerBattleState.battleCompleted
     ) {
@@ -1538,13 +2184,18 @@ async function finishComputerBattle() {
         playerScore >
         computerScore
     ) {
+
         result = "win";
+
     } else if (
         playerScore <
         computerScore
     ) {
+
         result = "loss";
+
     } else {
+
         result = "draw";
     }
 
@@ -1553,11 +2204,6 @@ async function finishComputerBattle() {
             result,
             playerScore
         );
-
-    /*
-       Record the completed battle
-       before displaying the results.
-    */
 
     await recordCompletedBattle(
         result,
@@ -1578,18 +2224,23 @@ async function recordCompletedBattle(
     result,
     points
 ) {
+
     /*
-       Update the local five-battle counter.
+       Update local battle count.
     */
 
     try {
+
         if (
             typeof registerFreeBattle ===
             "function"
         ) {
+
             registerFreeBattle();
         }
+
     } catch (error) {
+
         console.warn(
             "Could not update battle count:",
             error
@@ -1605,6 +2256,7 @@ async function recordCompletedBattle(
     }
 
     try {
+
         const {
             data: { user },
             error: userError
@@ -1644,6 +2296,7 @@ async function recordCompletedBattle(
                 .maybeSingle();
 
         if (existingError) {
+
             console.warn(
                 "Could not read leaderboard row:",
                 existingError
@@ -1685,7 +2338,9 @@ async function recordCompletedBattle(
             ) || 0;
 
         const update = {
-            user_id: user.id,
+
+            user_id:
+                user.id,
 
             display_name:
                 displayName,
@@ -1741,6 +2396,7 @@ async function recordCompletedBattle(
                 );
 
         if (upsertError) {
+
             console.warn(
                 "Could not update leaderboard:",
                 upsertError
@@ -1748,6 +2404,7 @@ async function recordCompletedBattle(
         }
 
     } catch (error) {
+
         console.warn(
             "Leaderboard update failed:",
             error
@@ -1763,6 +2420,7 @@ function showResults(
     result,
     points
 ) {
+
     const battleScreen =
         battleElement(
             "battleScreen"
@@ -1774,12 +2432,14 @@ function showResults(
         );
 
     if (battleScreen) {
+
         battleScreen.classList.remove(
             "active"
         );
     }
 
     if (results) {
+
         results.classList.add(
             "active"
         );
@@ -1821,21 +2481,25 @@ function showResults(
         );
 
     if (playerScore) {
+
         playerScore.textContent =
             computerBattleState.playerScore;
     }
 
     if (computerScore) {
+
         computerScore.textContent =
             computerBattleState.computerScore;
     }
 
     if (pointsElement) {
+
         pointsElement.textContent =
             `+${points}`;
     }
 
     if (result === "win") {
+
         if (icon) {
             icon.textContent =
                 "🏆";
@@ -1857,6 +2521,7 @@ function showResults(
         }
 
     } else if (result === "draw") {
+
         if (icon) {
             icon.textContent =
                 "🤝";
@@ -1878,6 +2543,7 @@ function showResults(
         }
 
     } else {
+
         if (icon) {
             icon.textContent =
                 "⚔️";
@@ -1905,17 +2571,13 @@ function showResults(
 ========================================================= */
 
 function playAgain() {
-    /*
-       If all free battles are used,
-       return to the hub so the user can
-       see the Premium option.
-    */
 
     if (
         typeof getBattleCount ===
             "function" &&
         getBattleCount() >= 5
     ) {
+
         window.location.href =
             "game-mode.html";
 
@@ -1924,7 +2586,8 @@ function playAgain() {
 
     clearTimer();
 
-    computerBattleState.questions = [];
+    computerBattleState.questions =
+        [];
 
     computerBattleState.currentQuestionIndex =
         0;
@@ -1962,23 +2625,27 @@ function playAgain() {
         );
 
     if (results) {
+
         results.classList.remove(
             "active"
         );
     }
 
     if (screen) {
+
         screen.classList.remove(
             "active"
         );
     }
 
     if (setup) {
+
         setup.style.display =
             "block";
     }
 
     if (startButton) {
+
         startButton.disabled =
             false;
 
@@ -1989,6 +2656,8 @@ function playAgain() {
     updateScoreDisplay();
 
     hideBattleError();
+
+    loadBattleSetup();
 }
 
 /* =========================================================
@@ -1996,6 +2665,7 @@ function playAgain() {
 ========================================================= */
 
 function returnToGameMode() {
+
     clearTimer();
 
     computerBattleState.battleActive =
@@ -2010,16 +2680,13 @@ function returnToGameMode() {
 ========================================================= */
 
 async function verifyComputerBattleUser() {
-    /*
-       If Supabase isn't loaded, don't
-       block the page from working locally.
-    */
 
     if (!computerBattleSupabase) {
         return true;
     }
 
     try {
+
         const {
             data: { user },
             error
@@ -2029,6 +2696,7 @@ async function verifyComputerBattleUser() {
                 .getUser();
 
         if (error) {
+
             console.error(
                 "Authentication check failed:",
                 error
@@ -2038,6 +2706,7 @@ async function verifyComputerBattleUser() {
         }
 
         if (!user) {
+
             window.location.href =
                 "login.html";
 
@@ -2047,6 +2716,7 @@ async function verifyComputerBattleUser() {
         return true;
 
     } catch (error) {
+
         console.error(
             "Unexpected authentication error:",
             error
@@ -2061,6 +2731,7 @@ async function verifyComputerBattleUser() {
 ========================================================= */
 
 async function initializeComputerBattle() {
+
     const authenticated =
         await verifyComputerBattleUser();
 
@@ -2076,6 +2747,7 @@ async function initializeComputerBattle() {
         );
 
     if (subjectSelect) {
+
         subjectSelect.addEventListener(
             "change",
             updateTopicOptions
