@@ -33,6 +33,10 @@ module.exports = async function handler(req, res) {
 
         const body = req.body || {};
 
+        // =====================================================
+        // READ REQUEST DATA
+        // =====================================================
+
         const message =
             typeof body.message === "string"
                 ? body.message.trim()
@@ -59,82 +63,106 @@ module.exports = async function handler(req, res) {
                 : "";
 
         const difficulty =
-            typeof body.difficulty === "string"
-                ? body.difficulty
+            typeof body.difficulty === "string" &&
+            body.difficulty.trim()
+                ? body.difficulty.trim()
                 : "mixed";
 
-        const questionCount =
-            Number(body.questionCount) || 10;
+        // Support BOTH names used by different versions
+        // of the frontend.
+        const requestedQuestionCount =
+            body.numberOfQuestions ??
+            body.questionCount ??
+            body.questions ??
+            10;
 
-        // =====================================================
-        // VALIDATE MESSAGE
-        // =====================================================
+        let questionCount =
+            Number(requestedQuestionCount);
 
-        if (!message) {
-
-            return res.status(400).json({
-                error: "Please provide a message."
-            });
+        if (!Number.isFinite(questionCount)) {
+            questionCount = 10;
         }
+
+        questionCount =
+            Math.min(
+                Math.max(Math.floor(questionCount), 1),
+                20
+            );
+
+        // =====================================================
+        // DETECT GAME MODE
+        // =====================================================
+
+        const isGameMode =
+            mode === "game" ||
+            type === "game_questions" ||
+            type === "game" ||
+            body.gameMode === true;
 
         // =====================================================
         // GAME MODE
         // =====================================================
 
-        const isGameMode =
-            mode === "game" ||
-            type === "game_questions";
-
         if (isGameMode) {
 
-            const count =
-                Math.min(
-                    Math.max(questionCount, 1),
-                    20
-                );
+            // -------------------------------------------------
+            // SUBJECT REQUIRED
+            // -------------------------------------------------
 
             if (!subject) {
 
                 return res.status(400).json({
-                    error: "A subject is required for Game Mode."
+                    error:
+                        "A subject is required for Game Mode."
                 });
             }
+
+            // -------------------------------------------------
+            // TOPIC REQUIRED
+            // -------------------------------------------------
 
             if (!topic) {
 
                 return res.status(400).json({
-                    error: "A topic is required for Game Mode."
+                    error:
+                        "A topic is required for Game Mode."
                 });
             }
+
+            // -------------------------------------------------
+            // CREATE GAME PROMPT
+            // -------------------------------------------------
 
             const gameInstructions = `
 You are StudyMind AI Game Mode.
 
 You create educational multiple-choice questions
-for students following the Nigerian secondary-school
-curriculum.
+for secondary-school students following the Nigerian
+secondary-school curriculum.
 
-The request is for:
+The battle information is:
 
 Subject: ${subject}
 Topic: ${topic}
 Difficulty: ${difficulty}
 
-Create exactly ${count} high-quality multiple-choice
-questions specifically about the stated subject and topic.
+Create exactly ${questionCount} high-quality multiple-choice
+questions specifically about the selected subject and topic.
 
-IMPORTANT:
+IMPORTANT OUTPUT RULE:
 
 Return ONLY valid JSON.
 
 Do NOT return:
+
 - Markdown
 - Code fences
 - Explanations outside the JSON
 - Introductory text
 - Closing text
+- HTML
 
-The JSON MUST have exactly this structure:
+The response MUST have exactly this structure:
 
 {
   "questions": [
@@ -147,63 +175,93 @@ The JSON MUST have exactly this structure:
         "Option D"
       ],
       "answer": 0,
-      "explanation": "Short explanation of the correct answer."
+      "explanation": "Short explanation."
     }
   ]
 }
 
 RULES:
 
-1. Return exactly ${count} questions.
+1. Return exactly ${questionCount} questions.
 
 2. Every question must have exactly four options.
 
-3. The options must be strings.
+3. Every option must be a non-empty string.
 
-4. "answer" MUST be a zero-based number:
-   0 = first option
-   1 = second option
-   2 = third option
-   3 = fourth option
+4. "answer" MUST be a zero-based integer.
 
-5. The answer must be factually correct.
+5. 0 means the first option is correct.
 
-6. Questions must genuinely test the selected topic.
+6. 1 means the second option is correct.
 
-7. Do not create questions about unrelated subjects.
+7. 2 means the third option is correct.
 
-8. Avoid duplicate questions.
+8. 3 means the fourth option is correct.
 
-9. Make the questions appropriate for Nigerian secondary-school students.
+9. Every answer must be factually correct.
 
-10. Where relevant, follow Nigerian examination conventions such as WAEC/NECO-style questioning.
+10. Every question must genuinely test the selected topic.
 
-11. Do not assume that every subject is Mathematics.
+11. The selected topic must be the primary focus of every question.
 
-12. For Mathematics, Physics, Chemistry and other calculation-based subjects,
-    use correct formulas, values and units.
+12. Do not create unrelated questions.
 
-13. For English Language, Literature, Government, Economics, Biology,
-    Geography, History, CRS, IRS, Civic Education and other humanities
-    subjects, ensure questions match the selected topic.
+13. Do not duplicate questions.
 
-14. For practical/science subjects, questions should remain academically
-    accurate and suitable for the student's level.
+14. Make the questions appropriate for Nigerian secondary-school students.
 
-15. Keep explanations short.
+15. Where appropriate, follow WAEC/NECO-style questioning.
 
-16. Do not include HTML.
+16. Do not assume the subject is Mathematics.
 
-17. Do not include LaTeX unless it is genuinely necessary.
+17. For Mathematics, Physics, Chemistry and other calculation-based
+subjects, ensure calculations, formulas, values and units are correct.
 
-18. Do not put the correct answer directly into the question.
+18. For Biology, Geography, Economics, Government, History,
+Civic Education, CRS, IRS, English Language, Literature and
+other subjects, make the questions specifically relevant to
+the selected topic.
 
-19. Make distractor options plausible.
+19. Distractor options should be plausible but incorrect.
 
-20. The topic must be the primary focus of every question.
+20. Do not place the correct answer directly inside the question.
 
-Return ONLY the JSON object.
+21. Keep explanations short.
+
+22. Do not use HTML.
+
+23. Do not use unnecessary LaTeX.
+
+24. Do not include any text outside the JSON object.
+
+25. The final response must contain exactly ${questionCount}
+valid question objects.
 `;
+
+            // -------------------------------------------------
+            // CREATE USER INPUT
+            // -------------------------------------------------
+
+            const gameMessage = `
+Generate ${questionCount} multiple-choice questions.
+
+Subject: ${subject}
+
+Topic: ${topic}
+
+Difficulty: ${difficulty}
+
+The questions must be suitable for a StudyMind AI
+educational battle.
+`;
+
+            console.log(
+                `Generating ${questionCount} Game Mode questions for ${subject} - ${topic}`
+            );
+
+            // -------------------------------------------------
+            // OPENAI REQUEST
+            // -------------------------------------------------
 
             const response =
                 await client.responses.create({
@@ -213,15 +271,19 @@ Return ONLY the JSON object.
                     instructions:
                         gameInstructions,
 
-                    input: message
-
+                    input:
+                        gameMessage
                 });
 
             const output =
                 response.output_text || "";
 
+            console.log(
+                "Game Mode AI response received."
+            );
+
             // =================================================
-            // PARSE AI JSON
+            // PARSE JSON
             // =================================================
 
             let parsed = null;
@@ -229,12 +291,19 @@ Return ONLY the JSON object.
             try {
 
                 parsed =
-                    JSON.parse(output.trim());
+                    JSON.parse(
+                        output.trim()
+                    );
 
-            } catch (_) {
+            } catch (parseError) {
 
-                // Try to recover JSON if the model accidentally
-                // included surrounding text.
+                console.error(
+                    "Direct JSON parsing failed."
+                );
+
+                // ------------------------------------------------
+                // RECOVER JSON OBJECT FROM SURROUNDING TEXT
+                // ------------------------------------------------
 
                 const start =
                     output.indexOf("{");
@@ -244,6 +313,7 @@ Return ONLY the JSON object.
 
                 if (
                     start !== -1 &&
+                    end !== -1 &&
                     end > start
                 ) {
 
@@ -257,14 +327,15 @@ Return ONLY the JSON object.
                                 )
                             );
 
-                    } catch (_) {
+                    } catch (recoveryError) {
+
                         parsed = null;
                     }
                 }
             }
 
             // =================================================
-            // VALIDATE RESULT
+            // VALIDATE AI RESPONSE
             // =================================================
 
             if (
@@ -278,11 +349,15 @@ Return ONLY the JSON object.
                 );
 
                 return res.status(502).json({
+
                     error:
-                        "Game Mode AI returned invalid question data.",
-                    reply: output
+                        "Game Mode AI returned invalid question data."
                 });
             }
+
+            // =================================================
+            // VALIDATE EACH QUESTION
+            // =================================================
 
             const validQuestions =
                 parsed.questions
@@ -297,7 +372,8 @@ Return ONLY the JSON object.
 
                         if (
                             typeof question.question !==
-                            "string"
+                            "string" ||
+                            !question.question.trim()
                         ) {
                             return false;
                         }
@@ -319,9 +395,8 @@ Return ONLY the JSON object.
                         if (
                             !question.options.every(
                                 option =>
-                                    typeof option ===
-                                    "string" &&
-                                    option.trim()
+                                    typeof option === "string" &&
+                                    option.trim().length > 0
                             )
                         ) {
                             return false;
@@ -341,6 +416,7 @@ Return ONLY the JSON object.
                         return true;
                     })
                     .map(question => ({
+
                         question:
                             question.question.trim(),
 
@@ -360,24 +436,34 @@ Return ONLY the JSON object.
                                 : ""
                     }));
 
+            // =================================================
+            // CHECK QUESTION COUNT
+            // =================================================
+
             if (
-                validQuestions.length < count
+                validQuestions.length < questionCount
             ) {
 
                 console.error(
-                    "Game Mode returned insufficient valid questions:",
+                    "Insufficient valid Game Mode questions:",
                     validQuestions.length,
                     "of",
-                    count
+                    questionCount
                 );
 
                 return res.status(502).json({
+
                     error:
-                        `Game Mode generated only ${validQuestions.length} valid questions out of ${count}.`,
+                        `Game Mode generated only ${validQuestions.length} valid questions out of ${questionCount}.`,
+
                     questions:
                         validQuestions
                 });
             }
+
+            // =================================================
+            // RETURN GAME QUESTIONS
+            // =================================================
 
             return res.status(200).json({
 
@@ -392,8 +478,10 @@ Return ONLY the JSON object.
                 difficulty,
 
                 questions:
-                    validQuestions.slice(0, count)
-
+                    validQuestions.slice(
+                        0,
+                        questionCount
+                    )
             });
         }
 
@@ -401,12 +489,15 @@ Return ONLY the JSON object.
         // NORMAL STUDYMIND AI
         // =====================================================
 
-        const response =
-            await client.responses.create({
+        if (!message) {
 
-                model: "gpt-5-mini",
+            return res.status(400).json({
+                error:
+                    "Please provide a message."
+            });
+        }
 
-                instructions: `
+        const normalInstructions = `
 You are StudyMind AI, a professional educational assistant.
 
 Your job is to help students:
@@ -479,17 +570,24 @@ answer it directly.
 
 If the student asks for help understanding something,
 teach it rather than simply giving an unexplained answer.
-`,
+`;
 
-                input: message
+        const response =
+            await client.responses.create({
 
+                model: "gpt-5-mini",
+
+                instructions:
+                    normalInstructions,
+
+                input:
+                    message
             });
 
         return res.status(200).json({
 
             reply:
                 response.output_text || ""
-
         });
 
     } catch (error) {
@@ -507,8 +605,6 @@ teach it rather than simply giving an unexplained answer.
             details:
                 error.message ||
                 "Unknown error"
-
         });
     }
 };
-
