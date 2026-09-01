@@ -8,7 +8,8 @@
    • 10 questions per battle
    • 15-second question timer
    • Free 5-battle limit
-   • Premium access
+   • TEST ACCOUNT unlimited battles
+   • Premium unlimited battles
    • Battle points
    • Wins / losses / draws
    • Global leaderboard
@@ -45,6 +46,28 @@ const QUESTION_TIME_SECONDS = 15;
 
 const MATCHMAKING_INTERVAL = 2500;
 const MATCH_TIMEOUT = 120000;
+
+
+/*
+ * TEST ACCOUNT
+ *
+ * A Supabase user can be marked as a test account by adding:
+ *
+ * {
+ *     "is_test_account": true
+ * }
+ *
+ * to that user's auth metadata.
+ *
+ * This is deliberately NOT stored in localStorage because
+ * localStorage can be changed by any user from their browser.
+ */
+const TEST_ACCOUNT_METADATA_KEYS = [
+    "is_test_account",
+    "isTestAccount",
+    "test_account",
+    "testAccount"
+];
 
 
 /* =========================================================
@@ -261,6 +284,61 @@ function getDisplayName(user) {
         user.email?.split("@")[0] ||
         "Player"
     );
+}
+
+
+/* =========================================================
+   TEST ACCOUNT DETECTION
+========================================================= */
+
+function isTestAccount(user) {
+
+    if (!user) {
+        return false;
+    }
+
+    const metadata =
+        user.user_metadata || {};
+
+    return TEST_ACCOUNT_METADATA_KEYS.some(
+        key => {
+
+            const value =
+                metadata[key];
+
+            return (
+                value === true ||
+                value === "true" ||
+                value === 1 ||
+                value === "1"
+            );
+        }
+    );
+}
+
+
+/*
+ * This helper gets the currently authenticated user and checks
+ * whether the account is a designated test account.
+ */
+async function isCurrentUserTestAccount() {
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+        return isTestAccount(user);
+
+    } catch (error) {
+
+        console.warn(
+            "Could not determine test-account status:",
+            error
+        );
+
+        return false;
+    }
 }
 
 
@@ -579,10 +657,31 @@ function setBattlePoints(value) {
 
 
 /* =========================================================
+   ACCOUNT ACCESS TYPE
+========================================================= */
+
+async function getBattleAccessType() {
+
+    const user =
+        await getCurrentUser();
+
+    if (isTestAccount(user)) {
+        return "test";
+    }
+
+    if (isPremiumUser()) {
+        return "premium";
+    }
+
+    return "free";
+}
+
+
+/* =========================================================
    UPDATE BATTLE COUNT UI
 ========================================================= */
 
-function updateBattleLimitUI() {
+async function updateBattleLimitUI() {
 
     const used =
         getBattlesUsed();
@@ -592,6 +691,22 @@ function updateBattleLimitUI() {
             0,
             FREE_BATTLE_LIMIT - used
         );
+
+    let accessType =
+        "free";
+
+    try {
+
+        accessType =
+            await getBattleAccessType();
+
+    } catch (_) {}
+
+
+    const unlimited =
+        accessType === "test" ||
+        accessType === "premium";
+
 
     const ids = [
         "freeBattlesRemaining",
@@ -609,9 +724,44 @@ function updateBattleLimitUI() {
         }
 
         element.textContent =
-            isPremiumUser()
+            unlimited
                 ? "Unlimited"
                 : remaining;
+    });
+
+
+    /*
+     * Optional status elements.
+     */
+    const statusIds = [
+        "battleLimitMessage",
+        "freeBattleMessage",
+        "battleAccessStatus"
+    ];
+
+    statusIds.forEach(id => {
+
+        const element = $(id);
+
+        if (!element) {
+            return;
+        }
+
+        if (accessType === "test") {
+
+            element.textContent =
+                "Test Account — Unlimited Battles";
+
+        } else if (accessType === "premium") {
+
+            element.textContent =
+                "Premium — Unlimited Battles";
+
+        } else {
+
+            element.textContent =
+                `${remaining} free battle${remaining === 1 ? "" : "s"} remaining`;
+        }
     });
 }
 
@@ -640,23 +790,143 @@ function showPremiumMessage() {
    CHECK BATTLE ACCESS
 ========================================================= */
 
-function canStartBattle() {
+async function canStartBattle() {
 
-    if (isPremiumUser()) {
+    try {
+
+        const user =
+            await getCurrentUser();
+
+
+        /*
+         * TEST ACCOUNT:
+         *
+         * Unlimited battles.
+         *
+         * This check happens BEFORE the free limit.
+         */
+
+        if (isTestAccount(user)) {
+
+            console.log(
+                "Game Mode: test account detected — unlimited battles enabled."
+            );
+
+            return true;
+        }
+
+
+        /*
+         * PREMIUM:
+         *
+         * Unlimited battles.
+         */
+
+        if (isPremiumUser()) {
+
+            return true;
+        }
+
+
+        /*
+         * NORMAL FREE ACCOUNT:
+         *
+         * Enforce the 5-battle limit.
+         */
+
+        if (
+            getBattlesUsed() >=
+            FREE_BATTLE_LIMIT
+        ) {
+
+            showPremiumMessage();
+
+            return false;
+        }
+
+
         return true;
-    }
 
-    if (
-        getBattlesUsed() >=
-        FREE_BATTLE_LIMIT
-    ) {
+    } catch (error) {
 
-        showPremiumMessage();
+        console.error(
+            "Battle access check failed:",
+            error
+        );
+
+        alert(
+            "We could not verify your Game Mode access. Please refresh the page and try again."
+        );
 
         return false;
     }
+}
 
-    return true;
+
+/* =========================================================
+   INCREMENT BATTLE COUNT
+========================================================= */
+
+async function recordBattleUsage() {
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+
+        /*
+         * TEST ACCOUNT:
+         *
+         * Do NOT consume one of the 5 free battles.
+         */
+
+        if (isTestAccount(user)) {
+
+            console.log(
+                "Test account battle completed — free battle count not increased."
+            );
+
+            await updateBattleLimitUI();
+
+            return;
+        }
+
+
+        /*
+         * PREMIUM:
+         *
+         * Premium battles are unlimited and therefore
+         * should not consume the free battle counter.
+         */
+
+        if (isPremiumUser()) {
+
+            await updateBattleLimitUI();
+
+            return;
+        }
+
+
+        /*
+         * NORMAL FREE USER:
+         *
+         * Consume one free battle.
+         */
+
+        setBattlesUsed(
+            getBattlesUsed() + 1
+        );
+
+        await updateBattleLimitUI();
+
+    } catch (error) {
+
+        console.warn(
+            "Could not record battle usage:",
+            error
+        );
+    }
 }
 
 
@@ -888,10 +1158,6 @@ async function generateBattleQuestions(
     difficulty = "mixed"
 ) {
 
-    /*
-     * First try existing application generators.
-     */
-
     const generators = [
         window.generateGameQuestions,
         window.generateBattleQuestionsAI,
@@ -943,10 +1209,6 @@ async function generateBattleQuestions(
         }
     }
 
-
-    /*
-     * Then try the application's API routes.
-     */
 
     const endpoints = [
         "/api/generate-questions",
@@ -1038,7 +1300,7 @@ async function generateBattleQuestions(
 
 async function startComputerBattle() {
 
-    if (!canStartBattle()) {
+    if (!(await canStartBattle())) {
         return;
     }
 
@@ -1683,10 +1945,6 @@ async function updateLeaderboardRecord(
         getDisplayName(user);
 
 
-    /*
-     * First get the existing record.
-     */
-
     const {
         data: existing,
         error: selectError
@@ -1765,12 +2023,6 @@ async function updateLeaderboardRecord(
             new Date().toISOString()
     };
 
-
-    /*
-     * IMPORTANT:
-     * Do NOT reference a "points" column.
-     * The leaderboard uses battle_points.
-     */
 
     const {
         error: upsertError
@@ -1878,12 +2130,14 @@ async function finishComputerBattle() {
     );
 
 
-    setBattlesUsed(
-        getBattlesUsed() + 1
-    );
+    /*
+     * IMPORTANT:
+     *
+     * This now respects the test account and Premium
+     * bypass. Only normal free users consume one battle.
+     */
 
-
-    updateBattleLimitUI();
+    await recordBattleUsage();
 
 
     const arena =
@@ -2170,7 +2424,7 @@ function normalizeMatchId(value) {
 
 async function findOneVOneOpponent() {
 
-    if (!canStartBattle()) {
+    if (!(await canStartBattle())) {
         return;
     }
 
@@ -2217,14 +2471,6 @@ async function findOneVOneOpponent() {
             getSupabase();
 
 
-        /*
-         * Search for an existing waiting room.
-         *
-         * This is READ ONLY.
-         * It avoids the recursive game_match_players
-         * policy problem.
-         */
-
         const {
             data: waitingMatches,
             error: searchError
@@ -2270,10 +2516,6 @@ async function findOneVOneOpponent() {
             waitingMatches?.[0] || null;
 
 
-        /*
-         * Join existing match.
-         */
-
         if (existingMatch) {
 
             await joinExistingMatch(
@@ -2283,11 +2525,6 @@ async function findOneVOneOpponent() {
             return;
         }
 
-
-        /*
-         * Create a new waiting room
-         * through the database RPC.
-         */
 
         const {
             data: createdMatch,
@@ -2487,13 +2724,6 @@ async function joinExistingMatch(
     );
 
 
-    /*
-     * IMPORTANT:
-     * Prefer the RPC because direct INSERT into
-     * game_match_players can trigger the recursive
-     * RLS policy we encountered earlier.
-     */
-
     const rpcNames = [
         "join_game_match",
         "join_1v1_match",
@@ -2548,11 +2778,6 @@ async function joinExistingMatch(
         }
     }
 
-
-    /*
-     * If the database has no join RPC, try a direct
-     * insert as a final compatibility path.
-     */
 
     if (!joined) {
 
@@ -2620,10 +2845,6 @@ async function joinExistingMatch(
     );
 
 
-    /*
-     * Give Supabase a moment to update the match.
-     */
-
     setTimeout(
         () => {
 
@@ -2650,10 +2871,6 @@ async function checkMatchPlayers() {
         getSupabase();
 
 
-    /*
-     * Read the match itself first.
-     */
-
     const {
         data: match,
         error: matchError
@@ -2678,10 +2895,6 @@ async function checkMatchPlayers() {
     }
 
 
-    /*
-     * If the match has started, launch.
-     */
-
     if (
         match.status === "active" ||
         match.status === "in_progress" ||
@@ -2697,13 +2910,6 @@ async function checkMatchPlayers() {
         return;
     }
 
-
-    /*
-     * Check player count.
-     *
-     * This is a normal SELECT and does not modify
-     * game_match_players.
-     */
 
     const {
         data: players,
@@ -2741,10 +2947,6 @@ async function checkMatchPlayers() {
             "Starting your battle..."
         );
 
-
-        /*
-         * Try to start through RPC.
-         */
 
         await tryStartOneVOneMatch();
 
@@ -3182,11 +3384,6 @@ function showOneVOneQuestion() {
 
     if (!answerGrid) {
 
-        /*
-         * Some versions of the HTML reuse the
-         * normal answerGrid.
-         */
-
         const fallback =
             $("answerGrid");
 
@@ -3370,12 +3567,6 @@ async function answerOneVOneQuestion(
     updateOneVOneScores();
 
 
-    /*
-     * Try to publish this player's answer to Supabase.
-     * This is best-effort because different database
-     * versions may have different RPC names.
-     */
-
     await publishOneVOneAnswer(
         battleState.currentQuestion,
         correct,
@@ -3553,15 +3744,6 @@ async function publishOneVOneAnswer(
             );
         }
     }
-
-
-    /*
-     * No RPC available.
-     *
-     * Do not directly write to game_match_players
-     * because that was the source of the recursive
-     * RLS policy problem.
-     */
 }
 
 
@@ -3699,18 +3881,20 @@ async function finishLocalOneVOne() {
     }
 
 
-    setBattlesUsed(
-        getBattlesUsed() + 1
-    );
-
-
     setBattlePoints(
         getBattlePoints() +
         points
     );
 
 
-    updateBattleLimitUI();
+    /*
+     * TEST ACCOUNT AND PREMIUM ACCOUNT DO NOT
+     * consume free battle credits.
+     *
+     * Normal free users consume one.
+     */
+
+    await recordBattleUsage();
 
 
     try {
@@ -3866,11 +4050,6 @@ async function handleOneVOneFinishedMatch(
         return;
     }
 
-
-    /*
-     * If the database provides final scores,
-     * use them.
-     */
 
     if (
         match?.player1_score !== undefined
@@ -4668,9 +4847,11 @@ async function initializeGameMode() {
 
         populateGameSubjects();
 
-        updateBattleLimitUI();
-
         bindGameEvents();
+
+        await getCurrentUser();
+
+        await updateBattleLimitUI();
 
         await updateLeaderboardUI();
 
@@ -4678,10 +4859,21 @@ async function initializeGameMode() {
 
 
         /*
-         * Make sure the user is authenticated.
+         * Console information is useful while debugging,
+         * but does not expose the user's email.
          */
 
-        await getCurrentUser();
+        const user =
+            await getCurrentUser();
+
+        console.log(
+            "Game Mode access:",
+            isTestAccount(user)
+                ? "TEST ACCOUNT — UNLIMITED"
+                : isPremiumUser()
+                    ? "PREMIUM — UNLIMITED"
+                    : "FREE — 5 BATTLES"
+        );
 
     } catch (error) {
 
@@ -4731,8 +4923,6 @@ if (
 
 /* =========================================================
    GLOBAL EXPORTS
-   Allows existing HTML onclick handlers to continue
-   working even if they use inline onclick="..."
 ========================================================= */
 
 window.startComputerBattle =
@@ -4788,3 +4978,7 @@ window.getBattlesUsed =
 
 window.getBattlePoints =
     getBattlePoints;
+
+window.isTestAccount =
+    isTestAccount;
+
