@@ -154,61 +154,59 @@ function shuffleArray(array) {
    STUDY PLAN
 ========================================================= */
 
+/* =========================================================
+   GET SAVED STUDY PLAN
+========================================================= */
+
 function getStudyPlan() {
 
-    const possibleKeys = [
-        "studyMindPlan",
-        "studyPlan",
-        "currentStudyPlan",
-        "studyMindStudyPlan",
-        "generatedStudyPlan"
-    ];
+    const raw =
+        localStorage.getItem("studyMindPlan");
 
-    for (const key of possibleKeys) {
+    if (!raw) {
 
-        const raw =
-            localStorage.getItem(key);
+        console.warn(
+            "Computer Battle: No study plan found."
+        );
 
-        if (!raw) {
-            continue;
-        }
-
-        try {
-
-            const parsed =
-                JSON.parse(raw);
-
-            if (parsed) {
-
-                console.log(
-                    `Computer Battle: Study plan loaded from ${key}`,
-                    parsed
-                );
-
-                return parsed;
-            }
-
-        } catch (error) {
-
-            console.warn(
-                `Could not parse ${key}:`,
-                error
-            );
-        }
+        return null;
     }
 
-    console.warn(
-        "Computer Battle: No study plan found in localStorage."
-    );
+    try {
 
-    return null;
+        const plan =
+            JSON.parse(raw);
+
+        console.log(
+            "Computer Battle: Study plan loaded:",
+            plan
+        );
+
+        return plan;
+
+    } catch (error) {
+
+        console.error(
+            "Computer Battle: Could not parse studyMindPlan:",
+            error
+        );
+
+        return null;
+    }
 }
 
+
 /* =========================================================
-   SUBJECT NAME DETECTION
+   SUBJECT NAME
 ========================================================= */
 
 function getSubjectName(item) {
+
+    if (
+        typeof item === "string"
+    ) {
+        return item.trim();
+    }
 
     if (
         !item ||
@@ -217,14 +215,14 @@ function getSubjectName(item) {
         return "";
     }
 
-    const possibleNames = [
+    const names = [
         item.subject,
         item.subjectName,
         item.subject_name,
         item.name
     ];
 
-    for (const value of possibleNames) {
+    for (const value of names) {
 
         if (
             typeof value === "string" &&
@@ -237,11 +235,18 @@ function getSubjectName(item) {
     return "";
 }
 
+
 /* =========================================================
-   TOPIC NAME DETECTION
+   TOPIC NAME
 ========================================================= */
 
 function getTopicName(item) {
+
+    if (
+        typeof item === "string"
+    ) {
+        return item.trim();
+    }
 
     if (
         !item ||
@@ -250,7 +255,7 @@ function getTopicName(item) {
         return "";
     }
 
-    const possibleNames = [
+    const names = [
         item.topic,
         item.topicName,
         item.topic_name,
@@ -258,7 +263,7 @@ function getTopicName(item) {
         item.title
     ];
 
-    for (const value of possibleNames) {
+    for (const value of names) {
 
         if (
             typeof value === "string" &&
@@ -271,195 +276,92 @@ function getTopicName(item) {
     return "";
 }
 
+
 /* =========================================================
    EXTRACT SUBJECTS
-   More robust than the previous version.
-
-   This recursively searches the complete study plan,
-   so it can handle subjects stored inside nested objects.
 ========================================================= */
 
 function extractSubjects(plan) {
-    if (!plan || typeof plan !== "object") {
+
+    if (
+        !plan ||
+        typeof plan !== "object"
+    ) {
         return [];
     }
 
-    if (Array.isArray(plan.subjects)) {
-        return plan.subjects
-            .map(subject => String(subject).trim())
-            .filter(Boolean);
+    if (
+        !Array.isArray(plan.subjects)
+    ) {
+        console.warn(
+            "Computer Battle: plan.subjects is not an array.",
+            plan
+        );
+
+        return [];
     }
 
-    return [];
-}
-
-    function addSubject(value) {
-
-        if (
-            typeof value !== "string"
-        ) {
-            return;
-        }
-
-        const subject =
-            value.trim();
-
-        if (
-            !subject ||
-            subject.length > 100
-        ) {
-            return;
-        }
-
-        if (
-            !subjects.some(
-                existing =>
-                    normalizeBattleText(existing) ===
-                    normalizeBattleText(subject)
+    const subjects =
+        plan.subjects
+            .map(subject =>
+                getSubjectName(subject)
             )
-        ) {
-            subjects.push(subject);
-        }
-    }
-
-    function inspect(node) {
-
-        if (!node) {
-            return;
-        }
-
-        if (
-            typeof node === "string"
-        ) {
-            return;
-        }
-
-        if (
-            typeof node !== "object"
-        ) {
-            return;
-        }
-
-        if (visited.has(node)) {
-            return;
-        }
-
-        visited.add(node);
-
-        /*
-           Direct subject fields.
-        */
-
-        addSubject(node.subject);
-        addSubject(node.subjectName);
-        addSubject(node.subject_name);
-
-        /*
-           Arrays and nested objects.
-        */
-
-        if (Array.isArray(node)) {
-
-            node.forEach(item => {
-                inspect(item);
-            });
-
-            return;
-        }
-
-        Object.keys(node).forEach(key => {
-
-            const value =
-                node[key];
-
-            /*
-               These keys are very likely to
-               contain actual subject records.
-            */
-
-            const keyLower =
-                key.toLowerCase();
-
-            if (
-                keyLower === "subjects" ||
-                keyLower === "studysubjects" ||
-                keyLower === "study_subjects"
-            ) {
-
-                if (Array.isArray(value)) {
-
-                    value.forEach(item => {
-
-                        if (
-                            typeof item === "string"
-                        ) {
-                            addSubject(item);
-                        } else {
-                            const name =
-                                getSubjectName(
-                                    item
-                                );
-
-                            addSubject(name);
-
-                            inspect(item);
-                        }
-                    });
-
-                    return;
-                }
-            }
-
-            /*
-               Continue recursively through
-               every nested object.
-            */
-
-            if (
-                value &&
-                typeof value === "object"
-            ) {
-                inspect(value);
-            }
-        });
-    }
-
-    inspect(plan);
+            .filter(Boolean);
 
     console.log(
         "Computer Battle subjects:",
         subjects
     );
 
-    return subjects;
+    return [
+        ...new Set(subjects)
+    ];
 }
 
+
 /* =========================================================
-   EXTRACT TOPICS FOR SELECTED SUBJECT
+   EXTRACT TOPICS
 ========================================================= */
 
-function extractTopics(plan, selectedSubject) {
-    if (!plan || typeof plan !== "object") {
+function extractTopics(
+    plan,
+    selectedSubject
+) {
+
+    if (
+        !plan ||
+        typeof plan !== "object"
+    ) {
         return [];
     }
 
-    if (Array.isArray(plan.topics)) {
-        return plan.topics
-            .map(topic => String(topic).trim())
-            .filter(Boolean);
-    }
-
-    return [];
-}
-
-    const topics = [];
-    const visited = new WeakSet();
-
-    const target =
-        normalizeBattleText(
-            selectedSubject
+    if (
+        !Array.isArray(plan.topics)
+    ) {
+        console.warn(
+            "Computer Battle: plan.topics is not an array.",
+            plan
         );
 
+        return [];
+    }
+
+    const topics =
+        plan.topics
+            .map(topic =>
+                getTopicName(topic)
+            )
+            .filter(Boolean);
+
+    console.log(
+        "Computer Battle topics:",
+        topics
+    );
+
+    return [
+        ...new Set(topics)
+    ];
+}
     function addTopic(value) {
 
         if (
