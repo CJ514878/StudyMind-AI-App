@@ -280,9 +280,18 @@ function getTopicName(item) {
 ========================================================= */
 
 function extractSubjects(plan) {
+    if (!plan || typeof plan !== "object") {
+        return [];
+    }
 
-    const subjects = [];
-    const visited = new WeakSet();
+    if (Array.isArray(plan.subjects)) {
+        return plan.subjects
+            .map(subject => String(subject).trim())
+            .filter(Boolean);
+    }
+
+    return [];
+}
 
     function addSubject(value) {
 
@@ -429,10 +438,19 @@ function extractSubjects(plan) {
    EXTRACT TOPICS FOR SELECTED SUBJECT
 ========================================================= */
 
-function extractTopics(
-    plan,
-    selectedSubject
-) {
+function extractTopics(plan, selectedSubject) {
+    if (!plan || typeof plan !== "object") {
+        return [];
+    }
+
+    if (Array.isArray(plan.topics)) {
+        return plan.topics
+            .map(topic => String(topic).trim())
+            .filter(Boolean);
+    }
+
+    return [];
+}
 
     const topics = [];
     const visited = new WeakSet();
