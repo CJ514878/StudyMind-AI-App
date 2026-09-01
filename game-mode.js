@@ -4,6 +4,32 @@
 ========================================================= */
 
 /* =========================================================
+   GAME MODE STORAGE
+========================================================= */
+
+const GAME_STORAGE = {
+    theme: "studyMindGameTheme"
+};
+
+/* =========================================================
+   GLOBAL BATTLE STATE
+========================================================= */
+
+let battleState = {
+    mode: null,
+    subject: "",
+    topic: "",
+    difficulty: "mixed",
+    questions: [],
+    currentQuestion: 0,
+    playerScore: 0,
+    opponentScore: 0,
+    timer: 0,
+    timerInterval: null,
+    answering: false,
+    battleActive: false
+};
+/* =========================================================
    1V1 STATE
 ========================================================= */
 
