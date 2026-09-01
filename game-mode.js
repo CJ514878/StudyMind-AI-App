@@ -1,40 +1,36 @@
 /* =========================================================
    STUDYMIND AI — GAME MODE
    COMPLETE CORRECTED REPLACEMENT
-   ---------------------------------------------------------
-   Includes:
+   =========================================================
+   FEATURES
    • Computer Battle
    • 1v1 matchmaking
    • 10 questions per battle
    • 15-second question timer
    • Free 5-battle limit
-   • Premium check
+   • Premium access
    • Battle points
    • Wins / losses / draws
    • Global leaderboard
    • Realtime leaderboard refresh
    • Realtime 1v1 match updates
    • Subject + topic selection
-   • Theme
    • Navigation
+   • Safe Supabase handling
 ========================================================= */
 
 
 /* =========================================================
-   ELEMENT SHORTCUT
+   ELEMENT HELPER
 ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
 
-function getElement(id) {
-    return document.getElementById(id);
-}
-
 
 /* =========================================================
-   GAME CONSTANTS
+   CONSTANTS
 ========================================================= */
 
 const GAME_STORAGE = {
@@ -44,18 +40,15 @@ const GAME_STORAGE = {
 };
 
 const FREE_BATTLE_LIMIT = 5;
-
 const QUESTIONS_PER_BATTLE = 10;
-
 const QUESTION_TIME_SECONDS = 15;
 
 const MATCHMAKING_INTERVAL = 2500;
-
 const MATCH_TIMEOUT = 120000;
 
 
 /* =========================================================
-   GLOBAL BATTLE STATE
+   BATTLE STATE
 ========================================================= */
 
 let battleState = {
@@ -75,7 +68,6 @@ let battleState = {
     timerInterval: null,
 
     answering: false,
-
     battleActive: false
 };
 
@@ -85,23 +77,18 @@ let battleState = {
 ========================================================= */
 
 let oneVOneMatchId = null;
-
 let oneVOnePlayerNumber = null;
-
 let oneVOneMyName = "Player";
 
 let oneVOnePolling = null;
-
 let oneVOneMatchmakingStartedAt = 0;
 
 let oneVOneActive = false;
-
 let oneVOneResultsRecorded = false;
 
 let oneVOneAnsweredQuestions = new Set();
 
 let oneVOneChannel = null;
-
 let leaderboardRealtimeChannel = null;
 
 
@@ -244,7 +231,7 @@ async function getCurrentUser() {
         throw error;
     }
 
-    if (!data || !data.user) {
+    if (!data?.user) {
         throw new Error(
             "You must be logged in before playing Game Mode."
         );
@@ -264,8 +251,7 @@ function getDisplayName(user) {
         return "Player";
     }
 
-    const metadata =
-        user.user_metadata || {};
+    const metadata = user.user_metadata || {};
 
     return (
         metadata.display_name ||
@@ -279,7 +265,7 @@ function getDisplayName(user) {
 
 
 /* =========================================================
-   SUBJECT NORMALIZER
+   NORMALIZE SUBJECT
 ========================================================= */
 
 function normalizeSubjectName(subject) {
@@ -294,18 +280,17 @@ function normalizeSubjectName(subject) {
             .toLowerCase();
 
     const match =
-        Object.keys(SUBJECT_DATABASE)
-            .find(
-                name =>
-                    name.toLowerCase() === cleaned
-            );
+        Object.keys(SUBJECT_DATABASE).find(
+            name =>
+                name.toLowerCase() === cleaned
+        );
 
     return match || String(subject).trim();
 }
 
 
 /* =========================================================
-   POPULATE SUBJECT DROPDOWNS
+   SUBJECT DROPDOWNS
 ========================================================= */
 
 function populateGameSubjects() {
@@ -315,166 +300,138 @@ function populateGameSubjects() {
         $("battleSubject")
     ].filter(Boolean);
 
-    selectors.forEach(function(select) {
+    selectors.forEach(select => {
 
-        const currentValue =
-            select.value;
+        const currentValue = select.value;
 
         select.innerHTML =
             '<option value="">Select subject</option>';
 
-        Object.keys(SUBJECT_DATABASE)
-            .forEach(function(subject) {
+        Object.keys(SUBJECT_DATABASE).forEach(subject => {
 
-                const option =
-                    document.createElement("option");
+            const option =
+                document.createElement("option");
 
-                option.value =
-                    subject;
+            option.value = subject;
+            option.textContent = subject;
 
-                option.textContent =
-                    subject;
-
-                select.appendChild(option);
-            });
+            select.appendChild(option);
+        });
 
         if (
             currentValue &&
             SUBJECT_DATABASE[currentValue]
         ) {
-            select.value =
-                currentValue;
+            select.value = currentValue;
         }
     });
 
     populateOneVOneTopics();
+    populateBattleTopics();
+}
+
+
+/* =========================================================
+   1V1 TOPICS
+========================================================= */
+
+function populateOneVOneTopics() {
+
+    const subject = $("oneVOneSubject");
+    const topic = $("oneVOneTopic");
+
+    if (!subject || !topic) {
+        return;
+    }
+
+    const selectedSubject =
+        normalizeSubjectName(subject.value);
+
+    const currentTopic = topic.value;
+
+    topic.innerHTML =
+        '<option value="">Select topic</option>';
+
+    const topics =
+        SUBJECT_DATABASE[selectedSubject] || [];
+
+    topics.forEach(topicName => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = topicName;
+        option.textContent = topicName;
+
+        topic.appendChild(option);
+    });
+
+    if (topics.includes(currentTopic)) {
+        topic.value = currentTopic;
+    }
+}
+
+
+/* =========================================================
+   COMPUTER TOPICS
+========================================================= */
+
+function populateBattleTopics() {
+
+    const subject = $("battleSubject");
+    const topic = $("battleTopic");
+
+    if (!subject || !topic) {
+        return;
+    }
+
+    const selectedSubject =
+        normalizeSubjectName(subject.value);
+
+    const currentTopic = topic.value;
+
+    topic.innerHTML =
+        '<option value="">Select topic</option>';
+
+    const topics =
+        SUBJECT_DATABASE[selectedSubject] || [];
+
+    topics.forEach(topicName => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = topicName;
+        option.textContent = topicName;
+
+        topic.appendChild(option);
+    });
+
+    if (topics.includes(currentTopic)) {
+        topic.value = currentTopic;
+    }
+}
+
+
+/* =========================================================
+   SUBJECT CHANGE HANDLERS
+========================================================= */
+
+function handleOneVOneSubjectChange() {
+
+    populateOneVOneTopics();
+    updateFindOpponentButton();
+}
+
+
+function handleBattleSubjectChange() {
 
     populateBattleTopics();
 }
 
 
 /* =========================================================
-   POPULATE 1V1 TOPICS
-========================================================= */
-
-function populateOneVOneTopics() {
-
-    const subject =
-        $("oneVOneSubject");
-
-    const topic =
-        $("oneVOneTopic");
-
-    if (!subject || !topic) {
-        return;
-    }
-
-    const selectedSubject =
-        normalizeSubjectName(
-            subject.value
-        );
-
-    const currentTopic =
-        topic.value;
-
-    topic.innerHTML =
-        '<option value="">Select topic</option>';
-
-    const topics =
-        SUBJECT_DATABASE[selectedSubject] || [];
-
-    topics.forEach(function(topicName) {
-
-        const option =
-            document.createElement("option");
-
-        option.value =
-            topicName;
-
-        option.textContent =
-            topicName;
-
-        topic.appendChild(option);
-    });
-
-    if (
-        currentTopic &&
-        topics.includes(currentTopic)
-    ) {
-        topic.value =
-            currentTopic;
-    }
-}
-
-
-/* =========================================================
-   POPULATE COMPUTER BATTLE TOPICS
-========================================================= */
-
-function populateBattleTopics() {
-
-    const subject =
-        $("battleSubject");
-
-    const topic =
-        $("battleTopic");
-
-    if (!subject || !topic) {
-        return;
-    }
-
-    const selectedSubject =
-        normalizeSubjectName(
-            subject.value
-        );
-
-    const currentTopic =
-        topic.value;
-
-    topic.innerHTML =
-        '<option value="">Select topic</option>';
-
-    const topics =
-        SUBJECT_DATABASE[selectedSubject] || [];
-
-    topics.forEach(function(topicName) {
-
-        const option =
-            document.createElement("option");
-
-        option.value =
-            topicName;
-
-        option.textContent =
-            topicName;
-
-        topic.appendChild(option);
-    });
-
-    if (
-        currentTopic &&
-        topics.includes(currentTopic)
-    ) {
-        topic.value =
-            currentTopic;
-    }
-}
-
-
-/* =========================================================
-   1V1 SUBJECT CHANGE
-========================================================= */
-
-function handleOneVOneSubjectChange() {
-
-    populateOneVOneTopics();
-
-    updateFindOpponentButton();
-}
-
-
-/* =========================================================
-   1V1 TOPIC CHANGE
+   1V1 BUTTON
 ========================================================= */
 
 function updateFindOpponentButton() {
@@ -494,30 +451,19 @@ function updateFindOpponentButton() {
 
     button.disabled =
         !subject ||
-        !topic;
+        !topic ||
+        !!oneVOneMatchId;
 }
 
 
 /* =========================================================
-   COMPUTER SUBJECT CHANGE
-========================================================= */
-
-function handleBattleSubjectChange() {
-
-    populateBattleTopics();
-}
-
-
-/* =========================================================
-   1V1 VALUES
+   VALUES
 ========================================================= */
 
 function oneVOneSubjectValue() {
 
     return normalizeSubjectName(
-        $("oneVOneSubject")
-            ?.value
-            ?.trim() || ""
+        $("oneVOneSubject")?.value || ""
     );
 }
 
@@ -525,18 +471,15 @@ function oneVOneSubjectValue() {
 function oneVOneTopicValue() {
 
     return (
-        $("oneVOneTopic")
-            ?.value
-            ?.trim() || ""
-    );
+        $("oneVOneTopic")?.value || ""
+    ).trim();
 }
 
 
 function oneVOneDifficultyValue() {
 
     return (
-        $("oneVOneDifficulty")
-            ?.value ||
+        $("oneVOneDifficulty")?.value ||
         "mixed"
     );
 }
@@ -564,18 +507,17 @@ function isPremiumUser() {
 
 
 /* =========================================================
-   BATTLE COUNT
+   FREE BATTLE COUNT
 ========================================================= */
 
 function getBattlesUsed() {
 
-    const stored =
-        localStorage.getItem(
-            GAME_STORAGE.battleCount
-        );
-
     const value =
-        Number(stored);
+        Number(
+            localStorage.getItem(
+                GAME_STORAGE.battleCount
+            )
+        );
 
     return Number.isFinite(value)
         ? Math.max(0, value)
@@ -609,13 +551,12 @@ function getBattleCount() {
 
 function getBattlePoints() {
 
-    const stored =
-        localStorage.getItem(
-            GAME_STORAGE.battlePoints
-        );
-
     const value =
-        Number(stored);
+        Number(
+            localStorage.getItem(
+                GAME_STORAGE.battlePoints
+            )
+        );
 
     return Number.isFinite(value)
         ? Math.max(0, value)
@@ -638,6 +579,44 @@ function setBattlePoints(value) {
 
 
 /* =========================================================
+   UPDATE BATTLE COUNT UI
+========================================================= */
+
+function updateBattleLimitUI() {
+
+    const used =
+        getBattlesUsed();
+
+    const remaining =
+        Math.max(
+            0,
+            FREE_BATTLE_LIMIT - used
+        );
+
+    const ids = [
+        "freeBattlesRemaining",
+        "battlesRemaining",
+        "battleCount",
+        "freeBattleCount"
+    ];
+
+    ids.forEach(id => {
+
+        const element = $(id);
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            isPremiumUser()
+                ? "Unlimited"
+                : remaining;
+    });
+}
+
+
+/* =========================================================
    PREMIUM MESSAGE
 ========================================================= */
 
@@ -647,9 +626,7 @@ function showPremiumMessage() {
         typeof window.openPremium ===
         "function"
     ) {
-
         window.openPremium();
-
         return;
     }
 
@@ -684,6 +661,224 @@ function canStartBattle() {
 
 
 /* =========================================================
+   CLEAN ERROR
+========================================================= */
+
+function cleanErrorMessage(message) {
+
+    if (!message) {
+        return "Something went wrong. Please try again.";
+    }
+
+    const text =
+        String(message);
+
+    if (
+        text.includes(
+            "infinite recursion detected"
+        )
+    ) {
+
+        return (
+            "The 1v1 database security policy is blocking matchmaking. " +
+            "The Game Mode JavaScript is working, but the Supabase policy needs to be fixed."
+        );
+    }
+
+    if (
+        text.includes(
+            "invalid response"
+        )
+    ) {
+
+        return (
+            "The AI question service returned an invalid response. " +
+            "Please try the battle again."
+        );
+    }
+
+    return text;
+}
+
+
+/* =========================================================
+   QUESTION NORMALIZER
+========================================================= */
+
+function normalizeQuestionArray(data) {
+
+    let questions = [];
+
+    if (Array.isArray(data)) {
+
+        questions = data;
+
+    } else if (
+        Array.isArray(data?.questions)
+    ) {
+
+        questions = data.questions;
+
+    } else if (
+        Array.isArray(data?.data)
+    ) {
+
+        questions = data.data;
+
+    } else if (
+        Array.isArray(data?.result)
+    ) {
+
+        questions = data.result;
+
+    } else if (
+        Array.isArray(data?.items)
+    ) {
+
+        questions = data.items;
+    }
+
+
+    return questions
+        .map(item => {
+
+            if (!item) {
+                return null;
+            }
+
+            const question =
+                String(
+                    item.question ||
+                    item.text ||
+                    item.prompt ||
+                    ""
+                ).trim();
+
+
+            let options =
+                Array.isArray(item.options)
+                    ? item.options
+                    : Array.isArray(item.choices)
+                        ? item.choices
+                        : Array.isArray(item.answers)
+                            ? item.answers
+                            : [];
+
+
+            options =
+                options.map(
+                    option =>
+                        typeof option === "object"
+                            ? String(
+                                option.text ||
+                                option.label ||
+                                option.value ||
+                                ""
+                            )
+                            : String(option)
+                );
+
+
+            let answer =
+                item.answer ??
+                item.correctAnswer ??
+                item.correct_answer ??
+                item.correctOption ??
+                item.correct_option;
+
+
+            if (
+                typeof answer === "object" &&
+                answer !== null
+            ) {
+
+                answer =
+                    answer.index ??
+                    answer.value ??
+                    answer.text ??
+                    answer.label;
+            }
+
+
+            if (
+                typeof answer === "string"
+            ) {
+
+                const cleaned =
+                    answer.trim();
+
+                const upper =
+                    cleaned.toUpperCase();
+
+
+                if (
+                    /^[A-D]$/.test(upper)
+                ) {
+
+                    answer =
+                        upper.charCodeAt(0) -
+                        65;
+
+                } else {
+
+                    const numeric =
+                        Number(cleaned);
+
+                    if (
+                        Number.isInteger(numeric)
+                    ) {
+
+                        answer =
+                            numeric;
+
+                    } else {
+
+                        const found =
+                            options.findIndex(
+                                option =>
+                                    option
+                                        .trim()
+                                        .toLowerCase() ===
+                                    cleaned
+                                        .toLowerCase()
+                            );
+
+                        if (found >= 0) {
+                            answer = found;
+                        }
+                    }
+                }
+            }
+
+
+            answer =
+                Number(answer);
+
+
+            if (
+                !question ||
+                options.length < 2 ||
+                !Number.isInteger(answer) ||
+                answer < 0 ||
+                answer >= options.length
+            ) {
+
+                return null;
+            }
+
+
+            return {
+                question,
+                options,
+                answer
+            };
+
+        })
+        .filter(Boolean);
+}
+
+
+/* =========================================================
    GENERATE BATTLE QUESTIONS
 ========================================================= */
 
@@ -694,63 +889,63 @@ async function generateBattleQuestions(
 ) {
 
     /*
-     * If the existing AI question generator exists,
-     * use it first.
+     * First try existing application generators.
      */
 
-    const possibleGenerators = [
+    const generators = [
         window.generateGameQuestions,
         window.generateBattleQuestionsAI,
-        window.generateAIQuestions,
-        window.createBattleQuestions
+        window.createBattleQuestions,
+        window.generateAIQuestions
     ];
 
     for (
-        const generator of possibleGenerators
+        const generator of generators
     ) {
 
         if (
-            typeof generator ===
-            "function" &&
-            generator !== generateBattleQuestions
+            typeof generator !== "function" ||
+            generator === generateBattleQuestions
         ) {
+            continue;
+        }
 
-            try {
+        try {
 
-                const result =
-                    await generator(
-                        subject,
-                        topic,
-                        difficulty,
-                        QUESTIONS_PER_BATTLE
-                    );
-
-                const normalized =
-                    normalizeQuestionArray(
-                        result
-                    );
-
-                if (
-                    normalized.length >=
+            const result =
+                await generator(
+                    subject,
+                    topic,
+                    difficulty,
                     QUESTIONS_PER_BATTLE
-                ) {
+                );
 
-                    return normalized;
-                }
+            const questions =
+                normalizeQuestionArray(result);
 
-            } catch (error) {
+            if (
+                questions.length >=
+                QUESTIONS_PER_BATTLE
+            ) {
 
-                console.warn(
-                    "External battle question generator failed:",
-                    error
+                return questions.slice(
+                    0,
+                    QUESTIONS_PER_BATTLE
                 );
             }
+
+        } catch (error) {
+
+            console.warn(
+                "Existing question generator failed:",
+                error
+            );
         }
     }
 
 
     /*
-     * Try the existing API endpoint used by the app.
+     * Then try the application's API routes.
      */
 
     const endpoints = [
@@ -779,14 +974,19 @@ async function generateBattleQuestions(
 
                         body:
                             JSON.stringify({
+
                                 subject,
                                 topic,
                                 difficulty,
+
                                 count:
                                     QUESTIONS_PER_BATTLE,
+
                                 numberOfQuestions:
                                     QUESTIONS_PER_BATTLE,
-                                mode: "battle"
+
+                                mode:
+                                    "battle"
                             })
                     }
                 );
@@ -802,9 +1002,7 @@ async function generateBattleQuestions(
 
 
             const questions =
-                normalizeQuestionArray(
-                    data
-                );
+                normalizeQuestionArray(data);
 
 
             if (
@@ -812,7 +1010,10 @@ async function generateBattleQuestions(
                 QUESTIONS_PER_BATTLE
             ) {
 
-                return questions;
+                return questions.slice(
+                    0,
+                    QUESTIONS_PER_BATTLE
+                );
             }
 
         } catch (error) {
@@ -832,142 +1033,7 @@ async function generateBattleQuestions(
 
 
 /* =========================================================
-   NORMALIZE QUESTION ARRAY
-========================================================= */
-
-function normalizeQuestionArray(data) {
-
-    let questions = [];
-
-    if (Array.isArray(data)) {
-
-        questions =
-            data;
-
-    } else if (
-        Array.isArray(data?.questions)
-    ) {
-
-        questions =
-            data.questions;
-
-    } else if (
-        Array.isArray(data?.data)
-    ) {
-
-        questions =
-            data.data;
-
-    } else if (
-        Array.isArray(data?.result)
-    ) {
-
-        questions =
-            data.result;
-    }
-
-
-    return questions
-        .map(function(item) {
-
-            if (!item) {
-                return null;
-            }
-
-            const question =
-                String(
-                    item.question ||
-                    item.text ||
-                    item.prompt ||
-                    ""
-                ).trim();
-
-            let options =
-                Array.isArray(item.options)
-                    ? item.options
-                    : Array.isArray(item.choices)
-                        ? item.choices
-                        : [];
-
-
-            options =
-                options.map(
-                    option =>
-                        String(option)
-                );
-
-
-            let answer =
-                item.answer;
-
-            if (
-                typeof answer ===
-                "string"
-            ) {
-
-                const upper =
-                    answer
-                        .trim()
-                        .toUpperCase();
-
-                if (
-                    /^[A-D]$/.test(upper)
-                ) {
-
-                    answer =
-                        upper.charCodeAt(0) -
-                        65;
-
-                } else if (
-                    options.length
-                ) {
-
-                    const found =
-                        options.findIndex(
-                            option =>
-                                option
-                                    .trim()
-                                    .toLowerCase() ===
-                                answer
-                                    .trim()
-                                    .toLowerCase()
-                        );
-
-                    if (found >= 0) {
-                        answer = found;
-                    }
-                }
-            }
-
-
-            answer =
-                Number(answer);
-
-
-            if (
-                !question ||
-                options.length < 2 ||
-                !Number.isInteger(answer) ||
-                answer < 0 ||
-                answer >= options.length
-            ) {
-
-                return null;
-            }
-
-
-            return {
-                question,
-                options,
-                answer
-            };
-        })
-        .filter(Boolean);
-}
-
-
-/* =========================================================
-   COMPUTER BATTLE
+   COMPUTER BATTLE START
 ========================================================= */
 
 async function startComputerBattle() {
@@ -977,48 +1043,13 @@ async function startComputerBattle() {
     }
 
 
-    /*
-     * Preserve the existing Computer Battle engine
-     * if one exists outside this file.
-     */
-
-    if (
-        typeof window.beginBattle ===
-        "function" &&
-        window.beginBattle !== startComputerBattle
-    ) {
-
-        try {
-
-            await window.beginBattle();
-
-            return;
-
-        } catch (error) {
-
-            console.warn(
-                "Existing Computer Battle starter failed:",
-                error
-            );
-        }
-    }
-
-
-    /*
-     * Otherwise initialize the battle ourselves.
-     */
-
     const subject =
         normalizeSubjectName(
-            $("battleSubject")?.value ||
-            $("oneVOneSubject")?.value ||
-            ""
+            $("battleSubject")?.value || ""
         );
 
     const topic =
-        $("battleTopic")?.value ||
-        $("oneVOneTopic")?.value ||
-        "";
+        $("battleTopic")?.value || "";
 
     const difficulty =
         $("battleDifficulty")?.value ||
@@ -1040,9 +1071,7 @@ async function startComputerBattle() {
         mode: "computer",
 
         subject,
-
         topic,
-
         difficulty,
 
         questions: [],
@@ -1050,7 +1079,6 @@ async function startComputerBattle() {
         currentQuestion: 0,
 
         playerScore: 0,
-
         opponentScore: 0,
 
         timer: QUESTION_TIME_SECONDS,
@@ -1077,12 +1105,20 @@ async function startComputerBattle() {
         setup.hidden = true;
     }
 
+    if (arena) {
+        arena.hidden = false;
+    }
+
     if (results) {
         results.hidden = true;
     }
 
-    if (arena) {
-        arena.hidden = false;
+
+    const loading =
+        $("battleLoading");
+
+    if (loading) {
+        loading.hidden = false;
     }
 
 
@@ -1096,15 +1132,30 @@ async function startComputerBattle() {
             );
 
 
+        if (
+            questions.length <
+            QUESTIONS_PER_BATTLE
+        ) {
+
+            throw new Error(
+                "The AI returned fewer than 10 valid questions."
+            );
+        }
+
+
         battleState.questions =
             questions.slice(
                 0,
                 QUESTIONS_PER_BATTLE
             );
 
-
         battleState.battleActive =
             true;
+
+
+        if (loading) {
+            loading.hidden = true;
+        }
 
 
         updateComputerBattleScores();
@@ -1113,8 +1164,21 @@ async function startComputerBattle() {
 
     } catch (error) {
 
+        console.error(
+            "Computer Battle error:",
+            error
+        );
+
+
         battleState.battleActive =
             false;
+
+        stopBattleTimer();
+
+
+        if (loading) {
+            loading.hidden = true;
+        }
 
         if (arena) {
             arena.hidden = true;
@@ -1123,6 +1187,7 @@ async function startComputerBattle() {
         if (setup) {
             setup.hidden = false;
         }
+
 
         alert(
             cleanErrorMessage(
@@ -1140,6 +1205,7 @@ async function startComputerBattle() {
 function showComputerQuestion() {
 
     stopBattleTimer();
+
 
     const question =
         battleState.questions[
@@ -1167,10 +1233,9 @@ function showComputerQuestion() {
         "questionNumber",
         "currentQuestionNumber",
         "battleQuestionNumber"
-    ].forEach(function(id) {
+    ].forEach(id => {
 
-        const element =
-            $(id);
+        const element = $(id);
 
         if (element) {
             element.textContent =
@@ -1182,10 +1247,9 @@ function showComputerQuestion() {
     [
         "battleQuestionTopic",
         "questionTopic"
-    ].forEach(function(id) {
+    ].forEach(id => {
 
-        const element =
-            $(id);
+        const element = $(id);
 
         if (element) {
             element.textContent =
@@ -1200,7 +1264,6 @@ function showComputerQuestion() {
 
 
     if (questionElement) {
-
         questionElement.textContent =
             question.question;
     }
@@ -1222,7 +1285,7 @@ function showComputerQuestion() {
 
 
     question.options.forEach(
-        function(option, index) {
+        (option, index) => {
 
             const button =
                 document.createElement(
@@ -1238,9 +1301,12 @@ function showComputerQuestion() {
             button.textContent =
                 option;
 
+            button.dataset.index =
+                String(index);
+
             button.addEventListener(
                 "click",
-                function() {
+                () => {
 
                     answerComputerQuestion(
                         index
@@ -1302,14 +1368,13 @@ function answerComputerQuestion(
 
 
     buttons.forEach(
-        function(button, index) {
+        (button, index) => {
 
             button.disabled =
                 true;
 
             if (
-                index ===
-                question.answer
+                index === question.answer
             ) {
 
                 button.classList.add(
@@ -1335,21 +1400,15 @@ function answerComputerQuestion(
         question.answer
     ) {
 
-        battleState.playerScore +=
-            10;
+        battleState.playerScore += 10;
 
     } else {
-
-        /*
-         * Simple computer opponent behavior.
-         */
 
         if (
             Math.random() < 0.65
         ) {
 
-            battleState.opponentScore +=
-                10;
+            battleState.opponentScore += 10;
         }
     }
 
@@ -1357,22 +1416,17 @@ function answerComputerQuestion(
     updateComputerBattleScores();
 
 
-    setTimeout(
-        function() {
+    setTimeout(() => {
 
-            if (
-                !battleState.battleActive
-            ) {
-                return;
-            }
+        if (!battleState.battleActive) {
+            return;
+        }
 
-            battleState.currentQuestion++;
+        battleState.currentQuestion++;
 
-            showComputerQuestion();
+        showComputerQuestion();
 
-        },
-        900
-    );
+    }, 900);
 }
 
 
@@ -1408,7 +1462,7 @@ function handleComputerTimeout() {
 
 
     buttons.forEach(
-        function(button, index) {
+        (button, index) => {
 
             button.disabled =
                 true;
@@ -1430,30 +1484,24 @@ function handleComputerTimeout() {
         Math.random() < 0.65
     ) {
 
-        battleState.opponentScore +=
-            10;
+        battleState.opponentScore += 10;
     }
 
 
     updateComputerBattleScores();
 
 
-    setTimeout(
-        function() {
+    setTimeout(() => {
 
-            if (
-                !battleState.battleActive
-            ) {
-                return;
-            }
+        if (!battleState.battleActive) {
+            return;
+        }
 
-            battleState.currentQuestion++;
+        battleState.currentQuestion++;
 
-            showComputerQuestion();
+        showComputerQuestion();
 
-        },
-        900
-    );
+    }, 900);
 }
 
 
@@ -1472,49 +1520,47 @@ function startBattleTimer() {
 
 
     battleState.timerInterval =
-        setInterval(
-            function() {
+        setInterval(() => {
+
+            if (
+                !battleState.battleActive
+            ) {
+
+                stopBattleTimer();
+
+                return;
+            }
+
+
+            battleState.timer--;
+
+            updateBattleTimer();
+
+
+            if (
+                battleState.timer <= 0
+            ) {
+
+                stopBattleTimer();
+
 
                 if (
-                    !battleState.battleActive
+                    battleState.mode ===
+                    "computer"
                 ) {
 
-                    stopBattleTimer();
+                    handleComputerTimeout();
 
-                    return;
-                }
-
-
-                battleState.timer--;
-
-                updateBattleTimer();
-
-
-                if (
-                    battleState.timer <= 0
+                } else if (
+                    battleState.mode ===
+                    "1v1"
                 ) {
 
-                    stopBattleTimer();
-
-                    if (
-                        battleState.mode ===
-                        "computer"
-                    ) {
-
-                        handleComputerTimeout();
-
-                    } else if (
-                        battleState.mode ===
-                        "1v1"
-                    ) {
-
-                        handleOneVOneTimeout();
-                    }
+                    handleOneVOneTimeout();
                 }
+            }
 
-            },
-            1000
-        );
+        }, 1000);
 }
 
 
@@ -1544,12 +1590,9 @@ function updateBattleTimer() {
     ];
 
 
-    for (
-        const id of ids
-    ) {
+    ids.forEach(id => {
 
-        const element =
-            $(id);
+        const element = $(id);
 
         if (element) {
 
@@ -1558,20 +1601,13 @@ function updateBattleTimer() {
                     0,
                     battleState.timer
                 );
-
-            if (
-                id ===
-                "battleTimer"
-            ) {
-                return;
-            }
         }
-    }
+    });
 }
 
 
 /* =========================================================
-   COMPUTER SCORES
+   COMPUTER SCORE UI
 ========================================================= */
 
 function updateComputerBattleScores() {
@@ -1599,10 +1635,168 @@ function updateComputerBattleScores() {
 
 
 /* =========================================================
+   RECORD COMPUTER RESULT
+========================================================= */
+
+async function recordComputerResult(
+    result,
+    points
+) {
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+        const client =
+            getSupabase();
+
+        await updateLeaderboardRecord(
+            client,
+            user,
+            result,
+            points
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Could not update global leaderboard:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   UPDATE LEADERBOARD RECORD
+========================================================= */
+
+async function updateLeaderboardRecord(
+    client,
+    user,
+    result,
+    points
+) {
+
+    const displayName =
+        getDisplayName(user);
+
+
+    /*
+     * First get the existing record.
+     */
+
+    const {
+        data: existing,
+        error: selectError
+    } =
+        await client
+            .from("game_leaderboard")
+            .select(
+                "user_id,display_name,battle_points,wins,losses,draws,battles_played"
+            )
+            .eq(
+                "user_id",
+                user.id
+            )
+            .maybeSingle();
+
+
+    if (selectError) {
+        throw selectError;
+    }
+
+
+    const current =
+        existing || {};
+
+
+    const update = {
+
+        user_id:
+            user.id,
+
+        display_name:
+            displayName,
+
+        battle_points:
+            Number(
+                current.battle_points || 0
+            ) +
+            Number(points || 0),
+
+        wins:
+            Number(
+                current.wins || 0
+            ) +
+            (
+                result === "win"
+                    ? 1
+                    : 0
+            ),
+
+        losses:
+            Number(
+                current.losses || 0
+            ) +
+            (
+                result === "loss"
+                    ? 1
+                    : 0
+            ),
+
+        draws:
+            Number(
+                current.draws || 0
+            ) +
+            (
+                result === "draw"
+                    ? 1
+                    : 0
+            ),
+
+        battles_played:
+            Number(
+                current.battles_played || 0
+            ) + 1,
+
+        updated_at:
+            new Date().toISOString()
+    };
+
+
+    /*
+     * IMPORTANT:
+     * Do NOT reference a "points" column.
+     * The leaderboard uses battle_points.
+     */
+
+    const {
+        error: upsertError
+    } =
+        await client
+            .from("game_leaderboard")
+            .upsert(
+                update,
+                {
+                    onConflict:
+                        "user_id"
+                }
+            );
+
+
+    if (upsertError) {
+        throw upsertError;
+    }
+}
+
+
+/* =========================================================
    FINISH COMPUTER BATTLE
 ========================================================= */
 
-function finishComputerBattle() {
+async function finishComputerBattle() {
 
     stopBattleTimer();
 
@@ -1628,12 +1822,13 @@ function finishComputerBattle() {
         "Great work!";
 
     let points =
-        player;
+        0;
+
+    let result =
+        "draw";
 
 
-    if (
-        player > opponent
-    ) {
+    if (player > opponent) {
 
         title =
             "🏆 Victory!";
@@ -1644,15 +1839,22 @@ function finishComputerBattle() {
         points =
             player + 25;
 
-    } else if (
-        player < opponent
-    ) {
+        result =
+            "win";
+
+    } else if (player < opponent) {
 
         title =
             "Keep Studying!";
 
         message =
             "The computer won this round.";
+
+        points =
+            player;
+
+        result =
+            "loss";
 
     } else {
 
@@ -1664,6 +1866,9 @@ function finishComputerBattle() {
 
         points =
             player + 10;
+
+        result =
+            "draw";
     }
 
 
@@ -1676,6 +1881,9 @@ function finishComputerBattle() {
     setBattlesUsed(
         getBattlesUsed() + 1
     );
+
+
+    updateBattleLimitUI();
 
 
     const arena =
@@ -1734,7 +1942,13 @@ function finishComputerBattle() {
     }
 
 
-    updateLeaderboardUI();
+    await recordComputerResult(
+        result,
+        points
+    );
+
+
+    await updateLeaderboardUI();
 }
 
 
@@ -1785,10 +1999,6 @@ function startOneVOneMode() {
     }
 
 
-    window.oneVOneArenaStarted =
-        false;
-
-
     updateFindOpponentButton();
 
 
@@ -1822,8 +2032,7 @@ function showMatchmaking() {
 
     if (button) {
 
-        button.disabled =
-            true;
+        button.disabled = true;
 
         button.textContent =
             "🔎 Searching...";
@@ -1853,10 +2062,10 @@ function hideMatchmaking() {
 
     if (button) {
 
-        updateFindOpponentButton();
-
         button.textContent =
             "⚔️ Find Opponent";
+
+        updateFindOpponentButton();
     }
 }
 
@@ -1887,7 +2096,7 @@ function updateMatchmakingText(
 
 
 /* =========================================================
-   CLEAR MATCH POLLING
+   CLEAR POLLING
 ========================================================= */
 
 function clearOneVOnePolling() {
@@ -1980,10 +2189,8 @@ async function findOneVOneOpponent() {
         const subject =
             oneVOneSubjectValue();
 
-
         const topic =
             oneVOneTopicValue();
-
 
         const difficulty =
             oneVOneDifficultyValue();
@@ -2011,7 +2218,11 @@ async function findOneVOneOpponent() {
 
 
         /*
-         * Look for an existing waiting room.
+         * Search for an existing waiting room.
+         *
+         * This is READ ONLY.
+         * It avoids the recursive game_match_players
+         * policy problem.
          */
 
         const {
@@ -2056,12 +2267,11 @@ async function findOneVOneOpponent() {
 
 
         const existingMatch =
-            waitingMatches?.[0] ||
-            null;
+            waitingMatches?.[0] || null;
 
 
         /*
-         * Join existing room.
+         * Join existing match.
          */
 
         if (existingMatch) {
@@ -2075,7 +2285,8 @@ async function findOneVOneOpponent() {
 
 
         /*
-         * Create waiting room.
+         * Create a new waiting room
+         * through the database RPC.
          */
 
         const {
@@ -2132,10 +2343,6 @@ async function findOneVOneOpponent() {
             new Set();
 
 
-        window.oneVOneArenaStarted =
-            false;
-
-
         console.log(
             "Created new 1v1 waiting room:",
             oneVOneMatchId
@@ -2156,7 +2363,7 @@ async function findOneVOneOpponent() {
 
         oneVOnePolling =
             setInterval(
-                async function() {
+                async () => {
 
                     if (
                         !oneVOneMatchId ||
@@ -2199,7 +2406,6 @@ async function findOneVOneOpponent() {
                 MATCHMAKING_INTERVAL
             );
 
-
     } catch (error) {
 
         console.error(
@@ -2239,142 +2445,193 @@ async function findOneVOneOpponent() {
    JOIN EXISTING MATCH
 ========================================================= */
 
-async function joinExistingMatch(match) {
-
-    if (!match?.id) {
-
-        throw new Error(
-            "Invalid match."
-        );
-    }
-
+async function joinExistingMatch(
+    match
+) {
 
     const client =
         getSupabase();
-
 
     const user =
         await getCurrentUser();
 
 
-    const displayName =
-        getDisplayName(user);
-
-
     oneVOneMatchId =
-        match.id;
+        normalizeMatchId(match);
 
 
-    oneVOneMyName =
-        displayName;
+    if (!oneVOneMatchId) {
 
+        throw new Error(
+            "The waiting match does not have a valid ID."
+        );
+    }
+
+
+    oneVOnePlayerNumber =
+        2;
+
+    oneVOneActive =
+        false;
 
     oneVOneResultsRecorded =
         false;
-
 
     oneVOneAnsweredQuestions =
         new Set();
 
 
-    window.oneVOneArenaStarted =
+    console.log(
+        "Joining existing 1v1 match:",
+        oneVOneMatchId
+    );
+
+
+    /*
+     * IMPORTANT:
+     * Prefer the RPC because direct INSERT into
+     * game_match_players can trigger the recursive
+     * RLS policy we encountered earlier.
+     */
+
+    const rpcNames = [
+        "join_game_match",
+        "join_1v1_match",
+        "join_game_match_room"
+    ];
+
+
+    let joined =
         false;
+
+    let lastError =
+        null;
+
+
+    for (
+        const rpcName of rpcNames
+    ) {
+
+        try {
+
+            const {
+                error
+            } =
+                await client.rpc(
+                    rpcName,
+                    {
+                        p_match_id:
+                            oneVOneMatchId,
+
+                        p_display_name:
+                            oneVOneMyName
+                    }
+                );
+
+
+            if (!error) {
+
+                joined =
+                    true;
+
+                break;
+            }
+
+
+            lastError =
+                error;
+
+        } catch (error) {
+
+            lastError =
+                error;
+        }
+    }
+
+
+    /*
+     * If the database has no join RPC, try a direct
+     * insert as a final compatibility path.
+     */
+
+    if (!joined) {
+
+        try {
+
+            const {
+                error
+            } =
+                await client
+                    .from("game_match_players")
+                    .insert({
+                        match_id:
+                            oneVOneMatchId,
+
+                        user_id:
+                            user.id,
+
+                        display_name:
+                            oneVOneMyName,
+
+                        player_number:
+                            2
+                    });
+
+
+            if (!error) {
+
+                joined =
+                    true;
+
+            } else {
+
+                lastError =
+                    error;
+            }
+
+        } catch (error) {
+
+            lastError =
+                error;
+        }
+    }
+
+
+    if (!joined) {
+
+        throw lastError ||
+            new Error(
+                "Unable to join the 1v1 waiting room."
+            );
+    }
+
+
+    await subscribeToOneVOne(
+        oneVOneMatchId
+    );
 
 
     clearOneVOnePolling();
 
 
-    /*
-     * Check whether the user is already in the room.
-     */
-
-    const {
-        data: existingPlayer,
-        error: existingPlayerError
-    } =
-        await client
-            .from("game_match_players")
-            .select(
-                "user_id,player_number,display_name"
-            )
-            .eq(
-                "match_id",
-                match.id
-            )
-            .eq(
-                "user_id",
-                user.id
-            )
-            .maybeSingle();
-
-
-    if (existingPlayerError) {
-        throw existingPlayerError;
-    }
-
-
-    if (existingPlayer) {
-
-        oneVOnePlayerNumber =
-            Number(
-                existingPlayer.player_number
-            );
-
-
-        oneVOneMyName =
-            existingPlayer.display_name ||
-            displayName;
-
-    } else {
-
-        /*
-         * Join through the RPC.
-         */
-
-        const {
-            data: joinedMatch,
-            error: joinError
-        } =
-            await client.rpc(
-                "join_game_match",
-                {
-                    p_match_id:
-                        match.id,
-
-                    p_display_name:
-                        displayName
-                }
-            );
-
-
-        if (joinError) {
-            throw joinError;
-        }
-
-
-        oneVOnePlayerNumber =
-            Number(
-                joinedMatch?.player_number ||
-                2
-            );
-    }
-
-
     updateMatchmakingText(
         "Opponent found! ⚔️",
-        "Both players are connected. Preparing your battle..."
+        "Preparing your battle..."
     );
 
 
-    await subscribeToOneVOne(
-        match.id
+    /*
+     * Give Supabase a moment to update the match.
+     */
+
+    setTimeout(
+        () => {
+
+            checkMatchPlayers();
+
+        },
+        500
     );
-
-
-    await checkMatchPlayers();
-
-
-    return true;
 }
 
 
@@ -2389,289 +2646,189 @@ async function checkMatchPlayers() {
     }
 
 
-    try {
-
-        const client =
-            getSupabase();
-
-
-        const {
-            data: players,
-            error: playersError
-        } =
-            await client
-                .from("game_match_players")
-                .select(
-                    "match_id,user_id,player_number,display_name"
-                )
-                .eq(
-                    "match_id",
-                    oneVOneMatchId
-                )
-                .order(
-                    "player_number",
-                    {
-                        ascending: true
-                    }
-                );
-
-
-        if (playersError) {
-            throw playersError;
-        }
-
-
-        const matchPlayers =
-            Array.isArray(players)
-                ? players
-                : [];
-
-
-        const user =
-            await getCurrentUser();
-
-
-        const currentPlayer =
-            matchPlayers.find(
-                player =>
-                    String(
-                        player.user_id
-                    ) ===
-                    String(
-                        user.id
-                    )
-            );
-
-
-        if (currentPlayer) {
-
-            oneVOnePlayerNumber =
-                Number(
-                    currentPlayer.player_number
-                );
-
-
-            oneVOneMyName =
-                currentPlayer.display_name ||
-                oneVOneMyName;
-        }
-
-
-        /*
-         * Still waiting for player 2.
-         */
-
-        if (
-            matchPlayers.length < 2
-        ) {
-
-            updateMatchmakingText(
-                "Looking for an opponent...",
-                "Your battle room is ready. Searching for another student..."
-            );
-
-            return;
-        }
-
-
-        /*
-         * Load the match.
-         */
-
-        const {
-            data: match,
-            error: matchError
-        } =
-            await client
-                .from("game_matches")
-                .select("*")
-                .eq(
-                    "id",
-                    oneVOneMatchId
-                )
-                .maybeSingle();
-
-
-        if (matchError) {
-            throw matchError;
-        }
-
-
-        if (!match) {
-
-            throw new Error(
-                "The 1v1 match no longer exists."
-            );
-        }
-
-
-        /*
-         * Finished / cancelled.
-         */
-
-        if (
-            match.status ===
-            "finished" ||
-            match.status ===
-            "cancelled"
-        ) {
-
-            clearOneVOnePolling();
-
-            oneVOneActive =
-                false;
-
-            updateMatchmakingText(
-                "Match unavailable",
-                "This battle is no longer available."
-            );
-
-            return;
-        }
-
-
-        /*
-         * Starting.
-         */
-
-        if (
-            match.status ===
-            "starting"
-        ) {
-
-            updateMatchmakingText(
-                "Opponent found! ⚔️",
-                "Both players are connected. Starting the battle..."
-            );
-
-
-            /*
-             * Player 1 changes starting -> active.
-             */
-
-            if (
-                oneVOnePlayerNumber ===
-                1
-            ) {
-
-                const {
-                    data,
-                    error
-                } =
-                    await client.rpc(
-                        "start_game_match",
-                        {
-                            p_match_id:
-                                oneVOneMatchId
-                        }
-                    );
-
-
-                if (error) {
-
-                    console.warn(
-                        "start_game_match:",
-                        error
-                    );
-
-
-                    const {
-                        data:
-                            latestMatch
-                    } =
-                        await client
-                            .from("game_matches")
-                            .select("*")
-                            .eq(
-                                "id",
-                                oneVOneMatchId
-                            )
-                            .maybeSingle();
-
-
-                    if (
-                        latestMatch?.status ===
-                        "active"
-                    ) {
-
-                        activateOneVOneMatch(
-                            latestMatch
-                        );
-                    }
-
-                    return;
-                }
-
-
-                console.log(
-                    "1v1 start RPC:",
-                    data
-                );
-
-
-                const {
-                    data:
-                        latestMatch
-                } =
-                    await client
-                        .from("game_matches")
-                        .select("*")
-                        .eq(
-                            "id",
-                            oneVOneMatchId
-                        )
-                        .maybeSingle();
-
-
-                if (
-                    latestMatch?.status ===
-                    "active"
-                ) {
-
-                    activateOneVOneMatch(
-                        latestMatch
-                    );
-                }
-            }
-
-            return;
-        }
-
-
-        /*
-         * Active.
-         */
-
-        if (
-            match.status ===
-            "active"
-        ) {
-
-            activateOneVOneMatch(
-                match
-            );
-
-            return;
-        }
-
-
-        console.warn(
-            "Unexpected 1v1 status:",
-            match.status
-        );
-
-    } catch (error) {
-
-        console.error(
-            "checkMatchPlayers error:",
-            error
-        );
+    const client =
+        getSupabase();
+
+
+    /*
+     * Read the match itself first.
+     */
+
+    const {
+        data: match,
+        error: matchError
+    } =
+        await client
+            .from("game_matches")
+            .select("*")
+            .eq(
+                "id",
+                oneVOneMatchId
+            )
+            .maybeSingle();
+
+
+    if (matchError) {
+        throw matchError;
     }
+
+
+    if (!match) {
+        return;
+    }
+
+
+    /*
+     * If the match has started, launch.
+     */
+
+    if (
+        match.status === "active" ||
+        match.status === "in_progress" ||
+        match.status === "started"
+    ) {
+
+        clearOneVOnePolling();
+
+        if (!oneVOneActive) {
+            await startOneVOneBattle(match);
+        }
+
+        return;
+    }
+
+
+    /*
+     * Check player count.
+     *
+     * This is a normal SELECT and does not modify
+     * game_match_players.
+     */
+
+    const {
+        data: players,
+        error: playersError
+    } =
+        await client
+            .from("game_match_players")
+            .select("*")
+            .eq(
+                "match_id",
+                oneVOneMatchId
+            )
+            .order(
+                "player_number",
+                {
+                    ascending: true
+                }
+            );
+
+
+    if (playersError) {
+        throw playersError;
+    }
+
+
+    if (
+        players &&
+        players.length >= 2
+    ) {
+
+        clearOneVOnePolling();
+
+        updateMatchmakingText(
+            "Opponent found! ⚔️",
+            "Starting your battle..."
+        );
+
+
+        /*
+         * Try to start through RPC.
+         */
+
+        await tryStartOneVOneMatch();
+
+
+        setTimeout(
+            () => {
+
+                checkMatchPlayers();
+
+            },
+            600
+        );
+
+        return;
+    }
+
+
+    updateMatchmakingText(
+        "Looking for an opponent...",
+        "Waiting for another student to join."
+    );
 }
 
 
 /* =========================================================
-   REALTIME 1V1
+   START MATCH RPC
+========================================================= */
+
+async function tryStartOneVOneMatch() {
+
+    if (!oneVOneMatchId) {
+        return false;
+    }
+
+
+    const client =
+        getSupabase();
+
+
+    const rpcNames = [
+        "start_game_match",
+        "start_1v1_match",
+        "start_game_match_battle"
+    ];
+
+
+    for (
+        const rpcName of rpcNames
+    ) {
+
+        try {
+
+            const {
+                error
+            } =
+                await client.rpc(
+                    rpcName,
+                    {
+                        p_match_id:
+                            oneVOneMatchId
+                    }
+                );
+
+
+            if (!error) {
+                return true;
+            }
+
+        } catch (error) {
+
+            console.warn(
+                `RPC ${rpcName} unavailable:`,
+                error
+            );
+        }
+    }
+
+
+    return false;
+}
+
+
+/* =========================================================
+   SUBSCRIBE TO 1V1
 ========================================================= */
 
 async function subscribeToOneVOne(
@@ -2682,24 +2839,26 @@ async function subscribeToOneVOne(
         getSupabase();
 
 
-    if (!matchId) {
-        return null;
+    if (oneVOneChannel) {
+
+        try {
+
+            await client.removeChannel(
+                oneVOneChannel
+            );
+
+        } catch (_) {}
+
+        oneVOneChannel =
+            null;
     }
 
 
-    await cleanupOneVOneConnection();
-
-
-    oneVOneMatchId =
-        matchId;
-
-
-    const channel =
+    oneVOneChannel =
         client
             .channel(
                 `game-match-${matchId}`
             )
-
             .on(
                 "postgres_changes",
                 {
@@ -2709,63 +2868,47 @@ async function subscribeToOneVOne(
                     filter:
                         `id=eq.${matchId}`
                 },
-                async function(payload) {
+                payload => {
 
                     console.log(
-                        "1v1 match realtime:",
+                        "1v1 match realtime update:",
                         payload
                     );
 
-
-                    const match =
-                        payload.new;
-
-
-                    if (!match) {
-                        return;
-                    }
-
-
                     if (
-                        match.status ===
-                        "active"
+                        payload.new
                     ) {
 
-                        activateOneVOneMatch(
-                            match
+                        handleMatchRealtimeUpdate(
+                            payload.new
                         );
-
-                    } else {
-
-                        await checkMatchPlayers();
                     }
                 }
             )
-
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
-                    table:
-                        "game_match_players",
+                    table: "game_match_players",
                     filter:
                         `match_id=eq.${matchId}`
                 },
-                async function(payload) {
+                payload => {
 
                     console.log(
-                        "1v1 player realtime:",
+                        "1v1 player realtime update:",
                         payload
                     );
 
-
-                    await checkMatchPlayers();
+                    checkMatchPlayers()
+                        .catch(
+                            console.warn
+                        );
                 }
             )
-
             .subscribe(
-                function(status) {
+                status => {
 
                     console.log(
                         "1v1 realtime status:",
@@ -2773,28 +2916,14 @@ async function subscribeToOneVOne(
                     );
                 }
             );
-
-
-    oneVOneChannel =
-        channel;
-
-
-    window.oneVOneChannel =
-        channel;
-
-
-    await checkMatchPlayers();
-
-
-    return channel;
 }
 
 
 /* =========================================================
-   ACTIVATE 1V1 MATCH
+   HANDLE MATCH REALTIME UPDATE
 ========================================================= */
 
-async function activateOneVOneMatch(
+function handleMatchRealtimeUpdate(
     match
 ) {
 
@@ -2804,211 +2933,130 @@ async function activateOneVOneMatch(
 
 
     if (
-        oneVOneMatchId &&
-        match.id &&
-        String(match.id) !==
-        String(oneVOneMatchId)
+        match.status === "active" ||
+        match.status === "in_progress" ||
+        match.status === "started"
     ) {
+
+        if (!oneVOneActive) {
+
+            startOneVOneBattle(
+                match
+            ).catch(
+                console.error
+            );
+        }
 
         return;
     }
-
-
-    oneVOneMatchId =
-        match.id ||
-        oneVOneMatchId;
-
-
-    oneVOneActive =
-        true;
-
-
-    clearOneVOnePolling();
 
 
     if (
-        window.oneVOneArenaStarted
+        match.status === "completed" ||
+        match.status === "finished"
     ) {
 
-        return;
+        handleOneVOneFinishedMatch(
+            match
+        ).catch(
+            console.error
+        );
     }
-
-
-    window.oneVOneArenaStarted =
-        true;
-
-
-    updateMatchmakingText(
-        "Battle starting! ⚔️",
-        "Your 1v1 match is active. Get ready!"
-    );
-
-
-    setTimeout(
-        async function() {
-
-            try {
-
-                await startOneVOneArena();
-
-            } catch (error) {
-
-                console.error(
-                    "Could not start 1v1 arena:",
-                    error
-                );
-
-
-                window.oneVOneArenaStarted =
-                    false;
-
-
-                updateMatchmakingText(
-                    "Could not start battle",
-                    cleanErrorMessage(
-                        error?.message
-                    )
-                );
-            }
-
-        },
-        500
-    );
 }
 
 
 /* =========================================================
-   START 1V1 ARENA
+   START 1V1 BATTLE
 ========================================================= */
 
-async function startOneVOneArena() {
+async function startOneVOneBattle(
+    match
+) {
 
-    clearOneVOnePolling();
-
-
-    const setup =
-        $("battleSetup");
-
-    const oneVOneSetup =
-        $("oneVOneSetup");
-
-    const computerArena =
-        $("battleArena");
-
-    const oneVOneArena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-
-    if (setup) {
-        setup.hidden = true;
+    if (oneVOneActive) {
+        return;
     }
-
-    if (oneVOneSetup) {
-        oneVOneSetup.hidden = true;
-    }
-
-    if (computerArena) {
-        computerArena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-
-    if (!oneVOneArena) {
-
-        throw new Error(
-            "The 1v1 arena element (#oneVOneArena) is missing from game-mode.html."
-        );
-    }
-
-
-    oneVOneArena.hidden =
-        false;
-
-
-    oneVOneArena.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
 
 
     oneVOneActive =
         true;
 
-
     oneVOneResultsRecorded =
         false;
 
+    clearOneVOnePolling();
 
-    oneVOneAnsweredQuestions =
-        new Set();
+
+    const subject =
+        normalizeSubjectName(
+            match?.subject ||
+            oneVOneSubjectValue()
+        );
+
+    const topic =
+        match?.topic ||
+        oneVOneTopicValue();
+
+    const difficulty =
+        match?.difficulty ||
+        oneVOneDifficultyValue();
 
 
     battleState = {
 
         mode: "1v1",
 
-        subject:
-            oneVOneSubjectValue(),
-
-        topic:
-            oneVOneTopicValue(),
-
-        difficulty:
-            oneVOneDifficultyValue(),
+        subject,
+        topic,
+        difficulty,
 
         questions: [],
 
         currentQuestion: 0,
 
         playerScore: 0,
-
         opponentScore: 0,
 
-        timer:
-            QUESTION_TIME_SECONDS,
+        timer: QUESTION_TIME_SECONDS,
 
         timerInterval: null,
 
         answering: false,
 
-        battleActive: true
+        battleActive: false
     };
 
 
-    updateOneVOnePlayerLabels();
-
-
-    updateOneVOneArenaMessage(
-        "Preparing your questions..."
+    updateMatchmakingText(
+        "Battle ready! ⚔️",
+        "Generating your questions..."
     );
+
+
+    const oneVOneSetup =
+        $("oneVOneSetup");
+
+    const oneVOneArena =
+        $("oneVOneArena");
+
+
+    if (oneVOneSetup) {
+        oneVOneSetup.hidden = true;
+    }
+
+    if (oneVOneArena) {
+        oneVOneArena.hidden = false;
+    }
 
 
     try {
 
         const questions =
             await generateBattleQuestions(
-                battleState.subject,
-                battleState.topic,
-                battleState.difficulty
+                subject,
+                topic,
+                difficulty
             );
-
-
-        if (
-            !Array.isArray(questions) ||
-            questions.length <
-            QUESTIONS_PER_BATTLE
-        ) {
-
-            throw new Error(
-                "The AI did not return enough questions for the 1v1 battle."
-            );
-        }
 
 
         battleState.questions =
@@ -3018,7 +3066,21 @@ async function startOneVOneArena() {
             );
 
 
+        battleState.battleActive =
+            true;
+
+
+        updateOneVOneScores();
+
+        showOneVOneQuestion();
+
     } catch (error) {
+
+        console.error(
+            "Unable to start 1v1 battle:",
+            error
+        );
+
 
         battleState.battleActive =
             false;
@@ -3026,129 +3088,12 @@ async function startOneVOneArena() {
         oneVOneActive =
             false;
 
-        window.oneVOneArenaStarted =
-            false;
 
-
-        updateOneVOneArenaMessage(
-            "Could not prepare the battle questions."
+        alert(
+            cleanErrorMessage(
+                error?.message
+            )
         );
-
-
-        throw error;
-    }
-
-
-    showOneVOneQuestion();
-}
-
-
-/* =========================================================
-   1V1 PLAYER LABELS
-========================================================= */
-
-function updateOneVOnePlayerLabels() {
-
-    const playerOneName =
-        $("oneVOnePlayerOneName");
-
-    const playerTwoName =
-        $("oneVOnePlayerTwoName");
-
-    const opponentName =
-        $("oneVOneOpponentName");
-
-
-    /*
-     * Player 1 and Player 2 names.
-     */
-
-    if (
-        oneVOnePlayerNumber ===
-        1
-    ) {
-
-        if (playerOneName) {
-            playerOneName.textContent =
-                oneVOneMyName;
-        }
-
-        if (playerTwoName) {
-            playerTwoName.textContent =
-                "Opponent";
-        }
-
-    } else {
-
-        if (playerOneName) {
-            playerOneName.textContent =
-                "Opponent";
-        }
-
-        if (playerTwoName) {
-            playerTwoName.textContent =
-                oneVOneMyName;
-        }
-    }
-
-
-    if (opponentName) {
-
-        opponentName.textContent =
-            "Opponent";
-    }
-
-
-    const playerScore =
-        $("oneVOnePlayerScore");
-
-    const opponentScore =
-        $("oneVOneOpponentScore");
-
-
-    if (playerScore) {
-        playerScore.textContent =
-            "0";
-    }
-
-    if (opponentScore) {
-        opponentScore.textContent =
-            "0";
-    }
-}
-
-
-/* =========================================================
-   1V1 ARENA MESSAGE
-========================================================= */
-
-function updateOneVOneArenaMessage(
-    message
-) {
-
-    const ids = [
-        "oneVOneArenaMessage",
-        "oneVOneStatusMessage",
-        "oneVOneBattleStatus",
-        "oneVOneQuestionStatus"
-    ];
-
-
-    for (
-        const id of ids
-    ) {
-
-        const element =
-            $(id);
-
-
-        if (element) {
-
-            element.textContent =
-                message;
-
-            return;
-        }
     }
 }
 
@@ -3170,7 +3115,7 @@ function showOneVOneQuestion() {
 
     if (!question) {
 
-        finishOneVOneBattle();
+        finishLocalOneVOne();
 
         return;
     }
@@ -3180,58 +3125,83 @@ function showOneVOneQuestion() {
         false;
 
 
-    const questionNumber =
+    const number =
         battleState.currentQuestion + 1;
 
 
     [
         "oneVOneQuestionNumber",
-        "oneVOneCurrentQuestionNumber"
-    ].forEach(function(id) {
+        "oneVOneCurrentQuestion",
+        "oneVOneQuestionCount"
+    ].forEach(id => {
 
-        const element =
-            $(id);
+        const element = $(id);
 
         if (element) {
             element.textContent =
-                questionNumber;
+                number;
         }
     });
 
 
     [
-        "oneVOneQuestionTopic",
-        "oneVOneBattleTopic"
-    ].forEach(function(id) {
+        "oneVOneQuestion",
+        "oneVOneQuestionText"
+    ].forEach(id => {
 
-        const element =
-            $(id);
+        const element = $(id);
 
         if (element) {
+            element.textContent =
+                question.question;
+        }
+    });
+
+
+    [
+        "oneVOneTopic",
+        "oneVOneBattleTopic"
+    ].forEach(id => {
+
+        const element = $(id);
+
+        if (
+            element &&
+            element.tagName !== "SELECT"
+        ) {
+
             element.textContent =
                 battleState.topic;
         }
     });
 
 
-    const questionElement =
-        $("oneVOneQuestion") ||
-        $("oneVOneBattleQuestion");
-
-
-    if (questionElement) {
-
-        questionElement.textContent =
-            question.question;
-    }
-
-
     const answerGrid =
-        $("oneVOneAnswerGrid") ||
-        $("answerGrid");
+        $("oneVOneAnswerGrid");
 
 
     if (!answerGrid) {
+
+        /*
+         * Some versions of the HTML reuse the
+         * normal answerGrid.
+         */
+
+        const fallback =
+            $("answerGrid");
+
+        if (fallback) {
+
+            renderOneVOneAnswers(
+                fallback,
+                question
+            );
+
+            startBattleTimer();
+
+            return;
+        }
+
 
         throw new Error(
             "The 1v1 answer grid is missing from game-mode.html."
@@ -3239,18 +3209,37 @@ function showOneVOneQuestion() {
     }
 
 
-    answerGrid.innerHTML =
-        "";
+    renderOneVOneAnswers(
+        answerGrid,
+        question
+    );
+
+
+    updateOneVOneScores();
+
+    startBattleTimer();
+}
+
+
+/* =========================================================
+   RENDER 1V1 ANSWERS
+========================================================= */
+
+function renderOneVOneAnswers(
+    container,
+    question
+) {
+
+    container.innerHTML = "";
 
 
     question.options.forEach(
-        function(option, index) {
+        (option, index) => {
 
             const button =
                 document.createElement(
                     "button"
                 );
-
 
             button.type =
                 "button";
@@ -3261,10 +3250,9 @@ function showOneVOneQuestion() {
             button.textContent =
                 option;
 
-
             button.addEventListener(
                 "click",
-                function() {
+                () => {
 
                     answerOneVOneQuestion(
                         index
@@ -3272,18 +3260,11 @@ function showOneVOneQuestion() {
                 }
             );
 
-
-            answerGrid.appendChild(
+            container.appendChild(
                 button
             );
         }
     );
-
-
-    updateOneVOneScores();
-
-
-    startBattleTimer();
 }
 
 
@@ -3291,7 +3272,7 @@ function showOneVOneQuestion() {
    ANSWER 1V1 QUESTION
 ========================================================= */
 
-function answerOneVOneQuestion(
+async function answerOneVOneQuestion(
     selectedIndex
 ) {
 
@@ -3299,14 +3280,12 @@ function answerOneVOneQuestion(
         battleState.answering ||
         !battleState.battleActive
     ) {
-
         return;
     }
 
 
     battleState.answering =
         true;
-
 
     stopBattleTimer();
 
@@ -3322,6 +3301,32 @@ function answerOneVOneQuestion(
     }
 
 
+    if (
+        oneVOneAnsweredQuestions.has(
+            battleState.currentQuestion
+        )
+    ) {
+        return;
+    }
+
+
+    oneVOneAnsweredQuestions.add(
+        battleState.currentQuestion
+    );
+
+
+    const correct =
+        selectedIndex ===
+        question.answer;
+
+
+    if (correct) {
+
+        battleState.playerScore +=
+            10;
+    }
+
+
     const answerGrid =
         $("oneVOneAnswerGrid") ||
         $("answerGrid");
@@ -3329,22 +3334,19 @@ function answerOneVOneQuestion(
 
     const buttons =
         answerGrid
-            ? answerGrid.querySelectorAll(
+            ?.querySelectorAll(
                 ".answer-button"
-            )
-            : [];
+            ) || [];
 
 
     buttons.forEach(
-        function(button, index) {
+        (button, index) => {
 
             button.disabled =
                 true;
 
-
             if (
-                index ===
-                question.answer
+                index === question.answer
             ) {
 
                 button.classList.add(
@@ -3352,10 +3354,8 @@ function answerOneVOneQuestion(
                 );
             }
 
-
             if (
-                index ===
-                selectedIndex &&
+                index === selectedIndex &&
                 index !== question.answer
             ) {
 
@@ -3367,26 +3367,24 @@ function answerOneVOneQuestion(
     );
 
 
-    oneVOneAnsweredQuestions.add(
-        battleState.currentQuestion
-    );
-
-
-    if (
-        selectedIndex ===
-        question.answer
-    ) {
-
-        battleState.playerScore +=
-            10;
-    }
-
-
     updateOneVOneScores();
 
 
+    /*
+     * Try to publish this player's answer to Supabase.
+     * This is best-effort because different database
+     * versions may have different RPC names.
+     */
+
+    await publishOneVOneAnswer(
+        battleState.currentQuestion,
+        correct,
+        battleState.playerScore
+    );
+
+
     setTimeout(
-        function() {
+        () => {
 
             if (
                 !battleState.battleActive
@@ -3394,14 +3392,12 @@ function answerOneVOneQuestion(
                 return;
             }
 
-
             battleState.currentQuestion++;
-
 
             showOneVOneQuestion();
 
         },
-        900
+        700
     );
 }
 
@@ -3410,13 +3406,12 @@ function answerOneVOneQuestion(
    1V1 TIMEOUT
 ========================================================= */
 
-function handleOneVOneTimeout() {
+async function handleOneVOneTimeout() {
 
     if (
         battleState.answering ||
         !battleState.battleActive
     ) {
-
         return;
     }
 
@@ -3438,18 +3433,16 @@ function handleOneVOneTimeout() {
 
     const buttons =
         answerGrid
-            ? answerGrid.querySelectorAll(
+            ?.querySelectorAll(
                 ".answer-button"
-            )
-            : [];
+            ) || [];
 
 
     buttons.forEach(
-        function(button, index) {
+        (button, index) => {
 
             button.disabled =
                 true;
-
 
             if (
                 question &&
@@ -3469,11 +3462,15 @@ function handleOneVOneTimeout() {
     );
 
 
-    updateOneVOneScores();
+    await publishOneVOneAnswer(
+        battleState.currentQuestion,
+        false,
+        battleState.playerScore
+    );
 
 
     setTimeout(
-        function() {
+        () => {
 
             if (
                 !battleState.battleActive
@@ -3481,114 +3478,201 @@ function handleOneVOneTimeout() {
                 return;
             }
 
-
             battleState.currentQuestion++;
-
 
             showOneVOneQuestion();
 
         },
-        900
+        700
     );
 }
 
 
 /* =========================================================
-   1V1 SCORES
+   PUBLISH 1V1 ANSWER
 ========================================================= */
 
-function updateOneVOneScores() {
+async function publishOneVOneAnswer(
+    questionIndex,
+    correct,
+    score
+) {
 
-    const playerScore =
-        $("oneVOnePlayerScore");
-
-    const opponentScore =
-        $("oneVOneOpponentScore");
-
-
-    if (playerScore) {
-
-        playerScore.textContent =
-            battleState.playerScore;
+    if (!oneVOneMatchId) {
+        return;
     }
 
 
-    if (opponentScore) {
+    const client =
+        getSupabase();
 
-        opponentScore.textContent =
-            battleState.opponentScore;
+
+    const rpcNames = [
+        "submit_game_match_answer",
+        "submit_1v1_answer",
+        "update_game_match_score"
+    ];
+
+
+    for (
+        const rpcName of rpcNames
+    ) {
+
+        try {
+
+            const {
+                error
+            } =
+                await client.rpc(
+                    rpcName,
+                    {
+                        p_match_id:
+                            oneVOneMatchId,
+
+                        p_question_index:
+                            questionIndex,
+
+                        p_correct:
+                            correct,
+
+                        p_score:
+                            score
+                    }
+                );
+
+
+            if (!error) {
+                return;
+            }
+
+        } catch (error) {
+
+            console.warn(
+                `Answer RPC ${rpcName} failed:`,
+                error
+            );
+        }
     }
+
+
+    /*
+     * No RPC available.
+     *
+     * Do not directly write to game_match_players
+     * because that was the source of the recursive
+     * RLS policy problem.
+     */
 }
 
 
 /* =========================================================
-   FINISH 1V1
+   UPDATE 1V1 SCORES
 ========================================================= */
 
-async function finishOneVOneBattle() {
+function updateOneVOneScores() {
+
+    const myScore =
+        battleState.playerScore;
+
+    const opponentScore =
+        battleState.opponentScore;
+
+
+    const myIds = [
+        "oneVOnePlayerScore",
+        "oneVOneMyScore",
+        "player1Score"
+    ];
+
+
+    const opponentIds = [
+        "oneVOneOpponentScore",
+        "oneVOneEnemyScore",
+        "player2Score"
+    ];
+
+
+    myIds.forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                myScore;
+        }
+    });
+
+
+    opponentIds.forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                opponentScore;
+        }
+    });
+}
+
+
+/* =========================================================
+   FINISH LOCAL 1V1
+========================================================= */
+
+async function finishLocalOneVOne() {
 
     stopBattleTimer();
+
+    battleState.battleActive =
+        false;
 
 
     if (
         oneVOneResultsRecorded
     ) {
-
         return;
     }
 
 
-    battleState.battleActive =
-        false;
-
-    oneVOneActive =
-        false;
+    oneVOneResultsRecorded =
+        true;
 
 
-    const arena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = false;
-    }
-
-
-    const player =
+    const myScore =
         Number(
             battleState.playerScore || 0
         );
 
-    const opponent =
+
+    const opponentScore =
         Number(
             battleState.opponentScore || 0
         );
 
 
-    let title =
-        "1v1 Battle Complete";
-
-    let message =
-        "Great work!";
-
-    let points =
-        player;
-
     let result =
         "draw";
 
+    let points =
+        10;
+
+    let title =
+        "🤝 Draw!";
+
+    let message =
+        "The battle ended in a draw.";
+
 
     if (
-        player >
-        opponent
+        myScore >
+        opponentScore
     ) {
+
+        result =
+            "win";
+
+        points =
+            myScore + 25;
 
         title =
             "🏆 Victory!";
@@ -3596,48 +3680,28 @@ async function finishOneVOneBattle() {
         message =
             "You won the 1v1 battle!";
 
-        points =
-            player + 25;
-
-        result =
-            "win";
-
     } else if (
-        player <
-        opponent
+        myScore <
+        opponentScore
     ) {
-
-        title =
-            "Keep Studying!";
-
-        message =
-            "Your opponent won this round.";
 
         result =
             "loss";
 
-    } else {
+        points =
+            myScore;
 
         title =
-            "🤝 Draw!";
+            "Keep Going!";
 
         message =
-            "Both players finished with the same score.";
-
-        points =
-            player + 10;
-
-        result =
-            "draw";
+            "Your opponent won this battle.";
     }
 
 
-    /*
-     * Only this browser records its own local result.
-     */
-
-    oneVOneResultsRecorded =
-        true;
+    setBattlesUsed(
+        getBattlesUsed() + 1
+    );
 
 
     setBattlePoints(
@@ -3646,64 +3710,579 @@ async function finishOneVOneBattle() {
     );
 
 
-    setBattlesUsed(
-        getBattlesUsed() + 1
+    updateBattleLimitUI();
+
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+        const client =
+            getSupabase();
+
+
+        await updateLeaderboardRecord(
+            client,
+            user,
+            result,
+            points
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Could not save 1v1 result:",
+            error
+        );
+    }
+
+
+    showOneVOneResults(
+        title,
+        message,
+        myScore,
+        opponentScore,
+        points
     );
 
 
-    if ($("battleResultTitle")) {
+    await updateLeaderboardUI();
+}
 
-        $("battleResultTitle")
-            .textContent =
-            title;
+
+/* =========================================================
+   SHOW 1V1 RESULTS
+========================================================= */
+
+function showOneVOneResults(
+    title,
+    message,
+    playerScore,
+    opponentScore,
+    points
+) {
+
+    const arena =
+        $("oneVOneArena");
+
+    const results =
+        $("battleResults") ||
+        $("oneVOneResults");
+
+
+    if (arena) {
+        arena.hidden = true;
     }
 
 
-    if ($("battleResultMessage")) {
-
-        $("battleResultMessage")
-            .textContent =
-            message;
+    if (results) {
+        results.hidden = false;
     }
 
 
-    if ($("finalPlayerScore")) {
+    [
+        "battleResultTitle",
+        "oneVOneResultTitle"
+    ].forEach(id => {
 
-        $("finalPlayerScore")
-            .textContent =
-            player;
-    }
+        const element = $(id);
 
-
-    if ($("finalComputerScore")) {
-
-        $("finalComputerScore")
-            .textContent =
-            opponent;
-    }
+        if (element) {
+            element.textContent =
+                title;
+        }
+    });
 
 
-    if ($("pointsEarned")) {
+    [
+        "battleResultMessage",
+        "oneVOneResultMessage"
+    ].forEach(id => {
 
-        $("pointsEarned")
-            .textContent =
-            `+${points}`;
-    }
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                message;
+        }
+    });
 
 
-    if ($("finalOpponentLabel")) {
+    [
+        "finalPlayerScore",
+        "oneVOneFinalPlayerScore"
+    ].forEach(id => {
 
-        $("finalOpponentLabel")
-            .textContent =
-            "OPPONENT";
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                playerScore;
+        }
+    });
+
+
+    [
+        "finalComputerScore",
+        "oneVOneFinalOpponentScore"
+    ].forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                opponentScore;
+        }
+    });
+
+
+    [
+        "pointsEarned",
+        "oneVOnePointsEarned"
+    ].forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                `+${points}`;
+        }
+    });
+}
+
+
+/* =========================================================
+   MATCH FINISHED
+========================================================= */
+
+async function handleOneVOneFinishedMatch(
+    match
+) {
+
+    if (
+        oneVOneResultsRecorded
+    ) {
+        return;
     }
 
 
     /*
-     * Attempt to record the result server-side.
-     * If the RPC does not exist, the battle still
-     * finishes locally.
+     * If the database provides final scores,
+     * use them.
      */
+
+    if (
+        match?.player1_score !== undefined
+    ) {
+
+        if (
+            oneVOnePlayerNumber === 1
+        ) {
+
+            battleState.playerScore =
+                Number(
+                    match.player1_score || 0
+                );
+
+            battleState.opponentScore =
+                Number(
+                    match.player2_score || 0
+                );
+
+        } else {
+
+            battleState.playerScore =
+                Number(
+                    match.player2_score || 0
+                );
+
+            battleState.opponentScore =
+                Number(
+                    match.player1_score || 0
+                );
+        }
+    }
+
+
+    await finishLocalOneVOne();
+}
+
+
+/* =========================================================
+   CLEANUP 1V1 CONNECTION
+========================================================= */
+
+async function cleanupOneVOneConnection() {
+
+    clearOneVOnePolling();
+
+    stopBattleTimer();
+
+
+    if (
+        oneVOneChannel
+    ) {
+
+        try {
+
+            const client =
+                getSupabase();
+
+            await client.removeChannel(
+                oneVOneChannel
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Could not remove 1v1 realtime channel:",
+                error
+            );
+        }
+
+
+        oneVOneChannel =
+            null;
+    }
+
+
+    oneVOneMatchId =
+        null;
+
+    oneVOnePlayerNumber =
+        null;
+
+    oneVOneActive =
+        false;
+
+    oneVOneResultsRecorded =
+        false;
+
+    oneVOneAnsweredQuestions =
+        new Set();
+}
+
+
+/* =========================================================
+   CANCEL 1V1
+========================================================= */
+
+async function cancelOneVOneMatch() {
+
+    try {
+
+        const client =
+            getSupabase();
+
+
+        if (oneVOneMatchId) {
+
+            const rpcNames = [
+                "cancel_game_match",
+                "cancel_1v1_match"
+            ];
+
+
+            for (
+                const rpcName of rpcNames
+            ) {
+
+                try {
+
+                    const {
+                        error
+                    } =
+                        await client.rpc(
+                            rpcName,
+                            {
+                                p_match_id:
+                                    oneVOneMatchId
+                            }
+                        );
+
+
+                    if (!error) {
+                        break;
+                    }
+
+                } catch (_) {}
+            }
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Cancel match error:",
+            error
+        );
+
+    } finally {
+
+        await cleanupOneVOneConnection();
+
+        hideMatchmaking();
+
+
+        const setup =
+            $("oneVOneSetup");
+
+        if (setup) {
+            setup.hidden = false;
+        }
+    }
+}
+
+
+/* =========================================================
+   LEADERBOARD
+========================================================= */
+
+async function loadLeaderboard() {
+
+    const client =
+        getSupabase();
+
+
+    const {
+        data,
+        error
+    } =
+        await client
+            .from("game_leaderboard")
+            .select(
+                "user_id,display_name,battle_points,wins,losses,draws,battles_played,updated_at"
+            )
+            .order(
+                "battle_points",
+                {
+                    ascending: false
+                }
+            )
+            .limit(100);
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    renderLeaderboard(
+        data || []
+    );
+
+
+    return data || [];
+}
+
+
+/* =========================================================
+   RENDER LEADERBOARD
+========================================================= */
+
+function renderLeaderboard(
+    players
+) {
+
+    const container =
+        $("leaderboardList") ||
+        $("leaderboardPreview") ||
+        $("leaderboard");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    if (!players.length) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "leaderboard-empty";
+
+        empty.textContent =
+            "No battles have been recorded yet.";
+
+        container.appendChild(
+            empty
+        );
+
+        return;
+    }
+
+
+    players.forEach(
+        (player, index) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "leaderboard-row";
+
+
+            const rank =
+                document.createElement(
+                    "span"
+                );
+
+            rank.className =
+                "leaderboard-rank";
+
+            rank.textContent =
+                index === 0
+                    ? "🥇"
+                    : index === 1
+                        ? "🥈"
+                        : index === 2
+                            ? "🥉"
+                            : String(
+                                index + 1
+                            );
+
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.className =
+                "leaderboard-name";
+
+            name.textContent =
+                player.display_name ||
+                "Player";
+
+
+            const points =
+                document.createElement(
+                    "span"
+                );
+
+            points.className =
+                "leaderboard-points";
+
+            points.textContent =
+                `${Number(
+                    player.battle_points || 0
+                )} BP`;
+
+
+            row.appendChild(rank);
+            row.appendChild(name);
+            row.appendChild(points);
+
+
+            container.appendChild(
+                row
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   LEADERBOARD UI
+========================================================= */
+
+async function updateLeaderboardUI() {
+
+    try {
+
+        const players =
+            await loadLeaderboard();
+
+
+        const currentUser =
+            await getCurrentUser()
+                .catch(
+                    () => null
+                );
+
+
+        if (!currentUser) {
+            return;
+        }
+
+
+        const mine =
+            players.find(
+                player =>
+                    player.user_id ===
+                    currentUser.id
+            );
+
+
+        if (!mine) {
+            return;
+        }
+
+
+        const pointIds = [
+            "battlePoints",
+            "leaderboardBattlePoints",
+            "myBattlePoints"
+        ];
+
+
+        pointIds.forEach(id => {
+
+            const element = $(id);
+
+            if (element) {
+
+                element.textContent =
+                    Number(
+                        mine.battle_points || 0
+                    );
+            }
+        });
+
+
+        const winsIds = [
+            "battleWins",
+            "myWins"
+        ];
+
+
+        winsIds.forEach(id => {
+
+            const element = $(id);
+
+            if (element) {
+
+                element.textContent =
+                    Number(
+                        mine.wins || 0
+                    );
+            }
+        });
+
+    } catch (error) {
+
+        console.warn(
+            "Leaderboard could not be loaded:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   LEADERBOARD REALTIME
+========================================================= */
+
+async function subscribeToLeaderboard() {
 
     try {
 
@@ -3712,200 +4291,140 @@ async function finishOneVOneBattle() {
 
 
         if (
-            typeof client.rpc ===
-            "function"
+            leaderboardRealtimeChannel
         ) {
 
-            const {
-                error
-            } =
-                await client.rpc(
-                    "finish_game_match",
-                    {
-                        p_match_id:
-                            oneVOneMatchId,
-
-                        p_player_score:
-                            player
-                    }
-                );
-
-
-            if (error) {
-
-                console.warn(
-                    "finish_game_match RPC:",
-                    error
-                );
-            }
+            await client.removeChannel(
+                leaderboardRealtimeChannel
+            );
         }
+
+
+        leaderboardRealtimeChannel =
+            client
+                .channel(
+                    "game-leaderboard-live"
+                )
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "game_leaderboard"
+                    },
+                    () => {
+
+                        updateLeaderboardUI()
+                            .catch(
+                                console.warn
+                            );
+                    }
+                )
+                .subscribe();
 
     } catch (error) {
 
         console.warn(
-            "Could not record 1v1 result on server:",
+            "Leaderboard realtime unavailable:",
             error
         );
     }
+}
 
 
-    console.log(
-        "🏁 1v1 finished:",
-        {
-            player,
-            opponent,
-            points,
-            result
-        }
+/* =========================================================
+   THEME
+========================================================= */
+
+function applyGameTheme() {
+
+    const theme =
+        localStorage.getItem(
+            GAME_STORAGE.theme
+        ) ||
+        "dark";
+
+
+    document.documentElement
+        .setAttribute(
+            "data-theme",
+            theme
+        );
+
+
+    document.body?.classList.toggle(
+        "light-mode",
+        theme === "light"
     );
 
 
-    updateLeaderboardUI();
+    document.body?.classList.toggle(
+        "dark-mode",
+        theme !== "light"
+    );
+}
+
+
+function toggleGameTheme() {
+
+    const current =
+        localStorage.getItem(
+            GAME_STORAGE.theme
+        ) ||
+        "dark";
+
+
+    const next =
+        current === "dark"
+            ? "light"
+            : "dark";
+
+
+    localStorage.setItem(
+        GAME_STORAGE.theme,
+        next
+    );
+
+
+    applyGameTheme();
 }
 
 
 /* =========================================================
-   CANCEL 1V1
+   NAVIGATION
 ========================================================= */
 
-async function cancelOneVOne() {
+function goToPage(url) {
 
-    clearOneVOnePolling();
-
-    stopBattleTimer();
-
-
-    const matchId =
-        oneVOneMatchId;
-
-
-    try {
-
-        if (matchId) {
-
-            const client =
-                getSupabase();
-
-
-            const {
-                error
-            } =
-                await client.rpc(
-                    "cancel_game_match",
-                    {
-                        p_match_id:
-                            matchId
-                    }
-                );
-
-
-            if (error) {
-
-                console.warn(
-                    "cancel_game_match:",
-                    error
-                );
-            }
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not cancel 1v1:",
-            error
-        );
+    if (!url) {
+        return;
     }
 
-
-    await cleanupOneVOneConnection();
-
-
-    oneVOneMatchId =
-        null;
-
-    oneVOnePlayerNumber =
-        null;
-
-    oneVOneActive =
-        false;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
+    window.location.href =
+        url;
+}
 
 
-    window.oneVOneArenaStarted =
-        false;
+function goHome() {
+    goToPage("home.html");
+}
 
 
-    hideMatchmaking();
+function goDashboard() {
+    goToPage("dashboard.html");
+}
+
+
+function goToGameMode() {
+    goToPage("game-mode.html");
 }
 
 
 /* =========================================================
-   RESET 1V1 ARENA
+   GENERIC GAME RESET
 ========================================================= */
 
-function resetOneVOneArena() {
-
-    stopBattleTimer();
-
-    clearOneVOnePolling();
-
-    cleanupOneVOneConnection();
-
-
-    battleState.battleActive =
-        false;
-
-    oneVOneActive =
-        false;
-
-    oneVOneMatchId =
-        null;
-
-    oneVOnePlayerNumber =
-        null;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-
-    window.oneVOneArenaStarted =
-        false;
-
-
-    const arena =
-        $("oneVOneArena");
-
-
-    const results =
-        $("battleResults");
-
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-
-    startOneVOneMode();
-}
-
-
-/* =========================================================
-   RESET COMPUTER BATTLE
-========================================================= */
-
-function resetBattle() {
+function resetComputerBattle() {
 
     stopBattleTimer();
 
@@ -3915,9 +4434,7 @@ function resetBattle() {
         mode: null,
 
         subject: "",
-
         topic: "",
-
         difficulty: "mixed",
 
         questions: [],
@@ -3925,11 +4442,9 @@ function resetBattle() {
         currentQuestion: 0,
 
         playerScore: 0,
-
         opponentScore: 0,
 
-        timer:
-            QUESTION_TIME_SECONDS,
+        timer: QUESTION_TIME_SECONDS,
 
         timerInterval: null,
 
@@ -3942,11 +4457,11 @@ function resetBattle() {
     const arena =
         $("battleArena");
 
-    const setup =
-        $("battleSetup");
-
     const results =
         $("battleResults");
+
+    const setup =
+        $("battleSetup");
 
 
     if (arena) {
@@ -3967,929 +4482,177 @@ function resetBattle() {
 
 
 /* =========================================================
-   CLEANUP REALTIME
+   BATTLE AGAIN
 ========================================================= */
 
-async function cleanupOneVOneConnection() {
+function battleAgain() {
 
-    clearOneVOnePolling();
+    resetComputerBattle();
 
-
-    try {
-
-        const channel =
-            oneVOneChannel ||
-            window.oneVOneChannel;
-
-
-        if (channel) {
-
-            const client =
-                getSupabase();
-
-
-            await client.removeChannel(
-                channel
-            );
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not remove 1v1 realtime channel:",
-            error
-        );
-    }
-
-
-    oneVOneChannel =
-        null;
-
-
-    window.oneVOneChannel =
-        null;
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 
 /* =========================================================
-   LEADERBOARD CURRENT USER
+   EVENT BINDINGS
 ========================================================= */
 
-async function getLeaderboardCurrentUser() {
+function bindGameEvents() {
 
-    try {
+    const battleSubject =
+        $("battleSubject");
 
-        return await getCurrentUser();
+    if (battleSubject) {
 
-    } catch (error) {
-
-        console.warn(
-            "Could not get leaderboard user:",
-            error
-        );
-
-        return null;
-    }
-}
-
-
-/* =========================================================
-   ESCAPE LEADERBOARD HTML
-========================================================= */
-
-function escapeLeaderboardHTML(value) {
-
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-}
-
-
-/* =========================================================
-   LEADERBOARD RANK
-========================================================= */
-
-function getLeaderboardRankDisplay(rank) {
-
-    if (rank === 1) {
-        return "🥇";
-    }
-
-    if (rank === 2) {
-        return "🥈";
-    }
-
-    if (rank === 3) {
-        return "🥉";
-    }
-
-    return `#${rank}`;
-}
-
-
-/* =========================================================
-   YOUR RANK
-========================================================= */
-
-function updateYourLeaderboardRank(
-    rank,
-    totalPlayers
-) {
-
-    const container =
-        $("yourLeaderboardRank");
-
-
-    if (!container) {
-        return;
-    }
-
-
-    const span =
-        container.querySelector(
-            "span"
-        );
-
-
-    const value =
-        rank
-            ? `#${rank}`
-            : "—";
-
-
-    if (span) {
-
-        span.textContent =
-            value;
-
-    } else {
-
-        container.textContent =
-            value;
-    }
-
-
-    container.title =
-        rank
-            ? `Rank ${rank} of ${totalPlayers}`
-            : "Not ranked yet";
-}
-
-
-/* =========================================================
-   GET GLOBAL LEADERBOARD
-========================================================= */
-
-async function getGlobalLeaderboard() {
-
-    const client =
-        getSupabase();
-
-
-    const {
-        data,
-        error
-    } =
-        await client
-            .from("game_leaderboard")
-            .select(`
-                user_id,
-                display_name,
-                battle_points,
-                wins,
-                losses,
-                draws,
-                battles_played,
-                updated_at,
-                battles
-            `)
-            .order(
-                "battle_points",
-                {
-                    ascending: false
-                }
-            )
-            .order(
-                "wins",
-                {
-                    ascending: false
-                }
-            )
-            .order(
-                "battles_played",
-                {
-                    ascending: true
-                }
-            );
-
-
-    if (error) {
-        throw error;
-    }
-
-
-    return Array.isArray(data)
-        ? data
-        : [];
-}
-
-
-/* =========================================================
-   UPDATE LEADERBOARD UI
-========================================================= */
-
-async function updateLeaderboardUI() {
-
-    const rows =
-        $("leaderboardRows");
-
-
-    if (!rows) {
-        return;
-    }
-
-
-    rows.innerHTML = `
-        <div class="leaderboard-row">
-            <span>⏳</span>
-            <span>Loading leaderboard...</span>
-            <strong>—</strong>
-        </div>
-    `;
-
-
-    try {
-
-        const currentUser =
-            await getLeaderboardCurrentUser();
-
-
-        const currentUserId =
-            currentUser?.id ||
-            null;
-
-
-        const leaderboard =
-            await getGlobalLeaderboard();
-
-
-        /*
-         * Deduplicate by user ID.
-         */
-
-        const uniquePlayers =
-            new Map();
-
-
-        leaderboard.forEach(
-            function(player) {
-
-                if (!player?.user_id) {
-                    return;
-                }
-
-
-                const userId =
-                    String(
-                        player.user_id
-                    );
-
-
-                const existing =
-                    uniquePlayers.get(
-                        userId
-                    );
-
-
-                if (!existing) {
-
-                    uniquePlayers.set(
-                        userId,
-                        player
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    Number(
-                        player.battle_points || 0
-                    ) >
-                    Number(
-                        existing.battle_points || 0
-                    )
-                ) {
-
-                    uniquePlayers.set(
-                        userId,
-                        player
-                    );
-                }
-            }
-        );
-
-
-        const players =
-            Array.from(
-                uniquePlayers.values()
-            );
-
-
-        /*
-         * Sort correctly.
-         */
-
-        players.sort(
-            function(a, b) {
-
-                const pointsA =
-                    Number(
-                        a.battle_points || 0
-                    );
-
-                const pointsB =
-                    Number(
-                        b.battle_points || 0
-                    );
-
-
-                if (
-                    pointsA !== pointsB
-                ) {
-
-                    return (
-                        pointsB -
-                        pointsA
-                    );
-                }
-
-
-                const winsA =
-                    Number(
-                        a.wins || 0
-                    );
-
-                const winsB =
-                    Number(
-                        b.wins || 0
-                    );
-
-
-                if (
-                    winsA !== winsB
-                ) {
-
-                    return (
-                        winsB -
-                        winsA
-                    );
-                }
-
-
-                const battlesA =
-                    Number(
-                        a.battles_played ??
-                        a.battles ??
-                        0
-                    );
-
-                const battlesB =
-                    Number(
-                        b.battles_played ??
-                        b.battles ??
-                        0
-                    );
-
-
-                return (
-                    battlesA -
-                    battlesB
-                );
-            }
-        );
-
-
-        const totalPlayers =
-            $("totalPlayers");
-
-
-        if (totalPlayers) {
-
-            totalPlayers.textContent =
-                players.length;
-        }
-
-
-        if (!players.length) {
-
-            rows.innerHTML = `
-                <div class="leaderboard-row">
-                    <span>🏆</span>
-                    <span>No players yet</span>
-                    <strong>0</strong>
-                </div>
-            `;
-
-
-            if ($("yourBattlePoints")) {
-
-                $("yourBattlePoints")
-                    .textContent =
-                    getBattlePoints();
-            }
-
-
-            updateYourLeaderboardRank(
-                null,
-                0
-            );
-
-
-            return;
-        }
-
-
-        const currentPlayerIndex =
-            players.findIndex(
-                player =>
-                    currentUserId &&
-                    String(
-                        player.user_id
-                    ) ===
-                    String(
-                        currentUserId
-                    )
-            );
-
-
-        if ($("yourBattlePoints")) {
-
-            $("yourBattlePoints")
-                .textContent =
-                currentPlayerIndex !== -1
-                    ? Number(
-                        players[
-                            currentPlayerIndex
-                        ].battle_points || 0
-                    )
-                    : getBattlePoints();
-        }
-
-
-        rows.innerHTML =
-            players
-                .map(
-                    function(player, index) {
-
-                        const rank =
-                            index + 1;
-
-
-                        const points =
-                            Number(
-                                player.battle_points || 0
-                            );
-
-
-                        const isYou =
-                            Boolean(
-                                currentUserId &&
-                                String(
-                                    player.user_id
-                                ) ===
-                                String(
-                                    currentUserId
-                                )
-                            );
-
-
-                        const displayName =
-                            player.display_name ||
-                            "StudyMind Student";
-
-
-                        return `
-                            <div
-                                class="leaderboard-row ${
-                                    isYou
-                                        ? "current-player"
-                                        : ""
-                                }"
-                                data-rank="${rank}"
-                                data-user-id="${escapeLeaderboardHTML(
-                                    player.user_id
-                                )}"
-                            >
-
-                                <span class="leaderboard-rank">
-                                    ${getLeaderboardRankDisplay(
-                                        rank
-                                    )}
-                                </span>
-
-                                <span class="leaderboard-player">
-                                    ${escapeLeaderboardHTML(
-                                        displayName
-                                    )}
-                                    ${
-                                        isYou
-                                            ? " <small>(You)</small>"
-                                            : ""
-                                    }
-                                </span>
-
-                                <strong class="leaderboard-points">
-                                    ${points}
-                                </strong>
-
-                            </div>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        if (
-            currentPlayerIndex !==
-            -1
-        ) {
-
-            updateYourLeaderboardRank(
-                currentPlayerIndex + 1,
-                players.length
-            );
-
-        } else {
-
-            const localPoints =
-                getBattlePoints();
-
-
-            const calculatedRank =
-                players.filter(
-                    player =>
-                        Number(
-                            player.battle_points || 0
-                        ) >
-                        localPoints
-                ).length + 1;
-
-
-            updateYourLeaderboardRank(
-                calculatedRank,
-                players.length + 1
-            );
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "GLOBAL LEADERBOARD ERROR:",
-            error
-        );
-
-
-        rows.innerHTML = `
-            <div class="leaderboard-row">
-                <span>⚠️</span>
-                <span>Leaderboard temporarily unavailable</span>
-                <strong>—</strong>
-            </div>
-        `;
-    }
-}
-
-
-/* =========================================================
-   REFRESH LEADERBOARD
-========================================================= */
-
-async function refreshLeaderboard() {
-
-    await updateLeaderboardUI();
-}
-
-
-/* =========================================================
-   LEADERBOARD REALTIME
-========================================================= */
-
-async function subscribeToLeaderboard() {
-
-    try {
-
-        const client =
-            getSupabase();
-
-
-        if (
-            leaderboardRealtimeChannel
-        ) {
-
-            try {
-
-                await client.removeChannel(
-                    leaderboardRealtimeChannel
-                );
-
-            } catch (_) {}
-
-
-            leaderboardRealtimeChannel =
-                null;
-        }
-
-
-        leaderboardRealtimeChannel =
-            client
-                .channel(
-                    "global-game-leaderboard"
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table:
-                            "game_leaderboard"
-                    },
-                    function() {
-
-                        setTimeout(
-                            function() {
-
-                                updateLeaderboardUI();
-
-                            },
-                            300
-                        );
-                    }
-                )
-                .subscribe(
-                    function(status) {
-
-                        console.log(
-                            "Leaderboard realtime:",
-                            status
-                        );
-                    }
-                );
-
-    } catch (error) {
-
-        console.warn(
-            "Leaderboard realtime subscription failed:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   INITIALIZE LEADERBOARD
-========================================================= */
-
-async function initializeLeaderboard() {
-
-    await updateLeaderboardUI();
-
-    await subscribeToLeaderboard();
-}
-
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-function openPremium() {
-
-    alert(
-        "Premium will give you unlimited Game Mode battles."
-    );
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function openHome() {
-
-    window.location.href =
-        "home.html";
-}
-
-
-function openNewStudyPlan() {
-
-    window.location.href =
-        "home.html#newStudyPlan";
-}
-
-
-function openSummarizer() {
-
-    window.location.href =
-        "dashboard.html#summarizer";
-}
-
-
-function openStudyStreak() {
-
-    window.location.href =
-        "dashboard.html#studyStreak";
-}
-
-
-function openStudyScore() {
-
-    window.location.href =
-        "dashboard.html#studyScore";
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logoutStudyMind() {
-
-    try {
-
-        const client =
-            getSupabase();
-
-
-        await client.auth.signOut();
-
-    } catch (error) {
-
-        console.warn(
-            "Supabase logout error:",
-            error
+        battleSubject.addEventListener(
+            "change",
+            handleBattleSubjectChange
         );
     }
 
 
-    localStorage.removeItem(
-        "studyMindCurrentUser"
-    );
+    const oneVOneSubject =
+        $("oneVOneSubject");
 
+    if (oneVOneSubject) {
 
-    window.location.href =
-        "index.html";
-}
-
-
-/* =========================================================
-   THEME
-========================================================= */
-
-function toggleGameTheme() {
-
-    const body =
-        document.body;
-
-
-    const isLight =
-        body.classList.contains(
-            "light-mode"
-        );
-
-
-    if (isLight) {
-
-        body.classList.remove(
-            "light-mode"
-        );
-
-
-        localStorage.setItem(
-            GAME_STORAGE.theme,
-            "dark"
-        );
-
-    } else {
-
-        body.classList.add(
-            "light-mode"
-        );
-
-
-        localStorage.setItem(
-            GAME_STORAGE.theme,
-            "light"
+        oneVOneSubject.addEventListener(
+            "change",
+            handleOneVOneSubjectChange
         );
     }
 
 
-    updateThemeButton();
-}
+    const computerButton =
+        $("startComputerBattle") ||
+        $("startBattleButton") ||
+        $("computerBattleButton");
 
 
-/* =========================================================
-   THEME BUTTON
-========================================================= */
+    if (computerButton) {
 
-function updateThemeButton() {
-
-    const button =
-        $("themeButton");
-
-
-    if (!button) {
-        return;
-    }
-
-
-    button.textContent =
-        document.body.classList.contains(
-            "light-mode"
-        )
-            ? "☀️ Light Mode"
-            : "🌙 Dark Mode";
-}
-
-
-/* =========================================================
-   LOAD SAVED THEME
-========================================================= */
-
-function loadSavedTheme() {
-
-    const saved =
-        localStorage.getItem(
-            GAME_STORAGE.theme
-        );
-
-
-    if (
-        saved ===
-        "light"
-    ) {
-
-        document.body.classList.add(
-            "light-mode"
-        );
-
-    } else {
-
-        document.body.classList.remove(
-            "light-mode"
+        computerButton.addEventListener(
+            "click",
+            startComputerBattle
         );
     }
 
 
-    updateThemeButton();
-}
+    const findOpponentButton =
+        $("findOpponentButton");
 
 
-/* =========================================================
-   CLEAN ERROR
-========================================================= */
+    if (findOpponentButton) {
 
-function cleanErrorMessage(
-    message
-) {
-
-    if (!message) {
-
-        return (
-            "Unknown server error."
+        findOpponentButton.addEventListener(
+            "click",
+            findOneVOneOpponent
         );
     }
 
 
-    let text =
-        String(message)
-            .replace(
-                /<[^>]*>/g,
-                " "
-            )
-            .replace(
-                /\s+/g,
-                " "
-            )
-            .trim();
+    const oneVOneButton =
+        $("oneVOneButton") ||
+        $("startOneVOneButton");
 
 
-    if (
-        text.length >
-        500
-    ) {
+    if (oneVOneButton) {
 
-        text =
-            text.slice(
-                0,
-                500
-            ) +
-            "...";
+        oneVOneButton.addEventListener(
+            "click",
+            startOneVOneMode
+        );
     }
 
 
-    return text;
+    const cancelButton =
+        $("cancelMatchButton") ||
+        $("cancelMatchmakingButton");
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            cancelOneVOneMatch
+        );
+    }
+
+
+    const themeButton =
+        $("themeToggle") ||
+        $("gameThemeToggle");
+
+
+    if (themeButton) {
+
+        themeButton.addEventListener(
+            "click",
+            toggleGameTheme
+        );
+    }
+
+
+    const homeButtons =
+        document.querySelectorAll(
+            "[data-go-home]"
+        );
+
+
+    homeButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            goHome
+        );
+    });
+
+
+    const dashboardButtons =
+        document.querySelectorAll(
+            "[data-go-dashboard]"
+        );
+
+
+    dashboardButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            goDashboard
+        );
+    });
+
+
+    const gameButtons =
+        document.querySelectorAll(
+            "[data-go-game]"
+        );
+
+
+    gameButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            goToGameMode
+        );
+    });
+
+
+    const againButton =
+        $("battleAgainButton") ||
+        $("playAgainButton");
+
+
+    if (againButton) {
+
+        againButton.addEventListener(
+            "click",
+            battleAgain
+        );
+    }
 }
 
 
@@ -4897,136 +4660,82 @@ function cleanErrorMessage(
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async function() {
+async function initializeGameMode() {
 
-        console.log(
-            "🎮 Initializing StudyMind Game Mode..."
-        );
+    try {
 
-
-        /*
-         * Theme.
-         */
-
-        loadSavedTheme();
-
-
-        /*
-         * Subjects and topics.
-         */
+        applyGameTheme();
 
         populateGameSubjects();
 
+        updateBattleLimitUI();
 
-        /*
-         * 1v1 subject.
-         */
+        bindGameEvents();
 
-        const oneVOneSubject =
-            $("oneVOneSubject");
+        await updateLeaderboardUI();
 
-
-        if (oneVOneSubject) {
-
-            oneVOneSubject.addEventListener(
-                "change",
-                handleOneVOneSubjectChange
-            );
-        }
+        await subscribeToLeaderboard();
 
 
         /*
-         * 1v1 topic.
+         * Make sure the user is authenticated.
          */
 
-        const oneVOneTopic =
-            $("oneVOneTopic");
+        await getCurrentUser();
 
+    } catch (error) {
 
-        if (oneVOneTopic) {
-
-            oneVOneTopic.addEventListener(
-                "change",
-                updateFindOpponentButton
-            );
-        }
-
-
-        /*
-         * Computer battle subject.
-         */
-
-        const battleSubject =
-            $("battleSubject");
-
-
-        if (battleSubject) {
-
-            battleSubject.addEventListener(
-                "change",
-                handleBattleSubjectChange
-            );
-        }
-
-
-        /*
-         * Find opponent button.
-         */
-
-        const findButton =
-            $("findOpponentButton");
-
-
-        if (findButton) {
-
-            findButton.addEventListener(
-                "click",
-                findOneVOneOpponent
-            );
-        }
-
-
-        /*
-         * Initialize button state.
-         */
-
-        updateFindOpponentButton();
-
-
-        /*
-         * Load leaderboard.
-         */
-
-        try {
-
-            await initializeLeaderboard();
-
-        } catch (error) {
-
-            console.warn(
-                "Leaderboard initialization failed:",
-                error
-            );
-        }
-
-
-        console.log(
-            "✅ StudyMind Game Mode initialized."
+        console.error(
+            "Game Mode initialization error:",
+            error
         );
+
+
+        const errorElement =
+            $("gameModeError");
+
+
+        if (errorElement) {
+
+            errorElement.hidden =
+                false;
+
+            errorElement.textContent =
+                cleanErrorMessage(
+                    error?.message
+                );
+        }
     }
-);
+}
+
+
+/* =========================================================
+   PAGE LOAD
+========================================================= */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeGameMode
+    );
+
+} else {
+
+    initializeGameMode();
+}
 
 
 /* =========================================================
    GLOBAL EXPORTS
+   Allows existing HTML onclick handlers to continue
+   working even if they use inline onclick="..."
 ========================================================= */
 
 window.startComputerBattle =
-    startComputerBattle;
-
-window.beginBattle =
     startComputerBattle;
 
 window.startOneVOneMode =
@@ -5035,50 +4744,14 @@ window.startOneVOneMode =
 window.findOneVOneOpponent =
     findOneVOneOpponent;
 
-window.joinExistingMatch =
-    joinExistingMatch;
+window.cancelOneVOneMatch =
+    cancelOneVOneMatch;
 
-window.cancelOneVOne =
-    cancelOneVOne;
+window.handleOneVOneSubjectChange =
+    handleOneVOneSubjectChange;
 
-window.resetOneVOneArena =
-    resetOneVOneArena;
-
-window.resetBattle =
-    resetBattle;
-
-window.openHome =
-    openHome;
-
-window.openNewStudyPlan =
-    openNewStudyPlan;
-
-window.openSummarizer =
-    openSummarizer;
-
-window.openStudyStreak =
-    openStudyStreak;
-
-window.openStudyScore =
-    openStudyScore;
-
-window.openPremium =
-    openPremium;
-
-window.logoutStudyMind =
-    logoutStudyMind;
-
-window.toggleGameTheme =
-    toggleGameTheme;
-
-window.updateThemeButton =
-    updateThemeButton;
-
-window.refreshLeaderboard =
-    refreshLeaderboard;
-
-window.updateLeaderboardUI =
-    updateLeaderboardUI;
+window.handleBattleSubjectChange =
+    handleBattleSubjectChange;
 
 window.populateGameSubjects =
     populateGameSubjects;
@@ -5089,31 +4762,29 @@ window.populateOneVOneTopics =
 window.populateBattleTopics =
     populateBattleTopics;
 
-window.SUBJECT_DATABASE =
-    SUBJECT_DATABASE;
+window.toggleGameTheme =
+    toggleGameTheme;
 
-window.getBattlePoints =
-    getBattlePoints;
+window.goHome =
+    goHome;
 
-window.setBattlePoints =
-    setBattlePoints;
+window.goDashboard =
+    goDashboard;
+
+window.goToGameMode =
+    goToGameMode;
+
+window.battleAgain =
+    battleAgain;
+
+window.updateLeaderboardUI =
+    updateLeaderboardUI;
+
+window.getBattleCount =
+    getBattleCount;
 
 window.getBattlesUsed =
     getBattlesUsed;
 
-window.setBattlesUsed =
-    setBattlesUsed;
-
-window.FREE_BATTLE_LIMIT =
-    FREE_BATTLE_LIMIT;
-
-window.QUESTIONS_PER_BATTLE =
-    QUESTIONS_PER_BATTLE;
-
-window.QUESTION_TIME_SECONDS =
-    QUESTION_TIME_SECONDS;
-
-console.log(
-    "✅ StudyMind Game Mode JS loaded successfully."
-);
-
+window.getBattlePoints =
+    getBattlePoints;
