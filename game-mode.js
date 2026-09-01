@@ -6803,46 +6803,808 @@ function showPremiumMessage() {
 
 
 /* =========================================================
-   LEADERBOARD
+LEADERBOARD — GLOBAL GAME MODE LEADERBOARD
 ========================================================= */
 
-function updateLeaderboardUI() {
+/*
 
-    const points =
-        getBattlePoints();
+* Loads every participating account from the
+* game_leaderboard table and displays them in
+* descending battle-point order.
+*
+* A player is considered a participant once they
+* have a record in game_leaderboard.
+*
+* Expected database columns:
+*
+* user_id
+* display_name
+* battle_points
+*
+* The code also tolerates common alternative
+* display-name / points column names.
+  */
 
-    if ($("yourBattlePoints")) {
+/* =========================================================
+GET LEADERBOARD DATA
+========================================================= */
+
+async function getGlobalLeaderboard() {
+
+
+const client =
+    getSupabase();
+
+if (!client) {
+
+    throw new Error(
+        "Supabase client is not available."
+    );
+}
+
+/*
+ * Load all leaderboard accounts.
+ *
+ * We intentionally do not filter by the
+ * current user because this is a GLOBAL
+ * leaderboard.
+ */
+
+const {
+    data,
+    error
+} =
+    await client
+        .from("game_leaderboard")
+        .select("*")
+        .order(
+            "battle_points",
+            {
+                ascending: false
+            }
+        );
+
+if (error) {
+
+    throw error;
+}
+
+return Array.isArray(data)
+    ? data
+    : [];
+
+
+}
+
+/* =========================================================
+GET CURRENT USER ID
+========================================================= */
+
+async function getLeaderboardCurrentUser() {
+
+
+try {
+
+    const user =
+        await getCurrentUser();
+
+    return user || null;
+
+} catch (error) {
+
+    console.warn(
+        "Could not get current leaderboard user:",
+        error
+    );
+
+    return null;
+    }
+
+
+}
+
+/* =========================================================
+GET LEADERBOARD DISPLAY NAME
+========================================================= */
+
+function getLeaderboardDisplayName(
+row
+) {
+
+
+if (!row) {
+    return "Player";
+}
+
+/*
+ * Support the normal database column first,
+ * then common alternatives.
+ */
+
+const name =
+    row.display_name ||
+    row.username ||
+    row.full_name ||
+    row.name ||
+    row.user_name ||
+    row.email;
+
+if (name) {
+
+    return String(name).trim() ||
+        "Player";
+}
+
+return "Player";
+
+
+}
+
+/* =========================================================
+GET LEADERBOARD POINTS
+========================================================= */
+
+function getLeaderboardPoints(
+row
+) {
+
+
+if (!row) {
+    return 0;
+}
+
+const rawPoints =
+    row.battle_points ??
+    row.points ??
+    row.score ??
+    0;
+
+const points =
+    Number(rawPoints);
+
+if (
+    !Number.isFinite(points)
+) {
+
+    return 0;
+}
+
+return Math.max(
+    0,
+    Math.round(points)
+);
+
+
+}
+
+/* =========================================================
+ESCAPE LEADERBOARD HTML
+========================================================= */
+
+function escapeLeaderboardHTML(
+value
+) {
+
+
+return String(
+    value ?? ""
+)
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+
+}
+
+/* =========================================================
+LEADERBOARD MEDAL
+========================================================= */
+
+function getLeaderboardRankDisplay(
+rank
+) {
+
+
+if (rank === 1) {
+    return "🥇";
+}
+
+if (rank === 2) {
+    return "🥈";
+}
+
+if (rank === 3) {
+    return "🥉";
+}
+
+return String(rank);
+
+
+}
+
+/* =========================================================
+UPDATE CURRENT USER RANK
+========================================================= */
+
+function updateYourLeaderboardRank(
+rank,
+totalPlayers
+) {
+
+
+const rankContainer =
+    $("yourLeaderboardRank");
+
+if (!rankContainer) {
+    return;
+}
+
+/*
+ * Support the existing markup where
+ * yourLeaderboardRank contains a span.
+ */
+
+const rankSpan =
+    rankContainer.querySelector(
+        "span"
+    );
+
+if (rankSpan) {
+
+    rankSpan.textContent =
+        rank
+            ? String(rank)
+            : "—";
+
+} else {
+
+    rankContainer.textContent =
+        rank
+            ? `#${rank}`
+            : "—";
+}
+
+/*
+ * Optional rank metadata.
+ */
+
+rankContainer.title =
+    rank
+        ? `Rank ${rank} of ${totalPlayers}`
+        : "Not ranked yet";
+
+
+}
+
+/* =========================================================
+RENDER GLOBAL LEADERBOARD
+========================================================= */
+
+async function updateLeaderboardUI() {
+
+
+const rows =
+    $("leaderboardRows");
+
+/*
+ * Even if the leaderboard UI is not currently
+ * visible, we still avoid making unnecessary
+ * database requests when the container doesn't exist.
+ */
+
+if (!rows) {
+    return;
+}
+
+/*
+ * Show a professional loading state.
+ */
+
+rows.innerHTML = `
+    <div class="leaderboard-row leaderboard-loading">
+        <span>⏳</span>
+        <span>Loading leaderboard...</span>
+        <strong>—</strong>
+    </div>
+`;
+
+try {
+
+    /*
+     * -----------------------------------------------------
+     * CURRENT USER
+     * -----------------------------------------------------
+     */
+
+    const currentUser =
+        await getLeaderboardCurrentUser();
+
+    const currentUserId =
+        currentUser?.id || null;
+
+    /*
+     * -----------------------------------------------------
+     * LOAD GLOBAL LEADERBOARD
+     * -----------------------------------------------------
+     */
+
+    let leaderboard =
+        await getGlobalLeaderboard();
+
+    /*
+     * -----------------------------------------------------
+     * NORMALIZE RECORDS
+     * -----------------------------------------------------
+     */
+
+    leaderboard =
+        leaderboard
+            .map(
+                row => {
+
+                    return {
+
+                        original:
+                            row,
+
+                        userId:
+                            row.user_id ||
+                            row.userid ||
+                            row.id ||
+                            null,
+
+                        displayName:
+                            getLeaderboardDisplayName(
+                                row
+                            ),
+
+                        points:
+                            getLeaderboardPoints(
+                                row
+                            )
+                    };
+                }
+            );
+
+    /*
+     * -----------------------------------------------------
+     * SORT AGAIN CLIENT-SIDE
+     * -----------------------------------------------------
+     *
+     * This protects the UI if the database contains
+     * null/alternative point values.
+     */
+
+    leaderboard.sort(
+        function (
+            a,
+            b
+        ) {
+
+            if (
+                b.points !==
+                a.points
+            ) {
+
+                return (
+                    b.points -
+                    a.points
+                );
+            }
+
+            return a.displayName
+                .localeCompare(
+                    b.displayName
+                );
+        }
+    );
+
+    /*
+     * -----------------------------------------------------
+     * UPDATE YOUR PERSONAL POINTS
+     * -----------------------------------------------------
+     */
+
+    const currentRow =
+        leaderboard.find(
+            player =>
+                currentUserId &&
+                player.userId ===
+                currentUserId
+        );
+
+    /*
+     * If the user has a leaderboard record,
+     * use the database value.
+     *
+     * Otherwise fall back to local Game Mode
+     * points so the UI remains compatible with
+     * the existing free version.
+     */
+
+    const yourPoints =
+        currentRow
+            ? currentRow.points
+            : getBattlePoints();
+
+    if (
+        $("yourBattlePoints")
+    ) {
 
         $("yourBattlePoints")
             .textContent =
-            points;
+            yourPoints;
     }
 
-    const rows =
-        $("leaderboardRows");
+    /*
+     * -----------------------------------------------------
+     * EMPTY LEADERBOARD
+     * -----------------------------------------------------
+     */
 
-    if (!rows) {
+    if (
+        leaderboard.length ===
+        0
+    ) {
+
+        rows.innerHTML = `
+            <div class="leaderboard-row leaderboard-empty">
+                <span>🏆</span>
+                <span>No players yet</span>
+                <strong>—</strong>
+            </div>
+        `;
+
+        updateYourLeaderboardRank(
+            null,
+            0
+        );
+
         return;
     }
 
+    /*
+     * -----------------------------------------------------
+     * BUILD LEADERBOARD
+     * -----------------------------------------------------
+     */
+
+    rows.innerHTML =
+        leaderboard
+            .map(
+                function (
+                    player,
+                    index
+                ) {
+
+                    const rank =
+                        index + 1;
+
+                    const isYou =
+                        Boolean(
+                            currentUserId &&
+                            player.userId ===
+                            currentUserId
+                        );
+
+                    const rankDisplay =
+                        getLeaderboardRankDisplay(
+                            rank
+                        );
+
+                    const safeName =
+                        escapeLeaderboardHTML(
+                            player.displayName
+                        );
+
+                    const safePoints =
+                        player.points;
+
+                    return `
+                        <div
+                            class="leaderboard-row ${
+                                isYou
+                                    ? "current-player"
+                                    : ""
+                            }"
+                            data-rank="${rank}"
+                            data-user-id="${
+                                escapeLeaderboardHTML(
+                                    player.userId ||
+                                    ""
+                                )
+                            }"
+                        >
+
+                            <span
+                                class="leaderboard-rank"
+                            >
+                                ${rankDisplay}
+                            </span>
+
+                            <span
+                                class="leaderboard-player"
+                            >
+                                ${safeName}${
+                                    isYou
+                                        ? ' <small>(You)</small>'
+                                        : ''
+                                }
+                            </span>
+
+                            <strong
+                                class="leaderboard-points"
+                            >
+                                ${safePoints}
+                            </strong>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+    /*
+     * -----------------------------------------------------
+     * FIND YOUR RANK
+     * -----------------------------------------------------
+     */
+
+    if (currentRow) {
+
+        const yourRank =
+            leaderboard.findIndex(
+                player =>
+                    player.userId ===
+                    currentUserId
+            ) + 1;
+
+        updateYourLeaderboardRank(
+            yourRank,
+            leaderboard.length
+        );
+
+    } else {
+
+        /*
+         * The current user does not have a
+         * database leaderboard record yet.
+         *
+         * Work out where their local points
+         * would place them.
+         */
+
+        const localPoints =
+            getBattlePoints();
+
+        const calculatedRank =
+            leaderboard.filter(
+                player =>
+                    player.points >
+                    localPoints
+            ).length + 1;
+
+        updateYourLeaderboardRank(
+            calculatedRank,
+            leaderboard.length + 1
+        );
+    }
+
+    /*
+     * -----------------------------------------------------
+     * KEEP YOUR LOCAL POINTS IN SYNC
+     * -----------------------------------------------------
+     *
+     * If the database already knows the user's
+     * score, update the local value too.
+     */
+
+    if (currentRow) {
+
+        localStorage.setItem(
+            "studyMindBattlePoints",
+            String(
+                currentRow.points
+            )
+        );
+    }
+
+    console.log(
+        "Global leaderboard loaded:",
+        leaderboard
+    );
+
+} catch (error) {
+
+    console.error(
+        "Could not load global leaderboard:",
+        error
+    );
+
+    /*
+     * Do not destroy the existing leaderboard
+     * UI if the database temporarily fails.
+     */
+
     rows.innerHTML = `
-        <div class="leaderboard-row">
-            <span>1</span>
-            <span>You</span>
-            <strong>${points}</strong>
+        <div class="leaderboard-row leaderboard-error">
+            <span>⚠️</span>
+            <span>Leaderboard temporarily unavailable</span>
+            <strong>—</strong>
         </div>
     `;
 
-    if ($("yourLeaderboardRank")) {
+    /*
+     * Keep the user's local points visible.
+     */
 
-        $("yourLeaderboardRank")
-            .querySelector("span")
-            ?.replaceChildren(
-                document.createTextNode(
-                    "1"
-                )
-            );
+    if (
+        $("yourBattlePoints")
+    ) {
+
+        $("yourBattlePoints")
+            .textContent =
+            getBattlePoints();
     }
+}
+
+
+}
+
+/* =========================================================
+REFRESH LEADERBOARD
+========================================================= */
+
+async function refreshLeaderboard() {
+
+
+try {
+
+    await updateLeaderboardUI();
+
+} catch (error) {
+
+    console.error(
+        "Leaderboard refresh failed:",
+        error
+    );
+}
+
+
+}
+
+/* =========================================================
+REALTIME LEADERBOARD UPDATES
+========================================================= */
+
+/*
+
+* This makes the leaderboard update when another
+* player finishes a battle and their leaderboard
+* record changes.
+  */
+
+let leaderboardRealtimeChannel =
+null;
+
+async function subscribeToLeaderboard() {
+
+
+try {
+
+    const client =
+        getSupabase();
+
+    if (!client) {
+        return;
+    }
+
+    /*
+     * Remove an existing subscription first.
+     */
+
+    if (
+        leaderboardRealtimeChannel
+    ) {
+
+        try {
+
+            await client.removeChannel(
+                leaderboardRealtimeChannel
+            );
+
+        } catch (_) {}
+
+        leaderboardRealtimeChannel =
+            null;
+    }
+
+    leaderboardRealtimeChannel =
+        client
+            .channel(
+                "global-game-leaderboard"
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table:
+                        "game_leaderboard"
+                },
+                function(payload) {
+
+                    console.log(
+                        "Leaderboard update:",
+                        payload
+                    );
+
+                    /*
+                     * Give Supabase a moment to finish
+                     * the database transaction before
+                     * requesting the latest leaderboard.
+                     */
+
+                    setTimeout(
+                        function () {
+
+                            updateLeaderboardUI();
+
+                        },
+                        300
+                    );
+                }
+            )
+            .subscribe(
+                function(status) {
+
+                    console.log(
+                        "Leaderboard realtime status:",
+                        status
+                    );
+                }
+            );
+
+} catch (error) {
+
+    console.warn(
+        "Could not subscribe to leaderboard realtime updates:",
+        error
+    );
+}
+
+
+}
+
+/* =========================================================
+INITIALIZE LEADERBOARD
+========================================================= */
+
+async function initializeLeaderboard() {
+
+
+await updateLeaderboardUI();
+
+await subscribeToLeaderboard();
+
+
 }
 
 /* =========================================================
