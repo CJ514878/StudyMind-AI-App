@@ -1,21 +1,23 @@
 /* =========================================================
    STUDYMIND AI — GAME MODE
-   COMPLETE CORRECTED REPLACEMENT
-   =========================================================
+   RESTORED / EXPANDED NIGERIAN CURRICULUM VERSION
+
    FEATURES
    • Computer Battle
    • 1v1 matchmaking
    • 10 questions per battle
    • 15-second question timer
    • Free 5-battle limit
-   • TEST ACCOUNT unlimited battles
-   • Premium unlimited battles
+   • Test-account bypass
+   • Premium access
    • Battle points
    • Wins / losses / draws
    • Global leaderboard
-   • Realtime leaderboard refresh
-   • Realtime 1v1 match updates
-   • Subject + topic selection
+   • Realtime leaderboard
+   • Realtime 1v1 matchmaking
+   • Nigerian curriculum subjects
+   • Nigerian curriculum topics
+   • Subject → Topic selection
    • Navigation
    • Safe Supabase handling
 ========================================================= */
@@ -41,33 +43,28 @@ const GAME_STORAGE = {
 };
 
 const FREE_BATTLE_LIMIT = 5;
+
 const QUESTIONS_PER_BATTLE = 10;
+
 const QUESTION_TIME_SECONDS = 15;
 
 const MATCHMAKING_INTERVAL = 2500;
+
 const MATCH_TIMEOUT = 120000;
 
 
-/*
- * TEST ACCOUNT
- *
- * A Supabase user can be marked as a test account by adding:
- *
- * {
- *     "is_test_account": true
- * }
- *
- * to that user's auth metadata.
- *
- * This is deliberately NOT stored in localStorage because
- * localStorage can be changed by any user from their browser.
- */
-const TEST_ACCOUNT_METADATA_KEYS = [
-    "is_test_account",
-    "isTestAccount",
-    "test_account",
-    "testAccount"
-];
+/* =========================================================
+   TEST ACCOUNT
+   ---------------------------------------------------------
+   Put ONLY your testing account email here.
+
+   This bypasses the 5-battle frontend restriction for
+   your development/testing account.
+
+   Everyone else still gets the normal 5-battle limit.
+========================================================= */
+
+const TEST_GAME_ACCOUNT_EMAIL = "";
 
 
 /* =========================================================
@@ -76,8 +73,11 @@ const TEST_ACCOUNT_METADATA_KEYS = [
 
 let battleState = {
     mode: null,
+
     subject: "",
+
     topic: "",
+
     difficulty: "mixed",
 
     questions: [],
@@ -85,12 +85,15 @@ let battleState = {
     currentQuestion: 0,
 
     playerScore: 0,
+
     opponentScore: 0,
 
     timer: QUESTION_TIME_SECONDS,
+
     timerInterval: null,
 
     answering: false,
+
     battleActive: false
 };
 
@@ -100,106 +103,1119 @@ let battleState = {
 ========================================================= */
 
 let oneVOneMatchId = null;
+
 let oneVOnePlayerNumber = null;
+
 let oneVOneMyName = "Player";
 
 let oneVOnePolling = null;
+
 let oneVOneMatchmakingStartedAt = 0;
 
 let oneVOneActive = false;
+
 let oneVOneResultsRecorded = false;
 
 let oneVOneAnsweredQuestions = new Set();
 
 let oneVOneChannel = null;
+
 let leaderboardRealtimeChannel = null;
 
 
 /* =========================================================
-   SUBJECT DATABASE
+   NIGERIAN CURRICULUM DATABASE
+   ---------------------------------------------------------
+   Expanded subject/topic database.
+
+   Covers the major Nigerian secondary-school subjects
+   and the subjects used in the previous Game Mode version.
 ========================================================= */
 
 const SUBJECT_DATABASE = {
 
-    Mathematics: [
-        "Algebra",
-        "Geometry",
-        "Trigonometry",
-        "Statistics",
-        "Probability",
-        "Calculus",
-        "Number and Numeration"
+    "Agricultural Science": [
+        "Introduction to Agriculture",
+        "Branches of Agriculture",
+        "Importance of Agriculture",
+        "Agricultural Ecology",
+        "Farm Tools and Implements",
+        "Farm Machinery",
+        "Soil Science",
+        "Soil Formation",
+        "Soil Properties",
+        "Soil Fertility",
+        "Soil Conservation",
+        "Farm Management",
+        "Farm Records",
+        "Crop Production",
+        "Crop Improvement",
+        "Seed Selection",
+        "Planting Operations",
+        "Crop Pests",
+        "Crop Diseases",
+        "Weed Control",
+        "Animal Production",
+        "Animal Nutrition",
+        "Animal Health",
+        "Livestock Management",
+        "Poultry Production",
+        "Fishery",
+        "Forestry",
+        "Wildlife Management",
+        "Agricultural Marketing",
+        "Agricultural Finance",
+        "Agricultural Cooperatives",
+        "Agricultural Extension",
+        "Agricultural Policies"
     ],
 
-    English: [
-        "Grammar",
-        "Comprehension",
-        "Vocabulary",
-        "Oral English",
-        "Summary Writing",
-        "Essay Writing",
-        "Literature"
+    "Animal Husbandry": [
+        "Introduction to Animal Husbandry",
+        "Classification of Farm Animals",
+        "Animal Anatomy",
+        "Animal Physiology",
+        "Animal Nutrition",
+        "Feeds and Feeding",
+        "Digestive System",
+        "Animal Reproduction",
+        "Breeding",
+        "Animal Health",
+        "Animal Diseases",
+        "Disease Prevention",
+        "Poultry Production",
+        "Cattle Production",
+        "Sheep Production",
+        "Goat Production",
+        "Pig Production",
+        "Rabbit Production",
+        "Animal Housing",
+        "Farm Records",
+        "Livestock Marketing"
     ],
 
-    Physics: [
-        "Mechanics",
-        "Waves",
+    "Arabic": [
+        "Arabic Alphabet",
+        "Arabic Vocabulary",
+        "Arabic Grammar",
+        "Arabic Pronouns",
+        "Arabic Verbs",
+        "Arabic Sentence Structure",
+        "Reading Comprehension",
+        "Translation",
+        "Arabic Literature",
+        "Arabic Culture",
+        "Writing in Arabic"
+    ],
+
+    "Basic Science": [
+        "Living and Non-Living Things",
+        "Cells",
+        "Human Body",
+        "Nutrition",
+        "Health",
+        "Disease",
+        "Environment",
+        "Ecosystem",
+        "Matter",
+        "Energy",
+        "Force",
+        "Motion",
         "Heat",
+        "Light",
+        "Sound",
         "Electricity",
         "Magnetism",
-        "Optics",
-        "Modern Physics"
+        "Simple Machines",
+        "Earth and Space",
+        "Technology"
     ],
 
-    Chemistry: [
-        "Atomic Structure",
-        "Chemical Bonding",
-        "Stoichiometry",
-        "Acids and Bases",
-        "Organic Chemistry",
-        "Electrochemistry",
-        "Periodic Chemistry"
+    "Basic Technology": [
+        "Technology and Society",
+        "Safety",
+        "Workshop Tools",
+        "Materials",
+        "Woodwork",
+        "Metalwork",
+        "Technical Drawing",
+        "Building Construction",
+        "Electricity",
+        "Electronics",
+        "Machines",
+        "Mechanisms",
+        "Energy",
+        "Transportation",
+        "Communication",
+        "Maintenance"
     ],
 
-    Biology: [
-        "Cell Biology",
+    "Biology": [
+        "Introduction to Biology",
+        "Living Organisms",
+        "Cell Structure",
+        "Cell Organisation",
+        "Cell Division",
+        "Nutrition",
+        "Photosynthesis",
+        "Respiration",
+        "Transport in Plants",
+        "Transport in Animals",
+        "Excretion",
+        "Homeostasis",
+        "Support and Movement",
+        "Reproduction",
+        "Growth",
         "Genetics",
-        "Ecology",
+        "Variation",
         "Evolution",
+        "Ecology",
+        "Population",
+        "Food Chains",
+        "Food Webs",
+        "Energy Flow",
+        "Adaptation",
         "Human Biology",
         "Plant Biology",
-        "Reproduction"
+        "Microorganisms",
+        "Disease",
+        "Conservation"
     ],
 
-    Economics: [
-        "Demand and Supply",
-        "Production",
-        "Market Structures",
-        "National Income",
-        "Money and Banking",
-        "Inflation",
-        "International Trade"
+    "Business Studies": [
+        "Introduction to Business",
+        "Office Practice",
+        "Business Documents",
+        "Communication",
+        "Banking",
+        "Insurance",
+        "Transportation",
+        "Advertising",
+        "Trade",
+        "Entrepreneurship",
+        "Bookkeeping",
+        "Consumer Education",
+        "Business Ownership",
+        "Business Ethics"
     ],
 
-    Government: [
-        "Constitution",
+    "Chemistry": [
+        "Introduction to Chemistry",
+        "Matter",
+        "Atomic Structure",
+        "Periodic Table",
+        "Chemical Bonding",
+        "Mole Concept",
+        "Stoichiometry",
+        "Chemical Reactions",
+        "Acids Bases and Salts",
+        "Oxidation and Reduction",
+        "Electrochemistry",
+        "Energy Changes",
+        "Rates of Reaction",
+        "Chemical Equilibrium",
+        "Solubility",
+        "Gas Laws",
+        "Organic Chemistry",
+        "Hydrocarbons",
+        "Alcohols",
+        "Carboxylic Acids",
+        "Polymers",
+        "Environmental Chemistry",
+        "Metals",
+        "Non-Metals"
+    ],
+
+    "Christian Religious Studies": [
+        "Creation",
+        "The Fall of Man",
+        "The Call of Abraham",
+        "Joseph",
+        "Moses",
+        "The Exodus",
+        "The Ten Commandments",
+        "Joshua",
+        "Judges",
+        "Samuel",
+        "David",
+        "Solomon",
+        "The Prophets",
+        "The Birth of Jesus",
+        "The Ministry of Jesus",
+        "Miracles of Jesus",
+        "Parables of Jesus",
+        "The Death of Jesus",
+        "The Resurrection",
+        "The Early Church",
+        "Paul",
+        "Christian Living",
+        "Faith",
+        "Love",
+        "Justice",
+        "Leadership"
+    ],
+
+    "Civic Education": [
+        "Citizenship",
+        "Rights and Duties",
+        "Human Rights",
+        "Rule of Law",
         "Democracy",
+        "Constitution",
+        "Political Participation",
+        "National Values",
+        "Integrity",
+        "Patriotism",
+        "Leadership",
+        "Followership",
+        "National Unity",
+        "Federalism",
         "Political Parties",
+        "Elections",
+        "Electoral Process",
+        "Civil Society",
+        "Public Service",
+        "Corruption",
+        "Drug Abuse",
+        "Human Trafficking",
+        "Cultism",
+        "Security"
+    ],
+
+    "Commerce": [
+        "Introduction to Commerce",
+        "Trade",
+        "Home Trade",
+        "Foreign Trade",
+        "Wholesale Trade",
+        "Retail Trade",
+        "Aids to Trade",
+        "Transportation",
+        "Communication",
+        "Banking",
+        "Insurance",
+        "Warehousing",
+        "Advertising",
+        "Tourism",
+        "Business Ownership",
+        "Company Formation",
+        "Capital",
+        "Stock Exchange",
+        "Consumer Protection"
+    ],
+
+    "Computer Studies": [
+        "Introduction to Computers",
+        "Computer Hardware",
+        "Computer Software",
+        "Input Devices",
+        "Output Devices",
+        "Storage Devices",
+        "Operating Systems",
+        "Computer Networks",
+        "Internet",
+        "Cybersecurity",
+        "Word Processing",
+        "Spreadsheets",
+        "Database",
+        "Programming",
+        "Algorithms",
+        "Flowcharts",
+        "Data Processing",
+        "Computer Ethics"
+    ],
+
+    "Data Processing": [
+        "Data and Information",
+        "Data Processing Cycle",
+        "Computer Systems",
+        "Hardware",
+        "Software",
+        "Operating Systems",
+        "Word Processing",
+        "Spreadsheets",
+        "Databases",
+        "Presentation Software",
+        "Networking",
+        "Internet",
+        "Cybersecurity",
+        "Programming",
+        "Algorithms",
+        "Flowcharts",
+        "Information Systems"
+    ],
+
+    "Economics": [
+        "Introduction to Economics",
+        "Basic Economic Problems",
+        "Opportunity Cost",
+        "Production",
+        "Factors of Production",
+        "Division of Labour",
+        "Scale of Production",
+        "Demand",
+        "Supply",
+        "Market Equilibrium",
+        "Elasticity",
+        "Market Structures",
+        "Price Determination",
+        "Money",
+        "Banking",
+        "Inflation",
+        "Unemployment",
+        "National Income",
+        "Economic Growth",
+        "Economic Development",
+        "Public Finance",
+        "Taxation",
+        "International Trade",
+        "Balance of Payments",
+        "Population",
+        "Agriculture",
+        "Industrialisation",
+        "Economic Planning",
+        "ECOWAS",
+        "Nigerian Economy"
+    ],
+
+    "English Language": [
+        "Parts of Speech",
+        "Nouns",
+        "Pronouns",
+        "Verbs",
+        "Adjectives",
+        "Adverbs",
+        "Prepositions",
+        "Conjunctions",
+        "Tenses",
+        "Subject Verb Agreement",
+        "Sentence Structure",
+        "Clauses",
+        "Phrases",
+        "Punctuation",
+        "Vocabulary",
+        "Synonyms",
+        "Antonyms",
+        "Idioms",
+        "Comprehension",
+        "Summary Writing",
+        "Essay Writing",
+        "Letter Writing",
+        "Report Writing",
+        "Speech Writing",
+        "Article Writing",
+        "Argumentative Writing",
+        "Descriptive Writing",
+        "Narrative Writing",
+        "Oral English",
+        "Stress",
+        "Intonation",
+        "Vowels",
+        "Consonants"
+    ],
+
+    "Financial Accounting": [
+        "Introduction to Accounting",
+        "Accounting Principles",
+        "Accounting Concepts",
+        "Source Documents",
+        "Books of Original Entry",
+        "Ledger Accounts",
+        "Trial Balance",
+        "Cash Book",
+        "Bank Reconciliation",
+        "Control Accounts",
+        "Depreciation",
+        "Bad Debts",
+        "Final Accounts",
+        "Trading Account",
+        "Profit and Loss Account",
+        "Balance Sheet",
+        "Partnership Accounts",
+        "Company Accounts",
+        "Manufacturing Accounts",
+        "Incomplete Records",
+        "Public Sector Accounting",
+        "Accounting Ratios"
+    ],
+
+    "Foods and Nutrition": [
+        "Food and Nutrition",
+        "Nutrients",
+        "Carbohydrates",
+        "Proteins",
+        "Fats and Oils",
+        "Vitamins",
+        "Minerals",
+        "Water",
+        "Balanced Diet",
+        "Meal Planning",
+        "Food Preservation",
+        "Food Storage",
+        "Food Preparation",
+        "Cooking Methods",
+        "Food Hygiene",
+        "Special Diets",
+        "Deficiency Diseases"
+    ],
+
+    "French": [
+        "French Alphabet",
+        "Greetings",
+        "Numbers",
+        "Days and Months",
+        "French Vocabulary",
+        "Nouns",
+        "Articles",
+        "Pronouns",
+        "Adjectives",
+        "Verbs",
+        "Tenses",
+        "Sentence Construction",
+        "Reading Comprehension",
+        "Translation",
+        "French Culture",
+        "French Writing"
+    ],
+
+    "Further Mathematics": [
+        "Sets",
+        "Logic",
+        "Number Systems",
+        "Algebra",
+        "Quadratic Equations",
+        "Polynomials",
+        "Sequences",
+        "Series",
+        "Binomial Theorem",
+        "Matrices",
+        "Determinants",
+        "Vectors",
+        "Complex Numbers",
+        "Coordinate Geometry",
+        "Trigonometry",
+        "Calculus",
+        "Differentiation",
+        "Integration",
+        "Differential Equations",
+        "Probability",
+        "Statistics",
+        "Mechanics"
+    ],
+
+    "General Mathematics": [
+        "Number Bases",
+        "Fractions",
+        "Decimals",
+        "Percentages",
+        "Ratio and Proportion",
+        "Indices",
+        "Logarithms",
+        "Surds",
+        "Sets",
+        "Algebra",
+        "Linear Equations",
+        "Quadratic Equations",
+        "Simultaneous Equations",
+        "Variation",
+        "Sequences",
+        "Geometry",
+        "Constructions",
+        "Mensuration",
+        "Trigonometry",
+        "Statistics",
+        "Data Presentation",
+        "Probability",
+        "Vectors",
+        "Matrices",
+        "Financial Mathematics"
+    ],
+
+    "Geography": [
+        "Introduction to Geography",
+        "The Earth",
+        "Latitude and Longitude",
+        "Map Reading",
+        "Scale",
+        "Relief",
+        "Weather",
+        "Climate",
+        "Rocks",
+        "Soils",
+        "Drainage",
+        "Vegetation",
+        "Population",
+        "Migration",
+        "Settlement",
+        "Agriculture",
+        "Mineral Resources",
+        "Industries",
+        "Transportation",
+        "Trade",
+        "Environmental Management",
+        "Urbanisation",
+        "Regional Geography of Nigeria",
+        "West Africa",
+        "Africa",
+        "World Geography"
+    ],
+
+    "Government": [
+        "Meaning of Government",
+        "Political Concepts",
+        "State",
+        "Nation",
+        "Sovereignty",
+        "Power",
+        "Authority",
+        "Legitimacy",
+        "Democracy",
+        "Constitution",
+        "Rule of Law",
+        "Separation of Powers",
+        "Federalism",
+        "Unitary Government",
+        "Confederation",
+        "Political Parties",
+        "Pressure Groups",
+        "Elections",
         "Electoral Systems",
         "Legislature",
         "Executive",
-        "Judiciary"
+        "Judiciary",
+        "Public Administration",
+        "Local Government",
+        "Nigerian Political Development",
+        "Military Rule",
+        "Foreign Policy",
+        "International Organisations",
+        "ECOWAS",
+        "African Union"
     ],
 
-    Geography: [
-        "Physical Geography",
-        "Human Geography",
-        "Map Reading",
-        "Climate",
-        "Population",
-        "Resources",
-        "Environmental Management"
+    "Health Education": [
+        "Personal Health",
+        "Community Health",
+        "Nutrition",
+        "Physical Fitness",
+        "Mental Wellbeing",
+        "First Aid",
+        "Communicable Diseases",
+        "Non-Communicable Diseases",
+        "Personal Hygiene",
+        "Environmental Health",
+        "Drug Education",
+        "Safety",
+        "Human Development",
+        "Family Health",
+        "Health Services"
+    ],
+
+    "History": [
+        "Introduction to Nigerian History",
+        "Early Nigerian Societies",
+        "Hausa States",
+        "Kanem Borno",
+        "Oyo Empire",
+        "Benin Kingdom",
+        "Igbo Society",
+        "Yoruba Society",
+        "Trans-Saharan Trade",
+        "Trans-Atlantic Trade",
+        "European Contact",
+        "Christian Missionaries",
+        "Colonial Rule",
+        "Amalgamation",
+        "Nationalism",
+        "Independence",
+        "First Republic",
+        "Military Rule",
+        "Civil War",
+        "Second Republic",
+        "Third Republic",
+        "Fourth Republic",
+        "African History"
+    ],
+
+    "Home Economics": [
+        "Introduction to Home Economics",
+        "Family",
+        "Home Management",
+        "Consumer Education",
+        "Food and Nutrition",
+        "Meal Planning",
+        "Clothing",
+        "Textiles",
+        "Sewing",
+        "Child Development",
+        "Family Relationships",
+        "Household Resources",
+        "Interior Decoration",
+        "Home Safety",
+        "Entrepreneurship"
+    ],
+
+    "Information Technology": [
+        "Information Technology",
+        "Computer Hardware",
+        "Computer Software",
+        "Operating Systems",
+        "Internet",
+        "Web Technologies",
+        "Networking",
+        "Database Systems",
+        "Data Processing",
+        "Cybersecurity",
+        "Programming",
+        "Algorithms",
+        "Artificial Intelligence",
+        "Digital Citizenship",
+        "Information Systems"
+    ],
+
+    "Islamic Studies": [
+        "Introduction to Islam",
+        "Tawhid",
+        "Quran",
+        "Hadith",
+        "Prophet Muhammad",
+        "Makkah",
+        "Madinah",
+        "Hijrah",
+        "Five Pillars",
+        "Salah",
+        "Zakah",
+        "Sawm",
+        "Hajj",
+        "Islamic Morality",
+        "Islamic Law",
+        "Family Life",
+        "Islamic History",
+        "Islamic Economic Principles"
+    ],
+
+    "Literature-in-English": [
+        "Introduction to Literature",
+        "Prose",
+        "Poetry",
+        "Drama",
+        "Literary Devices",
+        "Figures of Speech",
+        "Characterisation",
+        "Plot",
+        "Setting",
+        "Theme",
+        "Narrative Techniques",
+        "Point of View",
+        "African Literature",
+        "Nigerian Literature",
+        "Comparative Literature"
+    ],
+
+    "Marketing": [
+        "Introduction to Marketing",
+        "Marketing Concepts",
+        "Market Research",
+        "Consumer Behaviour",
+        "Market Segmentation",
+        "Product",
+        "Branding",
+        "Packaging",
+        "Pricing",
+        "Promotion",
+        "Advertising",
+        "Sales Promotion",
+        "Distribution",
+        "Channels of Distribution",
+        "Digital Marketing",
+        "Marketing Ethics"
+    ],
+
+    "Music": [
+        "Elements of Music",
+        "Notation",
+        "Rhythm",
+        "Melody",
+        "Harmony",
+        "Scales",
+        "Intervals",
+        "Musical Instruments",
+        "Nigerian Music",
+        "African Music",
+        "Music History",
+        "Composition",
+        "Performance"
+    ],
+
+    "Physical Education": [
+        "Physical Fitness",
+        "Health Related Fitness",
+        "Athletics",
+        "Track Events",
+        "Field Events",
+        "Football",
+        "Basketball",
+        "Volleyball",
+        "Handball",
+        "Gymnastics",
+        "Swimming",
+        "Sportsmanship",
+        "Rules and Officials",
+        "First Aid",
+        "Recreation"
+    ],
+
+    "Physics": [
+        "Measurements",
+        "Units",
+        "Scalars and Vectors",
+        "Motion",
+        "Speed",
+        "Velocity",
+        "Acceleration",
+        "Force",
+        "Newton's Laws",
+        "Work",
+        "Energy",
+        "Power",
+        "Momentum",
+        "Pressure",
+        "Density",
+        "Heat",
+        "Temperature",
+        "Waves",
+        "Sound",
+        "Light",
+        "Reflection",
+        "Refraction",
+        "Electricity",
+        "Current",
+        "Voltage",
+        "Resistance",
+        "Magnetism",
+        "Electromagnetic Induction",
+        "Atomic Physics",
+        "Nuclear Physics"
+    ],
+
+    "Technical Drawing": [
+        "Introduction to Technical Drawing",
+        "Drawing Instruments",
+        "Geometric Constructions",
+        "Orthographic Projection",
+        "Isometric Drawing",
+        "Oblique Drawing",
+        "Sectional Views",
+        "Dimensioning",
+        "Scale Drawing",
+        "Building Drawing",
+        "Mechanical Drawing",
+        "Electrical Drawing",
+        "Perspective Drawing",
+        "Computer Aided Design"
+    ],
+
+    "Visual Arts": [
+        "Introduction to Visual Arts",
+        "Elements of Art",
+        "Principles of Design",
+        "Drawing",
+        "Painting",
+        "Sculpture",
+        "Printmaking",
+        "Textile Art",
+        "Ceramics",
+        "Graphic Design",
+        "Art History",
+        "Nigerian Art",
+        "African Art",
+        "Contemporary Art"
+    ],
+
+    "Yoruba": [
+        "Yoruba Alphabet",
+        "Yoruba Vocabulary",
+        "Yoruba Grammar",
+        "Parts of Speech",
+        "Sentence Construction",
+        "Yoruba Proverbs",
+        "Yoruba Oral Literature",
+        "Yoruba Written Literature",
+        "Reading Comprehension",
+        "Translation",
+        "Yoruba Culture"
+    ],
+
+    "Igbo": [
+        "Igbo Alphabet",
+        "Igbo Vocabulary",
+        "Igbo Grammar",
+        "Parts of Speech",
+        "Sentence Construction",
+        "Igbo Proverbs",
+        "Igbo Oral Literature",
+        "Igbo Written Literature",
+        "Reading Comprehension",
+        "Translation",
+        "Igbo Culture"
+    ],
+
+    "Hausa": [
+        "Hausa Alphabet",
+        "Hausa Vocabulary",
+        "Hausa Grammar",
+        "Parts of Speech",
+        "Sentence Construction",
+        "Hausa Proverbs",
+        "Hausa Oral Literature",
+        "Hausa Written Literature",
+        "Reading Comprehension",
+        "Translation",
+        "Hausa Culture"
+    ],
+
+    "Accounting": [
+        "Introduction to Accounting",
+        "Accounting Concepts",
+        "Accounting Principles",
+        "Source Documents",
+        "Books of Original Entry",
+        "Ledger",
+        "Trial Balance",
+        "Cash Book",
+        "Bank Reconciliation",
+        "Depreciation",
+        "Final Accounts",
+        "Partnership Accounts",
+        "Company Accounts",
+        "Manufacturing Accounts",
+        "Incomplete Records",
+        "Accounting Ratios"
+    ],
+
+    "Commerce": [
+        "Introduction to Commerce",
+        "Trade",
+        "Home Trade",
+        "Foreign Trade",
+        "Wholesale",
+        "Retail",
+        "Transportation",
+        "Communication",
+        "Banking",
+        "Insurance",
+        "Warehousing",
+        "Advertising",
+        "Tourism",
+        "Stock Exchange",
+        "Business Ownership"
+    ],
+
+    "Digital Technologies": [
+        "Digital Literacy",
+        "Computer Systems",
+        "Digital Communication",
+        "Internet",
+        "Cybersecurity",
+        "Digital Citizenship",
+        "Programming",
+        "Algorithms",
+        "Data",
+        "Databases",
+        "Artificial Intelligence",
+        "Cloud Computing",
+        "Digital Ethics",
+        "Emerging Technologies"
+    ],
+
+    "Citizenship and Heritage Studies": [
+        "Nigerian Identity",
+        "Citizenship",
+        "National Symbols",
+        "Nigerian Cultures",
+        "National Values",
+        "Unity",
+        "Patriotism",
+        "Leadership",
+        "Community Development",
+        "Nigerian History",
+        "Constitution",
+        "Democracy",
+        "Human Rights"
+    ],
+
+    "Fisheries": [
+        "Introduction to Fisheries",
+        "Aquatic Resources",
+        "Fish Anatomy",
+        "Fish Nutrition",
+        "Fish Breeding",
+        "Fish Ponds",
+        "Fish Farming",
+        "Fish Diseases",
+        "Fish Processing",
+        "Fish Preservation",
+        "Fisheries Management",
+        "Fisheries Marketing"
+    ],
+
+    "Insurance": [
+        "Introduction to Insurance",
+        "Principles of Insurance",
+        "Types of Insurance",
+        "Life Insurance",
+        "Fire Insurance",
+        "Marine Insurance",
+        "Motor Insurance",
+        "Risk",
+        "Premium",
+        "Claims",
+        "Underwriting",
+        "Insurance Companies"
+    ],
+
+    "Office Practice": [
+        "Office",
+        "Office Equipment",
+        "Office Staff",
+        "Communication",
+        "Filing",
+        "Records Management",
+        "Mail Services",
+        "Telephone Services",
+        "Meetings",
+        "Office Safety",
+        "Secretarial Duties"
+    ],
+
+    "Entrepreneurship": [
+        "Entrepreneurship",
+        "Entrepreneurs",
+        "Business Ideas",
+        "Opportunity Identification",
+        "Business Planning",
+        "Market Research",
+        "Sources of Finance",
+        "Business Ownership",
+        "Marketing",
+        "Risk Management",
+        "Innovation",
+        "Small Business Management"
+    ],
+
+    "Tourism": [
+        "Introduction to Tourism",
+        "Types of Tourism",
+        "Tourist Attractions",
+        "Nigerian Tourism",
+        "Cultural Tourism",
+        "Eco Tourism",
+        "Hospitality",
+        "Transportation",
+        "Tourism Marketing",
+        "Tourism Development"
+    ],
+
+    "Catering and Craft Practice": [
+        "Kitchen Safety",
+        "Kitchen Equipment",
+        "Food Preparation",
+        "Cooking Methods",
+        "Menu Planning",
+        "Food Service",
+        "Table Setting",
+        "Baking",
+        "Pastry",
+        "Catering Management",
+        "Food Hygiene",
+        "Hospitality"
+    ],
+
+    "Fashion Design and Garment Making": [
+        "Introduction to Fashion",
+        "Textiles",
+        "Sewing Tools",
+        "Sewing Machines",
+        "Pattern Making",
+        "Garment Construction",
+        "Fashion Illustration",
+        "Measurement",
+        "Cutting",
+        "Finishing",
+        "Fashion Marketing"
+    ],
+
+    "Computer Hardware and GSM Repairs": [
+        "Computer Components",
+        "Motherboard",
+        "CPU",
+        "RAM",
+        "Storage",
+        "Power Supply",
+        "Computer Assembly",
+        "Troubleshooting",
+        "Mobile Phone Components",
+        "GSM Technology",
+        "Phone Repairs",
+        "Safety"
+    ],
+
+    "Solar Photovoltaic Installation and Maintenance": [
+        "Solar Energy",
+        "Solar Panels",
+        "Photovoltaic Cells",
+        "Solar System Components",
+        "Batteries",
+        "Charge Controllers",
+        "Inverters",
+        "Solar Wiring",
+        "System Installation",
+        "System Maintenance",
+        "Electrical Safety"
+    ],
+
+    "Livestock Farming": [
+        "Livestock Production",
+        "Animal Nutrition",
+        "Animal Breeding",
+        "Animal Housing",
+        "Poultry",
+        "Cattle",
+        "Goats",
+        "Sheep",
+        "Pigs",
+        "Animal Health",
+        "Livestock Marketing"
+    ],
+
+    "Beauty and Cosmetology": [
+        "Personal Grooming",
+        "Skin Care",
+        "Hair Care",
+        "Hair Styling",
+        "Nail Care",
+        "Makeup",
+        "Beauty Products",
+        "Salon Management",
+        "Hygiene",
+        "Customer Service"
+    ],
+
+    "Horticulture and Crop Production": [
+        "Horticulture",
+        "Crop Classification",
+        "Nursery Management",
+        "Seed Selection",
+        "Planting",
+        "Crop Nutrition",
+        "Irrigation",
+        "Pest Control",
+        "Disease Control",
+        "Harvesting",
+        "Post Harvest Handling",
+        "Crop Marketing"
     ]
+
 };
 
 
@@ -274,7 +1290,8 @@ function getDisplayName(user) {
         return "Player";
     }
 
-    const metadata = user.user_metadata || {};
+    const metadata =
+        user.user_metadata || {};
 
     return (
         metadata.display_name ||
@@ -284,61 +1301,6 @@ function getDisplayName(user) {
         user.email?.split("@")[0] ||
         "Player"
     );
-}
-
-
-/* =========================================================
-   TEST ACCOUNT DETECTION
-========================================================= */
-
-function isTestAccount(user) {
-
-    if (!user) {
-        return false;
-    }
-
-    const metadata =
-        user.user_metadata || {};
-
-    return TEST_ACCOUNT_METADATA_KEYS.some(
-        key => {
-
-            const value =
-                metadata[key];
-
-            return (
-                value === true ||
-                value === "true" ||
-                value === 1 ||
-                value === "1"
-            );
-        }
-    );
-}
-
-
-/*
- * This helper gets the currently authenticated user and checks
- * whether the account is a designated test account.
- */
-async function isCurrentUserTestAccount() {
-
-    try {
-
-        const user =
-            await getCurrentUser();
-
-        return isTestAccount(user);
-
-    } catch (error) {
-
-        console.warn(
-            "Could not determine test-account status:",
-            error
-        );
-
-        return false;
-    }
 }
 
 
@@ -358,12 +1320,15 @@ function normalizeSubjectName(subject) {
             .toLowerCase();
 
     const match =
-        Object.keys(SUBJECT_DATABASE).find(
-            name =>
-                name.toLowerCase() === cleaned
-        );
+        Object.keys(SUBJECT_DATABASE)
+            .find(
+                name =>
+                    name.toLowerCase() ===
+                    cleaned
+            );
 
-    return match || String(subject).trim();
+    return match ||
+        String(subject).trim();
 }
 
 
@@ -380,113 +1345,168 @@ function populateGameSubjects() {
 
     selectors.forEach(select => {
 
-        const currentValue = select.value;
+        const currentValue =
+            select.value;
 
         select.innerHTML =
             '<option value="">Select subject</option>';
 
-        Object.keys(SUBJECT_DATABASE).forEach(subject => {
+        Object.keys(SUBJECT_DATABASE)
+            .sort(
+                (a, b) =>
+                    a.localeCompare(b)
+            )
+            .forEach(subject => {
 
-            const option =
-                document.createElement("option");
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-            option.value = subject;
-            option.textContent = subject;
+                option.value =
+                    subject;
 
-            select.appendChild(option);
-        });
+                option.textContent =
+                    subject;
+
+                select.appendChild(
+                    option
+                );
+            });
 
         if (
             currentValue &&
             SUBJECT_DATABASE[currentValue]
         ) {
-            select.value = currentValue;
+            select.value =
+                currentValue;
         }
     });
 
     populateOneVOneTopics();
+
     populateBattleTopics();
 }
 
 
 /* =========================================================
-   1V1 TOPICS
+   POPULATE 1V1 TOPICS
 ========================================================= */
 
 function populateOneVOneTopics() {
 
-    const subject = $("oneVOneSubject");
-    const topic = $("oneVOneTopic");
+    const subject =
+        $("oneVOneSubject");
+
+    const topic =
+        $("oneVOneTopic");
 
     if (!subject || !topic) {
         return;
     }
 
     const selectedSubject =
-        normalizeSubjectName(subject.value);
+        normalizeSubjectName(
+            subject.value
+        );
 
-    const currentTopic = topic.value;
+    const currentTopic =
+        topic.value;
 
     topic.innerHTML =
         '<option value="">Select topic</option>';
 
     const topics =
-        SUBJECT_DATABASE[selectedSubject] || [];
+        SUBJECT_DATABASE[
+            selectedSubject
+        ] || [];
 
     topics.forEach(topicName => {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
-        option.value = topicName;
-        option.textContent = topicName;
+        option.value =
+            topicName;
 
-        topic.appendChild(option);
+        option.textContent =
+            topicName;
+
+        topic.appendChild(
+            option
+        );
     });
 
-    if (topics.includes(currentTopic)) {
-        topic.value = currentTopic;
+    if (
+        topics.includes(
+            currentTopic
+        )
+    ) {
+        topic.value =
+            currentTopic;
     }
 }
 
 
 /* =========================================================
-   COMPUTER TOPICS
+   POPULATE COMPUTER TOPICS
 ========================================================= */
 
 function populateBattleTopics() {
 
-    const subject = $("battleSubject");
-    const topic = $("battleTopic");
+    const subject =
+        $("battleSubject");
+
+    const topic =
+        $("battleTopic");
 
     if (!subject || !topic) {
         return;
     }
 
     const selectedSubject =
-        normalizeSubjectName(subject.value);
+        normalizeSubjectName(
+            subject.value
+        );
 
-    const currentTopic = topic.value;
+    const currentTopic =
+        topic.value;
 
     topic.innerHTML =
         '<option value="">Select topic</option>';
 
     const topics =
-        SUBJECT_DATABASE[selectedSubject] || [];
+        SUBJECT_DATABASE[
+            selectedSubject
+        ] || [];
 
     topics.forEach(topicName => {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
-        option.value = topicName;
-        option.textContent = topicName;
+        option.value =
+            topicName;
 
-        topic.appendChild(option);
+        option.textContent =
+            topicName;
+
+        topic.appendChild(
+            option
+        );
     });
 
-    if (topics.includes(currentTopic)) {
-        topic.value = currentTopic;
+    if (
+        topics.includes(
+            currentTopic
+        )
+    ) {
+        topic.value =
+            currentTopic;
     }
 }
 
@@ -498,6 +1518,7 @@ function populateBattleTopics() {
 function handleOneVOneSubjectChange() {
 
     populateOneVOneTopics();
+
     updateFindOpponentButton();
 }
 
@@ -541,7 +1562,8 @@ function updateFindOpponentButton() {
 function oneVOneSubjectValue() {
 
     return normalizeSubjectName(
-        $("oneVOneSubject")?.value || ""
+        $("oneVOneSubject")?.value ||
+        ""
     );
 }
 
@@ -549,7 +1571,8 @@ function oneVOneSubjectValue() {
 function oneVOneTopicValue() {
 
     return (
-        $("oneVOneTopic")?.value || ""
+        $("oneVOneTopic")?.value ||
+        ""
     ).trim();
 }
 
@@ -570,10 +1593,22 @@ function oneVOneDifficultyValue() {
 function isPremiumUser() {
 
     const values = [
-        localStorage.getItem("studyMindPremium"),
-        localStorage.getItem("studyMindIsPremium"),
-        localStorage.getItem("premium"),
-        localStorage.getItem("isPremium")
+
+        localStorage.getItem(
+            "studyMindPremium"
+        ),
+
+        localStorage.getItem(
+            "studyMindIsPremium"
+        ),
+
+        localStorage.getItem(
+            "premium"
+        ),
+
+        localStorage.getItem(
+            "isPremium"
+        )
     ];
 
     return values.some(
@@ -581,6 +1616,51 @@ function isPremiumUser() {
             value === "true" ||
             value === "1"
     );
+}
+
+
+/* =========================================================
+   TEST ACCOUNT CHECK
+========================================================= */
+
+function isTestAccount(user) {
+
+    if (
+        !TEST_GAME_ACCOUNT_EMAIL
+    ) {
+        return false;
+    }
+
+    if (!user?.email) {
+        return false;
+    }
+
+    return (
+        user.email.trim().toLowerCase() ===
+        TEST_GAME_ACCOUNT_EMAIL
+            .trim()
+            .toLowerCase()
+    );
+}
+
+
+/* =========================================================
+   CHECK TEST ACCOUNT
+========================================================= */
+
+async function isCurrentUserTestAccount() {
+
+    try {
+
+        const user =
+            await getCurrentUser();
+
+        return isTestAccount(user);
+
+    } catch (_) {
+
+        return false;
+    }
 }
 
 
@@ -607,6 +1687,7 @@ function setBattlesUsed(value) {
 
     localStorage.setItem(
         GAME_STORAGE.battleCount,
+
         String(
             Math.max(
                 0,
@@ -646,6 +1727,7 @@ function setBattlePoints(value) {
 
     localStorage.setItem(
         GAME_STORAGE.battlePoints,
+
         String(
             Math.max(
                 0,
@@ -657,28 +1739,7 @@ function setBattlePoints(value) {
 
 
 /* =========================================================
-   ACCOUNT ACCESS TYPE
-========================================================= */
-
-async function getBattleAccessType() {
-
-    const user =
-        await getCurrentUser();
-
-    if (isTestAccount(user)) {
-        return "test";
-    }
-
-    if (isPremiumUser()) {
-        return "premium";
-    }
-
-    return "free";
-}
-
-
-/* =========================================================
-   UPDATE BATTLE COUNT UI
+   UPDATE BATTLE LIMIT UI
 ========================================================= */
 
 async function updateBattleLimitUI() {
@@ -686,27 +1747,19 @@ async function updateBattleLimitUI() {
     const used =
         getBattlesUsed();
 
+    let unlimited =
+        isPremiumUser();
+
+    if (!unlimited) {
+        unlimited =
+            await isCurrentUserTestAccount();
+    }
+
     const remaining =
         Math.max(
             0,
             FREE_BATTLE_LIMIT - used
         );
-
-    let accessType =
-        "free";
-
-    try {
-
-        accessType =
-            await getBattleAccessType();
-
-    } catch (_) {}
-
-
-    const unlimited =
-        accessType === "test" ||
-        accessType === "premium";
-
 
     const ids = [
         "freeBattlesRemaining",
@@ -717,7 +1770,8 @@ async function updateBattleLimitUI() {
 
     ids.forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (!element) {
             return;
@@ -727,41 +1781,6 @@ async function updateBattleLimitUI() {
             unlimited
                 ? "Unlimited"
                 : remaining;
-    });
-
-
-    /*
-     * Optional status elements.
-     */
-    const statusIds = [
-        "battleLimitMessage",
-        "freeBattleMessage",
-        "battleAccessStatus"
-    ];
-
-    statusIds.forEach(id => {
-
-        const element = $(id);
-
-        if (!element) {
-            return;
-        }
-
-        if (accessType === "test") {
-
-            element.textContent =
-                "Test Account — Unlimited Battles";
-
-        } else if (accessType === "premium") {
-
-            element.textContent =
-                "Premium — Unlimited Battles";
-
-        } else {
-
-            element.textContent =
-                `${remaining} free battle${remaining === 1 ? "" : "s"} remaining`;
-        }
     });
 }
 
@@ -776,7 +1795,9 @@ function showPremiumMessage() {
         typeof window.openPremium ===
         "function"
     ) {
+
         window.openPremium();
+
         return;
     }
 
@@ -797,41 +1818,28 @@ async function canStartBattle() {
         const user =
             await getCurrentUser();
 
-
         /*
-         * TEST ACCOUNT:
-         *
-         * Unlimited battles.
-         *
-         * This check happens BEFORE the free limit.
+         * Premium users are unlimited.
          */
 
-        if (isTestAccount(user)) {
-
-            console.log(
-                "Game Mode: test account detected — unlimited battles enabled."
-            );
-
+        if (
+            isPremiumUser()
+        ) {
             return true;
         }
 
-
         /*
-         * PREMIUM:
-         *
-         * Unlimited battles.
+         * Development/testing account is unlimited.
          */
 
-        if (isPremiumUser()) {
-
+        if (
+            isTestAccount(user)
+        ) {
             return true;
         }
 
-
         /*
-         * NORMAL FREE ACCOUNT:
-         *
-         * Enforce the 5-battle limit.
+         * Normal free user.
          */
 
         if (
@@ -844,7 +1852,6 @@ async function canStartBattle() {
             return false;
         }
 
-
         return true;
 
     } catch (error) {
@@ -854,78 +1861,7 @@ async function canStartBattle() {
             error
         );
 
-        alert(
-            "We could not verify your Game Mode access. Please refresh the page and try again."
-        );
-
         return false;
-    }
-}
-
-
-/* =========================================================
-   INCREMENT BATTLE COUNT
-========================================================= */
-
-async function recordBattleUsage() {
-
-    try {
-
-        const user =
-            await getCurrentUser();
-
-
-        /*
-         * TEST ACCOUNT:
-         *
-         * Do NOT consume one of the 5 free battles.
-         */
-
-        if (isTestAccount(user)) {
-
-            console.log(
-                "Test account battle completed — free battle count not increased."
-            );
-
-            await updateBattleLimitUI();
-
-            return;
-        }
-
-
-        /*
-         * PREMIUM:
-         *
-         * Premium battles are unlimited and therefore
-         * should not consume the free battle counter.
-         */
-
-        if (isPremiumUser()) {
-
-            await updateBattleLimitUI();
-
-            return;
-        }
-
-
-        /*
-         * NORMAL FREE USER:
-         *
-         * Consume one free battle.
-         */
-
-        setBattlesUsed(
-            getBattlesUsed() + 1
-        );
-
-        await updateBattleLimitUI();
-
-    } catch (error) {
-
-        console.warn(
-            "Could not record battle usage:",
-            error
-        );
     }
 }
 
@@ -937,7 +1873,9 @@ async function recordBattleUsage() {
 function cleanErrorMessage(message) {
 
     if (!message) {
-        return "Something went wrong. Please try again.";
+        return (
+            "Something went wrong. Please try again."
+        );
     }
 
     const text =
@@ -979,33 +1917,48 @@ function normalizeQuestionArray(data) {
 
     let questions = [];
 
-    if (Array.isArray(data)) {
-
-        questions = data;
-
-    } else if (
-        Array.isArray(data?.questions)
+    if (
+        Array.isArray(data)
     ) {
 
-        questions = data.questions;
+        questions =
+            data;
 
     } else if (
-        Array.isArray(data?.data)
+        Array.isArray(
+            data?.questions
+        )
     ) {
 
-        questions = data.data;
+        questions =
+            data.questions;
 
     } else if (
-        Array.isArray(data?.result)
+        Array.isArray(
+            data?.data
+        )
     ) {
 
-        questions = data.result;
+        questions =
+            data.data;
 
     } else if (
-        Array.isArray(data?.items)
+        Array.isArray(
+            data?.result
+        )
     ) {
 
-        questions = data.items;
+        questions =
+            data.result;
+
+    } else if (
+        Array.isArray(
+            data?.items
+        )
+    ) {
+
+        questions =
+            data.items;
     }
 
 
@@ -1026,11 +1979,17 @@ function normalizeQuestionArray(data) {
 
 
             let options =
-                Array.isArray(item.options)
+                Array.isArray(
+                    item.options
+                )
                     ? item.options
-                    : Array.isArray(item.choices)
+                    : Array.isArray(
+                        item.choices
+                    )
                         ? item.choices
-                        : Array.isArray(item.answers)
+                        : Array.isArray(
+                            item.answers
+                        )
                             ? item.answers
                             : [];
 
@@ -1038,7 +1997,8 @@ function normalizeQuestionArray(data) {
             options =
                 options.map(
                     option =>
-                        typeof option === "object"
+                        typeof option ===
+                        "object"
                             ? String(
                                 option.text ||
                                 option.label ||
@@ -1058,7 +2018,8 @@ function normalizeQuestionArray(data) {
 
 
             if (
-                typeof answer === "object" &&
+                typeof answer ===
+                "object" &&
                 answer !== null
             ) {
 
@@ -1071,7 +2032,8 @@ function normalizeQuestionArray(data) {
 
 
             if (
-                typeof answer === "string"
+                typeof answer ===
+                "string"
             ) {
 
                 const cleaned =
@@ -1082,20 +2044,27 @@ function normalizeQuestionArray(data) {
 
 
                 if (
-                    /^[A-D]$/.test(upper)
+                    /^[A-D]$/.test(
+                        upper
+                    )
                 ) {
 
                     answer =
-                        upper.charCodeAt(0) -
-                        65;
+                        upper.charCodeAt(
+                            0
+                        ) - 65;
 
                 } else {
 
                     const numeric =
-                        Number(cleaned);
+                        Number(
+                            cleaned
+                        );
 
                     if (
-                        Number.isInteger(numeric)
+                        Number.isInteger(
+                            numeric
+                        )
                     ) {
 
                         answer =
@@ -1113,8 +2082,12 @@ function normalizeQuestionArray(data) {
                                         .toLowerCase()
                             );
 
-                        if (found >= 0) {
-                            answer = found;
+                        if (
+                            found >= 0
+                        ) {
+
+                            answer =
+                                found;
                         }
                     }
                 }
@@ -1158,23 +2131,41 @@ async function generateBattleQuestions(
     difficulty = "mixed"
 ) {
 
+    /*
+     * Existing application generators.
+     */
+
     const generators = [
+
         window.generateGameQuestions,
+
         window.generateBattleQuestionsAI,
+
         window.createBattleQuestions,
+
         window.generateAIQuestions
+
     ];
+
 
     for (
         const generator of generators
     ) {
 
         if (
-            typeof generator !== "function" ||
-            generator === generateBattleQuestions
+            typeof generator !==
+            "function"
         ) {
             continue;
         }
+
+        if (
+            generator ===
+            generateBattleQuestions
+        ) {
+            continue;
+        }
+
 
         try {
 
@@ -1186,8 +2177,12 @@ async function generateBattleQuestions(
                     QUESTIONS_PER_BATTLE
                 );
 
+
             const questions =
-                normalizeQuestionArray(result);
+                normalizeQuestionArray(
+                    result
+                );
+
 
             if (
                 questions.length >=
@@ -1210,10 +2205,18 @@ async function generateBattleQuestions(
     }
 
 
+    /*
+     * Application API routes.
+     */
+
     const endpoints = [
+
         "/api/generate-questions",
+
         "/api/questions",
+
         "/api/generate"
+
     ];
 
 
@@ -1238,7 +2241,9 @@ async function generateBattleQuestions(
                             JSON.stringify({
 
                                 subject,
+
                                 topic,
+
                                 difficulty,
 
                                 count:
@@ -1254,7 +2259,9 @@ async function generateBattleQuestions(
                 );
 
 
-            if (!response.ok) {
+            if (
+                !response.ok
+            ) {
                 continue;
             }
 
@@ -1264,7 +2271,9 @@ async function generateBattleQuestions(
 
 
             const questions =
-                normalizeQuestionArray(data);
+                normalizeQuestionArray(
+                    data
+                );
 
 
             if (
@@ -1295,30 +2304,37 @@ async function generateBattleQuestions(
 
 
 /* =========================================================
-   COMPUTER BATTLE START
+   COMPUTER BATTLE
 ========================================================= */
 
 async function startComputerBattle() {
 
-    if (!(await canStartBattle())) {
+    if (
+        !(await canStartBattle())
+    ) {
         return;
     }
 
 
     const subject =
         normalizeSubjectName(
-            $("battleSubject")?.value || ""
+            $("battleSubject")?.value ||
+            ""
         );
 
     const topic =
-        $("battleTopic")?.value || "";
+        $("battleTopic")?.value ||
+        "";
 
     const difficulty =
         $("battleDifficulty")?.value ||
         "mixed";
 
 
-    if (!subject || !topic) {
+    if (
+        !subject ||
+        !topic
+    ) {
 
         alert(
             "Choose a subject and topic before starting the battle."
@@ -1333,7 +2349,9 @@ async function startComputerBattle() {
         mode: "computer",
 
         subject,
+
         topic,
+
         difficulty,
 
         questions: [],
@@ -1341,9 +2359,11 @@ async function startComputerBattle() {
         currentQuestion: 0,
 
         playerScore: 0,
+
         opponentScore: 0,
 
-        timer: QUESTION_TIME_SECONDS,
+        timer:
+            QUESTION_TIME_SECONDS,
 
         timerInterval: null,
 
@@ -1379,6 +2399,7 @@ async function startComputerBattle() {
     const loading =
         $("battleLoading");
 
+
     if (loading) {
         loading.hidden = false;
     }
@@ -1411,6 +2432,7 @@ async function startComputerBattle() {
                 QUESTIONS_PER_BATTLE
             );
 
+
         battleState.battleActive =
             true;
 
@@ -1434,6 +2456,7 @@ async function startComputerBattle() {
 
         battleState.battleActive =
             false;
+
 
         stopBattleTimer();
 
@@ -1488,18 +2511,24 @@ function showComputerQuestion() {
 
 
     const questionNumber =
-        battleState.currentQuestion + 1;
+        battleState.currentQuestion +
+        1;
 
 
     [
         "questionNumber",
+
         "currentQuestionNumber",
+
         "battleQuestionNumber"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 questionNumber;
         }
@@ -1508,12 +2537,16 @@ function showComputerQuestion() {
 
     [
         "battleQuestionTopic",
+
         "questionTopic"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 battleState.topic;
         }
@@ -1526,6 +2559,7 @@ function showComputerQuestion() {
 
 
     if (questionElement) {
+
         questionElement.textContent =
             question.question;
     }
@@ -1543,7 +2577,8 @@ function showComputerQuestion() {
     }
 
 
-    answerGrid.innerHTML = "";
+    answerGrid.innerHTML =
+        "";
 
 
     question.options.forEach(
@@ -1568,12 +2603,10 @@ function showComputerQuestion() {
 
             button.addEventListener(
                 "click",
-                () => {
-
+                () =>
                     answerComputerQuestion(
                         index
-                    );
-                }
+                    )
             );
 
             answerGrid.appendChild(
@@ -1608,6 +2641,7 @@ function answerComputerQuestion(
     battleState.answering =
         true;
 
+
     stopBattleTimer();
 
 
@@ -1635,8 +2669,10 @@ function answerComputerQuestion(
             button.disabled =
                 true;
 
+
             if (
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
@@ -1644,9 +2680,12 @@ function answerComputerQuestion(
                 );
             }
 
+
             if (
-                index === selectedIndex &&
-                index !== question.answer
+                index ===
+                selectedIndex &&
+                index !==
+                question.answer
             ) {
 
                 button.classList.add(
@@ -1662,15 +2701,18 @@ function answerComputerQuestion(
         question.answer
     ) {
 
-        battleState.playerScore += 10;
+        battleState.playerScore +=
+            10;
 
     } else {
 
         if (
-            Math.random() < 0.65
+            Math.random() <
+            0.65
         ) {
 
-            battleState.opponentScore += 10;
+            battleState.opponentScore +=
+                10;
         }
     }
 
@@ -1678,17 +2720,24 @@ function answerComputerQuestion(
     updateComputerBattleScores();
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        if (!battleState.battleActive) {
-            return;
-        }
+            if (
+                !battleState.battleActive
+            ) {
+                return;
+            }
 
-        battleState.currentQuestion++;
 
-        showComputerQuestion();
+            battleState.currentQuestion++;
 
-    }, 900);
+
+            showComputerQuestion();
+
+        },
+        900
+    );
 }
 
 
@@ -1729,9 +2778,11 @@ function handleComputerTimeout() {
             button.disabled =
                 true;
 
+
             if (
                 question &&
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
@@ -1743,27 +2794,36 @@ function handleComputerTimeout() {
 
 
     if (
-        Math.random() < 0.65
+        Math.random() <
+        0.65
     ) {
 
-        battleState.opponentScore += 10;
+        battleState.opponentScore +=
+            10;
     }
 
 
     updateComputerBattleScores();
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        if (!battleState.battleActive) {
-            return;
-        }
+            if (
+                !battleState.battleActive
+            ) {
+                return;
+            }
 
-        battleState.currentQuestion++;
 
-        showComputerQuestion();
+            battleState.currentQuestion++;
 
-    }, 900);
+
+            showComputerQuestion();
+
+        },
+        900
+    );
 }
 
 
@@ -1775,54 +2835,61 @@ function startBattleTimer() {
 
     stopBattleTimer();
 
+
     battleState.timer =
         QUESTION_TIME_SECONDS;
+
 
     updateBattleTimer();
 
 
     battleState.timerInterval =
-        setInterval(() => {
+        setInterval(
+            () => {
 
-            if (
-                !battleState.battleActive
-            ) {
+                if (
+                    !battleState.battleActive
+                ) {
 
-                stopBattleTimer();
+                    stopBattleTimer();
 
-                return;
-            }
-
-
-            battleState.timer--;
-
-            updateBattleTimer();
+                    return;
+                }
 
 
-            if (
-                battleState.timer <= 0
-            ) {
+                battleState.timer--;
 
-                stopBattleTimer();
+
+                updateBattleTimer();
 
 
                 if (
-                    battleState.mode ===
-                    "computer"
+                    battleState.timer <=
+                    0
                 ) {
 
-                    handleComputerTimeout();
+                    stopBattleTimer();
 
-                } else if (
-                    battleState.mode ===
-                    "1v1"
-                ) {
 
-                    handleOneVOneTimeout();
+                    if (
+                        battleState.mode ===
+                        "computer"
+                    ) {
+
+                        handleComputerTimeout();
+
+                    } else if (
+                        battleState.mode ===
+                        "1v1"
+                    ) {
+
+                        handleOneVOneTimeout();
+                    }
                 }
-            }
 
-        }, 1000);
+            },
+            1000
+        );
 }
 
 
@@ -1836,6 +2903,7 @@ function stopBattleTimer() {
             battleState.timerInterval
         );
 
+
         battleState.timerInterval =
             null;
     }
@@ -1845,16 +2913,22 @@ function stopBattleTimer() {
 function updateBattleTimer() {
 
     const ids = [
+
         "battleTimer",
+
         "timer",
+
         "oneVOneTimer",
+
         "oneVOneBattleTimer"
+
     ];
 
 
     ids.forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
 
@@ -1869,7 +2943,7 @@ function updateBattleTimer() {
 
 
 /* =========================================================
-   COMPUTER SCORE UI
+   COMPUTER SCORES
 ========================================================= */
 
 function updateComputerBattleScores() {
@@ -1912,6 +2986,7 @@ async function recordComputerResult(
 
         const client =
             getSupabase();
+
 
         await updateLeaderboardRecord(
             client,
@@ -1980,13 +3055,18 @@ async function updateLeaderboardRecord(
 
         battle_points:
             Number(
-                current.battle_points || 0
+                current.battle_points ||
+                0
             ) +
-            Number(points || 0),
+            Number(
+                points ||
+                0
+            ),
 
         wins:
             Number(
-                current.wins || 0
+                current.wins ||
+                0
             ) +
             (
                 result === "win"
@@ -1996,7 +3076,8 @@ async function updateLeaderboardRecord(
 
         losses:
             Number(
-                current.losses || 0
+                current.losses ||
+                0
             ) +
             (
                 result === "loss"
@@ -2006,7 +3087,8 @@ async function updateLeaderboardRecord(
 
         draws:
             Number(
-                current.draws || 0
+                current.draws ||
+                0
             ) +
             (
                 result === "draw"
@@ -2016,8 +3098,10 @@ async function updateLeaderboardRecord(
 
         battles_played:
             Number(
-                current.battles_played || 0
-            ) + 1,
+                current.battles_played ||
+                0
+            ) +
+            1,
 
         updated_at:
             new Date().toISOString()
@@ -2028,7 +3112,9 @@ async function updateLeaderboardRecord(
         error: upsertError
     } =
         await client
-            .from("game_leaderboard")
+            .from(
+                "game_leaderboard"
+            )
             .upsert(
                 update,
                 {
@@ -2052,35 +3138,45 @@ async function finishComputerBattle() {
 
     stopBattleTimer();
 
+
     battleState.battleActive =
         false;
 
 
     const player =
         Number(
-            battleState.playerScore || 0
+            battleState.playerScore ||
+            0
         );
+
 
     const opponent =
         Number(
-            battleState.opponentScore || 0
+            battleState.opponentScore ||
+            0
         );
 
 
     let title =
         "Battle Complete";
 
+
     let message =
         "Great work!";
 
+
     let points =
         0;
+
 
     let result =
         "draw";
 
 
-    if (player > opponent) {
+    if (
+        player >
+        opponent
+    ) {
 
         title =
             "🏆 Victory!";
@@ -2094,7 +3190,10 @@ async function finishComputerBattle() {
         result =
             "win";
 
-    } else if (player < opponent) {
+    } else if (
+        player <
+        opponent
+    ) {
 
         title =
             "Keep Studying!";
@@ -2131,13 +3230,34 @@ async function finishComputerBattle() {
 
 
     /*
-     * IMPORTANT:
-     *
-     * This now respects the test account and Premium
-     * bypass. Only normal free users consume one battle.
+     * Only increment the free battle counter for
+     * normal users.
+
+     * Premium/test users can play unlimited battles.
      */
 
-    await recordBattleUsage();
+    const user =
+        await getCurrentUser()
+            .catch(
+                () => null
+            );
+
+
+    const bypassLimit =
+        isPremiumUser() ||
+        isTestAccount(user);
+
+
+    if (!bypassLimit) {
+
+        setBattlesUsed(
+            getBattlesUsed() +
+            1
+        );
+    }
+
+
+    await updateBattleLimitUI();
 
 
     const arena =
@@ -2156,7 +3276,9 @@ async function finishComputerBattle() {
     }
 
 
-    if ($("battleResultTitle")) {
+    if (
+        $("battleResultTitle")
+    ) {
 
         $("battleResultTitle")
             .textContent =
@@ -2164,7 +3286,9 @@ async function finishComputerBattle() {
     }
 
 
-    if ($("battleResultMessage")) {
+    if (
+        $("battleResultMessage")
+    ) {
 
         $("battleResultMessage")
             .textContent =
@@ -2172,7 +3296,9 @@ async function finishComputerBattle() {
     }
 
 
-    if ($("finalPlayerScore")) {
+    if (
+        $("finalPlayerScore")
+    ) {
 
         $("finalPlayerScore")
             .textContent =
@@ -2180,7 +3306,9 @@ async function finishComputerBattle() {
     }
 
 
-    if ($("finalComputerScore")) {
+    if (
+        $("finalComputerScore")
+    ) {
 
         $("finalComputerScore")
             .textContent =
@@ -2188,7 +3316,9 @@ async function finishComputerBattle() {
     }
 
 
-    if ($("pointsEarned")) {
+    if (
+        $("pointsEarned")
+    ) {
 
         $("pointsEarned")
             .textContent =
@@ -2259,8 +3389,11 @@ function startOneVOneMode() {
     if (oneVOneSetup) {
 
         oneVOneSetup.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
+            behavior:
+                "smooth",
+
+            block:
+                "start"
         });
     }
 }
@@ -2286,7 +3419,8 @@ function showMatchmaking() {
 
     if (button) {
 
-        button.disabled = true;
+        button.disabled =
+            true;
 
         button.textContent =
             "🔎 Searching...";
@@ -2337,12 +3471,14 @@ function updateMatchmakingText(
 
 
     if (titleElement) {
+
         titleElement.textContent =
             title;
     }
 
 
     if (messageElement) {
+
         messageElement.textContent =
             message;
     }
@@ -2355,7 +3491,9 @@ function updateMatchmakingText(
 
 function clearOneVOnePolling() {
 
-    if (oneVOnePolling) {
+    if (
+        oneVOnePolling
+    ) {
 
         clearInterval(
             oneVOnePolling
@@ -2424,12 +3562,16 @@ function normalizeMatchId(value) {
 
 async function findOneVOneOpponent() {
 
-    if (!(await canStartBattle())) {
+    if (
+        !(await canStartBattle())
+    ) {
         return;
     }
 
 
-    if (oneVOneMatchId) {
+    if (
+        oneVOneMatchId
+    ) {
         return;
     }
 
@@ -2450,7 +3592,10 @@ async function findOneVOneOpponent() {
             oneVOneDifficultyValue();
 
 
-        if (!subject || !topic) {
+        if (
+            !subject ||
+            !topic
+        ) {
 
             alert(
                 "Choose a subject and topic first."
@@ -2461,7 +3606,9 @@ async function findOneVOneOpponent() {
 
 
         oneVOneMyName =
-            getDisplayName(user);
+            getDisplayName(
+                user
+            );
 
 
         showMatchmaking();
@@ -2471,12 +3618,21 @@ async function findOneVOneOpponent() {
             getSupabase();
 
 
+        /*
+         * READ-ONLY waiting-room search.
+         */
+
         const {
-            data: waitingMatches,
-            error: searchError
+            data:
+                waitingMatches,
+
+            error:
+                searchError
         } =
             await client
-                .from("game_matches")
+                .from(
+                    "game_matches"
+                )
                 .select("*")
                 .eq(
                     "status",
@@ -2501,7 +3657,8 @@ async function findOneVOneOpponent() {
                 .order(
                     "created_at",
                     {
-                        ascending: true
+                        ascending:
+                            true
                     }
                 )
                 .limit(1);
@@ -2513,10 +3670,13 @@ async function findOneVOneOpponent() {
 
 
         const existingMatch =
-            waitingMatches?.[0] || null;
+            waitingMatches?.[0] ||
+            null;
 
 
-        if (existingMatch) {
+        if (
+            existingMatch
+        ) {
 
             await joinExistingMatch(
                 existingMatch
@@ -2526,9 +3686,16 @@ async function findOneVOneOpponent() {
         }
 
 
+        /*
+         * Create through RPC.
+         */
+
         const {
-            data: createdMatch,
-            error: createError
+            data:
+                createdMatch,
+
+            error:
+                createError
         } =
             await client.rpc(
                 "create_game_match",
@@ -2559,7 +3726,9 @@ async function findOneVOneOpponent() {
             );
 
 
-        if (!oneVOneMatchId) {
+        if (
+            !oneVOneMatchId
+        ) {
 
             throw new Error(
                 "The waiting room was created but no match ID was returned."
@@ -2618,10 +3787,12 @@ async function findOneVOneOpponent() {
 
                         clearOneVOnePolling();
 
+
                         updateMatchmakingText(
                             "Still waiting...",
                             "No opponent has joined yet. You can keep waiting or cancel the search."
                         );
+
 
                         return;
                     }
@@ -2653,17 +3824,8 @@ async function findOneVOneOpponent() {
 
         clearOneVOnePolling();
 
+
         await cleanupOneVOneConnection();
-
-
-        oneVOneMatchId =
-            null;
-
-        oneVOnePlayerNumber =
-            null;
-
-        oneVOneActive =
-            false;
 
 
         hideMatchmaking();
@@ -2694,10 +3856,14 @@ async function joinExistingMatch(
 
 
     oneVOneMatchId =
-        normalizeMatchId(match);
+        normalizeMatchId(
+            match
+        );
 
 
-    if (!oneVOneMatchId) {
+    if (
+        !oneVOneMatchId
+    ) {
 
         throw new Error(
             "The waiting match does not have a valid ID."
@@ -2725,9 +3891,13 @@ async function joinExistingMatch(
 
 
     const rpcNames = [
+
         "join_game_match",
+
         "join_1v1_match",
+
         "join_game_match_room"
+
     ];
 
 
@@ -2779,6 +3949,12 @@ async function joinExistingMatch(
     }
 
 
+    /*
+     * Compatibility fallback.
+     *
+     * Only use if the RPC does not exist.
+     */
+
     if (!joined) {
 
         try {
@@ -2787,8 +3963,11 @@ async function joinExistingMatch(
                 error
             } =
                 await client
-                    .from("game_match_players")
+                    .from(
+                        "game_match_players"
+                    )
                     .insert({
+
                         match_id:
                             oneVOneMatchId,
 
@@ -2824,10 +4003,12 @@ async function joinExistingMatch(
 
     if (!joined) {
 
-        throw lastError ||
+        throw (
+            lastError ||
             new Error(
                 "Unable to join the 1v1 waiting room."
-            );
+            )
+        );
     }
 
 
@@ -2848,7 +4029,10 @@ async function joinExistingMatch(
     setTimeout(
         () => {
 
-            checkMatchPlayers();
+            checkMatchPlayers()
+                .catch(
+                    console.error
+                );
 
         },
         500
@@ -2862,7 +4046,9 @@ async function joinExistingMatch(
 
 async function checkMatchPlayers() {
 
-    if (!oneVOneMatchId) {
+    if (
+        !oneVOneMatchId
+    ) {
         return;
     }
 
@@ -2872,11 +4058,16 @@ async function checkMatchPlayers() {
 
 
     const {
-        data: match,
-        error: matchError
+        data:
+            match,
+
+        error:
+            matchError
     } =
         await client
-            .from("game_matches")
+            .from(
+                "game_matches"
+            )
             .select("*")
             .eq(
                 "id",
@@ -2896,27 +4087,42 @@ async function checkMatchPlayers() {
 
 
     if (
-        match.status === "active" ||
-        match.status === "in_progress" ||
-        match.status === "started"
+        match.status ===
+            "active" ||
+        match.status ===
+            "in_progress" ||
+        match.status ===
+            "started"
     ) {
 
         clearOneVOnePolling();
 
-        if (!oneVOneActive) {
-            await startOneVOneBattle(match);
+
+        if (
+            !oneVOneActive
+        ) {
+
+            await startOneVOneBattle(
+                match
+            );
         }
+
 
         return;
     }
 
 
     const {
-        data: players,
-        error: playersError
+        data:
+            players,
+
+        error:
+            playersError
     } =
         await client
-            .from("game_match_players")
+            .from(
+                "game_match_players"
+            )
             .select("*")
             .eq(
                 "match_id",
@@ -2925,7 +4131,8 @@ async function checkMatchPlayers() {
             .order(
                 "player_number",
                 {
-                    ascending: true
+                    ascending:
+                        true
                 }
             );
 
@@ -2942,6 +4149,7 @@ async function checkMatchPlayers() {
 
         clearOneVOnePolling();
 
+
         updateMatchmakingText(
             "Opponent found! ⚔️",
             "Starting your battle..."
@@ -2954,11 +4162,15 @@ async function checkMatchPlayers() {
         setTimeout(
             () => {
 
-                checkMatchPlayers();
+                checkMatchPlayers()
+                    .catch(
+                        console.warn
+                    );
 
             },
             600
         );
+
 
         return;
     }
@@ -2977,7 +4189,9 @@ async function checkMatchPlayers() {
 
 async function tryStartOneVOneMatch() {
 
-    if (!oneVOneMatchId) {
+    if (
+        !oneVOneMatchId
+    ) {
         return false;
     }
 
@@ -2987,9 +4201,13 @@ async function tryStartOneVOneMatch() {
 
 
     const rpcNames = [
+
         "start_game_match",
+
         "start_1v1_match",
+
         "start_game_match_battle"
+
     ];
 
 
@@ -3041,7 +4259,9 @@ async function subscribeToOneVOne(
         getSupabase();
 
 
-    if (oneVOneChannel) {
+    if (
+        oneVOneChannel
+    ) {
 
         try {
 
@@ -3050,6 +4270,7 @@ async function subscribeToOneVOne(
             );
 
         } catch (_) {}
+
 
         oneVOneChannel =
             null;
@@ -3064,9 +4285,15 @@ async function subscribeToOneVOne(
             .on(
                 "postgres_changes",
                 {
-                    event: "*",
-                    schema: "public",
-                    table: "game_matches",
+                    event:
+                        "*",
+
+                    schema:
+                        "public",
+
+                    table:
+                        "game_matches",
+
                     filter:
                         `id=eq.${matchId}`
                 },
@@ -3076,6 +4303,7 @@ async function subscribeToOneVOne(
                         "1v1 match realtime update:",
                         payload
                     );
+
 
                     if (
                         payload.new
@@ -3090,18 +4318,19 @@ async function subscribeToOneVOne(
             .on(
                 "postgres_changes",
                 {
-                    event: "*",
-                    schema: "public",
-                    table: "game_match_players",
+                    event:
+                        "*",
+
+                    schema:
+                        "public",
+
+                    table:
+                        "game_match_players",
+
                     filter:
                         `match_id=eq.${matchId}`
                 },
-                payload => {
-
-                    console.log(
-                        "1v1 player realtime update:",
-                        payload
-                    );
+                () => {
 
                     checkMatchPlayers()
                         .catch(
@@ -3122,7 +4351,7 @@ async function subscribeToOneVOne(
 
 
 /* =========================================================
-   HANDLE MATCH REALTIME UPDATE
+   MATCH REALTIME
 ========================================================= */
 
 function handleMatchRealtimeUpdate(
@@ -3135,12 +4364,17 @@ function handleMatchRealtimeUpdate(
 
 
     if (
-        match.status === "active" ||
-        match.status === "in_progress" ||
-        match.status === "started"
+        match.status ===
+            "active" ||
+        match.status ===
+            "in_progress" ||
+        match.status ===
+            "started"
     ) {
 
-        if (!oneVOneActive) {
+        if (
+            !oneVOneActive
+        ) {
 
             startOneVOneBattle(
                 match
@@ -3149,13 +4383,16 @@ function handleMatchRealtimeUpdate(
             );
         }
 
+
         return;
     }
 
 
     if (
-        match.status === "completed" ||
-        match.status === "finished"
+        match.status ===
+            "completed" ||
+        match.status ===
+            "finished"
     ) {
 
         handleOneVOneFinishedMatch(
@@ -3175,7 +4412,9 @@ async function startOneVOneBattle(
     match
 ) {
 
-    if (oneVOneActive) {
+    if (
+        oneVOneActive
+    ) {
         return;
     }
 
@@ -3186,6 +4425,7 @@ async function startOneVOneBattle(
     oneVOneResultsRecorded =
         false;
 
+
     clearOneVOnePolling();
 
 
@@ -3195,9 +4435,11 @@ async function startOneVOneBattle(
             oneVOneSubjectValue()
         );
 
+
     const topic =
         match?.topic ||
         oneVOneTopicValue();
+
 
     const difficulty =
         match?.difficulty ||
@@ -3206,26 +4448,37 @@ async function startOneVOneBattle(
 
     battleState = {
 
-        mode: "1v1",
+        mode:
+            "1v1",
 
         subject,
+
         topic,
+
         difficulty,
 
         questions: [],
 
-        currentQuestion: 0,
+        currentQuestion:
+            0,
 
-        playerScore: 0,
-        opponentScore: 0,
+        playerScore:
+            0,
 
-        timer: QUESTION_TIME_SECONDS,
+        opponentScore:
+            0,
 
-        timerInterval: null,
+        timer:
+            QUESTION_TIME_SECONDS,
 
-        answering: false,
+        timerInterval:
+            null,
 
-        battleActive: false
+        answering:
+            false,
+
+        battleActive:
+            false
     };
 
 
@@ -3259,6 +4512,17 @@ async function startOneVOneBattle(
                 topic,
                 difficulty
             );
+
+
+        if (
+            questions.length <
+            QUESTIONS_PER_BATTLE
+        ) {
+
+            throw new Error(
+                "The AI returned fewer than 10 valid questions."
+            );
+        }
 
 
         battleState.questions =
@@ -3328,18 +4592,24 @@ function showOneVOneQuestion() {
 
 
     const number =
-        battleState.currentQuestion + 1;
+        battleState.currentQuestion +
+        1;
 
 
     [
         "oneVOneQuestionNumber",
+
         "oneVOneCurrentQuestion",
+
         "oneVOneQuestionCount"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 number;
         }
@@ -3348,12 +4618,16 @@ function showOneVOneQuestion() {
 
     [
         "oneVOneQuestion",
+
         "oneVOneQuestionText"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 question.question;
         }
@@ -3361,15 +4635,19 @@ function showOneVOneQuestion() {
 
 
     [
-        "oneVOneTopic",
-        "oneVOneBattleTopic"
+        "oneVOneBattleTopic",
+
+        "oneVOneQuestionTopic"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (
             element &&
-            element.tagName !== "SELECT"
+            element.tagName !==
+            "SELECT"
         ) {
 
             element.textContent =
@@ -3387,12 +4665,16 @@ function showOneVOneQuestion() {
         const fallback =
             $("answerGrid");
 
+
         if (fallback) {
 
             renderOneVOneAnswers(
                 fallback,
                 question
             );
+
+
+            updateOneVOneScores();
 
             startBattleTimer();
 
@@ -3427,7 +4709,8 @@ function renderOneVOneAnswers(
     question
 ) {
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     question.options.forEach(
@@ -3438,6 +4721,7 @@ function renderOneVOneAnswers(
                     "button"
                 );
 
+
             button.type =
                 "button";
 
@@ -3447,15 +4731,15 @@ function renderOneVOneAnswers(
             button.textContent =
                 option;
 
+
             button.addEventListener(
                 "click",
-                () => {
-
+                () =>
                     answerOneVOneQuestion(
                         index
-                    );
-                }
+                    )
             );
+
 
             container.appendChild(
                 button
@@ -3483,6 +4767,7 @@ async function answerOneVOneQuestion(
 
     battleState.answering =
         true;
+
 
     stopBattleTimer();
 
@@ -3542,8 +4827,10 @@ async function answerOneVOneQuestion(
             button.disabled =
                 true;
 
+
             if (
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
@@ -3551,9 +4838,12 @@ async function answerOneVOneQuestion(
                 );
             }
 
+
             if (
-                index === selectedIndex &&
-                index !== question.answer
+                index ===
+                    selectedIndex &&
+                index !==
+                    question.answer
             ) {
 
                 button.classList.add(
@@ -3583,7 +4873,9 @@ async function answerOneVOneQuestion(
                 return;
             }
 
+
             battleState.currentQuestion++;
+
 
             showOneVOneQuestion();
 
@@ -3635,9 +4927,11 @@ async function handleOneVOneTimeout() {
             button.disabled =
                 true;
 
+
             if (
                 question &&
-                index === question.answer
+                index ===
+                question.answer
             ) {
 
                 button.classList.add(
@@ -3669,7 +4963,9 @@ async function handleOneVOneTimeout() {
                 return;
             }
 
+
             battleState.currentQuestion++;
+
 
             showOneVOneQuestion();
 
@@ -3689,7 +4985,9 @@ async function publishOneVOneAnswer(
     score
 ) {
 
-    if (!oneVOneMatchId) {
+    if (
+        !oneVOneMatchId
+    ) {
         return;
     }
 
@@ -3699,9 +4997,13 @@ async function publishOneVOneAnswer(
 
 
     const rpcNames = [
+
         "submit_game_match_answer",
+
         "submit_1v1_answer",
+
         "update_game_match_score"
+
     ];
 
 
@@ -3717,6 +5019,7 @@ async function publishOneVOneAnswer(
                 await client.rpc(
                     rpcName,
                     {
+
                         p_match_id:
                             oneVOneMatchId,
 
@@ -3761,24 +5064,34 @@ function updateOneVOneScores() {
 
 
     const myIds = [
+
         "oneVOnePlayerScore",
+
         "oneVOneMyScore",
+
         "player1Score"
+
     ];
 
 
     const opponentIds = [
+
         "oneVOneOpponentScore",
+
         "oneVOneEnemyScore",
+
         "player2Score"
+
     ];
 
 
     myIds.forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 myScore;
         }
@@ -3787,9 +5100,11 @@ function updateOneVOneScores() {
 
     opponentIds.forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 opponentScore;
         }
@@ -3804,6 +5119,7 @@ function updateOneVOneScores() {
 async function finishLocalOneVOne() {
 
     stopBattleTimer();
+
 
     battleState.battleActive =
         false;
@@ -3822,13 +5138,15 @@ async function finishLocalOneVOne() {
 
     const myScore =
         Number(
-            battleState.playerScore || 0
+            battleState.playerScore ||
+            0
         );
 
 
     const opponentScore =
         Number(
-            battleState.opponentScore || 0
+            battleState.opponentScore ||
+            0
         );
 
 
@@ -3881,37 +5199,51 @@ async function finishLocalOneVOne() {
     }
 
 
+    const user =
+        await getCurrentUser()
+            .catch(
+                () => null
+            );
+
+
+    const bypassLimit =
+        isPremiumUser() ||
+        isTestAccount(user);
+
+
+    if (!bypassLimit) {
+
+        setBattlesUsed(
+            getBattlesUsed() +
+            1
+        );
+    }
+
+
     setBattlePoints(
         getBattlePoints() +
         points
     );
 
 
-    /*
-     * TEST ACCOUNT AND PREMIUM ACCOUNT DO NOT
-     * consume free battle credits.
-     *
-     * Normal free users consume one.
-     */
-
-    await recordBattleUsage();
+    await updateBattleLimitUI();
 
 
     try {
 
-        const user =
-            await getCurrentUser();
+        if (user) {
 
-        const client =
-            getSupabase();
+            const client =
+                getSupabase();
 
 
-        await updateLeaderboardRecord(
-            client,
-            user,
-            result,
-            points
-        );
+            await updateLeaderboardRecord(
+                client,
+                user,
+                result,
+                points
+            );
+        }
 
     } catch (error) {
 
@@ -3950,6 +5282,7 @@ function showOneVOneResults(
     const arena =
         $("oneVOneArena");
 
+
     const results =
         $("battleResults") ||
         $("oneVOneResults");
@@ -3967,12 +5300,16 @@ function showOneVOneResults(
 
     [
         "battleResultTitle",
+
         "oneVOneResultTitle"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 title;
         }
@@ -3981,12 +5318,16 @@ function showOneVOneResults(
 
     [
         "battleResultMessage",
+
         "oneVOneResultMessage"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 message;
         }
@@ -3995,12 +5336,16 @@ function showOneVOneResults(
 
     [
         "finalPlayerScore",
+
         "oneVOneFinalPlayerScore"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 playerScore;
         }
@@ -4009,12 +5354,16 @@ function showOneVOneResults(
 
     [
         "finalComputerScore",
+
         "oneVOneFinalOpponentScore"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 opponentScore;
         }
@@ -4023,12 +5372,16 @@ function showOneVOneResults(
 
     [
         "pointsEarned",
+
         "oneVOnePointsEarned"
+
     ].forEach(id => {
 
-        const element = $(id);
+        const element =
+            $(id);
 
         if (element) {
+
             element.textContent =
                 `+${points}`;
         }
@@ -4052,33 +5405,39 @@ async function handleOneVOneFinishedMatch(
 
 
     if (
-        match?.player1_score !== undefined
+        match?.player1_score !==
+        undefined
     ) {
 
         if (
-            oneVOnePlayerNumber === 1
+            oneVOnePlayerNumber ===
+            1
         ) {
 
             battleState.playerScore =
                 Number(
-                    match.player1_score || 0
+                    match.player1_score ||
+                    0
                 );
 
             battleState.opponentScore =
                 Number(
-                    match.player2_score || 0
+                    match.player2_score ||
+                    0
                 );
 
         } else {
 
             battleState.playerScore =
                 Number(
-                    match.player2_score || 0
+                    match.player2_score ||
+                    0
                 );
 
             battleState.opponentScore =
                 Number(
-                    match.player1_score || 0
+                    match.player1_score ||
+                    0
                 );
         }
     }
@@ -4089,7 +5448,7 @@ async function handleOneVOneFinishedMatch(
 
 
 /* =========================================================
-   CLEANUP 1V1 CONNECTION
+   CLEANUP 1V1
 ========================================================= */
 
 async function cleanupOneVOneConnection() {
@@ -4107,6 +5466,7 @@ async function cleanupOneVOneConnection() {
 
             const client =
                 getSupabase();
+
 
             await client.removeChannel(
                 oneVOneChannel
@@ -4155,11 +5515,16 @@ async function cancelOneVOneMatch() {
             getSupabase();
 
 
-        if (oneVOneMatchId) {
+        if (
+            oneVOneMatchId
+        ) {
 
             const rpcNames = [
+
                 "cancel_game_match",
+
                 "cancel_1v1_match"
+
             ];
 
 
@@ -4206,6 +5571,7 @@ async function cancelOneVOneMatch() {
         const setup =
             $("oneVOneSetup");
 
+
         if (setup) {
             setup.hidden = false;
         }
@@ -4228,14 +5594,17 @@ async function loadLeaderboard() {
         error
     } =
         await client
-            .from("game_leaderboard")
+            .from(
+                "game_leaderboard"
+            )
             .select(
                 "user_id,display_name,battle_points,wins,losses,draws,battles_played,updated_at"
             )
             .order(
                 "battle_points",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             )
             .limit(100);
@@ -4274,7 +5643,8 @@ function renderLeaderboard(
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     if (!players.length) {
@@ -4284,15 +5654,19 @@ function renderLeaderboard(
                 "div"
             );
 
+
         empty.className =
             "leaderboard-empty";
+
 
         empty.textContent =
             "No battles have been recorded yet.";
 
+
         container.appendChild(
             empty
         );
+
 
         return;
     }
@@ -4306,6 +5680,7 @@ function renderLeaderboard(
                     "div"
                 );
 
+
             row.className =
                 "leaderboard-row";
 
@@ -4315,8 +5690,10 @@ function renderLeaderboard(
                     "span"
                 );
 
+
             rank.className =
                 "leaderboard-rank";
+
 
             rank.textContent =
                 index === 0
@@ -4335,8 +5712,10 @@ function renderLeaderboard(
                     "span"
                 );
 
+
             name.className =
                 "leaderboard-name";
+
 
             name.textContent =
                 player.display_name ||
@@ -4348,18 +5727,29 @@ function renderLeaderboard(
                     "span"
                 );
 
+
             points.className =
                 "leaderboard-points";
 
+
             points.textContent =
                 `${Number(
-                    player.battle_points || 0
+                    player.battle_points ||
+                    0
                 )} BP`;
 
 
-            row.appendChild(rank);
-            row.appendChild(name);
-            row.appendChild(points);
+            row.appendChild(
+                rank
+            );
+
+            row.appendChild(
+                name
+            );
+
+            row.appendChild(
+                points
+            );
 
 
             container.appendChild(
@@ -4407,42 +5797,45 @@ async function updateLeaderboardUI() {
         }
 
 
-        const pointIds = [
+        [
             "battlePoints",
+
             "leaderboardBattlePoints",
+
             "myBattlePoints"
-        ];
 
+        ].forEach(id => {
 
-        pointIds.forEach(id => {
-
-            const element = $(id);
+            const element =
+                $(id);
 
             if (element) {
 
                 element.textContent =
                     Number(
-                        mine.battle_points || 0
+                        mine.battle_points ||
+                        0
                     );
             }
         });
 
 
-        const winsIds = [
+        [
             "battleWins",
+
             "myWins"
-        ];
 
+        ].forEach(id => {
 
-        winsIds.forEach(id => {
-
-            const element = $(id);
+            const element =
+                $(id);
 
             if (element) {
 
                 element.textContent =
                     Number(
-                        mine.wins || 0
+                        mine.wins ||
+                        0
                     );
             }
         });
@@ -4487,9 +5880,14 @@ async function subscribeToLeaderboard() {
                 .on(
                     "postgres_changes",
                     {
-                        event: "*",
-                        schema: "public",
-                        table: "game_leaderboard"
+                        event:
+                            "*",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "game_leaderboard"
                     },
                     () => {
 
@@ -4579,28 +5977,38 @@ function goToPage(url) {
         return;
     }
 
+
     window.location.href =
         url;
 }
 
 
 function goHome() {
-    goToPage("home.html");
+
+    goToPage(
+        "home.html"
+    );
 }
 
 
 function goDashboard() {
-    goToPage("dashboard.html");
+
+    goToPage(
+        "dashboard.html"
+    );
 }
 
 
 function goToGameMode() {
-    goToPage("game-mode.html");
+
+    goToPage(
+        "game-mode.html"
+    );
 }
 
 
 /* =========================================================
-   GENERIC GAME RESET
+   RESET COMPUTER BATTLE
 ========================================================= */
 
 function resetComputerBattle() {
@@ -4610,26 +6018,41 @@ function resetComputerBattle() {
 
     battleState = {
 
-        mode: null,
+        mode:
+            null,
 
-        subject: "",
-        topic: "",
-        difficulty: "mixed",
+        subject:
+            "",
 
-        questions: [],
+        topic:
+            "",
 
-        currentQuestion: 0,
+        difficulty:
+            "mixed",
 
-        playerScore: 0,
-        opponentScore: 0,
+        questions:
+            [],
 
-        timer: QUESTION_TIME_SECONDS,
+        currentQuestion:
+            0,
 
-        timerInterval: null,
+        playerScore:
+            0,
 
-        answering: false,
+        opponentScore:
+            0,
 
-        battleActive: false
+        timer:
+            QUESTION_TIME_SECONDS,
+
+        timerInterval:
+            null,
+
+        answering:
+            false,
+
+        battleActive:
+            false
     };
 
 
@@ -4668,9 +6091,14 @@ function battleAgain() {
 
     resetComputerBattle();
 
+
     window.scrollTo({
-        top: 0,
-        behavior: "smooth"
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
     });
 }
 
@@ -4684,6 +6112,7 @@ function bindGameEvents() {
     const battleSubject =
         $("battleSubject");
 
+
     if (battleSubject) {
 
         battleSubject.addEventListener(
@@ -4695,6 +6124,7 @@ function bindGameEvents() {
 
     const oneVOneSubject =
         $("oneVOneSubject");
+
 
     if (oneVOneSubject) {
 
@@ -4775,49 +6205,43 @@ function bindGameEvents() {
     }
 
 
-    const homeButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-go-home]"
-        );
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                goHome
+            );
+        });
 
 
-    homeButtons.forEach(button => {
-
-        button.addEventListener(
-            "click",
-            goHome
-        );
-    });
-
-
-    const dashboardButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-go-dashboard]"
-        );
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                goDashboard
+            );
+        });
 
 
-    dashboardButtons.forEach(button => {
-
-        button.addEventListener(
-            "click",
-            goDashboard
-        );
-    });
-
-
-    const gameButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-go-game]"
-        );
+        )
+        .forEach(button => {
 
-
-    gameButtons.forEach(button => {
-
-        button.addEventListener(
-            "click",
-            goToGameMode
-        );
-    });
+            button.addEventListener(
+                "click",
+                goToGameMode
+            );
+        });
 
 
     const againButton =
@@ -4845,35 +6269,24 @@ async function initializeGameMode() {
 
         applyGameTheme();
 
+
         populateGameSubjects();
 
-        bindGameEvents();
-
-        await getCurrentUser();
 
         await updateBattleLimitUI();
 
+
+        bindGameEvents();
+
+
         await updateLeaderboardUI();
+
 
         await subscribeToLeaderboard();
 
 
-        /*
-         * Console information is useful while debugging,
-         * but does not expose the user's email.
-         */
+        await getCurrentUser();
 
-        const user =
-            await getCurrentUser();
-
-        console.log(
-            "Game Mode access:",
-            isTestAccount(user)
-                ? "TEST ACCOUNT — UNLIMITED"
-                : isPremiumUser()
-                    ? "PREMIUM — UNLIMITED"
-                    : "FREE — 5 BATTLES"
-        );
 
     } catch (error) {
 
@@ -4891,6 +6304,7 @@ async function initializeGameMode() {
 
             errorElement.hidden =
                 false;
+
 
             errorElement.textContent =
                 cleanErrorMessage(
@@ -4978,7 +6392,3 @@ window.getBattlesUsed =
 
 window.getBattlePoints =
     getBattlePoints;
-
-window.isTestAccount =
-    isTestAccount;
-
