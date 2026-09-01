@@ -6803,44 +6803,66 @@ function showPremiumMessage() {
 
 
 /* =========================================================
-LEADERBOARD — GLOBAL GAME MODE LEADERBOARD
-========================================================= */
+   LEADERBOARD — GLOBAL GAME MODE LEADERBOARD
+   =========================================================
 
-/*
+   PURPOSE:
+   ---------------------------------------------------------
+   Shows ALL accounts that have participated in Game Mode.
 
-* IMPORTANT:
-*
-* The actual game_leaderboard table uses:
-*
-* user_id
-* display_name
-* points
-* wins
-* losses
-* draws
-* battles
-*
-* DO NOT use battle_points here.
-  */
+   The leaderboard statistics come from:
+
+       game_leaderboard
+           user_id
+           display_name
+           points
+           wins
+           losses
+           draws
+           battles
+
+   IMPORTANT:
+   ---------------------------------------------------------
+   We do NOT use battle_points.
+
+   We also do NOT hide players simply because their
+   leaderboard row has missing/zero statistics.
+   ========================================================= */
+
 
 /* =========================================================
-LOAD GLOBAL LEADERBOARD
-========================================================= */
+   LOAD GLOBAL LEADERBOARD
+   ========================================================= */
 
 async function getGlobalLeaderboard() {
 
+    const client = getSupabase();
 
-const client =
-    getSupabase();
+    /*
+     * -----------------------------------------------------
+     * LOAD EVERY LEADERBOARD RECORD
+     * -----------------------------------------------------
+     *
+     * We deliberately do not use a limit here.
+     * Supabase will therefore return all rows permitted
+     * by the database policy.
+     */
 
-const {
-    data,
-    error
-} =
-    await client
+    const {
+        data,
+        error
+    } = await client
         .from("game_leaderboard")
         .select(
-            "user_id,display_name,points,wins,losses,draws,battles"
+            `
+            user_id,
+            display_name,
+            points,
+            wins,
+            losses,
+            draws,
+            battles
+            `
         )
         .order(
             "points",
@@ -6861,586 +6883,778 @@ const {
             }
         );
 
-if (error) {
+    if (error) {
 
-    throw error;
+        console.error(
+            "Could not load game_leaderboard:",
+            error
+        );
+
+        throw error;
+    }
+
+    return Array.isArray(data)
+        ? data
+        : [];
 }
 
-return Array.isArray(data)
-    ? data
-    : [];
-
-
-}
 
 /* =========================================================
-GET CURRENT USER
-========================================================= */
+   GET CURRENT USER
+   ========================================================= */
 
 async function getLeaderboardCurrentUser() {
 
+    try {
 
-try {
+        return await getCurrentUser();
 
-    return await getCurrentUser();
+    } catch (error) {
 
-} catch (error) {
+        console.warn(
+            "Could not get current leaderboard user:",
+            error
+        );
 
-    console.warn(
-        "Could not get current leaderboard user:",
-        error
-    );
-
-    return null;
+        return null;
+    }
 }
 
-
-}
 
 /* =========================================================
-ESCAPE HTML
-========================================================= */
+   ESCAPE HTML
+   ========================================================= */
 
-function escapeLeaderboardHTML(
-value
-) {
+function escapeLeaderboardHTML(value) {
 
-
-return String(
-    value ?? ""
-)
-    .replace(
-        /&/g,
-        "&amp;"
+    return String(
+        value ?? ""
     )
-    .replace(
-        /</g,
-        "&lt;"
-    )
-    .replace(
-        />/g,
-        "&gt;"
-    )
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-    .replace(
-        /'/g,
-        "&#039;"
-    );
-
-
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
+
 
 /* =========================================================
-RANK DISPLAY
-========================================================= */
+   RANK DISPLAY
+   ========================================================= */
 
-function getLeaderboardRankDisplay(
-rank
-) {
+function getLeaderboardRankDisplay(rank) {
 
+    if (rank === 1) {
 
-if (rank === 1) {
-    return "🥇";
+        return "🥇";
+    }
+
+    if (rank === 2) {
+
+        return "🥈";
+    }
+
+    if (rank === 3) {
+
+        return "🥉";
+    }
+
+    return `#${rank}`;
 }
 
-if (rank === 2) {
-    return "🥈";
-}
-
-if (rank === 3) {
-    return "🥉";
-}
-
-return `#${rank}`;
-
-
-}
 
 /* =========================================================
-UPDATE YOUR RANK
-========================================================= */
+   UPDATE YOUR RANK
+   ========================================================= */
 
 function updateYourLeaderboardRank(
-rank,
-totalPlayers
+    rank,
+    totalPlayers
 ) {
 
+    const container =
+        $("yourLeaderboardRank");
 
-const container =
-    $("yourLeaderboardRank");
+    if (!container) {
 
-if (!container) {
-    return;
-}
+        return;
+    }
 
-const span =
-    container.querySelector(
-        "span"
-    );
+    const span =
+        container.querySelector(
+            "span"
+        );
 
-if (span) {
+    if (span) {
 
-    span.textContent =
+        span.textContent =
+            rank
+                ? `#${rank}`
+                : "—";
+
+    } else {
+
+        container.textContent =
+            rank
+                ? `#${rank}`
+                : "—";
+    }
+
+    container.title =
         rank
-            ? `#${rank}`
-            : "—";
-
-} else {
-
-    container.textContent =
-        rank
-            ? `#${rank}`
-            : "—";
+            ? `Rank ${rank} of ${totalPlayers}`
+            : "Not ranked yet";
 }
 
-container.title =
-    rank
-        ? `Rank ${rank} of ${totalPlayers}`
-        : "Not ranked yet";
-
-
-}
 
 /* =========================================================
-UPDATE LEADERBOARD UI
-========================================================= */
+   UPDATE LEADERBOARD UI
+   ========================================================= */
 
 async function updateLeaderboardUI() {
 
+    const rows =
+        $("leaderboardRows");
 
-const rows =
-    $("leaderboardRows");
+    if (!rows) {
 
-if (!rows) {
-    return;
-}
+        return;
+    }
 
-/*
- * Loading state
- */
 
-rows.innerHTML = `
-    <div class="leaderboard-row">
-        <span>⏳</span>
-        <span>Loading leaderboard...</span>
-        <strong>—</strong>
-    </div>
-`;
+    /* -----------------------------------------------------
+       LOADING STATE
+       ----------------------------------------------------- */
 
-try {
+    rows.innerHTML = `
+        <div class="leaderboard-row">
+            <span>⏳</span>
+            <span>Loading leaderboard...</span>
+            <strong>—</strong>
+        </div>
+    `;
 
-    /*
-     * -----------------------------------------------------
-     * GET CURRENT USER
-     * -----------------------------------------------------
-     */
 
-    const currentUser =
-        await getLeaderboardCurrentUser();
+    try {
 
-    const currentUserId =
-        currentUser?.id || null;
+        /* -------------------------------------------------
+           GET CURRENT USER
+           ------------------------------------------------- */
 
-    /*
-     * -----------------------------------------------------
-     * LOAD ALL PARTICIPATING ACCOUNTS
-     * -----------------------------------------------------
-     */
+        const currentUser =
+            await getLeaderboardCurrentUser();
 
-    const leaderboard =
-        await getGlobalLeaderboard();
+        const currentUserId =
+            currentUser?.id || null;
 
-    /*
-     * -----------------------------------------------------
-     * EMPTY LEADERBOARD
-     * -----------------------------------------------------
-     */
 
-    if (
-        leaderboard.length ===
-        0
-    ) {
+        /* -------------------------------------------------
+           GET ALL PARTICIPATING PLAYERS
+           ------------------------------------------------- */
 
-        rows.innerHTML = `
-            <div class="leaderboard-row">
-                <span>🏆</span>
-                <span>No players yet</span>
-                <strong>0</strong>
-            </div>
-        `;
+        const leaderboard =
+            await getGlobalLeaderboard();
+
+
+        /* -------------------------------------------------
+           REMOVE INVALID DUPLICATE USER ROWS
+           -------------------------------------------------
+
+           If a database problem has accidentally created
+           multiple leaderboard rows for the same user,
+           only keep the best/highest-stat row.
+
+           This prevents one account from appearing multiple
+           times in the global leaderboard.
+        ------------------------------------------------- */
+
+        const uniquePlayers =
+            new Map();
+
+        leaderboard.forEach(
+            function(player) {
+
+                if (
+                    !player ||
+                    !player.user_id
+                ) {
+
+                    return;
+                }
+
+                const existing =
+                    uniquePlayers.get(
+                        player.user_id
+                    );
+
+                if (!existing) {
+
+                    uniquePlayers.set(
+                        player.user_id,
+                        player
+                    );
+
+                    return;
+                }
+
+                const existingPoints =
+                    Number(
+                        existing.points || 0
+                    );
+
+                const newPoints =
+                    Number(
+                        player.points || 0
+                    );
+
+                if (
+                    newPoints >
+                    existingPoints
+                ) {
+
+                    uniquePlayers.set(
+                        player.user_id,
+                        player
+                    );
+                }
+            }
+        );
+
+
+        const players =
+            Array.from(
+                uniquePlayers.values()
+            );
+
+
+        /* -------------------------------------------------
+           SORT AGAIN AFTER DEDUPLICATION
+           ------------------------------------------------- */
+
+        players.sort(
+            function(a, b) {
+
+                const pointsA =
+                    Number(
+                        a.points || 0
+                    );
+
+                const pointsB =
+                    Number(
+                        b.points || 0
+                    );
+
+                if (
+                    pointsA !==
+                    pointsB
+                ) {
+
+                    return (
+                        pointsB -
+                        pointsA
+                    );
+                }
+
+
+                const winsA =
+                    Number(
+                        a.wins || 0
+                    );
+
+                const winsB =
+                    Number(
+                        b.wins || 0
+                    );
+
+                if (
+                    winsA !==
+                    winsB
+                ) {
+
+                    return (
+                        winsB -
+                        winsA
+                    );
+                }
+
+
+                const battlesA =
+                    Number(
+                        a.battles || 0
+                    );
+
+                const battlesB =
+                    Number(
+                        b.battles || 0
+                    );
+
+                return (
+                    battlesA -
+                    battlesB
+                );
+            }
+        );
+
+
+        /* -------------------------------------------------
+           EMPTY LEADERBOARD
+           ------------------------------------------------- */
+
+        if (
+            players.length ===
+            0
+        ) {
+
+            rows.innerHTML = `
+                <div class="leaderboard-row">
+                    <span>🏆</span>
+                    <span>No players yet</span>
+                    <strong>0</strong>
+                </div>
+            `;
+
+            if (
+                $("yourBattlePoints")
+            ) {
+
+                $("yourBattlePoints")
+                    .textContent =
+                    "0";
+            }
+
+            updateYourLeaderboardRank(
+                null,
+                0
+            );
+
+            return;
+        }
+
+
+        /* -------------------------------------------------
+           FIND CURRENT USER
+           ------------------------------------------------- */
+
+        const currentPlayerIndex =
+            players.findIndex(
+                function(player) {
+
+                    return (
+                        currentUserId &&
+                        String(
+                            player.user_id
+                        ) ===
+                        String(
+                            currentUserId
+                        )
+                    );
+                }
+            );
+
+
+        /* -------------------------------------------------
+           UPDATE CURRENT USER'S POINTS
+           ------------------------------------------------- */
 
         if (
             $("yourBattlePoints")
         ) {
 
-            $("yourBattlePoints")
-                .textContent =
-                "0";
+            if (
+                currentPlayerIndex !==
+                -1
+            ) {
+
+                $("yourBattlePoints")
+                    .textContent =
+                    Number(
+                        players[
+                            currentPlayerIndex
+                        ].points || 0
+                    );
+
+            } else {
+
+                /*
+                 * User has not appeared in the global
+                 * leaderboard yet.
+                 */
+
+                $("yourBattlePoints")
+                    .textContent =
+                    Number(
+                        getBattlePoints() || 0
+                    );
+            }
         }
 
-        updateYourLeaderboardRank(
-            null,
-            0
-        );
 
-        return;
-    }
+        /* -------------------------------------------------
+           RENDER EVERY PARTICIPATING PLAYER
+           ------------------------------------------------- */
 
-    /*
-     * -----------------------------------------------------
-     * FIND CURRENT USER
-     * -----------------------------------------------------
-     */
+        rows.innerHTML =
+            players
+                .map(
+                    function(
+                        player,
+                        index
+                    ) {
 
-    const currentPlayerIndex =
-        leaderboard.findIndex(
-            player =>
-                currentUserId &&
-                player.user_id ===
-                currentUserId
-        );
+                        const rank =
+                            index + 1;
 
-    /*
-     * -----------------------------------------------------
-     * YOUR POINTS
-     * -----------------------------------------------------
-     */
+                        const points =
+                            Number(
+                                player.points || 0
+                            );
 
-    if (
-        $("yourBattlePoints")
-    ) {
+                        const wins =
+                            Number(
+                                player.wins || 0
+                            );
+
+                        const losses =
+                            Number(
+                                player.losses || 0
+                            );
+
+                        const draws =
+                            Number(
+                                player.draws || 0
+                            );
+
+                        const battles =
+                            Number(
+                                player.battles || 0
+                            );
+
+                        const isYou =
+                            Boolean(
+                                currentUserId &&
+                                String(
+                                    player.user_id
+                                ) ===
+                                String(
+                                    currentUserId
+                                )
+                            );
+
+
+                        const displayName =
+                            player.display_name ||
+                            "StudyMind Student";
+
+
+                        return `
+                            <div
+                                class="leaderboard-row ${
+                                    isYou
+                                        ? "current-player"
+                                        : ""
+                                }"
+                                data-rank="${rank}"
+                                data-user-id="${escapeLeaderboardHTML(
+                                    player.user_id
+                                )}"
+                            >
+
+                                <span
+                                    class="leaderboard-rank"
+                                >
+                                    ${getLeaderboardRankDisplay(
+                                        rank
+                                    )}
+                                </span>
+
+
+                                <span
+                                    class="leaderboard-player"
+                                >
+                                    ${escapeLeaderboardHTML(
+                                        displayName
+                                    )}
+
+                                    ${
+                                        isYou
+                                            ? ' <small>(You)</small>'
+                                            : ""
+                                    }
+                                </span>
+
+
+                                <strong
+                                    class="leaderboard-points"
+                                >
+                                    ${points}
+                                </strong>
+
+                            </div>
+                        `;
+                    }
+                )
+                .join("");
+
+
+        /* -------------------------------------------------
+           UPDATE YOUR RANK
+           ------------------------------------------------- */
 
         if (
             currentPlayerIndex !==
             -1
         ) {
 
-            $("yourBattlePoints")
-                .textContent =
-                Number(
-                    leaderboard[
-                        currentPlayerIndex
-                    ].points || 0
-                );
+            updateYourLeaderboardRank(
+                currentPlayerIndex + 1,
+                players.length
+            );
 
         } else {
 
+            /*
+             * The current user is not yet registered in
+             * game_leaderboard.
+             *
+             * Calculate the position their local score
+             * would occupy.
+             */
+
+            const localPoints =
+                Number(
+                    getBattlePoints() || 0
+                );
+
+            const calculatedRank =
+                players.filter(
+                    function(player) {
+
+                        return (
+                            Number(
+                                player.points || 0
+                            ) >
+                            localPoints
+                        );
+                    }
+                ).length + 1;
+
+            updateYourLeaderboardRank(
+                calculatedRank,
+                players.length + 1
+            );
+        }
+
+
+        /* -------------------------------------------------
+           DEBUG INFORMATION
+           ------------------------------------------------- */
+
+        console.log(
+            "GLOBAL LEADERBOARD PLAYERS:",
+            players.length
+        );
+
+        console.log(
+            "GLOBAL LEADERBOARD:",
+            players
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "GLOBAL LEADERBOARD ERROR:",
+            error
+        );
+
+
+        /* -----------------------------------------------
+           SHOW CLEAN ERROR
+           ----------------------------------------------- */
+
+        rows.innerHTML = `
+            <div class="leaderboard-row">
+                <span>⚠️</span>
+                <span>Leaderboard temporarily unavailable</span>
+                <strong>—</strong>
+            </div>
+        `;
+
+
+        /* -----------------------------------------------
+           KEEP LOCAL SCORE VISIBLE
+           ----------------------------------------------- */
+
+        if (
+            $("yourBattlePoints")
+        ) {
+
             $("yourBattlePoints")
                 .textContent =
                 Number(
-                    getBattlePoints() ||
-                    0
+                    getBattlePoints() || 0
                 );
         }
     }
-
-    /*
-     * -----------------------------------------------------
-     * RENDER EVERY PLAYER
-     * -----------------------------------------------------
-     */
-
-    rows.innerHTML =
-        leaderboard
-            .map(
-                function (
-                    player,
-                    index
-                ) {
-
-                    const rank =
-                        index + 1;
-
-                    const points =
-                        Number(
-                            player.points || 0
-                        );
-
-                    const wins =
-                        Number(
-                            player.wins || 0
-                        );
-
-                    const battles =
-                        Number(
-                            player.battles || 0
-                        );
-
-                    const isYou =
-                        Boolean(
-                            currentUserId &&
-                            player.user_id ===
-                            currentUserId
-                        );
-
-                    const displayName =
-                        player.display_name ||
-                        "StudyMind Student";
-
-                    return `
-                        <div
-                            class="leaderboard-row ${
-                                isYou
-                                    ? "current-player"
-                                    : ""
-                            }"
-                            data-rank="${rank}"
-                            data-user-id="${
-                                escapeLeaderboardHTML(
-                                    player.user_id ||
-                                    ""
-                                )
-                            }"
-                        >
-
-                            <span
-                                class="leaderboard-rank"
-                            >
-                                ${getLeaderboardRankDisplay(
-                                    rank
-                                )}
-                            </span>
-
-                            <span
-                                class="leaderboard-player"
-                            >
-                                ${escapeLeaderboardHTML(
-                                    displayName
-                                )}
-
-                                ${
-                                    isYou
-                                        ? ' <small>(You)</small>'
-                                        : ""
-                                }
-                            </span>
-
-                            <strong
-                                class="leaderboard-points"
-                            >
-                                ${points}
-                            </strong>
-
-                        </div>
-                    `;
-                }
-            )
-            .join("");
-
-    /*
-     * -----------------------------------------------------
-     * UPDATE YOUR RANK
-     * -----------------------------------------------------
-     */
-
-    if (
-        currentPlayerIndex !==
-        -1
-    ) {
-
-        updateYourLeaderboardRank(
-            currentPlayerIndex + 1,
-            leaderboard.length
-        );
-
-    } else {
-
-        /*
-         * If the current account has not yet
-         * participated, calculate where their
-         * local score would rank.
-         */
-
-        const localPoints =
-            Number(
-                getBattlePoints() || 0
-            );
-
-        const calculatedRank =
-            leaderboard.filter(
-                player =>
-                    Number(
-                        player.points || 0
-                    ) >
-                    localPoints
-            ).length + 1;
-
-        updateYourLeaderboardRank(
-            calculatedRank,
-            leaderboard.length + 1
-        );
-    }
-
-    /*
-     * -----------------------------------------------------
-     * LOG FOR DEBUGGING
-     * -----------------------------------------------------
-     */
-
-    console.log(
-        "GLOBAL LEADERBOARD:",
-        leaderboard
-    );
-
-} catch (error) {
-
-    console.error(
-        "GLOBAL LEADERBOARD ERROR:",
-        error
-    );
-
-    rows.innerHTML = `
-        <div class="leaderboard-row">
-            <span>⚠️</span>
-            <span>Leaderboard temporarily unavailable</span>
-            <strong>—</strong>
-        </div>
-    `;
-
-    /*
-     * Keep local score visible if Supabase
-     * temporarily fails.
-     */
-
-    if (
-        $("yourBattlePoints")
-    ) {
-
-        $("yourBattlePoints")
-            .textContent =
-            Number(
-                getBattlePoints() || 0
-            );
-    }
 }
 
-
-}
 
 /* =========================================================
-REFRESH LEADERBOARD
-========================================================= */
+   REFRESH LEADERBOARD
+   ========================================================= */
 
 async function refreshLeaderboard() {
 
-
-await updateLeaderboardUI();
-
-
+    await updateLeaderboardUI();
 }
 
+
 /* =========================================================
-REALTIME GLOBAL LEADERBOARD
-========================================================= */
+   REALTIME GLOBAL LEADERBOARD
+   ========================================================= */
 
 let leaderboardRealtimeChannel =
-null;
+    null;
+
 
 async function subscribeToLeaderboard() {
 
+    try {
 
-try {
+        const client =
+            getSupabase();
 
-    const client =
-        getSupabase();
 
-    /*
-     * Remove previous subscription.
-     */
+        /* -------------------------------------------------
+           REMOVE PREVIOUS SUBSCRIPTION
+           ------------------------------------------------- */
 
-    if (
-        leaderboardRealtimeChannel
-    ) {
+        if (
+            leaderboardRealtimeChannel
+        ) {
 
-        try {
+            try {
 
-            await client.removeChannel(
-                leaderboardRealtimeChannel
-            );
+                await client.removeChannel(
+                    leaderboardRealtimeChannel
+                );
 
-        } catch (_) {}
+            } catch (_) {}
+
+            leaderboardRealtimeChannel =
+                null;
+        }
+
+
+        /* -------------------------------------------------
+           CREATE GLOBAL REALTIME CHANNEL
+           ------------------------------------------------- */
 
         leaderboardRealtimeChannel =
-            null;
+            client
+                .channel(
+                    "global-game-leaderboard"
+                )
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table:
+                            "game_leaderboard"
+                    },
+                    function(payload) {
+
+                        console.log(
+                            "GLOBAL LEADERBOARD CHANGED:",
+                            payload
+                        );
+
+
+                        /*
+                         * Wait briefly for the database
+                         * transaction to finish before
+                         * requesting the updated rows.
+                         */
+
+                        setTimeout(
+                            function() {
+
+                                updateLeaderboardUI();
+
+                            },
+                            300
+                        );
+                    }
+                )
+                .subscribe(
+                    function(status) {
+
+                        console.log(
+                            "Leaderboard realtime:",
+                            status
+                        );
+                    }
+                );
+
+    } catch (error) {
+
+        console.warn(
+            "Leaderboard realtime subscription failed:",
+            error
+        );
     }
-
-    /*
-     * Subscribe to every leaderboard
-     * INSERT / UPDATE / DELETE.
-     */
-
-    leaderboardRealtimeChannel =
-        client
-            .channel(
-                "global-game-leaderboard"
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table:
-                        "game_leaderboard"
-                },
-                function(payload) {
-
-                    console.log(
-                        "GLOBAL LEADERBOARD CHANGED:",
-                        payload
-                    );
-
-                    /*
-                     * Refresh after the database
-                     * transaction has completed.
-                     */
-
-                    setTimeout(
-                        function () {
-
-                            updateLeaderboardUI();
-
-                        },
-                        300
-                    );
-                }
-            )
-            .subscribe(
-                function(status) {
-
-                    console.log(
-                        "Leaderboard realtime:",
-                        status
-                    );
-                }
-            );
-
-} catch (error) {
-
-    console.warn(
-        "Leaderboard realtime subscription failed:",
-        error
-    );
 }
 
-
-}
 
 /* =========================================================
-INITIALIZE LEADERBOARD
-========================================================= */
+   INITIALIZE LEADERBOARD
+   ========================================================= */
 
 async function initializeLeaderboard() {
 
+    try {
 
-await updateLeaderboardUI();
+        await updateLeaderboardUI();
 
-await subscribeToLeaderboard();
+    } catch (error) {
+
+        console.error(
+            "Initial leaderboard load failed:",
+            error
+        );
+    }
 
 
+    try {
+
+        await subscribeToLeaderboard();
+
+    } catch (error) {
+
+        console.warn(
+            "Leaderboard realtime initialization failed:",
+            error
+        );
+    }
 }
+
+
 
 /* =========================================================
    NAVIGATION
