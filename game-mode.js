@@ -7107,7 +7107,18 @@ async function updateLeaderboardUI() {
             Array.from(
                 uniquePlayers.values()
             );
+/* -------------------------------------------------
+   UPDATE TOTAL PLAYERS
+------------------------------------------------- */
 
+const totalPlayersElement =
+    $("totalPlayers");
+
+if (totalPlayersElement) {
+
+    totalPlayersElement.textContent =
+        players.length;
+}
 
         /* -------------------------------------------------
            SORT PLAYERS
