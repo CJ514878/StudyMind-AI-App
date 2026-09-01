@@ -2,6 +2,14 @@
    STUDYMIND AI — 1V1 + LEADERBOARD
    CLEAN REPLACEMENT
 ========================================================= */
+/* =========================================================
+   ELEMENT SHORTCUT
+========================================================= */
+
+function $(id) {
+    return document.getElementById(id);
+}
+
 
 /* =========================================================
    GAME MODE STORAGE
@@ -12,23 +20,336 @@ const GAME_STORAGE = {
 };
 
 /* =========================================================
-   GLOBAL BATTLE STATE
+GLOBAL BATTLE STATE
 ========================================================= */
 
 let battleState = {
-    mode: null,
-    subject: "",
-    topic: "",
-    difficulty: "mixed",
-    questions: [],
-    currentQuestion: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    timer: 0,
-    timerInterval: null,
-    answering: false,
-    battleActive: false
+mode: null,
+subject: "",
+topic: "",
+difficulty: "mixed",
+questions: [],
+currentQuestion: 0,
+playerScore: 0,
+opponentScore: 0,
+timer: 0,
+timerInterval: null,
+answering: false,
+battleActive: false
 };
+/* =========================================================
+   SUBJECT DATABASE
+========================================================= */
+
+const SUBJECT_DATABASE = {
+    Mathematics: [
+        "Algebra",
+        "Geometry",
+        "Trigonometry",
+        "Statistics",
+        "Probability",
+        "Calculus",
+        "Number and Numeration"
+    ],
+
+    English: [
+        "Grammar",
+        "Comprehension",
+        "Vocabulary",
+        "Oral English",
+        "Summary Writing",
+        "Essay Writing",
+        "Literature"
+    ],
+
+    Physics: [
+        "Mechanics",
+        "Waves",
+        "Heat",
+        "Electricity",
+        "Magnetism",
+        "Optics",
+        "Modern Physics"
+    ],
+
+    Chemistry: [
+        "Atomic Structure",
+        "Chemical Bonding",
+        "Stoichiometry",
+        "Acids and Bases",
+        "Organic Chemistry",
+        "Electrochemistry",
+        "Periodic Chemistry"
+    ],
+
+    Biology: [
+        "Cell Biology",
+        "Genetics",
+        "Ecology",
+        "Evolution",
+        "Human Biology",
+        "Plant Biology",
+        "Reproduction"
+    ],
+
+    Economics: [
+        "Demand and Supply",
+        "Production",
+        "Market Structures",
+        "National Income",
+        "Money and Banking",
+        "Inflation",
+        "International Trade"
+    ],
+
+    Government: [
+        "Constitution",
+        "Democracy",
+        "Political Parties",
+        "Electoral Systems",
+        "Legislature",
+        "Executive",
+        "Judiciary"
+    ],
+
+    Geography: [
+        "Physical Geography",
+        "Human Geography",
+        "Map Reading",
+        "Climate",
+        "Population",
+        "Resources",
+        "Environmental Management"
+    ]
+};
+
+
+/* =========================================================
+   POPULATE SUBJECT DROPDOWNS
+========================================================= */
+
+function populateGameSubjects() {
+
+    const selectors = [
+        $("oneVOneSubject"),
+        $("battleSubject")
+    ].filter(Boolean);
+
+    selectors.forEach(function(select) {
+
+        const currentValue =
+            select.value;
+
+        select.innerHTML =
+            '<option value="">Select subject</option>';
+
+        Object.keys(SUBJECT_DATABASE)
+            .forEach(function(subject) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    subject;
+
+                option.textContent =
+                    subject;
+
+                select.appendChild(option);
+            });
+
+        if (
+            currentValue &&
+            SUBJECT_DATABASE[currentValue]
+        ) {
+            select.value =
+                currentValue;
+        }
+    });
+
+    populateOneVOneTopics();
+}
+
+
+/* =========================================================
+   POPULATE 1V1 TOPICS
+========================================================= */
+
+function populateOneVOneTopics() {
+
+    const subject =
+        $("oneVOneSubject");
+
+    const topic =
+        $("oneVOneTopic");
+
+    if (!subject || !topic) {
+        return;
+    }
+
+    const selectedSubject =
+        subject.value;
+
+    topic.innerHTML =
+        '<option value="">Select topic</option>';
+
+    const topics =
+        SUBJECT_DATABASE[selectedSubject] || [];
+
+    topics.forEach(function(topicName) {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            topicName;
+
+        option.textContent =
+            topicName;
+
+        topic.appendChild(option);
+    });
+}
+
+
+/* =========================================================
+   SUBJECT CHANGE
+========================================================= */
+
+function handleOneVOneSubjectChange() {
+
+    populateOneVOneTopics();
+
+    const subject =
+        $("oneVOneSubject")?.value;
+
+    const topic =
+        $("oneVOneTopic")?.value;
+
+    const button =
+        $("findOpponentButton");
+
+    if (button) {
+        button.disabled =
+            !subject ||
+            !topic;
+    }
+}
+
+
+/* =========================================================
+   COMPUTER BATTLE FUNCTION
+   ========================================================= */
+
+function startComputerBattle() {
+
+    console.log(
+        "Starting Computer Battle..."
+    );
+
+    /*
+     * Keep the existing Computer Battle
+     * starter if beginBattle() is available.
+     */
+
+    if (
+        typeof beginBattle ===
+        "function"
+    ) {
+
+        beginBattle();
+
+        return;
+    }
+
+    /*
+     * Fallback for the existing Game Mode UI.
+     */
+
+    const setup =
+        $("battleSetup");
+
+    const arena =
+        $("battleArena");
+
+    if (setup) {
+        setup.hidden = true;
+    }
+
+    if (arena) {
+        arena.hidden = false;
+    }
+}
+
+
+/* =========================================================
+   INITIALIZE GAME MODE
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        populateGameSubjects();
+
+        const subject =
+            $("oneVOneSubject");
+
+        if (subject) {
+
+            subject.addEventListener(
+                "change",
+                handleOneVOneSubjectChange
+            );
+        }
+
+        const topic =
+            $("oneVOneTopic");
+
+        if (topic) {
+
+            topic.addEventListener(
+                "change",
+                function() {
+
+                    const button =
+                        $("findOpponentButton");
+
+                    if (button) {
+
+                        button.disabled =
+                            !subject?.value ||
+                            !topic.value;
+                    }
+                }
+            );
+        }
+
+        updateThemeButton();
+
+        console.log(
+            "✅ StudyMind Game Mode initialized."
+        );
+    }
+);
+
+
+/* =========================================================
+   GLOBAL EXPORTS
+========================================================= */
+
+window.startComputerBattle =
+    startComputerBattle;
+
+window.SUBJECT_DATABASE =
+    SUBJECT_DATABASE;
+
+window.populateGameSubjects =
+    populateGameSubjects;
+
+window.populateOneVOneTopics =
+    populateOneVOneTopics;
+
 /* =========================================================
    1V1 STATE
 ========================================================= */
@@ -90,14 +411,6 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-
-/* =========================================================
-   ELEMENT SHORTCUT
-========================================================= */
-
-function $(id) {
-    return document.getElementById(id);
-}
 
 
 /* =========================================================
