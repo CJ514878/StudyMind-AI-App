@@ -6806,27 +6806,21 @@ function showPremiumMessage() {
    LEADERBOARD — GLOBAL GAME MODE LEADERBOARD
    =========================================================
 
-   PURPOSE:
-   ---------------------------------------------------------
-   Shows ALL accounts that have participated in Game Mode.
+   ACTUAL DATABASE COLUMNS:
 
-   The leaderboard statistics come from:
-
-       game_leaderboard
-           user_id
-           display_name
-           points
-           wins
-           losses
-           draws
-           battles
+       user_id
+       display_name
+       battle_points
+       wins
+       losses
+       draws
+       battles_played
+       updated_at
+       battles
 
    IMPORTANT:
    ---------------------------------------------------------
-   We do NOT use battle_points.
-
-   We also do NOT hide players simply because their
-   leaderboard row has missing/zero statistics.
+   The leaderboard uses battle_points, NOT points.
    ========================================================= */
 
 
@@ -6838,34 +6832,24 @@ async function getGlobalLeaderboard() {
 
     const client = getSupabase();
 
-    /*
-     * -----------------------------------------------------
-     * LOAD EVERY LEADERBOARD RECORD
-     * -----------------------------------------------------
-     *
-     * We deliberately do not use a limit here.
-     * Supabase will therefore return all rows permitted
-     * by the database policy.
-     */
-
     const {
         data,
         error
     } = await client
         .from("game_leaderboard")
-        .select(
-            `
+        .select(`
             user_id,
             display_name,
-            points,
+            battle_points,
             wins,
             losses,
             draws,
+            battles_played,
+            updated_at,
             battles
-            `
-        )
+        `)
         .order(
-            "points",
+            "battle_points",
             {
                 ascending: false
             }
@@ -6877,7 +6861,7 @@ async function getGlobalLeaderboard() {
             }
         )
         .order(
-            "battles",
+            "battles_played",
             {
                 ascending: true
             }
@@ -6930,26 +6914,11 @@ function escapeLeaderboardHTML(value) {
     return String(
         value ?? ""
     )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -6960,17 +6929,14 @@ function escapeLeaderboardHTML(value) {
 function getLeaderboardRankDisplay(rank) {
 
     if (rank === 1) {
-
         return "🥇";
     }
 
     if (rank === 2) {
-
         return "🥈";
     }
 
     if (rank === 3) {
-
         return "🥉";
     }
 
@@ -6991,14 +6957,11 @@ function updateYourLeaderboardRank(
         $("yourLeaderboardRank");
 
     if (!container) {
-
         return;
     }
 
     const span =
-        container.querySelector(
-            "span"
-        );
+        container.querySelector("span");
 
     if (span) {
 
@@ -7032,13 +6995,12 @@ async function updateLeaderboardUI() {
         $("leaderboardRows");
 
     if (!rows) {
-
         return;
     }
 
 
     /* -----------------------------------------------------
-       LOADING STATE
+       LOADING
        ----------------------------------------------------- */
 
     rows.innerHTML = `
@@ -7053,7 +7015,7 @@ async function updateLeaderboardUI() {
     try {
 
         /* -------------------------------------------------
-           GET CURRENT USER
+           CURRENT USER
            ------------------------------------------------- */
 
         const currentUser =
@@ -7064,7 +7026,7 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           GET ALL PARTICIPATING PLAYERS
+           LOAD ALL PLAYERS
            ------------------------------------------------- */
 
         const leaderboard =
@@ -7072,15 +7034,10 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           REMOVE INVALID DUPLICATE USER ROWS
+           REMOVE DUPLICATE USER ROWS
            -------------------------------------------------
 
-           If a database problem has accidentally created
-           multiple leaderboard rows for the same user,
-           only keep the best/highest-stat row.
-
-           This prevents one account from appearing multiple
-           times in the global leaderboard.
+           Every account should appear only once.
         ------------------------------------------------- */
 
         const uniquePlayers =
@@ -7093,33 +7050,43 @@ async function updateLeaderboardUI() {
                     !player ||
                     !player.user_id
                 ) {
-
                     return;
                 }
 
+                const userId =
+                    String(
+                        player.user_id
+                    );
+
                 const existing =
                     uniquePlayers.get(
-                        player.user_id
+                        userId
                     );
 
                 if (!existing) {
 
                     uniquePlayers.set(
-                        player.user_id,
+                        userId,
                         player
                     );
 
                     return;
                 }
 
+                /*
+                 * If duplicates exist, keep the
+                 * record with the highest battle
+                 * points.
+                 */
+
                 const existingPoints =
                     Number(
-                        existing.points || 0
+                        existing.battle_points || 0
                     );
 
                 const newPoints =
                     Number(
-                        player.points || 0
+                        player.battle_points || 0
                     );
 
                 if (
@@ -7128,7 +7095,7 @@ async function updateLeaderboardUI() {
                 ) {
 
                     uniquePlayers.set(
-                        player.user_id,
+                        userId,
                         player
                     );
                 }
@@ -7143,20 +7110,25 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           SORT AGAIN AFTER DEDUPLICATION
-           ------------------------------------------------- */
+           SORT PLAYERS
+           -------------------------------------------------
+
+           1. Battle points
+           2. Wins
+           3. Battles played
+        ------------------------------------------------- */
 
         players.sort(
             function(a, b) {
 
                 const pointsA =
                     Number(
-                        a.points || 0
+                        a.battle_points || 0
                     );
 
                 const pointsB =
                     Number(
-                        b.points || 0
+                        b.battle_points || 0
                     );
 
                 if (
@@ -7195,12 +7167,16 @@ async function updateLeaderboardUI() {
 
                 const battlesA =
                     Number(
-                        a.battles || 0
+                        a.battles_played ||
+                        a.battles ||
+                        0
                     );
 
                 const battlesB =
                     Number(
-                        b.battles || 0
+                        b.battles_played ||
+                        b.battles ||
+                        0
                     );
 
                 return (
@@ -7268,7 +7244,7 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           UPDATE CURRENT USER'S POINTS
+           UPDATE YOUR BATTLE POINTS
            ------------------------------------------------- */
 
         if (
@@ -7285,14 +7261,14 @@ async function updateLeaderboardUI() {
                     Number(
                         players[
                             currentPlayerIndex
-                        ].points || 0
+                        ].battle_points || 0
                     );
 
             } else {
 
                 /*
-                 * User has not appeared in the global
-                 * leaderboard yet.
+                 * Account has not yet received
+                 * a leaderboard row.
                  */
 
                 $("yourBattlePoints")
@@ -7305,7 +7281,7 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           RENDER EVERY PARTICIPATING PLAYER
+           RENDER EVERY PARTICIPATING ACCOUNT
            ------------------------------------------------- */
 
         rows.innerHTML =
@@ -7319,30 +7295,38 @@ async function updateLeaderboardUI() {
                         const rank =
                             index + 1;
 
+
                         const points =
                             Number(
-                                player.points || 0
+                                player.battle_points || 0
                             );
+
 
                         const wins =
                             Number(
                                 player.wins || 0
                             );
 
+
                         const losses =
                             Number(
                                 player.losses || 0
                             );
+
 
                         const draws =
                             Number(
                                 player.draws || 0
                             );
 
-                        const battles =
+
+                        const battlesPlayed =
                             Number(
-                                player.battles || 0
+                                player.battles_played ||
+                                player.battles ||
+                                0
                             );
+
 
                         const isYou =
                             Boolean(
@@ -7428,11 +7412,10 @@ async function updateLeaderboardUI() {
         } else {
 
             /*
-             * The current user is not yet registered in
-             * game_leaderboard.
+             * The account has no leaderboard row yet.
              *
-             * Calculate the position their local score
-             * would occupy.
+             * Calculate where its local battle
+             * points would rank.
              */
 
             const localPoints =
@@ -7440,18 +7423,20 @@ async function updateLeaderboardUI() {
                     getBattlePoints() || 0
                 );
 
+
             const calculatedRank =
                 players.filter(
                     function(player) {
 
                         return (
                             Number(
-                                player.points || 0
+                                player.battle_points || 0
                             ) >
                             localPoints
                         );
                     }
                 ).length + 1;
+
 
             updateYourLeaderboardRank(
                 calculatedRank,
@@ -7461,7 +7446,7 @@ async function updateLeaderboardUI() {
 
 
         /* -------------------------------------------------
-           DEBUG INFORMATION
+           DEBUG
            ------------------------------------------------- */
 
         console.log(
@@ -7475,27 +7460,13 @@ async function updateLeaderboardUI() {
         );
 
 
- } catch (error) {
+    } catch (error) {
 
-    console.error(
-        "GLOBAL LEADERBOARD ERROR:",
-        error
-    );
+        console.error(
+            "GLOBAL LEADERBOARD ERROR:",
+            error
+        );
 
-    alert(
-        "Leaderboard error:\n\n" +
-        (
-            error?.message ||
-            error?.details ||
-            error?.hint ||
-            JSON.stringify(error)
-        )
-    );
-
-
-        /* -----------------------------------------------
-           SHOW CLEAN ERROR
-           ----------------------------------------------- */
 
         rows.innerHTML = `
             <div class="leaderboard-row">
@@ -7505,10 +7476,6 @@ async function updateLeaderboardUI() {
             </div>
         `;
 
-
-        /* -----------------------------------------------
-           KEEP LOCAL SCORE VISIBLE
-           ----------------------------------------------- */
 
         if (
             $("yourBattlePoints")
@@ -7551,7 +7518,7 @@ async function subscribeToLeaderboard() {
 
 
         /* -------------------------------------------------
-           REMOVE PREVIOUS SUBSCRIPTION
+           REMOVE OLD CHANNEL
            ------------------------------------------------- */
 
         if (
@@ -7572,7 +7539,7 @@ async function subscribeToLeaderboard() {
 
 
         /* -------------------------------------------------
-           CREATE GLOBAL REALTIME CHANNEL
+           SUBSCRIBE TO LEADERBOARD CHANGES
            ------------------------------------------------- */
 
         leaderboardRealtimeChannel =
@@ -7595,12 +7562,6 @@ async function subscribeToLeaderboard() {
                             payload
                         );
 
-
-                        /*
-                         * Wait briefly for the database
-                         * transaction to finish before
-                         * requesting the updated rows.
-                         */
 
                         setTimeout(
                             function() {
