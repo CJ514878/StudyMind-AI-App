@@ -12,6 +12,7 @@ module.exports = async function handler(req, res) {
 
     if (req.method !== "POST") {
         return res.status(405).json({
+            success: false,
             error: "Method not allowed"
         });
     }
@@ -25,6 +26,7 @@ module.exports = async function handler(req, res) {
         console.error("OPENAI_API_KEY is missing.");
 
         return res.status(500).json({
+            success: false,
             error: "OPENAI_API_KEY is not configured on Vercel."
         });
     }
@@ -44,12 +46,17 @@ module.exports = async function handler(req, res) {
 
         const type =
             typeof body.type === "string"
-                ? body.type
+                ? body.type.trim().toLowerCase()
+                : "";
+
+        const requestType =
+            typeof body.requestType === "string"
+                ? body.requestType.trim().toLowerCase()
                 : "";
 
         const mode =
             typeof body.mode === "string"
-                ? body.mode
+                ? body.mode.trim().toLowerCase()
                 : "";
 
         const subject =
@@ -68,8 +75,10 @@ module.exports = async function handler(req, res) {
                 ? body.difficulty.trim()
                 : "mixed";
 
-        // Support BOTH names used by different versions
-        // of the frontend.
+        // =====================================================
+        // QUESTION COUNT
+        // =====================================================
+
         const requestedQuestionCount =
             body.numberOfQuestions ??
             body.questionCount ??
@@ -83,24 +92,47 @@ module.exports = async function handler(req, res) {
             questionCount = 10;
         }
 
-        questionCount =
-            Math.min(
-                Math.max(Math.floor(questionCount), 1),
-                20
-            );
+        questionCount = Math.min(
+            Math.max(Math.floor(questionCount), 1),
+            20
+        );
 
         // =====================================================
-        // DETECT GAME MODE
+        // DETECT COMPUTER BATTLE / GAME MODE
         // =====================================================
+
+        const isComputerBattle =
+            mode === "computer_battle" ||
+            mode === "computer-battle" ||
+            mode === "computer battle" ||
+            requestType === "computer_battle" ||
+            requestType === "computer-battle" ||
+            requestType === "computer battle";
 
         const isGameMode =
+            isComputerBattle ||
             mode === "game" ||
+            mode === "game_mode" ||
+            mode === "game-mode" ||
+            type === "game_questions" ||
             type === "game_questions" ||
             type === "game" ||
+            type === "computer_battle" ||
             body.gameMode === true;
 
+        console.log("StudyMind AI request:", {
+            mode,
+            type,
+            requestType,
+            subject,
+            topic,
+            questionCount,
+            isGameMode,
+            isComputerBattle
+        });
+
         // =====================================================
-        // GAME MODE
+        // GAME MODE / COMPUTER BATTLE
         // =====================================================
 
         if (isGameMode) {
@@ -112,8 +144,9 @@ module.exports = async function handler(req, res) {
             if (!subject) {
 
                 return res.status(400).json({
+                    success: false,
                     error:
-                        "A subject is required for Game Mode."
+                        "A subject is required for Computer Battle."
                 });
             }
 
@@ -124,126 +157,176 @@ module.exports = async function handler(req, res) {
             if (!topic) {
 
                 return res.status(400).json({
+                    success: false,
                     error:
-                        "A topic is required for Game Mode."
+                        "A topic is required for Computer Battle."
                 });
             }
 
             // -------------------------------------------------
-            // CREATE GAME PROMPT
+            // CURRICULUM INFORMATION
+            // -------------------------------------------------
+
+            const curriculumTopics =
+                Array.isArray(body.curriculumTopics)
+                    ? body.curriculumTopics
+                    : [];
+
+            const curriculum =
+                typeof body.curriculum === "string" &&
+                body.curriculum.trim()
+                    ? body.curriculum.trim()
+                    : "Nigerian Senior Secondary School curriculum";
+
+            // -------------------------------------------------
+            // RANDOMIZATION NONCE
+            // -------------------------------------------------
+
+            const battleNonce =
+                typeof body.battleNonce === "string" &&
+                body.battleNonce.trim()
+                    ? body.battleNonce.trim()
+                    : `${Date.now()}-${Math.random()
+                        .toString(36)
+                        .slice(2)}`;
+
+            // -------------------------------------------------
+            // CURRICULUM CONTEXT
+            // -------------------------------------------------
+
+            const curriculumContext =
+                curriculumTopics.length > 0
+                    ? `
+Relevant curriculum topics/reference:
+
+${curriculumTopics
+    .map((item, index) => `${index + 1}. ${String(item)}`)
+    .join("\n")}
+`
+                    : "";
+
+            // -------------------------------------------------
+            // GAME INSTRUCTIONS
             // -------------------------------------------------
 
             const gameInstructions = `
-You are StudyMind AI Game Mode.
+You are StudyMind AI's Computer Battle question generator.
 
-You create educational multiple-choice questions
-for secondary-school students following the Nigerian
-secondary-school curriculum.
+Your task is to create a completely NEW set of educational
+multiple-choice questions for a secondary-school student.
 
-The battle information is:
+CURRICULUM:
+${curriculum}
 
-Subject: ${subject}
-Topic: ${topic}
-Difficulty: ${difficulty}
+SELECTED SUBJECT:
+${subject}
 
-Create exactly ${questionCount} high-quality multiple-choice
-questions specifically about the selected subject and topic.
+SELECTED TOPIC:
+${topic}
 
-IMPORTANT OUTPUT RULE:
+DIFFICULTY:
+${difficulty}
+
+BATTLE ID:
+${battleNonce}
+
+${curriculumContext}
+
+The selected subject and topic are authoritative.
+
+Every question MUST belong to the selected subject.
+
+Every question MUST primarily test the selected topic.
+
+Never silently change the subject.
+
+Never silently change the topic.
+
+Never default to Mathematics.
+
+If the selected subject is not Mathematics, do NOT generate
+Mathematics questions.
+
+If the selected subject is Mathematics, generate Mathematics
+questions specifically about the selected topic.
+
+Questions must be appropriate for Nigerian secondary-school
+students and should be compatible with WAEC/NECO-style
+academic expectations where appropriate.
+
+Generate exactly ${questionCount} questions.
+
+Every question must have exactly four answer options.
+
+There must be exactly one correct answer.
+
+The answer field must be a zero-based integer:
+
+0 = first option
+1 = second option
+2 = third option
+3 = fourth option
+
+Distractors must be plausible but incorrect.
+
+Do not duplicate questions.
+
+Do not repeat the same question wording.
+
+Do not create generic questions unrelated to the selected topic.
+
+For calculation-based subjects, verify formulas, calculations,
+values and units carefully.
+
+For science subjects, ensure scientific facts are accurate.
+
+For English Language and Literature, ensure grammar,
+comprehension, literary concepts and terminology are accurate
+for the selected topic.
+
+For Economics, Government, Civic Education, Geography,
+History, CRS, IRS and other humanities subjects, ensure the
+question genuinely relates to the selected topic.
+
+Keep explanations short and educational.
+
+IMPORTANT:
 
 Return ONLY valid JSON.
 
-Do NOT return:
+Do not return Markdown.
 
-- Markdown
-- Code fences
-- Explanations outside the JSON
-- Introductory text
-- Closing text
-- HTML
+Do not return code fences.
 
-The response MUST have exactly this structure:
+Do not return an explanation outside the JSON.
+
+Do not return HTML.
+
+The response MUST contain exactly this structure:
 
 {
-  "questions": [
-    {
-      "question": "Question text",
-      "options": [
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
-      ],
-      "answer": 0,
-      "explanation": "Short explanation."
-    }
-  ]
+    "questions": [
+        {
+            "question": "Question text",
+            "options": [
+                "Option A",
+                "Option B",
+                "Option C",
+                "Option D"
+            ],
+            "answer": 0,
+            "explanation": "Short explanation."
+        }
+    ]
 }
-
-RULES:
-
-1. Return exactly ${questionCount} questions.
-
-2. Every question must have exactly four options.
-
-3. Every option must be a non-empty string.
-
-4. "answer" MUST be a zero-based integer.
-
-5. 0 means the first option is correct.
-
-6. 1 means the second option is correct.
-
-7. 2 means the third option is correct.
-
-8. 3 means the fourth option is correct.
-
-9. Every answer must be factually correct.
-
-10. Every question must genuinely test the selected topic.
-
-11. The selected topic must be the primary focus of every question.
-
-12. Do not create unrelated questions.
-
-13. Do not duplicate questions.
-
-14. Make the questions appropriate for Nigerian secondary-school students.
-
-15. Where appropriate, follow WAEC/NECO-style questioning.
-
-16. Do not assume the subject is Mathematics.
-
-17. For Mathematics, Physics, Chemistry and other calculation-based
-subjects, ensure calculations, formulas, values and units are correct.
-
-18. For Biology, Geography, Economics, Government, History,
-Civic Education, CRS, IRS, English Language, Literature and
-other subjects, make the questions specifically relevant to
-the selected topic.
-
-19. Distractor options should be plausible but incorrect.
-
-20. Do not place the correct answer directly inside the question.
-
-21. Keep explanations short.
-
-22. Do not use HTML.
-
-23. Do not use unnecessary LaTeX.
-
-24. Do not include any text outside the JSON object.
-
-25. The final response must contain exactly ${questionCount}
-valid question objects.
 `;
 
             // -------------------------------------------------
-            // CREATE USER INPUT
+            // USER INPUT
             // -------------------------------------------------
 
             const gameMessage = `
-Generate ${questionCount} multiple-choice questions.
+Create ${questionCount} NEW multiple-choice questions.
 
 Subject: ${subject}
 
@@ -251,17 +334,21 @@ Topic: ${topic}
 
 Difficulty: ${difficulty}
 
-The questions must be suitable for a StudyMind AI
-educational battle.
+Curriculum: ${curriculum}
+
+This is a Computer Battle.
+
+Generate a fresh question set for this battle.
+Do not reuse a previous question set.
 `;
 
             console.log(
-                `Generating ${questionCount} Game Mode questions for ${subject} - ${topic}`
+                `Generating ${questionCount} Computer Battle questions: ${subject} - ${topic}`
             );
 
-            // -------------------------------------------------
+            // =================================================
             // OPENAI REQUEST
-            // -------------------------------------------------
+            // =================================================
 
             const response =
                 await client.responses.create({
@@ -276,11 +363,30 @@ educational battle.
                 });
 
             const output =
-                response.output_text || "";
+                typeof response.output_text === "string"
+                    ? response.output_text.trim()
+                    : "";
 
             console.log(
-                "Game Mode AI response received."
+                "Computer Battle AI response received."
             );
+
+            // =================================================
+            // CHECK EMPTY RESPONSE
+            // =================================================
+
+            if (!output) {
+
+                console.error(
+                    "OpenAI returned an empty response."
+                );
+
+                return res.status(502).json({
+                    success: false,
+                    error:
+                        "Computer Battle AI returned an empty response."
+                });
+            }
 
             // =================================================
             // PARSE JSON
@@ -288,54 +394,75 @@ educational battle.
 
             let parsed = null;
 
+            // -------------------------------------------------
+            // First attempt: direct JSON
+            // -------------------------------------------------
+
             try {
 
                 parsed =
-                    JSON.parse(
-                        output.trim()
-                    );
+                    JSON.parse(output);
 
-            } catch (parseError) {
+            } catch (directParseError) {
 
-                console.error(
-                    "Direct JSON parsing failed."
+                console.warn(
+                    "Direct JSON parsing failed. Attempting recovery."
                 );
 
                 // ------------------------------------------------
-                // RECOVER JSON OBJECT FROM SURROUNDING TEXT
+                // Remove possible markdown code fences
                 // ------------------------------------------------
 
-                const start =
-                    output.indexOf("{");
+                let cleaned =
+                    output
+                        .replace(/^```json\s*/i, "")
+                        .replace(/^```\s*/i, "")
+                        .replace(/\s*```$/i, "")
+                        .trim();
 
-                const end =
-                    output.lastIndexOf("}");
+                try {
 
-                if (
-                    start !== -1 &&
-                    end !== -1 &&
-                    end > start
-                ) {
+                    parsed =
+                        JSON.parse(cleaned);
 
-                    try {
+                } catch (cleanedParseError) {
 
-                        parsed =
-                            JSON.parse(
-                                output.slice(
-                                    start,
-                                    end + 1
-                                )
-                            );
+                    // ------------------------------------------------
+                    // Recover JSON object from surrounding text
+                    // ------------------------------------------------
 
-                    } catch (recoveryError) {
+                    const start =
+                        cleaned.indexOf("{");
 
-                        parsed = null;
+                    const end =
+                        cleaned.lastIndexOf("}");
+
+                    if (
+                        start !== -1 &&
+                        end !== -1 &&
+                        end > start
+                    ) {
+
+                        try {
+
+                            parsed =
+                                JSON.parse(
+                                    cleaned.slice(
+                                        start,
+                                        end + 1
+                                    )
+                                );
+
+                        } catch (recoveryError) {
+
+                            parsed = null;
+                        }
                     }
                 }
             }
 
             // =================================================
-            // VALIDATE AI RESPONSE
+            // VALIDATE TOP-LEVEL RESPONSE
             // =================================================
 
             if (
@@ -344,19 +471,19 @@ educational battle.
             ) {
 
                 console.error(
-                    "Invalid Game Mode AI output:",
+                    "Invalid Computer Battle AI output:",
                     output
                 );
 
                 return res.status(502).json({
-
+                    success: false,
                     error:
-                        "Game Mode AI returned invalid question data."
+                        "Computer Battle AI returned invalid question data."
                 });
             }
 
             // =================================================
-            // VALIDATE EACH QUESTION
+            // VALIDATE QUESTIONS
             // =================================================
 
             const validQuestions =
@@ -430,39 +557,77 @@ educational battle.
                             Number(question.answer),
 
                         explanation:
-                            typeof question.explanation ===
-                            "string"
+                            typeof question.explanation === "string"
                                 ? question.explanation.trim()
                                 : ""
                     }));
+
+            // =================================================
+            // REMOVE DUPLICATE QUESTIONS
+            // =================================================
+
+            const uniqueQuestions = [];
+
+            const seenQuestions =
+                new Set();
+
+            for (
+                const question
+                of validQuestions
+            ) {
+
+                const normalized =
+                    question.question
+                        .toLowerCase()
+                        .replace(/\s+/g, " ")
+                        .trim();
+
+                if (
+                    !seenQuestions.has(
+                        normalized
+                    )
+                ) {
+
+                    seenQuestions.add(
+                        normalized
+                    );
+
+                    uniqueQuestions.push(
+                        question
+                    );
+                }
+            }
 
             // =================================================
             // CHECK QUESTION COUNT
             // =================================================
 
             if (
-                validQuestions.length < questionCount
+                uniqueQuestions.length <
+                questionCount
             ) {
 
                 console.error(
-                    "Insufficient valid Game Mode questions:",
-                    validQuestions.length,
+                    "Insufficient unique questions:",
+                    uniqueQuestions.length,
                     "of",
                     questionCount
                 );
 
                 return res.status(502).json({
 
+                    success: false,
+
                     error:
-                        `Game Mode generated only ${validQuestions.length} valid questions out of ${questionCount}.`,
+                        `Computer Battle generated only ${uniqueQuestions.length} unique valid questions out of ${questionCount}.`,
 
                     questions:
-                        validQuestions
+                        uniqueQuestions
                 });
             }
 
             // =================================================
-            // RETURN GAME QUESTIONS
+            // RETURN QUESTIONS
             // =================================================
 
             return res.status(200).json({
@@ -471,14 +636,20 @@ educational battle.
 
                 type: "game_questions",
 
+                mode: "computer_battle",
+
+                requestType: "computer_battle",
+
                 subject,
 
                 topic,
 
                 difficulty,
 
+                questionCount,
+
                 questions:
-                    validQuestions.slice(
+                    uniqueQuestions.slice(
                         0,
                         questionCount
                     )
@@ -492,10 +663,17 @@ educational battle.
         if (!message) {
 
             return res.status(400).json({
+
+                success: false,
+
                 error:
                     "Please provide a message."
             });
         }
+
+        // =====================================================
+        // NORMAL AI INSTRUCTIONS
+        // =====================================================
 
         const normalInstructions = `
 You are StudyMind AI, a professional educational assistant.
@@ -527,7 +705,8 @@ FORMATTING RULES:
 
 3. NEVER create an empty bullet point.
 
-4. NEVER put a bullet point by itself immediately before a mathematical equation.
+4. NEVER put a bullet point by itself immediately before
+a mathematical equation.
 
 5. Put important mathematical equations on their own line.
 
@@ -572,6 +751,10 @@ If the student asks for help understanding something,
 teach it rather than simply giving an unexplained answer.
 `;
 
+        // =====================================================
+        // NORMAL OPENAI REQUEST
+        // =====================================================
+
         const response =
             await client.responses.create({
 
@@ -586,6 +769,8 @@ teach it rather than simply giving an unexplained answer.
 
         return res.status(200).json({
 
+            success: true,
+
             reply:
                 response.output_text || ""
         });
@@ -599,12 +784,16 @@ teach it rather than simply giving an unexplained answer.
 
         return res.status(500).json({
 
+            success: false,
+
             error:
                 "AI API error",
 
             details:
-                error.message ||
-                "Unknown error"
+                error &&
+                error.message
+                    ? error.message
+                    : "Unknown error"
         });
     }
 };
