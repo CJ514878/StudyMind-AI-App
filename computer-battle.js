@@ -32,11 +32,15 @@ const QUESTION_TIME_LIMIT = 15;
 const FREE_BATTLE_LIMIT = 5;
 
 /*
-   IMPORTANT:
-   This is the single localStorage key used by Computer Battle
-   for the free-battle counter.
+    IMPORTANT:
+   Computer Battle and Game Mode MUST use the
+   exact same localStorage key for the free-battle
+   counter.
+
+   Game Mode's canonical key is:
+   studyMindGameBattleCount
 */
-const FREE_BATTLES_USED_KEY = "studyMindFreeBattlesUsed";
+const FREE_BATTLES_USED_KEY = "studyMindGameBattleCount";
 
 /*
    Used to prevent the same completed battle from being counted
