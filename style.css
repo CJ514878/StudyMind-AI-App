@@ -4125,3 +4125,96 @@ SMALL MOBILE
 ```
 
 }
+/* =========================================================
+   STUDYMIND AI — SUMMARIZER USAGE CIRCLE
+========================================================= */
+
+.progress-circle {
+    --usage-progress: 0%;
+
+    width: 120px;
+    height: 120px;
+
+    margin: 20px auto;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    background:
+        conic-gradient(
+            var(--primary-color, #4f46e5)
+            var(--usage-progress),
+            rgba(128, 128, 128, 0.18)
+            var(--usage-progress)
+        );
+
+    transition:
+        background 0.5s ease,
+        transform 0.3s ease;
+}
+
+
+/* Inner circle */
+
+.progress-circle::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 88px;
+    height: 88px;
+
+    border-radius: 50%;
+
+    background:
+        var(--card-background, #111827);
+
+}
+
+
+/* Percentage text */
+
+.progress-circle span {
+
+    position: relative;
+
+    z-index: 2;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+}
+
+
+/* Small visual animation when usage changes */
+
+.progress-circle[data-progress] {
+
+    animation:
+        usageCircleUpdate 0.45s ease;
+
+}
+
+
+@keyframes usageCircleUpdate {
+
+    0% {
+        transform: scale(0.94);
+    }
+
+    60% {
+        transform: scale(1.04);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
