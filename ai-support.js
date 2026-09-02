@@ -595,7 +595,7 @@ ${question}
 
     const response =
         await fetch(
-            "/api/chat",
+            "/api/ask-ai",
             {
                 method: "POST",
 
