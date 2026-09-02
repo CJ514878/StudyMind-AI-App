@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>StudyMind AI — Study Score</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+
+        .score-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        .score-hero {
+            margin-bottom: 28px;
+        }
+
+        .score-hero h1 {
+            margin-bottom: 8px;
+        }
+
+        .score-hero p {
+            opacity: .7;
+            margin: 0;
+        }
+
+        .score-top {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .score-card {
+            border-radius: 24px;
+            padding: 28px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.09);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 45px rgba(0,0,0,.12);
+        }
+
+        .score-main-card {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            min-height: 320px;
+        }
+
+        .score-gauge {
+            --score-progress: 0deg;
+
+            width: 230px;
+            height: 230px;
+            min-width: 230px;
+
+            border-radius: 50%;
+
+            background:
+                conic-gradient(
+                    from -90deg,
+                    #6c63ff 0deg,
+                    #8c7cff var(--score-progress),
+                    rgba(255,255,255,.08) var(--score-progress),
+                    rgba(255,255,255,.08) 360deg
+                );
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            box-shadow:
+                0 15px 45px rgba(108,99,255,.18);
+
+            position: relative;
+        }
+
+        .score-gauge::before {
+            content: "";
+            position: absolute;
+            inset: 10px;
+            border-radius: 50%;
+            background: #0b1220;
+        }
+
+        .score-gauge-inner {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .score-number {
+            font-size: 55px;
+            line-height: 1;
+            font-weight: 900;
+        }
+
+        .score-out-of {
+            font-size: 14px;
+            opacity: .55;
+            margin-top: 6px;
+        }
+
+        .score-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(108,99,255,.13);
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .score-explanation h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .score-explanation p {
+            line-height: 1.65;
+            opacity: .7;
+        }
+
+        .score-mini-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .score-mini {
+            border-radius: 18px;
+            padding: 20px;
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.06);
+        }
+
+        .score-mini-icon {
+            font-size: 25px;
+            margin-bottom: 9px;
+        }
+
+        .score-mini-label {
+            font-size: 13px;
+            opacity: .6;
+            margin-bottom: 5px;
+        }
+
+        .score-mini-value {
+            font-size: 27px;
+            font-weight: 800;
+        }
+
+        .score-mini-value small {
+            font-size: 13px;
+            opacity: .55;
+        }
+
+        .breakdown-card {
+            margin-bottom: 22px;
+        }
+
+        .breakdown-card h2 {
+            margin-top: 0;
+            margin-bottom: 7px;
+        }
+
+        .breakdown-description {
+            opacity: .6;
+            margin-bottom: 24px;
+        }
+
+        .score-row {
+            margin-bottom: 22px;
+        }
+
+        .score-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .score-row-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 9px;
+        }
+
+        .score-row-name {
+            font-weight: 650;
+        }
+
+        .score-row-value {
+            opacity: .7;
+            font-size: 14px;
+        }
+
+        .score-progress {
+            height: 10px;
+            width: 100%;
+            background: rgba(255,255,255,.07);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .score-progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(
+                90deg,
+                #6c63ff,
+                #9b91ff
+            );
+            transition: width .7s ease;
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .achievement {
+            padding: 22px 15px;
+            text-align: center;
+            border-radius: 18px;
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.06);
+            opacity: .45;
+            transition: .25s ease;
+        }
+
+        .achievement.unlocked {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .achievement-icon {
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+
+        .achievement-title {
+            font-weight: 750;
+            margin-bottom: 5px;
+        }
+
+        .achievement-description {
+            font-size: 12px;
+            opacity: .6;
+            line-height: 1.4;
+        }
+
+        .score-tip {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .score-tip-icon {
+            font-size: 32px;
+        }
+
+        .score-tip strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .score-tip span {
+            opacity: .65;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        body.light-mode .score-card {
+            background: rgba(255,255,255,.9);
+            border-color: rgba(0,0,0,.08);
+        }
+
+        body.light-mode .score-gauge::before {
+            background: #f8f9ff;
+        }
+
+        body.light-mode .score-mini,
+        body.light-mode .achievement {
+            background: rgba(0,0,0,.025);
+            border-color: rgba(0,0,0,.06);
+        }
+
+        body.light-mode .score-progress {
+            background: rgba(0,0,0,.08);
+        }
+
+        @media (max-width: 900px) {
+
+            .score-top {
+                grid-template-columns: 1fr;
+            }
+
+            .achievement-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+        }
+
+        @media (max-width: 620px) {
+
+            .score-page {
+                padding: 20px 14px 45px;
+            }
+
+            .score-main-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 24px 18px;
+            }
+
+            .score-gauge {
+                width: 190px;
+                height: 190px;
+                min-width: 190px;
+            }
+
+            .score-number {
+                font-size: 45px;
+            }
+
+            .score-mini-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .achievement-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+        StudyMind AI
+    </div>
+
+    <nav>
+
+        <a href="home.html">
+            Home
+        </a>
+
+        <a href="index.html">
+            New Study Plan
+        </a>
+
+        <a href="summarizer.html">
+            Summarizer
+        </a>
+
+        <a href="ai-support.html">
+            AI Support
+        </a>
+
+        <a href="streak.html">
+            Study Streak
+        </a>
+
+        <a
+            href="score.html"
+            class="active"
+        >
+            Study Score
+        </a>
+
+        <button
+            id="themeButton"
+            type="button"
+            onclick="toggleTheme()"
+        >
+            🌙
+        </button>
+
+        <button
+            type="button"
+            onclick="logoutStudyMind()"
+        >
+            Logout
+        </button>
+
+    </nav>
+
+</header>
+
+
+<main class="score-page">
+
+    <section class="score-hero">
+
+        <h1>
+            📊 Study Score
+        </h1>
+
+        <p>
+            See how consistently and effectively you're progressing.
+        </p>
+
+    </section>
+
+
+    <section class="score-top">
+
+        <div class="score-card score-main-card">
+
+            <div
+                class="score-gauge"
+                id="scoreGauge"
+            >
+
+                <div class="score-gauge-inner">
+
+                    <div
+                        class="score-number"
+                        id="overallScore"
+                    >
+                        0
+                    </div>
+
+                    <div class="score-out-of">
+                        out of 100
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-explanation">
+
+                <h2 id="scoreTitle">
+                    Let's get started
+                </h2>
+
+                <p id="scoreDescription">
+                    Your Study Score will increase as you complete
+                    topics, knowledge checks, study consistently,
+                    and make progress through your study plan.
+                </p>
+
+                <div
+                    class="score-status"
+                    id="scoreStatus"
+                >
+                    🚀 Getting Started
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="score-card">
+
+            <div class="score-mini-grid">
+
+                <div class="score-mini">
+
+                    <div class="score-mini-icon">
+                        📚
+                    </div>
+
+                    <div class="score-mini-label">
+                        TOPICS
+                    </div>
+
+                    <div class="score-mini-value">
+                        <span id="topicsCompleted">
+                            0
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="score-mini">
+
+                    <div class="score-mini-icon">
+                        🧠
+                    </div>
+
+                    <div class="score-mini-label">
+                        KNOWLEDGE CHECKS
+                    </div>
+
+                    <div class="score-mini-value">
+                        <span id="questionsCompleted">
+                            0
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="score-mini">
+
+                    <div class="score-mini-icon">
+                        🔥
+                    </div>
+
+                    <div class="score-mini-label">
+                        CURRENT STREAK
+                    </div>
+
+                    <div class="score-mini-value">
+                        <span id="currentStreak">
+                            0
+                        </span>
+                        <small>days</small>
+                    </div>
+
+                </div>
+
+
+                <div class="score-mini">
+
+                    <div class="score-mini-icon">
+                        🎯
+                    </div>
+
+                    <div class="score-mini-label">
+                        PLAN PROGRESS
+                    </div>
+
+                    <div class="score-mini-value">
+                        <span id="planProgress">
+                            0
+                        </span>
+                        <small>%</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="score-card breakdown-card">
+
+        <h2>
+            Score Breakdown
+        </h2>
+
+        <p class="breakdown-description">
+            Your score is based on several parts of your study activity.
+        </p>
+
+
+        <div class="score-row">
+
+            <div class="score-row-top">
+
+                <span class="score-row-name">
+                    📚 Topic Completion
+                </span>
+
+                <span
+                    class="score-row-value"
+                    id="topicScoreText"
+                >
+                    0 / 30
+                </span>
+
+            </div>
+
+            <div class="score-progress">
+                <div
+                    class="score-progress-bar"
+                    id="topicScoreBar"
+                ></div>
+            </div>
+
+        </div>
+
+
+        <div class="score-row">
+
+            <div class="score-row-top">
+
+                <span class="score-row-name">
+                    🧠 Knowledge Checks
+                </span>
+
+                <span
+                    class="score-row-value"
+                    id="questionScoreText"
+                >
+                    0 / 25
+                </span>
+
+            </div>
+
+            <div class="score-progress">
+                <div
+                    class="score-progress-bar"
+                    id="questionScoreBar"
+                ></div>
+            </div>
+
+        </div>
+
+
+        <div class="score-row">
+
+            <div class="score-row-top">
+
+                <span class="score-row-name">
+                    🔥 Study Consistency
+                </span>
+
+                <span
+                    class="score-row-value"
+                    id="streakScoreText"
+                >
+                    0 / 25
+                </span>
+
+            </div>
+
+            <div class="score-progress">
+                <div
+                    class="score-progress-bar"
+                    id="streakScoreBar"
+                ></div>
+            </div>
+
+        </div>
+
+
+        <div class="score-row">
+
+            <div class="score-row-top">
+
+                <span class="score-row-name">
+                    🎯 Study Plan Progress
+                </span>
+
+                <span
+                    class="score-row-value"
+                    id="planScoreText"
+                >
+                    0 / 20
+                </span>
+
+            </div>
+
+            <div class="score-progress">
+                <div
+                    class="score-progress-bar"
+                    id="planScoreBar"
+                ></div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="score-card">
+
+        <h2>
+            🏆 Achievements
+        </h2>
+
+        <p class="breakdown-description">
+            Keep studying to unlock more achievements.
+        </p>
+
+
+        <div class="achievement-grid">
+
+            <div
+                class="achievement"
+                id="achievementFirstTopic"
+            >
+
+                <div class="achievement-icon">
+                    📖
+                </div>
+
+                <div class="achievement-title">
+                    First Topic
+                </div>
+
+                <div class="achievement-description">
+                    Complete your first topic.
+                </div>
+
+            </div>
+
+
+            <div
+                class="achievement"
+                id="achievementFiveTopics"
+            >
+
+                <div class="achievement-icon">
+                    🎓
+                </div>
+
+                <div class="achievement-title">
+                    5 Topics
+                </div>
+
+                <div class="achievement-description">
+                    Complete five topics.
+                </div>
+
+            </div>
+
+
+            <div
+                class="achievement"
+                id="achievementSevenDays"
+            >
+
+                <div class="achievement-icon">
+                    🔥
+                </div>
+
+                <div class="achievement-title">
+                    7-Day Streak
+                </div>
+
+                <div class="achievement-description">
+                    Maintain a seven-day streak.
+                </div>
+
+            </div>
+
+
+            <div
+                class="achievement"
+                id="achievementHighScore"
+            >
+
+                <div class="achievement-icon">
+                    💎
+                </div>
+
+                <div class="achievement-title">
+                    Elite Scholar
+                </div>
+
+                <div class="achievement-description">
+                    Reach a Study Score of 80+.
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="score-card">
+
+        <div class="score-tip">
+
+            <div class="score-tip-icon">
+                💡
+            </div>
+
+            <div>
+
+                <strong id="scoreTipTitle">
+                    Your score grows with consistency.
+                </strong>
+
+                <span id="scoreTipText">
+                    Complete your study topics and knowledge checks,
+                    then keep your streak alive.
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="score.js"></script>
+
+</body>
+</html>
