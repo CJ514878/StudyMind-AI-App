@@ -7,7 +7,234 @@
 
 const QUESTIONS_PER_BATTLE = 10;
 const QUESTION_TIME_LIMIT = 15;
+const NIGERIAN_CURRICULUM = {
+    Mathematics: [
+        "Number and Numeration",
+        "Algebraic Processes",
+        "Geometry",
+        "Mensuration",
+        "Statistics",
+        "Probability",
+        "Trigonometry",
+        "Coordinate Geometry",
+        "Calculus"
+    ],
 
+    Physics: [
+        "Measurements",
+        "Motion",
+        "Forces",
+        "Energy",
+        "Heat",
+        "Waves",
+        "Sound",
+        "Light",
+        "Electricity",
+        "Magnetism",
+        "Electromagnetic Induction"
+    ],
+
+    Chemistry: [
+        "Atomic Structure",
+        "Periodic Table",
+        "Chemical Bonding",
+        "Mole Concept",
+        "Chemical Reactions",
+        "Acids Bases and Salts",
+        "Organic Chemistry",
+        "Electrochemistry",
+        "Rates of Reaction",
+        "Equilibrium"
+    ],
+
+    Biology: [
+        "Cell Structure",
+        "Cell Division",
+        "Nutrition",
+        "Transport Systems",
+        "Respiration",
+        "Excretion",
+        "Coordination",
+        "Reproduction",
+        "Genetics",
+        "Ecology",
+        "Evolution"
+    ],
+
+    Economics: [
+        "Basic Economic Concepts",
+        "Demand and Supply",
+        "Production",
+        "Market Structures",
+        "National Income",
+        "Money and Banking",
+        "Inflation",
+        "Unemployment",
+        "International Trade",
+        "Economic Development"
+    ],
+
+    Government: [
+        "Political Concepts",
+        "Constitution",
+        "Democracy",
+        "Political Parties",
+        "Elections",
+        "Legislature",
+        "Executive",
+        "Judiciary",
+        "Local Government",
+        "International Organizations"
+    ],
+
+    Geography: [
+        "Map Reading",
+        "Physical Geography",
+        "Weather and Climate",
+        "Rocks",
+        "Soils",
+        "Population",
+        "Settlement",
+        "Agriculture",
+        "Industry",
+        "Transportation"
+    ],
+
+    "English Language": [
+        "Grammar",
+        "Vocabulary",
+        "Comprehension",
+        "Summary",
+        "Oral English",
+        "Parts of Speech",
+        "Sentence Structure",
+        "Figures of Speech",
+        "Writing",
+        "Literature"
+    ],
+
+    Accounting: [
+        "Introduction to Accounting",
+        "Accounting Concepts",
+        "Books of Original Entry",
+        "Ledger Accounts",
+        "Trial Balance",
+        "Bank Reconciliation",
+        "Final Accounts",
+        "Depreciation",
+        "Partnership Accounts",
+        "Company Accounts"
+    ],
+
+    Commerce: [
+        "Trade",
+        "Occupation",
+        "Business Units",
+        "Retail Trade",
+        "Wholesale Trade",
+        "Transportation",
+        "Communication",
+        "Insurance",
+        "Banking",
+        "Marketing"
+    ],
+
+    "Computer Studies": [
+        "Computer Fundamentals",
+        "Computer Hardware",
+        "Computer Software",
+        "Operating Systems",
+        "Data Processing",
+        "Algorithms",
+        "Programming",
+        "Databases",
+        "Computer Networks",
+        "Internet and Web Technologies"
+    ],
+
+    "Further Mathematics": [
+        "Algebra",
+        "Functions",
+        "Matrices",
+        "Vectors",
+        "Complex Numbers",
+        "Calculus",
+        "Differentiation",
+        "Integration",
+        "Probability",
+        "Statistics"
+    ],
+
+    Literature: [
+        "Prose",
+        "Poetry",
+        "Drama",
+        "Literary Devices",
+        "Characterization",
+        "Plot",
+        "Themes",
+        "Setting",
+        "Narrative Techniques"
+    ],
+
+    "Christian Religious Studies": [
+        "Creation",
+        "The Patriarchs",
+        "Moses",
+        "The Prophets",
+        "The Life of Jesus",
+        "The Teachings of Jesus",
+        "The Early Church",
+        "Christian Ethics",
+        "Faith",
+        "Love and Forgiveness"
+    ],
+
+    "Islamic Religious Studies": [
+        "Quran",
+        "Hadith",
+        "Tawhid",
+        "Worship",
+        "Prophet Muhammad",
+        "Islamic Ethics",
+        "Family Life",
+        "Islamic Law",
+        "Islamic History"
+    ],
+
+    "Agricultural Science": [
+        "Farm Management",
+        "Soil Science",
+        "Crop Production",
+        "Animal Production",
+        "Farm Tools",
+        "Agricultural Economics",
+        "Pests and Diseases",
+        "Farm Records",
+        "Agricultural Extension"
+    ],
+
+    "Technical Drawing": [
+        "Geometric Construction",
+        "Orthographic Projection",
+        "Isometric Drawing",
+        "Perspective Drawing",
+        "Sectional Views",
+        "Building Drawing",
+        "Machine Drawing"
+    ],
+
+    "Visual Arts": [
+        "Drawing",
+        "Painting",
+        "Sculpture",
+        "Graphics",
+        "Textiles",
+        "Ceramics",
+        "Art History",
+        "Design Principles"
+    ]
+};
 const AI_QUESTION_ENDPOINT = "/api/generate-questions";
 
 /* =========================================================
