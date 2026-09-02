@@ -1,6902 +1,6135 @@
 /* =========================================================
-   STUDYMIND AI — GAME MODE
-   FULL REPLACEMENT
-   Nigerian Secondary Curriculum + AI Battle System
-========================================================= */
+   STUDYMIND AI — DASHBOARD.JS
+   COMPLETE REPLACEMENT
+   =========================================================
 
-"use strict";
+   FEATURES:
+   - Loads the student's real study plan
+   - Supports studyMindPlan and older studyData
+   - Correct topic names
+   - Subjects
+   - Topic progress
+   - Current study session
+   - Topic completion
+   - Study streak
+   - 25/45/60 minute timer
+   - Calendar
+   - 6 study days + 1 break day
+   - Exam day
+   - Study schedule
+   - AI progress analysis
+   - Ask StudyMind AI
+   - Document summarizer
+   - 5 free AI questions
+   - 5 free document summaries
+   - Topic knowledge checks
+   - Premium limit message
+   ========================================================= */
 
-/* =========================================================
-   CONFIGURATION
-========================================================= */
-
-const FREE_BATTLE_LIMIT = 5;
-const QUESTIONS_PER_BATTLE = 10;
-const QUESTION_TIME_SECONDS = 15;
-
-const GAME_STORAGE = {
-    battlesUsed: "studyMindGameBattlesUsed",
-    battlePoints: "studyMindBattlePoints",
-    theme: "studyMindTheme"
-};
-
-/* =========================================================
-   NIGERIAN SECONDARY SCHOOL CURRICULUM
-========================================================= */
-
-const SUBJECT_DATABASE = {
-
-    "Agricultural Science": [
-        "Introduction to Agriculture",
-        "Farm Tools and Machinery",
-        "Soil Science",
-        "Soil Fertility",
-        "Crop Production",
-        "Crop Improvement",
-        "Plant Nutrition",
-        "Pests and Diseases",
-        "Animal Nutrition",
-        "Animal Production",
-        "Livestock Management",
-        "Fishery",
-        "Forestry",
-        "Farm Management",
-        "Agricultural Economics",
-        "Agricultural Extension",
-        "Farm Records",
-        "Agricultural Marketing"
-    ],
-
-    "Animal Husbandry": [
-        "Introduction to Animal Husbandry",
-        "Animal Nutrition",
-        "Digestive System",
-        "Animal Health",
-        "Animal Diseases",
-        "Livestock Management",
-        "Poultry Production",
-        "Pig Production",
-        "Cattle Production",
-        "Sheep and Goat Production",
-        "Rabbit Production",
-        "Fish Production",
-        "Animal Breeding"
-    ],
-
-    "Arabic": [
-        "Arabic Alphabet",
-        "Reading and Comprehension",
-        "Arabic Grammar",
-        "Arabic Vocabulary",
-        "Translation",
-        "Arabic Literature",
-        "Composition"
-    ],
-
-    "Basic Science": [
-        "Living and Non-Living Things",
-        "Cells",
-        "Human Body",
-        "Nutrition",
-        "Health and Disease",
-        "Matter",
-        "Energy",
-        "Force",
-        "Light",
-        "Sound",
-        "Electricity",
-        "Magnetism",
-        "Environment",
-        "Earth and Space"
-    ],
-
-    "Basic Technology": [
-        "Introduction to Technology",
-        "Safety",
-        "Materials",
-        "Tools",
-        "Workshop Practice",
-        "Woodwork",
-        "Metalwork",
-        "Building Technology",
-        "Electrical Technology",
-        "Electronics",
-        "Mechanics",
-        "Technology and Society"
-    ],
-
-    "Biology": [
-        "Characteristics of Living Things",
-        "Cell Structure and Organisation",
-        "Cell Division",
-        "Nutrition",
-        "Transport System",
-        "Respiration",
-        "Excretion",
-        "Coordination and Control",
-        "Reproduction",
-        "Growth",
-        "Genetics",
-        "Evolution",
-        "Ecology",
-        "Adaptation",
-        "Classification",
-        "Microorganisms",
-        "Human Health",
-        "Plant Biology"
-    ],
-
-    "Business Studies": [
-        "Introduction to Business",
-        "Office Practice",
-        "Bookkeeping",
-        "Commerce",
-        "Business Documents",
-        "Communication",
-        "Banking",
-        "Insurance",
-        "Entrepreneurship",
-        "Consumer Education"
-    ],
-
-    "Chemistry": [
-        "Introduction to Chemistry",
-        "Atomic Structure",
-        "Periodic Table",
-        "Chemical Bonding",
-        "Mole Concept",
-        "Chemical Formulae",
-        "Chemical Equations",
-        "Acids Bases and Salts",
-        "Oxidation and Reduction",
-        "Electrochemistry",
-        "Organic Chemistry",
-        "Hydrocarbons",
-        "Metals",
-        "Non-Metals",
-        "Rates of Reaction",
-        "Chemical Equilibrium",
-        "Energy Changes",
-        "Environmental Chemistry"
-    ],
-
-    "Christian Religious Studies": [
-        "Creation",
-        "The Fall of Man",
-        "The Call of Abraham",
-        "Moses and the Exodus",
-        "The Ten Commandments",
-        "The Prophets",
-        "The Life of Jesus",
-        "The Teachings of Jesus",
-        "Miracles of Jesus",
-        "Death and Resurrection",
-        "The Early Church",
-        "Christian Living",
-        "Faith and Works",
-        "Love and Forgiveness",
-        "Leadership and Service"
-    ],
-
-    "Civic Education": [
-        "Citizenship",
-        "Human Rights",
-        "Duties and Responsibilities",
-        "Democracy",
-        "Rule of Law",
-        "Constitution",
-        "Political Participation",
-        "National Values",
-        "Leadership",
-        "Good Governance",
-        "Corruption",
-        "National Integration",
-        "Peace and Conflict Resolution",
-        "Democratic Institutions"
-    ],
-
-    "Commerce": [
-        "Introduction to Commerce",
-        "Trade",
-        "Retail Trade",
-        "Wholesale Trade",
-        "Home Trade",
-        "Foreign Trade",
-        "Business Units",
-        "Banking",
-        "Insurance",
-        "Transportation",
-        "Warehousing",
-        "Communication",
-        "Advertising",
-        "Capital",
-        "Stock Exchange"
-    ],
-
-    "Computer Studies": [
-        "Introduction to Computers",
-        "Computer Hardware",
-        "Computer Software",
-        "Input and Output Devices",
-        "Data Representation",
-        "Computer Memory",
-        "Operating Systems",
-        "Word Processing",
-        "Spreadsheets",
-        "Databases",
-        "Computer Networks",
-        "Internet",
-        "Cybersecurity",
-        "Programming",
-        "Algorithms",
-        "Information Technology"
-    ],
-
-    "Data Processing": [
-        "Introduction to Data Processing",
-        "Data and Information",
-        "Computer Hardware",
-        "Computer Software",
-        "Data Representation",
-        "Database Systems",
-        "Spreadsheets",
-        "Word Processing",
-        "Networking",
-        "Internet",
-        "Information Systems",
-        "Programming",
-        "Data Security"
-    ],
-
-    "Economics": [
-        "Introduction to Economics",
-        "Basic Economic Concepts",
-        "Demand",
-        "Supply",
-        "Price Determination",
-        "Production",
-        "Factors of Production",
-        "Market Structures",
-        "Population",
-        "Labour Market",
-        "Money",
-        "Banking",
-        "Inflation",
-        "National Income",
-        "Economic Growth",
-        "Economic Development",
-        "Public Finance",
-        "International Trade",
-        "Balance of Payments",
-        "Nigerian Economy"
-    ],
-
-    "English Language": [
-        "Parts of Speech",
-        "Sentence Structure",
-        "Tenses",
-        "Concord",
-        "Vocabulary Development",
-        "Comprehension",
-        "Summary Writing",
-        "Essay Writing",
-        "Letter Writing",
-        "Report Writing",
-        "Speech Writing",
-        "Argumentative Writing",
-        "Narrative Writing",
-        "Descriptive Writing",
-        "Oral English",
-        "Figures of Speech",
-        "Lexis and Structure"
-    ],
-
-    "Financial Accounting": [
-        "Introduction to Accounting",
-        "Accounting Concepts",
-        "Source Documents",
-        "Books of Original Entry",
-        "Ledger Accounts",
-        "Trial Balance",
-        "Bank Reconciliation",
-        "Depreciation",
-        "Control Accounts",
-        "Final Accounts",
-        "Partnership Accounts",
-        "Company Accounts",
-        "Manufacturing Accounts",
-        "Incomplete Records",
-        "Accounting Ratios"
-    ],
-
-    "Food and Nutrition": [
-        "Food Nutrients",
-        "Balanced Diet",
-        "Meal Planning",
-        "Food Preparation",
-        "Food Preservation",
-        "Kitchen Safety",
-        "Food Hygiene",
-        "Digestion",
-        "Special Diets",
-        "Consumer Education"
-    ],
-
-    "French": [
-        "French Alphabet",
-        "Greetings",
-        "Numbers",
-        "Family",
-        "School",
-        "Food",
-        "Daily Activities",
-        "Grammar",
-        "Tenses",
-        "Vocabulary",
-        "Reading Comprehension",
-        "Writing",
-        "Conversation"
-    ],
-
-    "Further Mathematics": [
-        "Algebra",
-        "Quadratic Equations",
-        "Sequences and Series",
-        "Binomial Expansion",
-        "Matrices",
-        "Vectors",
-        "Coordinate Geometry",
-        "Calculus",
-        "Differentiation",
-        "Integration",
-        "Trigonometry",
-        "Complex Numbers",
-        "Probability",
-        "Statistics",
-        "Mechanics"
-    ],
-
-    "Geography": [
-        "Map Reading",
-        "Scale and Distance",
-        "Latitude and Longitude",
-        "Physical Geography",
-        "Weather and Climate",
-        "Rocks",
-        "Relief",
-        "Drainage",
-        "Vegetation",
-        "Population",
-        "Settlement",
-        "Agriculture",
-        "Industry",
-        "Transportation",
-        "Environmental Resources",
-        "Regional Geography",
-        "Nigeria's Geography"
-    ],
-
-    "Government": [
-        "Introduction to Government",
-        "Political Concepts",
-        "Constitution",
-        "Democracy",
-        "Political Parties",
-        "Electoral Systems",
-        "Pressure Groups",
-        "Public Opinion",
-        "Legislature",
-        "Executive",
-        "Judiciary",
-        "Federalism",
-        "Local Government",
-        "Citizenship",
-        "Human Rights",
-        "International Organisations",
-        "Nigerian Political Development"
-    ],
-
-    "Health Education": [
-        "Personal Health",
-        "Nutrition",
-        "Physical Fitness",
-        "First Aid",
-        "Communicable Diseases",
-        "Non-Communicable Diseases",
-        "Mental and Social Health",
-        "Environmental Health",
-        "Safety Education",
-        "Drug Education"
-    ],
-
-    "History": [
-        "Introduction to History",
-        "Pre-Colonial Nigeria",
-        "Hausa States",
-        "Yoruba States",
-        "Igbo Society",
-        "Kanem-Bornu",
-        "European Contact",
-        "Trans-Saharan Trade",
-        "Slave Trade",
-        "Colonial Rule",
-        "Amalgamation",
-        "Nationalist Movements",
-        "Independence",
-        "Nigerian Civil War",
-        "Post-Independence Nigeria",
-        "African History"
-    ],
-
-    "Home Economics": [
-        "Family and Home",
-        "Food and Nutrition",
-        "Clothing",
-        "Textiles",
-        "Child Development",
-        "Consumer Education",
-        "Home Management",
-        "Household Resources",
-        "Interior Decoration",
-        "Family Health"
-    ],
-
-    "Information Technology": [
-        "Information Systems",
-        "Computer Hardware",
-        "Computer Software",
-        "Operating Systems",
-        "Networking",
-        "Internet",
-        "Cybersecurity",
-        "Database Systems",
-        "Programming",
-        "Algorithms",
-        "Digital Communication",
-        "Information Management"
-    ],
-
-    "Islamic Religious Studies": [
-        "The Qur'an",
-        "Hadith",
-        "Tawhid",
-        "Salah",
-        "Zakat",
-        "Sawm",
-        "Hajj",
-        "Islamic Morality",
-        "Islamic Law",
-        "Life of Prophet Muhammad",
-        "Early Muslim Community",
-        "Islamic History"
-    ],
-
-    "Literature in English": [
-        "Introduction to Literature",
-        "Prose",
-        "Poetry",
-        "Drama",
-        "Literary Devices",
-        "Figures of Speech",
-        "Characterisation",
-        "Themes",
-        "Plot",
-        "Setting",
-        "African Literature",
-        "Nigerian Literature"
-    ],
-
-    "Marketing": [
-        "Introduction to Marketing",
-        "Marketing Concepts",
-        "Market Research",
-        "Consumer Behaviour",
-        "Product",
-        "Pricing",
-        "Promotion",
-        "Distribution",
-        "Advertising",
-        "Sales Promotion",
-        "Digital Marketing"
-    ],
-
-    "Mathematics": [
-        "Number Bases",
-        "Fractions",
-        "Decimals",
-        "Percentages",
-        "Ratio and Proportion",
-        "Indices",
-        "Logarithms",
-        "Surds",
-        "Algebra",
-        "Linear Equations",
-        "Quadratic Equations",
-        "Simultaneous Equations",
-        "Inequalities",
-        "Sequences",
-        "Variation",
-        "Sets",
-        "Geometry",
-        "Mensuration",
-        "Trigonometry",
-        "Coordinate Geometry",
-        "Statistics",
-        "Probability",
-        "Matrices",
-        "Vectors",
-        "Financial Mathematics"
-    ],
-
-    "Music": [
-        "Elements of Music",
-        "Musical Notation",
-        "Scales",
-        "Intervals",
-        "Chords",
-        "Rhythm",
-        "Harmony",
-        "Melody",
-        "Musical Instruments",
-        "African Music",
-        "Nigerian Music",
-        "Music History"
-    ],
-
-    "Physical Education": [
-        "Physical Fitness",
-        "Athletics",
-        "Football",
-        "Basketball",
-        "Volleyball",
-        "Handball",
-        "Swimming",
-        "Gymnastics",
-        "Health and Fitness",
-        "Sports Injuries",
-        "Rules of Games"
-    ],
-
-    "Physics": [
-        "Measurement",
-        "Motion",
-        "Scalars and Vectors",
-        "Force",
-        "Work Energy and Power",
-        "Machines",
-        "Pressure",
-        "Heat",
-        "Waves",
-        "Sound",
-        "Light",
-        "Reflection",
-        "Refraction",
-        "Electricity",
-        "Current Electricity",
-        "Magnetism",
-        "Electromagnetic Induction",
-        "Atomic Physics",
-        "Radioactivity",
-        "Electronics"
-    ],
-
-    "Technical Drawing": [
-        "Drawing Instruments",
-        "Geometrical Construction",
-        "Orthographic Projection",
-        "Isometric Drawing",
-        "Perspective Drawing",
-        "Sectional Views",
-        "Scale Drawing",
-        "Engineering Curves",
-        "Building Drawing",
-        "Mechanical Drawing"
-    ],
-
-    "Visual Arts": [
-        "Introduction to Art",
-        "Elements of Art",
-        "Principles of Design",
-        "Drawing",
-        "Painting",
-        "Sculpture",
-        "Textiles",
-        "Graphics",
-        "Ceramics",
-        "Photography",
-        "African Art",
-        "Nigerian Art"
-    ],
-
-    "Yoruba": [
-        "Yoruba Grammar",
-        "Yoruba Vocabulary",
-        "Comprehension",
-        "Essay Writing",
-        "Oral Literature",
-        "Written Literature",
-        "Yoruba Culture",
-        "Yoruba History"
-    ],
-
-    "Igbo": [
-        "Igbo Grammar",
-        "Igbo Vocabulary",
-        "Comprehension",
-        "Essay Writing",
-        "Oral Literature",
-        "Written Literature",
-        "Igbo Culture",
-        "Igbo History"
-    ],
-
-    "Hausa": [
-        "Hausa Grammar",
-        "Hausa Vocabulary",
-        "Comprehension",
-        "Essay Writing",
-        "Oral Literature",
-        "Written Literature",
-        "Hausa Culture",
-        "Hausa History"
-    ]
-};
 
 /* =========================================================
-   BATTLE STATE
-========================================================= */
+   SETTINGS
+   ========================================================= */
 
-let battleState = {
-    mode: "computer",
-    subject: "",
-    topic: "",
-    difficulty: "mixed",
+const FREE_QUESTION_LIMIT = 5;
+const FREE_SUMMARY_LIMIT = 5;
 
-    questions: [],
-    currentQuestion: 0,
+const DEFAULT_TIMER_SECONDS = 25 * 60;
 
-    playerScore: 0,
-    opponentScore: 0,
+const DAY_MS =
+    24 * 60 * 60 * 1000;
 
-    timer: QUESTION_TIME_SECONDS,
-    timerInterval: null,
-
-    answering: false,
-    battleActive: false
-};
 
 /* =========================================================
-   SAFE ELEMENT HELPER
-========================================================= */
+   GLOBAL STATE
+   ========================================================= */
 
-function $(id) {
-    return document.getElementById(id);
-}
+let currentUser = null;
+let isAuthenticated = false;
 
-/* =========================================================
-   LOCAL STORAGE
-========================================================= */
+let studyPlan = null;
 
-function getBattlesUsed() {
-    return Number(
+let completedTopics =
+    loadArray("studyMindCompletedTopics");
+
+let completedQuestionTopics =
+    loadArray("studyMindCompletedQuestionTopics");
+
+let currentTopicIndex =
+    Number(
         localStorage.getItem(
-            GAME_STORAGE.battlesUsed
-        ) || 0
-    );
-}
+            "studyMindCurrentTopicIndex"
+        )
+    ) || 0;
 
-function setBattlesUsed(value) {
-    localStorage.setItem(
-        GAME_STORAGE.battlesUsed,
-        String(Math.max(0, value))
-    );
-}
-
-function getBattlePoints() {
-    return Number(
+let currentStreak =
+    Number(
         localStorage.getItem(
-            GAME_STORAGE.battlePoints
-        ) || 0
-    );
-}
+            "studyMindStreak"
+        )
+    ) || 0;
 
-function setBattlePoints(value) {
-    localStorage.setItem(
-        GAME_STORAGE.battlePoints,
-        String(Math.max(0, value))
+let topicQuestions =
+    loadObject(
+        "studyMindTopicQuestions"
     );
-}
+
+let calendarDate =
+    new Date();
+
 
 /* =========================================================
-   INITIALIZATION
-========================================================= */
+   AI USAGE
+   ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+let aiQuestionCount =
+    Number(
+        localStorage.getItem(
+            "aiQuestionCount"
+        )
+    ) || 0;
 
-        updateBattleLimitUI();
+let summaryUsageCount =
+    Number(
+        localStorage.getItem(
+            "summaryUsageCount"
+        )
+    ) || 0;
 
-        loadStudyPlanSubjects();
-
-        setupComputerSubjectListener();
-
-        setupOneVOneSubjectListener();
-
-        updateThemeButton();
-
-        showComputerSetup();
-
-        updateLeaderboardUI();
-    }
-);
 
 /* =========================================================
-   BATTLE LIMIT
-========================================================= */
+   TIMER STATE
+   ========================================================= */
 
-function hasBattleAvailable() {
-
-    return (
-        getBattlesUsed() <
-        FREE_BATTLE_LIMIT
+let selectedTimerSeconds =
+    getStoredPositiveNumber(
+        "studyMindSelectedTimerSeconds",
+        DEFAULT_TIMER_SECONDS
     );
-}
 
-function updateBattleLimitUI() {
-
-    const used =
-        getBattlesUsed();
-
-    const remaining =
-        Math.max(
-            0,
-            FREE_BATTLE_LIMIT - used
-        );
-
-    if ($("battlesUsed")) {
-        $("battlesUsed").textContent =
-            used;
-    }
-
-    if ($("battleLimit")) {
-        $("battleLimit").textContent =
-            FREE_BATTLE_LIMIT;
-    }
-
-    if ($("battleStatusText")) {
-        $("battleStatusText").textContent =
-            remaining > 0
-                ? `${remaining} battle${remaining === 1 ? "" : "s"} remaining`
-                : "No free battles remaining";
-    }
-
-    const premiumCard =
-        $("premiumBattleCard");
-
-    if (premiumCard) {
-        premiumCard.style.display =
-            remaining === 0
-                ? "flex"
-                : "";
-    }
-}
-
-/* =========================================================
-   NORMALIZE SUBJECT NAME
-========================================================= */
-
-function normalizeSubjectName(name) {
-
-    if (!name) {
-        return "";
-    }
-
-    const cleaned =
-        String(name)
-            .trim()
-            .replace(/\s+/g, " ")
-            .toLowerCase();
-
-    const aliases = {
-
-        "math": "Mathematics",
-        "maths": "Mathematics",
-        "mathematics": "Mathematics",
-
-        "english": "English Language",
-        "english language": "English Language",
-
-        "chem": "Chemistry",
-        "chem": "Chemistry",
-        "chemistry": "Chemistry",
-
-        "further maths": "Further Mathematics",
-        "further math": "Further Mathematics",
-        "further mathematics": "Further Mathematics",
-
-        "agric": "Agricultural Science",
-        "agric science": "Agricultural Science",
-        "agricultural science": "Agricultural Science",
-
-        "crs": "Christian Religious Studies",
-        "christian religious studies":
-            "Christian Religious Studies",
-
-        "irs": "Islamic Religious Studies",
-        "islamic religious studies":
-            "Islamic Religious Studies",
-
-        "computer": "Computer Studies",
-        "computer studies": "Computer Studies",
-        "computer science": "Computer Studies",
-
-        "data processing": "Data Processing",
-
-        "ict": "Information Technology",
-        "information technology":
-            "Information Technology",
-
-        "lit": "Literature in English",
-        "literature": "Literature in English",
-        "literature in english":
-            "Literature in English",
-
-        "pe": "Physical Education",
-        "physical education":
-            "Physical Education",
-
-        "civic": "Civic Education",
-        "civic education":
-            "Civic Education",
-
-        "financial accounting":
-            "Financial Accounting",
-
-        "visual art": "Visual Arts",
-        "visual arts": "Visual Arts",
-
-        "technical drawing":
-            "Technical Drawing",
-
-        "home economics":
-            "Home Economics"
-    };
-
-    return (
-        aliases[cleaned] ||
-        Object.keys(SUBJECT_DATABASE).find(
-            subject =>
-                subject.toLowerCase() ===
-                cleaned
-        ) ||
-        String(name).trim()
+let timerSeconds =
+    getStoredNumber(
+        "studyMindTimerSeconds",
+        selectedTimerSeconds
     );
-}
+
+let timerRunning = false;
+let timerEndTime = null;
+let timerInterval = null;
+
 
 /* =========================================================
-   LOAD ALL SUBJECTS
-========================================================= */
+   DOM HELPER
+   ========================================================= */
 
-function loadStudyPlanSubjects() {
+const $ = id =>
+    document.getElementById(id);
 
-    const subjectSelects = [
-        $("battleSubject"),
-        $("oneVOneSubject")
-    ].filter(Boolean);
 
-    if (!subjectSelects.length) {
-        return;
-    }
+/* =========================================================
+   DASHBOARD ELEMENTS
+   ========================================================= */
 
-    /*
-     * Always start with every subject in the
-     * Nigerian secondary curriculum database.
-     */
+const weeklyHours =
+    $("weeklyHours");
 
-    const curriculumSubjects =
-        Object.keys(
-            SUBJECT_DATABASE
-        );
+const daysLeftElement =
+    $("daysLeft");
 
-    /*
-     * Add subjects found in the student's
-     * personal StudyMind plan.
-     */
+const dailyGoal =
+    $("dailyGoal");
 
-    let planSubjects = [];
+const studyScore =
+    $("studyScore");
+
+
+/* =========================================================
+   SUBJECTS / TOPICS
+   ========================================================= */
+
+const subjectList =
+    $("subjectList");
+
+const topicList =
+    $("topicList");
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+const progressPercent =
+    $("progressPercent");
+
+const progressCount =
+    $("progressCount");
+
+const progressBar =
+    $("progressBar");
+
+
+/* =========================================================
+   STREAK
+   ========================================================= */
+
+const streak =
+    $("streak");
+
+
+/* =========================================================
+   SCORE
+   ========================================================= */
+
+const scoreDisplay =
+    $("scoreDisplay");
+
+const scoreProgressBar =
+    $("scoreProgressBar");
+
+const scoreMessage =
+    $("scoreMessage");
+
+
+/* =========================================================
+   CALENDAR
+   ========================================================= */
+
+const calendarDays =
+    $("calendarDays");
+
+const calendarMonth =
+    $("calendarMonth");
+
+const previousMonth =
+    $("previousMonth");
+
+const nextMonth =
+    $("nextMonth");
+
+
+/* =========================================================
+   NEXT BOOKING
+   ========================================================= */
+
+const nextBooking =
+    $("nextBooking");
+
+const nextBookingTime =
+    $("nextBookingTime");
+
+const scheduleList =
+    $("scheduleList");
+
+
+/* =========================================================
+   CURRENT TOPIC
+   ========================================================= */
+
+const currentTopicName =
+    $("currentTopicName");
+
+const currentTopicDescription =
+    $("currentTopicDescription");
+
+const topicPosition =
+    $("topicPosition");
+
+const topicStatusBadge =
+    $("topicStatusBadge");
+
+const topicCompleteCheckbox =
+    $("topicCompleteCheckbox");
+
+const topicCompletionMessage =
+    $("topicCompletionMessage");
+
+const nextTopicMessage =
+    $("nextTopicMessage");
+
+
+/* =========================================================
+   TOPIC QUESTIONS
+   ========================================================= */
+
+const topicQuestionsSection =
+    $("topicQuestionsSection") ||
+    $("topicQuestions");
+
+const topicQuestionsContainer =
+    $("topicQuestionsContainer") ||
+    $("topicQuestions");
+
+const submitTopicQuestions =
+    $("submitTopicQuestions");
+
+const topicQuestionResult =
+    $("topicQuestionResult");
+
+
+/* =========================================================
+   TIMER ELEMENTS
+   ========================================================= */
+
+const studyTimer =
+    $("studyTimer");
+
+const startTimerButton =
+    $("startTimerButton");
+
+const pauseTimerButton =
+    $("pauseTimerButton");
+
+const resetTimerButton =
+    $("resetTimerButton");
+
+const timerDurationSelect =
+    $("timerDuration") ||
+    $("studyTimerDuration") ||
+    $("timerMinutes") ||
+    $("studyTime");
+
+
+/* =========================================================
+   AI PROGRESS ANALYSIS
+   ========================================================= */
+
+const analyzeProgressButton =
+    $("analyzeProgressButton");
+
+const aiAdviceText =
+    $("aiAdviceText");
+
+
+/* =========================================================
+   ASK AI
+   ========================================================= */
+
+const askAIButton =
+    $("askAIButton");
+
+const aiQuestion =
+    $("aiQuestion");
+
+const aiResponse =
+    $("aiResponse");
+
+const aiCountBadge =
+    $("aiCountBadge");
+
+
+/* =========================================================
+   DOCUMENT SUMMARIZER
+   ========================================================= */
+
+const summarizeInput =
+    $("summarizeInput");
+
+const summarizeBtn =
+    $("summarizeBtn");
+
+const summaryOutput =
+    $("summaryOutput");
+
+const summaryCountBadge =
+    $("summaryCountBadge");
+
+
+/* =========================================================
+   STORAGE HELPERS
+   ========================================================= */
+
+function loadArray(key) {
 
     try {
 
-        const rawPlan =
-            localStorage.getItem(
-                "studyMindPlan"
+        const value =
+            JSON.parse(
+                localStorage.getItem(key)
             );
 
-        if (rawPlan) {
+        return Array.isArray(value)
+            ? value
+            : [];
 
-            const plan =
-                JSON.parse(rawPlan);
+    } catch {
 
-            planSubjects =
-                extractSubjectsFromPlan(plan);
-        }
+        return [];
 
-    } catch (error) {
-
-        console.warn(
-            "Could not read study plan:",
-            error
-        );
-    }
-
-    /*
-     * Combine everything.
-     */
-
-    const allSubjects = [
-        ...curriculumSubjects,
-        ...planSubjects.map(
-            subject =>
-                subject.name
-        )
-    ];
-
-    /*
-     * Normalize and remove duplicates.
-     */
-
-    const uniqueMap =
-        new Map();
-
-    allSubjects.forEach(
-        name => {
-
-            if (!name) {
-                return;
-            }
-
-            const normalized =
-                normalizeSubjectName(
-                    name
-                );
-
-            if (!normalized) {
-                return;
-            }
-
-            uniqueMap.set(
-                normalized.toLowerCase(),
-                normalized
-            );
-        }
-    );
-
-    const uniqueSubjects =
-        Array.from(
-            uniqueMap.values()
-        );
-
-    /*
-     * Alphabetical order.
-     */
-
-    uniqueSubjects.sort(
-        (a, b) =>
-            a.localeCompare(b)
-    );
-
-    /*
-     * Populate BOTH dropdowns.
-     */
-
-    subjectSelects.forEach(
-        select => {
-
-            const previousValue =
-                select.value;
-
-            select.innerHTML = "";
-
-            const defaultOption =
-                document.createElement(
-                    "option"
-                );
-
-            defaultOption.value = "";
-
-            defaultOption.textContent =
-                "Choose a subject";
-
-            select.appendChild(
-                defaultOption
-            );
-
-            uniqueSubjects.forEach(
-                subject => {
-
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    option.value =
-                        subject;
-
-                    option.textContent =
-                        subject;
-
-                    select.appendChild(
-                        option
-                    );
-                }
-            );
-
-            /*
-             * Restore an existing selection
-             * if one was already present.
-             */
-
-            if (
-                previousValue &&
-                uniqueSubjects.includes(
-                    normalizeSubjectName(
-                        previousValue
-                    )
-                )
-            ) {
-
-                select.value =
-                    normalizeSubjectName(
-                        previousValue
-                    );
-            }
-        }
-    );
-
-    console.log(
-        "StudyMind Game Mode subjects loaded:",
-        uniqueSubjects
-    );
-}
-
-/* =========================================================
-   EXTRACT SUBJECTS FROM STUDY PLAN
-========================================================= */
-
-function extractSubjectsFromPlan(plan) {
-
-    const results = [];
-
-    if (!plan) {
-        return results;
-    }
-
-    if (Array.isArray(plan)) {
-
-        plan.forEach(
-            item => {
-
-                if (
-                    typeof item ===
-                    "string"
-                ) {
-
-                    results.push({
-                        name: item,
-                        topics: []
-                    });
-
-                    return;
-                }
-
-                if (
-                    item &&
-                    typeof item ===
-                    "object"
-                ) {
-
-                    const name =
-                        item.subject ||
-                        item.subjectName ||
-                        item.name ||
-                        item.title;
-
-                    if (name) {
-
-                        results.push({
-                            name:
-                                String(name),
-                            topics:
-                                item.topics ||
-                                item.topicList ||
-                                item.contents ||
-                                []
-                        });
-                    }
-                }
-            }
-        );
-
-        return results;
-    }
-
-    if (
-        typeof plan !==
-        "object"
-    ) {
-
-        return results;
-    }
-
-    const possibleArrays = [
-
-        plan.subjects,
-        plan.subjectList,
-        plan.plan,
-        plan.schedule,
-        plan.studyPlan,
-        plan.timetable
-    ];
-
-    possibleArrays.forEach(
-        array => {
-
-            if (
-                Array.isArray(array)
-            ) {
-
-                results.push(
-                    ...extractSubjectsFromPlan(
-                        array
-                    )
-                );
-            }
-        }
-    );
-
-    if (
-        plan.subjects &&
-        typeof plan.subjects ===
-        "object" &&
-        !Array.isArray(
-            plan.subjects
-        )
-    ) {
-
-        Object.entries(
-            plan.subjects
-        ).forEach(
-            ([name, data]) => {
-
-                results.push({
-
-                    name,
-
-                    topics:
-                        data?.topics ||
-                        data?.topicList ||
-                        data?.contents ||
-                        []
-                });
-            }
-        );
-    }
-
-    return results;
-}
-
-/* =========================================================
-   COMPUTER SUBJECT LISTENER
-========================================================= */
-
-function setupComputerSubjectListener() {
-
-    const subject =
-        $("battleSubject");
-
-    if (!subject) {
-        return;
-    }
-
-    subject.addEventListener(
-        "change",
-        function () {
-
-            populateTopicSelect(
-                "battleSubject",
-                "battleTopic",
-                "startBattleButton"
-            );
-        }
-    );
-}
-
-/* =========================================================
-   1V1 SUBJECT LISTENER
-========================================================= */
-
-function setupOneVOneSubjectListener() {
-
-    const subject =
-        $("oneVOneSubject");
-
-    if (!subject) {
-        return;
-    }
-
-    subject.addEventListener(
-        "change",
-        function () {
-
-            populateTopicSelect(
-                "oneVOneSubject",
-                "oneVOneTopic",
-                "findOpponentButton"
-            );
-        }
-    );
-}
-
-/* =========================================================
-   POPULATE TOPICS
-========================================================= */
-
-function populateTopicSelect(
-    subjectId,
-    topicId,
-    buttonId
-) {
-
-    const subjectSelect =
-        $(subjectId);
-
-    const topicSelect =
-        $(topicId);
-
-    if (!topicSelect) {
-        return;
-    }
-
-    topicSelect.innerHTML = "";
-
-    const selectedSubject =
-        subjectSelect?.value?.trim() || "";
-
-    if (!selectedSubject) {
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-        option.value = "";
-
-        option.textContent =
-            "Choose a subject first";
-
-        topicSelect.appendChild(
-            option
-        );
-
-        topicSelect.disabled =
-            true;
-
-        if ($(buttonId)) {
-            $(buttonId).disabled =
-                true;
-        }
-
-        return;
-    }
-
-    const normalizedSubject =
-        normalizeSubjectName(
-            selectedSubject
-        );
-
-    /*
-     * Curriculum topics.
-     */
-
-    let topics =
-        SUBJECT_DATABASE[
-            normalizedSubject
-        ] || [];
-
-    /*
-     * Personal study-plan topics.
-     */
-
-    const personalTopics =
-        getTopicsFromStudyPlan(
-            normalizedSubject
-        );
-
-    topics = [
-        ...topics,
-        ...personalTopics
-    ];
-
-    /*
-     * Remove duplicates.
-     */
-
-    topics = [
-        ...new Set(
-            topics
-                .map(
-                    topic =>
-                        String(topic)
-                            .trim()
-                )
-                .filter(Boolean)
-        )
-    ];
-
-    /*
-     * Topic dropdown default.
-     */
-
-    const defaultOption =
-        document.createElement(
-            "option"
-        );
-
-    defaultOption.value = "";
-
-    defaultOption.textContent =
-        topics.length
-            ? "Choose a topic"
-            : "No topics available";
-
-    topicSelect.appendChild(
-        defaultOption
-    );
-
-    /*
-     * Add topics.
-     */
-
-    topics.forEach(
-        topic => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                topic;
-
-            option.textContent =
-                topic;
-
-            topicSelect.appendChild(
-                option
-            );
-        }
-    );
-
-    topicSelect.disabled =
-        topics.length === 0;
-
-    if ($(buttonId)) {
-        $(buttonId).disabled =
-            topics.length === 0;
     }
 }
 
-/* =========================================================
-   GET TOPICS FROM STUDY PLAN
-========================================================= */
 
-function getTopicsFromStudyPlan(
-    subjectName
-) {
-
-    const topics = [];
+function loadObject(key) {
 
     try {
 
-        const raw =
-            localStorage.getItem(
-                "studyMindPlan"
+        const value =
+            JSON.parse(
+                localStorage.getItem(key)
             );
 
-        if (!raw) {
-            return topics;
-        }
+        return value &&
+            typeof value === "object"
+            ? value
+            : null;
 
-        const plan =
-            JSON.parse(raw);
+    } catch {
 
-        findTopicsForSubject(
-            plan,
-            subjectName,
-            topics
-        );
+        return null;
 
-    } catch (error) {
-
-        console.warn(
-            "Could not read study-plan topics:",
-            error
-        );
     }
-
-    return [
-        ...new Set(
-            topics
-                .map(
-                    topic =>
-                        String(topic)
-                            .trim()
-                )
-                .filter(Boolean)
-        )
-    ];
 }
-/* =========================================================
-   FIND TOPICS
-========================================================= */
 
-function findTopicsForSubject(
-    value,
-    subjectName,
-    output
+
+function getStoredNumber(
+    key,
+    fallback
 ) {
 
-    if (!value) {
+    const value =
+        Number(
+            localStorage.getItem(key)
+        );
+
+    return Number.isFinite(value) &&
+        value >= 0
+        ? value
+        : fallback;
+}
+
+
+function getStoredPositiveNumber(
+    key,
+    fallback
+) {
+
+    const value =
+        Number(
+            localStorage.getItem(key)
+        );
+
+    return Number.isFinite(value) &&
+        value > 0
+        ? value
+        : fallback;
+}
+
+
+function savePlan() {
+
+    if (!studyPlan) {
         return;
     }
 
-    const target =
-        normalizeSubjectName(
-            subjectName
-        ).toLowerCase();
+    localStorage.setItem(
+        "studyMindPlan",
+        JSON.stringify(studyPlan)
+    );
+}
 
-    if (Array.isArray(value)) {
 
-        value.forEach(
-            item => {
+/* =========================================================
+   DATE HELPERS
+   ========================================================= */
 
-                if (
-                    item &&
-                    typeof item ===
-                    "object"
-                ) {
+function startOfDay(date) {
 
-                    const name =
-                        item.subject ||
-                        item.subjectName ||
-                        item.subject_name ||
-                        item.name ||
-                        item.title;
+    const result =
+        new Date(date);
 
-                    if (
-                        name &&
-                        normalizeSubjectName(
-                            name
-                        ).toLowerCase() ===
-                        target
-                    ) {
+    result.setHours(
+        0,
+        0,
+        0,
+        0
+    );
 
-                        addTopics(
-                            item.topics ||
-                            item.topicList ||
-                            item.contents,
-                            output
-                        );
-                    }
+    return result;
+}
 
-                    findTopicsForSubject(
-                        item,
-                        subjectName,
-                        output
-                    );
-                }
-            }
-        );
 
-        return;
+function formatDateKey(date) {
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+
+function todayKey() {
+
+    return formatDateKey(
+        new Date()
+    );
+}
+
+
+/* =========================================================
+   TOPIC HELPERS
+   ========================================================= */
+
+function getTopicName(topic) {
+
+    if (
+        typeof topic === "string"
+    ) {
+
+        return topic.trim();
+
     }
 
     if (
-        typeof value !==
-        "object"
+        topic &&
+        typeof topic === "object"
     ) {
 
-        return;
+        const name =
+            topic.name ||
+            topic.topic ||
+            topic.topicName ||
+            topic.title ||
+            topic.subjectTopic ||
+            topic.label;
+
+        if (
+            name !== undefined &&
+            name !== null &&
+            String(name).trim()
+        ) {
+
+            return String(name).trim();
+
+        }
+
+    }
+
+    return "";
+}
+
+
+function getTopicId(
+    topic,
+    index
+) {
+
+    if (
+        topic &&
+        typeof topic === "object"
+    ) {
+
+        if (
+            topic.id !== undefined &&
+            topic.id !== null
+        ) {
+
+            return String(topic.id);
+
+        }
+
+        if (
+            topic.topicId !== undefined &&
+            topic.topicId !== null
+        ) {
+
+            return String(topic.topicId);
+
+        }
+
     }
 
     const name =
-        value.subject ||
-        value.subjectName ||
-        value.subject_name;
+        getTopicName(topic);
 
-    if (
-        name &&
-        normalizeSubjectName(
-            name
-        ).toLowerCase() ===
-        target
-    ) {
-
-        addTopics(
-            value.topics ||
-            value.topicList ||
-            value.contents,
-            output
-        );
+    if (name) {
+        return name;
     }
 
-    Object.values(value).forEach(
-        child => {
-
-            if (
-                child &&
-                typeof child ===
-                "object"
-            ) {
-
-                findTopicsForSubject(
-                    child,
-                    subjectName,
-                    output
-                );
-            }
-        }
-    );
+    return `topic-${index + 1}`;
 }
 
-/* =========================================================
-   ADD TOPICS
-========================================================= */
 
-function addTopics(
-    value,
-    output
+/* =========================================================
+   NORMALIZE TOPICS
+   ========================================================= */
+
+function normalizeTopics(
+    rawTopics,
+    subjects = []
 ) {
 
-    if (!value) {
-        return;
+    let topicListData = [];
+
+
+    /*
+       ARRAY
+    */
+
+    if (
+        Array.isArray(rawTopics)
+    ) {
+
+        topicListData =
+            rawTopics;
+
     }
 
-    if (Array.isArray(value)) {
 
-        value.forEach(
-            item => {
+    /*
+       STRING
+    */
+
+    else if (
+        typeof rawTopics === "string"
+    ) {
+
+        topicListData =
+            rawTopics
+                .split(/[\n,]/)
+                .map(
+                    topic =>
+                        topic.trim()
+                )
+                .filter(Boolean);
+
+    }
+
+
+    /*
+       NORMALIZE
+    */
+
+    return topicListData
+        .map(
+            (topic, index) => {
+
+                /*
+                   STRING TOPIC
+                */
 
                 if (
-                    typeof item ===
+                    typeof topic ===
                     "string"
                 ) {
 
-                    output.push(
-                        item
-                    );
+                    const name =
+                        topic.trim();
 
-                    return;
+                    if (!name) {
+                        return null;
+                    }
+
+                    return {
+
+                        id:
+                            index + 1,
+
+                        name,
+
+                        title:
+                            name,
+
+                        topic:
+                            name,
+
+                        subject:
+                            subjects[index] ||
+                            "",
+
+                        description:
+                            `Study ${name} and complete the knowledge check.`,
+
+                        status:
+                            "Not Started"
+
+                    };
+
                 }
 
+
+                /*
+                   OBJECT TOPIC
+                */
+
                 if (
-                    item &&
-                    typeof item ===
+                    topic &&
+                    typeof topic ===
                     "object"
                 ) {
 
                     const name =
-                        item.topic ||
-                        item.topicName ||
-                        item.name ||
-                        item.title;
-
-                    if (name) {
-
-                        output.push(
-                            String(name)
-                        );
-                    }
-                }
-            }
-        );
-
-        return;
-    }
-
-    if (
-        typeof value ===
-        "string"
-    ) {
-
-        output.push(value);
-    }
-}
-
-/* =========================================================
-   START COMPUTER BATTLE
-========================================================= */
-
-function startComputerBattle() {
-
-    if (!hasBattleAvailable()) {
-
-        openPremium();
-
-        return;
-    }
-
-    battleState.mode =
-        "computer";
-
-    showComputerSetup();
-
-    const setup =
-        $("battleSetup");
-
-    if (setup) {
-
-        setup.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-}
-
-/* =========================================================
-   SHOW COMPUTER SETUP
-========================================================= */
-
-function showComputerSetup() {
-
-    const setup =
-        $("battleSetup");
-
-    const oneVOneSetup =
-        $("oneVOneSetup");
-
-    const arena =
-        $("battleArena");
-
-    const oneVOneArena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-    if (setup) {
-        setup.hidden = false;
-    }
-
-    if (oneVOneSetup) {
-        oneVOneSetup.hidden = true;
-    }
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (oneVOneArena) {
-        oneVOneArena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-}
-
-/* =========================================================
-   BEGIN COMPUTER BATTLE
-========================================================= */
-
-async function beginBattle() {
-
-    if (!hasBattleAvailable()) {
-
-        openPremium();
-
-        return;
-    }
-
-    const subject =
-        normalizeSubjectName(
-            $("battleSubject")?.value?.trim() ||
-            ""
-        );
-
-    const topic =
-        $("battleTopic")?.value?.trim() ||
-        "";
-
-    const difficulty =
-        $("battleDifficulty")?.value ||
-        "mixed";
-
-    if (!subject) {
-
-        alert(
-            "Please choose a subject before starting."
-        );
-
-        return;
-    }
-
-    if (!topic) {
-
-        alert(
-            "Please choose a topic before starting."
-        );
-
-        return;
-    }
-
-    battleState = {
-
-        mode: "computer",
-
-        subject,
-
-        topic,
-
-        difficulty,
-
-        questions: [],
-
-        currentQuestion: 0,
-
-        playerScore: 0,
-
-        opponentScore: 0,
-
-        timer:
-            QUESTION_TIME_SECONDS,
-
-        timerInterval: null,
-
-        answering: false,
-
-        battleActive: false
-    };
-
-    const button =
-        $("startBattleButton");
-
-    if (button) {
-
-        button.disabled = true;
-
-        button.textContent =
-            "⚔️ Generating Battle...";
-    }
-
-    try {
-
-        const questions =
-            await generateBattleQuestions(
-                subject,
-                topic,
-                difficulty
-            );
-
-        if (
-            !Array.isArray(questions) ||
-            questions.length <
-            QUESTIONS_PER_BATTLE
-        ) {
-
-            throw new Error(
-                "The AI did not return enough valid questions."
-            );
-        }
-
-        battleState.questions =
-            questions.slice(
-                0,
-                QUESTIONS_PER_BATTLE
-            );
-
-        setBattlesUsed(
-            getBattlesUsed() + 1
-        );
-
-        updateBattleLimitUI();
-
-        startComputerArena();
-
-    } catch (error) {
-
-        console.error(
-            "Battle generation error:",
-            error
-        );
-
-        alert(
-            "The computer battle could not start.\n\n" +
-            error.message
-        );
-
-    } finally {
-
-        if (button) {
-
-            button.disabled = false;
-
-            button.textContent =
-                "⚔️ Start Battle";
-        }
-    }
-}
-
-/* =========================================================
-   AI QUESTION GENERATION
-========================================================= */
-
-async function generateBattleQuestions(
-    subject,
-    topic,
-    difficulty
-) {
-
-    const prompt = `
-You are generating questions for StudyMind AI Game Mode.
-
-Create exactly ${QUESTIONS_PER_BATTLE}
-multiple-choice questions for a Nigerian secondary-school student.
-
-SUBJECT:
-${subject}
-
-TOPIC:
-${topic}
-
-DIFFICULTY:
-${difficulty}
-
-The questions MUST be specifically about the selected subject
-and selected topic.
-
-Return ONLY valid JSON.
-
-Use exactly this structure:
-
-{
-  "questions": [
-    {
-      "question": "Question text",
-      "options": [
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
-      ],
-      "answer": 0,
-      "explanation": "Short explanation"
-    }
-  ]
-}
-
-RULES:
-
-1. Exactly 10 questions.
-
-2. Exactly 4 options for every question.
-
-3. "answer" must be a zero-based number from 0 to 3.
-
-4. Every question must have exactly one correct answer.
-
-5. Questions must be academically accurate.
-
-6. Questions must match the selected topic.
-
-7. Do not change the subject.
-
-8. Do not change the topic.
-
-9. Do not mix subjects.
-
-10. Do not mix unrelated topics.
-
-11. No markdown.
-
-12. No code fences.
-
-13. No text outside the JSON.
-
-14. Questions must be appropriate for Nigerian secondary-school students.
-
-15. Where appropriate, use WAEC/NECO-style question conventions.
-
-16. For Mathematics, Physics, Chemistry and calculation-based subjects,
-use correct formulas, calculations and units.
-
-17. For English Language, Literature, Government, Economics, Biology,
-Geography, History, Civic Education, CRS, IRS and other subjects,
-make the questions specifically relevant to the selected topic.
-
-18. Avoid duplicate questions.
-
-19. Make distractors plausible.
-
-20. Keep explanations short.
-
-Return ONLY the JSON object.
-`;
-
-    const endpoints = [
-        "/api/ask-ai",
-        "/api/chat"
-    ];
-
-    let lastError =
-        "The AI server did not return a usable response.";
-
-    for (
-        const endpoint of endpoints
-    ) {
-
-        try {
-
-            const response =
-                await fetch(
-                    endpoint,
-                    {
-
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-
-                            message: prompt,
-
-                            prompt,
-
-                            subject,
-
-                            topic,
-
-                            difficulty,
-
-                            mode: "game",
-
-                            type:
-                                "game_questions",
-
-                            questionCount:
-                                QUESTIONS_PER_BATTLE
-                        })
-                    }
-                );
-
-            const rawText =
-                await response.text();
-
-            console.log(
-                `AI response from ${endpoint}:`,
-                rawText
-            );
-
-            if (!response.ok) {
-
-                let serverMessage =
-                    rawText;
-
-                try {
-
-                    const errorJson =
-                        JSON.parse(
-                            rawText
+                        getTopicName(
+                            topic
                         );
 
-                    serverMessage =
-                        extractServerError(
-                            errorJson
-                        ) ||
-                        rawText;
-
-                } catch (_) {}
-
-                lastError =
-                    `${endpoint} returned HTTP ${response.status}: ` +
-                    cleanErrorMessage(
-                        serverMessage
-                    );
-
-                continue;
-            }
-
-            if (!rawText.trim()) {
-
-                lastError =
-                    `${endpoint} returned an empty response.`;
-
-                continue;
-            }
-
-            let payload =
-                safelyParseJSON(
-                    rawText
-                );
-
-            /*
-             * If the endpoint returned JSON containing
-             * a reply string, inspect that reply too.
-             */
-
-            if (
-                payload &&
-                typeof payload.reply ===
-                "string"
-            ) {
-
-                const nested =
-                    extractJSONFromText(
-                        payload.reply
-                    );
-
-                if (nested) {
-                    payload = nested;
-                }
-            }
-
-            if (!payload) {
-
-                payload =
-                    extractJSONFromText(
-                        rawText
-                    );
-            }
-
-            const questions =
-                extractQuestionsFromResponse(
-                    payload
-                );
-
-            const normalized =
-                normalizeQuestions(
-                    questions
-                );
-
-            if (
-                normalized.length >=
-                QUESTIONS_PER_BATTLE
-            ) {
-
-                return normalized.slice(
-                    0,
-                    QUESTIONS_PER_BATTLE
-                );
-            }
-
-            lastError =
-                `${endpoint} returned data, but it did not contain ` +
-                `${QUESTIONS_PER_BATTLE} usable questions.`;
-
-        } catch (error) {
-
-            console.error(
-                `${endpoint} request failed:`,
-                error
-            );
-
-            lastError =
-                `${endpoint} request failed: ` +
-                error.message;
-        }
-    }
-
-    throw new Error(
-        "AI server error.\n\n" +
-        lastError
-    );
-}
-
-/* =========================================================
-   SAFE JSON PARSER
-========================================================= */
-
-function safelyParseJSON(text) {
-
-    if (!text) {
-        return null;
-    }
-
-    try {
-
-        return JSON.parse(
-            text
-        );
-
-    } catch (_) {
-
-        return null;
-    }
-}
-
-/* =========================================================
-   EXTRACT JSON FROM TEXT
-========================================================= */
-
-function extractJSONFromText(text) {
-
-    if (!text) {
-        return null;
-    }
-
-    let cleaned =
-        String(text).trim();
-
-    cleaned =
-        cleaned
-            .replace(
-                /^```json\s*/i,
-                ""
-            )
-            .replace(
-                /^```\s*/i,
-                ""
-            )
-            .replace(
-                /\s*```$/i,
-                ""
-            )
-            .trim();
-
-    const direct =
-        safelyParseJSON(
-            cleaned
-        );
-
-    if (direct) {
-        return direct;
-    }
-
-    const objectStart =
-        cleaned.indexOf("{");
-
-    const objectEnd =
-        cleaned.lastIndexOf("}");
-
-    if (
-        objectStart !== -1 &&
-        objectEnd > objectStart
-    ) {
-
-        const object =
-            safelyParseJSON(
-                cleaned.slice(
-                    objectStart,
-                    objectEnd + 1
-                )
-            );
-
-        if (object) {
-            return object;
-        }
-    }
-
-    const arrayStart =
-        cleaned.indexOf("[");
-
-    const arrayEnd =
-        cleaned.lastIndexOf("]");
-
-    if (
-        arrayStart !== -1 &&
-        arrayEnd > arrayStart
-    ) {
-
-        const array =
-            safelyParseJSON(
-                cleaned.slice(
-                    arrayStart,
-                    arrayEnd + 1
-                )
-            );
-
-        if (array) {
-            return array;
-        }
-    }
-
-    return null;
-}
-
-/* =========================================================
-   EXTRACT SERVER ERROR
-========================================================= */
-
-function extractServerError(data) {
-
-    if (!data) {
-        return "";
-    }
-
-    if (
-        typeof data ===
-        "string"
-    ) {
-
-        return data;
-    }
-
-    return (
-        data.error?.message ||
-        data.error ||
-        data.message ||
-        data.details ||
-        data.statusText ||
-        ""
-    );
-}
-
-/* =========================================================
-   EXTRACT QUESTIONS
-========================================================= */
-
-function extractQuestionsFromResponse(
-    payload
-) {
-
-    if (!payload) {
-        return [];
-    }
-
-    if (
-        Array.isArray(payload)
-    ) {
-
-        return payload;
-    }
-
-    if (
-        Array.isArray(
-            payload.questions
-        )
-    ) {
-
-        return payload.questions;
-    }
-
-    if (
-        payload.data &&
-        Array.isArray(
-            payload.data.questions
-        )
-    ) {
-
-        return payload.data.questions;
-    }
-
-    if (
-        payload.result &&
-        Array.isArray(
-            payload.result.questions
-        )
-    ) {
-
-        return payload.result.questions;
-    }
-
-    if (
-        Array.isArray(
-            payload.choices
-        )
-    ) {
-
-        const content =
-            payload
-                .choices[0]
-                ?.message
-                ?.content;
-
-        if (
-            typeof content ===
-            "string"
-        ) {
-
-            const nested =
-                extractJSONFromText(
-                    content
-                );
-
-            return extractQuestionsFromResponse(
-                nested
-            );
-        }
-    }
-
-    const text =
-        payload.text ||
-        payload.content ||
-        payload.output ||
-        payload.reply;
-
-    if (
-        typeof text ===
-        "string"
-    ) {
-
-        const nested =
-            extractJSONFromText(
-                text
-            );
-
-        return extractQuestionsFromResponse(
-            nested
-        );
-    }
-
-    return [];
-}
-
-/* =========================================================
-   NORMALIZE QUESTIONS
-========================================================= */
-
-function normalizeQuestions(
-    questions
-) {
-
-    if (
-        !Array.isArray(
-            questions
-        )
-    ) {
-
-        return [];
-    }
-
-    return questions
-        .map(
-            question => {
-
-                if (
-                    !question ||
-                    typeof question !==
-                    "object"
-                ) {
-
-                    return null;
-                }
-
-                const questionText =
-                    question.question ||
-                    question.questionText ||
-                    question.text;
-
-                let options =
-                    question.options ||
-                    question.choices ||
-                    question.answers;
-
-                if (
-                    !Array.isArray(
-                        options
-                    )
-                ) {
-
-                    return null;
-                }
-
-                options =
-                    options
-                        .map(
-                            option => {
-
-                                if (
-                                    typeof option ===
-                                    "string"
-                                ) {
-
-                                    return option.trim();
-                                }
-
-                                if (
-                                    option &&
-                                    typeof option ===
-                                    "object"
-                                ) {
-
-                                    return (
-                                        option.text ||
-                                        option.label ||
-                                        option.answer ||
-                                        ""
-                                    ).trim();
-                                }
-
-                                return "";
-                            }
-                        )
-                        .filter(Boolean);
-
-                if (
-                    !questionText ||
-                    options.length !== 4
-                ) {
-
-                    return null;
-                }
-
-                let answer =
-                    question.answer ??
-                    question.correctAnswer ??
-                    question.correct ??
-                    question.answerIndex;
-
-                if (
-                    typeof answer ===
-                    "string"
-                ) {
-
-                    const trimmed =
-                        answer.trim();
-
-                    const letter =
-                        trimmed
-                            .toUpperCase()
-                            .replace(
-                                /[.)]/g,
-                                ""
-                            );
-
-                    if (
-                        ["A", "B", "C", "D"]
-                            .includes(
-                                letter
-                            )
-                    ) {
-
-                        answer =
-                            ["A", "B", "C", "D"]
-                                .indexOf(
-                                    letter
-                                );
-
-                    } else if (
-                        !Number.isNaN(
-                            Number(trimmed)
-                        )
-                    ) {
-
-                        answer =
-                            Number(trimmed);
-
-                        if (
-                            answer >= 1 &&
-                            answer <= 4
-                        ) {
-
-                            answer -= 1;
-                        }
+                    /*
+                       IMPORTANT:
+                       Never turn a real topic
+                       into "Untitled Topic".
+                    */
+
+                    if (!name) {
+                        return null;
                     }
+
+                    const subject =
+                        topic.subject ||
+                        topic.subjectName ||
+                        topic.course ||
+                        subjects[index] ||
+                        "";
+
+                    const description =
+                        topic.description ||
+                        topic.details ||
+                        topic.explanation ||
+                        `Study ${name} and complete the knowledge check.`;
+
+                    const status =
+                        topic.status ||
+                        "Not Started";
+
+                    return {
+
+                        ...topic,
+
+                        id:
+                            topic.id ??
+                            topic.topicId ??
+                            index + 1,
+
+                        name,
+
+                        title:
+                            topic.title ||
+                            name,
+
+                        topic:
+                            topic.topic ||
+                            name,
+
+                        subject:
+                            String(
+                                subject
+                            ).trim(),
+
+                        description:
+                            String(
+                                description
+                            ).trim(),
+
+                        status:
+                            String(
+                                status
+                            ).trim()
+
+                    };
+
                 }
 
-                answer =
-                    Number(answer);
 
-                if (
-                    !Number.isInteger(
-                        answer
-                    ) ||
-                    answer < 0 ||
-                    answer > 3
-                ) {
+                return null;
 
-                    return null;
-                }
-
-                return {
-
-                    question:
-                        String(
-                            questionText
-                        ).trim(),
-
-                    options,
-
-                    answer,
-
-                    explanation:
-                        typeof question.explanation ===
-                        "string"
-                            ? question.explanation.trim()
-                            : ""
-                };
             }
         )
         .filter(Boolean);
 }
 
-/* =========================================================
-   START COMPUTER ARENA
-========================================================= */
-
-function startComputerArena() {
-
-    const setup =
-        $("battleSetup");
-
-    const arena =
-        $("battleArena");
-
-    const oneVOneSetup =
-        $("oneVOneSetup");
-
-    const oneVOneArena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-    if (setup) {
-        setup.hidden = true;
-    }
-
-    if (oneVOneSetup) {
-        oneVOneSetup.hidden = true;
-    }
-
-    if (oneVOneArena) {
-        oneVOneArena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-    if (arena) {
-        arena.hidden = false;
-    }
-
-    battleState.battleActive =
-        true;
-
-    battleState.currentQuestion =
-        0;
-
-    battleState.playerScore =
-        0;
-
-    battleState.opponentScore =
-        0;
-
-    updateComputerScores();
-
-    showComputerQuestion();
-}
 
 /* =========================================================
-   SHOW COMPUTER QUESTION
-========================================================= */
+   NORMALIZE SUBJECTS
+   ========================================================= */
 
-function showComputerQuestion() {
-
-    stopBattleTimer();
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    if (!question) {
-
-        finishComputerBattle();
-
-        return;
-    }
-
-    battleState.answering =
-        false;
-
-    const number =
-        battleState.currentQuestion +
-        1;
+function normalizeSubjects(
+    rawSubjects
+) {
 
     if (
-        $("currentQuestionNumber")
+        Array.isArray(
+            rawSubjects
+        )
     ) {
 
-        $("currentQuestionNumber")
-            .textContent =
-            number;
-    }
-
-    if (
-        $("battleQuestionTopic")
-    ) {
-
-        $("battleQuestionTopic")
-            .textContent =
-            battleState.topic;
-    }
-
-    if (
-        $("battleQuestion")
-    ) {
-
-        $("battleQuestion")
-            .textContent =
-            question.question;
-    }
-
-    const answerGrid =
-        $("answerGrid");
-
-    if (!answerGrid) {
-        return;
-    }
-
-    answerGrid.innerHTML =
-        "";
-
-    question.options.forEach(
-        (option, index) => {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.className =
-                "answer-button";
-
-            button.textContent =
-                option;
-
-            button.addEventListener(
-                "click",
-                function () {
-
-                    answerComputerQuestion(
-                        index
-                    );
-                }
-            );
-
-            answerGrid.appendChild(
-                button
-            );
-        }
-    );
-
-    startBattleTimer();
-}
-
-/* =========================================================
-   TIMER
-========================================================= */
-
-function startBattleTimer() {
-
-    stopBattleTimer();
-
-    battleState.timer =
-        QUESTION_TIME_SECONDS;
-
-    updateBattleTimer();
-
-    battleState.timerInterval =
-        setInterval(
-            function () {
-
-                battleState.timer--;
-
-                updateBattleTimer();
+        return rawSubjects
+            .map(subject => {
 
                 if (
-                    battleState.timer <=
-                    0
+                    subject &&
+                    typeof subject ===
+                    "object"
                 ) {
 
-                    stopBattleTimer();
+                    return String(
+                        subject.name ||
+                        subject.subject ||
+                        subject.title ||
+                        ""
+                    ).trim();
 
-                    handleComputerTimeout();
                 }
 
-            },
-            1000
-        );
-}
+                return String(
+                    subject
+                ).trim();
 
-function stopBattleTimer() {
+            })
+            .filter(Boolean);
+
+    }
+
 
     if (
-        battleState.timerInterval
-    ) {
-
-        clearInterval(
-            battleState.timerInterval
-        );
-
-        battleState.timerInterval =
-            null;
-    }
-}
-
-function updateBattleTimer() {
-
-    if ($("battleTimer")) {
-
-        $("battleTimer")
-            .textContent =
-            Math.max(
-                0,
-                battleState.timer
-            );
-    }
-}
-
-/* =========================================================
-   ANSWER QUESTION
-========================================================= */
-
-function answerComputerQuestion(
-    selectedIndex
-) {
-
-    if (
-        battleState.answering ||
-        !battleState.battleActive
-    ) {
-
-        return;
-    }
-
-    battleState.answering =
-        true;
-
-    stopBattleTimer();
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    if (!question) {
-        return;
-    }
-
-    const buttons =
-        document.querySelectorAll(
-            "#answerGrid .answer-button"
-        );
-
-    buttons.forEach(
-        function (
-            button,
-            index
-        ) {
-
-            button.disabled =
-                true;
-
-            if (
-                index ===
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-
-            if (
-                index ===
-                selectedIndex &&
-                index !==
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "incorrect"
-                );
-            }
-        }
-    );
-
-    if (
-        selectedIndex ===
-        question.answer
-    ) {
-
-        battleState.playerScore +=
-            10;
-
-    } else {
-
-        if (
-            Math.random() <
-            0.65
-        ) {
-
-            battleState.opponentScore +=
-                10;
-        }
-    }
-
-    updateComputerScores();
-
-    setTimeout(
-        function () {
-
-            battleState.currentQuestion++;
-
-            showComputerQuestion();
-
-        },
-        900
-    );
-}
-
-/* =========================================================
-   TIMEOUT
-========================================================= */
-
-function handleComputerTimeout() {
-
-    if (
-        battleState.answering ||
-        !battleState.battleActive
-    ) {
-
-        return;
-    }
-
-    battleState.answering =
-        true;
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    const buttons =
-        document.querySelectorAll(
-            "#answerGrid .answer-button"
-        );
-
-    buttons.forEach(
-        function (
-            button,
-            index
-        ) {
-
-            button.disabled =
-                true;
-
-            if (
-                question &&
-                index ===
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-        }
-    );
-
-    battleState.opponentScore +=
-        10;
-
-    updateComputerScores();
-
-    setTimeout(
-        function () {
-
-            battleState.currentQuestion++;
-
-            showComputerQuestion();
-
-        },
-        900
-    );
-}
-/* =========================================================
-   UPDATE SCORES
-========================================================= */
-
-function updateComputerScores() {
-
-    if ($("playerScore")) {
-
-        $("playerScore")
-            .textContent =
-            battleState.playerScore;
-    }
-
-    if ($("computerScore")) {
-
-        $("computerScore")
-            .textContent =
-            battleState.opponentScore;
-    }
-}
-
-/* =========================================================
-   FINISH BATTLE
-========================================================= */
-
-function finishComputerBattle() {
-
-    stopBattleTimer();
-
-    battleState.battleActive =
-        false;
-
-    const arena =
-        $("battleArena");
-
-    const results =
-        $("battleResults");
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = false;
-    }
-
-    const player =
-        battleState.playerScore;
-
-    const computer =
-        battleState.opponentScore;
-
-    let points = 0;
-
-    let title =
-        "Battle Complete";
-
-    let message =
-        "";
-
-    if (
-        player >
-        computer
-    ) {
-
-        title =
-            "🏆 Victory!";
-
-        message =
-            "Excellent work! You defeated the computer.";
-
-        points =
-            player + 25;
-
-    } else if (
-        player <
-        computer
-    ) {
-
-        title =
-            "Keep Studying!";
-
-        message =
-            "The computer won this round. Review the topic and try again.";
-
-        points =
-            player;
-
-    } else {
-
-        title =
-            "🤝 Draw!";
-
-        message =
-            "You and the computer finished with the same score.";
-
-        points =
-            player + 10;
-    }
-
-    setBattlePoints(
-        getBattlePoints() +
-        points
-    );
-
-    if ($("battleResultTitle")) {
-
-        $("battleResultTitle")
-            .textContent =
-            title;
-    }
-
-    if ($("battleResultMessage")) {
-
-        $("battleResultMessage")
-            .textContent =
-            message;
-    }
-
-    if ($("finalPlayerScore")) {
-
-        $("finalPlayerScore")
-            .textContent =
-            player;
-    }
-
-    if ($("finalComputerScore")) {
-
-        $("finalComputerScore")
-            .textContent =
-            computer;
-    }
-
-    if ($("pointsEarned")) {
-
-        $("pointsEarned")
-            .textContent =
-            `+${points}`;
-    }
-
-    if ($("finalOpponentLabel")) {
-
-        $("finalOpponentLabel")
-            .textContent =
-            "COMPUTER";
-    }
-
-    updateLeaderboardUI();
-}
-
-/* =========================================================
-   RESET BATTLE
-========================================================= */
-
-function resetBattle() {
-
-    stopBattleTimer();
-
-    battleState.battleActive =
-        false;
-
-    const arena =
-        $("battleArena");
-
-    const results =
-        $("battleResults");
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-    showComputerSetup();
-
-    updateBattleLimitUI();
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-/* =========================================================
-   1V1 MODE — COMPLETE MATCHMAKING SYSTEM
-========================================================= */
-
-/*
- * 1V1 state
- */
-
-let oneVOneMatchId = null;
-let oneVOnePlayerNumber = null;
-let oneVOneMyName = "Player";
-let oneVOnePolling = null;
-let oneVOneMatchmakingStartedAt = 0;
-let oneVOneActive = false;
-let oneVOneResultsRecorded = false;
-let oneVOneAnsweredQuestions = new Set();
-
-const MATCHMAKING_INTERVAL = 2500;
-const MATCH_TIMEOUT = 120000;
-
-/* =========================================================
-   SUPABASE HELPER
-========================================================= */
-
-function getSupabase() {
-
-    /*
-     * Your project may expose Supabase in different ways.
-     */
-
-    if (
-        typeof window.supabaseClient !==
-        "undefined"
-    ) {
-        return window.supabaseClient;
-    }
-
-    if (
-        typeof window.supabase !==
-        "undefined" &&
-        window.supabase &&
-        typeof window.supabase.from ===
-        "function"
-    ) {
-        return window.supabase;
-    }
-
-    if (
-        typeof supabase !==
-        "undefined" &&
-        supabase &&
-        typeof supabase.from ===
-        "function"
-    ) {
-        return supabase;
-    }
-
-    throw new Error(
-        "Supabase is not connected on the Game Mode page."
-    );
-}
-
-/* =========================================================
-   ELEMENT HELPER
-========================================================= */
-
-function getElement(id) {
-
-    return document.getElementById(id);
-}
-
-/* =========================================================
-   CURRENT USER
-========================================================= */
-
-async function getCurrentUser() {
-
-    const client =
-        getSupabase();
-
-    const {
-        data,
-        error
-    } =
-        await client.auth.getUser();
-
-    if (error) {
-        throw error;
-    }
-
-    if (!data?.user) {
-
-        throw new Error(
-            "You must be logged in before playing 1v1."
-        );
-    }
-
-    return data.user;
-}
-
-/* =========================================================
-   DISPLAY NAME
-========================================================= */
-
-function getDisplayName(user) {
-
-    if (!user) {
-        return "Player";
-    }
-
-    const metadata =
-        user.user_metadata || {};
-
-    return (
-        metadata.full_name ||
-        metadata.name ||
-        metadata.display_name ||
-        metadata.username ||
-        user.email?.split("@")[0] ||
-        "Player"
-    );
-}
-
-/* =========================================================
-   PREMIUM CHECK
-========================================================= */
-
-function isPremiumUser() {
-
-    /*
-     * Keep this compatible with the current free version.
-     *
-     * If you later add a real subscription field,
-     * this can be changed to read it from Supabase.
-     */
-
-    const premium =
-        localStorage.getItem(
-            "studyMindPremium"
-        );
-
-    return (
-        premium === "true" ||
-        premium === "1"
-    );
-}
-
-/* =========================================================
-   BATTLE COUNT
-========================================================= */
-
-function getBattleCount() {
-
-    return getBattlesUsed();
-}
-
-/* =========================================================
-   MATCHMAKING UI
-========================================================= */
-
-function showMatchmaking() {
-
-    const status =
-        getElement(
-            "matchmakingStatus"
-        );
-
-    const button =
-        getElement(
-            "findOpponentButton"
-        );
-
-    if (status) {
-        status.hidden = false;
-    }
-
-    if (button) {
-
-        button.disabled = true;
-
-        button.dataset.originalText =
-            button.textContent;
-
-        button.textContent =
-            "🔎 Searching...";
-    }
-
-    updateMatchmakingText(
-        "Looking for an opponent...",
-        "StudyMind is searching for another student with the same subject, topic and difficulty."
-    );
-}
-
-/* =========================================================
-   UPDATE MATCHMAKING TEXT
-========================================================= */
-
-function updateMatchmakingText(
-    title,
-    message
-) {
-
-    const titleElement =
-        getElement(
-            "matchmakingTitle"
-        );
-
-    const messageElement =
-        getElement(
-            "matchmakingMessage"
-        );
-
-    if (titleElement) {
-
-        titleElement.textContent =
-            title;
-    }
-
-    if (messageElement) {
-
-        messageElement.textContent =
-            message;
-    }
-}
-
-/* =========================================================
-   HIDE MATCHMAKING
-========================================================= */
-
-function hideMatchmaking() {
-
-    const status =
-        getElement(
-            "matchmakingStatus"
-        );
-
-    const button =
-        getElement(
-            "findOpponentButton"
-        );
-
-    if (status) {
-        status.hidden = true;
-    }
-
-    if (button) {
-
-        button.disabled =
-            !(
-                getElement(
-                    "oneVOneSubject"
-                )?.value &&
-                getElement(
-                    "oneVOneTopic"
-                )?.value
-            );
-
-        button.textContent =
-            "⚔️ Find Opponent";
-    }
-}
-
-/* =========================================================
-   NORMALIZE MATCH ID
-========================================================= */
-
-function normalizeMatchId(
-    value
-) {
-
-    if (!value) {
-        return null;
-    }
-
-    /*
-     * RPC can return:
-     *
-     * UUID
-     * object
-     * array containing UUID
-     * object containing match_id/id
-     */
-
-    if (
-        typeof value ===
+        typeof rawSubjects ===
         "string"
     ) {
-        return value;
+
+        return rawSubjects
+            .split(/[,\n;]/)
+            .map(
+                subject =>
+                    subject.trim()
+            )
+            .filter(Boolean);
+
     }
 
+
+    return [];
+}
+
+
+/* =========================================================
+   NORMALIZE STUDY PLAN
+   ========================================================= */
+
+function normalizeStudyPlan(
+    rawPlan
+) {
+
     if (
-        Array.isArray(value)
-    ) {
-
-        if (!value.length) {
-            return null;
-        }
-
-        return normalizeMatchId(
-            value[0]
-        );
-    }
-
-    if (
-        typeof value ===
+        !rawPlan ||
+        typeof rawPlan !==
         "object"
     ) {
 
-        return (
-            value.match_id ||
-            value.matchId ||
-            value.id ||
-            value.game_match_id ||
-            null
-        );
+        return null;
+
     }
 
-    return null;
-}
 
-/* =========================================================
-   START 1V1 MODE
-========================================================= */
-
-function startOneVOneMode() {
-
-    battleState.mode =
-        "1v1";
-
-    const setup =
-        $("battleSetup");
-
-    const oneVOneSetup =
-        $("oneVOneSetup");
-
-    const arena =
-        $("battleArena");
-
-    const oneVOneArena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-    if (setup) {
-        setup.hidden = true;
-    }
-
-    if (oneVOneSetup) {
-        oneVOneSetup.hidden = false;
-    }
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (oneVOneArena) {
-        oneVOneArena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-    if (oneVOneSetup) {
-
-        oneVOneSetup.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-}
-
-/* =========================================================
-   FIND 1V1 OPPONENT
-========================================================= */
-function clearOneVOnePolling() {
-
-    if (oneVOnePolling) {
-
-        clearInterval(
-            oneVOnePolling
+    const subjects =
+        normalizeSubjects(
+            rawPlan.subjects
         );
 
-        oneVOnePolling =
-            null;
-    }
-}
-async function checkMatchPlayers() {
 
-    if (!oneVOneMatchId) {
-        return;
-    }
-
-    const supabaseClient =
-        getSupabase();
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("game_match_players")
-            .select("*")
-            .eq(
-                "match_id",
-                oneVOneMatchId
-            )
-            .order(
-                "player_number",
-                {
-                    ascending: true
-                }
-            );
-
-    if (error) {
-        throw error;
-    }
-
-    const players =
-        Array.isArray(data)
-            ? data
-            : [];
-
-    console.log(
-        "1v1 players:",
-        players
-    );
-
-    /*
-     * -----------------------------------------------------
-     * WAITING FOR PLAYER 2
-     * -----------------------------------------------------
-     */
-
-    if (players.length < 2) {
-
-        updateMatchmakingText(
-            "Looking for an opponent...",
-            "Your battle room is ready. Searching for another student..."
+    const topics =
+        normalizeTopics(
+            rawPlan.topics,
+            subjects
         );
 
-        return;
-    }
 
-    /*
-     * -----------------------------------------------------
-     * TWO PLAYERS FOUND
-     * -----------------------------------------------------
-     */
+    const rawHours =
+        rawPlan.studyHours ??
+        rawPlan.hoursPerDay ??
+        rawPlan.hours ??
+        0;
 
-    console.log(
-        "1v1 opponent found:",
-        players
-    );
 
-    clearOneVOnePolling();
+    const parsedHours =
+        Number(rawHours);
 
-    const playerOne =
-        players.find(
-            player =>
-                Number(
-                    player.player_number
-                ) === 1
-        );
 
-    const playerTwo =
-        players.find(
-            player =>
-                Number(
-                    player.player_number
-                ) === 2
-        );
+    return {
 
-    /*
-     * Make sure the current player knows
-     * which side they are on.
-     */
+        ...rawPlan,
 
-   let currentPlayer = null;
+        examType:
+            rawPlan.examType ||
+            rawPlan.exam ||
+            rawPlan.testType ||
+            "",
 
-try {
-
-    const currentUser =
-        await getCurrentUser();
-
-    if (currentUser?.id) {
-
-        currentPlayer =
-            players.find(
-                player =>
-                    player.user_id ===
-                    currentUser.id
-            );
-    }
-
-} catch (userError) {
-
-    console.warn(
-        "Could not identify current 1v1 player:",
-        userError
-    );
-}
-
-    if (currentPlayer) {
-
-        oneVOnePlayerNumber =
-            Number(
-                currentPlayer.player_number
-            );
-    }
-
-    /*
-     * -----------------------------------------------------
-     * MATCH IS READY
-     * -----------------------------------------------------
-     */
-
-    oneVOneActive =
-        true;
-
-    updateMatchmakingText(
-        "Opponent found! ⚔️",
-        "Both players are connected. Starting the battle..."
-    );
-
-    /*
-     * Update database status from
-     * starting → active.
-     *
-     * Only Player 1 attempts this.
-     * The other player will receive the
-     * realtime update.
-     */
-
-    if (
-        oneVOnePlayerNumber === 1
-    ) {
-
-        try {
-
-            await supabaseClient
-                .from("game_matches")
-                .update({
-                    status: "active"
-                })
-                .eq(
-                    "id",
-                    oneVOneMatchId
-                )
-                .eq(
-                    "status",
-                    "starting"
-                );
-
-        } catch (statusError) {
-
-            console.warn(
-                "Could not activate 1v1 match:",
-                statusError
-            );
-        }
-    }
-
-    /*
-     * -----------------------------------------------------
-     * START ARENA
-     * -----------------------------------------------------
-     */
-
-    setTimeout(
-        function () {
-
-            startOneVOneArena();
-
-        },
-        700
-    );
-}
-async function findOneVOneOpponent() {
-
-
-if (
-    !isPremiumUser() &&
-    getBattleCount() >= FREE_BATTLE_LIMIT
-) {
-    showPremiumMessage();
-    return;
-}
-
-if (oneVOneMatchId) {
-    return;
-}
-
-try {
-
-    const user =
-        await getCurrentUser();
-   console.log("CURRENT 1V1 USER:", {
-    id: user?.id,
-    email: user?.email
-});
-
-    if (!user || !user.id) {
-        throw new Error(
-            "You must be logged in to play 1v1."
-        );
-    }
-
-    const subject =
-        $("oneVOneSubject")?.value?.trim() || "";
-
-    const topic =
-        $("oneVOneTopic")?.value?.trim() || "";
-
-    const difficulty =
-        $("oneVOneDifficulty")?.value || "mixed";
-
-    if (!subject || !topic) {
-
-        alert(
-            "Choose a subject and topic first."
-        );
-
-        return;
-    }
-
-    oneVOneMyName =
-        getDisplayName(user);
-
-    showMatchmaking();
-
-    const supabaseClient =
-        getSupabase();
-
-    if (!supabaseClient) {
-        throw new Error(
-            "Supabase client is not available."
-        );
-    }
-
-    /*
-     * =====================================================
-     * STEP 1 — LOOK FOR AN EXISTING WAITING MATCH
-     * =====================================================
-     */
-
-    const {
-        data: waitingMatches,
-        error: searchError
-    } =
-        await supabaseClient
-            .from("game_matches")
-            .select("*")
-            .eq("status", "waiting")
-            .eq("subject", subject)
-            .eq("topic", topic)
-            .eq("difficulty", difficulty)
-            .neq("created_by", user.id)
-            .order("created_at", {
-                ascending: true
-            })
-            .limit(1);
-
-    if (searchError) {
-        throw searchError;
-    }
-
-    const existingMatch =
-        waitingMatches?.[0] || null;
-
-    /*
-     * =====================================================
-     * STEP 2 — JOIN EXISTING MATCH
-     * =====================================================
-     */
-
-    if (existingMatch) {
-
-        console.log(
-            "1v1 existing waiting match found:",
-            existingMatch
-        );
-
-        updateMatchmakingText(
-            "Opponent found! ⚔️",
-            "Joining the battle..."
-        );
-
-        /*
-         * Make absolutely sure no old polling loop
-         * is running before joining.
-         */
-
-        if (
-            typeof clearOneVOnePolling ===
-            "function"
-        ) {
-
-            clearOneVOnePolling();
-
-        } else {
-
-            clearInterval(
-                oneVOnePolling
-            );
-
-            oneVOnePolling =
-                null;
-        }
-
-        /*
-         * Join through the database function.
-         */
-
-        const {
-            data: joinedMatch,
-            error: joinError
-        } =
-            await supabaseClient.rpc(
-                "join_game_match",
-                {
-                    p_match_id:
-                        existingMatch.id,
-
-                    p_display_name:
-                        oneVOneMyName
-                }
-            );
-
-        if (joinError) {
-
-            /*
-             * The match may have been taken by
-             * another player between the search
-             * and the join.
-             */
-
-            console.warn(
-                "Existing match could not be joined:",
-                joinError
-            );
-
-            /*
-             * Do NOT treat this as a fatal error.
-             *
-             * Clear the current state and start a
-             * fresh matchmaking search.
-             */
-
-            oneVOneMatchId =
-                null;
-
-            oneVOnePlayerNumber =
-                null;
-
-            oneVOneResultsRecorded =
-                false;
-
-            oneVOneAnsweredQuestions =
-                new Set();
-
-            updateMatchmakingText(
-                "Searching again...",
-                "That battle room was just taken. Looking for another opponent..."
-            );
-
-            /*
-             * Retry after a short delay.
-             */
-
-            setTimeout(
-                function () {
-
-                    findOneVOneOpponent();
-
-                },
-                700
-            );
-
-            return;
-        }
-
-        /*
-         * =================================================
-         * WE SUCCESSFULLY JOINED
-         * =================================================
-         */
-
-        oneVOneMatchId =
-            normalizeMatchId(
-                joinedMatch
-            ) ||
-            existingMatch.id;
-
-        if (!oneVOneMatchId) {
-
-            throw new Error(
-                "The battle was joined but no match ID was returned."
-            );
-        }
-
-        oneVOnePlayerNumber =
-            2;
-
-        oneVOneResultsRecorded =
-            false;
-
-        oneVOneAnsweredQuestions =
-            new Set();
-
-        console.log(
-            "Successfully joined existing 1v1 match:",
-            oneVOneMatchId
-        );
-
-        /*
-         * Subscribe to THIS match.
-         */
-
-        await subscribeToOneVOne(
-            oneVOneMatchId
-        );
-
-        updateMatchmakingText(
-            "Opponent found! ⚔️",
-            "Both players are connected. Preparing your battle..."
-        );
-
-        /*
-         * Immediately check the players.
-         *
-         * Do not start another polling loop here.
-         */
-
-        await checkMatchPlayers();
-
-        return;
-    }
-
-    /*
-     * =====================================================
-     * STEP 3 — NO EXISTING MATCH
-     * CREATE OUR OWN WAITING ROOM
-     * =====================================================
-     */
-
-    console.log(
-        "No existing 1v1 match found. Creating waiting room..."
-    );
-
-    const {
-        data: createdMatch,
-        error: createError
-    } =
-        await supabaseClient.rpc(
-            "create_game_match",
-            {
-                p_subject:
-                    subject,
-
-                p_topic:
-                    topic,
-
-                p_difficulty:
-                    difficulty,
-
-                p_display_name:
-                    oneVOneMyName
-            }
-        );
-
-    if (createError) {
-        throw createError;
-    }
-
-    oneVOneMatchId =
-        normalizeMatchId(
-            createdMatch
-        );
-
-    if (!oneVOneMatchId) {
-
-        throw new Error(
-            "The battle room was created but no match ID was returned."
-        );
-    }
-
-    oneVOnePlayerNumber =
-        1;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    console.log(
-        "Created new 1v1 waiting room:",
-        oneVOneMatchId
-    );
-
-    /*
-     * Subscribe immediately.
-     */
-
-    await subscribeToOneVOne(
-        oneVOneMatchId
-    );
-
-    updateMatchmakingText(
-        "Looking for an opponent...",
-        "Your battle room is ready. Searching for another student..."
-    );
-
-    /*
-     * =====================================================
-     * STEP 4 — POLL OUR ROOM
-     * =====================================================
-     */
-
-    if (
-        typeof clearOneVOnePolling ===
-        "function"
-    ) {
-
-        clearOneVOnePolling();
-
-    } else {
-
-        clearInterval(
-            oneVOnePolling
-        );
-
-        oneVOnePolling =
-            null;
-    }
-
-    oneVOneMatchmakingStartedAt =
-        Date.now();
-
-    const pollForOpponent =
-        async function () {
-
-            /*
-             * Stop if the match is no longer ours.
-             */
-
-            if (
-                !oneVOneMatchId ||
-                oneVOneActive
-            ) {
-
-                return;
-            }
-
-            /*
-             * TIMEOUT
-             */
-
-            if (
-                Date.now() -
-                oneVOneMatchmakingStartedAt >=
-                MATCH_TIMEOUT
-            ) {
-
-                if (
-                    typeof clearOneVOnePolling ===
-                    "function"
-                ) {
-
-                    clearOneVOnePolling();
-
-                } else {
-
-                    clearInterval(
-                        oneVOnePolling
-                    );
-
-                    oneVOnePolling =
-                        null;
-                }
-
-                updateMatchmakingText(
-                    "Still waiting...",
-                    "No opponent has joined yet. You can keep waiting or cancel the search."
-                );
-
-                return;
-            }
-
-            try {
-
-                /*
-                 * First check our own room.
-                 */
-
-                await checkMatchPlayers();
-
-                if (
-                    !oneVOneMatchId ||
-                    oneVOneActive
-                ) {
-
-                    return;
-                }
-
-                /*
-                 * =================================================
-                 * LOOK FOR ANOTHER WAITING MATCH
-                 * =================================================
-                 */
-
-                const {
-                    data: otherMatches,
-                    error: otherSearchError
-                } =
-                    await supabaseClient
-                        .from("game_matches")
-                        .select("*")
-                        .eq("status", "waiting")
-                        .eq("subject", subject)
-                        .eq("topic", topic)
-                        .eq("difficulty", difficulty)
-                        .neq("created_by", user.id)
-                        .neq("id", oneVOneMatchId)
-                        .order("created_at", {
-                            ascending: true
-                        })
-                        .limit(1);
-
-                if (otherSearchError) {
-
-                    console.warn(
-                        "Waiting-match search error:",
-                        otherSearchError
-                    );
-
-                    return;
-                }
-
-                const otherMatch =
-                    otherMatches?.[0] || null;
-
-                if (!otherMatch) {
-                    return;
-                }
-
-                console.log(
-                    "Another waiting match found:",
-                    otherMatch
-                );
-
-                /*
-                 * STOP POLLING BEFORE JOINING.
-                 */
-
-                if (
-                    typeof clearOneVOnePolling ===
-                    "function"
-                ) {
-
-                    clearOneVOnePolling();
-
-                } else {
-
-                    clearInterval(
-                        oneVOnePolling
-                    );
-
-                    oneVOnePolling =
-                        null;
-                }
-
-                const oldMatchId =
-                    oneVOneMatchId;
-
-                updateMatchmakingText(
-                    "Opponent found! ⚔️",
-                    "Joining the opponent's battle room..."
-                );
-
-                /*
-                 * =================================================
-                 * JOIN OTHER PLAYER'S MATCH
-                 * =================================================
-                 */
-
-                const {
-                    data: joinedMatch,
-                    error: joinError
-                } =
-                    await supabaseClient.rpc(
-                        "join_game_match",
-                        {
-                            p_match_id:
-                                otherMatch.id,
-
-                            p_display_name:
-                                oneVOneMyName
-                        }
-                    );
-
-                if (joinError) {
-
-                    console.warn(
-                        "Could not join waiting match:",
-                        joinError
-                    );
-
-                    /*
-                     * Restore our original room.
-                     */
-
-                    oneVOneMatchId =
-                        oldMatchId;
-
-                    /*
-                     * Restart polling cleanly.
-                     */
-
-                    oneVOneMatchmakingStartedAt =
-                        Date.now();
-
-                    oneVOnePolling =
-                        setInterval(
-                            pollForOpponent,
-                            MATCHMAKING_INTERVAL
-                        );
-
-                    return;
-                }
-
-                /*
-                 * =================================================
-                 * SUCCESSFULLY JOINED OTHER MATCH
-                 * =================================================
-                 */
-
-                /*
-                 * Cancel our duplicate waiting room.
-                 */
-
-                try {
-
-                    await supabaseClient.rpc(
-                        "cancel_game_match",
-                        {
-                            p_match_id:
-                                oldMatchId
-                        }
-                    );
-
-                } catch (cancelError) {
-
-                    console.warn(
-                        "Could not cancel old waiting room:",
-                        cancelError
-                    );
-                }
-
-                /*
-                 * Disconnect from old room.
-                 */
-
-                await cleanupOneVOneConnection();
-
-                /*
-                 * Use the room we joined.
-                 */
-
-                oneVOneMatchId =
-                    normalizeMatchId(
-                        joinedMatch
-                    ) ||
-                    otherMatch.id;
-
-                oneVOnePlayerNumber =
-                    2;
-
-                oneVOneResultsRecorded =
-                    false;
-
-                oneVOneAnsweredQuestions =
-                    new Set();
-
-                console.log(
-                    "Joined existing waiting match:",
-                    oneVOneMatchId
-                );
-
-                /*
-                 * Subscribe to the new match.
-                 */
-
-                await subscribeToOneVOne(
-                    oneVOneMatchId
-                );
-
-                updateMatchmakingText(
-                    "Opponent found! ⚔️",
-                    "Both players are connected. Preparing your battle..."
-                );
-
-                /*
-                 * Check immediately.
-                 */
-
-                await checkMatchPlayers();
-
-            } catch (pollingError) {
-
-                console.error(
-                    "1v1 matchmaking polling error:",
-                    pollingError
-                );
-            }
-        };
-
-    oneVOnePolling =
-        setInterval(
-            pollForOpponent,
-            MATCHMAKING_INTERVAL
-        );
-
-} catch (error) {
-
-    console.error(
-        "1v1 matchmaking error:",
-        error
-    );
-
-    if (
-        typeof clearOneVOnePolling ===
-        "function"
-    ) {
-
-        clearOneVOnePolling();
-
-    } else {
-
-        clearInterval(
-            oneVOnePolling
-        );
-
-        oneVOnePolling =
-            null;
-    }
-
-    await cleanupOneVOneConnection();
-
-    oneVOneMatchId =
-        null;
-
-    oneVOnePlayerNumber =
-        null;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    hideMatchmaking();
-
-    alert(
-        cleanErrorMessage(
-            error?.message
-        )
-    );
-}
-
-
-}
-
-/* =========================================================
-   JOIN EXISTING 1V1 MATCH
-========================================================= */
-
-async function joinExistingMatch(match) {
-
-    if (!match || !match.id) {
-        throw new Error("Invalid match.");
-    }
-
-    const supabaseClient =
-        getSupabase();
-
-    const user =
-        await getCurrentUser();
-
-    if (!user || !user.id) {
-        throw new Error(
-            "You must be logged in to join a battle."
-        );
-    }
-
-    const displayName =
-        getDisplayName(user);
-
-    console.log(
-        "Joining existing 1v1 match:",
-        match.id
-    );
-
-    /*
-     * Call the database function that safely
-     * adds Player 2 to the match.
-     */
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.rpc(
-            "join_game_match",
-            {
-                p_match_id:
-                    match.id,
-
-                p_display_name:
-                    displayName
-            }
-        );
-
-    if (error) {
-
-        console.error(
-            "join_game_match error:",
-            error
-        );
-
-        throw error;
-    }
-
-    console.log(
-        "Successfully joined 1v1 match:",
-        data
-    );
-
-    oneVOneMatchId =
-        match.id;
-
-    oneVOnePlayerNumber =
-        2;
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    /*
-     * Stop matchmaking polling.
-     */
-
-    if (
-        typeof clearOneVOnePolling ===
-        "function"
-    ) {
-
-        clearOneVOnePolling();
-
-    } else if (
-        oneVOnePolling
-    ) {
-
-        clearInterval(
-            oneVOnePolling
-        );
-
-        oneVOnePolling =
-            null;
-    }
-
-    /*
-     * Subscribe to the match.
-     */
-
-    await subscribeToOneVOne(
-        oneVOneMatchId
-    );
-
-    /*
-     * The database function changes the match
-     * to "starting". The realtime subscription
-     * will handle the transition into the arena.
-     */
-
-    updateMatchmakingText(
-        "Opponent found! ⚔️",
-        "Your opponent has joined. Preparing the battle..."
-    );
-
-    console.log(
-        "1v1 Player 2 ready:",
-        oneVOneMatchId
-    );
-}
-/* =========================================================
-   CANCEL 1V1
-========================================================= */
-
-async function cancelOneVOne() {
-
-    clearOneVOnePolling();
-
-    const currentMatch =
-        oneVOneMatchId;
-
-    try {
-
-        if (
-            currentMatch
-        ) {
-
-            const client =
-                getSupabase();
-
-            await client.rpc(
-                "cancel_game_match",
-                {
-                    p_match_id:
-                        currentMatch
-                }
-            );
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not cancel 1v1 match:",
-            error
-        );
-    }
-
-    await cleanupOneVOneConnection();
-
-    oneVOneMatchId =
-        null;
-
-    oneVOnePlayerNumber =
-        null;
-
-    oneVOneActive =
-        false;
-
-    oneVOneResultsRecorded =
-        false;
-
-    hideMatchmaking();
-}
-
-/* =========================================================
-   CLEANUP 1V1 CONNECTION
-========================================================= */
-
-async function cleanupOneVOneConnection() {
-
-    clearOneVOnePolling();
-
-    try {
-
-        /*
-         * Realtime channel is stored here if the subscription
-         * function creates one.
-         */
-
-        if (
-            window.oneVOneChannel
-        ) {
-
-            const client =
-                getSupabase();
-
-            await client.removeChannel(
-                window.oneVOneChannel
-            );
-
-            window.oneVOneChannel =
-                null;
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not clean up 1v1 realtime channel:",
-            error
-        );
-    }
-}
-/* =========================================================
-   JOIN EXISTING 1V1 MATCH
-========================================================= */
-
-async function joinExistingMatch(match) {
-
-    const client = getSupabase();
-
-    if (!client) {
-        throw new Error(
-            "Supabase client is not available."
-        );
-    }
-
-    if (!match || !match.id) {
-        throw new Error(
-            "Invalid match."
-        );
-    }
-
-    try {
-
-        /*
-         * Get the currently logged-in user.
-         */
-
-        const user =
-            await getCurrentUser();
-
-        if (!user) {
-            throw new Error(
-                "You must be logged in to join a 1v1 match."
-            );
-        }
-
-        /*
-         * Get the student's display name.
-         *
-         * Use the same name already used elsewhere
-         * in Game Mode when possible.
-         */
-
-        let displayName =
-            user.user_metadata?.display_name ||
-            user.user_metadata?.full_name ||
-            user.user_metadata?.name ||
-            user.email?.split("@")[0] ||
-            "Player";
-
-        /*
-         * Save the match ID immediately.
-         */
-
-        oneVOneMatchId =
-            match.id;
-
-        /*
-         * Make sure we are not already in this match.
-         */
-
-        const {
-            data: existingPlayer,
-            error: existingPlayerError
-        } =
-            await client
-                .from("game_match_players")
-                .select(
-                    "user_id,player_number,display_name"
-                )
-                .eq(
-                    "match_id",
-                    match.id
-                )
-                .eq(
-                    "user_id",
-                    user.id
-                )
-                .maybeSingle();
-
-        if (existingPlayerError) {
-
-            console.error(
-                "Could not check existing 1v1 player:",
-                existingPlayerError
-            );
-
-            throw existingPlayerError;
-        }
-
-        /*
-         * If we are already in the match, simply
-         * reconnect to it.
-         */
-
-        if (existingPlayer) {
-
-            console.log(
-                "Already joined this 1v1 match:",
-                existingPlayer
-            );
-
-            oneVOnePlayerNumber =
-                Number(
-                    existingPlayer.player_number
-                );
-
-            oneVOneMyName =
-                existingPlayer.display_name ||
-                displayName;
-
-            updateMatchmakingText(
-                "Rejoining battle... ⚔️",
-                "Connecting you to your opponent."
-            );
-
-            await subscribeToOneVOne(
-                match.id
-            );
-
-            return existingPlayer;
-        }
-
-        /*
-         * Join through the SECURITY DEFINER RPC.
-         *
-         * This is important because the database function
-         * handles the protected game_match_players insert.
-         */
-
-        console.log(
-            "Joining existing 1v1 match:",
-            match.id
-        );
-
-        const {
-            data: joinedMatch,
-            error: joinError
-        } =
-            await client.rpc(
-                "join_game_match",
-                {
-                    p_match_id:
-                        match.id,
-                    p_display_name:
-                        displayName
-                }
-            );
-
-        if (joinError) {
-
-            console.error(
-                "join_game_match error:",
-                joinError
-            );
-
-            throw joinError;
-        }
-
-        console.log(
-            "Successfully joined 1v1 match:",
-            joinedMatch
-        );
-
-        /*
-         * The database function returns player_number = 2
-         * for the joining player.
-         */
-
-        if (
-            joinedMatch &&
-            joinedMatch.player_number
-        ) {
-
-            oneVOnePlayerNumber =
-                Number(
-                    joinedMatch.player_number
-                );
-        } else {
-
-            oneVOnePlayerNumber =
-                2;
-        }
-
-        oneVOneMyName =
-            displayName;
-
-        updateMatchmakingText(
-            "Opponent found! ⚔️",
-            "Both players are ready. Preparing your battle..."
-        );
-
-        /*
-         * Subscribe AFTER joining so we immediately receive
-         * any subsequent match/player updates.
-         */
-
-        await subscribeToOneVOne(
-            match.id
-        );
-
-        /*
-         * Check immediately in case the database has
-         * already changed the match to starting.
-         */
-
-        await checkMatchPlayers();
-
-        return joinedMatch;
-
-    } catch (error) {
-
-        console.error(
-            "joinExistingMatch error:",
-            error
-        );
-
-        updateMatchmakingText(
-            "Could not join match",
-            cleanErrorMessage(
-                error?.message ||
-                error
-            )
-        );
-
-        throw error;
-    }
-}
-
-/* =========================================================
-   CHECK 1V1 MATCH PLAYERS
-========================================================= */
-
-async function checkMatchPlayers() {
-
-    if (!oneVOneMatchId) {
-        return;
-    }
-
-    const client =
-        getSupabase();
-
-    if (!client) {
-        console.error(
-            "Supabase client is not available."
-        );
-        return;
-    }
-
-    try {
-
-        /*
-         * -----------------------------------------------------
-         * GET ALL PLAYERS IN THIS MATCH
-         * -----------------------------------------------------
-         */
-
-        const {
-            data: players,
-            error: playersError
-        } =
-            await client
-                .from("game_match_players")
-                .select(
-                    "match_id,user_id,player_number,display_name"
-                )
-                .eq(
-                    "match_id",
-                    oneVOneMatchId
-                )
-                .order(
-                    "player_number",
-                    {
-                        ascending: true
-                    }
-                );
-
-        if (playersError) {
-
-            console.error(
-                "Could not check 1v1 players:",
-                playersError
-            );
-
-            return;
-        }
-
-        const matchPlayers =
-            Array.isArray(players)
-                ? players
-                : [];
-
-        console.log(
-            "1v1 players:",
-            matchPlayers
-        );
-
-        /*
-         * -----------------------------------------------------
-         * WAIT FOR PLAYER 2
-         * -----------------------------------------------------
-         */
-
-        if (
-            matchPlayers.length <
-            2
-        ) {
-
-            updateMatchmakingText(
-                "Looking for an opponent...",
-                "Your battle room is ready. Searching for another student..."
-            );
-
-            return;
-        }
-
-        /*
-         * -----------------------------------------------------
-         * TWO PLAYERS FOUND
-         * -----------------------------------------------------
-         */
-
-        console.log(
-            "🎮 TWO PLAYERS FOUND!",
-            matchPlayers
-        );
-
-        /*
-         * -----------------------------------------------------
-         * IDENTIFY CURRENT PLAYER
-         * -----------------------------------------------------
-         */
-
-        try {
-
-            const user =
-                await getCurrentUser();
-
-            if (user?.id) {
-
-                const currentPlayer =
-                    matchPlayers.find(
-                        player =>
-                            player.user_id ===
-                            user.id
-                    );
-
-                if (currentPlayer) {
-
-                    oneVOnePlayerNumber =
-                        Number(
-                            currentPlayer.player_number
-                        );
-
-                    oneVOneMyName =
-                        currentPlayer.display_name ||
-                        oneVOneMyName;
-
-                    console.log(
-                        "Current 1v1 player number:",
-                        oneVOnePlayerNumber
-                    );
-                }
-            }
-
-        } catch (userError) {
-
-            console.warn(
-                "Could not identify current 1v1 player:",
-                userError
-            );
-        }
-
-        /*
-         * -----------------------------------------------------
-         * LOAD CURRENT MATCH
-         * -----------------------------------------------------
-         */
-
-        const {
-            data: match,
-            error: matchError
-        } =
-            await client
-                .from("game_matches")
-                .select("*")
-                .eq(
-                    "id",
-                    oneVOneMatchId
-                )
-                .maybeSingle();
-
-        if (matchError) {
-
-            console.error(
-                "Could not load 1v1 match:",
-                matchError
-            );
-
-            return;
-        }
-
-        if (!match) {
-
-            console.error(
-                "1v1 match no longer exists:",
-                oneVOneMatchId
-            );
-
-            return;
-        }
-
-        console.log(
-            "Current 1v1 match status:",
-            match.status
-        );
-
-        /*
-         * -----------------------------------------------------
-         * MATCH IS ALREADY ACTIVE
-         * -----------------------------------------------------
-         */
-
-        if (
-            match.status ===
-            "active"
-        ) {
-
-            console.log(
-                "🎮 1v1 match is ACTIVE."
-            );
-
-            clearOneVOnePolling();
-
-            oneVOneActive =
-                true;
-
-            updateMatchmakingText(
-                "Battle starting! ⚔️",
-                "Your 1v1 battle is ready."
-            );
-
-            /*
-             * Start the arena only once.
-             */
-
-            if (
-                !window.oneVOneArenaStarted
-            ) {
-
-                window.oneVOneArenaStarted =
-                    true;
-
-                setTimeout(
-                    function () {
-
-                        startOneVOneArena();
-
-                    },
-                    500
-                );
-            }
-
-            return;
-        }
-
-        /*
-         * -----------------------------------------------------
-         * MATCH IS FINISHED / CANCELLED
-         * -----------------------------------------------------
-         */
-
-        if (
-            match.status === "finished" ||
-            match.status === "cancelled"
-        ) {
-
-            console.warn(
-                "1v1 match is no longer playable:",
-                match.status
-            );
-
-            clearOneVOnePolling();
-
-            oneVOneActive =
-                false;
-
-            updateMatchmakingText(
-                "Match unavailable",
-                "This battle is no longer available."
-            );
-
-            return;
-        }
-
-        /*
-         * -----------------------------------------------------
-         * TWO PLAYERS + STARTING
-         * -----------------------------------------------------
-         */
-
-        if (
-            match.status ===
-            "starting"
-        ) {
-
-            updateMatchmakingText(
-                "Opponent found! ⚔️",
-                "Both players are connected. Starting the battle..."
-            );
-
-            /*
-             * -------------------------------------------------
-             * PLAYER 1 ACTIVATES THE MATCH
-             * -------------------------------------------------
-             */
-
-            if (
-                oneVOnePlayerNumber ===
-                1
-            ) {
-
-                console.log(
-                    "Player 1 activating 1v1 match..."
-                );
-
-                const {
-                    data: activatedMatch,
-                    error: activateError
-                } =
-                    await client.rpc(
-                        "start_game_match",
-                        {
-                            p_match_id:
-                                oneVOneMatchId
-                        }
-                    );
-
-                if (activateError) {
-
-                    console.warn(
-                        "start_game_match returned an error:",
-                        activateError
-                    );
-
-                    /*
-                     * Another client may have activated
-                     * the match at almost the same time.
-                     *
-                     * Re-read the database instead of
-                     * immediately failing.
-                     */
-
-                    const {
-                        data: latestMatch,
-                        error: latestError
-                    } =
-                        await client
-                            .from("game_matches")
-                            .select("*")
-                            .eq(
-                                "id",
-                                oneVOneMatchId
-                            )
-                            .maybeSingle();
-
-                    if (latestError) {
-
-                        console.warn(
-                            "Could not re-check 1v1 match:",
-                            latestError
-                        );
-
-                        return;
-                    }
-
-                    if (
-                        latestMatch?.status ===
-                        "active"
-                    ) {
-
-                        console.log(
-                            "1v1 match became active while checking."
-                        );
-
-                        oneVOneActive =
-                            true;
-
-                        clearOneVOnePolling();
-
-                        if (
-                            !window.oneVOneArenaStarted
-                        ) {
-
-                            window.oneVOneArenaStarted =
-                                true;
-
-                            setTimeout(
-                                function () {
-
-                                    startOneVOneArena();
-
-                                },
-                                500
-                            );
-                        }
-
-                    } else {
-
-                        console.log(
-                            "1v1 match is still:",
-                            latestMatch?.status
-                        );
-                    }
-
-                    return;
-                }
-
-                /*
-                 * RPC successfully activated the match.
-                 */
-
-                console.log(
-                    "✅ 1v1 match activated:",
-                    activatedMatch
-                );
-
-                /*
-                 * If the RPC returns the updated match,
-                 * start immediately.
-                 */
-
-                if (
-                    activatedMatch?.status ===
-                    "active"
-                ) {
-
-                    oneVOneActive =
-                        true;
-
-                    clearOneVOnePolling();
-
-                    if (
-                        !window.oneVOneArenaStarted
-                    ) {
-
-                        window.oneVOneArenaStarted =
-                            true;
-
-                        setTimeout(
-                            function () {
-
-                                startOneVOneArena();
-
-                            },
-                            500
-                        );
-                    }
-
-                    return;
-                }
-
-                /*
-                 * Some RPC implementations return only
-                 * an ID/object. Re-read the match.
-                 */
-
-                const {
-                    data: refreshedMatch
-                } =
-                    await client
-                        .from("game_matches")
-                        .select("*")
-                        .eq(
-                            "id",
-                            oneVOneMatchId
-                        )
-                        .maybeSingle();
-
-                if (
-                    refreshedMatch?.status ===
-                    "active"
-                ) {
-
-                    console.log(
-                        "✅ Database confirms 1v1 is active."
-                    );
-
-                    oneVOneActive =
-                        true;
-
-                    clearOneVOnePolling();
-
-                    if (
-                        !window.oneVOneArenaStarted
-                    ) {
-
-                        window.oneVOneArenaStarted =
-                            true;
-
-                        setTimeout(
-                            function () {
-
-                                startOneVOneArena();
-
-                            },
-                            500
-                        );
-                    }
-
-                } else {
-
-                    console.log(
-                        "Player 1 activated request completed. Waiting for active status..."
-                    );
-                }
-
-                return;
-            }
-
-            /*
-             * -------------------------------------------------
-             * PLAYER 2 WAITS
-             * -------------------------------------------------
-             */
-
-            if (
-                oneVOnePlayerNumber ===
-                2
-            ) {
-
-                console.log(
-                    "Player 2 waiting for Player 1 to activate the match..."
-                );
-
-                return;
-            }
-
-            /*
-             * -------------------------------------------------
-             * UNKNOWN PLAYER NUMBER
-             * -------------------------------------------------
-             */
-
-            console.warn(
-                "Two players found, but current player number is unknown."
-            );
-
-            return;
-        }
-
-        /*
-         * -----------------------------------------------------
-         * UNEXPECTED STATUS
-         * -----------------------------------------------------
-         */
-
-        console.warn(
-            "Unexpected 1v1 match status:",
-            match.status
-        );
-
-    } catch (error) {
-
-        console.error(
-            "checkMatchPlayers error:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   SUBSCRIBE TO 1V1 MATCH
-========================================================= */
-
-async function subscribeToOneVOne(matchId) {
-
-    const client = getSupabase();
-
-    if (!client) {
-        throw new Error(
-            "Supabase client is not available."
-        );
-    }
-oneVOneMatchId = matchId;
-    await cleanupOneVOneConnection();
-
-    console.log(
-        "Subscribing to 1v1 match:",
-        matchId
-    );
-
-    /*
-     * Create realtime channel.
-     */
-
-    const channel =
-        client
-            .channel(
-                `game-match-${matchId}`
-            )
-
-            /*
-             * MATCH UPDATES
-             */
-
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "game_matches",
-                    filter:
-                        `id=eq.${matchId}`
-                },
-                async function(payload) {
-
-                    console.log(
-                        "1v1 match update:",
-                        payload
-                    );
-
-                    const match =
-                        payload.new;
-
-                    if (!match) {
-                        return;
-                    }
-
-                    if (
-                        match.status ===
-                        "starting"
-                    ) {
-
-                        console.log(
-                            "1v1 match is starting."
-                        );
-
-                        await checkMatchPlayers();
-                    }
-
-                    if (
-                        match.status ===
-                        "active"
-                    ) {
-
-                        console.log(
-                            "1v1 match is active."
-                        );
-
-                        activateOneVOneMatch(
-                            match
-                        );
-                    }
-                }
-            )
-
-            /*
-             * PLAYER UPDATES
-             */
-
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table:
-                        "game_match_players",
-                    filter:
-                        `match_id=eq.${matchId}`
-                },
-                async function(payload) {
-
-                    console.log(
-                        "1v1 player update:",
-                        payload
-                    );
-
-                    await checkMatchPlayers();
-                }
-            )
-
-            .subscribe(
-                function(status) {
-
-                    console.log(
-                        "1v1 realtime status:",
-                        status
-                    );
-                }
-            );
-
-    window.oneVOneChannel =
-        channel;
-
-    /*
-     * Immediately check the database.
-     *
-     * This is important because the second player
-     * may have joined before realtime delivered
-     * the INSERT event.
-     */
-
-    await checkMatchPlayers();
-
-    return channel;
-}
-/* =========================================================
-   ACTIVATE 1V1 MATCH
-========================================================= */
-
-async function activateOneVOneMatch(match) {
-
-    if (!match) {
-        console.warn(
-            "activateOneVOneMatch called without a match."
-        );
-        return;
-    }
-
-    console.log(
-        "🎮 activateOneVOneMatch() called:",
-        match
-    );
-
-    /*
-     * Make sure the match belongs to the current
-     * 1v1 session.
-     */
-
-    if (
-        oneVOneMatchId &&
-        match.id &&
-        String(match.id) !==
-        String(oneVOneMatchId)
-    ) {
-
-        console.warn(
-            "Ignoring active match that does not belong to current 1v1 session."
-        );
-
-        return;
-    }
-
-    oneVOneMatchId =
-        match.id ||
-        oneVOneMatchId;
-
-    oneVOneActive =
-        true;
-
-    clearOneVOnePolling();
-
-    /*
-     * Prevent duplicate realtime events from
-     * opening the arena repeatedly.
-     */
-
-    if (
-        window.oneVOneArenaStarted
-    ) {
-
-        console.log(
-            "1v1 arena has already been started."
-        );
-
-        return;
-    }
-
-    window.oneVOneArenaStarted =
-        true;
-
-    updateMatchmakingText(
-        "Battle starting! ⚔️",
-        "Your 1v1 match is active. Get ready!"
-    );
-
-    console.log(
-        "1v1 match activated"
-    );
-
-    /*
-     * Give both clients a moment to finish
-     * receiving the player/realtime updates.
-     */
-
-    setTimeout(
-        async function () {
-
-            try {
-
-                await startOneVOneArena();
-
-            } catch (error) {
-
-                console.error(
-                    "Could not start 1v1 arena:",
-                    error
-                );
-
-                /*
-                 * Allow another realtime event to
-                 * attempt the arena if something
-                 * failed during startup.
-                 */
-
-                window.oneVOneArenaStarted =
-                    false;
-
-                updateMatchmakingText(
-                    "Could not start battle",
-                    error?.message ||
-                    "The 1v1 arena could not be opened."
-                );
-
-            }
-
-        },
-        500
-    );
-}
-
-
-/* =========================================================
-   START 1V1 ARENA
-========================================================= */
-
-async function startOneVOneArena() {
-
-    console.log(
-        "🎮 startOneVOneArena() called."
-    );
-
-    /*
-     * -----------------------------------------------------
-     * STOP MATCHMAKING
-     * -----------------------------------------------------
-     */
-
-    clearOneVOnePolling();
-
-    /*
-     * -----------------------------------------------------
-     * SHOW 1V1 ARENA
-     * -----------------------------------------------------
-     */
-
-    const setup =
-        $("battleSetup");
-
-    const oneVOneSetup =
-        $("oneVOneSetup");
-
-    const computerArena =
-        $("battleArena");
-
-    const oneVOneArena =
-        $("oneVOneArena");
-
-    const results =
-        $("battleResults");
-
-    if (setup) {
-        setup.hidden = true;
-    }
-
-    if (oneVOneSetup) {
-        oneVOneSetup.hidden = true;
-    }
-
-    if (computerArena) {
-        computerArena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = true;
-    }
-
-    if (oneVOneArena) {
-        oneVOneArena.hidden = false;
-
-        oneVOneArena.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-
-    } else {
-
-        console.error(
-            "❌ #oneVOneArena was not found in game-mode.html."
-        );
-
-        throw new Error(
-            "The 1v1 arena element (#oneVOneArena) is missing from game-mode.html."
-        );
-    }
-
-    /*
-     * -----------------------------------------------------
-     * MARK 1V1 AS ACTIVE
-     * -----------------------------------------------------
-     */
-
-    oneVOneActive =
-        true;
-
-    /*
-     * -----------------------------------------------------
-     * RESET 1V1 STATE
-     * -----------------------------------------------------
-     */
-
-    oneVOneResultsRecorded =
-        false;
-
-    oneVOneAnsweredQuestions =
-        new Set();
-
-    /*
-     * Create the local 1v1 battle state.
-     */
-
-    battleState = {
-
-        mode:
-            "1v1",
-
-        subject:
-            oneVOneSubjectValue(),
-
-        topic:
-            oneVOneTopicValue(),
-
-        difficulty:
-            oneVOneDifficultyValue(),
-
-        questions:
-            [],
-
-        currentQuestion:
-            0,
-
-        playerScore:
-            0,
-
-        opponentScore:
-            0,
-
-        timer:
-            QUESTION_TIME_SECONDS,
-
-        timerInterval:
+        examDate:
+            rawPlan.examDate ||
+            rawPlan.testDate ||
             null,
 
-        answering:
-            false,
+        subjects,
 
-        battleActive:
-            true
+        topics,
+
+        studyHours:
+            Number.isFinite(
+                parsedHours
+            )
+                ? parsedHours
+                : 0,
+
+        hoursPerDay:
+            Number.isFinite(
+                parsedHours
+            )
+                ? parsedHours
+                : 0,
+
+        difficulty:
+            rawPlan.difficulty ||
+            "balanced",
+
+        daysLeft:
+            Number(
+                rawPlan.daysLeft
+            ) || 0,
+
+        studyStartDate:
+            rawPlan.studyStartDate ||
+            rawPlan.startDate ||
+            rawPlan.createdDate ||
+            todayKey(),
+
+        createdAt:
+            rawPlan.createdAt ||
+            new Date().toISOString()
+
     };
+}
 
-    /*
-     * -----------------------------------------------------
-     * UPDATE 1V1 PLAYER LABELS
-     * -----------------------------------------------------
-     */
 
-    updateOneVOnePlayerLabels();
+/* =========================================================
+   STUDY PLAN VALIDATION
+   ========================================================= */
 
-    /*
-     * -----------------------------------------------------
-     * LOAD QUESTIONS
-     * -----------------------------------------------------
-     */
+function hasUsableStudyPlan(
+    plan
+) {
 
-    updateOneVOneArenaMessage(
-        "Preparing your questions..."
+    if (
+        !plan ||
+        typeof plan !==
+        "object"
+    ) {
+
+        return false;
+
+    }
+
+    const subjects =
+        Array.isArray(
+            plan.subjects
+        )
+            ? plan.subjects
+            : [];
+
+    const topics =
+        Array.isArray(
+            plan.topics
+        )
+            ? plan.topics
+            : [];
+
+    const hours =
+        Number(
+            plan.studyHours ??
+            plan.hoursPerDay
+        );
+
+
+    return (
+        subjects.length > 0 &&
+        topics.length > 0 &&
+        Number.isFinite(hours) &&
+        hours > 0
     );
+}
+
+
+/* =========================================================
+   LOAD STUDY PLAN
+   =========================================================
+
+   Supports:
+   - studyMindPlan
+   - studyData
+
+   This is important because older versions
+   of the Home generator used studyData.
+   ========================================================= */
+
+function loadStudyPlan() {
+
+    const savedMindPlan =
+        loadObject(
+            "studyMindPlan"
+        );
+
+    const savedStudyData =
+        loadObject(
+            "studyData"
+        );
+
+
+    const normalizedMindPlan =
+        normalizeStudyPlan(
+            savedMindPlan
+        );
+
+
+    const normalizedStudyData =
+        normalizeStudyPlan(
+            savedStudyData
+        );
+
+
+    /*
+       Prefer studyMindPlan when it
+       contains the student's actual data.
+    */
+
+    if (
+        hasUsableStudyPlan(
+            normalizedMindPlan
+        )
+    ) {
+
+        studyPlan =
+            normalizedMindPlan;
+
+    }
+
+    /*
+       Otherwise use studyData.
+    */
+
+    else if (
+        hasUsableStudyPlan(
+            normalizedStudyData
+        )
+    ) {
+
+        studyPlan =
+            normalizedStudyData;
+
+    }
+
+    /*
+       Otherwise use whichever exists.
+    */
+
+    else {
+
+        studyPlan =
+            normalizedMindPlan ||
+            normalizedStudyData ||
+            {
+
+                examType: "",
+
+                examDate: null,
+
+                subjects: [],
+
+                topics: [],
+
+                studyHours: 0,
+
+                hoursPerDay: 0,
+
+                difficulty:
+                    "balanced",
+
+                daysLeft: 0,
+
+                studyStartDate:
+                    todayKey(),
+
+                createdAt:
+                    new Date().toISOString()
+
+            };
+
+    }
+
+
+    /*
+       Make absolutely sure
+       topics are normalized.
+    */
+
+    studyPlan.subjects =
+        normalizeSubjects(
+            studyPlan.subjects
+        );
+
+    studyPlan.topics =
+        normalizeTopics(
+            studyPlan.topics,
+            studyPlan.subjects
+        );
+
+
+    if (
+        !studyPlan.studyStartDate
+    ) {
+
+        studyPlan.studyStartDate =
+            todayKey();
+
+    }
+
+
+    if (
+        !Number(
+            studyPlan.studyHours
+        ) &&
+        Number(
+            studyPlan.hoursPerDay
+        )
+    ) {
+
+        studyPlan.studyHours =
+            Number(
+                studyPlan.hoursPerDay
+            );
+
+    }
+
+
+    if (
+        !Number(
+            studyPlan.hoursPerDay
+        ) &&
+        Number(
+            studyPlan.studyHours
+        )
+    ) {
+
+        studyPlan.hoursPerDay =
+            Number(
+                studyPlan.studyHours
+            );
+
+    }
+
+
+    savePlan();
+
+}
+
+
+/* =========================================================
+   AUTHENTICATION
+   ========================================================= */
+
+async function checkAuthentication() {
 
     try {
 
-        const questions =
-            await generateBattleQuestions(
-                battleState.subject,
-                battleState.topic,
-                battleState.difficulty
-            );
-
         if (
-            !Array.isArray(questions) ||
-            questions.length <
-            QUESTIONS_PER_BATTLE
+            typeof supabaseClient ===
+            "undefined" ||
+            !supabaseClient ||
+            !supabaseClient.auth
         ) {
 
-            throw new Error(
-                "The AI did not return enough questions for the 1v1 battle."
-            );
+            return false;
+
         }
 
-        battleState.questions =
-            questions.slice(
-                0,
-                QUESTIONS_PER_BATTLE
-            );
+
+        const {
+
+            data: { user },
+
+            error
+
+        } =
+            await supabaseClient
+                .auth
+                .getUser();
+
+
+        if (
+            error ||
+            !user
+        ) {
+
+            currentUser = null;
+            isAuthenticated = false;
+
+            return false;
+
+        }
+
+
+        currentUser =
+            user;
+
+        isAuthenticated =
+            true;
+
+        return true;
 
     } catch (error) {
 
         console.error(
-            "1v1 question generation failed:",
+            "Authentication check failed:",
             error
         );
 
-        /*
-         * Do not leave the user stuck on a blank arena.
-         */
+        currentUser = null;
+        isAuthenticated = false;
 
-        battleState.battleActive =
-            false;
+        return false;
 
-        window.oneVOneArenaStarted =
-            false;
-
-        updateOneVOneArenaMessage(
-            "Could not prepare the battle questions."
-        );
-
-        throw error;
     }
 
-    /*
-     * -----------------------------------------------------
-     * DISPLAY FIRST QUESTION
-     * -----------------------------------------------------
-     */
-
-    showOneVOneQuestion();
-
-    console.log(
-        "✅ 1v1 arena opened successfully."
-    );
 }
 
 
 /* =========================================================
-   1V1 SELECTED SUBJECT
-========================================================= */
+   INITIALIZATION
+   ========================================================= */
 
-function oneVOneSubjectValue() {
+async function startDashboard() {
 
-    return normalizeSubjectName(
-        $("oneVOneSubject")?.value?.trim() ||
-        ""
-    );
-}
+    loadStudyPlan();
 
 
-/* =========================================================
-   1V1 SELECTED TOPIC
-========================================================= */
-
-function oneVOneTopicValue() {
-
-    return (
-        $("oneVOneTopic")?.value?.trim() ||
-        ""
-    );
-}
+    const authenticated =
+        await checkAuthentication();
 
 
-/* =========================================================
-   1V1 SELECTED DIFFICULTY
-========================================================= */
+    if (!authenticated) {
 
-function oneVOneDifficultyValue() {
+        window.location.href =
+            "login.html";
 
-    return (
-        $("oneVOneDifficulty")?.value ||
-        "mixed"
-    );
-}
+        return;
 
+    }
 
-/* =========================================================
-   1V1 PLAYER LABELS
-========================================================= */
-
-function updateOneVOnePlayerLabels() {
 
     /*
-     * Possible player-name elements used by the arena.
-     */
-
-    const playerOneName =
-        getElement(
-            "oneVOnePlayerOneName"
-        );
-
-    const playerTwoName =
-        getElement(
-            "oneVOnePlayerTwoName"
-        );
-
-    const opponentName =
-        getElement(
-            "oneVOneOpponentName"
-        );
-
-    /*
-     * Try to identify the two players from
-     * the current database match.
-     *
-     * The realtime player list is checked
-     * separately when available.
-     */
+       If no real plan exists,
+       send the student back to Home.
+    */
 
     if (
-        playerOneName &&
-        !playerOneName.textContent.trim()
+        !hasUsableStudyPlan(
+            studyPlan
+        )
     ) {
 
-        playerOneName.textContent =
-            "Player 1";
+        window.location.href =
+            "home.html#generator";
+
+        return;
+
     }
+
+
+    /*
+       Correct invalid topic index.
+    */
 
     if (
-        playerTwoName &&
-        !playerTwoName.textContent.trim()
+        currentTopicIndex < 0 ||
+        currentTopicIndex >=
+        studyPlan.topics.length
     ) {
 
-        playerTwoName.textContent =
-            "Player 2";
-    }
+        currentTopicIndex = 0;
 
-    if (opponentName) {
-
-        opponentName.textContent =
-            oneVOnePlayerNumber === 1
-                ? "Player 2"
-                : "Player 1";
-    }
-
-    /*
-     * Reuse the existing score elements if
-     * the 1v1 arena contains them.
-     */
-
-    const playerScore =
-        getElement(
-            "oneVOnePlayerScore"
+        localStorage.setItem(
+            "studyMindCurrentTopicIndex",
+            "0"
         );
 
-    const opponentScore =
-        getElement(
-            "oneVOneOpponentScore"
-        );
-
-    if (playerScore) {
-        playerScore.textContent =
-            "0";
     }
 
-    if (opponentScore) {
-        opponentScore.textContent =
-            "0";
-    }
+
+    ensureTimerStorage();
+
+    bindEvents();
+
+    restoreTimerState();
+
+    renderEverything();
+
 }
 
 
 /* =========================================================
-   1V1 ARENA MESSAGE
-========================================================= */
+   TIMER STORAGE
+   ========================================================= */
 
-function updateOneVOneArenaMessage(
-    message
-) {
+function ensureTimerStorage() {
 
-    const candidates = [
-        "oneVOneArenaMessage",
-        "oneVOneStatusMessage",
-        "oneVOneBattleStatus",
-        "oneVOneQuestionStatus"
-    ];
-
-    for (
-        const id of candidates
+    if (
+        !Number.isFinite(
+            selectedTimerSeconds
+        ) ||
+        selectedTimerSeconds <= 0
     ) {
 
-        const element =
-            getElement(id);
+        selectedTimerSeconds =
+            DEFAULT_TIMER_SECONDS;
 
-        if (element) {
-
-            element.textContent =
-                message;
-
-            return;
-        }
     }
+
+
+    if (
+        !Number.isFinite(
+            timerSeconds
+        ) ||
+        timerSeconds < 0
+    ) {
+
+        timerSeconds =
+            selectedTimerSeconds;
+
+    }
+
+
+    localStorage.setItem(
+        "studyMindSelectedTimerSeconds",
+        String(
+            selectedTimerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
 }
 
 
 /* =========================================================
-   SHOW 1V1 QUESTION
-========================================================= */
+   RESTORE TIMER
+   ========================================================= */
 
-function showOneVOneQuestion() {
+function restoreTimerState() {
 
-    stopOneVOneTimer();
+    const savedRunning =
+        localStorage.getItem(
+            "studyMindTimerRunning"
+        ) === "true";
 
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
 
-    /*
-     * Battle finished.
-     */
+    const savedEndTime =
+        Number(
+            localStorage.getItem(
+                "studyMindTimerEndTime"
+            )
+        );
 
-    if (!question) {
 
-        finishOneVOneBattle();
+    if (
+        savedRunning &&
+        Number.isFinite(
+            savedEndTime
+        ) &&
+        savedEndTime > Date.now()
+    ) {
 
+        timerEndTime =
+            savedEndTime;
+
+        timerRunning =
+            true;
+
+        timerSeconds =
+            Math.max(
+                0,
+                Math.ceil(
+                    (
+                        timerEndTime -
+                        Date.now()
+                    ) / 1000
+                )
+            );
+
+        startTimerInterval();
+
+        return;
+
+    }
+
+
+    if (
+        savedRunning &&
+        Number.isFinite(
+            savedEndTime
+        )
+    ) {
+
+        finishTimer(false);
+
+        return;
+
+    }
+
+
+    timerRunning =
+        false;
+
+    timerEndTime =
+        null;
+
+    timerSeconds =
+        getStoredNumber(
+            "studyMindTimerSeconds",
+            selectedTimerSeconds
+        );
+
+}
+
+
+/* =========================================================
+   EVENT BINDING
+   ========================================================= */
+
+function bindEvents() {
+
+    if (previousMonth) {
+
+        previousMonth.addEventListener(
+            "click",
+            () => {
+
+                calendarDate.setMonth(
+                    calendarDate.getMonth() - 1
+                );
+
+                renderCalendar();
+
+            }
+        );
+
+    }
+
+
+    if (nextMonth) {
+
+        nextMonth.addEventListener(
+            "click",
+            () => {
+
+                calendarDate.setMonth(
+                    calendarDate.getMonth() + 1
+                );
+
+                renderCalendar();
+
+            }
+        );
+
+    }
+
+
+    if (topicCompleteCheckbox) {
+
+        topicCompleteCheckbox.addEventListener(
+            "change",
+            completeCurrentTopic
+        );
+
+    }
+
+
+    if (startTimerButton) {
+
+        startTimerButton.addEventListener(
+            "click",
+            startTimer
+        );
+
+    }
+
+
+    if (pauseTimerButton) {
+
+        pauseTimerButton.addEventListener(
+            "click",
+            pauseTimer
+        );
+
+    }
+
+
+    if (resetTimerButton) {
+
+        resetTimerButton.addEventListener(
+            "click",
+            resetTimer
+        );
+
+    }
+
+
+    if (timerDurationSelect) {
+
+        timerDurationSelect.addEventListener(
+            "change",
+            handleTimerDurationChange
+        );
+
+        timerDurationSelect.addEventListener(
+            "input",
+            handleTimerDurationChange
+        );
+
+    }
+
+
+    if (analyzeProgressButton) {
+
+        analyzeProgressButton.addEventListener(
+            "click",
+            analyzeProgress
+        );
+
+    }
+
+
+    if (askAIButton) {
+
+        askAIButton.addEventListener(
+            "click",
+            askStudyMindAI
+        );
+
+    }
+
+
+    if (aiQuestion) {
+
+        aiQuestion.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    askStudyMindAI();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    if (summarizeBtn) {
+
+        summarizeBtn.addEventListener(
+            "click",
+            summarizeDocument
+        );
+
+    }
+
+
+    if (submitTopicQuestions) {
+
+        submitTopicQuestions.addEventListener(
+            "click",
+            submitQuestions
+        );
+
+    }
+
+
+    syncTimerDurationControl();
+
+}
+
+
+/* =========================================================
+   RENDER EVERYTHING
+   ========================================================= */
+
+function renderEverything() {
+
+    updateDashboardStats();
+
+    updateDashboardProgress();
+
+    renderSubjects();
+
+    renderTopics();
+
+    renderCurrentTopic();
+
+    renderCalendar();
+
+    renderSchedule();
+
+    updateNextBooking();
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+    setupAIAuthenticationUI();
+
+    updateSummaryBadge();
+
+    restoreTopicQuestions();
+
+}
+
+
+/* =========================================================
+   BASIC STATS
+   ========================================================= */
+
+function calculateDaysLeft() {
+
+    if (
+        !studyPlan ||
+        !studyPlan.examDate
+    ) {
+
+        return 0;
+
+    }
+
+
+    const today =
+        startOfDay(
+            new Date()
+        );
+
+
+    const exam =
+        startOfDay(
+            new Date(
+                studyPlan.examDate
+            )
+        );
+
+
+    if (
+        Number.isNaN(
+            exam.getTime()
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    return Math.max(
+        0,
+        Math.ceil(
+            (
+                exam.getTime() -
+                today.getTime()
+            ) / DAY_MS
+        )
+    );
+
+}
+
+
+/* =========================================================
+   DASHBOARD STATS
+   ========================================================= */
+
+function updateDashboardStats() {
+
+    const hours =
+        Number(
+            studyPlan.studyHours
+        ) || 0;
+
+
+    const remaining =
+        calculateDaysLeft();
+
+
+    if (weeklyHours) {
+
+        weeklyHours.textContent =
+            `${Math.round(
+                hours * 7
+            )} hrs`;
+
+    }
+
+
+    if (daysLeftElement) {
+
+        daysLeftElement.textContent =
+            remaining;
+
+    }
+
+
+    if (dailyGoal) {
+
+        dailyGoal.textContent =
+            `${hours} hrs/day`;
+
+    }
+
+
+    if (streak) {
+
+        streak.textContent =
+            `${currentStreak} Days 🔥`;
+
+    }
+
+}
+
+
+/* =========================================================
+   SUBJECTS
+   ========================================================= */
+
+function renderSubjects() {
+
+    if (!subjectList) {
         return;
     }
 
-    battleState.answering =
-        false;
 
-    const questionNumber =
-        battleState.currentQuestion +
-        1;
+    const subjects =
+        studyPlan.subjects || [];
 
-    /*
-     * Question number.
-     */
 
-    const numberElements = [
-        "oneVOneQuestionNumber",
-        "oneVOneCurrentQuestionNumber"
-    ];
+    if (!subjects.length) {
 
-    numberElements.forEach(
-        id => {
+        subjectList.innerHTML =
+            `
+                <div class="empty-state">
+                    No subjects in your study plan.
+                </div>
+            `;
 
-            const element =
-                getElement(id);
+        return;
 
-            if (element) {
-
-                element.textContent =
-                    questionNumber;
-            }
-        }
-    );
-
-    /*
-     * Topic.
-     */
-
-    const topicElements = [
-        "oneVOneQuestionTopic",
-        "oneVOneBattleTopic"
-    ];
-
-    topicElements.forEach(
-        id => {
-
-            const element =
-                getElement(id);
-
-            if (element) {
-
-                element.textContent =
-                    battleState.topic;
-            }
-        }
-    );
-
-    /*
-     * Question text.
-     */
-
-    const questionElements = [
-        "oneVOneQuestion",
-        "oneVOneBattleQuestion"
-    ];
-
-    let questionElement =
-        null;
-
-    for (
-        const id of questionElements
-    ) {
-
-        const element =
-            getElement(id);
-
-        if (element) {
-
-            questionElement =
-                element;
-
-            break;
-        }
     }
 
-    if (questionElement) {
 
-        questionElement.textContent =
-            question.question;
+    subjectList.innerHTML =
+        subjects
+            .map(
+                (
+                    subject,
+                    index
+                ) => {
+
+                    return `
+                        <div class="subject-item">
+
+                            <span class="subject-number">
+                                ${index + 1}
+                            </span>
+
+                            <strong>
+                                ${escapeHTML(
+                                    subject
+                                )}
+                            </strong>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   TOPICS
+   ========================================================= */
+
+function renderTopics() {
+
+    if (!topicList) {
+        return;
     }
 
-    /*
-     * Find the 1v1 answer grid.
-     */
 
-    let answerGrid =
-        getElement(
-            "oneVOneAnswerGrid"
-        );
+    const topics =
+        studyPlan.topics || [];
 
-    if (!answerGrid) {
 
-        /*
-         * Fall back to the normal battle answer
-         * grid if the HTML uses the same component.
-         */
+    if (!topics.length) {
 
-        answerGrid =
-            getElement(
-                "answerGrid"
-            );
+        topicList.innerHTML =
+            `
+                <div class="empty-state">
+                    No topics in your study plan.
+                </div>
+            `;
+
+        return;
+
     }
 
-    if (!answerGrid) {
 
-        throw new Error(
-            "The 1v1 answer grid is missing from game-mode.html."
-        );
-    }
+    topicList.innerHTML =
+        topics
+            .map(
+                (
+                    topic,
+                    index
+                ) => {
 
-    answerGrid.innerHTML =
-        "";
+                    const name =
+                        getTopicName(
+                            topic
+                        );
 
-    question.options.forEach(
-        function (
-            option,
-            index
-        ) {
 
-            const button =
-                document.createElement(
-                    "button"
+                    const topicId =
+                        getTopicId(
+                            topic,
+                            index
+                        );
+
+
+                    const completed =
+                        completedTopics.includes(
+                            topicId
+                        ) ||
+                        completedTopics.includes(
+                            name
+                        );
+
+
+                    return `
+                        <div
+                            class="topic-item ${
+                                completed
+                                    ? "completed"
+                                    : ""
+                            }"
+                            data-topic-index="${index}"
+                        >
+
+                            <span class="topic-number">
+                                ${index + 1}
+                            </span>
+
+                            <span class="topic-name">
+                                ${escapeHTML(
+                                    name
+                                )}
+                            </span>
+
+                            <span class="topic-state">
+                                ${
+                                    completed
+                                        ? "✓ Completed"
+                                        : "In Progress"
+                                }
+                            </span>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    document
+        .querySelectorAll(
+            ".topic-item[data-topic-index]"
+        )
+        .forEach(
+            item => {
+
+                item.addEventListener(
+                    "click",
+                    () => {
+
+                        const index =
+                            Number(
+                                item.dataset.topicIndex
+                            );
+
+
+                        if (
+                            Number.isFinite(
+                                index
+                            )
+                        ) {
+
+                            currentTopicIndex =
+                                index;
+
+                            localStorage.setItem(
+                                "studyMindCurrentTopicIndex",
+                                String(
+                                    currentTopicIndex
+                                )
+                            );
+
+                            renderTopics();
+
+                            renderCurrentTopic();
+
+                            restoreTopicQuestions();
+
+                        }
+
+                    }
                 );
 
-            button.type =
-                "button";
+            }
+        );
 
-            button.className =
-                "answer-button";
+}
 
-            button.textContent =
-                option;
 
-            button.addEventListener(
-                "click",
-                function () {
+/* =========================================================
+   PROGRESS
+   ========================================================= */
 
-                    answerOneVOneQuestion(
-                        index
+function isTopicCompleted(
+    topic,
+    index
+) {
+
+    const name =
+        getTopicName(
+            topic
+        );
+
+
+    const id =
+        getTopicId(
+            topic,
+            index
+        );
+
+
+    return (
+        completedTopics.includes(
+            id
+        ) ||
+        completedTopics.includes(
+            name
+        )
+    );
+
+}
+
+
+function getProgress() {
+
+    const topics =
+        studyPlan.topics || [];
+
+
+    const total =
+        topics.length;
+
+
+    let completed = 0;
+
+
+    topics.forEach(
+        (
+            topic,
+            index
+        ) => {
+
+            if (
+                isTopicCompleted(
+                    topic,
+                    index
+                )
+            ) {
+
+                completed++;
+
+            }
+
+        }
+    );
+
+
+    const percent =
+        total > 0
+            ? Math.round(
+                (
+                    completed /
+                    total
+                ) * 100
+            )
+            : 0;
+
+
+    return {
+
+        total,
+
+        completed,
+
+        percent
+
+    };
+
+}
+
+
+/* =========================================================
+   UPDATE PROGRESS
+   ========================================================= */
+
+function updateDashboardProgress() {
+
+    const {
+
+        total,
+
+        completed,
+
+        percent
+
+    } = getProgress();
+
+
+    if (progressPercent) {
+
+        progressPercent.textContent =
+            `${percent}%`;
+
+    }
+
+
+    if (progressCount) {
+
+        progressCount.textContent =
+            `${completed} of ${total} topics completed`;
+
+    }
+
+
+    if (progressBar) {
+
+        if (
+            progressBar.tagName ===
+            "CIRCLE"
+        ) {
+
+            const radius =
+                Number(
+                    progressBar.getAttribute(
+                        "r"
+                    )
+                ) || 45;
+
+
+            const circumference =
+                2 *
+                Math.PI *
+                radius;
+
+
+            progressBar.style.strokeDasharray =
+                circumference;
+
+
+            progressBar.style.strokeDashoffset =
+                circumference -
+                (
+                    percent /
+                    100 *
+                    circumference
+                );
+
+        } else {
+
+            progressBar.style.width =
+                `${percent}%`;
+
+        }
+
+    }
+
+
+    if (studyScore) {
+
+        studyScore.textContent =
+            percent;
+
+    }
+
+
+    if (scoreDisplay) {
+
+        scoreDisplay.textContent =
+            `${percent} / 100`;
+
+    }
+
+
+    if (scoreProgressBar) {
+
+        scoreProgressBar.style.width =
+            `${percent}%`;
+
+    }
+
+
+    if (scoreMessage) {
+
+        if (percent === 0) {
+
+            scoreMessage.textContent =
+                "Start studying to build your score.";
+
+        } else if (percent < 50) {
+
+            scoreMessage.textContent =
+                "Good start. Keep building your momentum.";
+
+        } else if (percent < 80) {
+
+            scoreMessage.textContent =
+                "You're making solid progress. Keep going.";
+
+        } else if (percent < 100) {
+
+            scoreMessage.textContent =
+                "Excellent progress. You're almost there.";
+
+        } else {
+
+            scoreMessage.textContent =
+                "Outstanding! You've completed your study plan.";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   CURRENT TOPIC
+   ========================================================= */
+
+function renderCurrentTopic() {
+
+    const topics =
+        studyPlan.topics || [];
+
+
+    const total =
+        topics.length;
+
+
+    if (!total) {
+
+        if (currentTopicName) {
+
+            currentTopicName.textContent =
+                "No topic available";
+
+        }
+
+
+        if (currentTopicDescription) {
+
+            currentTopicDescription.textContent =
+                "Create a study plan with topics to begin.";
+
+        }
+
+
+        if (topicPosition) {
+
+            topicPosition.textContent =
+                "TOPIC 0 OF 0";
+
+        }
+
+
+        if (topicStatusBadge) {
+
+            topicStatusBadge.textContent =
+                "NO TOPIC";
+
+        }
+
+
+        if (topicCompleteCheckbox) {
+
+            topicCompleteCheckbox.checked =
+                false;
+
+            topicCompleteCheckbox.disabled =
+                true;
+
+        }
+
+
+        return;
+
+    }
+
+
+    currentTopicIndex =
+        Math.max(
+            0,
+            Math.min(
+                currentTopicIndex,
+                total - 1
+            )
+        );
+
+
+    localStorage.setItem(
+        "studyMindCurrentTopicIndex",
+        String(
+            currentTopicIndex
+        )
+    );
+
+
+    const topic =
+        topics[
+            currentTopicIndex
+        ];
+
+
+    const topicName =
+        getTopicName(
+            topic
+        );
+
+
+    const completed =
+        isTopicCompleted(
+            topic,
+            currentTopicIndex
+        );
+
+
+    if (currentTopicName) {
+
+        /*
+           IMPORTANT:
+           Display the real topic name.
+           Never display "Untitled Topic".
+        */
+
+        currentTopicName.textContent =
+            topicName ||
+            `Topic ${
+                currentTopicIndex + 1
+            }`;
+
+    }
+
+
+    if (currentTopicDescription) {
+
+        const description =
+            topic &&
+            typeof topic ===
+            "object"
+                ? topic.description
+                : "";
+
+
+        currentTopicDescription.textContent =
+            description ||
+            (
+                completed
+                    ? "You've completed this topic. Review it or continue to the next topic."
+                    : "Study this topic and complete the knowledge check."
+            );
+
+    }
+
+
+    if (topicPosition) {
+
+        topicPosition.textContent =
+            `TOPIC ${
+                currentTopicIndex + 1
+            } OF ${total}`;
+
+    }
+
+
+    if (topicStatusBadge) {
+
+        topicStatusBadge.textContent =
+            completed
+                ? "COMPLETED"
+                : "IN PROGRESS";
+
+
+        topicStatusBadge.classList.toggle(
+            "completed",
+            completed
+        );
+
+    }
+
+
+    if (topicCompleteCheckbox) {
+
+        topicCompleteCheckbox.disabled =
+            false;
+
+        topicCompleteCheckbox.checked =
+            completed;
+
+    }
+
+
+    if (topicCompletionMessage) {
+
+        topicCompletionMessage.textContent =
+            completed
+                ? "✓ Topic completed. Great work!"
+                : "Tick this box when you are done studying this topic.";
+
+    }
+
+
+    if (nextTopicMessage) {
+
+        if (
+            currentTopicIndex <
+            total - 1
+        ) {
+
+            const nextName =
+                getTopicName(
+                    topics[
+                        currentTopicIndex + 1
+                    ]
+                );
+
+
+            nextTopicMessage.textContent =
+                `Next: ${nextName}`;
+
+        } else {
+
+            nextTopicMessage.textContent =
+                "You've reached the final topic.";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   COMPLETE CURRENT TOPIC
+   ========================================================= */
+
+function completeCurrentTopic() {
+
+    const topics =
+        studyPlan.topics || [];
+
+
+    if (!topics.length) {
+        return;
+    }
+
+
+    const topic =
+        topics[
+            currentTopicIndex
+        ];
+
+
+    if (!topic) {
+        return;
+    }
+
+
+    const topicName =
+        getTopicName(
+            topic
+        );
+
+
+    const topicId =
+        getTopicId(
+            topic,
+            currentTopicIndex
+        );
+
+
+    if (
+        topicCompleteCheckbox &&
+        topicCompleteCheckbox.checked
+    ) {
+
+        if (
+            !completedTopics.includes(
+                topicId
+            )
+        ) {
+
+            completedTopics.push(
+                topicId
+            );
+
+        }
+
+
+        /*
+           Keep the name too.
+           This makes older saved progress
+           compatible with the new format.
+        */
+
+        if (
+            topicName &&
+            !completedTopics.includes(
+                topicName
+            )
+        ) {
+
+            completedTopics.push(
+                topicName
+            );
+
+        }
+
+
+        if (
+            topic &&
+            typeof topic ===
+            "object"
+        ) {
+
+            topic.status =
+                "Completed";
+
+        }
+
+
+        if (topicCompletionMessage) {
+
+            topicCompletionMessage.textContent =
+                "✓ Topic marked as completed.";
+
+        }
+
+
+        updateStreak();
+
+
+        if (
+            currentTopicIndex <
+            topics.length - 1
+        ) {
+
+            currentTopicIndex++;
+
+
+            localStorage.setItem(
+                "studyMindCurrentTopicIndex",
+                String(
+                    currentTopicIndex
+                )
+            );
+
+        }
+
+    } else {
+
+        completedTopics =
+            completedTopics.filter(
+                item =>
+                    item !==
+                        topicId &&
+                    item !==
+                        topicName
+            );
+
+
+        if (
+            topic &&
+            typeof topic ===
+            "object"
+        ) {
+
+            topic.status =
+                "In Progress";
+
+        }
+
+
+        if (topicCompletionMessage) {
+
+            topicCompletionMessage.textContent =
+                "Topic marked as incomplete.";
+
+        }
+
+    }
+
+
+    localStorage.setItem(
+        "studyMindCompletedTopics",
+        JSON.stringify(
+            completedTopics
+        )
+    );
+
+
+    savePlan();
+
+
+    updateDashboardProgress();
+
+    renderTopics();
+
+    renderCurrentTopic();
+
+    renderCalendar();
+
+}
+
+
+/* =========================================================
+   STUDY STREAK
+   ========================================================= */
+
+function updateStreak() {
+
+    const today =
+        todayKey();
+
+
+    const lastStudyDate =
+        localStorage.getItem(
+            "studyMindLastStudyDate"
+        );
+
+
+    if (
+        lastStudyDate ===
+        today
+    ) {
+
+        return;
+
+    }
+
+
+    const yesterday =
+        new Date();
+
+
+    yesterday.setDate(
+        yesterday.getDate() - 1
+    );
+
+
+    if (
+        lastStudyDate ===
+        formatDateKey(
+            yesterday
+        )
+    ) {
+
+        currentStreak++;
+
+    } else {
+
+        currentStreak = 1;
+
+    }
+
+
+    localStorage.setItem(
+        "studyMindStreak",
+        String(
+            currentStreak
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindLastStudyDate",
+        today
+    );
+
+
+    if (streak) {
+
+        streak.textContent =
+            `${currentStreak} Days 🔥`;
+
+    }
+
+}
+
+
+/* =========================================================
+   CALENDAR
+   6 STUDY DAYS → 1 BREAK DAY
+   ========================================================= */
+
+function getStudyPlanStartDate() {
+
+    const saved =
+        new Date(
+            studyPlan.studyStartDate
+        );
+
+
+    if (
+        !Number.isNaN(
+            saved.getTime()
+        )
+    ) {
+
+        return startOfDay(
+            saved
+        );
+
+    }
+
+
+    const today =
+        startOfDay(
+            new Date()
+        );
+
+
+    studyPlan.studyStartDate =
+        formatDateKey(
+            today
+        );
+
+
+    savePlan();
+
+
+    return today;
+
+}
+
+
+function getExamDate() {
+
+    if (
+        !studyPlan.examDate
+    ) {
+
+        return null;
+
+    }
+
+
+    const exam =
+        new Date(
+            studyPlan.examDate
+        );
+
+
+    return Number.isNaN(
+        exam.getTime()
+    )
+        ? null
+        : startOfDay(
+            exam
+        );
+
+}
+
+
+function isExamDay(
+    date
+) {
+
+    const exam =
+        getExamDate();
+
+
+    return (
+        !!exam &&
+        startOfDay(
+            date
+        ).getTime() ===
+        exam.getTime()
+    );
+
+}
+
+
+function isCalendarBreakDay(
+    date
+) {
+
+    const current =
+        startOfDay(
+            date
+        );
+
+
+    const start =
+        getStudyPlanStartDate();
+
+
+    const exam =
+        getExamDate();
+
+
+    if (
+        current < start
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        exam &&
+        current > exam
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        exam &&
+        current.getTime() ===
+        exam.getTime()
+    ) {
+
+        return false;
+
+    }
+
+
+    const daysSinceStart =
+        Math.floor(
+            (
+                current.getTime() -
+                start.getTime()
+            ) / DAY_MS
+        );
+
+
+    /*
+       0-5 = Study
+       6   = Break
+       7-12 = Study
+       13  = Break
+       etc.
+    */
+
+    return (
+        daysSinceStart % 7 === 6
+    );
+
+}
+
+
+/* =========================================================
+   RENDER CALENDAR
+   ========================================================= */
+
+function renderCalendar() {
+
+    if (
+        !calendarDays ||
+        !calendarMonth
+    ) {
+
+        return;
+
+    }
+
+
+    calendarDays.innerHTML =
+        "";
+
+
+    const year =
+        calendarDate.getFullYear();
+
+
+    const month =
+        calendarDate.getMonth();
+
+
+    calendarMonth.textContent =
+        calendarDate.toLocaleDateString(
+            "en-US",
+            {
+                month:
+                    "long",
+                year:
+                    "numeric"
+            }
+        );
+
+
+    const firstDay =
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
+
+
+    const daysInMonth =
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
+
+
+    const previousMonthDays =
+        new Date(
+            year,
+            month,
+            0
+        ).getDate();
+
+
+    /*
+       PREVIOUS MONTH DAYS
+    */
+
+    for (
+        let i =
+            firstDay - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const cell =
+            document.createElement(
+                "div"
+            );
+
+
+        cell.className =
+            "calendar-day other-month";
+
+
+        cell.innerHTML =
+            `
+                <span class="day-number">
+                    ${
+                        previousMonthDays -
+                        i
+                    }
+                </span>
+            `;
+
+
+        calendarDays.appendChild(
+            cell
+        );
+
+    }
+
+
+    /*
+       CURRENT MONTH
+    */
+
+    for (
+        let dateNumber = 1;
+        dateNumber <= daysInMonth;
+        dateNumber++
+    ) {
+
+        const cell =
+            document.createElement(
+                "div"
+            );
+
+
+        cell.className =
+            "calendar-day";
+
+
+        const date =
+            new Date(
+                year,
+                month,
+                dateNumber
+            );
+
+
+        const normalized =
+            startOfDay(
+                date
+            );
+
+
+        const today =
+            startOfDay(
+                new Date()
+            );
+
+
+        if (
+            normalized.getTime() ===
+            today.getTime()
+        ) {
+
+            cell.classList.add(
+                "today"
+            );
+
+        }
+
+
+        const start =
+            getStudyPlanStartDate();
+
+
+        const exam =
+            getExamDate();
+
+
+        const insidePlan =
+            normalized >= start &&
+            (
+                !exam ||
+                normalized <= exam
+            );
+
+
+        const breakDay =
+            insidePlan &&
+            isCalendarBreakDay(
+                normalized
+            );
+
+
+        const examDay =
+            insidePlan &&
+            isExamDay(
+                normalized
+            );
+
+
+        /*
+           CHECK WHETHER A COMPLETED
+           TOPIC/STUDY DAY SHOULD BE SHOWN
+        */
+
+        if (examDay) {
+
+            cell.classList.add(
+                "exam-day"
+            );
+
+        } else if (
+            breakDay
+        ) {
+
+            cell.classList.add(
+                "break-day"
+            );
+
+        } else if (
+            insidePlan
+        ) {
+
+            cell.classList.add(
+                "study-day"
+            );
+
+        }
+
+
+        cell.innerHTML =
+            `
+                <span class="day-number">
+                    ${dateNumber}
+                </span>
+
+                ${
+                    breakDay
+                        ? `
+                            <span class="break-label">
+                                BREAK
+                            </span>
+                        `
+                        : ""
+                }
+
+                ${
+                    examDay
+                        ? `
+                            <span class="break-label">
+                                EXAM
+                            </span>
+                        `
+                        : ""
+                }
+            `;
+
+
+        calendarDays.appendChild(
+            cell
+        );
+
+    }
+
+
+    /*
+       FILL CALENDAR TO 42 CELLS
+    */
+
+    const totalCells =
+        calendarDays.children.length;
+
+
+    const remaining =
+        Math.max(
+            0,
+            42 - totalCells
+        );
+
+
+    for (
+        let i = 1;
+        i <= remaining;
+        i++
+    ) {
+
+        const cell =
+            document.createElement(
+                "div"
+            );
+
+
+        cell.className =
+            "calendar-day other-month";
+
+
+        cell.innerHTML =
+            `
+                <span class="day-number">
+                    ${i}
+                </span>
+            `;
+
+
+        calendarDays.appendChild(
+            cell
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SCHEDULE
+   ========================================================= */
+
+function formatTime(
+    hour,
+    minute
+) {
+
+    const suffix =
+        hour >= 12
+            ? "PM"
+            : "AM";
+
+
+    let displayHour =
+        hour % 12;
+
+
+    if (
+        displayHour === 0
+    ) {
+
+        displayHour = 12;
+
+    }
+
+
+    return (
+        `${displayHour}:` +
+        `${String(
+            minute
+        ).padStart(
+            2,
+            "0"
+        )} ${suffix}`
+    );
+
+}
+
+
+/* =========================================================
+   RENDER SCHEDULE
+   ========================================================= */
+
+function renderSchedule() {
+
+    if (!scheduleList) {
+        return;
+    }
+
+
+    const subjects =
+        studyPlan.subjects || [];
+
+
+    const hours =
+        Number(
+            studyPlan.studyHours
+        ) || 0;
+
+
+    if (
+        !subjects.length ||
+        hours <= 0
+    ) {
+
+        scheduleList.innerHTML =
+            `
+                <div class="empty-schedule">
+                    Your daily study sessions
+                    will appear here.
+                </div>
+            `;
+
+        return;
+
+    }
+
+
+    const dailyMinutes =
+        Math.round(
+            hours * 60
+        );
+
+
+    const preferredMinutes =
+        Math.max(
+            1,
+            Math.round(
+                selectedTimerSeconds /
+                60
+            )
+        );
+
+
+    let remaining =
+        dailyMinutes;
+
+
+    let sessionIndex =
+        0;
+
+
+    let startMinutes =
+        16 * 60;
+
+
+    scheduleList.innerHTML =
+        "";
+
+
+    while (
+        remaining > 0
+    ) {
+
+        const sessionMinutes =
+            Math.min(
+                preferredMinutes,
+                remaining
+            );
+
+
+        const subject =
+            subjects[
+                sessionIndex %
+                subjects.length
+            ];
+
+
+        const endMinutes =
+            startMinutes +
+            sessionMinutes;
+
+
+        const startHour =
+            Math.floor(
+                startMinutes /
+                60
+            );
+
+
+        const startMinute =
+            startMinutes %
+            60;
+
+
+        const endHour =
+            Math.floor(
+                endMinutes /
+                60
+            );
+
+
+        const endMinute =
+            endMinutes %
+            60;
+
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+
+        item.className =
+            "schedule-item";
+
+
+        item.innerHTML =
+            `
+                <div class="schedule-time">
+
+                    ${formatTime(
+                        startHour,
+                        startMinute
+                    )}
+
+                    <span>
+                        ${formatTime(
+                            endHour,
+                            endMinute
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="schedule-line"></div>
+
+                <div class="schedule-details">
+
+                    <span>
+                        ${
+                            sessionIndex === 0
+                                ? "FOCUS SESSION"
+                                : "STUDY SESSION"
+                        }
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(
+                            subject
+                        )}
+                    </strong>
+
+                    <small>
+                        ${sessionMinutes} minutes
+                    </small>
+
+                </div>
+            `;
+
+
+        scheduleList.appendChild(
+            item
+        );
+
+
+        remaining -=
+            sessionMinutes;
+
+
+        sessionIndex++;
+
+
+        if (
+            remaining > 0
+        ) {
+
+            startMinutes =
+                endMinutes + 15;
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   NEXT BOOKING
+   ========================================================= */
+
+function updateNextBooking() {
+
+    if (
+        !nextBooking ||
+        !nextBookingTime
+    ) {
+
+        return;
+
+    }
+
+
+    const subjects =
+        studyPlan.subjects || [];
+
+
+    if (!subjects.length) {
+
+        nextBooking.textContent =
+            "No upcoming session yet";
+
+
+        nextBookingTime.textContent =
+            "Create a study plan to populate your schedule.";
+
+
+        return;
+
+    }
+
+
+    const next =
+        new Date();
+
+
+    next.setHours(
+        16,
+        0,
+        0,
+        0
+    );
+
+
+    if (
+        next <= new Date()
+    ) {
+
+        next.setDate(
+            next.getDate() + 1
+        );
+
+    }
+
+
+    if (
+        isExamDay(next)
+    ) {
+
+        nextBooking.textContent =
+            "Exam Day";
+
+
+        nextBookingTime.textContent =
+            next.toLocaleDateString(
+                "en-US",
+                {
+                    weekday:
+                        "long",
+                    month:
+                        "short",
+                    day:
+                        "numeric"
+                }
+            );
+
+
+        return;
+
+    }
+
+
+    if (
+        isCalendarBreakDay(next)
+    ) {
+
+        nextBooking.textContent =
+            "Break Day";
+
+
+        nextBookingTime.textContent =
+            next.toLocaleDateString(
+                "en-US",
+                {
+                    weekday:
+                        "long",
+                    month:
+                        "short",
+                    day:
+                        "numeric"
+                }
+            );
+
+
+        return;
+
+    }
+
+
+    const subject =
+        subjects[
+            next.getDay() %
+            subjects.length
+        ];
+
+
+    nextBooking.textContent =
+        `Study ${subject}`;
+
+
+    nextBookingTime.textContent =
+        `${next.toLocaleDateString(
+            "en-US",
+            {
+                weekday:
+                    "long",
+                month:
+                    "short",
+                day:
+                    "numeric"
+            }
+        )} · ${formatTime(
+            16,
+            0
+        )}`;
+
+}
+
+
+/* =========================================================
+   TIMER
+   ========================================================= */
+
+function syncTimerDurationControl() {
+
+    if (!timerDurationSelect) {
+        return;
+    }
+
+
+    const minutes =
+        Math.round(
+            selectedTimerSeconds /
+            60
+        );
+
+
+    if (
+        timerDurationSelect.tagName ===
+        "SELECT"
+    ) {
+
+        const match =
+            Array.from(
+                timerDurationSelect.options
+            ).find(
+                option => {
+
+                    const value =
+                        Number(
+                            option.value
+                        );
+
+
+                    return (
+                        value ===
+                            minutes ||
+                        value ===
+                            selectedTimerSeconds
                     );
 
                 }
             );
 
-            answerGrid.appendChild(
-                button
-            );
+
+        if (match) {
+
+            timerDurationSelect.value =
+                match.value;
+
         }
-    );
 
-    /*
-     * Update score display.
-     */
+    } else {
 
-    updateOneVOneScores();
+        timerDurationSelect.value =
+            minutes;
 
-    /*
-     * Start timer.
-     */
+    }
 
-    startOneVOneTimer();
 }
 
 
 /* =========================================================
-   1V1 TIMER
-========================================================= */
+   TIMER DURATION CHANGE
+   ========================================================= */
 
-function startOneVOneTimer() {
+function handleTimerDurationChange() {
 
-    stopOneVOneTimer();
+    if (!timerDurationSelect) {
+        return;
+    }
 
-    battleState.timer =
-        QUESTION_TIME_SECONDS;
 
-    updateOneVOneTimer();
+    const value =
+        Number(
+            timerDurationSelect.value
+        );
 
-    battleState.timerInterval =
+
+    if (
+        !Number.isFinite(value) ||
+        value <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Values such as 25, 45, 60
+       are treated as minutes.
+    */
+
+    const newDuration =
+        value <= 300
+            ? value * 60
+            : value;
+
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
+        null;
+
+
+    selectedTimerSeconds =
+        newDuration;
+
+
+    timerSeconds =
+        newDuration;
+
+
+    timerRunning =
+        false;
+
+
+    timerEndTime =
+        null;
+
+
+    localStorage.setItem(
+        "studyMindSelectedTimerSeconds",
+        String(
+            selectedTimerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+    renderSchedule();
+
+}
+
+
+/* =========================================================
+   START TIMER
+   ========================================================= */
+
+function startTimer() {
+
+    if (timerRunning) {
+        return;
+    }
+
+
+    if (
+        timerSeconds <= 0
+    ) {
+
+        timerSeconds =
+            selectedTimerSeconds;
+
+    }
+
+
+    timerRunning =
+        true;
+
+
+    timerEndTime =
+        Date.now() +
+        timerSeconds * 1000;
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "true"
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerEndTime",
+        String(
+            timerEndTime
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+    startTimerInterval();
+
+}
+
+
+/* =========================================================
+   TIMER INTERVAL
+   ========================================================= */
+
+function startTimerInterval() {
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
         setInterval(
-            function () {
+            () => {
 
                 if (
-                    !battleState.battleActive
+                    !timerRunning ||
+                    !timerEndTime
                 ) {
-
-                    stopOneVOneTimer();
 
                     return;
+
                 }
 
-                battleState.timer--;
 
-                updateOneVOneTimer();
+                timerSeconds =
+                    Math.max(
+                        0,
+                        Math.ceil(
+                            (
+                                timerEndTime -
+                                Date.now()
+                            ) / 1000
+                        )
+                    );
+
+
+                localStorage.setItem(
+                    "studyMindTimerSeconds",
+                    String(
+                        timerSeconds
+                    )
+                );
+
+
+                updateTimerDisplay();
+
 
                 if (
-                    battleState.timer <=
-                    0
+                    timerSeconds <= 0
                 ) {
 
-                    stopOneVOneTimer();
+                    finishTimer(
+                        true
+                    );
 
-                    handleOneVOneTimeout();
                 }
 
             },
-            1000
-        );
-}
-
-
-/* =========================================================
-   STOP 1V1 TIMER
-========================================================= */
-
-function stopOneVOneTimer() {
-
-    if (
-        battleState?.timerInterval
-    ) {
-
-        clearInterval(
-            battleState.timerInterval
+            250
         );
 
-        battleState.timerInterval =
-            null;
-    }
 }
 
 
 /* =========================================================
-   UPDATE 1V1 TIMER
-========================================================= */
+   PAUSE TIMER
+   ========================================================= */
 
-function updateOneVOneTimer() {
+function pauseTimer() {
 
-    const timerElements = [
-        "oneVOneTimer",
-        "oneVOneBattleTimer"
-    ];
-
-    for (
-        const id of timerElements
-    ) {
-
-        const element =
-            getElement(id);
-
-        if (element) {
-
-            element.textContent =
-                Math.max(
-                    0,
-                    battleState.timer
-                );
-
-            return;
-        }
+    if (!timerRunning) {
+        return;
     }
+
+
+    if (timerEndTime) {
+
+        timerSeconds =
+            Math.max(
+                0,
+                Math.ceil(
+                    (
+                        timerEndTime -
+                        Date.now()
+                    ) / 1000
+                )
+            );
+
+    }
+
+
+    timerRunning =
+        false;
+
+
+    timerEndTime =
+        null;
+
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
+        null;
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
 }
 
 
 /* =========================================================
-   ANSWER 1V1 QUESTION
-========================================================= */
+   FINISH TIMER
+   ========================================================= */
 
-function answerOneVOneQuestion(
-    selectedIndex
+function finishTimer(
+    showAlert = true
 ) {
 
-    if (
-        battleState.answering ||
-        !battleState.battleActive
-    ) {
-
-        return;
-    }
-
-    battleState.answering =
-        true;
-
-    stopOneVOneTimer();
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    if (!question) {
-        return;
-    }
-
-    let answerGrid =
-        getElement(
-            "oneVOneAnswerGrid"
-        );
-
-    if (!answerGrid) {
-
-        answerGrid =
-            getElement(
-                "answerGrid"
-            );
-    }
-
-    const buttons =
-        answerGrid
-            ? answerGrid.querySelectorAll(
-                ".answer-button"
-            )
-            : [];
-
-    buttons.forEach(
-        function (
-            button,
-            index
-        ) {
-
-            button.disabled =
-                true;
-
-            if (
-                index ===
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-
-            if (
-                index ===
-                selectedIndex &&
-                index !==
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "incorrect"
-                );
-            }
-        }
-    );
-
-    /*
-     * Record this question locally.
-     */
-
-    oneVOneAnsweredQuestions.add(
-        battleState.currentQuestion
-    );
-
-    /*
-     * Score the current player.
-     *
-     * The opponent's actual score will eventually
-     * be synchronized through the match system.
-     */
-
-    if (
-        selectedIndex ===
-        question.answer
-    ) {
-
-        battleState.playerScore +=
-            10;
-    }
-
-    updateOneVOneScores();
-
-    /*
-     * Move to next question.
-     */
-
-    setTimeout(
-        function () {
-
-            if (
-                !battleState.battleActive
-            ) {
-
-                return;
-            }
-
-            battleState.currentQuestion++;
-
-            showOneVOneQuestion();
-
-        },
-        900
-    );
-}
-
-
-/* =========================================================
-   1V1 TIMEOUT
-========================================================= */
-
-function handleOneVOneTimeout() {
-
-    if (
-        battleState.answering ||
-        !battleState.battleActive
-    ) {
-
-        return;
-    }
-
-    battleState.answering =
-        true;
-
-    const question =
-        battleState.questions[
-            battleState.currentQuestion
-        ];
-
-    let answerGrid =
-        getElement(
-            "oneVOneAnswerGrid"
-        );
-
-    if (!answerGrid) {
-
-        answerGrid =
-            getElement(
-                "answerGrid"
-            );
-    }
-
-    const buttons =
-        answerGrid
-            ? answerGrid.querySelectorAll(
-                ".answer-button"
-            )
-            : [];
-
-    buttons.forEach(
-        function (
-            button,
-            index
-        ) {
-
-            button.disabled =
-                true;
-
-            if (
-                question &&
-                index ===
-                question.answer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-        }
-    );
-
-    /*
-     * A timeout gives the opponent the point.
-     */
-
-    battleState.opponentScore +=
-        10;
-
-    updateOneVOneScores();
-
-    setTimeout(
-        function () {
-
-            if (
-                !battleState.battleActive
-            ) {
-
-                return;
-            }
-
-            battleState.currentQuestion++;
-
-            showOneVOneQuestion();
-
-        },
-        900
-    );
-}
-
-
-/* =========================================================
-   UPDATE 1V1 SCORES
-========================================================= */
-
-function updateOneVOneScores() {
-
-    /*
-     * Generic score elements.
-     */
-
-    const playerScore =
-        getElement(
-            "oneVOnePlayerScore"
-        );
-
-    const opponentScore =
-        getElement(
-            "oneVOneOpponentScore"
-        );
-
-    if (playerScore) {
-
-        playerScore.textContent =
-            battleState.playerScore;
-    }
-
-    if (opponentScore) {
-
-        opponentScore.textContent =
-            battleState.opponentScore;
-    }
-
-    /*
-     * If the existing battle score elements are
-     * shared with 1v1, update those too.
-     */
-
-    const normalPlayerScore =
-        getElement(
-            "playerScore"
-        );
-
-    const normalOpponentScore =
-        getElement(
-            "computerScore"
-        );
-
-    if (
-        normalPlayerScore &&
-        battleState.mode ===
-        "1v1"
-    ) {
-
-        normalPlayerScore.textContent =
-            battleState.playerScore;
-    }
-
-    if (
-        normalOpponentScore &&
-        battleState.mode ===
-        "1v1"
-    ) {
-
-        normalOpponentScore.textContent =
-            battleState.opponentScore;
-    }
-}
-
-
-/* =========================================================
-   FINISH 1V1 BATTLE
-========================================================= */
-
-function finishOneVOneBattle() {
-
-    stopOneVOneTimer();
-
-    battleState.battleActive =
+    timerRunning =
         false;
 
-    oneVOneActive =
-        false;
 
-    const arena =
-        getElement(
-            "oneVOneArena"
-        );
-
-    const results =
-        getElement(
-            "battleResults"
-        );
-
-    if (arena) {
-        arena.hidden = true;
-    }
-
-    if (results) {
-        results.hidden = false;
-    }
-
-    const player =
-        battleState.playerScore;
-
-    const opponent =
-        battleState.opponentScore;
-
-    let title =
-        "1v1 Battle Complete";
-
-    let message =
-        "Great work!";
-
-    let points =
-        player;
-
-    if (
-        player >
-        opponent
-    ) {
-
-        title =
-            "🏆 Victory!";
-
-        message =
-            "You won the 1v1 battle!";
-
-        points =
-            player + 25;
-
-    } else if (
-        player <
-        opponent
-    ) {
-
-        title =
-            "Keep Studying!";
-
-        message =
-            "Your opponent won this round. Review the topic and try again.";
-
-    } else {
-
-        title =
-            "🤝 Draw!";
-
-        message =
-            "Both players finished with the same score.";
-
-        points =
-            player + 10;
-    }
-
-    /*
-     * Award points only once.
-     */
-
-    if (
-        !oneVOneResultsRecorded
-    ) {
-
-        oneVOneResultsRecorded =
-            true;
-
-        setBattlePoints(
-            getBattlePoints() +
-            points
-        );
-
-        /*
-         * Count the completed battle.
-         */
-
-        setBattlesUsed(
-            getBattlesUsed() + 1
-        );
-    }
-
-    if ($("battleResultTitle")) {
-
-        $("battleResultTitle")
-            .textContent =
-            title;
-    }
-
-    if ($("battleResultMessage")) {
-
-        $("battleResultMessage")
-            .textContent =
-            message;
-    }
-
-    if ($("finalPlayerScore")) {
-
-        $("finalPlayerScore")
-            .textContent =
-            player;
-    }
-
-    if ($("finalComputerScore")) {
-
-        $("finalComputerScore")
-            .textContent =
-            opponent;
-    }
-
-    if ($("pointsEarned")) {
-
-        $("pointsEarned")
-            .textContent =
-            `+${points}`;
-    }
-
-    if ($("finalOpponentLabel")) {
-
-        $("finalOpponentLabel")
-            .textContent =
-            "OPPONENT";
-    }
-
-    updateLeaderboardUI();
-
-    console.log(
-        "🏁 1v1 battle finished:",
-        {
-            player,
-            opponent,
-            points
-        }
-    );
-}
-
-
-/* =========================================================
-   RESET 1V1 ARENA
-========================================================= */
-
-function resetOneVOneArena() {
-
-    stopOneVOneTimer();
-
-    clearOneVOnePolling();
-
-    battleState.battleActive =
-        false;
-
-    oneVOneActive =
-        false;
-
-    oneVOneMatchId =
+    timerEndTime =
         null;
 
-    oneVOnePlayerNumber =
+
+    timerSeconds =
+        0;
+
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
         null;
 
-    oneVOneResultsRecorded =
-        false;
 
-    oneVOneAnsweredQuestions =
-        new Set();
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        "0"
+    );
 
-    window.oneVOneArenaStarted =
-        false;
 
-    cleanupOneVOneConnection();
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
 
-    const arena =
-        getElement(
-            "oneVOneArena"
-        );
 
-    if (arena) {
-        arena.hidden = true;
-    }
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
 
-    startOneVOneMode();
-}
-/* =========================================================
-   PREMIUM MESSAGE FALLBACK
-========================================================= */
 
-function showPremiumMessage() {
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+
+    updateStreak();
+
 
     if (
-        typeof openPremium ===
-        "function"
+        topicCompletionMessage
     ) {
 
-        openPremium();
+        const minutes =
+            Math.round(
+                selectedTimerSeconds /
+                60
+            );
 
+
+        topicCompletionMessage.textContent =
+            `⏰ Your ${minutes}-minute study session is complete. If you have finished the topic, tick the box below.`;
+
+    }
+
+
+    if (showAlert) {
+
+        const minutes =
+            Math.round(
+                selectedTimerSeconds /
+                60
+            );
+
+
+        alert(
+            `Your ${minutes}-minute study session is complete! 🎉`
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   RESET TIMER
+   ========================================================= */
+
+function resetTimer() {
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    timerInterval =
+        null;
+
+
+    timerRunning =
+        false;
+
+
+    timerEndTime =
+        null;
+
+
+    timerSeconds =
+        selectedTimerSeconds;
+
+
+    localStorage.setItem(
+        "studyMindTimerSeconds",
+        String(
+            timerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTimerRunning",
+        "false"
+    );
+
+
+    localStorage.removeItem(
+        "studyMindTimerEndTime"
+    );
+
+
+    if (studyTimer) {
+
+        studyTimer.classList.remove(
+            "timer-finished",
+            "timer-warning"
+        );
+
+    }
+
+
+    updateTimerDisplay();
+
+    updateTimerButtons();
+
+}
+
+
+/* =========================================================
+   TIMER BUTTONS
+   ========================================================= */
+
+function updateTimerButtons() {
+
+    if (startTimerButton) {
+
+        startTimerButton.disabled =
+            timerRunning;
+
+
+        if (
+            timerSeconds <= 0
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>✓</span> Timer Complete";
+
+        } else if (
+            timerRunning
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Running...";
+
+        } else if (
+            timerSeconds <
+            selectedTimerSeconds
+        ) {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Resume";
+
+        } else {
+
+            startTimerButton.innerHTML =
+                "<span>▶</span> Start Timer";
+
+        }
+
+    }
+
+
+    if (pauseTimerButton) {
+
+        pauseTimerButton.disabled =
+            !timerRunning;
+
+    }
+
+}
+
+
+/* =========================================================
+   TIMER DISPLAY
+   ========================================================= */
+
+function updateTimerDisplay() {
+
+    if (!studyTimer) {
         return;
     }
 
-    alert(
-        "You have used all 5 free Game Mode battles. Upgrade to Premium for unlimited battles."
+
+    const safe =
+        Math.max(
+            0,
+            Number(
+                timerSeconds
+            ) || 0
+        );
+
+
+    const minutes =
+        Math.floor(
+            safe / 60
+        );
+
+
+    const seconds =
+        safe % 60;
+
+
+    studyTimer.textContent =
+        `${String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )}:${String(
+            seconds
+        ).padStart(
+            2,
+            "0"
+        )}`;
+
+
+    studyTimer.classList.toggle(
+        "timer-warning",
+        safe > 0 &&
+        safe <= 60
     );
+
+
+    studyTimer.classList.toggle(
+        "timer-finished",
+        safe === 0
+    );
+
 }
 
 
 /* =========================================================
-   LEADERBOARD — GLOBAL GAME MODE LEADERBOARD
-   =========================================================
-
-   ACTUAL DATABASE COLUMNS:
-
-       user_id
-       display_name
-       battle_points
-       wins
-       losses
-       draws
-       battles_played
-       updated_at
-       battles
-
-   IMPORTANT:
-   ---------------------------------------------------------
-   The leaderboard uses battle_points, NOT points.
+   AI PROGRESS ANALYSIS
    ========================================================= */
 
+async function analyzeProgress() {
 
-/* =========================================================
-   LOAD GLOBAL LEADERBOARD
-   ========================================================= */
+    if (!aiAdviceText) {
+        return;
+    }
 
-async function getGlobalLeaderboard() {
 
-    const client = getSupabase();
+    if (!isAuthenticated) {
+
+        showAILoginMessage(
+            aiAdviceText
+        );
+
+        return;
+
+    }
+
 
     const {
-        data,
-        error
-    } = await client
-        .from("game_leaderboard")
-        .select(`
-            user_id,
-            display_name,
-            battle_points,
-            wins,
-            losses,
-            draws,
-            battles_played,
-            updated_at,
-            battles
-        `)
-        .order(
-            "battle_points",
-            {
-                ascending: false
-            }
-        )
-        .order(
-            "wins",
-            {
-                ascending: false
-            }
-        )
-        .order(
-            "battles_played",
-            {
-                ascending: true
-            }
-        );
+        total,
+        completed,
+        percent
+    } =
+        getProgress();
 
-    if (error) {
 
-        console.error(
-            "Could not load game_leaderboard:",
-            error
-        );
+    const currentTopic =
+        studyPlan.topics.length
+            ? getTopicName(
+                studyPlan.topics[
+                    currentTopicIndex
+                ]
+            )
+            : "None";
 
-        throw error;
+
+    const subjects =
+        studyPlan.subjects || [];
+
+
+    if (
+        analyzeProgressButton
+    ) {
+
+        analyzeProgressButton.disabled =
+            true;
+
+        analyzeProgressButton.textContent =
+            "⏳ Analyzing...";
+
     }
 
-    return Array.isArray(data)
-        ? data
-        : [];
-}
 
-/* =========================================================
-   GET CURRENT USER
-   ========================================================= */
+    aiAdviceText.textContent =
+        "StudyMind AI is analyzing your progress...";
 
-async function getLeaderboardCurrentUser() {
 
     try {
 
-        return await getCurrentUser();
+        const message =
+            `
+You are StudyMind AI, helping a secondary-school student.
+
+STUDENT STUDY INFORMATION:
+
+Exam type:
+${
+    studyPlan.examType ||
+    "Not specified"
+}
+
+Exam date:
+${
+    studyPlan.examDate ||
+    "Not specified"
+}
+
+Subjects:
+${
+    subjects.length
+        ? subjects.join(", ")
+        : "No subjects available"
+}
+
+Current topic:
+${
+    currentTopic ||
+    "No current topic"
+}
+
+Topics completed:
+${completed} of ${total}
+
+Progress:
+${percent}%
+
+Daily study hours:
+${
+    Number(
+        studyPlan.studyHours
+    ) || 0
+}
+
+Days remaining:
+${calculateDaysLeft()}
+
+Give practical advice on what the student should focus on next.
+
+Do not invent information.
+Keep the answer clear, concise and useful.
+            `.trim();
+
+
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            message
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.error ||
+                "Unable to analyze progress."
+            );
+
+        }
+
+
+        if (
+            !data ||
+            !data.reply
+        ) {
+
+            throw new Error(
+                "The AI returned an empty response."
+            );
+
+        }
+
+
+        aiAdviceText.innerHTML =
+            `
+                <strong>
+                    📊 Your Study Analysis
+                </strong>
+
+                <div>
+                    ${renderAIResponse(
+                        data.reply
+                    )}
+                </div>
+            `;
+
+
+        renderMath(
+            aiAdviceText
+        );
+
 
     } catch (error) {
 
-        console.warn(
-            "Could not get current leaderboard user:",
+        console.error(
+            "Progress analysis error:",
             error
         );
 
-        return null;
+
+        aiAdviceText.textContent =
+            error.message ||
+            "Unable to connect to StudyMind AI right now. Please try again.";
+
+    } finally {
+
+        if (
+            analyzeProgressButton
+        ) {
+
+            analyzeProgressButton.disabled =
+                false;
+
+            analyzeProgressButton.innerHTML =
+                "🔍 Analyze My Progress";
+
+        }
+
     }
+
+}
+
+
+/* =========================================================
+   AI QUESTION COUNT
+   ========================================================= */
+
+function getAIQuestionCount() {
+
+    aiQuestionCount =
+        Number(
+            localStorage.getItem(
+                "aiQuestionCount"
+            )
+        ) || 0;
+
+
+    return aiQuestionCount;
+
+}
+
+
+function getRemainingAIQuestions() {
+
+    return Math.max(
+        0,
+        FREE_QUESTION_LIMIT -
+        getAIQuestionCount()
+    );
+
+}
+
+
+/* =========================================================
+   RECORD AI QUESTION
+   ========================================================= */
+
+function recordAIQuestion() {
+
+    const count =
+        getAIQuestionCount();
+
+
+    if (
+        count >=
+        FREE_QUESTION_LIMIT
+    ) {
+
+        return false;
+
+    }
+
+
+    aiQuestionCount =
+        count + 1;
+
+
+    localStorage.setItem(
+        "aiQuestionCount",
+        String(
+            aiQuestionCount
+        )
+    );
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   UPDATE AI BADGE
+   ========================================================= */
+
+function updateAIBadge() {
+
+    const count =
+        getAIQuestionCount();
+
+
+    if (aiCountBadge) {
+
+        aiCountBadge.textContent =
+            `${count}/${FREE_QUESTION_LIMIT} used`;
+
+    }
+
+}
+
+
+/* =========================================================
+   ASK STUDYMIND AI
+   ========================================================= */
+
+async function askStudyMindAI() {
+
+    if (!isAuthenticated) {
+
+        showAILoginMessage(
+            aiResponse
+        );
+
+        return;
+
+    }
+
+
+    const question =
+        aiQuestion
+            ? aiQuestion.value.trim()
+            : "";
+
+
+    if (!question) {
+
+        if (aiResponse) {
+
+            aiResponse.textContent =
+                "Please enter a question first.";
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        !recordAIQuestion()
+    ) {
+
+        showAskAILimitMessage();
+
+        return;
+
+    }
+
+
+    if (askAIButton) {
+
+        askAIButton.disabled =
+            true;
+
+        askAIButton.textContent =
+            "⏳ Thinking...";
+
+    }
+
+
+    if (aiResponse) {
+
+        aiResponse.textContent =
+            "StudyMind AI is thinking...";
+
+    }
+
+
+    try {
+
+        const subjects =
+            studyPlan.subjects || [];
+
+
+        const topics =
+            studyPlan.topics || [];
+
+
+        const {
+            total,
+            completed,
+            percent
+        } =
+            getProgress();
+
+
+        const currentTopic =
+            topics.length
+                ? getTopicName(
+                    topics[
+                        currentTopicIndex
+                    ]
+                )
+                : "No current topic";
+
+
+        const topicNames =
+            topics
+                .map(
+                    topic =>
+                        getTopicName(
+                            topic
+                        )
+                )
+                .filter(Boolean);
+
+
+        /*
+           IMPORTANT:
+           Use /api/ask-ai because
+           that is the Vercel route
+           connected to your OpenAI API.
+        */
+
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            message:
+                                `
+You are StudyMind AI, a professional educational assistant helping a secondary-school student.
+
+STUDENT'S CURRENT STUDY INFORMATION
+
+Exam type:
+${
+    studyPlan.examType ||
+    "Not specified"
+}
+
+Exam date:
+${
+    studyPlan.examDate ||
+    "Not specified"
+}
+
+Days remaining:
+${calculateDaysLeft()}
+
+Subjects:
+${
+    subjects.length
+        ? subjects.join(", ")
+        : "No subjects available"
+}
+
+Topics:
+${
+    topicNames.length
+        ? topicNames.join(", ")
+        : "No topics available"
+}
+
+Current topic:
+${
+    currentTopic ||
+    "No current topic"
+}
+
+Daily study hours:
+${
+    Number(
+        studyPlan.studyHours
+    ) || 0
+}
+
+Progress:
+${completed} of ${total} topics completed (${percent}%)
+
+STUDENT'S QUESTION:
+
+${question}
+
+Answer the student's question clearly and accurately.
+
+Use the student's study information when it is relevant.
+
+If the student asks what they should study next, use their actual subjects, topics and progress.
+
+Do not invent subjects, topics, dates or progress.
+
+Keep the response helpful and readable.
+                                `.trim()
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.error ||
+                "Something went wrong while contacting StudyMind AI."
+            );
+
+        }
+
+
+        if (
+            !data ||
+            !data.reply
+        ) {
+
+            throw new Error(
+                "The AI returned an empty response."
+            );
+
+        }
+
+
+        if (aiResponse) {
+
+            aiResponse.innerHTML =
+                renderAIResponse(
+                    data.reply
+                );
+
+
+            renderMath(
+                aiResponse
+            );
+
+        }
+
+
+        if (aiQuestion) {
+
+            aiQuestion.value =
+                "";
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "StudyMind AI error:",
+            error
+        );
+
+
+        /*
+           Do not charge the student
+           for a failed request.
+        */
+
+        aiQuestionCount =
+            Math.max(
+                0,
+                getAIQuestionCount() - 1
+            );
+
+
+        localStorage.setItem(
+            "aiQuestionCount",
+            String(
+                aiQuestionCount
+            )
+        );
+
+
+        if (aiResponse) {
+
+            aiResponse.textContent =
+                error.message ||
+                "Sorry, I couldn't connect to StudyMind AI right now. Please try again.";
+
+        }
+
+    } finally {
+
+        updateAIBadge();
+
+        setupAIAuthenticationUI();
+
+    }
+
+}
+
+
+/* =========================================================
+   AI AUTHENTICATION UI
+   ========================================================= */
+
+function setupAIAuthenticationUI() {
+
+    const count =
+        getAIQuestionCount();
+
+
+    if (!isAuthenticated) {
+
+        if (askAIButton) {
+
+            askAIButton.disabled =
+                true;
+
+            askAIButton.textContent =
+                "🔒 Login Required";
+
+        }
+
+
+        if (aiQuestion) {
+
+            aiQuestion.disabled =
+                true;
+
+            aiQuestion.placeholder =
+                "Login to use StudyMind AI";
+
+        }
+
+
+        updateAIBadge();
+
+        return;
+
+    }
+
+
+    if (aiQuestion) {
+
+        aiQuestion.disabled =
+            false;
+
+        aiQuestion.placeholder =
+            "Ask anything about your study plan...";
+
+    }
+
+
+    if (askAIButton) {
+
+        askAIButton.disabled =
+            count >=
+            FREE_QUESTION_LIMIT;
+
+
+        askAIButton.textContent =
+            count >=
+            FREE_QUESTION_LIMIT
+                ? "🔒 Free Limit Reached"
+                : "🤖 Ask AI";
+
+    }
+
+
+    updateAIBadge();
+
+}
+
+
+/* =========================================================
+   LOGIN MESSAGE
+   ========================================================= */
+
+function showAILoginMessage(
+    container
+) {
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML =
+        `
+            <div class="ai-limit-message">
+
+                <h3>
+                    🔒 Login Required
+                </h3>
+
+                <p>
+                    Please log in to use
+                    StudyMind AI.
+                </p>
+
+                <button
+                    class="premium-button"
+                    onclick="window.location.href='login.html'"
+                >
+                    🔑 Login
+                </button>
+
+            </div>
+        `;
+
+}
+
+
+/* =========================================================
+   ASK AI LIMIT MESSAGE
+   ========================================================= */
+
+function showAskAILimitMessage() {
+
+    if (!aiResponse) {
+        return;
+    }
+
+
+    aiResponse.innerHTML =
+        `
+            <div class="ai-limit-message">
+
+                <h3>
+                    💎 Free AI Limit Reached
+                </h3>
+
+                <p>
+                    You've used all
+                    ${FREE_QUESTION_LIMIT}
+                    free AI questions.
+                </p>
+
+                <p>
+                    Upgrade to StudyMind AI Premium
+                    for unlimited AI assistance.
+                </p>
+
+                <button
+                    class="premium-button"
+                    onclick="openPremiumOffer()"
+                >
+                    💎 Explore Premium
+                </button>
+
+            </div>
+        `;
+
+}
+
+
+/* =========================================================
+   DOCUMENT SUMMARIZER
+   ========================================================= */
+
+function getSummaryUsageCount() {
+
+    summaryUsageCount =
+        Number(
+            localStorage.getItem(
+                "summaryUsageCount"
+            )
+        ) || 0;
+
+
+    return summaryUsageCount;
+
+}
+
+
+/* =========================================================
+   SUMMARY BADGE
+   ========================================================= */
+
+function updateSummaryBadge() {
+
+    const count =
+        getSummaryUsageCount();
+
+
+    if (summaryCountBadge) {
+
+        summaryCountBadge.textContent =
+            `${count}/${FREE_SUMMARY_LIMIT} used`;
+
+    }
+
+}
+
+
+/* =========================================================
+   DOCUMENT SUMMARIZER
+   ========================================================= */
+
+async function summarizeDocument() {
+
+    if (!isAuthenticated) {
+
+        showAILoginMessage(
+            summaryOutput
+        );
+
+        return;
+
+    }
+
+
+    const content =
+        summarizeInput
+            ? summarizeInput.value.trim()
+            : "";
+
+
+    if (!content) {
+
+        if (summaryOutput) {
+
+            summaryOutput.textContent =
+                "Please paste your study material first.";
+
+        }
+
+        return;
+
+    }
+
+
+    const currentCount =
+        getSummaryUsageCount();
+
+
+    if (
+        currentCount >=
+        FREE_SUMMARY_LIMIT
+    ) {
+
+        showSummaryLimitMessage();
+
+        return;
+
+    }
+
+
+    if (summarizeBtn) {
+
+        summarizeBtn.disabled =
+            true;
+
+        summarizeBtn.innerHTML =
+            "⏳ Summarizing...";
+
+    }
+
+
+    if (summaryOutput) {
+
+        summaryOutput.textContent =
+            "StudyMind AI is summarizing your material...";
+
+    }
+
+
+    try {
+
+        const examContext =
+            studyPlan.examType ||
+            "WAEC";
+
+
+        const currentTopic =
+            studyPlan.topics.length
+                ? getTopicName(
+                    studyPlan.topics[
+                        currentTopicIndex
+                    ]
+                )
+                : "";
+
+
+        const message =
+            `
+Summarize the following study material for a secondary-school student preparing for ${examContext}.
+
+CURRENT STUDY CONTEXT:
+
+Subjects:
+${
+    studyPlan.subjects.length
+        ? studyPlan.subjects.join(", ")
+        : "Not specified"
+}
+
+Current topic:
+${
+    currentTopic ||
+    "Not specified"
+}
+
+Focus on:
+
+- Key concepts
+- Important definitions
+- Important formulas
+- Exam-relevant points
+- Important facts
+- Easy-to-revise explanations
+
+Keep the summary concise but useful for exam revision.
+
+Study material:
+
+${content}
+            `.trim();
+
+
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            message
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.error ||
+                "Unable to summarize document."
+            );
+
+        }
+
+
+        if (
+            !data ||
+            !data.reply
+        ) {
+
+            throw new Error(
+                "The AI returned an empty summary."
+            );
+
+        }
+
+
+        summaryUsageCount =
+            currentCount + 1;
+
+
+        localStorage.setItem(
+            "summaryUsageCount",
+            String(
+                summaryUsageCount
+            )
+        );
+
+
+        updateSummaryBadge();
+
+
+        if (summaryOutput) {
+
+            summaryOutput.innerHTML =
+                `
+                    <div class="summary-result">
+
+                        <h4>
+                            📋 Summary
+                            (Tailored for
+                            ${escapeHTML(
+                                examContext
+                            )})
+                        </h4>
+
+                        <div>
+                            ${renderAIResponse(
+                                data.reply
+                            )}
+                        </div>
+
+                    </div>
+                `;
+
+
+            renderMath(
+                summaryOutput
+            );
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Document summarizer error:",
+            error
+        );
+
+
+        if (summaryOutput) {
+
+            summaryOutput.textContent =
+                error.message ||
+                "Sorry, I couldn't summarize your document right now.";
+
+        }
+
+    } finally {
+
+        if (summarizeBtn) {
+
+            summarizeBtn.disabled =
+                false;
+
+            summarizeBtn.innerHTML =
+                "✨ Summarize Notes";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   SUMMARY LIMIT
+   ========================================================= */
+
+function showSummaryLimitMessage() {
+
+    if (!summaryOutput) {
+        return;
+    }
+
+
+    summaryOutput.innerHTML =
+        `
+            <div class="ai-limit-message">
+
+                <h3>
+                    💎 Free Summary Limit Reached
+                </h3>
+
+                <p>
+                    You've used all
+                    ${FREE_SUMMARY_LIMIT}
+                    free document summaries.
+                </p>
+
+                <button
+                    class="premium-button"
+                    onclick="openPremiumOffer()"
+                >
+                    💎 Explore Premium
+                </button>
+
+            </div>
+        `;
+
+}
+
+
+/* =========================================================
+   TOPIC KNOWLEDGE CHECK
+   ========================================================= */
+
+async function generateQuestionsForTopic(
+    topic
+) {
+
+    if (!topic) {
+        return;
+    }
+
+
+    if (!isAuthenticated) {
+
+        showAILoginMessage(
+            topicQuestionsContainer
+        );
+
+        return;
+
+    }
+
+
+    const topicName =
+        getTopicName(
+            topic
+        );
+
+
+    if (!topicName) {
+        return;
+    }
+
+
+    if (
+        completedQuestionTopics.includes(
+            topicName
+        )
+    ) {
+
+        showTopicQuestionsFinished(
+            topicName
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !topicQuestionsSection ||
+        !topicQuestionsContainer
+    ) {
+
+        return;
+
+    }
+
+
+    topicQuestionsSection.style.display =
+        "block";
+
+
+    topicQuestionsContainer.innerHTML =
+        `
+            <p>
+                🤖 StudyMind AI is preparing
+                5 questions about
+                <strong>
+                    ${escapeHTML(
+                        topicName
+                    )}
+                </strong>...
+            </p>
+        `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            message:
+                                `
+Create exactly 5 educational multiple-choice questions for a secondary-school student who has studied this topic:
+
+${topicName}
+
+Requirements:
+
+- Exactly 5 questions.
+- Exactly 4 options per question.
+- Only one correct answer.
+- Test understanding.
+- Return ONLY valid JSON.
+- No markdown.
+
+Format:
+
+[
+  {
+    "question": "Question",
+    "options": ["A", "B", "C", "D"],
+    "answer": 0
+  }
+]
+
+The answer must be the zero-based index of the correct option.
+                                `.trim()
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.error ||
+                "Could not generate questions."
+            );
+
+        }
+
+
+        if (
+            !data ||
+            !data.reply
+        ) {
+
+            throw new Error(
+                "The AI returned an empty response."
+            );
+
+        }
+
+
+        const questions =
+            JSON.parse(
+                cleanJSONResponse(
+                    data.reply
+                )
+            );
+
+
+        if (
+            !Array.isArray(
+                questions
+            ) ||
+            questions.length < 5
+        ) {
+
+            throw new Error(
+                "The AI did not return 5 valid questions."
+            );
+
+        }
+
+
+        topicQuestions = {
+
+            topic:
+                topicName,
+
+            questions:
+                questions.slice(
+                    0,
+                    5
+                ),
+
+            submitted:
+                false
+
+        };
+
+
+        localStorage.setItem(
+            "studyMindTopicQuestions",
+            JSON.stringify(
+                topicQuestions
+            )
+        );
+
+
+        renderTopicQuestions(
+            topicQuestions
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Question generation error:",
+            error
+        );
+
+
+        topicQuestionsContainer.innerHTML =
+            `
+                <div class="ai-response">
+
+                    <p>
+                        I couldn't generate the
+                        questions right now.
+                    </p>
+
+                    <button
+                        class="secondary-button"
+                        id="retryTopicQuestionsButton"
+                    >
+                        Try Again
+                    </button>
+
+                </div>
+            `;
+
+
+        const retry =
+            $("retryTopicQuestionsButton");
+
+
+        if (retry) {
+
+            retry.addEventListener(
+                "click",
+                () =>
+                    generateQuestionsForTopic(
+                        topicName
+                    )
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER TOPIC QUESTIONS
+   ========================================================= */
+
+function renderTopicQuestions(
+    data
+) {
+
+    if (
+        !data ||
+        !Array.isArray(
+            data.questions
+        ) ||
+        !topicQuestionsSection ||
+        !topicQuestionsContainer
+    ) {
+
+        return;
+
+    }
+
+
+    topicQuestionsSection.style.display =
+        "block";
+
+
+    topicQuestionsContainer.innerHTML =
+        "";
+
+
+    data.questions
+        .slice(0, 5)
+        .forEach(
+            (
+                question,
+                index
+            ) => {
+
+                const box =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                box.className =
+                    "topic-question";
+
+
+                const options =
+                    Array.isArray(
+                        question.options
+                    )
+                        ? question.options.slice(
+                            0,
+                            4
+                        )
+                        : [];
+
+
+                box.innerHTML =
+                    `
+                        <h4>
+                            ${index + 1}.
+                            ${escapeHTML(
+                                question.question ||
+                                ""
+                            )}
+                        </h4>
+
+                        <div>
+
+                            ${options
+                                .map(
+                                    (
+                                        option,
+                                        optionIndex
+                                    ) =>
+                                        `
+                                            <label>
+
+                                                <input
+                                                    type="radio"
+                                                    name="topic-question-${index}"
+                                                    value="${optionIndex}"
+                                                >
+
+                                                ${escapeHTML(
+                                                    option
+                                                )}
+
+                                            </label>
+                                        `
+                                )
+                                .join("")}
+
+                        </div>
+                    `;
+
+
+                topicQuestionsContainer.appendChild(
+                    box
+                );
+
+            }
+        );
+
+
+    if (submitTopicQuestions) {
+
+        submitTopicQuestions.disabled =
+            false;
+
+        submitTopicQuestions.textContent =
+            "Submit Answers";
+
+    }
+
+}
+
+
+/* =========================================================
+   SUBMIT QUESTIONS
+   ========================================================= */
+
+function submitQuestions() {
+
+    if (
+        !topicQuestions ||
+        !Array.isArray(
+            topicQuestions.questions
+        ) ||
+        topicQuestions.submitted
+    ) {
+
+        return;
+
+    }
+
+
+    let score = 0;
+
+    let answered = 0;
+
+
+    topicQuestions.questions
+        .slice(0, 5)
+        .forEach(
+            (
+                question,
+                index
+            ) => {
+
+                const selected =
+                    document.querySelector(
+                        `input[name="topic-question-${index}"]:checked`
+                    );
+
+
+                const box =
+                    document.querySelectorAll(
+                        ".topic-question"
+                    )[index];
+
+
+                if (!selected) {
+                    return;
+                }
+
+
+                answered++;
+
+
+                if (
+                    Number(
+                        selected.value
+                    ) ===
+                    Number(
+                        question.answer
+                    )
+                ) {
+
+                    score++;
+
+
+                    if (box) {
+
+                        box.classList.add(
+                            "question-correct"
+                        );
+
+                    }
+
+                } else if (box) {
+
+                    box.classList.add(
+                        "question-wrong"
+                    );
+
+                }
+
+            }
+        );
+
+
+    if (
+        answered < 5
+    ) {
+
+        if (topicQuestionResult) {
+
+            topicQuestionResult.textContent =
+                "⚠️ Please answer all 5 questions before submitting.";
+
+        }
+
+        return;
+
+    }
+
+
+    topicQuestions.submitted =
+        true;
+
+
+    localStorage.setItem(
+        "studyMindTopicQuestions",
+        JSON.stringify(
+            topicQuestions
+        )
+    );
+
+
+    if (
+        !completedQuestionTopics.includes(
+            topicQuestions.topic
+        )
+    ) {
+
+        completedQuestionTopics.push(
+            topicQuestions.topic
+        );
+
+    }
+
+
+    localStorage.setItem(
+        "studyMindCompletedQuestionTopics",
+        JSON.stringify(
+            completedQuestionTopics
+        )
+    );
+
+
+    document
+        .querySelectorAll(
+            "#topicQuestions input, #topicQuestionsSection input"
+        )
+        .forEach(
+            input => {
+
+                input.disabled =
+                    true;
+
+            }
+        );
+
+
+    if (submitTopicQuestions) {
+
+        submitTopicQuestions.disabled =
+            true;
+
+        submitTopicQuestions.textContent =
+            "✓ Questions Completed";
+
+    }
+
+
+    if (topicQuestionResult) {
+
+        topicQuestionResult.innerHTML =
+            `
+                🧠 You scored
+                <strong>
+                    ${score}/5
+                </strong>
+                on the
+                ${escapeHTML(
+                    topicQuestions.topic
+                )}
+                knowledge check.
+
+                <br><br>
+
+                🎉 You've completed your
+                5-question knowledge check
+                for this topic.
+
+            `;
+
+    }
+
+}
+
+
+/* =========================================================
+   RESTORE QUESTIONS
+   ========================================================= */
+
+function restoreTopicQuestions() {
+
+    if (
+        !topicQuestions ||
+        !topicQuestions.topic ||
+        !Array.isArray(
+            topicQuestions.questions
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const currentTopic =
+        studyPlan.topics[
+            currentTopicIndex
+        ];
+
+
+    const currentTopicName =
+        getTopicName(
+            currentTopic
+        );
+
+
+    /*
+       Only show saved questions if they
+       belong to the current topic.
+    */
+
+    if (
+        currentTopicName &&
+        topicQuestions.topic !==
+        currentTopicName
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        completedQuestionTopics.includes(
+            topicQuestions.topic
+        )
+    ) {
+
+        showTopicQuestionsFinished(
+            topicQuestions.topic
+        );
+
+    } else {
+
+        renderTopicQuestions(
+            topicQuestions
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   QUESTIONS FINISHED
+   ========================================================= */
+
+function showTopicQuestionsFinished(
+    topic
+) {
+
+    if (!topicQuestionsSection) {
+        return;
+    }
+
+
+    topicQuestionsSection.style.display =
+        "block";
+
+
+    if (topicQuestionsContainer) {
+
+        topicQuestionsContainer.innerHTML =
+            `
+                <div class="ai-limit-message">
+
+                    <h3>
+                        🎉 Knowledge Check Completed
+                    </h3>
+
+                    <p>
+                        You've already completed
+                        the 5-question knowledge
+                        check for
+                        <strong>
+                            ${escapeHTML(
+                                topic
+                            )}
+                        </strong>.
+                    </p>
+
+                    <p>
+                        There are no more free
+                        questions for this topic.
+                    </p>
+
+                    <button
+                        class="premium-button"
+                        onclick="openPremiumOffer()"
+                    >
+                        💎 Explore Premium
+                    </button>
+
+                </div>
+            `;
+
+    }
+
+
+    if (submitTopicQuestions) {
+
+        submitTopicQuestions.disabled =
+            true;
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM
+   ========================================================= */
+
+function openPremiumOffer() {
+
+    const existing =
+        $("premiumModal");
+
+
+    if (existing) {
+
+        existing.remove();
+
+    }
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "premiumModal";
+
+
+    modal.innerHTML =
+        `
+            <div class="premium-modal-overlay">
+
+                <div class="premium-modal">
+
+                    <button
+                        id="closePremiumButton"
+                        class="premium-close"
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
+
+                    <div class="premium-icon">
+                        💎
+                    </div>
+
+                    <h2>
+                        StudyMind AI Premium
+                    </h2>
+
+                    <p>
+                        Unlimited AI help and
+                        more study features
+                        are coming soon.
+                    </p>
+
+                    <button
+                        id="premiumComingSoonButton"
+                        class="premium-button"
+                    >
+                        Coming Soon 🚀
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    const close =
+        $("closePremiumButton");
+
+
+    if (close) {
+
+        close.addEventListener(
+            "click",
+            () =>
+                modal.remove()
+        );
+
+    }
+
+
+    const comingSoon =
+        $("premiumComingSoonButton");
+
+
+    if (comingSoon) {
+
+        comingSoon.addEventListener(
+            "click",
+            () => {
+
+                alert(
+                    "Premium is coming soon! 🚀"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   JSON CLEANER
+   ========================================================= */
+
+function cleanJSONResponse(
+    text
+) {
+
+    let cleaned =
+        String(
+            text
+        ).trim();
+
+
+    cleaned =
+        cleaned.replace(
+            /^```json\s*/i,
+            ""
+        );
+
+
+    cleaned =
+        cleaned.replace(
+            /^```\s*/i,
+            ""
+        );
+
+
+    cleaned =
+        cleaned.replace(
+            /\s*```$/i,
+            ""
+        );
+
+
+    const first =
+        cleaned.indexOf(
+            "["
+        );
+
+
+    const last =
+        cleaned.lastIndexOf(
+            "]"
+        );
+
+
+    if (
+        first !== -1 &&
+        last !== -1 &&
+        last > first
+    ) {
+
+        cleaned =
+            cleaned.substring(
+                first,
+                last + 1
+            );
+
+    }
+
+
+    return cleaned.trim();
+
+}
+
+
+/* =========================================================
+   AI RESPONSE FORMATTER
+   ========================================================= */
+
+function renderAIResponse(
+    text
+) {
+
+    if (!text) {
+        return "";
+    }
+
+
+    let result =
+        escapeHTML(
+            text
+        );
+
+
+    /*
+       Bold
+    */
+
+    result =
+        result.replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        );
+
+
+    /*
+       Italic
+    */
+
+    result =
+        result.replace(
+            /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
+            "<em>$1</em>"
+        );
+
+
+    /*
+       Headings
+    */
+
+    result =
+        result.replace(
+            /^### (.*)$/gm,
+            "<h4>$1</h4>"
+        );
+
+
+    result =
+        result.replace(
+            /^## (.*)$/gm,
+            "<h3>$1</h3>"
+        );
+
+
+    result =
+        result.replace(
+            /^# (.*)$/gm,
+            "<h2>$1</h2>"
+        );
+
+
+    /*
+       Bullet points
+    */
+
+    result =
+        result.replace(
+            /(?:^|\n)[ \t]*[-*][ \t]+(.+)(?=\n|$)/g,
+            "\n<li>$1</li>"
+        );
+
+
+    result =
+        result.replace(
+            /((?:<li>.*?<\/li>\s*)+)/gs,
+            "<ul>$1</ul>"
+        );
+
+
+    /*
+       Paragraph spacing
+    */
+
+    result =
+        result.replace(
+            /\n{2,}/g,
+            "<br><br>"
+        );
+
+
+    result =
+        result.replace(
+            /\n/g,
+            "<br>"
+        );
+
+
+    return result;
+
 }
 
 
@@ -6904,985 +6137,294 @@ async function getLeaderboardCurrentUser() {
    ESCAPE HTML
    ========================================================= */
 
-function escapeLeaderboardHTML(value) {
+function escapeHTML(
+    value
+) {
 
     return String(
         value ?? ""
     )
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
 /* =========================================================
-   RANK DISPLAY
+   MATH RENDERING
    ========================================================= */
 
-function getLeaderboardRankDisplay(rank) {
-
-    if (rank === 1) {
-        return "🥇";
-    }
-
-    if (rank === 2) {
-        return "🥈";
-    }
-
-    if (rank === 3) {
-        return "🥉";
-    }
-
-    return `#${rank}`;
-}
-
-
-/* =========================================================
-   UPDATE YOUR RANK
-   ========================================================= */
-
-function updateYourLeaderboardRank(
-    rank,
-    totalPlayers
+function renderMath(
+    container
 ) {
 
-    const container =
-        $("yourLeaderboardRank");
+    if (
+        !container
+    ) {
 
-    if (!container) {
         return;
-    }
 
-    const span =
-        container.querySelector("span");
-
-    if (span) {
-
-        span.textContent =
-            rank
-                ? `#${rank}`
-                : "—";
-
-    } else {
-
-        container.textContent =
-            rank
-                ? `#${rank}`
-                : "—";
-    }
-
-    container.title =
-        rank
-            ? `Rank ${rank} of ${totalPlayers}`
-            : "Not ranked yet";
-}
-
-
-/* =========================================================
-   UPDATE LEADERBOARD UI
-   ========================================================= */
-
-async function updateLeaderboardUI() {
-
-    const rows =
-        $("leaderboardRows");
-
-    if (!rows) {
-        return;
     }
 
 
-    /* -----------------------------------------------------
-       LOADING
-       ----------------------------------------------------- */
+    /*
+       MathJax may not be loaded.
+       If it is available, render equations.
+    */
 
-    rows.innerHTML = `
-        <div class="leaderboard-row">
-            <span>⏳</span>
-            <span>Loading leaderboard...</span>
-            <strong>—</strong>
-        </div>
-    `;
+    if (
+        window.MathJax &&
+        typeof window.MathJax.typesetPromise ===
+        "function"
+    ) {
 
-
-    try {
-
-        /* -------------------------------------------------
-           CURRENT USER
-           ------------------------------------------------- */
-
-        const currentUser =
-            await getLeaderboardCurrentUser();
-
-        const currentUserId =
-            currentUser?.id || null;
-
-
-        /* -------------------------------------------------
-           LOAD ALL PLAYERS
-           ------------------------------------------------- */
-
-        const leaderboard =
-            await getGlobalLeaderboard();
-
-
-        /* -------------------------------------------------
-           REMOVE DUPLICATE USER ROWS
-           -------------------------------------------------
-
-           Every account should appear only once.
-        ------------------------------------------------- */
-
-        const uniquePlayers =
-            new Map();
-
-        leaderboard.forEach(
-            function(player) {
-
-                if (
-                    !player ||
-                    !player.user_id
-                ) {
-                    return;
-                }
-
-                const userId =
-                    String(
-                        player.user_id
-                    );
-
-                const existing =
-                    uniquePlayers.get(
-                        userId
-                    );
-
-                if (!existing) {
-
-                    uniquePlayers.set(
-                        userId,
-                        player
-                    );
-
-                    return;
-                }
-
-                /*
-                 * If duplicates exist, keep the
-                 * record with the highest battle
-                 * points.
-                 */
-
-                const existingPoints =
-                    Number(
-                        existing.battle_points || 0
-                    );
-
-                const newPoints =
-                    Number(
-                        player.battle_points || 0
-                    );
-
-                if (
-                    newPoints >
-                    existingPoints
-                ) {
-
-                    uniquePlayers.set(
-                        userId,
-                        player
-                    );
-                }
-            }
-        );
-
-
-        const players =
-            Array.from(
-                uniquePlayers.values()
-            );
-/* -------------------------------------------------
-   UPDATE TOTAL PLAYERS
-------------------------------------------------- */
-
-const totalPlayersElement =
-    $("totalPlayers");
-
-if (totalPlayersElement) {
-
-    totalPlayersElement.textContent =
-        players.length;
-}
-
-        /* -------------------------------------------------
-           SORT PLAYERS
-           -------------------------------------------------
-
-           1. Battle points
-           2. Wins
-           3. Battles played
-        ------------------------------------------------- */
-
-        players.sort(
-            function(a, b) {
-
-                const pointsA =
-                    Number(
-                        a.battle_points || 0
-                    );
-
-                const pointsB =
-                    Number(
-                        b.battle_points || 0
-                    );
-
-                if (
-                    pointsA !==
-                    pointsB
-                ) {
-
-                    return (
-                        pointsB -
-                        pointsA
-                    );
-                }
-
-
-                const winsA =
-                    Number(
-                        a.wins || 0
-                    );
-
-                const winsB =
-                    Number(
-                        b.wins || 0
-                    );
-
-                if (
-                    winsA !==
-                    winsB
-                ) {
-
-                    return (
-                        winsB -
-                        winsA
-                    );
-                }
-
-
-                const battlesA =
-                    Number(
-                        a.battles_played ||
-                        a.battles ||
-                        0
-                    );
-
-                const battlesB =
-                    Number(
-                        b.battles_played ||
-                        b.battles ||
-                        0
-                    );
-
-                return (
-                    battlesA -
-                    battlesB
-                );
-            }
-        );
-
-
-        /* -------------------------------------------------
-           EMPTY LEADERBOARD
-           ------------------------------------------------- */
-
-        if (
-            players.length ===
-            0
-        ) {
-
-            rows.innerHTML = `
-                <div class="leaderboard-row">
-                    <span>🏆</span>
-                    <span>No players yet</span>
-                    <strong>0</strong>
-                </div>
-            `;
-
-            if (
-                $("yourBattlePoints")
-            ) {
-
-                $("yourBattlePoints")
-                    .textContent =
-                    "0";
-            }
-
-            updateYourLeaderboardRank(
-                null,
-                0
+        window.MathJax
+            .typesetPromise(
+                [container]
+            )
+            .catch(
+                error =>
+                    console.error(
+                        "Math rendering error:",
+                        error
+                    )
             );
 
-            return;
-        }
-
-
-        /* -------------------------------------------------
-           FIND CURRENT USER
-           ------------------------------------------------- */
-
-        const currentPlayerIndex =
-            players.findIndex(
-                function(player) {
-
-                    return (
-                        currentUserId &&
-                        String(
-                            player.user_id
-                        ) ===
-                        String(
-                            currentUserId
-                        )
-                    );
-                }
-            );
-
-
-        /* -------------------------------------------------
-           UPDATE YOUR BATTLE POINTS
-           ------------------------------------------------- */
-
-        if (
-            $("yourBattlePoints")
-        ) {
-
-            if (
-                currentPlayerIndex !==
-                -1
-            ) {
-
-                $("yourBattlePoints")
-                    .textContent =
-                    Number(
-                        players[
-                            currentPlayerIndex
-                        ].battle_points || 0
-                    );
-
-            } else {
-
-                /*
-                 * Account has not yet received
-                 * a leaderboard row.
-                 */
-
-                $("yourBattlePoints")
-                    .textContent =
-                    Number(
-                        getBattlePoints() || 0
-                    );
-            }
-        }
-
-
-        /* -------------------------------------------------
-           RENDER EVERY PARTICIPATING ACCOUNT
-           ------------------------------------------------- */
-
-        rows.innerHTML =
-            players
-                .map(
-                    function(
-                        player,
-                        index
-                    ) {
-
-                        const rank =
-                            index + 1;
-
-
-                        const points =
-                            Number(
-                                player.battle_points || 0
-                            );
-
-
-                        const wins =
-                            Number(
-                                player.wins || 0
-                            );
-
-
-                        const losses =
-                            Number(
-                                player.losses || 0
-                            );
-
-
-                        const draws =
-                            Number(
-                                player.draws || 0
-                            );
-
-
-                        const battlesPlayed =
-                            Number(
-                                player.battles_played ||
-                                player.battles ||
-                                0
-                            );
-
-
-                        const isYou =
-                            Boolean(
-                                currentUserId &&
-                                String(
-                                    player.user_id
-                                ) ===
-                                String(
-                                    currentUserId
-                                )
-                            );
-
-
-                        const displayName =
-                            player.display_name ||
-                            "StudyMind Student";
-
-
-                        return `
-                            <div
-                                class="leaderboard-row ${
-                                    isYou
-                                        ? "current-player"
-                                        : ""
-                                }"
-                                data-rank="${rank}"
-                                data-user-id="${escapeLeaderboardHTML(
-                                    player.user_id
-                                )}"
-                            >
-
-                                <span
-                                    class="leaderboard-rank"
-                                >
-                                    ${getLeaderboardRankDisplay(
-                                        rank
-                                    )}
-                                </span>
-
-
-                                <span
-                                    class="leaderboard-player"
-                                >
-                                    ${escapeLeaderboardHTML(
-                                        displayName
-                                    )}
-
-                                    ${
-                                        isYou
-                                            ? ' <small>(You)</small>'
-                                            : ""
-                                    }
-                                </span>
-
-
-                                <strong
-                                    class="leaderboard-points"
-                                >
-                                    ${points}
-                                </strong>
-
-                            </div>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        /* -------------------------------------------------
-           UPDATE YOUR RANK
-           ------------------------------------------------- */
-
-        if (
-            currentPlayerIndex !==
-            -1
-        ) {
-
-            updateYourLeaderboardRank(
-                currentPlayerIndex + 1,
-                players.length
-            );
-
-        } else {
-
-            /*
-             * The account has no leaderboard row yet.
-             *
-             * Calculate where its local battle
-             * points would rank.
-             */
-
-            const localPoints =
-                Number(
-                    getBattlePoints() || 0
-                );
-
-
-            const calculatedRank =
-                players.filter(
-                    function(player) {
-
-                        return (
-                            Number(
-                                player.battle_points || 0
-                            ) >
-                            localPoints
-                        );
-                    }
-                ).length + 1;
-
-
-            updateYourLeaderboardRank(
-                calculatedRank,
-                players.length + 1
-            );
-        }
-
-
-        /* -------------------------------------------------
-           DEBUG
-           ------------------------------------------------- */
-
-        console.log(
-            "GLOBAL LEADERBOARD PLAYERS:",
-            players.length
-        );
-
-        console.log(
-            "GLOBAL LEADERBOARD:",
-            players
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "GLOBAL LEADERBOARD ERROR:",
-            error
-        );
-
-
-        rows.innerHTML = `
-            <div class="leaderboard-row">
-                <span>⚠️</span>
-                <span>Leaderboard temporarily unavailable</span>
-                <strong>—</strong>
-            </div>
-        `;
-
-
-        if (
-            $("yourBattlePoints")
-        ) {
-
-            $("yourBattlePoints")
-                .textContent =
-                Number(
-                    getBattlePoints() || 0
-                );
-        }
-    }
-}
-
-
-/* =========================================================
-   REFRESH LEADERBOARD
-   ========================================================= */
-
-async function refreshLeaderboard() {
-
-    await updateLeaderboardUI();
-}
-
-
-/* =========================================================
-   REALTIME GLOBAL LEADERBOARD
-   ========================================================= */
-
-let leaderboardRealtimeChannel =
-    null;
-
-
-async function subscribeToLeaderboard() {
-
-    try {
-
-        const client =
-            getSupabase();
-
-
-        /* -------------------------------------------------
-           REMOVE OLD CHANNEL
-           ------------------------------------------------- */
-
-        if (
-            leaderboardRealtimeChannel
-        ) {
-
-            try {
-
-                await client.removeChannel(
-                    leaderboardRealtimeChannel
-                );
-
-            } catch (_) {}
-
-            leaderboardRealtimeChannel =
-                null;
-        }
-
-
-        /* -------------------------------------------------
-           SUBSCRIBE TO LEADERBOARD CHANGES
-           ------------------------------------------------- */
-
-        leaderboardRealtimeChannel =
-            client
-                .channel(
-                    "global-game-leaderboard"
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table:
-                            "game_leaderboard"
-                    },
-                    function(payload) {
-
-                        console.log(
-                            "GLOBAL LEADERBOARD CHANGED:",
-                            payload
-                        );
-
-
-                        setTimeout(
-                            function() {
-
-                                updateLeaderboardUI();
-
-                            },
-                            300
-                        );
-                    }
-                )
-                .subscribe(
-                    function(status) {
-
-                        console.log(
-                            "Leaderboard realtime:",
-                            status
-                        );
-                    }
-                );
-
-    } catch (error) {
-
-        console.warn(
-            "Leaderboard realtime subscription failed:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   INITIALIZE LEADERBOARD
-   ========================================================= */
-
-async function initializeLeaderboard() {
-
-    try {
-
-        await updateLeaderboardUI();
-
-    } catch (error) {
-
-        console.error(
-            "Initial leaderboard load failed:",
-            error
-        );
     }
 
-
-    try {
-
-        await subscribeToLeaderboard();
-
-    } catch (error) {
-
-        console.warn(
-            "Leaderboard realtime initialization failed:",
-            error
-        );
-    }
 }
 
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function openHome() {
-
-    window.location.href =
-        "home.html";
-}
-
-function openNewStudyPlan() {
-
-    window.location.href =
-        "home.html#newStudyPlan";
-}
-
-function openSummarizer() {
-
-    window.location.href =
-        "dashboard.html#summarizer";
-}
-
-function openStudyStreak() {
-
-    window.location.href =
-        "dashboard.html#studyStreak";
-}
-
-function openStudyScore() {
-
-    window.location.href =
-        "dashboard.html#studyScore";
-}
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-function openPremium() {
-
-    alert(
-        "Premium will give you unlimited Game Mode battles."
-    );
-}
 
 /* =========================================================
    LOGOUT
-========================================================= */
+   ========================================================= */
 
 async function logoutStudyMind() {
 
     try {
 
         if (
-            typeof supabase !==
-            "undefined" &&
-            supabase.auth
+            typeof supabaseClient !==
+                "undefined" &&
+            supabaseClient &&
+            supabaseClient.auth
         ) {
 
-            await supabase.auth.signOut();
+            await supabaseClient
+                .auth
+                .signOut();
+
         }
 
     } catch (error) {
 
-        console.warn(
-            "Supabase logout error:",
+        console.error(
+            "Logout error:",
             error
         );
+
     }
 
+
     localStorage.removeItem(
-        "studyMindCurrentUser"
+        "studyMindLoggedIn"
     );
+
+
+    localStorage.removeItem(
+        "isLoggedIn"
+    );
+
+
+    localStorage.removeItem(
+        "currentUser"
+    );
+
 
     window.location.href =
         "index.html";
+
 }
 
+
 /* =========================================================
-   THEME
-========================================================= */
+   NAVIGATION
+   ========================================================= */
 
-function toggleGameTheme() {
+function openHome() {
 
-    const body =
-        document.body;
+    window.location.href =
+        "home.html";
 
-    const current =
-        body.classList.contains(
-            "light-mode"
-        );
-
-    if (current) {
-
-        body.classList.remove(
-            "light-mode"
-        );
-
-        localStorage.setItem(
-            GAME_STORAGE.theme,
-            "dark"
-        );
-
-    } else {
-
-        body.classList.add(
-            "light-mode"
-        );
-
-        localStorage.setItem(
-            GAME_STORAGE.theme,
-            "light"
-        );
-    }
-
-    updateThemeButton();
 }
 
-function updateThemeButton() {
 
-    const button =
-        $("themeButton");
+function openNewStudyPlan() {
 
-    if (!button) {
-        return;
-    }
+    window.location.href =
+        "home.html#generator";
 
-    const isLight =
-        document.body.classList.contains(
-            "light-mode"
-        );
-
-    button.textContent =
-        isLight
-            ? "☀️ Light Mode"
-            : "🌙 Dark Mode";
 }
 
-/* =========================================================
-   LOAD SAVED THEME
-========================================================= */
-
-(function loadSavedTheme() {
-
-    const saved =
-        localStorage.getItem(
-            GAME_STORAGE.theme
-        );
-
-    if (
-        saved ===
-        "light"
-    ) {
-
-        document.body.classList.add(
-            "light-mode"
-        );
-    }
-})();
 
 /* =========================================================
-   CLEAN ERROR
-========================================================= */
-
-function cleanErrorMessage(
-    message
-) {
-
-    if (!message) {
-
-        return "Unknown server error.";
-    }
-
-    let text =
-        String(message)
-            .replace(
-                /<[^>]*>/g,
-                " "
-            )
-            .replace(
-                /\s+/g,
-                " "
-            )
-            .trim();
-
-    if (
-        text.length >
-        500
-    ) {
-
-        text =
-            text.slice(
-                0,
-                500
-            ) +
-            "...";
-    }
-
-    return text;
-}
-
-/* =========================================================
-   GLOBAL EXPORTS
-========================================================= */
-
-window.startComputerBattle =
-    startComputerBattle;
-
-window.beginBattle =
-    beginBattle;
-
-window.startOneVOneMode =
-    startOneVOneMode;
-
-window.findOneVOneOpponent =
-    findOneVOneOpponent;
-
-window.joinExistingMatch =
-    joinExistingMatch;
-
-window.cancelOneVOne =
-    cancelOneVOne;
-
-window.resetBattle =
-    resetBattle;
+   GLOBAL FUNCTIONS
+   ========================================================= */
 
 window.openHome =
     openHome;
 
+
 window.openNewStudyPlan =
     openNewStudyPlan;
 
-window.openSummarizer =
-    openSummarizer;
-
-window.openStudyStreak =
-    openStudyStreak;
-
-window.openStudyScore =
-    openStudyScore;
-
-window.openPremium =
-    openPremium;
 
 window.logoutStudyMind =
     logoutStudyMind;
 
-window.toggleGameTheme =
-    toggleGameTheme;
 
-window.SUBJECT_DATABASE =
-    SUBJECT_DATABASE;
+window.openPremiumOffer =
+    openPremiumOffer;
+
+
+window.generateQuestionsForTopic =
+    generateQuestionsForTopic;
+
+
+window.getAIQuestionCount =
+    getAIQuestionCount;
+
+
+window.getRemainingAIQuestions =
+    getRemainingAIQuestions;
+
+
+/* =========================================================
+   CROSS-TAB SYNCHRONIZATION
+   ========================================================= */
+
+window.addEventListener(
+    "storage",
+    event => {
+
+        if (
+            event.key ===
+            "studyMindPlan" ||
+            event.key ===
+            "studyData"
+        ) {
+
+            loadStudyPlan();
+
+
+            if (
+                !hasUsableStudyPlan(
+                    studyPlan
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            renderEverything();
+
+        }
+
+
+        if (
+            event.key ===
+            "aiQuestionCount"
+        ) {
+
+            aiQuestionCount =
+                Number(
+                    event.newValue
+                ) || 0;
+
+
+            setupAIAuthenticationUI();
+
+        }
+
+
+        if (
+            event.key ===
+            "summaryUsageCount"
+        ) {
+
+            summaryUsageCount =
+                Number(
+                    event.newValue
+                ) || 0;
+
+
+            updateSummaryBadge();
+
+        }
+
+
+        if (
+            event.key ===
+            "studyMindCompletedTopics"
+        ) {
+
+            completedTopics =
+                loadArray(
+                    "studyMindCompletedTopics"
+                );
+
+
+            updateDashboardProgress();
+
+            renderTopics();
+
+            renderCurrentTopic();
+
+            renderCalendar();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   START DASHBOARD
+   ========================================================= */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        startDashboard
+    );
+
+} else {
+
+    startDashboard();
+
+}
 
