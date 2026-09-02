@@ -3890,11 +3890,397 @@ if (
 
 }
 /* =========================================================
-   COMPUTER BATTLE NAVIGATION
+   STUDYMIND AI — GAME MODE NAVIGATION
+========================================================= */
+
+
+/* =========================================================
+   HOME
+========================================================= */
+
+function openHome() {
+
+    window.location.href = "home.html";
+
+}
+
+
+/* =========================================================
+   NEW STUDY PLAN
+========================================================= */
+
+function openNewStudyPlan() {
+
+    window.location.href = "index.html";
+
+}
+
+
+/* =========================================================
+   SUMMARIZER
+========================================================= */
+
+function openSummarizer() {
+
+    window.location.href = "summarizer.html";
+
+}
+
+
+/* =========================================================
+   STUDY STREAK
+========================================================= */
+
+function openStudyStreak() {
+
+    window.location.href = "streak.html";
+
+}
+
+
+/* =========================================================
+   STUDY SCORE
+========================================================= */
+
+function openStudyScore() {
+
+    window.location.href = "study-score.html";
+
+}
+
+
+/* =========================================================
+   YOU VS COMPUTER
 ========================================================= */
 
 function openComputerBattle() {
+
     window.location.href = "computer-battle.html";
+
 }
 
-window.openComputerBattle = openComputerBattle;
+
+/* =========================================================
+   1V1
+========================================================= */
+
+function openOneVOne() {
+
+    /*
+       Use the existing 1v1 system
+       already contained in game-mode.js.
+    */
+
+    if (
+        typeof startOneVOneMode ===
+        "function"
+    ) {
+
+        startOneVOneMode();
+
+        return;
+
+    }
+
+
+    if (
+        typeof startOneVOne ===
+        "function"
+    ) {
+
+        startOneVOne();
+
+        return;
+
+    }
+
+
+    const setup =
+        document.getElementById(
+            "oneVOneSetup"
+        );
+
+
+    if (setup) {
+
+        setup.hidden = false;
+
+        setup.style.display = "";
+
+        setup.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        return;
+
+    }
+
+
+    console.error(
+        "StudyMind: 1v1 system is unavailable."
+    );
+
+}
+
+
+/* =========================================================
+   2V2
+========================================================= */
+
+function openTwoVTwo() {
+
+    alert(
+        "2v2 Battles are coming soon! 🚀"
+    );
+
+}
+
+
+/* =========================================================
+   TOURNAMENTS
+========================================================= */
+
+function openTournaments() {
+
+    alert(
+        "Tournaments are coming soon! 🏆"
+    );
+
+}
+
+
+/* =========================================================
+   PREMIUM
+========================================================= */
+
+function openPremium() {
+
+    alert(
+        "Premium will give you unlimited Game Mode battles."
+    );
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logoutStudyMind() {
+
+    try {
+
+        const client =
+            window.supabaseClient;
+
+
+        if (
+            client &&
+            client.auth
+        ) {
+
+            await client.auth.signOut();
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind logout error:",
+            error
+        );
+
+    }
+
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+/* =========================================================
+   GAME THEME
+========================================================= */
+
+function toggleGameTheme() {
+
+    const body =
+        document.body;
+
+
+    const isLight =
+        body.classList.contains(
+            "light-mode"
+        );
+
+
+    if (isLight) {
+
+        body.classList.remove(
+            "light-mode"
+        );
+
+        localStorage.setItem(
+            "studyMindGameTheme",
+            "dark"
+        );
+
+    } else {
+
+        body.classList.add(
+            "light-mode"
+        );
+
+        localStorage.setItem(
+            "studyMindGameTheme",
+            "light"
+        );
+
+    }
+
+
+    updateThemeButton();
+
+}
+
+
+/* =========================================================
+   UPDATE THEME BUTTON
+========================================================= */
+
+function updateThemeButton() {
+
+    const button =
+        document.getElementById(
+            "themeButton"
+        );
+
+
+    if (!button) {
+
+        return;
+
+    }
+
+
+    const isLight =
+        document.body.classList.contains(
+            "light-mode"
+        );
+
+
+    button.textContent =
+        isLight
+            ? "☀️ Light Mode"
+            : "🌙 Dark Mode";
+
+}
+
+
+/* =========================================================
+   LOAD SAVED THEME
+========================================================= */
+
+function initializeGameTheme() {
+
+    const savedTheme =
+        localStorage.getItem(
+            "studyMindGameTheme"
+        );
+
+
+    if (
+        savedTheme === "light"
+    ) {
+
+        document.body.classList.add(
+            "light-mode"
+        );
+
+    } else {
+
+        document.body.classList.remove(
+            "light-mode"
+        );
+
+    }
+
+
+    updateThemeButton();
+
+}
+
+
+/* =========================================================
+   GLOBAL EXPORTS
+========================================================= */
+
+/*
+   game-mode.html uses inline
+   onclick="..." handlers.
+
+   These MUST therefore exist
+   on window.
+*/
+
+window.openHome =
+    openHome;
+
+window.openNewStudyPlan =
+    openNewStudyPlan;
+
+window.openSummarizer =
+    openSummarizer;
+
+window.openStudyStreak =
+    openStudyStreak;
+
+window.openStudyScore =
+    openStudyScore;
+
+window.openComputerBattle =
+    openComputerBattle;
+
+window.openOneVOne =
+    openOneVOne;
+
+window.openTwoVTwo =
+    openTwoVTwo;
+
+window.openTournaments =
+    openTournaments;
+
+window.openPremium =
+    openPremium;
+
+window.logoutStudyMind =
+    logoutStudyMind;
+
+window.toggleGameTheme =
+    toggleGameTheme;
+
+window.updateThemeButton =
+    updateThemeButton;
+
+
+/* =========================================================
+   GAME MODE NAVIGATION INITIALIZATION
+========================================================= */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeGameTheme
+    );
+
+} else {
+
+    initializeGameTheme();
+
+}
