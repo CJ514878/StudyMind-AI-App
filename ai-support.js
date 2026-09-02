@@ -1,13 +1,11 @@
 /* =========================================================
    STUDYMIND AI — AI SUPPORT
-   COMPLETE REPLACEMENT
-========================================================= */
-
-"use strict";
+   FULL REPLACEMENT
+   ========================================================= */
 
 /* =========================================================
    CONFIGURATION
-========================================================= */
+   ========================================================= */
 
 const FREE_AI_LIMIT = 5;
 
@@ -20,155 +18,301 @@ let currentUser = null;
 let isAuthenticated = false;
 let aiRequestInProgress = false;
 
+
 /* =========================================================
-   ELEMENT SHORTCUT
-========================================================= */
+   DOM SHORTCUT
+   ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
 
+
 /* =========================================================
    INITIALIZATION
-========================================================= */
+   ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeAISupport
-);
+document.addEventListener("DOMContentLoaded", async () => {
 
-async function initializeAISupport() {
+    console.log("StudyMind AI Support initializing...");
 
-    setupTheme();
-
-    setupNavigation();
+    initializeTheme();
+    initializeNavigation();
+    initializeButtons();
 
     await checkAuthentication();
 
-    updateAIUsage();
+    updateAIUsageDisplay();
 
-    setupAIEvents();
+    /*
+     * Load MathJax in the background.
+     * This allows AI mathematical notation such as:
+     *
+     * \(x^2+y^2\)
+     *
+     * and
+     *
+     * \[
+     * d=\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}
+     * \]
+     *
+     * to render professionally.
+     */
+    loadMathJax()
+        .then(() => {
+            console.log("MathJax loaded successfully.");
+        })
+        .catch(error => {
+            console.warn("MathJax could not be loaded:", error);
+        });
+
+});
+
+
+/* =========================================================
+   MATHJAX
+   ========================================================= */
+
+function loadMathJax() {
+
+    if (
+        window.MathJax &&
+        typeof window.MathJax.typesetPromise === "function"
+    ) {
+        return Promise.resolve();
+    }
+
+    if (window.studyMindMathJaxPromise) {
+        return window.studyMindMathJaxPromise;
+    }
+
+    /*
+     * Only use \( \) for inline math and
+     * \[ \] for display math.
+     *
+     * Avoiding $...$ prevents things such as
+     * "$5" from being interpreted as mathematics.
+     */
+    window.MathJax = {
+        tex: {
+            inlineMath: [
+                ["\\(", "\\)"]
+            ],
+            displayMath: [
+                ["\\[", "\\]"]
+            ],
+            processEscapes: false,
+            processEnvironments: true
+        },
+
+        svg: {
+            fontCache: "global"
+        },
+
+        options: {
+            skipHtmlTags: [
+                "script",
+                "noscript",
+                "style",
+                "textarea",
+                "pre",
+                "code"
+            ]
+        }
+    };
+
+    window.studyMindMathJaxPromise = new Promise((resolve, reject) => {
+
+        const existingScript =
+            document.querySelector(
+                'script[src*="mathjax@3"]'
+            );
+
+        if (existingScript) {
+
+            const checkLoaded = setInterval(() => {
+
+                if (
+                    window.MathJax &&
+                    typeof window.MathJax.typesetPromise === "function"
+                ) {
+                    clearInterval(checkLoaded);
+                    resolve();
+                }
+
+            }, 100);
+
+            setTimeout(() => {
+
+                clearInterval(checkLoaded);
+
+                if (
+                    window.MathJax &&
+                    typeof window.MathJax.typesetPromise === "function"
+                ) {
+                    resolve();
+                } else {
+                    reject(
+                        new Error("MathJax failed to initialize.")
+                    );
+                }
+
+            }, 10000);
+
+            return;
+        }
+
+        const script = document.createElement("script");
+
+        script.src =
+            "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+
+        script.async = true;
+
+        script.onload = () => {
+
+            const waitForMathJax = setInterval(() => {
+
+                if (
+                    window.MathJax &&
+                    typeof window.MathJax.typesetPromise === "function"
+                ) {
+                    clearInterval(waitForMathJax);
+                    resolve();
+                }
+
+            }, 50);
+
+            setTimeout(() => {
+
+                clearInterval(waitForMathJax);
+
+                if (
+                    window.MathJax &&
+                    typeof window.MathJax.typesetPromise === "function"
+                ) {
+                    resolve();
+                } else {
+                    reject(
+                        new Error("MathJax initialized incorrectly.")
+                    );
+                }
+
+            }, 5000);
+        };
+
+        script.onerror = () => {
+            reject(
+                new Error("Unable to load MathJax.")
+            );
+        };
+
+        document.head.appendChild(script);
+    });
+
+    return window.studyMindMathJaxPromise;
 }
+
+
+/* =========================================================
+   RENDER MATHEMATICS
+   ========================================================= */
+
+async function renderMath(element) {
+
+    if (!element) {
+        return;
+    }
+
+    try {
+
+        await loadMathJax();
+
+        if (
+            window.MathJax &&
+            typeof window.MathJax.typesetPromise === "function"
+        ) {
+
+            /*
+             * Clear previous MathJax rendering before
+             * rendering the newly inserted response.
+             */
+            if (
+                typeof window.MathJax.typesetClear === "function"
+            ) {
+                window.MathJax.typesetClear([element]);
+            }
+
+            await window.MathJax.typesetPromise([element]);
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Mathematical rendering failed:",
+            error
+        );
+    }
+}
+
 
 /* =========================================================
    AUTHENTICATION
-========================================================= */
+   ========================================================= */
 
 async function checkAuthentication() {
 
     try {
 
-        const client =
-            window.supabaseClient;
-
         if (
-            !client ||
-            !client.auth
+            !window.supabaseClient ||
+            !window.supabaseClient.auth
         ) {
-
             console.warn(
-                "StudyMind AI: Supabase client unavailable."
+                "Supabase client is not available."
             );
 
-            return false;
+            isAuthenticated = false;
+            currentUser = null;
+
+            return;
         }
 
-        const result =
-            await client.auth.getUser();
+        const {
+            data,
+            error
+        } =
+            await window.supabaseClient.auth.getUser();
 
-        if (result.error) {
-
-            console.warn(
-                "StudyMind AI authentication error:",
-                result.error
-            );
-
-            return false;
+        if (error) {
+            throw error;
         }
 
-        currentUser =
-            result.data &&
-            result.data.user
-                ? result.data.user
-                : null;
+        currentUser = data?.user || null;
 
-        isAuthenticated =
-            !!currentUser;
+        isAuthenticated = !!currentUser;
 
-        if (!isAuthenticated) {
-
-            showAuthenticationMessage();
-        }
-
-        return isAuthenticated;
+        console.log(
+            "AI Support authentication:",
+            isAuthenticated
+        );
 
     } catch (error) {
 
         console.error(
-            "StudyMind AI authentication failed:",
+            "Authentication check failed:",
             error
         );
 
+        currentUser = null;
         isAuthenticated = false;
-
-        return false;
     }
 }
 
-/* =========================================================
-   EVENT SETUP
-========================================================= */
-
-function setupAIEvents() {
-
-    const askButton =
-        $("askAIButton");
-
-    const analyzeButton =
-        $("analyzeProgressButton");
-
-    if (askButton) {
-
-        askButton.addEventListener(
-            "click",
-            askStudyMindAI
-        );
-    }
-
-    if (analyzeButton) {
-
-        analyzeButton.addEventListener(
-            "click",
-            analyzeProgress
-        );
-    }
-
-    const questionInput =
-        $("aiQuestion");
-
-    if (questionInput) {
-
-        questionInput.addEventListener(
-            "keydown",
-            function(event) {
-
-                if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                ) {
-
-                    event.preventDefault();
-
-                    askStudyMindAI();
-                }
-            }
-        );
-    }
-}
 
 /* =========================================================
-   PLAN
-========================================================= */
+   STUDY PLAN
+   ========================================================= */
 
 function getStudyPlan() {
 
@@ -176,379 +320,326 @@ function getStudyPlan() {
 
     try {
 
-        const primary =
-            localStorage.getItem(
-                PLAN_KEY
-            );
+        const primaryPlan =
+            localStorage.getItem(PLAN_KEY);
 
-        if (primary) {
+        if (primaryPlan) {
 
-            plan =
-                JSON.parse(primary);
+            plan = JSON.parse(primaryPlan);
+
+        } else {
+
+            const compatibilityPlan =
+                localStorage.getItem(
+                    COMPAT_PLAN_KEY
+                );
+
+            if (compatibilityPlan) {
+                plan =
+                    JSON.parse(
+                        compatibilityPlan
+                    );
+            }
         }
 
     } catch (error) {
 
         console.warn(
-            "Could not read studyMindPlan.",
+            "Could not read study plan:",
             error
         );
+
+        plan = null;
     }
 
     if (!plan) {
-
-        try {
-
-            const compatibility =
-                localStorage.getItem(
-                    COMPAT_PLAN_KEY
-                );
-
-            if (compatibility) {
-
-                plan =
-                    JSON.parse(
-                        compatibility
-                    );
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Could not read studyData.",
-                error
-            );
-        }
+        return null;
     }
 
-    return normalizePlan(plan);
-}
-
-function normalizePlan(plan) {
-
-    if (
-        !plan ||
-        typeof plan !== "object"
-    ) {
-
-        return {
-
-            examType: "",
-
-            examDate: null,
-
-            subjects: [],
-
-            topics: [],
-
-            studyHours: 0,
-
-            difficulty: "",
-
-            daysLeft: 0
-        };
-    }
-
-    return {
-
-        examType:
-            plan.examType || "",
-
-        examDate:
-            plan.examDate || null,
-
-        subjects:
-            Array.isArray(plan.subjects)
-                ? plan.subjects
-                : [],
-
-        topics:
-            Array.isArray(plan.topics)
-                ? plan.topics
-                : [],
-
-        studyHours:
-            Number(plan.studyHours) || 0,
-
-        difficulty:
-            plan.difficulty || "",
-
-        daysLeft:
-            Number(plan.daysLeft) || 0
-    };
-}
-
-/* =========================================================
-   PROGRESS
-========================================================= */
-
-function getCompletedTopics() {
-
-    try {
-
-        const value =
-            localStorage.getItem(
-                "studyMindCompletedTopics"
-            );
-
-        if (!value) {
-
-            return [];
-        }
-
-        const parsed =
-            JSON.parse(value);
-
-        return Array.isArray(parsed)
-            ? parsed
+    const subjects =
+        Array.isArray(plan.subjects)
+            ? plan.subjects
             : [];
-
-    } catch {
-
-        return [];
-    }
-}
-
-function getProgress() {
-
-    const plan =
-        getStudyPlan();
 
     const topics =
         Array.isArray(plan.topics)
             ? plan.topics
             : [];
 
-    const completed =
+    return {
+
+        ...plan,
+
+        examType:
+            plan.examType ||
+            plan.exam ||
+            "General Examination",
+
+        examDate:
+            plan.examDate ||
+            plan.testDate ||
+            null,
+
+        subjects,
+
+        topics,
+
+        studyHours:
+            plan.studyHours ||
+            plan.dailyHours ||
+            0,
+
+        difficulty:
+            plan.difficulty ||
+            "Medium",
+
+        daysLeft:
+            calculateDaysLeft(
+                plan.examDate ||
+                plan.testDate
+            )
+    };
+}
+
+
+/* =========================================================
+   CALCULATE DAYS LEFT
+   ========================================================= */
+
+function calculateDaysLeft(dateValue) {
+
+    if (!dateValue) {
+        return null;
+    }
+
+    const examDate =
+        new Date(dateValue);
+
+    if (Number.isNaN(examDate.getTime())) {
+        return null;
+    }
+
+    const now = new Date();
+
+    const difference =
+        examDate.getTime() -
+        now.getTime();
+
+    return Math.max(
+        0,
+        Math.ceil(
+            difference /
+            (1000 * 60 * 60 * 24)
+        )
+    );
+}
+
+
+/* =========================================================
+   COMPLETED TOPICS
+   ========================================================= */
+
+function getCompletedTopics() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "studyMindCompletedTopics"
+            );
+
+        if (!saved) {
+            return [];
+        }
+
+        const parsed =
+            JSON.parse(saved);
+
+        return Array.isArray(parsed)
+            ? parsed
+            : [];
+
+    } catch (error) {
+
+        console.warn(
+            "Could not read completed topics:",
+            error
+        );
+
+        return [];
+    }
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+function getProgress() {
+
+    const plan =
+        getStudyPlan();
+
+    const completedTopics =
         getCompletedTopics();
+
+    const topics =
+        plan?.topics || [];
 
     const total =
         topics.length;
 
-    const completedCount =
-        completed.length;
+    const completed =
+        completedTopics.length;
 
     const percentage =
         total > 0
             ? Math.round(
-                (completedCount / total) * 100
+                (completed / total) * 100
             )
             : 0;
 
     return {
 
         total,
-
-        completed:
-            completedCount,
-
+        completed,
         percentage
     };
 }
 
+
 /* =========================================================
-   AI QUESTION COUNTER
-========================================================= */
+   AI QUESTION COUNT
+   ========================================================= */
 
 function getAIQuestionCount() {
 
-    const value =
-        Number(
-            localStorage.getItem(
-                AI_COUNT_KEY
-            )
-        );
-
-    if (
-        !Number.isFinite(value) ||
-        value < 0
-    ) {
-
-        return 0;
-    }
-
-    return Math.floor(value);
-}
-
-function getRemainingAIQuestions() {
-
-    if (isPremiumUser()) {
-
-        return Infinity;
-    }
-
-    return Math.max(
-        0,
-        FREE_AI_LIMIT -
-        getAIQuestionCount()
-    );
-}
-
-function updateAIUsage() {
-
-    const badge =
-        $("aiCountBadge");
-
-    if (!badge) {
-
-        return;
-    }
-
-    if (isPremiumUser()) {
-
-        badge.textContent =
-            "Premium — Unlimited";
-
-        return;
-    }
-
-    const used =
-        getAIQuestionCount();
-
-    badge.textContent =
-        `${used}/${FREE_AI_LIMIT} used`;
-}
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-function isPremiumUser() {
-
     try {
 
-        const premium =
+        const stored =
             localStorage.getItem(
-                "studyMindPremium"
+                AI_COUNT_KEY
             );
 
-        if (
-            premium === "true" ||
-            premium === "1"
-        ) {
-
-            return true;
-        }
-
-        const subscription =
-            localStorage.getItem(
-                "studyMindSubscription"
+        const count =
+            Number.parseInt(
+                stored || "0",
+                10
             );
 
-        if (
-            subscription === "premium" ||
-            subscription === "pro"
-        ) {
+        return Number.isFinite(count)
+            ? count
+            : 0;
 
-            return true;
-        }
-
-    } catch {}
-
-    return false;
+    } catch {
+        return 0;
+    }
 }
 
+
 /* =========================================================
-   CHECK AI LIMIT
-========================================================= */
+   UPDATE AI USAGE DISPLAY
+   ========================================================= */
+
+function updateAIUsageDisplay() {
+
+    const count =
+        getAIQuestionCount();
+
+    const elements = [
+        $("aiQuestionCount"),
+        $("aiUsageCount"),
+        $("questionUsage")
+    ];
+
+    elements.forEach(element => {
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            `${count}/${FREE_AI_LIMIT} used`;
+    });
+}
+
+
+/* =========================================================
+   FREE LIMIT
+   ========================================================= */
 
 function canAskAI() {
 
-    if (isPremiumUser()) {
+    const count =
+        getAIQuestionCount();
 
-        return true;
-    }
-
-    return (
-        getAIQuestionCount() <
-        FREE_AI_LIMIT
-    );
+    return count < FREE_AI_LIMIT;
 }
 
+
 /* =========================================================
-   RECORD AI REQUEST
-========================================================= */
+   RECORD AI QUESTION
+   ========================================================= */
 
 function recordAIQuestion() {
 
-    if (isPremiumUser()) {
+    const current =
+        getAIQuestionCount();
 
-        return true;
-    }
-
-    if (!canAskAI()) {
-
-        return false;
-    }
-
-    const newCount =
-        getAIQuestionCount() + 1;
+    const next =
+        current + 1;
 
     localStorage.setItem(
         AI_COUNT_KEY,
-        String(newCount)
+        String(next)
     );
 
-    updateAIUsage();
-
-    return true;
+    updateAIUsageDisplay();
 }
 
-/* =========================================================
-   LIMIT MESSAGE
-========================================================= */
-
-function showAILimitMessage(target) {
-
-    if (!target) {
-
-        return;
-    }
-
-    target.innerHTML = `
-        <div>
-            <strong>
-                You've used all 5 free AI questions.
-            </strong>
-
-            <br><br>
-
-            You can continue using the rest of
-            StudyMind AI, or upgrade to Premium
-            for unlimited AI support.
-        </div>
-    `;
-}
 
 /* =========================================================
-   AUTH MESSAGE
-========================================================= */
+   PREMIUM MESSAGE
+   ========================================================= */
 
-function showAuthenticationMessage() {
+function showPremiumMessage() {
 
     const response =
-        $("aiResponse");
+        $("aiResponse") ||
+        $("aiAnswer") ||
+        $("aiAdviceText");
 
     if (!response) {
-
         return;
     }
 
     response.innerHTML = `
-        <strong>
-            Please log in to use StudyMind AI.
-        </strong>
+        <div class="ai-limit-message">
 
-        <br><br>
+            <div class="ai-limit-icon">
+                🔒
+            </div>
 
-        Your AI support is connected to your
-        StudyMind account and study plan.
+            <h3>Free AI limit reached</h3>
+
+            <p>
+                You've used all ${FREE_AI_LIMIT}
+                free AI questions for today.
+            </p>
+
+            <p>
+                Premium access can give you
+                more AI study support.
+            </p>
+
+        </div>
     `;
 }
 
+
 /* =========================================================
    BUILD STUDY CONTEXT
-========================================================= */
+   ========================================================= */
 
 function buildStudyContext() {
 
@@ -558,279 +649,307 @@ function buildStudyContext() {
     const progress =
         getProgress();
 
-    const completed =
-        getCompletedTopics();
+    if (!plan) {
 
-    return {
+        return `
+The student does not currently have a saved study plan.
 
-        examType:
-            plan.examType ||
-            "Not specified",
+Give general but useful study guidance.
+If relevant, encourage the student to create a study plan first.
+`;
+    }
 
-        examDate:
-            plan.examDate ||
-            "Not specified",
+    const subjectText =
+        plan.subjects.length > 0
+            ? plan.subjects.join(", ")
+            : "No subjects listed";
 
-        daysLeft:
-            plan.daysLeft || 0,
+    const topicText =
+        plan.topics.length > 0
+            ? plan.topics.join(", ")
+            : "No topics listed";
 
-        subjects:
-            plan.subjects,
+    const completedText =
+        getCompletedTopics().length > 0
+            ? getCompletedTopics().join(", ")
+            : "None yet";
 
-        topics:
-            plan.topics,
+    return `
+STUDENT STUDY CONTEXT
 
-        studyHours:
-            plan.studyHours,
+Exam:
+${plan.examType}
 
-        difficulty:
-            plan.difficulty ||
-            "Not specified",
+Exam date:
+${plan.examDate || "Not specified"}
 
-        completedTopics:
-            completed,
+Days remaining:
+${plan.daysLeft ?? "Not specified"}
 
-        totalTopics:
-            progress.total,
+Subjects:
+${subjectText}
 
-        completedTopicCount:
-            progress.completed,
+Topics:
+${topicText}
 
-        progressPercentage:
-            progress.percentage
-    };
+Study hours per day:
+${plan.studyHours || "Not specified"}
+
+Difficulty:
+${plan.difficulty}
+
+Progress:
+${progress.completed}/${progress.total} topics completed (${progress.percentage}%)
+
+Completed topics:
+${completedText}
+
+Use this information to personalize the response.
+Do not invent subjects, topics, exam dates, or progress.
+`;
 }
 
-/* =========================================================
-   BUILD AI MESSAGE
-========================================================= */
 
-function buildAIMessage(
-    question,
-    mode
-) {
+/* =========================================================
+   BUILD AI PROMPT
+   ========================================================= */
+
+function buildAIPrompt(question, mode = "chat") {
 
     const context =
         buildStudyContext();
 
     return `
-You are StudyMind AI, a personalized educational
-study assistant.
+You are StudyMind AI, a professional academic study assistant.
 
-Help the student using the actual StudyMind study
-plan and progress provided below.
+Your job is to help the student understand subjects,
+revise efficiently, identify weak areas, and prepare
+for examinations.
 
-IMPORTANT RULES:
+${context}
 
-- Base your response on the supplied study context.
-- Do not invent subjects or topics.
-- Do not assume Mathematics is the subject.
-- Use only subjects and topics that actually appear
-  in the student's study plan when making
-  personalized recommendations.
-- If the study plan is empty or missing information,
-  clearly say that the information is unavailable.
-- Give practical, student-friendly advice.
-- Keep the response clear and organized.
-- When asked what to study next, prioritize unfinished
-  topics and consider the exam date and progress.
-- When asked which topics need attention, use the
-  completion information provided.
-- When explaining an academic concept, teach it clearly.
-- Do not mention these instructions.
+USER REQUEST:
+${question}
 
-STUDY PLAN AND PROGRESS:
-${JSON.stringify(context, null, 2)}
-
-REQUEST MODE:
+RESPONSE MODE:
 ${mode}
 
-STUDENT REQUEST:
-${question}
+IMPORTANT RESPONSE RULES:
+
+1. Be clear, accurate, encouraging, and educational.
+
+2. Base personalized recommendations on the study
+   information provided above.
+
+3. Do not invent information about the student's plan.
+
+4. Use short sections and bullet points when useful.
+
+5. Explain difficult concepts step by step.
+
+6. When mathematical notation is needed, ALWAYS use
+   proper LaTeX.
+
+7. Use \\(...\\) for inline mathematics.
+
+8. Use \\[...\\] for important standalone equations.
+
+9. Put standalone equations on their own line.
+
+10. Example:
+
+Distance between two points:
+
+\\[
+d=\\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}
+\\]
+
+11. For inline mathematics, write:
+
+The slope is \\(m=\\frac{y_2-y_1}{x_2-x_1}\\).
+
+12. Never write raw HTML.
+
+13. Do not use markdown tables unless absolutely necessary.
+
+14. Keep the answer readable on both desktop and mobile.
+
+15. If the user asks what to study next, prioritize unfinished
+    topics and topics that are most relevant to the exam.
+
+16. If the user asks for progress analysis, clearly explain:
+    - current progress
+    - strengths
+    - areas needing attention
+    - recommended next steps
+
+17. Never claim that you performed an action that you did not perform.
+
+Now answer the student's request.
 `;
 }
 
+
 /* =========================================================
-   AI API
-========================================================= */
+   CALL STUDYMIND AI
+   ========================================================= */
 
 async function callStudyMindAI(
     question,
     mode = "chat"
 ) {
 
-    const message =
-        buildAIMessage(
-            question,
-            mode
+    if (aiRequestInProgress) {
+
+        throw new Error(
+            "An AI request is already in progress."
         );
+    }
 
-    console.log(
-        "Sending request to /api/ask-ai..."
-    );
-
-    const response =
-        await fetch(
-            "/api/ask-ai",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    message
-                })
-            }
-        );
-
-    let data = null;
+    aiRequestInProgress = true;
 
     try {
 
-        data =
-            await response.json();
+        const prompt =
+            buildAIPrompt(
+                question,
+                mode
+            );
 
-    } catch (error) {
-
-        throw new Error(
-            `AI server returned an invalid response (${response.status}).`
+        console.log(
+            "Sending request to /api/ask-ai"
         );
-    }
 
-    console.log(
-        "StudyMind AI API response:",
-        data
-    );
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+                    method: "POST",
 
-    if (!response.ok) {
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-        let errorMessage =
-            `AI server error (${response.status}).`;
+                    body: JSON.stringify({
+                        message: prompt,
+                        mode
+                    })
+                }
+            );
 
-        if (
-            data &&
-            typeof data.error === "string" &&
-            data.error.trim()
-        ) {
+        let data = null;
 
-            errorMessage =
-                data.error.trim();
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            throw new Error(
+                "The AI server returned an invalid response."
+            );
         }
 
-        throw new Error(
-            errorMessage
-        );
-    }
-
-    if (
-        data &&
-        data.success === false
-    ) {
-
-        throw new Error(
-            data.error ||
-            "StudyMind AI could not process the request."
-        );
-    }
-
-    const answer =
-        extractAIAnswer(data);
-
-    if (!answer) {
-
-        console.error(
-            "Empty AI response received:",
+        console.log(
+            "AI server response:",
             data
         );
 
-        throw new Error(
-            "The AI server returned an empty response."
-        );
-    }
+        if (!response.ok) {
 
-    return answer;
+            throw new Error(
+                data?.error ||
+                data?.message ||
+                `AI server error (${response.status})`
+            );
+        }
+
+        if (
+            data?.success === false
+        ) {
+
+            throw new Error(
+                data.error ||
+                "The AI request failed."
+            );
+        }
+
+        const answer =
+            extractAIAnswer(data);
+
+        if (!answer) {
+
+            throw new Error(
+                "The AI server returned an empty response."
+            );
+        }
+
+        return answer;
+
+    } finally {
+
+        aiRequestInProgress = false;
+    }
 }
 
+
 /* =========================================================
-   RESPONSE PARSER
-========================================================= */
+   EXTRACT AI ANSWER
+   ========================================================= */
 
 function extractAIAnswer(data) {
 
     if (!data) {
-
         return "";
     }
 
-    if (typeof data === "string") {
+    /*
+     * IMPORTANT:
+     *
+     * ask-ai.js returns:
+     *
+     * {
+     *     success: true,
+     *     reply: "..."
+     * }
+     *
+     * Therefore data.reply MUST be checked.
+     */
 
-        return data.trim();
+    const possibleAnswers = [
+
+        data.reply,
+
+        data.answer,
+
+        data.response,
+
+        data.message,
+
+        data.content,
+
+        data?.message?.content,
+
+        data?.output_text,
+
+        data?.result
+    ];
+
+    for (const value of possibleAnswers) {
+
+        if (
+            typeof value === "string" &&
+            value.trim()
+        ) {
+            return value.trim();
+        }
     }
 
     /*
-       THIS IS THE IMPORTANT FIX.
-
-       ask-ai.js returns:
-
-       {
-           success: true,
-           reply: "..."
-       }
-
-       Therefore reply must be checked first.
-    */
-
-    if (
-        typeof data.reply === "string" &&
-        data.reply.trim()
-    ) {
-
-        return data.reply.trim();
-    }
-
-    if (
-        typeof data.answer === "string" &&
-        data.answer.trim()
-    ) {
-
-        return data.answer.trim();
-    }
-
-    if (
-        typeof data.response === "string" &&
-        data.response.trim()
-    ) {
-
-        return data.response.trim();
-    }
-
-    if (
-        typeof data.message === "string" &&
-        data.message.trim()
-    ) {
-
-        return data.message.trim();
-    }
-
-    if (
-        typeof data.content === "string" &&
-        data.content.trim()
-    ) {
-
-        return data.content.trim();
-    }
-
-    if (
-        data.message &&
-        typeof data.message.content === "string"
-    ) {
-
-        return data.message.content.trim();
-    }
+     * Compatibility with OpenAI-style responses.
+     */
 
     if (
         Array.isArray(data.choices) &&
@@ -841,19 +960,15 @@ function extractAIAnswer(data) {
             data.choices[0];
 
         if (
-            choice &&
-            choice.message &&
-            typeof choice.message.content === "string"
+            typeof choice?.message?.content ===
+            "string"
         ) {
-
             return choice.message.content.trim();
         }
 
         if (
-            choice &&
-            typeof choice.text === "string"
+            typeof choice?.text === "string"
         ) {
-
             return choice.text.trim();
         }
     }
@@ -861,38 +976,281 @@ function extractAIAnswer(data) {
     return "";
 }
 
+
 /* =========================================================
-   ASK STUDYMIND AI
-========================================================= */
+   ESCAPE HTML
+   ========================================================= */
 
-async function askStudyMindAI() {
+function escapeHTML(value) {
 
-    if (aiRequestInProgress) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-        return;
+
+/* =========================================================
+   FORMAT AI RESPONSE
+   ========================================================= */
+
+function formatAIResponse(text) {
+
+    if (!text) {
+        return "";
     }
 
-    const input =
-        $("aiQuestion");
+    /*
+     * Escape HTML first for security.
+     *
+     * LaTeX characters such as:
+     *
+     * \(
+     * \)
+     * \[
+     * \]
+     *
+     * are preserved.
+     */
 
-    const response =
-        $("aiResponse");
+    let formatted =
+        escapeHTML(text);
 
-    const button =
-        $("askAIButton");
+    /*
+     * Bold:
+     * **text**
+     */
 
-    if (!input || !response) {
+    formatted =
+        formatted.replace(
+            /\*\*(.+?)\*\*/g,
+            "<strong>$1</strong>"
+        );
+
+    /*
+     * Headings:
+     * ### Heading
+     */
+
+    formatted =
+        formatted.replace(
+            /^###\s+(.+)$/gm,
+            "<h4>$1</h4>"
+        );
+
+    formatted =
+        formatted.replace(
+            /^##\s+(.+)$/gm,
+            "<h3>$1</h3>"
+        );
+
+    formatted =
+        formatted.replace(
+            /^#\s+(.+)$/gm,
+            "<h2>$1</h2>"
+        );
+
+    /*
+     * Bullet points.
+     */
+
+    formatted =
+        formatted.replace(
+            /^[\t ]*[-*]\s+(.+)$/gm,
+            "<div class=\"ai-bullet\">$1</div>"
+        );
+
+    /*
+     * Numbered lists.
+     */
+
+    formatted =
+        formatted.replace(
+            /^(\d+)\.\s+(.+)$/gm,
+            "<div class=\"ai-numbered\"><span>$1.</span> $2</div>"
+        );
+
+    /*
+     * Preserve blank lines.
+     */
+
+    formatted =
+        formatted.replace(
+            /\n{3,}/g,
+            "\n\n"
+        );
+
+    /*
+     * Convert normal line breaks to HTML.
+     *
+     * MathJax can still detect LaTeX delimiters
+     * after this is inserted into the DOM.
+     */
+
+    formatted =
+        formatted.replace(
+            /\n/g,
+            "<br>"
+        );
+
+    return formatted;
+}
+
+
+/* =========================================================
+   DISPLAY AI RESPONSE
+   ========================================================= */
+
+async function displayAIResponse(text) {
+
+    const responseElement =
+        $("aiResponse") ||
+        $("aiAnswer") ||
+        $("aiAdviceText");
+
+    if (!responseElement) {
 
         console.warn(
-            "StudyMind AI: Required elements are missing."
+            "AI response element not found."
         );
 
         return;
     }
 
-    if (!isAuthenticated) {
+    responseElement.classList.add(
+        "ai-response"
+    );
 
-        showAuthenticationMessage();
+    responseElement.innerHTML =
+        formatAIResponse(text);
+
+    /*
+     * Give the browser a moment to insert
+     * the response before MathJax typesets it.
+     */
+
+    await new Promise(
+        resolve =>
+            requestAnimationFrame(resolve)
+    );
+
+    await renderMath(
+        responseElement
+    );
+}
+
+
+/* =========================================================
+   SHOW LOADING
+   ========================================================= */
+
+function showAILoading() {
+
+    const responseElement =
+        $("aiResponse") ||
+        $("aiAnswer") ||
+        $("aiAdviceText");
+
+    if (!responseElement) {
+        return;
+    }
+
+    responseElement.classList.add(
+        "ai-response"
+    );
+
+    responseElement.innerHTML = `
+        <div class="ai-loading">
+
+            <div class="ai-loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <span>
+                StudyMind AI is thinking...
+            </span>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   SHOW AI ERROR
+   ========================================================= */
+
+function showAIError(error) {
+
+    const responseElement =
+        $("aiResponse") ||
+        $("aiAnswer") ||
+        $("aiAdviceText");
+
+    if (!responseElement) {
+        return;
+    }
+
+    const message =
+        error?.message ||
+        "Something went wrong while contacting StudyMind AI.";
+
+    responseElement.innerHTML = `
+        <div class="ai-error">
+
+            <strong>
+                StudyMind AI couldn't respond.
+            </strong>
+
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
+            <button
+                type="button"
+                class="ai-retry-button"
+                onclick="retryLastAIRequest()"
+            >
+                Try Again
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   LAST QUESTION
+   ========================================================= */
+
+let lastAIQuestion = "";
+let lastAIMode = "chat";
+
+
+/* =========================================================
+   ASK STUDYMIND AI
+   ========================================================= */
+
+async function askStudyMindAI() {
+
+    if (aiRequestInProgress) {
+        return;
+    }
+
+    const input =
+        $("aiQuestion") ||
+        $("userQuestion") ||
+        $("questionInput") ||
+        $("chatInput");
+
+    if (!input) {
+
+        console.warn(
+            "AI question input not found."
+        );
 
         return;
     }
@@ -902,35 +1260,24 @@ async function askStudyMindAI() {
 
     if (!question) {
 
-        response.textContent =
-            "Please enter a question first.";
-
-        input.focus();
+        alert(
+            "Please enter a question first."
+        );
 
         return;
     }
 
     if (!canAskAI()) {
 
-        showAILimitMessage(
-            response
-        );
+        showPremiumMessage();
 
         return;
     }
 
-    aiRequestInProgress = true;
+    lastAIQuestion = question;
+    lastAIMode = "chat";
 
-    if (button) {
-
-        button.disabled = true;
-
-        button.textContent =
-            "⏳ Thinking...";
-    }
-
-    response.innerHTML =
-        "StudyMind AI is thinking...";
+    showAILoading();
 
     try {
 
@@ -940,15 +1287,17 @@ async function askStudyMindAI() {
                 "chat"
             );
 
-        /*
-           Only count the question when
-           the AI successfully responds.
-        */
+        await displayAIResponse(
+            answer
+        );
 
         recordAIQuestion();
 
-        response.innerHTML =
-            formatAIResponse(answer);
+        /*
+         * Clear input only after successful response.
+         */
+
+        input.value = "";
 
     } catch (error) {
 
@@ -957,105 +1306,142 @@ async function askStudyMindAI() {
             error
         );
 
-        response.innerHTML = `
-            <strong>
-                StudyMind AI couldn't respond.
-            </strong>
-
-            <br><br>
-
-            ${escapeHTML(
-                error &&
-                error.message
-                    ? error.message
-                    : "Please try again."
-            )}
-        `;
-
-    } finally {
-
-        aiRequestInProgress = false;
-
-        if (button) {
-
-            button.disabled = false;
-
-            button.textContent =
-                "🤖 Ask AI";
-        }
-
-        updateAIUsage();
+        showAIError(error);
     }
 }
 
+
 /* =========================================================
-   PROGRESS ANALYSIS
-========================================================= */
+   RETRY
+   ========================================================= */
 
-async function analyzeProgress() {
+async function retryLastAIRequest() {
 
-    if (aiRequestInProgress) {
-
-        return;
-    }
-
-    const response =
-        $("aiAdviceText");
-
-    const button =
-        $("analyzeProgressButton");
-
-    if (!response) {
-
-        return;
-    }
-
-    if (!isAuthenticated) {
-
-        response.innerHTML =
-            "<strong>Please log in to analyze your progress.</strong>";
-
+    if (!lastAIQuestion) {
         return;
     }
 
     if (!canAskAI()) {
 
-        showAILimitMessage(
-            response
-        );
+        showPremiumMessage();
 
         return;
     }
 
-    aiRequestInProgress = true;
+    showAILoading();
 
-    if (button) {
+    try {
 
-        button.disabled = true;
+        const answer =
+            await callStudyMindAI(
+                lastAIQuestion,
+                lastAIMode
+            );
 
-        button.textContent =
-            "⏳ Analyzing...";
+        await displayAIResponse(
+            answer
+        );
+
+        recordAIQuestion();
+
+    } catch (error) {
+
+        console.error(
+            "AI retry failed:",
+            error
+        );
+
+        showAIError(error);
+    }
+}
+
+
+/* =========================================================
+   QUICK ACTION
+   ========================================================= */
+
+async function askQuickQuestion(question) {
+
+    if (!question) {
+        return;
     }
 
-    response.innerHTML =
-        "StudyMind AI is analyzing your study plan and progress...";
+    if (!canAskAI()) {
+
+        showPremiumMessage();
+
+        return;
+    }
+
+    lastAIQuestion = question;
+    lastAIMode = "quick_action";
+
+    showAILoading();
+
+    try {
+
+        const answer =
+            await callStudyMindAI(
+                question,
+                "quick_action"
+            );
+
+        await displayAIResponse(
+            answer
+        );
+
+        recordAIQuestion();
+
+    } catch (error) {
+
+        console.error(
+            "Quick AI action failed:",
+            error
+        );
+
+        showAIError(error);
+    }
+}
+
+
+/* =========================================================
+   ANALYZE PROGRESS
+   ========================================================= */
+
+async function analyzeProgress() {
+
+    if (!canAskAI()) {
+
+        showPremiumMessage();
+
+        return;
+    }
+
+    const progress =
+        getProgress();
 
     const question = `
-Analyze my current StudyMind study progress.
+Analyze my current study progress.
+
+I have completed ${progress.completed}
+out of ${progress.total} topics.
+
+My current progress is ${progress.percentage}%.
 
 Tell me:
 
-1. How much of my study plan I have completed.
-2. Which subjects or topics I should prioritize.
-3. What I should study next.
-4. How I can improve my preparation for my upcoming exam.
+1. What I am doing well.
+2. What needs improvement.
+3. Which topics I should prioritize next.
+4. A practical study strategy for my next study session.
 
-Use only the subjects and topics in my actual
-StudyMind study plan.
-
-If the study plan does not contain enough information,
-say so instead of inventing information.
+Keep the advice specific and actionable.
 `;
+
+    lastAIQuestion = question;
+    lastAIMode = "progress_analysis";
+
+    showAILoading();
 
     try {
 
@@ -1065,331 +1451,566 @@ say so instead of inventing information.
                 "progress_analysis"
             );
 
+        await displayAIResponse(
+            answer
+        );
+
         recordAIQuestion();
 
-        response.innerHTML =
-            formatAIResponse(answer);
-
     } catch (error) {
 
         console.error(
-            "Progress analysis error:",
+            "Progress analysis failed:",
             error
         );
 
-        response.innerHTML = `
-            <strong>
-                Progress analysis failed.
-            </strong>
+        showAIError(error);
+    }
+}
 
-            <br><br>
 
-            ${escapeHTML(
-                error &&
-                error.message
-                    ? error.message
-                    : "Please try again."
-            )}
-        `;
+/* =========================================================
+   INITIALIZE BUTTONS
+   ========================================================= */
 
-    } finally {
+function initializeButtons() {
 
-        aiRequestInProgress = false;
+    const askButton =
+        $("askAIButton") ||
+        $("askStudyMindAI") ||
+        $("sendAIButton");
 
-        if (button) {
+    if (
+        askButton &&
+        !askButton.dataset.aiBound
+    ) {
 
-            button.disabled = false;
+        askButton.addEventListener(
+            "click",
+            askStudyMindAI
+        );
 
-            button.textContent =
-                "🔍 Analyze My Progress";
+        askButton.dataset.aiBound =
+            "true";
+    }
+
+
+    const analyzeButton =
+        $("analyzeProgressButton") ||
+        $("analyzeProgress");
+
+    if (
+        analyzeButton &&
+        !analyzeButton.dataset.aiBound
+    ) {
+
+        analyzeButton.addEventListener(
+            "click",
+            analyzeProgress
+        );
+
+        analyzeButton.dataset.aiBound =
+            "true";
+    }
+
+
+    /*
+     * Quick action buttons.
+     */
+
+    const quickButtons =
+        document.querySelectorAll(
+            "[data-ai-question]"
+        );
+
+    quickButtons.forEach(button => {
+
+        if (button.dataset.aiBound) {
+            return;
         }
 
-        updateAIUsage();
-    }
+        button.addEventListener(
+            "click",
+            () => {
+
+                const question =
+                    button.dataset.aiQuestion;
+
+                askQuickQuestion(
+                    question
+                );
+            }
+        );
+
+        button.dataset.aiBound =
+            "true";
+    });
 }
+
 
 /* =========================================================
-   FORMAT AI RESPONSE
-========================================================= */
+   ENTER KEY SUPPORT
+   ========================================================= */
 
-function formatAIResponse(text) {
-
-    if (!text) {
-
-        return "";
-    }
-
-    let safe =
-        escapeHTML(text);
-
-    /*
-       Bold
-    */
-
-    safe =
-        safe.replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-    /*
-       Headings
-    */
-
-    safe =
-        safe.replace(
-            /^### (.*?)$/gm,
-            "<h3>$1</h3>"
-        );
-
-    safe =
-        safe.replace(
-            /^## (.*?)$/gm,
-            "<h3>$1</h3>"
-        );
-
-    safe =
-        safe.replace(
-            /^# (.*?)$/gm,
-            "<h3>$1</h3>"
-        );
-
-    /*
-       Bullet points
-    */
-
-    safe =
-        safe.replace(
-            /^- (.*?)$/gm,
-            "• $1"
-        );
-
-    /*
-       Numbered lists
-    */
-
-    safe =
-        safe.replace(
-            /^(\d+)\.\s+(.*?)$/gm,
-            "$1. $2"
-        );
-
-    /*
-       Preserve line breaks
-    */
-
-    safe =
-        safe.replace(
-            /\n/g,
-            "<br>"
-        );
-
-    return safe;
-}
-
-/* =========================================================
-   HTML ESCAPE
-========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-}
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function setupNavigation() {
-
-    /*
-       Navigation buttons are already
-       handled by the HTML onclick
-       attributes.
-    */
-}
-
-function openHome() {
-
-    window.location.href =
-        "home.html";
-}
-
-function openNewStudyPlan() {
-
-    window.location.href =
-        "home.html#generator";
-}
-
-function openSummarizer() {
-
-    window.location.href =
-        "summarizer.html";
-}
-
-function openStudyStreak() {
-
-    window.location.href =
-        "study-streak.html";
-}
-
-function openStudyScore() {
-
-    window.location.href =
-        "study-score.html";
-}
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logoutStudyMind() {
-
-    try {
-
-        const client =
-            window.supabaseClient;
+document.addEventListener(
+    "keydown",
+    event => {
 
         if (
-            client &&
-            client.auth
+            event.key !== "Enter" ||
+            event.shiftKey
         ) {
-
-            await client.auth.signOut();
+            return;
         }
 
-    } catch (error) {
+        const active =
+            document.activeElement;
 
-        console.error(
-            "Logout error:",
-            error
-        );
+        if (
+            active &&
+            (
+                active.id === "aiQuestion" ||
+                active.id === "userQuestion" ||
+                active.id === "questionInput" ||
+                active.id === "chatInput"
+            )
+        ) {
+
+            event.preventDefault();
+
+            askStudyMindAI();
+        }
     }
+);
 
-    window.location.href =
-        "login.html";
-}
 
 /* =========================================================
    THEME
-========================================================= */
+   ========================================================= */
 
-function setupTheme() {
-
-    const button =
-        $("themeButton");
+function initializeTheme() {
 
     const savedTheme =
         localStorage.getItem(
             THEME_KEY
         );
 
-    const theme =
-        savedTheme === "light"
-            ? "light"
-            : "dark";
+    if (savedTheme === "light") {
 
-    applyTheme(theme);
+        document.body.classList.add(
+            "light-mode"
+        );
 
-    if (button) {
+    } else {
 
-        button.addEventListener(
-            "click",
-            toggleTheme
+        document.body.classList.remove(
+            "light-mode"
         );
     }
+
+    updateThemeButton();
 }
 
-function applyTheme(theme) {
 
-    document.body.classList.toggle(
-        "light-mode",
-        theme === "light"
-    );
+/* =========================================================
+   TOGGLE THEME
+   ========================================================= */
+
+function toggleTheme() {
+
+    const isLight =
+        document.body.classList.toggle(
+            "light-mode"
+        );
 
     localStorage.setItem(
         THEME_KEY,
-        theme
+        isLight
+            ? "light"
+            : "dark"
     );
 
-    updateThemeButton(theme);
+    updateThemeButton();
 }
 
-function updateThemeButton(theme) {
 
-    const button =
-        $("themeButton");
+/* =========================================================
+   UPDATE THEME BUTTON
+   ========================================================= */
 
-    if (!button) {
+function updateThemeButton() {
 
-        return;
-    }
-
-    button.textContent =
-        theme === "light"
-            ? "☀️ Light Mode"
-            : "🌙 Dark Mode";
-}
-
-function toggleTheme() {
+    const buttons =
+        document.querySelectorAll(
+            "#themeToggle, #darkModeToggle, [data-theme-toggle]"
+        );
 
     const isLight =
         document.body.classList.contains(
             "light-mode"
         );
 
-    applyTheme(
-        isLight
-            ? "dark"
-            : "light"
-    );
+    buttons.forEach(button => {
+
+        button.textContent =
+            isLight
+                ? "🌙 Dark Mode"
+                : "☀️ Light Mode";
+    });
 }
+
+
+/* =========================================================
+   INITIALIZE NAVIGATION
+   ========================================================= */
+
+function initializeNavigation() {
+
+    const themeButtons =
+        document.querySelectorAll(
+            "#themeToggle, #darkModeToggle, [data-theme-toggle]"
+        );
+
+    themeButtons.forEach(button => {
+
+        if (button.dataset.themeBound) {
+            return;
+        }
+
+        button.addEventListener(
+            "click",
+            toggleTheme
+        );
+
+        button.dataset.themeBound =
+            "true";
+    });
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+async function logout() {
+
+    try {
+
+        if (
+            window.supabaseClient &&
+            window.supabaseClient.auth
+        ) {
+
+            await window.supabaseClient.auth.signOut();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Logout failed:",
+            error
+        );
+
+    } finally {
+
+        window.location.href =
+            "login.html";
+    }
+}
+
 
 /* =========================================================
    GLOBAL FUNCTIONS
-========================================================= */
+   ========================================================= */
 
 window.askStudyMindAI =
     askStudyMindAI;
 
+window.askQuickQuestion =
+    askQuickQuestion;
+
 window.analyzeProgress =
     analyzeProgress;
 
-window.openHome =
-    openHome;
+window.retryLastAIRequest =
+    retryLastAIRequest;
 
-window.openNewStudyPlan =
-    openNewStudyPlan;
+window.toggleTheme =
+    toggleTheme;
 
-window.openSummarizer =
-    openSummarizer;
+window.logout =
+    logout;
 
-window.openStudyStreak =
-    openStudyStreak;
+window.renderMath =
+    renderMath;
 
-window.openStudyScore =
-    openStudyScore;
+window.formatAIResponse =
+    formatAIResponse;
 
-window.logoutStudyMind =
-    logoutStudyMind;
 
+/* =========================================================
+   PROFESSIONAL MATHJAX CSS
+   ========================================================= */
+
+(function addMathStyles() {
+
+    if (
+        document.getElementById(
+            "studymind-ai-math-styles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "studymind-ai-math-styles";
+
+    style.textContent = `
+
+        /* =========================================
+           AI RESPONSE
+           ========================================= */
+
+        .ai-response {
+            line-height: 1.75;
+            font-size: 1rem;
+        }
+
+
+        /* =========================================
+           MATHJAX
+           ========================================= */
+
+        .ai-response mjx-container {
+            font-size: 1.08em;
+        }
+
+
+        .ai-response mjx-container[display="true"] {
+
+            display: block;
+
+            margin: 1.25rem 0 !important;
+
+            padding: 0.75rem 0;
+
+            overflow-x: auto;
+            overflow-y: hidden;
+
+            max-width: 100%;
+
+            text-align: center;
+        }
+
+
+        /*
+         * Make large equations easier to read
+         * on mobile screens.
+         */
+
+        @media (max-width: 600px) {
+
+            .ai-response mjx-container[display="true"] {
+
+                font-size: 0.95em;
+
+                margin: 1rem 0 !important;
+
+                padding: 0.5rem 0;
+            }
+        }
+
+
+        /* =========================================
+           BULLETS
+           ========================================= */
+
+        .ai-bullet {
+
+            position: relative;
+
+            padding-left: 1.4rem;
+
+            margin: 0.45rem 0;
+        }
+
+
+        .ai-bullet::before {
+
+            content: "•";
+
+            position: absolute;
+
+            left: 0;
+
+            font-weight: 700;
+        }
+
+
+        /* =========================================
+           NUMBERED ITEMS
+           ========================================= */
+
+        .ai-numbered {
+
+            margin: 0.5rem 0;
+        }
+
+
+        .ai-numbered span {
+
+            font-weight: 700;
+        }
+
+
+        /* =========================================
+           HEADINGS
+           ========================================= */
+
+        .ai-response h2,
+        .ai-response h3,
+        .ai-response h4 {
+
+            margin-top: 1.25rem;
+
+            margin-bottom: 0.6rem;
+
+            line-height: 1.35;
+        }
+
+
+        /* =========================================
+           LOADING
+           ========================================= */
+
+        .ai-loading {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 0.75rem;
+
+            padding: 1rem 0;
+        }
+
+
+        .ai-loading-dots {
+
+            display: flex;
+
+            gap: 4px;
+        }
+
+
+        .ai-loading-dots span {
+
+            width: 7px;
+
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: currentColor;
+
+            animation:
+                studymindBounce
+                1.2s infinite ease-in-out;
+        }
+
+
+        .ai-loading-dots span:nth-child(2) {
+
+            animation-delay: 0.15s;
+        }
+
+
+        .ai-loading-dots span:nth-child(3) {
+
+            animation-delay: 0.3s;
+        }
+
+
+        @keyframes studymindBounce {
+
+            0%,
+            80%,
+            100% {
+
+                transform: translateY(0);
+
+                opacity: 0.4;
+            }
+
+            40% {
+
+                transform: translateY(-5px);
+
+                opacity: 1;
+            }
+        }
+
+
+        /* =========================================
+           ERROR
+           ========================================= */
+
+        .ai-error {
+
+            padding: 1rem;
+
+            border-radius: 12px;
+
+            margin-top: 0.5rem;
+        }
+
+
+        .ai-error p {
+
+            margin: 0.5rem 0 0;
+        }
+
+
+        .ai-retry-button {
+
+            margin-top: 0.75rem;
+
+            padding: 0.6rem 1rem;
+
+            border: none;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+        }
+
+
+        /* =========================================
+           LIMIT MESSAGE
+           ========================================= */
+
+        .ai-limit-message {
+
+            text-align: center;
+
+            padding: 1.5rem;
+        }
+
+
+        .ai-limit-icon {
+
+            font-size: 2rem;
+
+            margin-bottom: 0.5rem;
+        }
+
+    `;
+
+    document.head.appendChild(style);
+
+})();
