@@ -218,14 +218,16 @@ function setSummaryCount(count) {
 
 function updateUsageUI() {
 
-    const count =
-        getSummaryCount();
+    const count = getSummaryCount();
 
-    const percentage =
-        Math.round(
-            (count / FREE_SUMMARY_LIMIT) * 100
-        );
+    const percentage = Math.round(
+        (count / FREE_SUMMARY_LIMIT) * 100
+    );
 
+
+    /* =====================================================
+       BADGE
+    ===================================================== */
 
     if (summaryCountBadge) {
 
@@ -235,6 +237,10 @@ function updateUsageUI() {
     }
 
 
+    /* =====================================================
+       PERCENTAGE TEXT
+    ===================================================== */
+
     if (summaryUsagePercent) {
 
         summaryUsagePercent.textContent =
@@ -242,6 +248,10 @@ function updateUsageUI() {
 
     }
 
+
+    /* =====================================================
+       USAGE TEXT
+    ===================================================== */
 
     if (summaryUsageText) {
 
@@ -251,6 +261,10 @@ function updateUsageUI() {
     }
 
 
+    /* =====================================================
+       HORIZONTAL PROGRESS BAR
+    ===================================================== */
+
     if (summaryUsageProgressBar) {
 
         summaryUsageProgressBar.style.width =
@@ -258,8 +272,69 @@ function updateUsageUI() {
 
     }
 
-}
 
+    /* =====================================================
+       CIRCULAR PROGRESS
+    ===================================================== */
+
+    const circle =
+        document.querySelector(".progress-circle");
+
+    if (circle) {
+
+        /*
+         * Store the percentage directly on the element.
+         * CSS can then use this value to display the
+         * correct amount of circular progress.
+         */
+
+        circle.style.setProperty(
+            "--usage-progress",
+            `${percentage}%`
+        );
+
+
+        circle.dataset.progress =
+            String(percentage);
+
+
+        /*
+         * Also provide useful state classes.
+         */
+
+        circle.classList.remove(
+            "usage-0",
+            "usage-20",
+            "usage-40",
+            "usage-60",
+            "usage-80",
+            "usage-100"
+        );
+
+
+        circle.classList.add(
+            `usage-${percentage}`
+        );
+
+    }
+
+
+    /* =====================================================
+       LIMIT STATE
+    ===================================================== */
+
+    if (count >= FREE_SUMMARY_LIMIT) {
+
+        if (summaryCountBadge) {
+
+            summaryCountBadge.textContent =
+                "5/5 used";
+
+        }
+
+    }
+
+}
 
 /* =========================================================
    CHECK LIMIT
