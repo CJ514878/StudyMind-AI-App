@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>StudyMind AI — Study Streak</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .streak-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        .streak-hero {
+            margin-bottom: 28px;
+        }
+
+        .streak-hero h1 {
+            margin-bottom: 8px;
+        }
+
+        .streak-hero p {
+            opacity: .75;
+            margin: 0;
+        }
+
+        .streak-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .streak-card {
+            border-radius: 22px;
+            padding: 25px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.09);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 40px rgba(0,0,0,.12);
+        }
+
+        .streak-card-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .streak-card-label {
+            font-size: 14px;
+            opacity: .7;
+            margin-bottom: 7px;
+        }
+
+        .streak-card-value {
+            font-size: 34px;
+            font-weight: 800;
+        }
+
+        .streak-card-value small {
+            font-size: 16px;
+            opacity: .7;
+            font-weight: 500;
+        }
+
+        .current-streak-card {
+            grid-column: span 2;
+            min-height: 230px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+        }
+
+        .streak-main-number {
+            font-size: 72px;
+            line-height: 1;
+            font-weight: 900;
+            margin: 8px 0;
+        }
+
+        .streak-fire {
+            font-size: 70px;
+            filter: drop-shadow(0 8px 20px rgba(255,130,30,.3));
+        }
+
+        .streak-message {
+            opacity: .75;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .section-card {
+            border-radius: 22px;
+            padding: 25px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.09);
+            margin-bottom: 22px;
+        }
+
+        .section-card h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .section-description {
+            opacity: .65;
+            margin-bottom: 22px;
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        .week-day {
+            text-align: center;
+        }
+
+        .week-day-name {
+            font-size: 12px;
+            opacity: .6;
+            margin-bottom: 8px;
+        }
+
+        .week-day-box {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 65px;
+            margin: auto;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.08);
+            font-size: 20px;
+        }
+
+        .week-day-box.active {
+            background: linear-gradient(135deg, rgba(255,166,0,.9), rgba(255,92,0,.8));
+            border-color: transparent;
+            box-shadow: 0 8px 25px rgba(255,120,0,.2);
+        }
+
+        .week-day-box.today {
+            outline: 2px solid rgba(255,255,255,.35);
+            outline-offset: 3px;
+        }
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .calendar-title {
+            font-size: 20px;
+            font-weight: 750;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-size: 12px;
+            opacity: .55;
+            padding-bottom: 5px;
+        }
+
+        .calendar-day {
+            min-height: 55px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.05);
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .calendar-day.studied {
+            background: rgba(255,145,0,.18);
+            border-color: rgba(255,145,0,.3);
+        }
+
+        .calendar-day.today {
+            outline: 2px solid rgba(255,255,255,.3);
+        }
+
+        .calendar-day-number {
+            font-weight: 700;
+        }
+
+        .calendar-day-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            margin-top: 9px;
+            opacity: .85;
+        }
+
+        .streak-tip {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.045);
+        }
+
+        .streak-tip-icon {
+            font-size: 28px;
+        }
+
+        .streak-tip strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .streak-tip span {
+            opacity: .65;
+            font-size: 14px;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 35px 20px;
+            opacity: .65;
+        }
+
+        @media (max-width: 800px) {
+            .streak-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .current-streak-card {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .streak-page {
+                padding: 20px 14px 45px;
+            }
+
+            .streak-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-streak-card {
+                grid-column: span 1;
+                min-height: auto;
+            }
+
+            .streak-main-number {
+                font-size: 54px;
+            }
+
+            .streak-fire {
+                font-size: 55px;
+            }
+
+            .week-grid {
+                gap: 5px;
+            }
+
+            .week-day-box {
+                border-radius: 11px;
+                font-size: 16px;
+            }
+
+            .calendar-day {
+                min-height: 42px;
+                padding: 6px;
+            }
+        }
+
+        body.light-mode .streak-card,
+        body.light-mode .section-card {
+            background: rgba(255,255,255,.9);
+            border-color: rgba(0,0,0,.08);
+        }
+
+        body.light-mode .week-day-box {
+            background: rgba(0,0,0,.035);
+            border-color: rgba(0,0,0,.06);
+        }
+
+        body.light-mode .calendar-day {
+            background: rgba(0,0,0,.025);
+            border-color: rgba(0,0,0,.06);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">StudyMind AI</div>
+
+        <nav>
+            <a href="home.html">Home</a>
+            <a href="index.html">New Study Plan</a>
+            <a href="summarizer.html">Summarizer</a>
+            <a href="ai-support.html">AI Support</a>
+            <a href="streak.html" class="active">Study Streak</a>
+            <a href="score.html">Study Score</a>
+
+            <button
+                id="themeButton"
+                type="button"
+                onclick="toggleTheme()"
+                aria-label="Toggle theme"
+            >
+                🌙
+            </button>
+
+            <button
+                type="button"
+                onclick="logoutStudyMind()"
+            >
+                Logout
+            </button>
+        </nav>
+    </header>
+
+    <main class="streak-page">
+
+        <section class="streak-hero">
+            <h1>🔥 Study Streak</h1>
+            <p>Build consistency, stay focused, and keep your learning streak alive.</p>
+        </section>
+
+        <section class="streak-grid">
+
+            <div class="streak-card current-streak-card">
+
+                <div>
+                    <div class="streak-card-label">
+                        CURRENT STREAK
+                    </div>
+
+                    <div
+                        class="streak-main-number"
+                        id="currentStreak"
+                    >
+                        0
+                    </div>
+
+                    <div class="streak-card-value">
+                        <small>consecutive days</small>
+                    </div>
+
+                    <p
+                        class="streak-message"
+                        id="streakMessage"
+                    >
+                        Start studying to begin your streak.
+                    </p>
+                </div>
+
+                <div class="streak-fire">
+                    🔥
+                </div>
+
+            </div>
+
+            <div class="streak-card">
+                <div class="streak-card-icon">🏆</div>
+
+                <div class="streak-card-label">
+                    LONGEST STREAK
+                </div>
+
+                <div class="streak-card-value">
+                    <span id="longestStreak">0</span>
+                    <small>days</small>
+                </div>
+            </div>
+
+            <div class="streak-card">
+                <div class="streak-card-icon">📚</div>
+
+                <div class="streak-card-label">
+                    TOTAL STUDY DAYS
+                </div>
+
+                <div class="streak-card-value">
+                    <span id="totalStudyDays">0</span>
+                </div>
+            </div>
+
+            <div class="streak-card">
+                <div class="streak-card-icon">📈</div>
+
+                <div class="streak-card-label">
+                    THIS WEEK
+                </div>
+
+                <div class="streak-card-value">
+                    <span id="weeklyStudyDays">0</span>
+                    <small>/ 7 days</small>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="section-card">
+
+            <h2>This Week</h2>
+
+            <p class="section-description">
+                Your study activity over the last seven days.
+            </p>
+
+            <div
+                class="week-grid"
+                id="weekGrid"
+            ></div>
+
+        </section>
+
+        <section class="section-card">
+
+            <div class="calendar-header">
+                <div>
+                    <div class="calendar-title" id="calendarTitle">
+                        Study Activity
+                    </div>
+                </div>
+            </div>
+
+            <div class="calendar-grid">
+
+                <div class="calendar-weekday">Sun</div>
+                <div class="calendar-weekday">Mon</div>
+                <div class="calendar-weekday">Tue</div>
+                <div class="calendar-weekday">Wed</div>
+                <div class="calendar-weekday">Thu</div>
+                <div class="calendar-weekday">Fri</div>
+                <div class="calendar-weekday">Sat</div>
+
+            </div>
+
+            <div
+                class="calendar-grid"
+                id="calendarGrid"
+            ></div>
+
+        </section>
+
+        <section class="section-card">
+
+            <div class="streak-tip">
+
+                <div class="streak-tip-icon">
+                    🎯
+                </div>
+
+                <div>
+                    <strong id="streakTipTitle">
+                        Keep going!
+                    </strong>
+
+                    <span id="streakTipText">
+                        Consistency is the key to building a strong study habit.
+                    </span>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="streak.js"></script>
+
+</body>
+</html>
