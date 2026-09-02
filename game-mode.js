@@ -4294,3 +4294,191 @@ document.addEventListener(
     "DOMContentLoaded",
     initializeComputerBattle
 );
+/* =========================================================
+   STUDYMIND AI — YOU VS COMPUTER NAVIGATION FIX
+========================================================= */
+
+(function setupComputerBattleNavigation() {
+
+    function goToComputerBattle(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        console.log(
+            "StudyMind AI: Opening You vs Computer..."
+        );
+
+        window.location.href = "computer-battle.html";
+    }
+
+    function bindComputerBattleButton() {
+
+        /* -------------------------------------------------
+           1. Known / likely IDs
+        ------------------------------------------------- */
+
+        const possibleIds = [
+            "computerBattleButton",
+            "youVsComputerButton",
+            "startComputerBattle",
+            "computerBattle",
+            "playComputerBattle",
+            "vsComputerButton",
+            "battleComputerButton"
+        ];
+
+        possibleIds.forEach(id => {
+
+            const button =
+                document.getElementById(id);
+
+            if (!button) {
+                return;
+            }
+
+            if (
+                button.dataset.computerBattleBound ===
+                "true"
+            ) {
+                return;
+            }
+
+            button.dataset.computerBattleBound =
+                "true";
+
+            button.addEventListener(
+                "click",
+                goToComputerBattle
+            );
+
+            console.log(
+                `StudyMind AI: Bound Computer Battle button #${id}`
+            );
+        });
+
+        /* -------------------------------------------------
+           2. Search buttons by their visible text
+        ------------------------------------------------- */
+
+        const buttons =
+            document.querySelectorAll(
+                "button, a"
+            );
+
+        buttons.forEach(element => {
+
+            const text =
+                (
+                    element.textContent ||
+                    ""
+                )
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .toLowerCase();
+
+            const matches =
+                text === "you vs computer" ||
+                text.includes("you vs computer") ||
+                text.includes("vs computer") ||
+                text.includes("computer battle");
+
+            if (!matches) {
+                return;
+            }
+
+            if (
+                element.dataset.computerBattleBound ===
+                "true"
+            ) {
+                return;
+            }
+
+            element.dataset.computerBattleBound =
+                "true";
+
+            element.addEventListener(
+                "click",
+                goToComputerBattle
+            );
+
+            console.log(
+                "StudyMind AI: Bound You vs Computer button by text."
+            );
+        });
+    }
+
+    /* -----------------------------------------------------
+       Run after DOM is available
+    ----------------------------------------------------- */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            bindComputerBattleButton
+        );
+
+    } else {
+
+        bindComputerBattleButton();
+    }
+
+    /* -----------------------------------------------------
+       Event delegation backup
+
+       This catches dynamically-created buttons too.
+    ----------------------------------------------------- */
+
+    document.addEventListener(
+        "click",
+        function(event) {
+
+            const element =
+                event.target.closest(
+                    "button, a"
+                );
+
+            if (!element) {
+                return;
+            }
+
+            const text =
+                (
+                    element.textContent ||
+                    ""
+                )
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .toLowerCase();
+
+            if (
+                text === "you vs computer" ||
+                text.includes("you vs computer")
+            ) {
+
+                /*
+                   Don't interfere with buttons that
+                   are already correctly navigating.
+                */
+
+                if (
+                    element.dataset.computerBattleNavigated ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                element.dataset.computerBattleNavigated =
+                    "true";
+
+                goToComputerBattle(event);
+            }
+        }
+    );
+
+})();
