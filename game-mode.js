@@ -3889,3 +3889,12 @@ if (
     initializeComputerBattle();
 
 }
+/* =========================================================
+   COMPUTER BATTLE NAVIGATION
+========================================================= */
+
+function openComputerBattle() {
+    window.location.href = "computer-battle.html";
+}
+
+window.openComputerBattle = openComputerBattle;
