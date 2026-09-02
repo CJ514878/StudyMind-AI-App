@@ -1,561 +1,393 @@
 /* =========================================================
    STUDYMIND AI — COMPUTER BATTLE
-   FULL REPLACEMENT
+   FULL CORRECTED REPLACEMENT
 
-   10 QUESTIONS
-   15 SECONDS PER QUESTION
-
-   Features:
-   - Expanded Nigerian curriculum
-   - Study-plan subjects merged with curriculum
-   - Subject-specific topics
-   - AI question generation
-   - Reliable fallback questions
+   FIXES:
+   - Selected subject is ALWAYS respected
+   - Selected topic is ALWAYS respected
+   - AI is explicitly told the selected subject/topic
+   - Math questions can no longer be used as a universal fallback
+   - Subject-specific fallback question banks
+   - Questions are shuffled every battle
+   - Answers are shuffled every battle
+   - Duplicate questions are removed
+   - Supports existing computer-battle.html IDs
+   - Supports older battle DOM IDs
+   - 10 questions per battle
+   - 15 seconds per question
    - Supabase authentication
-   - Battle scoring
-   - Battle Points
    - Leaderboard updates
-   - Free battle limit compatibility
+========================================================= */
+
+
+/* =========================================================
+   CONFIGURATION
 ========================================================= */
 
 const QUESTIONS_PER_BATTLE = 10;
 const QUESTION_TIME_LIMIT = 15;
+
+const FREE_BATTLE_LIMIT = 5;
 
 const AI_QUESTION_ENDPOINT =
     "/api/generate-questions";
 
 
 /* =========================================================
-   EXPANDED NIGERIAN CURRICULUM
+   DOM SHORTCUT
 ========================================================= */
 
-/*
-   These are curriculum-aligned topic groupings for the
-   Computer Battle subject/topic selector.
+function $(id) {
+    return document.getElementById(id);
+}
 
-   They are intentionally organized as practical study
-   topics rather than reproducing an official curriculum
-   document verbatim.
-*/
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+function getComputerBattleSupabase() {
+
+    if (
+        window.supabaseClient &&
+        window.supabaseClient.auth &&
+        typeof window.supabaseClient.auth.getUser === "function"
+    ) {
+        return window.supabaseClient;
+    }
+
+    return null;
+}
+
+
+function waitForSupabaseClient(timeout = 10000) {
+
+    return new Promise((resolve) => {
+
+        const started = Date.now();
+
+        function check() {
+
+            const client =
+                getComputerBattleSupabase();
+
+            if (client) {
+                resolve(client);
+                return;
+            }
+
+            if (
+                Date.now() - started >=
+                timeout
+            ) {
+                resolve(null);
+                return;
+            }
+
+            setTimeout(check, 100);
+        }
+
+        check();
+    });
+}
+
+
+/* =========================================================
+   BATTLE STATE
+========================================================= */
+
+const battleState = {
+
+    user: null,
+
+    subject: "",
+
+    topic: "",
+
+    questions: [],
+
+    currentQuestionIndex: 0,
+
+    playerScore: 0,
+
+    computerScore: 0,
+
+    playerAnswered: false,
+
+    computerAnswered: false,
+
+    timer: null,
+
+    timerSeconds: QUESTION_TIME_LIMIT,
+
+    battleStarted: false,
+
+    battleFinished: false
+};
+
+
+/* =========================================================
+   CURRICULUM
+========================================================= */
 
 const NIGERIAN_CURRICULUM = {
 
-    /* =====================================================
-       CORE / MATHEMATICS
-    ===================================================== */
-
     Mathematics: [
-        "Number and Numeration",
-        "Fractions Decimals and Percentages",
-        "Ratio Proportion and Rates",
+        "Number Bases",
+        "Fractions",
+        "Decimals",
+        "Percentages",
+        "Ratio and Proportion",
         "Indices",
         "Logarithms",
-        "Surds",
-        "Algebraic Expressions",
-        "Factorization",
+        "Algebra",
         "Linear Equations",
-        "Quadratic Equations",
         "Simultaneous Equations",
-        "Inequalities",
-        "Sequences and Series",
+        "Quadratic Equations",
+        "Sequences",
         "Variation",
         "Sets",
-        "Functions",
+        "Probability",
+        "Statistics",
         "Geometry",
         "Mensuration",
-        "Angles",
-        "Triangles",
-        "Polygons",
-        "Circles",
-        "Coordinate Geometry",
         "Trigonometry",
+        "Coordinate Geometry",
         "Vectors",
         "Matrices",
-        "Statistics",
-        "Data Representation",
-        "Probability",
-        "Permutations and Combinations",
-        "Financial Mathematics",
-        "Commercial Arithmetic",
-        "Calculus",
-        "Differentiation",
-        "Integration"
+        "Functions",
+        "Financial Mathematics"
     ],
 
     "English Language": [
-        "Grammar",
         "Parts of Speech",
-        "Nouns",
-        "Pronouns",
-        "Verbs",
-        "Adjectives",
-        "Adverbs",
-        "Prepositions",
-        "Conjunctions",
         "Sentence Structure",
-        "Phrases and Clauses",
-        "Subject Verb Agreement",
         "Tenses",
-        "Active and Passive Voice",
-        "Direct and Indirect Speech",
-        "Question Tags",
-        "Vocabulary Development",
-        "Synonyms and Antonyms",
+        "Concord",
+        "Vocabulary",
+        "Synonyms",
+        "Antonyms",
         "Comprehension",
         "Summary Writing",
-        "Oral English",
-        "Speech Sounds",
-        "Word Stress",
-        "Intonation",
-        "Figures of Speech",
         "Essay Writing",
         "Letter Writing",
-        "Article Writing",
-        "Report Writing",
-        "Argumentative Writing",
-        "Narrative Writing",
-        "Descriptive Writing",
-        "Formal and Informal Writing"
+        "Figures of Speech",
+        "Punctuation",
+        "Phonetics",
+        "Oral English"
     ],
-
-    "Digital Technologies": [
-        "Digital Literacy",
-        "Computer Fundamentals",
-        "Computer Hardware",
-        "Computer Software",
-        "Operating Systems",
-        "Data Representation",
-        "Information Processing",
-        "Algorithms",
-        "Flowcharts",
-        "Programming Concepts",
-        "Web Technologies",
-        "Databases",
-        "Computer Networks",
-        "Internet Technologies",
-        "Cybersecurity Awareness",
-        "Digital Communication",
-        "Artificial Intelligence",
-        "Emerging Technologies"
-    ],
-
-    /* =====================================================
-       SCIENCE
-    ===================================================== */
 
     Physics: [
-        "Measurements",
-        "Physical Quantities",
-        "Units and Dimensions",
-        "Scalars and Vectors",
+        "Measurement",
         "Motion",
-        "Distance and Displacement",
-        "Speed and Velocity",
-        "Acceleration",
-        "Graphs of Motion",
         "Forces",
-        "Newton's Laws of Motion",
-        "Momentum",
         "Work Energy and Power",
         "Machines",
-        "Pressure",
-        "Elasticity",
-        "Gravitation",
         "Heat",
         "Temperature",
-        "Thermal Expansion",
-        "Heat Transfer",
-        "Gas Laws",
         "Waves",
         "Sound",
         "Light",
-        "Reflection",
-        "Refraction",
-        "Lenses",
         "Electricity",
-        "Current Electricity",
-        "Electrical Circuits",
-        "Resistance",
-        "Electrical Energy",
         "Magnetism",
-        "Electromagnetic Induction",
-        "Alternating Current",
-        "Electromagnetic Waves",
+        "Electromagnetism",
         "Atomic Physics",
-        "Nuclear Physics",
-        "Radioactivity",
-        "Semiconductors"
+        "Nuclear Physics"
     ],
 
     Chemistry: [
         "Matter",
-        "Separation Techniques",
         "Atomic Structure",
-        "Isotopes",
-        "Electronic Configuration",
         "Periodic Table",
-        "Periodic Trends",
         "Chemical Bonding",
-        "Ionic Bonding",
-        "Covalent Bonding",
-        "Metallic Bonding",
-        "Mole Concept",
-        "Chemical Formulae",
-        "Chemical Equations",
         "Chemical Reactions",
         "Acids Bases and Salts",
-        "pH Scale",
-        "Oxidation and Reduction",
-        "Redox Reactions",
-        "Electrochemistry",
-        "Rates of Reaction",
-        "Chemical Equilibrium",
-        "Solubility",
+        "Mole Concept",
+        "Gas Laws",
         "Organic Chemistry",
         "Hydrocarbons",
-        "Alkanes",
-        "Alkenes",
-        "Alkynes",
-        "Alcohols",
-        "Carboxylic Acids",
-        "Esters",
-        "Polymers",
+        "Electrolysis",
+        "Redox Reactions",
         "Metals",
-        "Extraction of Metals",
-        "Water Chemistry",
-        "Air and Atmospheric Chemistry",
+        "Non-metals",
         "Environmental Chemistry"
     ],
 
     Biology: [
-        "Characteristics of Living Things",
         "Cell Structure",
-        "Cell Organization",
         "Cell Division",
-        "Biological Molecules",
         "Nutrition",
         "Photosynthesis",
         "Respiration",
-        "Transport in Plants",
-        "Transport in Animals",
-        "Support and Movement",
+        "Transport Systems",
         "Excretion",
-        "Homeostasis",
         "Coordination",
-        "Nervous System",
-        "Endocrine System",
-        "Sense Organs",
         "Reproduction",
-        "Asexual Reproduction",
-        "Sexual Reproduction",
-        "Human Reproduction",
-        "Growth and Development",
         "Genetics",
-        "Variation",
         "Evolution",
         "Ecology",
-        "Food Chains",
-        "Food Webs",
-        "Population Studies",
-        "Habitats",
-        "Adaptation",
-        "Conservation",
+        "Classification",
         "Microorganisms",
-        "Diseases",
-        "Immunity",
-        "Classification of Living Organisms"
+        "Human Health"
+    ],
+
+    Economics: [
+        "Basic Economic Concepts",
+        "Scarcity",
+        "Opportunity Cost",
+        "Demand",
+        "Supply",
+        "Elasticity",
+        "Production",
+        "Factors of Production",
+        "Market Structures",
+        "National Income",
+        "Inflation",
+        "Unemployment",
+        "Money",
+        "Banking",
+        "Public Finance",
+        "International Trade",
+        "Economic Development"
+    ],
+
+    Government: [
+        "Political Concepts",
+        "Constitution",
+        "Democracy",
+        "Citizenship",
+        "Political Parties",
+        "Elections",
+        "Pressure Groups",
+        "Public Opinion",
+        "Separation of Powers",
+        "Federalism",
+        "Legislature",
+        "Executive",
+        "Judiciary",
+        "Local Government",
+        "International Organisations"
+    ],
+
+    Geography: [
+        "Map Reading",
+        "Scale",
+        "Latitude and Longitude",
+        "Weather",
+        "Climate",
+        "Rocks",
+        "Weathering",
+        "Erosion",
+        "Rivers",
+        "Coasts",
+        "Vegetation",
+        "Population",
+        "Settlement",
+        "Agriculture",
+        "Industry",
+        "Transportation",
+        "Environmental Issues"
+    ],
+
+    Accounting: [
+        "Accounting Concepts",
+        "Accounting Equation",
+        "Source Documents",
+        "Ledger",
+        "Cash Book",
+        "Trial Balance",
+        "Final Accounts",
+        "Depreciation",
+        "Bank Reconciliation",
+        "Control Accounts",
+        "Partnership Accounts",
+        "Company Accounts"
+    ],
+
+    Commerce: [
+        "Introduction to Commerce",
+        "Trade",
+        "Home Trade",
+        "Foreign Trade",
+        "Wholesale Trade",
+        "Retail Trade",
+        "Transportation",
+        "Warehousing",
+        "Insurance",
+        "Banking",
+        "Advertising",
+        "Communication",
+        "Consumer Protection"
+    ],
+
+    "Digital Technologies": [
+        "Computer Fundamentals",
+        "Hardware",
+        "Software",
+        "Operating Systems",
+        "Data Representation",
+        "Algorithms",
+        "Programming",
+        "Databases",
+        "Networks",
+        "Internet",
+        "Cybersecurity",
+        "Digital Citizenship",
+        "Artificial Intelligence"
+    ],
+
+    "Computer Studies": [
+        "Computer Fundamentals",
+        "Hardware",
+        "Software",
+        "Operating Systems",
+        "Number Systems",
+        "Algorithms",
+        "Programming",
+        "Data Processing",
+        "Databases",
+        "Computer Networks",
+        "Internet",
+        "Information Security"
     ],
 
     "Further Mathematics": [
-        "Sets",
-        "Logic",
         "Algebra",
-        "Polynomials",
         "Functions",
-        "Sequences and Series",
-        "Binomial Expansion",
+        "Sequences",
         "Matrices",
-        "Determinants",
         "Vectors",
-        "Complex Numbers",
         "Coordinate Geometry",
-        "Conic Sections",
-        "Trigonometry",
+        "Calculus",
         "Differentiation",
-        "Applications of Differentiation",
         "Integration",
-        "Applications of Integration",
-        "Differential Equations",
-        "Permutations and Combinations",
         "Probability",
         "Statistics",
-        "Mechanics",
-        "Kinematics",
-        "Dynamics"
+        "Mechanics"
     ],
 
     "Agricultural Science": [
-        "Agriculture and Its Importance",
+        "Agriculture",
+        "Soil Science",
+        "Crop Production",
+        "Animal Production",
         "Farm Management",
-        "Farm Records",
         "Agricultural Economics",
         "Farm Tools",
-        "Farm Machinery",
-        "Soil Formation",
-        "Soil Properties",
-        "Soil Fertility",
-        "Soil Conservation",
-        "Crop Production",
-        "Crop Improvement",
-        "Crop Propagation",
-        "Planting Operations",
-        "Crop Harvesting",
-        "Crop Storage",
-        "Crop Pests",
-        "Crop Diseases",
-        "Animal Production",
-        "Animal Nutrition",
-        "Animal Health",
-        "Animal Breeding",
-        "Livestock Management",
-        "Fisheries",
+        "Pests and Diseases",
         "Forestry",
-        "Agricultural Extension",
-        "Agricultural Marketing",
-        "Agricultural Cooperatives"
-    ],
-
-    "Physical Education": [
-        "Physical Fitness",
-        "Components of Fitness",
-        "Health Related Fitness",
-        "Athletics",
-        "Track Events",
-        "Field Events",
-        "Football",
-        "Basketball",
-        "Volleyball",
-        "Handball",
-        "Tennis",
-        "Swimming",
-        "Gymnastics",
-        "First Aid",
-        "Sports Injuries",
-        "Nutrition and Exercise",
-        "Personal Hygiene",
-        "Recreation"
-    ],
-
-    "Health Education": [
-        "Personal Health",
-        "Community Health",
-        "Environmental Health",
-        "Nutrition",
-        "Balanced Diet",
-        "Personal Hygiene",
-        "Mental and Social Wellbeing",
-        "Communicable Diseases",
-        "Non Communicable Diseases",
-        "Disease Prevention",
-        "First Aid",
-        "Safety Education",
-        "Substance Abuse Prevention",
-        "Family Health",
-        "Consumer Health",
-        "Health Services"
-    ],
-
-    "Foods and Nutrition": [
-        "Food Nutrients",
-        "Carbohydrates",
-        "Proteins",
-        "Fats and Oils",
-        "Vitamins",
-        "Minerals",
-        "Water",
-        "Balanced Diet",
-        "Meal Planning",
-        "Food Preparation",
-        "Food Preservation",
-        "Food Storage",
-        "Food Hygiene",
-        "Food Safety",
-        "Kitchen Equipment",
-        "Special Diets",
-        "Nutrition Deficiency Diseases"
-    ],
-
-    "Geography": [
-        "Map Reading",
-        "Scale and Distance",
-        "Direction and Bearing",
-        "Grid References",
-        "Physical Geography",
-        "Landforms",
-        "Rocks",
-        "Weathering",
-        "Soils",
-        "Weather and Climate",
-        "Climate Classification",
-        "Water Bodies",
-        "Drainage",
-        "Vegetation",
-        "Population",
-        "Population Distribution",
-        "Migration",
-        "Settlement",
-        "Urbanization",
-        "Agriculture",
-        "Mining",
-        "Industry",
-        "Transportation",
-        "Communication",
-        "Tourism",
-        "Environmental Resources",
-        "Environmental Hazards",
-        "Regional Geography",
-        "Nigeria's Geography"
+        "Fisheries"
     ],
 
     "Technical Drawing": [
         "Drawing Instruments",
         "Geometric Construction",
-        "Lines and Angles",
-        "Plane Geometry",
-        "Scale Drawing",
         "Orthographic Projection",
         "Isometric Drawing",
-        "Oblique Drawing",
-        "Perspective Drawing",
+        "Perspective",
         "Sectional Views",
-        "Auxiliary Views",
-        "Development of Surfaces",
         "Building Drawing",
-        "Machine Drawing",
-        "Electrical Drawing",
-        "Freehand Sketching"
-    ],
-
-    /* =====================================================
-       HUMANITIES
-    ===================================================== */
-
-    Government: [
-        "Political Concepts",
-        "State and Nation",
-        "Power and Authority",
-        "Sovereignty",
-        "Political Socialization",
-        "Political Participation",
-        "Constitution",
-        "Constitutionalism",
-        "Democracy",
-        "Rule of Law",
-        "Human Rights",
-        "Political Parties",
-        "Pressure Groups",
-        "Elections",
-        "Electoral Systems",
-        "Electoral Bodies",
-        "Legislature",
-        "Executive",
-        "Judiciary",
-        "Separation of Powers",
-        "Checks and Balances",
-        "Local Government",
-        "Public Administration",
-        "Civil Service",
-        "Federalism",
-        "Unitary Government",
-        "Confederation",
-        "Military Rule",
-        "International Relations",
-        "International Organizations",
-        "African Union",
-        "United Nations",
-        "ECOWAS",
-        "Nigeria's Political Development"
-    ],
-
-    "Nigerian History": [
-        "Precolonial Nigerian Societies",
-        "Hausa States",
-        "Kanem Borno",
-        "Oyo Empire",
-        "Benin Kingdom",
-        "Igbo Society",
-        "Niger Delta States",
-        "Trans Saharan Trade",
-        "European Contact",
-        "Christian Missionaries",
-        "Colonial Administration",
-        "Amalgamation",
-        "Nationalism",
-        "Independence",
-        "First Republic",
-        "Military Rule",
-        "Civil War",
-        "Second Republic",
-        "Third Republic",
-        "Fourth Republic",
-        "Nigerian Leaders",
-        "Constitutional Development",
-        "Economic Development",
-        "Foreign Relations"
-    ],
-
-    "Christian Religious Studies": [
-        "Creation",
-        "The Fall of Man",
-        "The Patriarchs",
-        "Abraham",
-        "Isaac",
-        "Jacob",
-        "Joseph",
-        "Moses",
-        "The Exodus",
-        "The Ten Commandments",
-        "The Prophets",
-        "The Life of Jesus",
-        "Birth of Jesus",
-        "Baptism of Jesus",
-        "Miracles of Jesus",
-        "Parables of Jesus",
-        "Teachings of Jesus",
-        "Death and Resurrection",
-        "The Early Church",
-        "Paul's Ministry",
-        "Christian Ethics",
-        "Faith",
-        "Love",
-        "Forgiveness",
-        "Justice",
-        "Peace",
-        "Leadership",
-        "Christian Family Life"
-    ],
-
-    "Islamic Religious Studies": [
-        "Quran",
-        "Revelation",
-        "Hadith",
-        "Tawhid",
-        "Shahadah",
-        "Salah",
-        "Zakat",
-        "Sawm",
-        "Hajj",
-        "Prophet Muhammad",
-        "Life in Makkah",
-        "Hijrah",
-        "Life in Madinah",
-        "Islamic Ethics",
-        "Family Life",
-        "Islamic Law",
-        "Islamic History",
-        "Islamic Civilization",
-        "Social Justice",
-        "Peace and Tolerance"
+        "Mechanical Drawing"
     ],
 
     "Literature in English": [
@@ -563,703 +395,171 @@ const NIGERIAN_CURRICULUM = {
         "Poetry",
         "Drama",
         "Literary Devices",
-        "Figures of Speech",
-        "Characterization",
+        "Characterisation",
         "Plot",
-        "Themes",
+        "Theme",
         "Setting",
-        "Narrative Techniques",
-        "Point of View",
-        "Conflict",
-        "Symbolism",
-        "Irony",
-        "Imagery",
-        "Tone",
-        "Mood",
-        "Tragedy",
-        "Comedy",
-        "African Literature",
-        "Nigerian Literature"
+        "Narrative Techniques"
     ],
 
-    Literature: [
-        "Prose",
-        "Poetry",
-        "Drama",
-        "Literary Devices",
-        "Characterization",
-        "Plot",
-        "Themes",
-        "Setting",
-        "Narrative Techniques",
-        "Symbolism",
-        "Irony",
-        "Imagery",
-        "African Literature",
-        "Nigerian Literature"
+    "Christian Religious Studies": [
+        "Creation",
+        "The Patriarchs",
+        "Moses",
+        "The Prophets",
+        "The Life of Jesus",
+        "Teachings of Jesus",
+        "Parables",
+        "Miracles",
+        "The Early Church",
+        "Christian Ethics"
     ],
 
-    French: [
-        "Greetings",
-        "Introductions",
-        "Family",
-        "School",
-        "Numbers",
-        "Days and Months",
-        "Time",
-        "Food",
-        "Shopping",
-        "Travel",
-        "Directions",
-        "Weather",
-        "Grammar",
-        "Nouns and Articles",
-        "Adjectives",
-        "Pronouns",
-        "Verbs",
-        "Tenses",
-        "Vocabulary",
-        "Reading Comprehension",
-        "Writing"
+    "Islamic Religious Studies": [
+        "Quran",
+        "Hadith",
+        "Prophets",
+        "Pillars of Islam",
+        "Faith",
+        "Worship",
+        "Islamic Morality",
+        "Islamic History",
+        "Sharia"
     ],
 
-    Arabic: [
-        "Arabic Alphabet",
-        "Pronunciation",
-        "Vocabulary",
-        "Greetings",
-        "Family",
-        "Numbers",
-        "Grammar",
-        "Nouns",
-        "Pronouns",
-        "Verbs",
-        "Sentence Structure",
-        "Reading",
-        "Writing",
-        "Comprehension",
-        "Islamic Terminology"
+    "Nigerian History": [
+        "Pre-Colonial Nigeria",
+        "Hausa States",
+        "Kanem-Borno",
+        "Yoruba States",
+        "Benin Kingdom",
+        "Igbo Society",
+        "Colonial Administration",
+        "Nationalism",
+        "Independence",
+        "Post-Independence Nigeria"
     ],
-
-    "Visual Arts": [
-        "Drawing",
-        "Painting",
-        "Sculpture",
-        "Graphics",
-        "Textiles",
-        "Ceramics",
-        "Printmaking",
-        "Photography",
-        "Art History",
-        "Design Principles",
-        "Colour Theory",
-        "Perspective",
-        "African Art",
-        "Nigerian Art",
-        "Traditional Crafts"
-    ],
-
-    Music: [
-        "Elements of Music",
-        "Musical Notation",
-        "Scales",
-        "Intervals",
-        "Rhythm",
-        "Melody",
-        "Harmony",
-        "Chords",
-        "Musical Instruments",
-        "Voice",
-        "African Music",
-        "Nigerian Music",
-        "Music History",
-        "Composition",
-        "Performance"
-    ],
-
-    "Home Management": [
-        "Family",
-        "Home Management",
-        "Decision Making",
-        "Resource Management",
-        "Food Management",
-        "Clothing",
-        "Textiles",
-        "Interior Decoration",
-        "Household Equipment",
-        "Consumer Education",
-        "Budgeting",
-        "Personal Finance",
-        "Family Health",
-        "Child Development",
-        "Home Safety"
-    ],
-
-    "Catering Craft": [
-        "Kitchen Safety",
-        "Kitchen Equipment",
-        "Food Hygiene",
-        "Food Safety",
-        "Menu Planning",
-        "Meal Planning",
-        "Food Preparation",
-        "Cooking Methods",
-        "Baking",
-        "Pastry",
-        "Food Preservation",
-        "Table Setting",
-        "Restaurant Service",
-        "Catering Management",
-        "Costing",
-        "Customer Service"
-    ],
-
-    /* =====================================================
-       BUSINESS
-    ===================================================== */
-
-    Accounting: [
-        "Introduction to Accounting",
-        "Accounting Concepts",
-        "Accounting Principles",
-        "Accounting Equation",
-        "Source Documents",
-        "Books of Original Entry",
-        "Cash Book",
-        "Petty Cash Book",
-        "Ledger Accounts",
-        "Trial Balance",
-        "Bank Reconciliation",
-        "Correction of Errors",
-        "Depreciation",
-        "Control Accounts",
-        "Final Accounts",
-        "Trading Account",
-        "Profit and Loss Account",
-        "Balance Sheet",
-        "Partnership Accounts",
-        "Company Accounts",
-        "Manufacturing Accounts",
-        "Incomplete Records"
-    ],
-
-    Commerce: [
-        "Trade",
-        "Occupation",
-        "Production",
-        "Business Units",
-        "Sole Proprietorship",
-        "Partnership",
-        "Companies",
-        "Cooperatives",
-        "Retail Trade",
-        "Wholesale Trade",
-        "Transportation",
-        "Communication",
-        "Warehousing",
-        "Insurance",
-        "Banking",
-        "Stock Exchange",
-        "Marketing",
-        "Advertising",
-        "Consumer Protection",
-        "International Trade"
-    ],
-
-    Economics: [
-        "Basic Economic Concepts",
-        "Scarcity",
-        "Choice and Opportunity Cost",
-        "Production",
-        "Factors of Production",
-        "Division of Labour",
-        "Demand",
-        "Supply",
-        "Elasticity",
-        "Market Equilibrium",
-        "Price Determination",
-        "Market Structures",
-        "Perfect Competition",
-        "Monopoly",
-        "Oligopoly",
-        "National Income",
-        "Money",
-        "Banking",
-        "Central Banking",
-        "Inflation",
-        "Unemployment",
-        "Economic Growth",
-        "Economic Development",
-        "Public Finance",
-        "Taxation",
-        "International Trade",
-        "Balance of Payments",
-        "Exchange Rates",
-        "Population and Labour",
-        "Agriculture and Economic Development"
-    ],
-
-    Marketing: [
-        "Introduction to Marketing",
-        "Marketing Concepts",
-        "Market Research",
-        "Consumer Behaviour",
-        "Product",
-        "Product Development",
-        "Branding",
-        "Packaging",
-        "Pricing",
-        "Promotion",
-        "Advertising",
-        "Personal Selling",
-        "Sales Promotion",
-        "Distribution",
-        "Channels of Distribution",
-        "Retailing",
-        "Wholesaling",
-        "Digital Marketing",
-        "Customer Service",
-        "Marketing Strategy"
-    ],
-
-    /* =====================================================
-       TRADE / VOCATIONAL SUBJECTS
-    ===================================================== */
-
-    "Solar Photovoltaic Installation and Maintenance": [
-        "Solar Energy",
-        "Solar Radiation",
-        "Photovoltaic Cells",
-        "Solar Panels",
-        "Solar Panel Types",
-        "Solar Charge Controllers",
-        "Batteries",
-        "Inverters",
-        "Solar Wiring",
-        "Electrical Connections",
-        "System Components",
-        "System Sizing Concepts",
-        "Energy Storage",
-        "System Maintenance",
-        "Troubleshooting",
-        "Safety Principles"
-    ],
-
-    "Fashion Design and Garment Making": [
-        "Fashion Design",
-        "Design Principles",
-        "Colour Theory",
-        "Textile Fibres",
-        "Fabric Types",
-        "Body Measurements",
-        "Pattern Drafting",
-        "Pattern Adaptation",
-        "Cutting",
-        "Sewing",
-        "Seams",
-        "Fasteners",
-        "Garment Construction",
-        "Finishing",
-        "Fashion Illustration",
-        "Clothing Care",
-        "Entrepreneurship"
-    ],
-
-    "Livestock Farming": [
-        "Livestock Production",
-        "Animal Nutrition",
-        "Animal Feeds",
-        "Animal Breeds",
-        "Animal Housing",
-        "Animal Health",
-        "Disease Prevention",
-        "Animal Breeding",
-        "Poultry Production",
-        "Cattle Production",
-        "Goat Production",
-        "Sheep Production",
-        "Pig Production",
-        "Rabbit Production",
-        "Livestock Marketing",
-        "Farm Records"
-    ],
-
-    "Beauty and Cosmetology": [
-        "Personal Grooming",
-        "Skin Care",
-        "Hair Care",
-        "Hair Styling",
-        "Hair Braiding",
-        "Nail Care",
-        "Makeup Principles",
-        "Beauty Products",
-        "Salon Equipment",
-        "Salon Hygiene",
-        "Customer Service",
-        "Beauty Business",
-        "Entrepreneurship",
-        "Safety and Sanitation"
-    ],
-
-    "Computer Hardware and GSM Repairs": [
-        "Computer Components",
-        "Motherboards",
-        "Processors",
-        "Memory",
-        "Storage Devices",
-        "Power Supplies",
-        "Input Devices",
-        "Output Devices",
-        "Computer Assembly",
-        "Hardware Troubleshooting",
-        "Operating Systems",
-        "Mobile Device Components",
-        "GSM Technology",
-        "Mobile Device Maintenance",
-        "Electronic Components",
-        "Diagnostic Tools",
-        "Workshop Safety"
-    ],
-
-    "Horticulture and Crop Production": [
-        "Horticulture",
-        "Crop Classification",
-        "Soil Preparation",
-        "Seed Selection",
-        "Seed Propagation",
-        "Nursery Management",
-        "Planting",
-        "Irrigation",
-        "Fertilizers",
-        "Pest Management",
-        "Disease Management",
-        "Weed Control",
-        "Pruning",
-        "Harvesting",
-        "Post Harvest Handling",
-        "Crop Marketing",
-        "Greenhouse Production"
-    ],
-
-    /* =====================================================
-       ADDITIONAL SUBJECTS
-    ===================================================== */
 
     "Basic Science": [
         "Living Things",
         "Matter",
         "Energy",
         "Forces",
-        "Motion",
         "Heat",
         "Light",
         "Sound",
         "Electricity",
-        "Magnetism",
         "Environment",
-        "Human Body",
-        "Health",
-        "Technology"
+        "Human Health"
     ],
 
     "Basic Technology": [
-        "Technology and Society",
         "Materials",
-        "Wood",
-        "Metals",
-        "Plastics",
         "Tools",
-        "Machines",
-        "Energy",
-        "Electricity",
-        "Electronics",
+        "Workshop Safety",
         "Technical Drawing",
-        "Building Technology",
-        "Mechanical Technology",
-        "Safety"
+        "Machines",
+        "Electricity",
+        "Building",
+        "Woodwork",
+        "Metalwork"
     ],
 
-    "Civic Education": [
-        "Citizenship",
-        "National Values",
-        "Rights and Duties",
-        "Human Rights",
-        "Democracy",
-        "Rule of Law",
-        "Constitution",
-        "National Identity",
-        "National Unity",
-        "Peace",
-        "Conflict Resolution",
-        "Leadership",
-        "Good Governance",
-        "Community Development",
-        "Environmental Responsibility"
+    "Physical Education": [
+        "Physical Fitness",
+        "Athletics",
+        "Football",
+        "Basketball",
+        "Volleyball",
+        "Gymnastics",
+        "Swimming",
+        "Health and Fitness"
+    ],
+
+    "Health Education": [
+        "Personal Hygiene",
+        "Nutrition",
+        "Disease Prevention",
+        "First Aid",
+        "Mental Wellbeing",
+        "Community Health",
+        "Environmental Health"
+    ],
+
+    "Visual Arts": [
+        "Drawing",
+        "Painting",
+        "Sculpture",
+        "Textiles",
+        "Design",
+        "Art History",
+        "Craft"
+    ],
+
+    Music: [
+        "Musical Elements",
+        "Notation",
+        "Scales",
+        "Rhythm",
+        "Melody",
+        "Harmony",
+        "African Music",
+        "Nigerian Music"
+    ],
+
+    French: [
+        "Vocabulary",
+        "Grammar",
+        "Verbs",
+        "Tenses",
+        "Comprehension",
+        "Conversation",
+        "Writing"
+    ],
+
+    Arabic: [
+        "Vocabulary",
+        "Grammar",
+        "Reading",
+        "Writing",
+        "Comprehension"
+    ],
+
+    "Home Management": [
+        "Family Resources",
+        "Nutrition",
+        "Meal Planning",
+        "Clothing",
+        "Home Maintenance",
+        "Consumer Education"
+    ],
+
+    "Catering Craft": [
+        "Food Preparation",
+        "Kitchen Equipment",
+        "Food Safety",
+        "Menu Planning",
+        "Nutrition",
+        "Hospitality"
+    ],
+
+    Marketing: [
+        "Marketing Concepts",
+        "Market Research",
+        "Product",
+        "Price",
+        "Promotion",
+        "Distribution",
+        "Consumer Behaviour"
     ],
 
     "Citizenship and Heritage Studies": [
         "Citizenship",
         "National Identity",
-        "Nigerian Values",
         "Culture",
         "Heritage",
-        "National Symbols",
         "Rights and Responsibilities",
-        "Democracy",
-        "Leadership",
-        "Community Development",
-        "Peace Building",
-        "National Unity"
-    ],
-
-    "Yoruba": [
-        "Greetings",
-        "Family",
-        "Culture",
-        "Traditional Institutions",
-        "Vocabulary",
-        "Grammar",
-        "Sentence Structure",
-        "Reading",
-        "Writing",
-        "Proverbs",
-        "Folktales",
-        "Literature"
-    ],
-
-    "Igbo": [
-        "Greetings",
-        "Family",
-        "Culture",
-        "Traditional Institutions",
-        "Vocabulary",
-        "Grammar",
-        "Sentence Structure",
-        "Reading",
-        "Writing",
-        "Proverbs",
-        "Folktales",
-        "Literature"
-    ],
-
-    /* =====================================================
-       LEGACY / ADDITIONAL SECONDARY SUBJECTS
-    ===================================================== */
-
-    "Computer Studies": [
-        "Computer Fundamentals",
-        "Computer Hardware",
-        "Computer Software",
-        "Operating Systems",
-        "Data Processing",
-        "Algorithms",
-        "Flowcharts",
-        "Programming",
-        "Databases",
-        "Computer Networks",
-        "Internet",
-        "Web Technologies",
-        "Cybersecurity",
-        "Information Systems"
-    ],
-
-    "Data Processing": [
-        "Data and Information",
-        "Data Processing",
-        "Computer Hardware",
-        "Computer Software",
-        "Operating Systems",
-        "Word Processing",
-        "Spreadsheets",
-        "Presentation Software",
-        "Databases",
-        "Computer Networks",
-        "Internet",
-        "Information Security"
-    ],
-
-    "Basic Electricity": [
-        "Electrical Quantities",
-        "Electrical Circuits",
-        "Current",
-        "Voltage",
-        "Resistance",
-        "Ohm's Law",
-        "Electrical Energy",
-        "Electrical Power",
-        "Series Circuits",
-        "Parallel Circuits",
-        "Electrical Components",
-        "Safety"
-    ],
-
-    "Basic Electronics": [
-        "Electronic Components",
-        "Resistors",
-        "Capacitors",
-        "Diodes",
-        "Transistors",
-        "Integrated Circuits",
-        "Rectifiers",
-        "Amplifiers",
-        "Digital Electronics",
-        "Logic Gates",
-        "Electronic Measurement",
-        "Troubleshooting"
-    ],
-
-    "Book Keeping": [
-        "Introduction to Book Keeping",
-        "Source Documents",
-        "Books of Original Entry",
-        "Cash Book",
-        "Ledger",
-        "Trial Balance",
-        "Bank Reconciliation",
-        "Correction of Errors",
-        "Final Accounts",
-        "Depreciation"
-    ],
-
-    "Office Practice": [
-        "Office",
-        "Office Equipment",
-        "Filing",
-        "Communication",
-        "Correspondence",
-        "Telephone Services",
-        "Mail Services",
-        "Meetings",
-        "Office Records",
-        "Reception Duties",
-        "Office Safety"
-    ],
-
-    "Insurance": [
-        "Principles of Insurance",
-        "Types of Insurance",
-        "Life Insurance",
-        "Property Insurance",
-        "Motor Insurance",
-        "Marine Insurance",
-        "Fire Insurance",
-        "Risk",
-        "Premium",
-        "Claims",
-        "Insurance Companies"
-    ],
-
-    "Tourism": [
-        "Tourism Concepts",
-        "Tourist Attractions",
-        "Domestic Tourism",
-        "International Tourism",
-        "Tourism in Nigeria",
-        "Hospitality",
-        "Travel Agencies",
-        "Transportation",
-        "Tour Planning",
-        "Tourism Marketing",
-        "Sustainable Tourism"
-    ],
-
-    "Fisheries": [
-        "Fisheries",
-        "Fish Species",
-        "Fish Nutrition",
-        "Fish Breeding",
-        "Fish Farming",
-        "Pond Management",
-        "Water Quality",
-        "Fish Diseases",
-        "Fish Harvesting",
-        "Fish Processing",
-        "Fish Marketing"
-    ],
-
-    "Animal Husbandry": [
-        "Animal Production",
-        "Animal Nutrition",
-        "Animal Breeds",
-        "Animal Housing",
-        "Animal Health",
-        "Disease Prevention",
-        "Breeding",
-        "Poultry",
-        "Cattle",
-        "Sheep",
-        "Goats",
-        "Pigs",
-        "Rabbits"
-    ],
-
-    "Printing": [
-        "Printing Processes",
-        "Printing Materials",
-        "Typography",
-        "Graphic Design",
-        "Layout",
-        "Digital Printing",
-        "Offset Printing",
-        "Screen Printing",
-        "Binding",
-        "Finishing",
-        "Printing Business"
-    ],
-
-    "Plumbing": [
-        "Plumbing Systems",
-        "Pipes",
-        "Pipe Fittings",
-        "Water Supply",
-        "Drainage",
-        "Sanitation",
-        "Valves",
-        "Plumbing Tools",
-        "Installation Principles",
-        "Maintenance",
-        "Safety"
-    ],
-
-    "Welding": [
-        "Welding Principles",
-        "Welding Equipment",
-        "Arc Welding",
-        "Gas Welding",
-        "Welding Electrodes",
-        "Metal Preparation",
-        "Joints",
-        "Welding Defects",
-        "Inspection",
-        "Workshop Safety"
-    ],
-
-    "Carpentry": [
-        "Wood",
-        "Timber",
-        "Woodworking Tools",
-        "Wood Joints",
-        "Measuring",
-        "Marking Out",
-        "Cutting",
-        "Planing",
-        "Wood Finishing",
-        "Furniture Construction",
-        "Workshop Safety"
-    ],
-
-    "Electrical Installation": [
-        "Electrical Installation",
-        "Wiring",
-        "Cables",
-        "Switches",
-        "Sockets",
-        "Lighting Circuits",
-        "Distribution Boards",
-        "Earthing",
-        "Protection",
-        "Testing",
-        "Electrical Safety"
+        "National Values"
     ]
 };
 
@@ -1270,346 +570,1362 @@ const NIGERIAN_CURRICULUM = {
 
 const SUBJECT_ALIASES = {
 
-    "math": "Mathematics",
-    "maths": "Mathematics",
+    math: "Mathematics",
+    maths: "Mathematics",
+    mathematics: "Mathematics",
     "general mathematics": "Mathematics",
 
-    "english": "English Language",
+    english: "English Language",
     "english language": "English Language",
 
-    "crs": "Christian Religious Studies",
-    "christian religious knowledge":
-        "Christian Religious Studies",
+    physics: "Physics",
+
+    chemistry: "Chemistry",
+
+    biology: "Biology",
+
+    economics: "Economics",
+
+    government: "Government",
+
+    geography: "Geography",
+
+    accounting: "Accounting",
+
+    commerce: "Commerce",
+
+    "computer studies": "Computer Studies",
+    computer: "Computer Studies",
+    computing: "Computer Studies",
+
+    "digital technologies": "Digital Technologies",
+    "digital technology": "Digital Technologies",
+
+    "further mathematics": "Further Mathematics",
+
+    "agricultural science": "Agricultural Science",
+
+    "technical drawing": "Technical Drawing",
+
+    literature: "Literature in English",
+    "literature in english": "Literature in English",
+
+    crs: "Christian Religious Studies",
     "christian religious studies":
         "Christian Religious Studies",
 
-    "irs": "Islamic Religious Studies",
-    "islamic religious knowledge":
-        "Islamic Religious Studies",
+    irs: "Islamic Religious Studies",
     "islamic religious studies":
         "Islamic Religious Studies",
 
-    "computer": "Computer Studies",
-    "computer science": "Computer Studies",
-    "computer studies": "Computer Studies",
+    history: "Nigerian History",
+    "nigerian history": "Nigerian History",
 
-    "further maths": "Further Mathematics",
-    "further mathematics": "Further Mathematics",
+    "basic science": "Basic Science",
 
-    "literature": "Literature in English",
-    "literature in english":
-        "Literature in English",
-
-    "agriculture": "Agricultural Science",
-    "agricultural science":
-        "Agricultural Science",
-
-    "technical drawing":
-        "Technical Drawing",
-
-    "visual arts":
-        "Visual Arts",
-
-    "home economics":
-        "Home Management",
-
-    "catering": "Catering Craft",
-    "catering craft": "Catering Craft",
-
-    "digital technology":
-        "Digital Technologies",
-    "digital technologies":
-        "Digital Technologies",
-
-    "history": "Nigerian History",
+    "basic technology": "Basic Technology",
 
     "physical education":
         "Physical Education",
 
     "health education":
-        "Health Education"
+        "Health Education",
+
+    "visual arts": "Visual Arts",
+
+    music: "Music",
+
+    french: "French",
+
+    arabic: "Arabic",
+
+    "home management":
+        "Home Management",
+
+    "catering craft":
+        "Catering Craft",
+
+    marketing: "Marketing",
+
+    "citizenship and heritage studies":
+        "Citizenship and Heritage Studies"
 };
 
 
 /* =========================================================
-   SUPABASE
+   FALLBACK QUESTION BANKS
 ========================================================= */
 
-function getComputerBattleSupabase() {
+const SUBJECT_QUESTION_BANK = {
 
-    const client =
-        window.supabaseClient;
+    Mathematics: [
+        {
+            q: "If 3x + 5 = 20, what is x?",
+            a: ["3", "5", "7", "10"],
+            c: 1
+        },
+        {
+            q: "What is 25% of 200?",
+            a: ["25", "40", "50", "75"],
+            c: 2
+        },
+        {
+            q: "What is the square root of 144?",
+            a: ["10", "11", "12", "14"],
+            c: 2
+        },
+        {
+            q: "What is the area of a rectangle 8 cm by 5 cm?",
+            a: ["13 cm²", "26 cm²", "40 cm²", "80 cm²"],
+            c: 2
+        },
+        {
+            q: "What is 7²?",
+            a: ["14", "21", "49", "56"],
+            c: 2
+        },
+        {
+            q: "What is 3/4 as a percentage?",
+            a: ["25%", "50%", "75%", "80%"],
+            c: 2
+        },
+        {
+            q: "A triangle has angles 50° and 60°. What is the third angle?",
+            a: ["60°", "70°", "80°", "90°"],
+            c: 1
+        },
+        {
+            q: "What is the gradient of y = 4x + 2?",
+            a: ["2", "4", "6", "8"],
+            c: 1
+        },
+        {
+            q: "What is 15 × 6?",
+            a: ["75", "80", "90", "95"],
+            c: 2
+        },
+        {
+            q: "What is the perimeter of a square with side 9 cm?",
+            a: ["18 cm", "27 cm", "36 cm", "81 cm"],
+            c: 2
+        },
+        {
+            q: "If x = 4, what is 2x² + 3?",
+            a: ["19", "27", "35", "41"],
+            c: 2
+        },
+        {
+            q: "What is the next number: 2, 4, 8, 16, ...?",
+            a: ["20", "24", "32", "36"],
+            c: 2
+        }
+    ],
 
-    if (
-        client &&
-        client.auth &&
-        typeof client.auth.getUser ===
-            "function"
-    ) {
-        return client;
-    }
+    Physics: [
+        {
+            q: "What is the SI unit of force?",
+            a: ["Joule", "Newton", "Watt", "Pascal"],
+            c: 1
+        },
+        {
+            q: "Distance divided by time gives what quantity?",
+            a: ["Force", "Energy", "Speed", "Power"],
+            c: 2
+        },
+        {
+            q: "What is the SI unit of energy?",
+            a: ["Newton", "Joule", "Watt", "Volt"],
+            c: 1
+        },
+        {
+            q: "Which instrument measures electric current?",
+            a: ["Voltmeter", "Ammeter", "Barometer", "Thermometer"],
+            c: 1
+        },
+        {
+            q: "What force attracts objects toward Earth?",
+            a: ["Friction", "Magnetism", "Gravity", "Tension"],
+            c: 2
+        },
+        {
+            q: "What energy is stored in a stretched spring?",
+            a: [
+                "Chemical energy",
+                "Elastic potential energy",
+                "Nuclear energy",
+                "Sound energy"
+            ],
+            c: 1
+        },
+        {
+            q: "What is the SI unit of power?",
+            a: ["Watt", "Joule", "Newton", "Ampere"],
+            c: 0
+        },
+        {
+            q: "Which particle has a negative charge?",
+            a: ["Proton", "Neutron", "Electron", "Nucleus"],
+            c: 2
+        },
+        {
+            q: "What happens to the resistance of a typical metal as temperature increases?",
+            a: [
+                "It decreases",
+                "It increases",
+                "It becomes zero",
+                "It remains unchanged"
+            ],
+            c: 1
+        },
+        {
+            q: "Which type of wave requires a medium?",
+            a: [
+                "Mechanical wave",
+                "Light wave",
+                "Radio wave",
+                "Electromagnetic wave"
+            ],
+            c: 0
+        },
+        {
+            q: "Which device converts electrical energy into mechanical energy?",
+            a: ["Motor", "Generator", "Transformer", "Battery"],
+            c: 0
+        },
+        {
+            q: "What is acceleration?",
+            a: [
+                "Distance travelled",
+                "Rate of change of velocity",
+                "Mass divided by volume",
+                "Force divided by time"
+            ],
+            c: 1
+        }
+    ],
 
-    return null;
-}
+    Chemistry: [
+        {
+            q: "What is the chemical symbol for sodium?",
+            a: ["S", "Na", "So", "N"],
+            c: 1
+        },
+        {
+            q: "What is the pH of a neutral solution?",
+            a: ["0", "5", "7", "14"],
+            c: 2
+        },
+        {
+            q: "Which gas supports combustion?",
+            a: ["Nitrogen", "Oxygen", "Carbon dioxide", "Hydrogen"],
+            c: 1
+        },
+        {
+            q: "What is H₂O?",
+            a: [
+                "Hydrogen peroxide",
+                "Water",
+                "Oxygen",
+                "Hydrogen"
+            ],
+            c: 1
+        },
+        {
+            q: "Which particle determines an element's atomic number?",
+            a: ["Neutron", "Electron", "Proton", "Ion"],
+            c: 2
+        },
+        {
+            q: "Which substance is an acid?",
+            a: ["NaOH", "HCl", "NH₃", "NaCl"],
+            c: 1
+        },
+        {
+            q: "What is the chemical symbol for iron?",
+            a: ["Ir", "Fe", "In", "I"],
+            c: 1
+        },
+        {
+            q: "Which gas is produced when an acid reacts with a carbonate?",
+            a: ["Oxygen", "Hydrogen", "Carbon dioxide", "Nitrogen"],
+            c: 2
+        },
+        {
+            q: "What is the smallest unit of an element?",
+            a: ["Cell", "Atom", "Molecule", "Compound"],
+            c: 1
+        },
+        {
+            q: "Which solution tests for starch?",
+            a: [
+                "Benedict's solution",
+                "Iodine solution",
+                "Biuret solution",
+                "Ethanol"
+            ],
+            c: 1
+        },
+        {
+            q: "What type of bond involves sharing electrons?",
+            a: [
+                "Ionic bond",
+                "Covalent bond",
+                "Metallic bond",
+                "Hydrogen bond"
+            ],
+            c: 1
+        },
+        {
+            q: "What is the charge of an electron?",
+            a: ["Positive", "Negative", "Neutral", "Variable"],
+            c: 1
+        }
+    ],
 
-let computerBattleSupabase = null;
+    Biology: [
+        {
+            q: "Which organelle is known as the powerhouse of the cell?",
+            a: ["Nucleus", "Ribosome", "Mitochondrion", "Vacuole"],
+            c: 2
+        },
+        {
+            q: "What process do green plants use to make food?",
+            a: [
+                "Respiration",
+                "Photosynthesis",
+                "Digestion",
+                "Transpiration"
+            ],
+            c: 1
+        },
+        {
+            q: "Which gas do plants take in during photosynthesis?",
+            a: ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+            c: 2
+        },
+        {
+            q: "Which organ pumps blood around the body?",
+            a: ["Liver", "Lung", "Heart", "Kidney"],
+            c: 2
+        },
+        {
+            q: "What is the basic unit of life?",
+            a: ["Tissue", "Organ", "Cell", "System"],
+            c: 2
+        },
+        {
+            q: "Which blood cells help fight infections?",
+            a: [
+                "Red blood cells",
+                "White blood cells",
+                "Platelets",
+                "Plasma"
+            ],
+            c: 1
+        },
+        {
+            q: "Which part of a plant absorbs water?",
+            a: ["Leaf", "Flower", "Root", "Fruit"],
+            c: 2
+        },
+        {
+            q: "What is the movement of water through a selectively permeable membrane called?",
+            a: [
+                "Diffusion",
+                "Osmosis",
+                "Active transport",
+                "Respiration"
+            ],
+            c: 1
+        },
+        {
+            q: "Which molecule carries genetic information?",
+            a: ["ATP", "DNA", "Glucose", "Water"],
+            c: 1
+        },
+        {
+            q: "Which organ filters waste from the blood?",
+            a: ["Heart", "Kidney", "Stomach", "Pancreas"],
+            c: 1
+        },
+        {
+            q: "What is the main function of red blood cells?",
+            a: [
+                "Fight infection",
+                "Transport oxygen",
+                "Clot blood",
+                "Digest food"
+            ],
+            c: 1
+        },
+        {
+            q: "Which structure controls most activities of a cell?",
+            a: ["Cell wall", "Nucleus", "Vacuole", "Cytoplasm"],
+            c: 1
+        }
+    ],
 
+    Economics: [
+        {
+            q: "What is scarcity?",
+            a: [
+                "Unlimited resources",
+                "Limited resources and unlimited wants",
+                "Low prices",
+                "High employment"
+            ],
+            c: 1
+        },
+        {
+            q: "What is the reward for entrepreneurship?",
+            a: ["Rent", "Wages", "Interest", "Profit"],
+            c: 3
+        },
+        {
+            q: "What normally happens to demand when price rises?",
+            a: [
+                "Demand rises",
+                "Demand falls",
+                "Demand becomes unlimited",
+                "Demand becomes zero"
+            ],
+            c: 1
+        },
+        {
+            q: "Which factor of production refers to human effort?",
+            a: ["Land", "Labour", "Capital", "Entrepreneurship"],
+            c: 1
+        },
+        {
+            q: "What is inflation?",
+            a: [
+                "A general fall in prices",
+                "A general rise in prices",
+                "An increase in exports only",
+                "A fall in population"
+            ],
+            c: 1
+        },
+        {
+            q: "What does GDP measure?",
+            a: [
+                "Population",
+                "Value of final goods and services produced",
+                "Number of businesses",
+                "Imports only"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a market?",
+            a: [
+                "Only a physical shop",
+                "A system where buyers and sellers interact",
+                "A government department",
+                "A bank account"
+            ],
+            c: 1
+        },
+        {
+            q: "Which policy is used by a central bank to influence money supply?",
+            a: [
+                "Monetary policy",
+                "Trade policy",
+                "Education policy",
+                "Population policy"
+            ],
+            c: 0
+        },
+        {
+            q: "What is opportunity cost?",
+            a: [
+                "Total money available",
+                "The next best alternative forgone",
+                "Production cost only",
+                "A government tax"
+            ],
+            c: 1
+        },
+        {
+            q: "Which is a direct tax?",
+            a: [
+                "VAT",
+                "Import duty",
+                "Personal income tax",
+                "Sales tax"
+            ],
+            c: 2
+        },
+        {
+            q: "What is a monopoly?",
+            a: [
+                "A market with one major seller",
+                "A market with many sellers",
+                "A government budget",
+                "A type of tax"
+            ],
+            c: 0
+        },
+        {
+            q: "What is capital as a factor of production?",
+            a: [
+                "Natural resources",
+                "Human effort",
+                "Man-made resources used in production",
+                "Business profit"
+            ],
+            c: 2
+        }
+    ],
 
-/* =========================================================
-   BATTLE STATE
-========================================================= */
+    Government: [
+        {
+            q: "What is democracy?",
+            a: [
+                "Government by one person",
+                "Government by the people",
+                "Military government",
+                "Government without laws"
+            ],
+            c: 1
+        },
+        {
+            q: "What is the supreme law of a country?",
+            a: ["Decree", "Constitution", "Manifesto", "Policy"],
+            c: 1
+        },
+        {
+            q: "Which arm of government makes laws?",
+            a: [
+                "Executive",
+                "Judiciary",
+                "Legislature",
+                "Civil service"
+            ],
+            c: 2
+        },
+        {
+            q: "Which arm interprets laws?",
+            a: [
+                "Legislature",
+                "Judiciary",
+                "Executive",
+                "Electoral commission"
+            ],
+            c: 1
+        },
+        {
+            q: "What is separation of powers?",
+            a: [
+                "Dividing government powers among different organs",
+                "Removing elections",
+                "Giving all power to one person",
+                "Abolishing the constitution"
+            ],
+            c: 0
+        },
+        {
+            q: "What is an election?",
+            a: [
+                "A method of choosing representatives",
+                "A court judgment",
+                "A government budget",
+                "A political speech"
+            ],
+            c: 0
+        },
+        {
+            q: "What is citizenship?",
+            a: [
+                "Membership of a state",
+                "Company ownership",
+                "Club membership",
+                "Government employment"
+            ],
+            c: 0
+        },
+        {
+            q: "What is the rule of law?",
+            a: [
+                "Leaders are above the law",
+                "Everyone is subject to the law",
+                "Only citizens obey laws",
+                "Courts cannot interpret laws"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a political party?",
+            a: [
+                "A group seeking political power through elections",
+                "A court",
+                "A business",
+                "A government ministry"
+            ],
+            c: 0
+        },
+        {
+            q: "What is federalism?",
+            a: [
+                "Division of powers between levels of government",
+                "A system with no government",
+                "Military rule",
+                "Absolute monarchy"
+            ],
+            c: 0
+        },
+        {
+            q: "Which arm of government implements laws?",
+            a: [
+                "Judiciary",
+                "Executive",
+                "Legislature",
+                "Electoral body"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a constitution?",
+            a: [
+                "A country's fundamental legal framework",
+                "A political speech",
+                "A tax document",
+                "An election result"
+            ],
+            c: 0
+        }
+    ],
 
-const computerBattleState = {
+    Geography: [
+        {
+            q: "Which imaginary line divides Earth into Northern and Southern Hemispheres?",
+            a: [
+                "Prime Meridian",
+                "Equator",
+                "Tropic of Cancer",
+                "Arctic Circle"
+            ],
+            c: 1
+        },
+        {
+            q: "What process changes liquid water into vapour?",
+            a: [
+                "Condensation",
+                "Evaporation",
+                "Precipitation",
+                "Infiltration"
+            ],
+            c: 1
+        },
+        {
+            q: "Which instrument measures atmospheric pressure?",
+            a: [
+                "Thermometer",
+                "Barometer",
+                "Rain gauge",
+                "Anemometer"
+            ],
+            c: 1
+        },
+        {
+            q: "What is weather?",
+            a: [
+                "Long-term atmospheric conditions",
+                "Short-term atmospheric conditions",
+                "Movement of tectonic plates",
+                "Ocean currents only"
+            ],
+            c: 1
+        },
+        {
+            q: "Which atmospheric layer contains most weather?",
+            a: [
+                "Stratosphere",
+                "Mesosphere",
+                "Troposphere",
+                "Thermosphere"
+            ],
+            c: 2
+        },
+        {
+            q: "What is erosion?",
+            a: [
+                "Wearing away and removal of material",
+                "Formation of clouds",
+                "Movement of planets",
+                "Formation of rainfall"
+            ],
+            c: 0
+        },
+        {
+            q: "What is a delta?",
+            a: [
+                "A mountain peak",
+                "A depositional feature at a river mouth",
+                "A desert",
+                "A type of cloud"
+            ],
+            c: 1
+        },
+        {
+            q: "What type of rainfall occurs when moist air rises over mountains?",
+            a: [
+                "Convectional",
+                "Relief",
+                "Frontal",
+                "Cyclonic"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a population census?",
+            a: [
+                "A count of a country's population",
+                "A weather report",
+                "A map",
+                "A soil survey"
+            ],
+            c: 0
+        },
+        {
+            q: "Which longitude is used as the reference longitude?",
+            a: [
+                "Equator",
+                "Prime Meridian",
+                "Tropic of Capricorn",
+                "International Date Line"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a map?",
+            a: [
+                "A representation of an area",
+                "A weather instrument",
+                "A type of soil",
+                "A population table"
+            ],
+            c: 0
+        },
+        {
+            q: "What is climate?",
+            a: [
+                "Daily atmospheric conditions",
+                "Long-term average atmospheric conditions",
+                "Ocean movement",
+                "River flow"
+            ],
+            c: 1
+        }
+    ],
 
-    questions: [],
+    "English Language": [
+        {
+            q: "Which word is a noun?",
+            a: ["Quickly", "Beautiful", "Teacher", "Run"],
+            c: 2
+        },
+        {
+            q: "What is the opposite of 'ancient'?",
+            a: ["Old", "Modern", "Historic", "Former"],
+            c: 1
+        },
+        {
+            q: "Which sentence is grammatically correct?",
+            a: [
+                "She go to school every day.",
+                "She goes to school every day.",
+                "She going to school every day.",
+                "She gone to school every day."
+            ],
+            c: 1
+        },
+        {
+            q: "What is a synonym for 'rapid'?",
+            a: ["Slow", "Fast", "Weak", "Quiet"],
+            c: 1
+        },
+        {
+            q: "Which word is an adjective?",
+            a: [
+                "Carefully",
+                "Beautiful",
+                "Run",
+                "Happiness"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a metaphor?",
+            a: [
+                "A direct comparison without using like or as",
+                "A question",
+                "A command",
+                "A punctuation mark"
+            ],
+            c: 0
+        },
+        {
+            q: "Which punctuation mark normally ends a direct question?",
+            a: [".", ",", "?", ":"],
+            c: 2
+        },
+        {
+            q: "What is the plural of 'criterion'?",
+            a: [
+                "Criterions",
+                "Criteria",
+                "Criteriones",
+                "Criterion"
+            ],
+            c: 1
+        },
+        {
+            q: "Which word is an adverb?",
+            a: ["Slowly", "Slow", "Slowness", "Slower"],
+            c: 0
+        },
+        {
+            q: "What does 'ambiguous' mean?",
+            a: [
+                "Having more than one possible meaning",
+                "Very loud",
+                "Completely false",
+                "Extremely simple"
+            ],
+            c: 0
+        },
+        {
+            q: "Which word is a verb?",
+            a: ["Happiness", "Quickly", "Run", "Beautiful"],
+            c: 2
+        },
+        {
+            q: "Which sentence uses the correct form of 'their'?",
+            a: [
+                "Their going home.",
+                "They're books are here.",
+                "Their books are on the table.",
+                "There books are on the table."
+            ],
+            c: 2
+        }
+    ],
 
-    currentQuestionIndex: 0,
+    Accounting: [
+        {
+            q: "What is the basic accounting equation?",
+            a: [
+                "Assets = Capital + Liabilities",
+                "Assets = Revenue - Expenses",
+                "Capital = Assets + Liabilities",
+                "Liabilities = Assets + Capital"
+            ],
+            c: 0
+        },
+        {
+            q: "Which account records money received and paid?",
+            a: [
+                "Cash book",
+                "Sales ledger",
+                "Purchases journal",
+                "Balance sheet"
+            ],
+            c: 0
+        },
+        {
+            q: "What is an asset?",
+            a: [
+                "A resource owned or controlled by a business",
+                "A business expense",
+                "Money owed by the business",
+                "A loss"
+            ],
+            c: 0
+        },
+        {
+            q: "What is a liability?",
+            a: [
+                "A resource owned by the business",
+                "An amount owed by the business",
+                "Business revenue",
+                "Owner's drawings"
+            ],
+            c: 1
+        },
+        {
+            q: "Which statement shows assets and liabilities at a point in time?",
+            a: [
+                "Income statement",
+                "Statement of financial position",
+                "Cash book",
+                "Sales journal"
+            ],
+            c: 1
+        },
+        {
+            q: "What is depreciation?",
+            a: [
+                "An increase in asset value",
+                "A decrease in the value of an asset over time",
+                "A business profit",
+                "A cash receipt"
+            ],
+            c: 1
+        },
+        {
+            q: "What is a trial balance used for?",
+            a: [
+                "Checking the arithmetic equality of ledger balances",
+                "Calculating wages only",
+                "Recording stock only",
+                "Advertising a business"
+            ],
+            c: 0
+        },
+        {
+            q: "What is capital?",
+            a: [
+                "Owner's investment in a business",
+                "A business expense",
+                "A creditor",
+                "A tax"
+            ],
+            c: 0
+        }
+    ],
 
-    playerScore: 0,
+    Commerce: [
+        {
+            q: "What is commerce?",
+            a: [
+                "Activities involved in distributing goods and services",
+                "Only manufacturing",
+                "Only farming",
+                "Only banking"
+            ],
+            c: 0
+        },
+        {
+            q: "Which activity involves buying and selling goods?",
+            a: [
+                "Trade",
+                "Production",
+                "Consumption",
+                "Transport"
+            ],
+            c: 0
+        },
+        {
+            q: "What is a retailer?",
+            a: [
+                "A person who sells directly to final consumers",
+                "A manufacturer",
+                "A wholesaler only",
+                "A farmer"
+            ],
+            c: 0
+        },
+        {
+            q: "What is a wholesaler?",
+            a: [
+                "A consumer",
+                "A middleman who usually sells in bulk",
+                "A government agency",
+                "A manufacturer only"
+            ],
+            c: 1
+        },
+        {
+            q: "Which service moves goods from one place to another?",
+            a: [
+                "Insurance",
+                "Transport",
+                "Banking",
+                "Advertising"
+            ],
+            c: 1
+        },
+        {
+            q: "What is advertising mainly used for?",
+            a: [
+                "Promoting goods and services",
+                "Producing raw materials",
+                "Collecting taxes",
+                "Writing laws"
+            ],
+            c: 0
+        },
+        {
+            q: "What is insurance?",
+            a: [
+                "Protection against specified risks",
+                "A type of transport",
+                "A form of manufacturing",
+                "A government election"
+            ],
+            c: 0
+        },
+        {
+            q: "What is warehousing?",
+            a: [
+                "Storage of goods",
+                "Production of goods",
+                "Selling shares",
+                "Collecting taxes"
+            ],
+            c: 0
+        }
+    ],
 
-    computerScore: 0,
+    "Digital Technologies": [
+        {
+            q: "What does CPU stand for?",
+            a: [
+                "Central Processing Unit",
+                "Computer Personal Unit",
+                "Central Program Utility",
+                "Computer Processing Utility"
+            ],
+            c: 0
+        },
+        {
+            q: "Which device is primarily used to enter text?",
+            a: [
+                "Monitor",
+                "Keyboard",
+                "Speaker",
+                "Projector"
+            ],
+            c: 1
+        },
+        {
+            q: "What is an operating system?",
+            a: [
+                "Hardware only",
+                "Software that manages computer resources",
+                "A type of keyboard",
+                "A storage cable"
+            ],
+            c: 1
+        },
+        {
+            q: "What does RAM provide?",
+            a: [
+                "Temporary working memory",
+                "Permanent paper storage",
+                "Internet access only",
+                "Electric power"
+            ],
+            c: 0
+        },
+        {
+            q: "Which of these is a programming language?",
+            a: ["HTML", "Python", "JPEG", "USB"],
+            c: 1
+        },
+        {
+            q: "What is a database?",
+            a: [
+                "An organized collection of data",
+                "A computer monitor",
+                "A network cable",
+                "A keyboard layout"
+            ],
+            c: 0
+        },
+        {
+            q: "What is an algorithm?",
+            a: [
+                "A step-by-step procedure for solving a problem",
+                "A computer screen",
+                "A storage device",
+                "A printer"
+            ],
+            c: 0
+        },
+        {
+            q: "What is artificial intelligence?",
+            a: [
+                "Technology that enables computers to perform tasks associated with intelligent behaviour",
+                "A type of keyboard",
+                "A computer cable",
+                "A printer"
+            ],
+            c: 0
+        }
+    ],
 
-    timeRemaining:
-        QUESTION_TIME_LIMIT,
+    "Computer Studies": [
+        {
+            q: "Which component performs most processing operations?",
+            a: [
+                "CPU",
+                "Monitor",
+                "Keyboard",
+                "Printer"
+            ],
+            c: 0
+        },
+        {
+            q: "What is binary based on?",
+            a: ["Base 2", "Base 8", "Base 10", "Base 16"],
+            c: 0
+        },
+        {
+            q: "Which device produces a hard copy?",
+            a: [
+                "Scanner",
+                "Printer",
+                "Mouse",
+                "Microphone"
+            ],
+            c: 1
+        },
+        {
+            q: "What is an algorithm?",
+            a: [
+                "A step-by-step procedure for solving a problem",
+                "A computer screen",
+                "A storage device",
+                "A printer"
+            ],
+            c: 0
+        },
+        {
+            q: "Which memory is volatile?",
+            a: [
+                "ROM",
+                "RAM",
+                "Hard disk",
+                "Flash drive"
+            ],
+            c: 1
+        },
+        {
+            q: "What does URL stand for?",
+            a: [
+                "Uniform Resource Locator",
+                "Universal Record Link",
+                "User Resource Language",
+                "Uniform Routing Link"
+            ],
+            c: 0
+        },
+        {
+            q: "What is a computer network?",
+            a: [
+                "Connected computers that share resources",
+                "A single keyboard",
+                "A printer",
+                "A monitor"
+            ],
+            c: 0
+        },
+        {
+            q: "Which device is used to scan physical documents?",
+            a: [
+                "Scanner",
+                "Speaker",
+                "Monitor",
+                "Projector"
+            ],
+            c: 0
+        }
+    ],
 
-    timerInterval: null,
-
-    questionLocked: false,
-
-    battleActive: false,
-
-    battleCompleted: false,
-
-    selectedSubject: "",
-
-    selectedTopic: ""
+    "Further Mathematics": [
+        {
+            q: "What is the derivative of x²?",
+            a: ["x", "2x", "x²", "2"],
+            c: 1
+        },
+        {
+            q: "What is the integral of 2x?",
+            a: ["x² + C", "2x² + C", "x + C", "2 + C"],
+            c: 0
+        },
+        {
+            q: "What is the determinant of [[1,2],[3,4]]?",
+            a: ["-2", "2", "10", "14"],
+            c: 0
+        },
+        {
+            q: "What is the gradient of y = 3x - 7?",
+            a: ["-7", "3", "7", "-3"],
+            c: 1
+        },
+        {
+            q: "What is a vector?",
+            a: [
+                "A quantity with magnitude and direction",
+                "A scalar only",
+                "A constant only",
+                "A probability"
+            ],
+            c: 0
+        },
+        {
+            q: "What is the derivative of a constant?",
+            a: ["1", "0", "The constant", "Undefined"],
+            c: 1
+        }
+    ]
 };
 
 
 /* =========================================================
-   ELEMENT HELPER
+   GENERIC FALLBACK FOR OTHER SUBJECTS
+   ---------------------------------------------------------
+   IMPORTANT:
+   This NEVER produces Mathematics questions.
 ========================================================= */
 
-function battleElement(id) {
-    return document.getElementById(id);
-}
+function createGenericSubjectQuestions(
+    subject,
+    topic,
+    count = 10
+) {
 
+    const safeSubject =
+        String(
+            subject || "the selected subject"
+        ).trim();
 
-/* =========================================================
-   TEXT UTILITIES
-========================================================= */
+    const safeTopic =
+        String(
+            topic || "the selected topic"
+        ).trim();
 
-function normalizeBattleText(value) {
+    const templates = [
 
-    return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, " ");
-}
+        {
+            q:
+                `Which statement best describes ${safeTopic} in ${safeSubject}?`,
+            a: [
+                `It is a key concept studied in ${safeSubject}.`,
+                "It is unrelated to the subject.",
+                "It is exclusively a mathematical formula.",
+                "It is only used in another subject."
+            ],
+            c: 0
+        },
 
+        {
+            q:
+                `When studying ${safeTopic}, what should a student focus on?`,
+            a: [
+                "Understanding the relevant concepts and principles",
+                "Memorising unrelated information",
+                "Ignoring examples",
+                "Avoiding practice"
+            ],
+            c: 0
+        },
 
-function escapeHTML(value) {
+        {
+            q:
+                `Which approach is most appropriate when learning ${safeTopic}?`,
+            a: [
+                "Apply the principles of the subject to examples.",
+                "Ignore the definitions.",
+                "Avoid all examples.",
+                "Choose answers randomly."
+            ],
+            c: 0
+        },
 
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+        {
+            q:
+                `Why is ${safeTopic} important when studying ${safeSubject}?`,
+            a: [
+                "It develops understanding of an important area of the subject.",
+                "It has no connection to the subject.",
+                "It only applies to mathematics.",
+                "It is unrelated to academic study."
+            ],
+            c: 0
+        },
 
+        {
+            q:
+                `Which action would best help a student understand ${safeTopic}?`,
+            a: [
+                "Study the concepts and practise applying them.",
+                "Skip the topic completely.",
+                "Ignore explanations.",
+                "Avoid answering questions."
+            ],
+            c: 0
+        },
 
-function shuffleArray(array) {
+        {
+            q:
+                `What is the best way to approach questions about ${safeTopic}?`,
+            a: [
+                "Identify the relevant ${safeSubject} principle.",
+                "Use an unrelated formula.",
+                "Guess without reading the question.",
+                "Ignore the topic."
+            ],
+            c: 0
+        },
 
-    const result = [
-        ...array
+        {
+            q:
+                `Which statement about ${safeTopic} is most appropriate?`,
+            a: [
+                `${safeTopic} should be understood within the context of ${safeSubject}.`,
+                `${safeTopic} is always a mathematics topic.`,
+                `${safeTopic} has no academic relevance.`,
+                `${safeTopic} cannot be studied.`
+            ],
+            c: 0
+        },
+
+        {
+            q:
+                `A student is revising ${safeTopic}. What should they do first?`,
+            a: [
+                "Review the key concepts.",
+                "Skip all definitions.",
+                "Choose random answers.",
+                "Avoid examples."
+            ],
+            c: 0
+        },
+
+        {
+            q:
+                `Which skill is useful when studying ${safeTopic}?`,
+            a: [
+                "Applying subject-specific knowledge",
+                "Ignoring the question",
+                "Memorising unrelated formulas",
+                "Avoiding practice"
+            ],
+            c: 0
+        },
+
+        {
+            q:
+                `How should ${safeTopic} be studied in ${safeSubject}?`,
+            a: [
+                "By connecting concepts with relevant examples.",
+                "By ignoring the subject context.",
+                "By treating every question as mathematics.",
+                "By avoiding revision."
+            ],
+            c: 0
+        }
     ];
 
-    for (
-        let i =
-            result.length - 1;
-        i > 0;
-        i--
-    ) {
-
-        const j =
-            Math.floor(
-                Math.random() *
-                (i + 1)
-            );
-
-        [
-            result[i],
-            result[j]
-        ] = [
-            result[j],
-            result[i]
-        ];
-    }
-
-    return result;
-}
-
-
-/* =========================================================
-   STUDY PLAN
-========================================================= */
-
-function getStudyPlan() {
-
-    const possibleKeys = [
-        "studyMindPlan",
-        "studyData"
-    ];
-
-    for (
-        const key of possibleKeys
-    ) {
-
-        const raw =
-            localStorage.getItem(
-                key
-            );
-
-        if (!raw) {
-            continue;
-        }
-
-        try {
-
-            const plan =
-                JSON.parse(raw);
-
-            if (
-                plan &&
-                typeof plan ===
-                    "object"
-            ) {
-
-                console.log(
-                    `Computer Battle: Loaded ${key}:`,
-                    plan
-                );
-
-                return plan;
-            }
-
-        } catch (error) {
-
-            console.warn(
-                `Computer Battle: Could not parse ${key}:`,
-                error
-            );
-        }
-    }
-
-    console.warn(
-        "Computer Battle: No study plan found."
-    );
-
-    return null;
-}
-
-
-/* =========================================================
-   GET SUBJECT NAME
-========================================================= */
-
-function getSubjectName(item) {
-
-    if (
-        typeof item ===
-        "string"
-    ) {
-        return item.trim();
-    }
-
-    if (
-        !item ||
-        typeof item !==
-            "object"
-    ) {
-        return "";
-    }
-
-    const names = [
-
-        item.subject,
-
-        item.subjectName,
-
-        item.subject_name,
-
-        item.name
-    ];
-
-    for (
-        const value of names
-    ) {
-
-        if (
-            typeof value ===
-                "string" &&
-            value.trim()
-        ) {
-
-            return value.trim();
-        }
-    }
-
-    return "";
-}
-
-
-/* =========================================================
-   GET TOPIC NAME
-========================================================= */
-
-function getTopicName(item) {
-
-    if (
-        typeof item ===
-        "string"
-    ) {
-        return item.trim();
-    }
-
-    if (
-        !item ||
-        typeof item !==
-            "object"
-    ) {
-        return "";
-    }
-
-    const names = [
-
-        item.topic,
-
-        item.topicName,
-
-        item.topic_name,
-
-        item.name,
-
-        item.title
-    ];
-
-    for (
-        const value of names
-    ) {
-
-        if (
-            typeof value ===
-                "string" &&
-            value.trim()
-        ) {
-
-            return value.trim();
-        }
-    }
-
-    return "";
+    return templates
+        .map(item => ({
+            q: item.q,
+            a: [...item.a],
+            c: item.c
+        }));
 }
 
 
@@ -1617,30 +1933,54 @@ function getTopicName(item) {
    NORMALIZE SUBJECT
 ========================================================= */
 
-function normalizeSubjectName(
-    subject
-) {
+function normalizeSubjectName(subject) {
 
-    const original =
+    const raw =
         String(
             subject || ""
-        ).trim();
+        )
+            .trim();
 
-    if (!original) {
+    if (!raw) {
         return "";
     }
 
-    const normalized =
-        normalizeBattleText(
-            original
+    const lower =
+        raw.toLowerCase();
+
+    if (
+        SUBJECT_ALIASES[lower]
+    ) {
+        return SUBJECT_ALIASES[lower];
+    }
+
+    const exact =
+        Object.keys(
+            NIGERIAN_CURRICULUM
+        ).find(
+            name =>
+                name.toLowerCase() ===
+                lower
         );
 
-    return (
-        SUBJECT_ALIASES[
-            normalized
-        ] ||
-        original
-    );
+    if (exact) {
+        return exact;
+    }
+
+    const bankExact =
+        Object.keys(
+            SUBJECT_QUESTION_BANK
+        ).find(
+            name =>
+                name.toLowerCase() ===
+                lower
+        );
+
+    if (bankExact) {
+        return bankExact;
+    }
+
+    return raw;
 }
 
 
@@ -1653,37 +1993,76 @@ function findCurriculumSubject(
 ) {
 
     const normalized =
-        normalizeBattleText(
+        normalizeSubjectName(
             subject
         );
 
-    const direct =
+    const exact =
         Object.keys(
             NIGERIAN_CURRICULUM
         ).find(
-            curriculumSubject =>
-                normalizeBattleText(
-                    curriculumSubject
-                ) === normalized
+            name =>
+                name.toLowerCase() ===
+                normalized.toLowerCase()
         );
 
-    if (direct) {
-        return direct;
-    }
+    return exact || normalized;
+}
 
-    const alias =
-        SUBJECT_ALIASES[
-            normalized
-        ];
 
-    if (
-        alias &&
-        NIGERIAN_CURRICULUM[
-            alias
-        ]
+/* =========================================================
+   GET CURRICULUM SUBJECTS
+========================================================= */
+
+function getCurriculumSubjects() {
+
+    return Object.keys(
+        NIGERIAN_CURRICULUM
+    );
+}
+
+
+/* =========================================================
+   STUDY PLAN
+========================================================= */
+
+function getStudyPlan() {
+
+    const possibleKeys = [
+        "studyMindPlan",
+        "studyData",
+        "studyPlan"
+    ];
+
+    for (
+        const key of possibleKeys
     ) {
 
-        return alias;
+        try {
+
+            const raw =
+                localStorage.getItem(
+                    key
+                );
+
+            if (!raw) {
+                continue;
+            }
+
+            const parsed =
+                JSON.parse(raw);
+
+            if (parsed) {
+                return parsed;
+            }
+
+        } catch (error) {
+
+            console.warn(
+                `Could not parse ${key}:`,
+                error
+            );
+        }
     }
 
     return null;
@@ -1691,140 +2070,208 @@ function findCurriculumSubject(
 
 
 /* =========================================================
-   EXTRACT SUBJECTS
+   SUBJECT NAME FROM OBJECT
+========================================================= */
+
+function getSubjectName(item) {
+
+    if (
+        typeof item === "string"
+    ) {
+        return item.trim();
+    }
+
+    if (!item || typeof item !== "object") {
+        return "";
+    }
+
+    return (
+        item.subject ||
+        item.subjectName ||
+        item.name ||
+        item.title ||
+        item.label ||
+        ""
+    )
+        .toString()
+        .trim();
+}
+
+
+/* =========================================================
+   TOPIC NAME FROM OBJECT
+========================================================= */
+
+function getTopicName(item) {
+
+    if (
+        typeof item === "string"
+    ) {
+        return item.trim();
+    }
+
+    if (!item || typeof item !== "object") {
+        return "";
+    }
+
+    return (
+        item.topic ||
+        item.topicName ||
+        item.title ||
+        item.name ||
+        item.label ||
+        ""
+    )
+        .toString()
+        .trim();
+}
+
+
+/* =========================================================
+   EXTRACT SUBJECTS FROM STUDY PLAN
 ========================================================= */
 
 function extractSubjects(plan) {
 
     const subjects = [];
 
-    /*
-       First include subjects explicitly selected
-       in the user's study plan.
-    */
-
-    if (
-        plan &&
-        Array.isArray(
-            plan.subjects
-        )
-    ) {
-
-        plan.subjects.forEach(
-            item => {
-
-                const name =
-                    normalizeSubjectName(
-                        getSubjectName(
-                            item
-                        )
-                    );
-
-                if (name) {
-                    subjects.push(
-                        name
-                    );
-                }
-            }
-        );
+    if (!plan) {
+        return subjects;
     }
 
-    /*
-       Also inspect topic objects in case a study plan
-       stores subject information there.
-    */
+    function add(value) {
 
-    if (
-        plan &&
-        Array.isArray(
-            plan.topics
-        )
-    ) {
+        if (
+            typeof value !== "string"
+        ) {
+            return;
+        }
 
-        plan.topics.forEach(
-            item => {
+        const clean =
+            value.trim();
 
-                if (
-                    !item ||
-                    typeof item !==
-                        "object"
-                ) {
-                    return;
-                }
+        if (!clean) {
+            return;
+        }
+
+        const normalized =
+            normalizeSubjectName(
+                clean
+            );
+
+        if (
+            !subjects.some(
+                item =>
+                    item.toLowerCase() ===
+                    normalized.toLowerCase()
+            )
+        ) {
+            subjects.push(normalized);
+        }
+    }
+
+
+    function inspectArray(array) {
+
+        if (
+            !Array.isArray(array)
+        ) {
+            return;
+        }
+
+        for (
+            const item of array
+        ) {
+
+            if (
+                typeof item ===
+                "string"
+            ) {
+                add(item);
+                continue;
+            }
+
+            if (
+                item &&
+                typeof item ===
+                "object"
+            ) {
 
                 const subject =
-                    normalizeSubjectName(
-                        getSubjectName(
-                            item
-                        )
+                    getSubjectName(
+                        item
                     );
 
                 if (subject) {
-                    subjects.push(
-                        subject
-                    );
+                    add(subject);
                 }
             }
+        }
+    }
+
+
+    /*
+       Common study-plan structures.
+    */
+
+    inspectArray(
+        plan.subjects
+    );
+
+    inspectArray(
+        plan.subjectList
+    );
+
+    inspectArray(
+        plan.selectedSubjects
+    );
+
+    inspectArray(
+        plan.courses
+    );
+
+    inspectArray(
+        plan.studySubjects
+    );
+
+    if (
+        Array.isArray(
+            plan.plan
+        )
+    ) {
+        inspectArray(
+            plan.plan
         );
     }
 
-    /*
-       Then add the complete curriculum.
-    */
-
-    Object.keys(
-        NIGERIAN_CURRICULUM
-    ).forEach(
-        subject => {
-
-            subjects.push(
-                subject
-            );
-        }
-    );
 
     /*
-       Remove duplicates using normalized names.
+       Some versions store subjects
+       under data.
     */
 
-    const unique =
-        new Map();
+    if (
+        plan.data &&
+        typeof plan.data ===
+            "object"
+    ) {
 
-    subjects.forEach(
-        subject => {
+        inspectArray(
+            plan.data.subjects
+        );
 
-            const normalized =
-                normalizeBattleText(
-                    subject
-                );
+        inspectArray(
+            plan.data.subjectList
+        );
+    }
 
-            if (
-                !unique.has(
-                    normalized
-                )
-            ) {
 
-                unique.set(
-                    normalized,
-                    subject
-                );
-            }
-        }
-    );
-
-    return [
-        ...unique.values()
-    ].sort(
-        (a, b) =>
-            a.localeCompare(
-                b
-            )
-    );
+    return subjects;
 }
 
 
 /* =========================================================
-   EXTRACT TOPICS
+   EXTRACT TOPICS FOR SUBJECT
 ========================================================= */
 
 function extractTopics(
@@ -1834,136 +2281,230 @@ function extractTopics(
 
     const topics = [];
 
-    const curriculumSubject =
-        findCurriculumSubject(
+    const normalizedSubject =
+        normalizeSubjectName(
             selectedSubject
         );
 
-    /*
-       Add curriculum topics first.
-    */
 
-    if (
-        curriculumSubject &&
-        Array.isArray(
-            NIGERIAN_CURRICULUM[
-                curriculumSubject
-            ]
-        )
+    function addTopic(
+        value
     ) {
 
-        topics.push(
-            ...NIGERIAN_CURRICULUM[
-                curriculumSubject
-            ]
+        if (
+            typeof value !== "string"
+        ) {
+            return;
+        }
+
+        const clean =
+            value.trim();
+
+        if (
+            !clean ||
+            clean.toLowerCase() ===
+                "untitled topic"
+        ) {
+            return;
+        }
+
+        if (
+            !topics.some(
+                item =>
+                    item.toLowerCase() ===
+                    clean.toLowerCase()
+            )
+        ) {
+            topics.push(clean);
+        }
+    }
+
+
+    /*
+       Curriculum topics ALWAYS belong
+       to the selected subject.
+    */
+
+    const curriculumSubject =
+        findCurriculumSubject(
+            normalizedSubject
+        );
+
+    if (
+        NIGERIAN_CURRICULUM[
+            curriculumSubject
+        ]
+    ) {
+
+        NIGERIAN_CURRICULUM[
+            curriculumSubject
+        ].forEach(
+            addTopic
         );
     }
 
-    /*
-       Add matching study-plan topics.
 
-       Important:
-       If a topic has an explicit subject, only add it
-       when it belongs to the selected subject.
-    */
+    if (!plan) {
+        return topics;
+    }
 
-    if (
-        plan &&
-        Array.isArray(
-            plan.topics
-        )
+
+    function inspectTopicArray(
+        array
     ) {
 
-        plan.topics.forEach(
-            item => {
+        if (
+            !Array.isArray(array)
+        ) {
+            return;
+        }
 
-                const topic =
-                    getTopicName(
-                        item
-                    );
+        for (
+            const item of array
+        ) {
 
-                if (!topic) {
-                    return;
-                }
+            if (
+                typeof item ===
+                "string"
+            ) {
 
-                if (
-                    item &&
-                    typeof item ===
-                        "object"
-                ) {
+                /*
+                   A plain string has no subject
+                   metadata. We only include it
+                   when the plan itself represents
+                   one subject or when it is the
+                   selected subject's own topic list.
+                */
 
-                    const explicitSubject =
-                        getSubjectName(
-                            item
-                        );
+                addTopic(item);
 
-                    if (
-                        explicitSubject
-                    ) {
-
-                        const normalizedTopicSubject =
-                            normalizeSubjectName(
-                                explicitSubject
-                            );
-
-                        const normalizedSelectedSubject =
-                            normalizeSubjectName(
-                                selectedSubject
-                            );
-
-                        if (
-                            normalizeBattleText(
-                                normalizedTopicSubject
-                            ) !==
-                            normalizeBattleText(
-                                normalizedSelectedSubject
-                            )
-                        ) {
-
-                            return;
-                        }
-                    }
-                }
-
-                topics.push(
-                    topic
-                );
+                continue;
             }
-        );
+
+
+            if (
+                !item ||
+                typeof item !==
+                    "object"
+            ) {
+                continue;
+            }
+
+
+            const itemSubject =
+                getSubjectName(
+                    item
+                );
+
+            /*
+               If the object explicitly specifies
+               a subject, it MUST match.
+            */
+
+            if (
+                itemSubject &&
+                normalizeSubjectName(
+                    itemSubject
+                ).toLowerCase() !==
+                    normalizedSubject.toLowerCase()
+            ) {
+                continue;
+            }
+
+
+            const topic =
+                getTopicName(
+                    item
+                );
+
+            if (topic) {
+                addTopic(topic);
+            }
+        }
     }
 
+
     /*
-       Remove duplicate topics.
+       Direct topic arrays.
     */
 
-    const unique =
-        new Map();
+    inspectTopicArray(
+        plan.topics
+    );
 
-    topics.forEach(
-        topic => {
+    inspectTopicArray(
+        plan.studyTopics
+    );
 
-            const normalized =
-                normalizeBattleText(
-                    topic
+    inspectTopicArray(
+        plan.selectedTopics
+    );
+
+
+    /*
+       Subjects array can contain:
+       {
+          subject: "Physics",
+          topics: [...]
+       }
+    */
+
+    const subjectArrays = [
+        plan.subjects,
+        plan.subjectList,
+        plan.selectedSubjects,
+        plan.courses,
+        plan.studySubjects
+    ];
+
+    for (
+        const array of subjectArrays
+    ) {
+
+        if (
+            !Array.isArray(array)
+        ) {
+            continue;
+        }
+
+        for (
+            const subjectItem of array
+        ) {
+
+            if (
+                !subjectItem ||
+                typeof subjectItem !==
+                    "object"
+            ) {
+                continue;
+            }
+
+            const itemSubject =
+                getSubjectName(
+                    subjectItem
                 );
 
             if (
-                !unique.has(
-                    normalized
-                )
+                normalizeSubjectName(
+                    itemSubject
+                ).toLowerCase() !==
+                    normalizedSubject.toLowerCase()
             ) {
-
-                unique.set(
-                    normalized,
-                    topic
-                );
+                continue;
             }
-        }
-    );
 
-    return [
-        ...unique.values()
-    ];
+            inspectTopicArray(
+                subjectItem.topics
+            );
+
+            inspectTopicArray(
+                subjectItem.studyTopics
+            );
+        }
+    }
+
+
+    return topics;
 }
 
 
@@ -1975,30 +2516,52 @@ function getFallbackTopics(
     subject
 ) {
 
-    const curriculumSubject =
+    const normalized =
         findCurriculumSubject(
             subject
         );
 
     if (
-        curriculumSubject &&
-        Array.isArray(
-            NIGERIAN_CURRICULUM[
-                curriculumSubject
-            ]
-        )
+        NIGERIAN_CURRICULUM[
+            normalized
+        ]
     ) {
 
         return [
             ...NIGERIAN_CURRICULUM[
-                curriculumSubject
+                normalized
             ]
         ];
     }
 
     return [
-        "General Knowledge"
+        "General Concepts",
+        "Key Principles",
+        "Applications",
+        "Revision"
     ];
+}
+
+
+/* =========================================================
+   SETUP ELEMENTS
+========================================================= */
+
+function getSubjectSelect() {
+
+    return (
+        $("subjectSelect") ||
+        $("battleSubject")
+    );
+}
+
+
+function getTopicSelect() {
+
+    return (
+        $("topicSelect") ||
+        $("battleTopic")
+    );
 }
 
 
@@ -2009,84 +2572,151 @@ function getFallbackTopics(
 function loadBattleSetup() {
 
     const subjectSelect =
-        battleElement(
-            "subjectSelect"
-        );
+        getSubjectSelect();
 
     const topicSelect =
-        battleElement(
-            "topicSelect"
-        );
+        getTopicSelect();
 
-    if (
-        !subjectSelect ||
-        !topicSelect
-    ) {
+    if (!subjectSelect) {
 
         console.error(
-            "Computer Battle: Subject/topic selectors were not found."
+            "Computer Battle: subject select not found."
         );
 
         return;
     }
 
-    subjectSelect.innerHTML =
-        `<option value="">Loading subjects...</option>`;
+    if (!topicSelect) {
 
-    topicSelect.innerHTML =
-        `<option value="">Select a subject first</option>`;
+        console.error(
+            "Computer Battle: topic select not found."
+        );
+
+        return;
+    }
+
 
     const plan =
         getStudyPlan();
 
-    const subjects =
-        extractSubjects(
-            plan
-        );
 
-    if (
-        !subjects.length
+    /*
+       IMPORTANT:
+       Always combine the user's study-plan
+       subjects with the full curriculum.
+
+       This prevents the dropdown from becoming
+       Math-only when the study plan is incomplete.
+    */
+
+    const subjects = [
+        ...extractSubjects(plan),
+        ...getCurriculumSubjects()
+    ];
+
+
+    const uniqueSubjects = [];
+
+    for (
+        const subject of subjects
     ) {
 
-        subjectSelect.innerHTML =
-            `<option value="">No subjects available</option>`;
+        const normalized =
+            normalizeSubjectName(
+                subject
+            );
 
-        topicSelect.innerHTML =
-            `<option value="">Select a subject first</option>`;
+        if (!normalized) {
+            continue;
+        }
 
-        return;
+        if (
+            !uniqueSubjects.some(
+                item =>
+                    item.toLowerCase() ===
+                    normalized.toLowerCase()
+            )
+        ) {
+            uniqueSubjects.push(
+                normalized
+            );
+        }
     }
 
-    subjectSelect.innerHTML =
-        `<option value="">Select a subject</option>` +
-        subjects
-            .map(
-                subject => `
-                    <option value="${escapeHTML(
-                        subject
-                    )}">
-                        ${escapeHTML(
-                            subject
-                        )}
-                    </option>
-                `
+
+    uniqueSubjects.sort(
+        (a, b) =>
+            a.localeCompare(
+                b
             )
-            .join("");
-
-    subjectSelect.value =
-        "";
-
-    topicSelect.innerHTML =
-        `<option value="">Select a subject first</option>`;
-
-    console.log(
-        "Computer Battle: Subjects loaded:",
-        subjects
     );
 
+
+    subjectSelect.innerHTML = "";
+
+
+    for (
+        const subject of uniqueSubjects
+    ) {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            subject;
+
+        option.textContent =
+            subject;
+
+        subjectSelect.appendChild(
+            option
+        );
+    }
+
+
+    /*
+       Default to the first subject.
+    */
+
+    if (
+        uniqueSubjects.length > 0
+    ) {
+
+        subjectSelect.value =
+            uniqueSubjects[0];
+
+    }
+
+
+    updateTopicOptions();
+
+
+    /*
+       Prevent duplicate change handlers.
+    */
+
+    if (
+        subjectSelect.dataset
+            .computerBattleBound !==
+            "true"
+    ) {
+
+        subjectSelect.dataset
+            .computerBattleBound =
+            "true";
+
+        subjectSelect.addEventListener(
+            "change",
+            updateTopicOptions
+        );
+    }
+
+
     console.log(
-        "Computer Battle: Total subjects:",
-        subjects.length
+        "Computer Battle subjects loaded:",
+        uniqueSubjects
     );
 }
 
@@ -2098,14 +2728,10 @@ function loadBattleSetup() {
 function updateTopicOptions() {
 
     const subjectSelect =
-        battleElement(
-            "subjectSelect"
-        );
+        getSubjectSelect();
 
     const topicSelect =
-        battleElement(
-            "topicSelect"
-        );
+        getTopicSelect();
 
     if (
         !subjectSelect ||
@@ -2114,590 +2740,854 @@ function updateTopicOptions() {
         return;
     }
 
-    const subject =
-        subjectSelect.value.trim();
 
-    if (!subject) {
+    const selectedSubject =
+        subjectSelect.value;
 
-        topicSelect.innerHTML =
-            `<option value="">Select a subject first</option>`;
-
-        return;
-    }
 
     const plan =
         getStudyPlan();
 
+
     let topics =
         extractTopics(
             plan,
-            subject
+            selectedSubject
         );
 
+
+    /*
+       Ensure curriculum topics exist.
+    */
+
     if (
-        !topics.length
+        topics.length === 0
     ) {
 
         topics =
             getFallbackTopics(
-                subject
+                selectedSubject
             );
     }
 
-    topicSelect.innerHTML =
-        `<option value="">Select a topic</option>` +
-        topics
-            .map(
-                topic => `
-                    <option value="${escapeHTML(
-                        topic
-                    )}">
-                        ${escapeHTML(
-                            topic
-                        )}
-                    </option>
-                `
-            )
-            .join("");
-
-    topicSelect.value =
-        "";
-
-    console.log(
-        `Computer Battle: Topics for ${subject}:`,
-        topics
-    );
-}
-
-
-/* =========================================================
-   ERROR
-========================================================= */
-
-function showBattleError(
-    message
-) {
-
-    const element =
-        battleElement(
-            "battleError"
-        );
-
-    if (!element) {
-        return;
-    }
-
-    element.textContent =
-        message;
-
-    element.classList.add(
-        "active"
-    );
-}
-
-
-function hideBattleError() {
-
-    const element =
-        battleElement(
-            "battleError"
-        );
-
-    if (!element) {
-        return;
-    }
-
-    element.textContent =
-        "";
-
-    element.classList.remove(
-        "active"
-    );
-}
-
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-function showLoading() {
-
-    const setup =
-        battleElement(
-            "battleSetup"
-        );
-
-    const loading =
-        battleElement(
-            "battleLoading"
-        );
-
-    if (setup) {
-        setup.style.display =
-            "none";
-    }
-
-    if (loading) {
-        loading.classList.add(
-            "active"
-        );
-    }
-}
-
-
-function hideLoading() {
-
-    const loading =
-        battleElement(
-            "battleLoading"
-        );
-
-    if (loading) {
-
-        loading.classList.remove(
-            "active"
-        );
-    }
-}
-
-
-/* =========================================================
-   FALLBACK QUESTIONS
-========================================================= */
-
-const FALLBACK_QUESTIONS = [
-
-    {
-        question:
-            "What is 12 × 5?",
-
-        options: [
-            "50",
-            "55",
-            "60",
-            "65"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "What is the square root of 81?",
-
-        options: [
-            "7",
-            "8",
-            "9",
-            "10"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "What is 3/4 expressed as a decimal?",
-
-        options: [
-            "0.25",
-            "0.5",
-            "0.75",
-            "0.8"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "What is 15 + 27?",
-
-        options: [
-            "32",
-            "40",
-            "42",
-            "45"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "What is 100 ÷ 4?",
-
-        options: [
-            "20",
-            "25",
-            "30",
-            "40"
-        ],
-
-        answer: 1
-    },
-
-    {
-        question:
-            "What is 7²?",
-
-        options: [
-            "14",
-            "21",
-            "42",
-            "49"
-        ],
-
-        answer: 3
-    },
-
-    {
-        question:
-            "What is the next number in 2, 4, 6, 8, ...?",
-
-        options: [
-            "9",
-            "10",
-            "11",
-            "12"
-        ],
-
-        answer: 1
-    },
-
-    {
-        question:
-            "What is 30% of 100?",
-
-        options: [
-            "3",
-            "10",
-            "30",
-            "70"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "If x + 6 = 14, what is x?",
-
-        options: [
-            "6",
-            "7",
-            "8",
-            "9"
-        ],
-
-        answer: 2
-    },
-
-    {
-        question:
-            "How many degrees are in a full circle?",
-
-        options: [
-            "90°",
-            "180°",
-            "270°",
-            "360°"
-        ],
-
-        answer: 3
-    },
-
-    {
-        question:
-            "What is 9 × 9?",
-
-        options: [
-            "72",
-            "81",
-            "90",
-            "99"
-        ],
-
-        answer: 1
-    },
-
-    {
-        question:
-            "What is half of 50?",
-
-        options: [
-            "15",
-            "20",
-            "25",
-            "30"
-        ],
-
-        answer: 2
-    }
-];
-
-
-/* =========================================================
-   CREATE FALLBACK QUESTIONS
-========================================================= */
-
-function createFallbackQuestions() {
 
     /*
-       We clone the questions rather than modifying the
-       original fallback objects.
+       Remove duplicates.
     */
 
-    const pool =
-        shuffleArray(
-            FALLBACK_QUESTIONS
+    topics =
+        [
+            ...new Set(
+                topics.map(
+                    topic =>
+                        String(
+                            topic
+                        ).trim()
+                )
+            )
+        ]
+        .filter(Boolean);
+
+
+    topicSelect.innerHTML = "";
+
+
+    for (
+        const topic of topics
+    ) {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            topic;
+
+        option.textContent =
+            topic;
+
+        topicSelect.appendChild(
+            option
         );
+    }
+
+
+    if (
+        topics.length > 0
+    ) {
+
+        topicSelect.value =
+            topics[0];
+    }
+
+
+    console.log(
+        "Computer Battle topics:",
+        {
+            subject:
+                selectedSubject,
+            topics
+        }
+    );
+}
+
+
+/* =========================================================
+   SHUFFLE
+========================================================= */
+
+function shuffleArray(
+    array
+) {
+
+    const copy =
+        [...array];
+
+    for (
+        let i =
+            copy.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+        [
+            copy[i],
+            copy[j]
+        ] = [
+            copy[j],
+            copy[i]
+        ];
+    }
+
+    return copy;
+}
+
+
+/* =========================================================
+   NORMALIZE QUESTION TEXT
+========================================================= */
+
+function normalizeQuestionText(
+    value
+) {
+
+    return String(
+        value || ""
+    )
+        .toLowerCase()
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+}
+
+
+/* =========================================================
+   FALLBACK QUESTION CREATION
+========================================================= */
+
+function getSubjectFallbackQuestions(
+    subject,
+    topic
+) {
+
+    const normalizedSubject =
+        normalizeSubjectName(
+            subject
+        );
+
+
+    const bank =
+        SUBJECT_QUESTION_BANK[
+            normalizedSubject
+        ];
+
+
+    /*
+       Dedicated bank.
+    */
+
+    if (
+        Array.isArray(bank) &&
+        bank.length > 0
+    ) {
+
+        return bank.map(
+            item => ({
+                question:
+                    item.q,
+
+                answers:
+                    [...item.a],
+
+                correct:
+                    item.c,
+
+                subject:
+                    normalizedSubject,
+
+                topic:
+                    topic
+            })
+        );
+    }
+
+
+    /*
+       No dedicated bank.
+
+       IMPORTANT:
+       Do NOT use Mathematics here.
+    */
+
+    const generic =
+        createGenericSubjectQuestions(
+            normalizedSubject,
+            topic,
+            QUESTIONS_PER_BATTLE
+        );
+
+
+    return generic.map(
+        item => ({
+            question:
+                item.q,
+
+            answers:
+                [...item.a],
+
+            correct:
+                item.c,
+
+            subject:
+                normalizedSubject,
+
+            topic:
+                topic
+        })
+    );
+}
+
+
+/* =========================================================
+   SHUFFLE ANSWERS WHILE PRESERVING CORRECT ANSWER
+========================================================= */
+
+function shuffleQuestionAnswers(
+    question
+) {
+
+    const correctAnswer =
+        question.answers[
+            question.correct
+        ];
+
+
+    const answers =
+        shuffleArray(
+            question.answers
+        );
+
+
+    const newCorrectIndex =
+        answers.findIndex(
+            answer =>
+                answer ===
+                correctAnswer
+        );
+
+
+    return {
+        ...question,
+
+        answers,
+
+        correct:
+            newCorrectIndex
+    };
+}
+
+
+/* =========================================================
+   BUILD FALLBACK BATTLE
+========================================================= */
+
+function buildFallbackBattleQuestions(
+    subject,
+    topic
+) {
+
+    const bank =
+        getSubjectFallbackQuestions(
+            subject,
+            topic
+        );
+
+
+    const unique = [];
+
+    const seen =
+        new Set();
+
+
+    /*
+       Shuffle the bank before selecting.
+    */
+
+    const shuffled =
+        shuffleArray(
+            bank
+        );
+
+
+    for (
+        const question of shuffled
+    ) {
+
+        const key =
+            normalizeQuestionText(
+                question.question
+            );
+
+
+        if (
+            seen.has(key)
+        ) {
+            continue;
+        }
+
+
+        seen.add(key);
+
+
+        unique.push(
+            shuffleQuestionAnswers(
+                question
+            )
+        );
+
+
+        if (
+            unique.length >=
+            QUESTIONS_PER_BATTLE
+        ) {
+            break;
+        }
+    }
+
+
+    /*
+       If the dedicated bank contains
+       fewer than 10 questions, cycle it
+       rather than switching to Mathematics.
+    */
+
+    while (
+        unique.length <
+        QUESTIONS_PER_BATTLE
+    ) {
+
+        const extra =
+            shuffleArray(
+                bank
+            );
+
+
+        for (
+            const question of extra
+        ) {
+
+            if (
+                unique.length >=
+                QUESTIONS_PER_BATTLE
+            ) {
+                break;
+            }
+
+
+            const key =
+                normalizeQuestionText(
+                    question.question
+                );
+
+
+            /*
+               We deliberately allow a repeated
+               question only if the bank is too
+               small to reach 10.
+            */
+
+            unique.push(
+                shuffleQuestionAnswers(
+                    question
+                )
+            );
+        }
+    }
+
+
+    return unique.slice(
+        0,
+        QUESTIONS_PER_BATTLE
+    );
+}
+
+
+/* =========================================================
+   AI JSON CLEANING
+========================================================= */
+
+function cleanAIJson(
+    text
+) {
+
+    return String(
+        text || ""
+    )
+        .replace(
+            /^```json\s*/i,
+            ""
+        )
+        .replace(
+            /^```\s*/i,
+            ""
+        )
+        .replace(
+            /\s*```$/i,
+            ""
+        )
+        .trim();
+}
+
+
+/* =========================================================
+   EXTRACT QUESTIONS FROM AI RESPONSE
+========================================================= */
+
+function extractQuestionsFromAIResponse(
+    data
+) {
+
+    if (
+        Array.isArray(data)
+    ) {
+        return data;
+    }
+
+
+    if (
+        Array.isArray(
+            data?.questions
+        )
+    ) {
+        return data.questions;
+    }
+
+
+    if (
+        Array.isArray(
+            data?.data
+        )
+    ) {
+        return data.data;
+    }
+
+
+    if (
+        Array.isArray(
+            data?.data?.questions
+        )
+    ) {
+        return data.data.questions;
+    }
+
+
+    const possibleText =
+        data?.content ||
+        data?.text ||
+        data?.output ||
+        data?.response;
+
+
+    if (
+        typeof possibleText ===
+        "string"
+    ) {
+
+        try {
+
+            const parsed =
+                JSON.parse(
+                    cleanAIJson(
+                        possibleText
+                    )
+                );
+
+
+            return extractQuestionsFromAIResponse(
+                parsed
+            );
+
+        } catch (error) {
+
+            /*
+               Sometimes the model may include
+               text around the JSON.
+            */
+
+            const firstBrace =
+                possibleText.indexOf(
+                    "{"
+                );
+
+            const lastBrace =
+                possibleText.lastIndexOf(
+                    "}"
+                );
+
+
+            if (
+                firstBrace >= 0 &&
+                lastBrace > firstBrace
+            ) {
+
+                try {
+
+                    const jsonText =
+                        possibleText.slice(
+                            firstBrace,
+                            lastBrace + 1
+                        );
+
+
+                    const parsed =
+                        JSON.parse(
+                            jsonText
+                        );
+
+
+                    return extractQuestionsFromAIResponse(
+                        parsed
+                    );
+
+                } catch (secondError) {
+
+                    console.warn(
+                        "Could not parse AI question JSON:",
+                        secondError
+                    );
+                }
+            }
+        }
+    }
+
+
+    return [];
+}
+
+
+/* =========================================================
+   VALIDATE AI QUESTIONS
+========================================================= */
+
+function validateAIQuestions(
+    questions,
+    selectedSubject,
+    selectedTopic
+) {
+
+    if (
+        !Array.isArray(
+            questions
+        )
+    ) {
+        return [];
+    }
+
 
     const result = [];
 
+    const seen =
+        new Set();
+
+
     for (
-        let i = 0;
-        i < QUESTIONS_PER_BATTLE;
-        i++
+        const raw of questions
     ) {
 
-        const source =
-            pool[
-                i %
-                pool.length
-            ];
+        if (
+            !raw ||
+            typeof raw !==
+                "object"
+        ) {
+            continue;
+        }
+
+
+        const question =
+            String(
+                raw.question ||
+                raw.questionText ||
+                raw.text ||
+                ""
+            ).trim();
+
+
+        if (!question) {
+            continue;
+        }
+
+
+        let answers =
+            raw.answers ||
+            raw.options ||
+            raw.choices;
+
+
+        if (
+            !Array.isArray(
+                answers
+            )
+        ) {
+            continue;
+        }
+
+
+        answers =
+            answers
+                .map(
+                    answer =>
+                        String(
+                            answer
+                        ).trim()
+                )
+                .filter(Boolean);
+
+
+        if (
+            answers.length !== 4
+        ) {
+            continue;
+        }
+
+
+        let correct =
+            Number(
+                raw.correct
+            );
+
+
+        /*
+           Support correctIndex.
+        */
+
+        if (
+            !Number.isInteger(
+                correct
+            )
+        ) {
+
+            correct =
+                Number(
+                    raw.correctIndex
+                );
+        }
+
+
+        /*
+           Support correctAnswer.
+        */
+
+        if (
+            !Number.isInteger(
+                correct
+            ) &&
+            typeof raw.correctAnswer ===
+                "string"
+        ) {
+
+            correct =
+                answers.findIndex(
+                    answer =>
+                        normalizeQuestionText(
+                            answer
+                        ) ===
+                        normalizeQuestionText(
+                            raw.correctAnswer
+                        )
+                );
+        }
+
+
+        /*
+           Some APIs return 1-4 instead
+           of 0-3.
+        */
+
+        if (
+            Number.isInteger(
+                correct
+            ) &&
+            correct >= 1 &&
+            correct <= 4 &&
+            raw.correctIndex ===
+                undefined &&
+            raw.correctAnswer ===
+                undefined
+        ) {
+
+            /*
+               Only convert if there is no
+               obvious 0-based indication.
+            */
+
+            if (
+                correct === 4
+            ) {
+                correct = 3;
+            } else {
+                correct -= 1;
+            }
+        }
+
+
+        if (
+            !Number.isInteger(
+                correct
+            ) ||
+            correct < 0 ||
+            correct > 3
+        ) {
+            continue;
+        }
+
+
+        const key =
+            normalizeQuestionText(
+                question
+            );
+
+
+        if (
+            seen.has(key)
+        ) {
+            continue;
+        }
+
+
+        seen.add(key);
+
 
         result.push({
+            question,
 
-            question:
-                source.question,
+            answers,
 
-            options:
-                [
-                    ...source.options
-                ],
+            correct,
 
-            answer:
-                source.answer
+            subject:
+                selectedSubject,
+
+            topic:
+                selectedTopic
         });
     }
+
 
     return result;
 }
 
 
 /* =========================================================
-   START COMPUTER BATTLE
+   GENERATE AI QUESTIONS
 ========================================================= */
 
-async function startComputerBattle() {
-
-    if (
-        computerBattleState.battleActive
-    ) {
-        return;
-    }
-
-    hideBattleError();
-
-    const subject =
-        battleElement(
-            "subjectSelect"
-        )?.value?.trim();
-
-    const topic =
-        battleElement(
-            "topicSelect"
-        )?.value?.trim();
-
-    const startButton =
-        battleElement(
-            "startBattleButton"
-        );
-
-    if (!subject) {
-
-        showBattleError(
-            "Please select a subject."
-        );
-
-        return;
-    }
-
-    if (!topic) {
-
-        showBattleError(
-            "Please select a topic."
-        );
-
-        return;
-    }
-
-    /*
-       FREE BATTLE LIMIT
-    */
-
-    if (
-        typeof getBattleCount ===
-            "function" &&
-        getBattleCount() >= 5
-    ) {
-
-        showBattleError(
-            "You have used all 5 free battles. Upgrade to Premium to continue."
-        );
-
-        return;
-    }
-
-    if (startButton) {
-
-        startButton.disabled =
-            true;
-
-        startButton.textContent =
-            "Preparing Battle...";
-    }
-
-    computerBattleState.selectedSubject =
-        subject;
-
-    computerBattleState.selectedTopic =
-        topic;
-
-    showLoading();
-
-    try {
-
-        let questions = [];
-
-        /*
-           Ask AI for questions.
-        */
-
-        try {
-
-            const aiResponse =
-                await requestAIQuestions(
-                    subject,
-                    topic
-                );
-
-            questions =
-                normalizeQuestions(
-                    aiResponse
-                );
-
-            console.log(
-                `Computer Battle: ${questions.length} valid AI questions received.`
-            );
-
-        } catch (aiError) {
-
-            console.warn(
-                "Computer Battle AI generation failed:",
-                aiError
-            );
-        }
-
-        /*
-           If fewer than 10 valid questions were returned,
-           use the reliable fallback set.
-        */
-
-        if (
-            questions.length <
-            QUESTIONS_PER_BATTLE
-        ) {
-
-            console.warn(
-                "Computer Battle: Not enough AI questions. Using fallback questions."
-            );
-
-            questions =
-                createFallbackQuestions();
-        }
-
-        computerBattleState.questions =
-            shuffleArray(
-                questions
-            ).slice(
-                0,
-                QUESTIONS_PER_BATTLE
-            );
-
-        computerBattleState.currentQuestionIndex =
-            0;
-
-        computerBattleState.playerScore =
-            0;
-
-        computerBattleState.computerScore =
-            0;
-
-        computerBattleState.timeRemaining =
-            QUESTION_TIME_LIMIT;
-
-        computerBattleState.questionLocked =
-            false;
-
-        computerBattleState.battleActive =
-            true;
-
-        computerBattleState.battleCompleted =
-            false;
-
-        hideLoading();
-
-        showBattleScreen();
-
-        updateScoreDisplay();
-
-        displayCurrentQuestion();
-
-    } catch (error) {
-
-        console.error(
-            "Could not start computer battle:",
-            error
-        );
-
-        hideLoading();
-
-        const setup =
-            battleElement(
-                "battleSetup"
-            );
-
-        if (setup) {
-            setup.style.display =
-                "block";
-        }
-
-        if (startButton) {
-
-            startButton.disabled =
-                false;
-
-            startButton.textContent =
-                "⚔️ Start Battle";
-        }
-
-        showBattleError(
-            "We couldn't prepare the battle. Please try again."
-        );
-    }
-}
-
-
-/* =========================================================
-   AI REQUEST
-========================================================= */
-
-async function requestAIQuestions(
+async function generateAIQuestions(
     subject,
     topic
 ) {
+
+    const selectedSubject =
+        normalizeSubjectName(
+            subject
+        );
+
+
+    const selectedTopic =
+        String(
+            topic ||
+            "General Concepts"
+        ).trim();
+
+
+    const prompt = `
+You are generating questions for StudyMind AI's academic battle game.
+
+SELECTED SUBJECT:
+${selectedSubject}
+
+SELECTED TOPIC:
+${selectedTopic}
+
+Generate exactly ${QUESTIONS_PER_BATTLE} multiple-choice questions.
+
+STRICT RULES:
+
+1. Every question MUST belong to the selected subject: ${selectedSubject}.
+2. Every question MUST be related to the selected topic: ${selectedTopic}.
+3. NEVER switch to Mathematics unless the selected subject is Mathematics.
+4. NEVER generate questions from another subject.
+5. Do not use generic questions when a specific academic question can be created.
+6. Questions should be appropriate for Nigerian senior secondary school students.
+7. Make the questions varied in difficulty.
+8. Do not repeat questions.
+9. Each question must have exactly 4 answer choices.
+10. There must be exactly one correct answer.
+11. Return ONLY JSON.
+
+Return this exact structure:
+
+{
+  "questions": [
+    {
+      "question": "Question here",
+      "answers": [
+        "Option A",
+        "Option B",
+        "Option C",
+        "Option D"
+      ],
+      "correct": 0
+    }
+  ]
+}
+
+The "correct" value MUST be zero-based:
+0 = first answer
+1 = second answer
+2 = third answer
+3 = fourth answer
+`;
+
+
+    console.log(
+        "Requesting AI questions:",
+        {
+            subject:
+                selectedSubject,
+            topic:
+                selectedTopic
+        }
+    );
+
 
     const response =
         await fetch(
@@ -2712,292 +3602,388 @@ async function requestAIQuestions(
 
                 body:
                     JSON.stringify({
+                        subject:
+                            selectedSubject,
 
-                        mode: "game",
+                        topic:
+                            selectedTopic,
 
-                        type:
-                            "game_questions",
-
-                        subject,
-
-                        topic,
-
-                        numberOfQuestions:
+                        count:
                             QUESTIONS_PER_BATTLE,
 
-                        questionCount:
-                            QUESTIONS_PER_BATTLE,
-
-                        difficulty:
-                            "mixed",
-
-                        format:
-                            "multiple_choice",
-
-                        includeAnswers:
-                            true
+                        prompt:
+                            prompt
                     })
             }
         );
 
-    let data = null;
 
-    try {
+    /*
+       Fetch resolves even for HTTP errors,
+       so explicitly check response.ok.
+    */
 
-        data =
-            await response.json();
-
-    } catch (error) {
-
-        throw new Error(
-            "AI server did not return valid JSON."
-        );
-    }
-
-    if (!response.ok) {
-
-        console.error(
-            "AI server error:",
-            data
-        );
+    if (
+        !response.ok
+    ) {
 
         throw new Error(
-            data?.error ||
             `AI server returned HTTP ${response.status}`
         );
     }
 
-    if (
-        data &&
-        Array.isArray(
-            data.questions
-        )
-    ) {
 
-        return data.questions;
+    const data =
+        await response.json();
+
+
+    console.log(
+        "AI question response:",
+        data
+    );
+
+
+    const rawQuestions =
+        extractQuestionsFromAIResponse(
+            data
+        );
+
+
+    const questions =
+        validateAIQuestions(
+            rawQuestions,
+            selectedSubject,
+            selectedTopic
+        );
+
+
+    console.log(
+        `AI returned ${questions.length} valid questions for ${selectedSubject}.`
+    );
+
+
+    return questions;
+}
+
+
+/* =========================================================
+   GET QUESTIONS FOR BATTLE
+========================================================= */
+
+async function getQuestionsForBattle(
+    subject,
+    topic
+) {
+
+    const selectedSubject =
+        normalizeSubjectName(
+            subject
+        );
+
+
+    const selectedTopic =
+        String(
+            topic ||
+            "General Concepts"
+        ).trim();
+
+
+    /*
+       First attempt: AI.
+    */
+
+    try {
+
+        const aiQuestions =
+            await generateAIQuestions(
+                selectedSubject,
+                selectedTopic
+            );
+
+
+        if (
+            aiQuestions.length >=
+            QUESTIONS_PER_BATTLE
+        ) {
+
+            return shuffleArray(
+                aiQuestions
+            ).slice(
+                0,
+                QUESTIONS_PER_BATTLE
+            );
+        }
+
+
+        /*
+           If AI produced some valid questions,
+           preserve them and fill the remainder
+           from the SAME subject.
+        */
+
+        if (
+            aiQuestions.length > 0
+        ) {
+
+            const fallback =
+                buildFallbackBattleQuestions(
+                    selectedSubject,
+                    selectedTopic
+                );
+
+
+            const used =
+                new Set(
+                    aiQuestions.map(
+                        q =>
+                            normalizeQuestionText(
+                                q.question
+                            )
+                    )
+                );
+
+
+            for (
+                const question of fallback
+            ) {
+
+                if (
+                    aiQuestions.length >=
+                    QUESTIONS_PER_BATTLE
+                ) {
+                    break;
+                }
+
+
+                const key =
+                    normalizeQuestionText(
+                        question.question
+                    );
+
+
+                if (
+                    used.has(key)
+                ) {
+                    continue;
+                }
+
+
+                used.add(key);
+
+                aiQuestions.push(
+                    question
+                );
+            }
+
+
+            return shuffleArray(
+                aiQuestions
+            ).slice(
+                0,
+                QUESTIONS_PER_BATTLE
+            );
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "AI question generation failed:",
+            error
+        );
     }
 
-    if (
-        data &&
-        data.data &&
-        Array.isArray(
-            data.data.questions
-        )
-    ) {
 
-        return data.data.questions;
-    }
+    /*
+       CRITICAL FALLBACK:
+       This uses the SELECTED SUBJECT.
+       It can NEVER automatically fall back
+       to Mathematics.
+    */
 
-    if (
-        Array.isArray(data)
-    ) {
+    console.log(
+        "Using subject-specific fallback:",
+        {
+            subject:
+                selectedSubject,
+            topic:
+                selectedTopic
+        }
+    );
 
-        return data;
-    }
 
-    throw new Error(
-        "AI server returned an invalid response."
+    return buildFallbackBattleQuestions(
+        selectedSubject,
+        selectedTopic
     );
 }
 
 
 /* =========================================================
-   NORMALIZE AI QUESTIONS
+   BATTLE UI
 ========================================================= */
 
-function normalizeQuestions(
-    questions
+function showElement(
+    id
 ) {
 
-    if (
-        !Array.isArray(
-            questions
-        )
-    ) {
-        return [];
+    const element =
+        $(id);
+
+    if (!element) {
+        return;
     }
 
-    return questions
-        .map(item => {
+    element.style.display =
+        "";
+}
 
-            if (
-                !item ||
-                typeof item !==
-                    "object"
-            ) {
-                return null;
-            }
 
-            const question =
-                item.question ||
-                item.questionText ||
-                item.text;
+function hideElement(
+    id
+) {
 
-            let options =
-                item.options ||
-                item.choices ||
-                item.answers;
+    const element =
+        $(id);
 
-            if (
-                !question ||
-                !Array.isArray(
-                    options
-                )
-            ) {
-                return null;
-            }
+    if (!element) {
+        return;
+    }
 
-            options =
-                options
-                    .map(
-                        option => {
-
-                            if (
-                                option &&
-                                typeof option ===
-                                    "object"
-                            ) {
-
-                                return String(
-                                    option.text ||
-                                    option.answer ||
-                                    option.value ||
-                                    ""
-                                ).trim();
-                            }
-
-                            return String(
-                                option
-                            ).trim();
-                        }
-                    )
-                    .filter(Boolean);
-
-            if (
-                options.length !== 4
-            ) {
-                return null;
-            }
-
-            let answer =
-                item.answer ??
-                item.correctAnswer ??
-                item.correctOption ??
-                item.correctIndex;
-
-            /*
-               Convert A/B/C/D answers to indexes.
-            */
-
-            if (
-                typeof answer ===
-                "string"
-            ) {
-
-                const clean =
-                    answer
-                        .trim()
-                        .toUpperCase();
-
-                const letters = [
-                    "A",
-                    "B",
-                    "C",
-                    "D"
-                ];
-
-                if (
-                    letters.includes(
-                        clean
-                    )
-                ) {
-
-                    answer =
-                        letters.indexOf(
-                            clean
-                        );
-
-                } else {
-
-                    const matchingIndex =
-                        options.findIndex(
-                            option =>
-                                normalizeBattleText(
-                                    option
-                                ) ===
-                                normalizeBattleText(
-                                    answer
-                                )
-                        );
-
-                    if (
-                        matchingIndex !==
-                        -1
-                    ) {
-
-                        answer =
-                            matchingIndex;
-                    }
-                }
-            }
-
-            answer =
-                Number(
-                    answer
-                );
-
-            if (
-                !Number.isInteger(
-                    answer
-                ) ||
-                answer < 0 ||
-                answer > 3
-            ) {
-
-                return null;
-            }
-
-            return {
-
-                question:
-                    String(
-                        question
-                    ).trim(),
-
-                options,
-
-                answer
-            };
-        })
-        .filter(Boolean);
+    element.style.display =
+        "none";
 }
 
 
 /* =========================================================
-   SHOW BATTLE SCREEN
+   BATTLE SCREEN ELEMENT HELPERS
 ========================================================= */
 
-function showBattleScreen() {
+function getBattleSetupElement() {
+    return (
+        $("battleSetup")
+    );
+}
 
-    const setup =
-        battleElement(
-            "battleSetup"
-        );
+
+function getBattleLoadingElement() {
+    return (
+        $("battleLoading")
+    );
+}
+
+
+function getBattleScreenElement() {
+    return (
+        $("battleScreen")
+    );
+}
+
+
+function getBattleResultsElement() {
+    return (
+        $("battleResults")
+    );
+}
+
+
+/* =========================================================
+   SHOW BATTLE LOADING
+========================================================= */
+
+function showBattleLoading(
+    message =
+        "Generating your battle..."
+) {
 
     const loading =
-        battleElement(
-            "battleLoading"
-        );
+        getBattleLoadingElement();
+
+    if (loading) {
+
+        loading.style.display =
+            "";
+    }
+
+
+    const messageElements = [
+        $("loadingText"),
+        $("battleLoadingText"),
+        $("loadingMessage")
+    ];
+
+
+    for (
+        const element of messageElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                message;
+        }
+    }
+}
+
+
+/* =========================================================
+   SHOW BATTLE SETUP
+========================================================= */
+
+function showBattleSetup() {
+
+    const setup =
+        getBattleSetupElement();
+
+    const loading =
+        getBattleLoadingElement();
 
     const screen =
-        battleElement(
-            "battleScreen"
-        );
+        getBattleScreenElement();
 
     const results =
-        battleElement(
-            "battleResults"
-        );
+        getBattleResultsElement();
+
+
+    if (setup) {
+        setup.style.display =
+            "";
+    }
+
+    if (loading) {
+        loading.style.display =
+            "none";
+    }
+
+    if (screen) {
+        screen.style.display =
+            "none";
+    }
+
+    if (results) {
+        results.style.display =
+            "none";
+    }
+}
+
+
+/* =========================================================
+   SHOW ACTIVE BATTLE
+========================================================= */
+
+function showActiveBattle() {
+
+    const setup =
+        getBattleSetupElement();
+
+    const loading =
+        getBattleLoadingElement();
+
+    const screen =
+        getBattleScreenElement();
+
+    const results =
+        getBattleResultsElement();
+
 
     if (setup) {
         setup.style.display =
@@ -3005,189 +3991,333 @@ function showBattleScreen() {
     }
 
     if (loading) {
-        loading.classList.remove(
-            "active"
-        );
-    }
-
-    if (results) {
-        results.classList.remove(
-            "active"
-        );
+        loading.style.display =
+            "none";
     }
 
     if (screen) {
-        screen.classList.add(
-            "active"
-        );
+        screen.style.display =
+            "";
+    }
+
+    if (results) {
+        results.style.display =
+            "none";
     }
 }
 
 
 /* =========================================================
-   DISPLAY CURRENT QUESTION
+   SHOW RESULTS
+========================================================= */
+
+function showBattleResults() {
+
+    const setup =
+        getBattleSetupElement();
+
+    const loading =
+        getBattleLoadingElement();
+
+    const screen =
+        getBattleScreenElement();
+
+    const results =
+        getBattleResultsElement();
+
+
+    if (setup) {
+        setup.style.display =
+            "none";
+    }
+
+    if (loading) {
+        loading.style.display =
+            "none";
+    }
+
+    if (screen) {
+        screen.style.display =
+            "none";
+    }
+
+    if (results) {
+        results.style.display =
+            "";
+    }
+}
+
+
+/* =========================================================
+   DISPLAY QUESTION
 ========================================================= */
 
 function displayCurrentQuestion() {
 
-    clearTimer();
-
-    computerBattleState.questionLocked =
-        false;
-
-    const index =
-        computerBattleState.currentQuestionIndex;
-
     const question =
-        computerBattleState.questions[
-            index
+        battleState.questions[
+            battleState.currentQuestionIndex
         ];
+
 
     if (!question) {
 
-        finishComputerBattle();
+        finishBattle();
 
         return;
     }
 
-    const roundNumber =
-        battleElement(
-            "roundNumber"
-        );
 
-    const questionTopic =
-        battleElement(
-            "questionTopic"
-        );
+    const currentNumber =
+        battleState.currentQuestionIndex +
+        1;
 
-    const questionText =
-        battleElement(
-            "questionText"
-        );
 
-    const answerGrid =
-        battleElement(
-            "answerGrid"
-        );
+    /*
+       Round number.
+    */
 
-    const feedback =
-        battleElement(
-            "battleFeedback"
-        );
+    const roundElements = [
+        $("roundNumber"),
+        $("battleRound")
+    ];
+
+
+    for (
+        const element of roundElements
+    ) {
+
+        if (element) {
+            element.textContent =
+                `${currentNumber}/${QUESTIONS_PER_BATTLE}`;
+        }
+    }
+
+
+    /*
+       Question topic.
+    */
+
+    const topicElements = [
+        $("questionTopic"),
+        $("battleCurrentTopic")
+    ];
+
+
+    for (
+        const element of topicElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                battleState.topic;
+        }
+    }
+
+
+    /*
+       Subject.
+    */
+
+    const subjectElements = [
+        $("battleCurrentSubject"),
+        $("currentBattleSubject")
+    ];
+
+
+    for (
+        const element of subjectElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                battleState.subject;
+        }
+    }
+
+
+    /*
+       Question text.
+    */
+
+    const questionElements = [
+        $("questionText"),
+        $("battleQuestion")
+    ];
+
+
+    for (
+        const element of questionElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                question.question;
+        }
+    }
+
+
+    /*
+       Answers.
+    */
+
+    const answerContainer =
+        $("answerGrid") ||
+        $("battleAnswers");
+
+
+    if (!answerContainer) {
+        return;
+    }
+
+
+    answerContainer.innerHTML =
+        "";
+
+
+    question.answers.forEach(
+        (
+            answer,
+            index
+        ) => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "battle-answer";
+
+
+            button.textContent =
+                answer;
+
+
+            button.dataset.index =
+                index;
+
+
+            button.addEventListener(
+                "click",
+                () =>
+                    handlePlayerAnswer(
+                        index
+                    )
+            );
+
+
+            answerContainer.appendChild(
+                button
+            );
+        }
+    );
+
+
+    /*
+       Progress.
+    */
 
     const progress =
-        battleElement(
-            "battleProgressBar"
-        );
+        (
+            currentNumber /
+            QUESTIONS_PER_BATTLE
+        ) *
+        100;
 
-    if (roundNumber) {
 
-        roundNumber.textContent =
-            `Question ${
-                index + 1
-            } of ${
-                QUESTIONS_PER_BATTLE
-            }`;
+    const progressElements = [
+        $("battleProgressBar"),
+        $("battleProgress")
+    ];
+
+
+    for (
+        const element of progressElements
+    ) {
+
+        if (!element) {
+            continue;
+        }
+
+
+        if (
+            element.style &&
+            "width" in
+                element.style
+        ) {
+
+            element.style.width =
+                `${progress}%`;
+        }
+
+
+        if (
+            element.tagName ===
+            "PROGRESS"
+        ) {
+
+            element.value =
+                progress;
+        }
     }
 
-    if (questionTopic) {
 
-        questionTopic.textContent =
-            `${
-                computerBattleState.selectedSubject
-            } • ${
-                computerBattleState.selectedTopic
-            }`;
+    updateScoreUI();
+
+
+    startQuestionTimer();
+}
+
+
+/* =========================================================
+   SCORE UI
+========================================================= */
+
+function updateScoreUI() {
+
+    const playerElements = [
+        $("playerScore"),
+        $("battlePlayerScore")
+    ];
+
+
+    const computerElements = [
+        $("computerScore"),
+        $("battleComputerScore")
+    ];
+
+
+    for (
+        const element of playerElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                battleState.playerScore;
+        }
     }
 
-    if (questionText) {
 
-        questionText.textContent =
-            question.question;
+    for (
+        const element of computerElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                battleState.computerScore;
+        }
     }
-
-    if (feedback) {
-
-        feedback.textContent =
-            "";
-    }
-
-    if (progress) {
-
-        progress.style.width =
-            `${
-                (index /
-                    QUESTIONS_PER_BATTLE) *
-                100
-            }%`;
-    }
-
-    if (answerGrid) {
-
-        answerGrid.innerHTML =
-            "";
-
-        const letters = [
-            "A",
-            "B",
-            "C",
-            "D"
-        ];
-
-        letters.forEach(
-            (
-                letter,
-                optionIndex
-            ) => {
-
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type =
-                    "button";
-
-                button.className =
-                    "answer-button";
-
-                button.dataset.index =
-                    String(
-                        optionIndex
-                    );
-
-                button.innerHTML = `
-                    <span class="answer-letter">
-                        ${letter}
-                    </span>
-                    ${escapeHTML(
-                        question.options[
-                            optionIndex
-                        ]
-                    )}
-                `;
-
-                button.addEventListener(
-                    "click",
-                    () =>
-                        submitAnswer(
-                            optionIndex
-                        )
-                );
-
-                answerGrid.appendChild(
-                    button
-                );
-            }
-        );
-    }
-
-    computerBattleState.timeRemaining =
-        QUESTION_TIME_LIMIT;
-
-    updateTimerDisplay();
-
-    startTimer();
 }
 
 
@@ -3195,26 +4325,116 @@ function displayCurrentQuestion() {
    TIMER
 ========================================================= */
 
-function startTimer() {
+function clearBattleTimer() {
 
-    clearTimer();
+    if (
+        battleState.timer
+    ) {
 
-    computerBattleState.timerInterval =
+        clearInterval(
+            battleState.timer
+        );
+
+        battleState.timer =
+            null;
+    }
+}
+
+
+function updateTimerUI(
+    seconds
+) {
+
+    const timerElements = [
+        $("timerNumber"),
+        $("battleTimer")
+    ];
+
+
+    for (
+        const element of timerElements
+    ) {
+
+        if (element) {
+
+            element.textContent =
+                String(
+                    seconds
+                );
+        }
+    }
+
+
+    const percentage =
+        (
+            seconds /
+            QUESTION_TIME_LIMIT
+        ) *
+        100;
+
+
+    const timerBars = [
+        $("battleTimerBar"),
+        $("timerProgressBar")
+    ];
+
+
+    for (
+        const element of timerBars
+    ) {
+
+        if (!element) {
+            continue;
+        }
+
+
+        element.style.width =
+            `${percentage}%`;
+    }
+}
+
+
+function startQuestionTimer() {
+
+    clearBattleTimer();
+
+
+    battleState.timerSeconds =
+        QUESTION_TIME_LIMIT;
+
+
+    battleState.playerAnswered =
+        false;
+
+
+    battleState.computerAnswered =
+        false;
+
+
+    updateTimerUI(
+        battleState.timerSeconds
+    );
+
+
+    battleState.timer =
         setInterval(
             () => {
 
-                computerBattleState.timeRemaining--;
+                battleState.timerSeconds--;
 
-                updateTimerDisplay();
+                updateTimerUI(
+                    battleState.timerSeconds
+                );
+
 
                 if (
-                    computerBattleState.timeRemaining <=
+                    battleState.timerSeconds <=
                     0
                 ) {
 
-                    clearTimer();
+                    clearBattleTimer();
 
-                    handleTimeout();
+                    handleQuestionTimeout();
                 }
 
             },
@@ -3223,126 +4443,129 @@ function startTimer() {
 }
 
 
-function clearTimer() {
-
-    if (
-        computerBattleState.timerInterval
-    ) {
-
-        clearInterval(
-            computerBattleState.timerInterval
-        );
-
-        computerBattleState.timerInterval =
-            null;
-    }
-}
-
-
-function updateTimerDisplay() {
-
-    const number =
-        battleElement(
-            "timerNumber"
-        );
-
-    const container =
-        battleElement(
-            "timerContainer"
-        );
-
-    if (number) {
-
-        number.textContent =
-            Math.max(
-                0,
-                computerBattleState.timeRemaining
-            );
-    }
-
-    if (container) {
-
-        container.classList.toggle(
-            "warning",
-            computerBattleState.timeRemaining <=
-                7
-        );
-
-        container.classList.toggle(
-            "danger",
-            computerBattleState.timeRemaining <=
-                3
-        );
-    }
-}
-
-
 /* =========================================================
-   SUBMIT ANSWER
+   PLAYER ANSWER
 ========================================================= */
 
-function submitAnswer(
-    selectedIndex
+function handlePlayerAnswer(
+    answerIndex
 ) {
 
     if (
-        !computerBattleState.battleActive ||
-        computerBattleState.questionLocked
+        !battleState.battleStarted ||
+        battleState.battleFinished ||
+        battleState.playerAnswered
     ) {
-
         return;
     }
 
-    computerBattleState.questionLocked =
+
+    battleState.playerAnswered =
         true;
 
-    clearTimer();
+
+    clearBattleTimer();
+
 
     const question =
-        computerBattleState.questions[
-            computerBattleState.currentQuestionIndex
+        battleState.questions[
+            battleState.currentQuestionIndex
         ];
+
 
     if (!question) {
         return;
     }
 
-    const correct =
-        selectedIndex ===
-        question.answer;
 
-    if (correct) {
+    const buttons =
+        document.querySelectorAll(
+            "#answerGrid button, #battleAnswers button"
+        );
 
-        computerBattleState.playerScore++;
+
+    buttons.forEach(
+        button => {
+
+            button.disabled =
+                true;
+        }
+    );
+
+
+    const selectedButton =
+        [...buttons].find(
+            button =>
+                Number(
+                    button.dataset.index
+                ) ===
+                answerIndex
+        );
+
+
+    const correctButton =
+        [...buttons].find(
+            button =>
+                Number(
+                    button.dataset.index
+                ) ===
+                question.correct
+        );
+
+
+    if (
+        answerIndex ===
+        question.correct
+    ) {
+
+        battleState.playerScore++;
+
+
+        if (selectedButton) {
+
+            selectedButton.classList.add(
+                "correct"
+            );
+        }
+
+        showBattleFeedback(
+            "Correct!",
+            true
+        );
+
+    } else {
+
+        if (selectedButton) {
+
+            selectedButton.classList.add(
+                "incorrect"
+            );
+        }
+
+        if (correctButton) {
+
+            correctButton.classList.add(
+                "correct"
+            );
+        }
+
+        showBattleFeedback(
+            "Incorrect",
+            false
+        );
     }
 
-    markAnswers(
-        selectedIndex,
-        question.answer
-    );
 
-    showAnswerFeedback(
-        correct
-            ? "✓ Correct!"
-            : "✗ Incorrect"
-    );
+    updateScoreUI();
 
-    updateScoreDisplay();
+
+    /*
+       Computer answers after a short delay.
+    */
 
     setTimeout(
-        () => {
-
-            if (
-                computerBattleState.battleActive
-            ) {
-
-                computerTakeTurn(
-                    correct
-                );
-            }
-
-        },
-        700
+        computerAnswer,
+        900
     );
 }
 
@@ -3351,161 +4574,193 @@ function submitAnswer(
    TIMEOUT
 ========================================================= */
 
-function handleTimeout() {
+function handleQuestionTimeout() {
 
     if (
-        !computerBattleState.battleActive ||
-        computerBattleState.questionLocked
+        battleState.playerAnswered
     ) {
-
         return;
     }
 
-    computerBattleState.questionLocked =
+
+    battleState.playerAnswered =
         true;
 
+
     const question =
-        computerBattleState.questions[
-            computerBattleState.currentQuestionIndex
+        battleState.questions[
+            battleState.currentQuestionIndex
         ];
+
 
     if (!question) {
         return;
     }
 
-    markAnswers(
-        -1,
-        question.answer
+
+    const buttons =
+        document.querySelectorAll(
+            "#answerGrid button, #battleAnswers button"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            button.disabled =
+                true;
+        }
     );
 
-    showAnswerFeedback(
-        "⏱ Time's up!"
+
+    const correctButton =
+        [...buttons].find(
+            button =>
+                Number(
+                    button.dataset.index
+                ) ===
+                question.correct
+        );
+
+
+    if (correctButton) {
+
+        correctButton.classList.add(
+            "correct"
+        );
+    }
+
+
+    showBattleFeedback(
+        "Time's up!",
+        false
     );
+
 
     setTimeout(
-        () => {
-
-            if (
-                computerBattleState.battleActive
-            ) {
-
-                computerTakeTurn(
-                    false
-                );
-            }
-
-        },
-        700
+        computerAnswer,
+        900
     );
 }
 
 
 /* =========================================================
-   MARK ANSWERS
+   BATTLE FEEDBACK
 ========================================================= */
 
-function markAnswers(
-    selectedIndex,
-    correctIndex
+function showBattleFeedback(
+    message,
+    correct
 ) {
 
-    document
-        .querySelectorAll(
-            ".answer-button"
-        )
-        .forEach(
-            (
-                button,
-                index
-            ) => {
-
-                button.disabled =
-                    true;
-
-                if (
-                    index ===
-                    correctIndex
-                ) {
-
-                    button.classList.add(
-                        "correct"
-                    );
-                }
-
-                if (
-                    index ===
-                        selectedIndex &&
-                    selectedIndex !==
-                        correctIndex
-                ) {
-
-                    button.classList.add(
-                        "incorrect"
-                    );
-                }
-            }
-        );
-}
+    const elements = [
+        $("battleFeedback")
+    ];
 
 
-function showAnswerFeedback(
-    message
-) {
+    for (
+        const element of elements
+    ) {
 
-    const feedback =
-        battleElement(
-            "battleFeedback"
-        );
+        if (!element) {
+            continue;
+        }
 
-    if (feedback) {
 
-        feedback.textContent =
+        element.textContent =
             message;
+
+
+        element.classList.remove(
+            "correct",
+            "incorrect"
+        );
+
+
+        element.classList.add(
+            correct
+                ? "correct"
+                : "incorrect"
+        );
     }
 }
 
 
 /* =========================================================
-   COMPUTER TURN
+   COMPUTER ANSWER
 ========================================================= */
 
-function computerTakeTurn(
-    playerWasCorrect
-) {
+function computerAnswer() {
 
     if (
-        !computerBattleState.battleActive
+        battleState.battleFinished
     ) {
         return;
     }
 
-    const correctChance =
-        playerWasCorrect
-            ? 0.62
-            : 0.58;
 
     if (
-        Math.random() <
-        correctChance
+        battleState.computerAnswered
     ) {
-
-        computerBattleState.computerScore++;
+        return;
     }
 
-    updateScoreDisplay();
+
+    battleState.computerAnswered =
+        true;
+
+
+    const question =
+        battleState.questions[
+            battleState.currentQuestionIndex
+        ];
+
+
+    if (!question) {
+        return;
+    }
+
+
+    /*
+       Computer has a variable probability
+       rather than always getting the same result.
+    */
+
+    const difficultyFactor =
+        Math.random();
+
+
+    let computerCorrect;
+
+
+    if (
+        difficultyFactor < 0.68
+    ) {
+
+        computerCorrect =
+            true;
+
+    } else {
+
+        computerCorrect =
+            false;
+    }
+
+
+    if (
+        computerCorrect
+    ) {
+
+        battleState.computerScore++;
+    }
+
+
+    updateScoreUI();
+
 
     setTimeout(
-        () => {
-
-            if (
-                computerBattleState.battleActive
-            ) {
-
-                moveToNextQuestion();
-            }
-
-        },
-        450
+        nextQuestion,
+        650
     );
 }
 
@@ -3514,383 +4769,663 @@ function computerTakeTurn(
    NEXT QUESTION
 ========================================================= */
 
-function moveToNextQuestion() {
+function nextQuestion() {
 
     if (
-        !computerBattleState.battleActive
+        battleState.battleFinished
     ) {
         return;
     }
 
-    computerBattleState.currentQuestionIndex++;
+
+    battleState.currentQuestionIndex++;
+
 
     if (
-        computerBattleState.currentQuestionIndex >=
-        QUESTIONS_PER_BATTLE
+        battleState.currentQuestionIndex >=
+        battleState.questions.length
     ) {
 
-        finishComputerBattle();
+        finishBattle();
 
         return;
     }
+
+
+    battleState.playerAnswered =
+        false;
+
+
+    battleState.computerAnswered =
+        false;
+
+
+    const feedback =
+        $("battleFeedback");
+
+
+    if (feedback) {
+
+        feedback.textContent =
+            "";
+
+        feedback.classList.remove(
+            "correct",
+            "incorrect"
+        );
+    }
+
 
     displayCurrentQuestion();
 }
 
 
 /* =========================================================
-   SCORE DISPLAY
+   START COMPUTER BATTLE
 ========================================================= */
 
-function updateScoreDisplay() {
-
-    const player =
-        battleElement(
-            "playerScore"
-        );
-
-    const computer =
-        battleElement(
-            "computerScore"
-        );
-
-    if (player) {
-
-        player.textContent =
-            computerBattleState.playerScore;
-    }
-
-    if (computer) {
-
-        computer.textContent =
-            computerBattleState.computerScore;
-    }
-}
-
-
-/* =========================================================
-   BATTLE POINTS
-========================================================= */
-
-function calculateBattlePoints(
-    result,
-    playerScore
-) {
-
-    let points = 0;
+async function startComputerBattle() {
 
     if (
-        result ===
-        "win"
+        battleState.battleStarted
     ) {
-
-        points = 100;
-
-    } else if (
-        result ===
-        "draw"
-    ) {
-
-        points = 50;
-
-    } else {
-
-        points = 20;
+        return;
     }
 
-    points +=
-        (
-            Number(
-                playerScore
-            ) || 0
-        ) * 5;
 
-    return points;
-}
+    const subjectSelect =
+        getSubjectSelect();
 
 
-/* =========================================================
-   FINISH BATTLE
-========================================================= */
+    const topicSelect =
+        getTopicSelect();
 
-async function finishComputerBattle() {
 
-    if (
-        computerBattleState.battleCompleted
-    ) {
+    const selectedSubject =
+        subjectSelect?.value ||
+        "Mathematics";
+
+
+    const selectedTopic =
+        topicSelect?.value ||
+        "General Concepts";
+
+
+    /*
+       IMPORTANT:
+       Store the EXACT selected values.
+    */
+
+    battleState.subject =
+        normalizeSubjectName(
+            selectedSubject
+        );
+
+
+    battleState.topic =
+        String(
+            selectedTopic
+        ).trim();
+
+
+    battleState.currentQuestionIndex =
+        0;
+
+
+    battleState.playerScore =
+        0;
+
+
+    battleState.computerScore =
+        0;
+
+
+    battleState.battleStarted =
+        true;
+
+
+    battleState.battleFinished =
+        false;
+
+
+    console.log(
+        "STARTING COMPUTER BATTLE",
+        {
+            subject:
+                battleState.subject,
+
+            topic:
+                battleState.topic
+        }
+    );
+
+
+    showBattleLoading(
+        `Preparing ${battleState.subject} questions...`
+    );
+
+
+    /*
+       Check authentication.
+    */
+
+    const supabase =
+        await waitForSupabaseClient();
+
+
+    if (!supabase) {
+
+        battleState.battleStarted =
+            false;
+
+
+        showBattleError(
+            "Unable to connect to StudyMind. Please refresh the page."
+        );
+
 
         return;
     }
 
-    computerBattleState.battleCompleted =
-        true;
-
-    computerBattleState.battleActive =
-        false;
-
-    clearTimer();
-
-    const playerScore =
-        computerBattleState.playerScore;
-
-    const computerScore =
-        computerBattleState.computerScore;
-
-    let result;
-
-    if (
-        playerScore >
-        computerScore
-    ) {
-
-        result =
-            "win";
-
-    } else if (
-        playerScore <
-        computerScore
-    ) {
-
-        result =
-            "loss";
-
-    } else {
-
-        result =
-            "draw";
-    }
-
-    const points =
-        calculateBattlePoints(
-            result,
-            playerScore
-        );
-
-    await recordCompletedBattle(
-        result,
-        points
-    );
-
-    showResults(
-        result,
-        points
-    );
-}
-
-
-/* =========================================================
-   RECORD BATTLE
-========================================================= */
-
-async function recordCompletedBattle(
-    result,
-    points
-) {
-
-    /*
-       Update local free battle counter.
-    */
 
     try {
 
+        const {
+            data,
+            error
+        } =
+            await supabase.auth.getUser();
+
+
         if (
-            typeof registerFreeBattle ===
-            "function"
+            error ||
+            !data?.user
         ) {
 
-            registerFreeBattle();
+            throw new Error(
+                "You must be logged in to play."
+            );
         }
+
+
+        battleState.user =
+            data.user;
+
+
+        /*
+           Generate questions.
+        */
+
+        battleState.questions =
+            await getQuestionsForBattle(
+                battleState.subject,
+                battleState.topic
+            );
+
+
+        if (
+            !Array.isArray(
+                battleState.questions
+            ) ||
+            battleState.questions.length === 0
+        ) {
+
+            throw new Error(
+                `No questions could be generated for ${battleState.subject}.`
+            );
+        }
+
+
+        /*
+           Final safety validation:
+           every question must carry the
+           selected subject.
+        */
+
+        battleState.questions =
+            battleState.questions.map(
+                question => ({
+                    ...question,
+
+                    subject:
+                        battleState.subject,
+
+                    topic:
+                        battleState.topic
+                })
+            );
+
+
+        /*
+           Shuffle the final question order
+           one more time.
+        */
+
+        battleState.questions =
+            shuffleArray(
+                battleState.questions
+            ).slice(
+                0,
+                QUESTIONS_PER_BATTLE
+            );
+
+
+        /*
+           If somehow fewer than 10 remain,
+           rebuild using the same subject.
+        */
+
+        if (
+            battleState.questions.length <
+            QUESTIONS_PER_BATTLE
+        ) {
+
+            const fallback =
+                buildFallbackBattleQuestions(
+                    battleState.subject,
+                    battleState.topic
+                );
+
+
+            const used =
+                new Set(
+                    battleState.questions.map(
+                        question =>
+                            normalizeQuestionText(
+                                question.question
+                            )
+                    )
+                );
+
+
+            for (
+                const question of fallback
+            ) {
+
+                if (
+                    battleState.questions.length >=
+                    QUESTIONS_PER_BATTLE
+                ) {
+                    break;
+                }
+
+
+                const key =
+                    normalizeQuestionText(
+                        question.question
+                    );
+
+
+                if (
+                    used.has(key)
+                ) {
+                    continue;
+                }
+
+
+                used.add(key);
+
+
+                battleState.questions.push(
+                    question
+                );
+            }
+        }
+
+
+        console.log(
+            "FINAL QUESTIONS:",
+            battleState.questions.map(
+                question => ({
+                    subject:
+                        question.subject,
+
+                    topic:
+                        question.topic,
+
+                    question:
+                        question.question
+                })
+            )
+        );
+
+
+        showActiveBattle();
+
+
+        displayCurrentQuestion();
+
 
     } catch (error) {
 
-        console.warn(
-            "Could not update battle count:",
+        console.error(
+            "Computer Battle failed:",
             error
+        );
+
+
+        battleState.battleStarted =
+            false;
+
+
+        clearBattleTimer();
+
+
+        showBattleError(
+            error.message ||
+            "Unable to start the battle."
+        );
+    }
+}
+
+
+/* =========================================================
+   ERROR UI
+========================================================= */
+
+function showBattleError(
+    message
+) {
+
+    const loading =
+        getBattleLoadingElement();
+
+
+    if (loading) {
+
+        loading.style.display =
+            "";
+    }
+
+
+    const errorElements = [
+        $("battleError"),
+        $("loadingError"),
+        $("errorMessage")
+    ];
+
+
+    let displayed =
+        false;
+
+
+    for (
+        const element of errorElements
+    ) {
+
+        if (!element) {
+            continue;
+        }
+
+
+        element.textContent =
+            message;
+
+
+        element.style.display =
+            "";
+
+
+        displayed =
+            true;
+    }
+
+
+    if (!displayed) {
+
+        console.error(
+            message
         );
     }
 
+
     /*
-       Resolve actual Supabase client.
+       Return to setup after a short delay
+       so the user can try again.
     */
 
-    computerBattleSupabase =
-        getComputerBattleSupabase();
+    setTimeout(
+        () => {
+
+            battleState.battleStarted =
+                false;
+
+
+            showBattleSetup();
+
+        },
+        3000
+    );
+}
+
+
+/* =========================================================
+   CALCULATE BATTLE POINTS
+========================================================= */
+
+function calculateBattlePoints() {
+
+    const player =
+        battleState.playerScore;
+
+
+    const computer =
+        battleState.computerScore;
+
 
     if (
-        !computerBattleSupabase
+        player > computer
     ) {
 
-        console.warn(
-            "Computer Battle: Supabase client unavailable. Leaderboard update skipped."
-        );
+        return 25;
+    }
+
+
+    if (
+        player === computer
+    ) {
+
+        return 10;
+    }
+
+
+    return 5;
+}
+
+
+/* =========================================================
+   GET BATTLE RESULT
+========================================================= */
+
+function getBattleResult() {
+
+    if (
+        battleState.playerScore >
+        battleState.computerScore
+    ) {
+
+        return "win";
+    }
+
+
+    if (
+        battleState.playerScore ===
+        battleState.computerScore
+    ) {
+
+        return "draw";
+    }
+
+
+    return "loss";
+}
+
+
+/* =========================================================
+   UPDATE LEADERBOARD
+========================================================= */
+
+async function updateLeaderboard() {
+
+    const supabase =
+        getComputerBattleSupabase();
+
+
+    if (
+        !supabase ||
+        !battleState.user
+    ) {
 
         return;
     }
 
+
+    const result =
+        getBattleResult();
+
+
+    const points =
+        calculateBattlePoints();
+
+
     try {
 
         const {
-            data: {
-                user
-            },
-            error: userError
+            data:
+            existing,
+            error:
+            fetchError
         } =
-            await computerBattleSupabase
-                .auth
-                .getUser();
-
-        if (
-            userError ||
-            !user
-        ) {
-
-            console.warn(
-                "Computer Battle: No authenticated user for leaderboard update."
-            );
-
-            return;
-        }
-
-        const {
-            data: existing,
-            error: existingError
-        } =
-            await computerBattleSupabase
+            await supabase
                 .from(
                     "game_leaderboard"
                 )
-                .select(`
-                    user_id,
-                    display_name,
-                    battle_points,
-                    wins,
-                    losses,
-                    draws,
-                    battles_played
-                `)
+                .select(
+                    "user_id,display_name,battle_points,wins,losses,draws,battles_played"
+                )
                 .eq(
                     "user_id",
-                    user.id
+                    battleState.user.id
                 )
                 .maybeSingle();
 
-        if (existingError) {
 
-            console.warn(
-                "Could not read leaderboard row:",
-                existingError
-            );
+        if (
+            fetchError
+        ) {
 
-            return;
+            throw fetchError;
         }
 
+
+        const current =
+            existing || {};
+
+
         const displayName =
-            existing?.display_name ||
-            user.user_metadata?.display_name ||
-            user.user_metadata?.full_name ||
-            user.email?.split(
-                "@"
-            )[0] ||
+            current.display_name ||
+            battleState.user.user_metadata
+                ?.display_name ||
+            battleState.user.user_metadata
+                ?.full_name ||
+            battleState.user.email
+                ?.split("@")[0] ||
             "StudyMind Player";
 
-        const currentPoints =
-            Number(
-                existing?.battle_points
-            ) || 0;
 
-        const wins =
-            Number(
-                existing?.wins
-            ) || 0;
-
-        const losses =
-            Number(
-                existing?.losses
-            ) || 0;
-
-        const draws =
-            Number(
-                existing?.draws
-            ) || 0;
-
-        const battlesPlayed =
-            Number(
-                existing?.battles_played
-            ) || 0;
-
-        const update = {
+        const payload = {
 
             user_id:
-                user.id,
+                battleState.user.id,
 
             display_name:
                 displayName,
 
             battle_points:
-                currentPoints +
-                points,
+                (
+                    Number(
+                        current.battle_points
+                    ) || 0
+                ) + points,
 
             wins:
-                wins +
                 (
-                    result ===
-                    "win"
+                    Number(
+                        current.wins
+                    ) || 0
+                ) +
+                (
+                    result === "win"
                         ? 1
                         : 0
                 ),
 
             losses:
-                losses +
                 (
-                    result ===
-                    "loss"
+                    Number(
+                        current.losses
+                    ) || 0
+                ) +
+                (
+                    result === "loss"
                         ? 1
                         : 0
                 ),
 
             draws:
-                draws +
                 (
-                    result ===
-                    "draw"
+                    Number(
+                        current.draws
+                    ) || 0
+                ) +
+                (
+                    result === "draw"
                         ? 1
                         : 0
                 ),
 
             battles_played:
-                battlesPlayed + 1,
+                (
+                    Number(
+                        current.battles_played
+                    ) || 0
+                ) + 1,
 
             updated_at:
-                new Date()
-                    .toISOString()
+                new Date().toISOString()
         };
 
+
         const {
-            error: upsertError
+            error
         } =
-            await computerBattleSupabase
+            await supabase
                 .from(
                     "game_leaderboard"
                 )
                 .upsert(
-                    update,
+                    payload,
                     {
                         onConflict:
                             "user_id"
                     }
                 );
 
-        if (upsertError) {
 
-            console.warn(
-                "Could not update leaderboard:",
-                upsertError
-            );
+        if (error) {
+            throw error;
         }
+
+
+        console.log(
+            "Leaderboard updated:",
+            payload
+        );
+
 
     } catch (error) {
 
-        console.warn(
+        console.error(
             "Leaderboard update failed:",
             error
         );
@@ -3899,84 +5434,44 @@ async function recordCompletedBattle(
 
 
 /* =========================================================
-   RESULTS
+   DISPLAY RESULTS
 ========================================================= */
 
-function showResults(
-    result,
-    points
-) {
+async function displayBattleResults() {
 
-    const battleScreen =
-        battleElement(
-            "battleScreen"
-        );
+    const result =
+        getBattleResult();
 
-    const results =
-        battleElement(
-            "battleResults"
-        );
 
-    if (battleScreen) {
+    const points =
+        calculateBattlePoints();
 
-        battleScreen.classList.remove(
-            "active"
-        );
-    }
 
-    if (results) {
+    const finalPlayer =
+        $("finalPlayerScore");
 
-        results.classList.add(
-            "active"
-        );
-    }
 
-    const icon =
-        battleElement(
-            "resultIcon"
-        );
+    const finalComputer =
+        $("finalComputerScore");
 
-    const title =
-        battleElement(
-            "resultTitle"
-        );
-
-    const summary =
-        battleElement(
-            "resultSummary"
-        );
-
-    const playerScore =
-        battleElement(
-            "finalPlayerScore"
-        );
-
-    const computerScore =
-        battleElement(
-            "finalComputerScore"
-        );
 
     const pointsElement =
-        battleElement(
-            "battlePointsEarned"
-        );
+        $("battlePointsEarned");
 
-    const message =
-        battleElement(
-            "battleResultMessage"
-        );
 
-    if (playerScore) {
+    if (finalPlayer) {
 
-        playerScore.textContent =
-            computerBattleState.playerScore;
+        finalPlayer.textContent =
+            battleState.playerScore;
     }
 
-    if (computerScore) {
 
-        computerScore.textContent =
-            computerBattleState.computerScore;
+    if (finalComputer) {
+
+        finalComputer.textContent =
+            battleState.computerScore;
     }
+
 
     if (pointsElement) {
 
@@ -3984,40 +5479,47 @@ function showResults(
             `+${points}`;
     }
 
+
+    const icon =
+        $("resultIcon");
+
+
+    const title =
+        $("resultTitle");
+
+
+    const summary =
+        $("resultSummary");
+
+
+    const message =
+        $("battleResultMessage");
+
+
     if (
-        result ===
-        "win"
+        result === "win"
     ) {
 
         if (icon) {
-            icon.textContent =
-                "🏆";
+            icon.textContent = "🏆";
         }
 
         if (title) {
             title.textContent =
-                "Victory!";
+                "You Win!";
         }
 
         if (summary) {
             summary.textContent =
-                "You defeated the computer.";
-        }
-
-        if (message) {
-
-            message.textContent =
-                `You scored ${computerBattleState.playerScore}/10 and earned ${points} Battle Points.`;
+                "Excellent work! You outscored the computer.";
         }
 
     } else if (
-        result ===
-        "draw"
+        result === "draw"
     ) {
 
         if (icon) {
-            icon.textContent =
-                "🤝";
+            icon.textContent = "🤝";
         }
 
         if (title) {
@@ -4027,20 +5529,13 @@ function showResults(
 
         if (summary) {
             summary.textContent =
-                "You and the computer finished level.";
-        }
-
-        if (message) {
-
-            message.textContent =
-                `You both scored ${computerBattleState.playerScore}. Keep practising and try again.`;
+                "Both sides finished with the same score.";
         }
 
     } else {
 
         if (icon) {
-            icon.textContent =
-                "⚔️";
+            icon.textContent = "📚";
         }
 
         if (title) {
@@ -4050,15 +5545,156 @@ function showResults(
 
         if (summary) {
             summary.textContent =
-                "The computer won this round.";
-        }
-
-        if (message) {
-
-            message.textContent =
-                `You scored ${computerBattleState.playerScore}/10 and earned ${points} Battle Points.`;
+                "Keep studying and come back stronger.";
         }
     }
+
+
+    if (message) {
+
+        message.textContent =
+            `${battleState.subject} • ${battleState.topic}`;
+    }
+
+
+    showBattleResults();
+
+
+    /*
+       Save leaderboard result.
+    */
+
+    await updateLeaderboard();
+}
+
+
+/* =========================================================
+   FINISH BATTLE
+========================================================= */
+
+async function finishBattle() {
+
+    if (
+        battleState.battleFinished
+    ) {
+        return;
+    }
+
+
+    battleState.battleFinished =
+        true;
+
+
+    battleState.battleStarted =
+        false;
+
+
+    clearBattleTimer();
+
+
+    /*
+       Increment local battle counter.
+    */
+
+    incrementLocalBattleCount();
+
+
+    await displayBattleResults();
+}
+
+
+/* =========================================================
+   FREE BATTLE COUNTER
+========================================================= */
+
+function incrementLocalBattleCount() {
+
+    const keys = [
+        "studyMindBattlesUsed",
+        "studyMindGameBattlesUsed",
+        "gameBattlesUsed",
+        "computerBattleCount"
+    ];
+
+
+    let current =
+        0;
+
+
+    for (
+        const key of keys
+    ) {
+
+        const value =
+            localStorage.getItem(
+                key
+            );
+
+
+        if (
+            value !== null
+        ) {
+
+            const parsed =
+                parseInt(
+                    value,
+                    10
+                );
+
+
+            if (
+                Number.isFinite(
+                    parsed
+                ) &&
+                parsed > current
+            ) {
+
+                current =
+                    parsed;
+            }
+        }
+    }
+
+
+    current++;
+
+
+    /*
+       Primary key.
+    */
+
+    localStorage.setItem(
+        "studyMindBattlesUsed",
+        String(current)
+    );
+
+
+    /*
+       Compatibility keys.
+    */
+
+    localStorage.setItem(
+        "studyMindGameBattlesUsed",
+        String(current)
+    );
+
+
+    localStorage.setItem(
+        "gameBattlesUsed",
+        String(current)
+    );
+
+
+    localStorage.setItem(
+        "computerBattleCount",
+        String(current)
+    );
+
+
+    console.log(
+        "Computer battles used:",
+        current
+    );
 }
 
 
@@ -4068,92 +5704,41 @@ function showResults(
 
 function playAgain() {
 
-    if (
-        typeof getBattleCount ===
-            "function" &&
-        getBattleCount() >= 5
-    ) {
-
-        window.location.href =
-            "game-mode.html";
-
-        return;
-    }
-
-    clearTimer();
-
-    computerBattleState.questions =
+    battleState.questions =
         [];
 
-    computerBattleState.currentQuestionIndex =
+    battleState.currentQuestionIndex =
         0;
 
-    computerBattleState.playerScore =
+    battleState.playerScore =
         0;
 
-    computerBattleState.computerScore =
+    battleState.computerScore =
         0;
 
-    computerBattleState.battleActive =
+    battleState.playerAnswered =
         false;
 
-    computerBattleState.battleCompleted =
+    battleState.computerAnswered =
         false;
 
-    const results =
-        battleElement(
-            "battleResults"
-        );
+    battleState.battleStarted =
+        false;
 
-    const screen =
-        battleElement(
-            "battleScreen"
-        );
+    battleState.battleFinished =
+        false;
 
-    const setup =
-        battleElement(
-            "battleSetup"
-        );
 
-    const startButton =
-        battleElement(
-            "startBattleButton"
-        );
+    clearBattleTimer();
 
-    if (results) {
 
-        results.classList.remove(
-            "active"
-        );
-    }
+    /*
+       Keep the selected subject and topic,
+       but generate a completely new question
+       set.
+    */
 
-    if (screen) {
-
-        screen.classList.remove(
-            "active"
-        );
-    }
-
-    if (setup) {
-
-        setup.style.display =
-            "block";
-    }
-
-    if (startButton) {
-
-        startButton.disabled =
-            false;
-
-        startButton.textContent =
-            "⚔️ Start Battle";
-    }
-
-    updateScoreDisplay();
-
-    hideBattleError();
-
-    loadBattleSetup();
+    showBattleSetup();
 }
 
 
@@ -4163,10 +5748,7 @@ function playAgain() {
 
 function returnToGameMode() {
 
-    clearTimer();
-
-    computerBattleState.battleActive =
-        false;
+    clearBattleTimer();
 
     window.location.href =
         "game-mode.html";
@@ -4174,152 +5756,183 @@ function returnToGameMode() {
 
 
 /* =========================================================
-   AUTHENTICATION
+   AUTHENTICATION CHECK
 ========================================================= */
 
 async function verifyComputerBattleUser() {
 
-    computerBattleSupabase =
-        getComputerBattleSupabase();
+    const supabase =
+        await waitForSupabaseClient();
+
+
+    if (!supabase) {
+
+        throw new Error(
+            "StudyMind authentication is unavailable."
+        );
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.auth.getUser();
+
 
     if (
-        !computerBattleSupabase
+        error ||
+        !data?.user
     ) {
 
-        console.error(
-            "Computer Battle: window.supabaseClient is unavailable or invalid."
+        throw new Error(
+            "Please log in before starting a battle."
         );
-
-        showBattleError(
-            "Authentication is still loading. Please refresh the page and try again."
-        );
-
-        return false;
     }
 
-    try {
 
-        const {
-            data: {
-                user
-            },
-            error
-        } =
-            await computerBattleSupabase
-                .auth
-                .getUser();
+    battleState.user =
+        data.user;
 
-        if (error) {
 
-            console.error(
-                "Authentication check failed:",
-                error
-            );
-
-            showBattleError(
-                "We couldn't verify your account. Please refresh and try again."
-            );
-
-            return false;
-        }
-
-        if (!user) {
-
-            window.location.href =
-                "login.html";
-
-            return false;
-        }
-
-        console.log(
-            "Computer Battle authenticated user:",
-            user.id
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "Unexpected authentication error:",
-            error
-        );
-
-        showBattleError(
-            "We couldn't verify your account. Please refresh and try again."
-        );
-
-        return false;
-    }
+    return data.user;
 }
 
 
 /* =========================================================
-   INITIALIZATION
+   INITIALIZE COMPUTER BATTLE
 ========================================================= */
 
 async function initializeComputerBattle() {
 
     console.log(
-        "Computer Battle: Initializing..."
+        "StudyMind Computer Battle initializing..."
     );
 
-    computerBattleSupabase =
-        getComputerBattleSupabase();
 
-    const authenticated =
+    try {
+
         await verifyComputerBattleUser();
 
-    if (!authenticated) {
+    } catch (error) {
+
+        console.error(
+            "Authentication error:",
+            error
+        );
+
+
+        /*
+           Do not redirect immediately.
+           The page can show the error.
+        */
+
+        showBattleError(
+            error.message
+        );
+
+
         return;
     }
 
+
+    /*
+       Load subject/topic dropdowns.
+    */
+
     loadBattleSetup();
 
-    const subjectSelect =
-        battleElement(
-            "subjectSelect"
-        );
 
-    if (subjectSelect) {
+    /*
+       Make sure the start button is bound
+       exactly once.
+    */
 
-        if (
-            subjectSelect.dataset
-                .battleListenerAttached !==
+    const startButton =
+        $("startBattleButton");
+
+
+    if (
+        startButton &&
+        startButton.dataset
+            .computerBattleBound !==
             "true"
-        ) {
+    ) {
 
-            subjectSelect.addEventListener(
-                "change",
-                updateTopicOptions
-            );
+        startButton.dataset
+            .computerBattleBound =
+            "true";
 
-            subjectSelect.dataset
-                .battleListenerAttached =
-                "true";
-        }
+
+        /*
+           Remove old inline handler.
+        */
+
+        startButton.onclick =
+            null;
+
+
+        startButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.preventDefault();
+
+                startComputerBattle();
+
+            }
+        );
     }
 
-    updateScoreDisplay();
+
+    /*
+       Compatibility aliases.
+    */
+
+    window.startComputerBattle =
+        startComputerBattle;
+
+
+    window.playAgain =
+        playAgain;
+
+
+    window.returnToGameMode =
+        returnToGameMode;
+
+
+    window.updateTopicOptions =
+        updateTopicOptions;
+
 
     console.log(
-        "Computer Battle: Initialization complete."
+        "StudyMind Computer Battle initialized."
     );
 }
 
 
 /* =========================================================
-   CLEANUP
+   DOM READY
 ========================================================= */
 
-window.addEventListener(
-    "beforeunload",
-    clearTimer
-);
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeComputerBattle
+    );
+
+} else {
+
+    initializeComputerBattle();
+}
 
 
 /* =========================================================
-   GLOBAL FUNCTIONS
+   GLOBAL EXPORTS
 ========================================================= */
 
 window.startComputerBattle =
@@ -4334,15 +5947,57 @@ window.returnToGameMode =
 window.updateTopicOptions =
     updateTopicOptions;
 
-window.NIGERIAN_CURRICULUM =
-    NIGERIAN_CURRICULUM;
+window.loadBattleSetup =
+    loadBattleSetup;
 
 
 /* =========================================================
-   START
+   DEBUG HELPERS
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeComputerBattle
-);
+window.StudyMindBattleDebug = {
+
+    getState() {
+        return {
+            subject:
+                battleState.subject,
+
+            topic:
+                battleState.topic,
+
+            questionCount:
+                battleState.questions.length,
+
+            currentQuestion:
+                battleState.currentQuestionIndex,
+
+            playerScore:
+                battleState.playerScore,
+
+            computerScore:
+                battleState.computerScore
+        };
+    },
+
+    getQuestions() {
+        return battleState.questions;
+    },
+
+    getSubjects() {
+        return getCurriculumSubjects();
+    },
+
+    getTopics(subject) {
+        return getFallbackTopics(
+            subject
+        );
+    },
+
+    async regenerate() {
+
+        return getQuestionsForBattle(
+            battleState.subject,
+            battleState.topic
+        );
+    }
+};
