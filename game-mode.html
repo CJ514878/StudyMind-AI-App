@@ -1,30 +1,28 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
->
+    <title>
+        StudyMind AI — Game Mode
+    </title>
 
-<title>
-    StudyMind AI — Game Mode
-</title>
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
-<link
-    rel="stylesheet"
-    href="style.css"
->
-
-<link
-    rel="stylesheet"
-    href="game-mode.css"
->
+    <link
+        rel="stylesheet"
+        href="game-mode.css"
+    >
 
 </head>
 
@@ -32,466 +30,485 @@ content="width=device-width, initial-scale=1.0"
 
 <div class="game-page">
 
-<nav class="game-navbar">
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
 
-```
-<div class="game-logo">
-    StudyMind AI
+    <nav class="game-navbar">
+
+        <div class="game-logo">
+            StudyMind AI
+        </div>
+
+        <div class="game-nav-links">
+
+            <button
+                type="button"
+                onclick="openHome()"
+            >
+                Home
+            </button>
+
+            <button
+                type="button"
+                class="new-plan-button"
+                onclick="openNewStudyPlan()"
+            >
+                + New Study Plan
+            </button>
+
+            <button
+                type="button"
+                onclick="openSummarizer()"
+            >
+                Summarizer
+            </button>
+
+            <button
+                type="button"
+                onclick="openStudyStreak()"
+            >
+                Study Streak
+            </button>
+
+            <button
+                type="button"
+                onclick="openStudyScore()"
+            >
+                Study Score
+            </button>
+
+            <button
+                type="button"
+                class="active"
+            >
+                🎮 Game Mode
+            </button>
+
+            <button
+                type="button"
+                onclick="toggleGameTheme()"
+                id="themeButton"
+            >
+                🌙 Dark Mode
+            </button>
+
+            <button
+                type="button"
+                class="logout-button"
+                onclick="logoutStudyMind()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- =====================================================
+         MAIN GAME CONTAINER
+    ====================================================== -->
+
+    <main class="game-container">
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="game-hero">
+
+            <div class="game-hero-icon">
+                ⚔️
+            </div>
+
+            <span class="game-label">
+                STUDYMIND BATTLE ARENA
+            </span>
+
+            <h1>
+                Learn. Compete. Win.
+            </h1>
+
+            <p>
+                Challenge your knowledge, answer questions,
+                earn points and climb the leaderboard.
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             BATTLE STATUS
+        ================================================== -->
+
+        <section class="battle-status-card">
+
+            <div class="battle-status-left">
+
+                <div class="status-icon">
+                    🎮
+                </div>
+
+                <div>
+
+                    <span class="status-label">
+                        FREE BATTLES
+                    </span>
+
+                    <h3>
+                        <span id="battlesUsed">0</span>
+                        /
+                        <span id="battleLimit">5</span>
+                        battles used
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="battle-status-right">
+
+                <span id="battleStatusText">
+                    5 battles remaining
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             GAME MODES
+        ================================================== -->
+
+        <section class="game-section">
+
+            <div class="section-heading">
+
+                <span class="game-label">
+                    🎮 GAME MODES
+                </span>
+
+                <h2>
+                    Choose your battle
+                </h2>
+
+                <p>
+                    Battle the computer, challenge another
+                    StudyMind student, team up or compete
+                    in tournaments.
+                </p>
+
+            </div>
+
+
+            <div class="game-mode-grid">
+
+
+                <!-- =========================================
+                     COMPUTER BATTLE
+                ========================================== -->
+
+                <button
+                    type="button"
+                    class="game-mode-card featured-mode"
+                    id="computerModeButton"
+                    onclick="openComputerBattle()"
+                >
+
+                    <div class="mode-icon">
+                        🤖
+                    </div>
+
+                    <div class="mode-content">
+
+                        <span class="mode-tag">
+                            AVAILABLE
+                        </span>
+
+                        <h3>
+                            You vs Computer
+                        </h3>
+
+                        <p>
+                            Test your knowledge against
+                            an AI opponent.
+                        </p>
+
+                        <span class="mode-action">
+                            Start Battle →
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+                <!-- =========================================
+                     1V1 — COMING SOON
+                ========================================== -->
+
+                <button
+                    type="button"
+                    class="game-mode-card locked-mode coming-soon-card"
+                    id="oneVOneModeButton"
+                    disabled
+                    aria-disabled="true"
+                >
+
+                    <div class="mode-icon">
+                        ⚔️
+                    </div>
+
+                    <div class="mode-content">
+
+                        <span class="mode-tag">
+                            COMING SOON
+                        </span>
+
+                        <h3>
+                            1v1 Battle
+                        </h3>
+
+                        <p>
+                            Challenge another StudyMind
+                            student in a real-time battle.
+                        </p>
+
+                        <span class="mode-action">
+                            Coming Soon
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+                <!-- =========================================
+                     2V2 — COMING SOON
+                ========================================== -->
+
+                <button
+                    type="button"
+                    class="game-mode-card locked-mode"
+                    id="twoVTwoModeButton"
+                    disabled
+                    aria-disabled="true"
+                >
+
+                    <div class="mode-icon">
+                        👥
+                    </div>
+
+                    <div class="mode-content">
+
+                        <span class="mode-tag">
+                            COMING SOON
+                        </span>
+
+                        <h3>
+                            2v2 Team Battle
+                        </h3>
+
+                        <p>
+                            Team up with another student
+                            and compete together.
+                        </p>
+
+                        <span class="mode-action">
+                            Coming Soon
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+                <!-- =========================================
+                     TOURNAMENTS — COMING SOON
+                ========================================== -->
+
+                <button
+                    type="button"
+                    class="game-mode-card locked-mode"
+                    id="tournamentModeButton"
+                    disabled
+                    aria-disabled="true"
+                >
+
+                    <div class="mode-icon">
+                        🏆
+                    </div>
+
+                    <div class="mode-content">
+
+                        <span class="mode-tag">
+                            COMING SOON
+                        </span>
+
+                        <h3>
+                            Tournaments
+                        </h3>
+
+                        <p>
+                            Compete through multiple rounds
+                            and fight for the top spot.
+                        </p>
+
+                        <span class="mode-action">
+                            Coming Soon
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             LEADERBOARD
+        ================================================== -->
+
+        <section class="leaderboard-section">
+
+            <div class="section-heading">
+
+                <span class="game-label">
+                    🏆 LEADERBOARD
+                </span>
+
+                <h2>
+                    Top StudyMind players
+                </h2>
+
+                <p>
+                    Earn more battle points and climb
+                    the rankings.
+                </p>
+
+            </div>
+
+
+            <div class="leaderboard-card">
+
+                <div class="leaderboard-row leaderboard-header">
+
+                    <span>
+                        Rank
+                    </span>
+
+                    <span>
+                        Player
+                    </span>
+
+                    <span>
+                        Points
+                    </span>
+
+                </div>
+
+
+                <div id="leaderboardRows">
+
+                    <div class="leaderboard-row">
+
+                        <span>
+                            —
+                        </span>
+
+                        <span>
+                            Loading...
+                        </span>
+
+                        <strong>
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="leaderboard-row your-rank"
+                    id="yourLeaderboardRank"
+                >
+
+                    <span>
+                        —
+                    </span>
+
+                    <span>
+                        You
+                    </span>
+
+                    <strong id="yourBattlePoints">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PREMIUM
+        ================================================== -->
+
+        <section
+            class="premium-battle-card"
+            id="premiumBattleCard"
+        >
+
+            <div class="premium-icon">
+                ⭐
+            </div>
+
+            <div>
+
+                <span class="game-label">
+                    STUDYMIND PREMIUM
+                </span>
+
+                <h2>
+                    Keep competing without limits
+                </h2>
+
+                <p>
+                    Free users get 5 battles.
+                    Premium members can play unlimited
+                    battles and compete more often.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="premium-button"
+                onclick="openPremium()"
+            >
+                ⭐ Go Premium
+            </button>
+
+        </section>
+
+
+    </main>
+
 </div>
 
-<div class="game-nav-links">
-
-    <button
-        type="button"
-        onclick="openHome()"
-    >
-        Home
-    </button>
-
-    <button
-        type="button"
-        class="new-plan-button"
-        onclick="openNewStudyPlan()"
-    >
-        + New Study Plan
-    </button>
-
-    <button
-        type="button"
-        onclick="openSummarizer()"
-    >
-        Summarizer
-    </button>
-
-    <button
-        type="button"
-        onclick="openStudyStreak()"
-    >
-        Study Streak
-    </button>
-
-    <button
-        type="button"
-        onclick="openStudyScore()"
-    >
-        Study Score
-    </button>
-
-    <button
-        type="button"
-        class="active"
-    >
-        🎮 Game Mode
-    </button>
-
-    <button
-        type="button"
-        onclick="toggleGameTheme()"
-        id="themeButton"
-    >
-        🌙 Dark Mode
-    </button>
-
-    <button
-        type="button"
-        class="logout-button"
-        onclick="logoutStudyMind()"
-    >
-        Logout
-    </button>
-
-</div>
-```
-
-</nav>
-
-<main class="game-container">
-
-<section class="game-hero">
-
-```
-<div class="game-hero-icon">
-    ⚔️
-</div>
-
-<span class="game-label">
-    STUDYMIND BATTLE ARENA
-</span>
-
-<h1>
-    Learn. Compete. Win.
-</h1>
-
-<p>
-    Challenge your knowledge, answer questions,
-    earn points and climb the leaderboard.
-</p>
-```
-
-</section>
-
-<section class="battle-status-card">
-
-```
-<div class="battle-status-left">
-
-    <div class="status-icon">
-        🎮
-    </div>
-
-    <div>
-
-        <span class="status-label">
-            FREE BATTLES
-        </span>
-
-        <h3>
-            <span id="battlesUsed">0</span>
-            /
-            <span id="battleLimit">5</span>
-            battles used
-        </h3>
-
-    </div>
-
-</div>
-
-<div class="battle-status-right">
-
-    <span id="battleStatusText">
-        5 battles remaining
-    </span>
-
-</div>
-```
-
-</section>
 
 <!-- =====================================================
-     GAME MODES
-===================================================== -->
-
-<section class="game-section">
-
-```
-<div class="section-heading">
-
-    <span class="game-label">
-        🎮 GAME MODES
-    </span>
-
-    <h2>
-        Choose your battle
-    </h2>
-
-    <p>
-        Battle the computer, challenge another
-        StudyMind student, team up or compete
-        in tournaments.
-    </p>
-
-</div>
-
-
-<div class="game-mode-grid">
-
-
-    <!-- =================================================
-         COMPUTER BATTLE
-    ================================================== -->
-
-    <button
-        type="button"
-        class="game-mode-card featured-mode"
-        id="computerModeButton"
-        onclick="openComputerBattle()"
-    >
-
-        <div class="mode-icon">
-            🤖
-        </div>
-
-        <div class="mode-content">
-
-            <span class="mode-tag">
-                AVAILABLE
-            </span>
-
-            <h3>
-                You vs Computer
-            </h3>
-
-            <p>
-                Test your knowledge against
-                an AI opponent.
-            </p>
-
-            <span class="mode-action">
-                Start Battle →
-            </span>
-
-        </div>
-
-    </button>
-
-
-    <!-- =================================================
-         1V1
-    ================================================== -->
-
-    <button
-        type="button"
-        class="game-mode-card featured-mode one-v-one-card"
-        id="oneVOneModeButton"
-        onclick="openOneVOne()"
-    >
-
-        <div class="mode-icon">
-            ⚔️
-        </div>
-
-        <div class="mode-content">
-
-            <span class="mode-tag">
-                LIVE
-            </span>
-
-            <h3>
-                1v1 Battle
-            </h3>
-
-            <p>
-                Challenge another StudyMind
-                student in a real-time battle.
-            </p>
-
-            <span class="mode-action">
-                Find Opponent →
-            </span>
-
-        </div>
-
-    </button>
-
-
-    <!-- =================================================
-         2V2
-    ================================================== -->
-
-    <button
-        type="button"
-        class="game-mode-card locked-mode"
-        id="twoVTwoModeButton"
-        onclick="openTwoVTwo()"
-    >
-
-        <div class="mode-icon">
-            👥
-        </div>
-
-        <div class="mode-content">
-
-            <span class="mode-tag">
-                COMING SOON
-            </span>
-
-            <h3>
-                2v2 Team Battle
-            </h3>
-
-            <p>
-                Team up with another student
-                and compete together.
-            </p>
-
-            <span class="mode-action">
-                Coming Soon →
-            </span>
-
-        </div>
-
-    </button>
-
-
-    <!-- =================================================
-         TOURNAMENTS
-    ================================================== -->
-
-    <button
-        type="button"
-        class="game-mode-card locked-mode"
-        id="tournamentModeButton"
-        onclick="openTournaments()"
-    >
-
-        <div class="mode-icon">
-            🏆
-        </div>
-
-        <div class="mode-content">
-
-            <span class="mode-tag">
-                COMING SOON
-            </span>
-
-            <h3>
-                Tournaments
-            </h3>
-
-            <p>
-                Compete through multiple rounds
-                and fight for the top spot.
-            </p>
-
-            <span class="mode-action">
-                Coming Soon →
-            </span>
-
-        </div>
-
-    </button>
-
-
-</div>
-```
-
-</section>
-
-<!-- =====================================================
-     LEADERBOARD
-===================================================== -->
-
-<section class="leaderboard-section">
-
-```
-<div class="section-heading">
-
-    <span class="game-label">
-        🏆 LEADERBOARD
-    </span>
-
-    <h2>
-        Top StudyMind players
-    </h2>
-
-    <p>
-        Earn more battle points and climb
-        the rankings.
-    </p>
-
-</div>
-
-
-<div class="leaderboard-card">
-
-    <div class="leaderboard-row leaderboard-header">
-
-        <span>
-            Rank
-        </span>
-
-        <span>
-            Player
-        </span>
-
-        <span>
-            Points
-        </span>
-
-    </div>
-
-
-    <div id="leaderboardRows">
-
-        <div class="leaderboard-row">
-
-            <span>
-                —
-            </span>
-
-            <span>
-                Loading...
-            </span>
-
-            <strong>
-                —
-            </strong>
-
-        </div>
-
-    </div>
-
-
-    <div
-        class="leaderboard-row your-rank"
-        id="yourLeaderboardRank"
-    >
-
-        <span>
-            —
-        </span>
-
-        <span>
-            You
-        </span>
-
-        <strong id="yourBattlePoints">
-            0
-        </strong>
-
-    </div>
-
-</div>
-```
-
-</section>
-
-<!-- =====================================================
-     PREMIUM
-===================================================== -->
-
-<section
-    class="premium-battle-card"
-    id="premiumBattleCard"
->
-
-```
-<div class="premium-icon">
-    ⭐
-</div>
-
-<div>
-
-    <span class="game-label">
-        STUDYMIND PREMIUM
-    </span>
-
-    <h2>
-        Keep competing without limits
-    </h2>
-
-    <p>
-        Free users get 5 battles.
-        Premium members can play unlimited
-        battles and compete more often.
-    </p>
-
-</div>
-
-<button
-    type="button"
-    class="premium-button"
-    onclick="openPremium()"
->
-    ⭐ Go Premium
-</button>
-```
-
-</section>
-
-</main>
-
-</div>
+     SCRIPTS
+====================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
