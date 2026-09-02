@@ -14,8 +14,40 @@ const AI_QUESTION_ENDPOINT = "/api/generate-questions";
    SUPABASE
 ========================================================= */
 
-const computerBattleSupabase =
-    typeof supabase !== "undefined" ? supabase : null;
+/*
+   IMPORTANT:
+   supabase.js creates the configured client as:
+
+       window.supabaseClient
+
+   Do NOT use the global `supabase` library namespace as
+   the configured client.
+*/
+
+function getComputerBattleSupabase() {
+    const client =
+        window.supabaseClient;
+
+    if (
+        client &&
+        client.auth &&
+        typeof client.auth.getUser ===
+            "function"
+    ) {
+        return client;
+    }
+
+    return null;
+}
+
+/*
+   Kept as a variable for compatibility with the rest of
+   this file. It is refreshed during initialization so that
+   the client is definitely available after all scripts load.
+*/
+
+let computerBattleSupabase =
+    null;
 
 /* =========================================================
    BATTLE STATE
@@ -28,7 +60,9 @@ const computerBattleState = {
     playerScore: 0,
     computerScore: 0,
 
-    timeRemaining: QUESTION_TIME_LIMIT,
+    timeRemaining:
+        QUESTION_TIME_LIMIT,
+
     timerInterval: null,
 
     questionLocked: false,
@@ -54,62 +88,128 @@ function battleElement(id) {
 const FALLBACK_QUESTIONS = [
     {
         question: "What is 12 × 5?",
-        options: ["50", "55", "60", "65"],
+        options: [
+            "50",
+            "55",
+            "60",
+            "65"
+        ],
         answer: 2
     },
     {
-        question: "What is the square root of 81?",
-        options: ["7", "8", "9", "10"],
+        question:
+            "What is the square root of 81?",
+        options: [
+            "7",
+            "8",
+            "9",
+            "10"
+        ],
         answer: 2
     },
     {
-        question: "What is 3/4 expressed as a decimal?",
-        options: ["0.25", "0.5", "0.75", "0.8"],
+        question:
+            "What is 3/4 expressed as a decimal?",
+        options: [
+            "0.25",
+            "0.5",
+            "0.75",
+            "0.8"
+        ],
         answer: 2
     },
     {
         question: "What is 15 + 27?",
-        options: ["32", "40", "42", "45"],
+        options: [
+            "32",
+            "40",
+            "42",
+            "45"
+        ],
         answer: 2
     },
     {
         question: "What is 100 ÷ 4?",
-        options: ["20", "25", "30", "40"],
+        options: [
+            "20",
+            "25",
+            "30",
+            "40"
+        ],
         answer: 1
     },
     {
         question: "What is 7²?",
-        options: ["14", "21", "42", "49"],
+        options: [
+            "14",
+            "21",
+            "42",
+            "49"
+        ],
         answer: 3
     },
     {
-        question: "What is the next number in 2, 4, 6, 8, ...?",
-        options: ["9", "10", "11", "12"],
+        question:
+            "What is the next number in 2, 4, 6, 8, ...?",
+        options: [
+            "9",
+            "10",
+            "11",
+            "12"
+        ],
         answer: 1
     },
     {
-        question: "What is 30% of 100?",
-        options: ["3", "10", "30", "70"],
+        question:
+            "What is 30% of 100?",
+        options: [
+            "3",
+            "10",
+            "30",
+            "70"
+        ],
         answer: 2
     },
     {
-        question: "If x + 6 = 14, what is x?",
-        options: ["6", "7", "8", "9"],
+        question:
+            "If x + 6 = 14, what is x?",
+        options: [
+            "6",
+            "7",
+            "8",
+            "9"
+        ],
         answer: 2
     },
     {
-        question: "How many degrees are in a full circle?",
-        options: ["90°", "180°", "270°", "360°"],
+        question:
+            "How many degrees are in a full circle?",
+        options: [
+            "90°",
+            "180°",
+            "270°",
+            "360°"
+        ],
         answer: 3
     },
     {
         question: "What is 9 × 9?",
-        options: ["72", "81", "90", "99"],
+        options: [
+            "72",
+            "81",
+            "90",
+            "99"
+        ],
         answer: 1
     },
     {
         question: "What is half of 50?",
-        options: ["15", "20", "25", "30"],
+        options: [
+            "15",
+            "20",
+            "25",
+            "30"
+        ],
         answer: 2
     }
 ];
@@ -137,13 +237,23 @@ function escapeHTML(value) {
 function shuffleArray(array) {
     const result = [...array];
 
-    for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(
-            Math.random() * (i + 1)
-        );
+    for (
+        let i = result.length - 1;
+        i > 0;
+        i--
+    ) {
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
 
-        [result[i], result[j]] =
-            [result[j], result[i]];
+        [
+            result[i],
+            result[j]
+        ] = [
+            result[j],
+            result[i]
+        ];
     }
 
     return result;
@@ -167,8 +277,6 @@ function shuffleArray(array) {
        studyStartDate: "...",
        createdAt: "..."
    }
-
-   We therefore read studyMindPlan directly.
 */
 
 /* =========================================================
@@ -177,7 +285,9 @@ function shuffleArray(array) {
 
 function getStudyPlan() {
     const raw =
-        localStorage.getItem("studyMindPlan");
+        localStorage.getItem(
+            "studyMindPlan"
+        );
 
     if (!raw) {
         console.warn(
@@ -213,13 +323,17 @@ function getStudyPlan() {
 ========================================================= */
 
 function getSubjectName(item) {
-    if (typeof item === "string") {
+    if (
+        typeof item ===
+        "string"
+    ) {
         return item.trim();
     }
 
     if (
         !item ||
-        typeof item !== "object"
+        typeof item !==
+            "object"
     ) {
         return "";
     }
@@ -231,9 +345,12 @@ function getSubjectName(item) {
         item.name
     ];
 
-    for (const value of names) {
+    for (
+        const value of names
+    ) {
         if (
-            typeof value === "string" &&
+            typeof value ===
+                "string" &&
             value.trim()
         ) {
             return value.trim();
@@ -248,13 +365,17 @@ function getSubjectName(item) {
 ========================================================= */
 
 function getTopicName(item) {
-    if (typeof item === "string") {
+    if (
+        typeof item ===
+        "string"
+    ) {
         return item.trim();
     }
 
     if (
         !item ||
-        typeof item !== "object"
+        typeof item !==
+            "object"
     ) {
         return "";
     }
@@ -267,9 +388,12 @@ function getTopicName(item) {
         item.title
     ];
 
-    for (const value of names) {
+    for (
+        const value of names
+    ) {
         if (
-            typeof value === "string" &&
+            typeof value ===
+                "string" &&
             value.trim()
         ) {
             return value.trim();
@@ -286,12 +410,17 @@ function getTopicName(item) {
 function extractSubjects(plan) {
     if (
         !plan ||
-        typeof plan !== "object"
+        typeof plan !==
+            "object"
     ) {
         return [];
     }
 
-    if (!Array.isArray(plan.subjects)) {
+    if (
+        !Array.isArray(
+            plan.subjects
+        )
+    ) {
         console.warn(
             "Computer Battle: plan.subjects is not an array.",
             plan
@@ -302,8 +431,11 @@ function extractSubjects(plan) {
 
     const subjects =
         plan.subjects
-            .map(subject =>
-                getSubjectName(subject)
+            .map(
+                subject =>
+                    getSubjectName(
+                        subject
+                    )
             )
             .filter(Boolean);
 
@@ -323,39 +455,23 @@ function extractSubjects(plan) {
    EXTRACT TOPICS
 ========================================================= */
 
-/*
-   IMPORTANT:
-
-   script.js currently saves topics as one flat array:
-
-       topics: [
-           "Algebra",
-           "Quadratic Equations",
-           "Motion",
-           "Forces"
-       ]
-
-   There is currently no subject attached to each topic.
-
-   Therefore Computer Battle cannot safely determine
-   which topic belongs to which subject.
-
-   For now, ALL saved topics are displayed for the
-   selected subject.
-
-   This matches the actual studyMindPlan schema and
-   avoids the broken recursive extraction code.
-*/
-
-function extractTopics(plan, selectedSubject) {
+function extractTopics(
+    plan,
+    selectedSubject
+) {
     if (
         !plan ||
-        typeof plan !== "object"
+        typeof plan !==
+            "object"
     ) {
         return [];
     }
 
-    if (!Array.isArray(plan.topics)) {
+    if (
+        !Array.isArray(
+            plan.topics
+        )
+    ) {
         console.warn(
             "Computer Battle: plan.topics is not an array.",
             plan
@@ -366,8 +482,11 @@ function extractTopics(plan, selectedSubject) {
 
     const topics =
         plan.topics
-            .map(topic =>
-                getTopicName(topic)
+            .map(
+                topic =>
+                    getTopicName(
+                        topic
+                    )
             )
             .filter(Boolean);
 
@@ -387,13 +506,21 @@ function extractTopics(plan, selectedSubject) {
    FALLBACK TOPICS
 ========================================================= */
 
-function getFallbackTopics(subject) {
+function getFallbackTopics(
+    subject
+) {
     const normalized =
-        normalizeBattleText(subject);
+        normalizeBattleText(
+            subject
+        );
 
     if (
-        normalized.includes("math") ||
-        normalized.includes("mathematics")
+        normalized.includes(
+            "math"
+        ) ||
+        normalized.includes(
+            "mathematics"
+        )
     ) {
         return [
             "Algebra",
@@ -405,7 +532,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("physics")
+        normalized.includes(
+            "physics"
+        )
     ) {
         return [
             "Motion",
@@ -417,7 +546,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("chemistry")
+        normalized.includes(
+            "chemistry"
+        )
     ) {
         return [
             "Atomic Structure",
@@ -429,7 +560,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("biology")
+        normalized.includes(
+            "biology"
+        )
     ) {
         return [
             "Cell Biology",
@@ -441,7 +574,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("economics")
+        normalized.includes(
+            "economics"
+        )
     ) {
         return [
             "Demand and Supply",
@@ -453,7 +588,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("government")
+        normalized.includes(
+            "government"
+        )
     ) {
         return [
             "Democracy",
@@ -465,7 +602,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("geography")
+        normalized.includes(
+            "geography"
+        )
     ) {
         return [
             "Weather and Climate",
@@ -477,7 +616,9 @@ function getFallbackTopics(subject) {
     }
 
     if (
-        normalized.includes("english")
+        normalized.includes(
+            "english"
+        )
     ) {
         return [
             "Grammar",
@@ -499,10 +640,14 @@ function getFallbackTopics(subject) {
 
 function loadBattleSetup() {
     const subjectSelect =
-        battleElement("subjectSelect");
+        battleElement(
+            "subjectSelect"
+        );
 
     const topicSelect =
-        battleElement("topicSelect");
+        battleElement(
+            "topicSelect"
+        );
 
     if (
         !subjectSelect ||
@@ -525,14 +670,13 @@ function loadBattleSetup() {
         getStudyPlan();
 
     let subjects =
-        extractSubjects(plan);
+        extractSubjects(
+            plan
+        );
 
-    /*
-       If there is no saved study plan,
-       keep the page usable with Math.
-    */
-
-    if (!subjects.length) {
+    if (
+        !subjects.length
+    ) {
         console.warn(
             "No subjects found in study plan. Using Math fallback."
         );
@@ -545,16 +689,18 @@ function loadBattleSetup() {
     subjectSelect.innerHTML =
         `<option value="">Select a subject</option>` +
         subjects
-            .map(subject => `
-                <option value="${escapeHTML(subject)}">
-                    ${escapeHTML(subject)}
-                </option>
-            `)
+            .map(
+                subject => `
+                    <option value="${escapeHTML(
+                        subject
+                    )}">
+                        ${escapeHTML(
+                            subject
+                        )}
+                    </option>
+                `
+            )
             .join("");
-
-    /*
-       Automatically select the first subject.
-    */
 
     subjectSelect.value =
         subjects[0];
@@ -572,10 +718,14 @@ function loadBattleSetup() {
 
 function updateTopicOptions() {
     const subjectSelect =
-        battleElement("subjectSelect");
+        battleElement(
+            "subjectSelect"
+        );
 
     const topicSelect =
-        battleElement("topicSelect");
+        battleElement(
+            "topicSelect"
+        );
 
     if (
         !subjectSelect ||
@@ -606,12 +756,9 @@ function updateTopicOptions() {
             subject
         );
 
-    /*
-       If no topics exist in the study plan,
-       use subject-specific fallback topics.
-    */
-
-    if (!topics.length) {
+    if (
+        !topics.length
+    ) {
         topics =
             getFallbackTopics(
                 subject
@@ -621,16 +768,18 @@ function updateTopicOptions() {
     topicSelect.innerHTML =
         `<option value="">Select a topic</option>` +
         topics
-            .map(topic => `
-                <option value="${escapeHTML(topic)}">
-                    ${escapeHTML(topic)}
-                </option>
-            `)
+            .map(
+                topic => `
+                    <option value="${escapeHTML(
+                        topic
+                    )}">
+                        ${escapeHTML(
+                            topic
+                        )}
+                    </option>
+                `
+            )
             .join("");
-
-    /*
-       Automatically select the first topic.
-    */
 
     if (topics.length) {
         topicSelect.value =
@@ -642,9 +791,13 @@ function updateTopicOptions() {
    ERROR MESSAGE
 ========================================================= */
 
-function showBattleError(message) {
+function showBattleError(
+    message
+) {
     const element =
-        battleElement("battleError");
+        battleElement(
+            "battleError"
+        );
 
     if (!element) {
         return;
@@ -660,7 +813,9 @@ function showBattleError(message) {
 
 function hideBattleError() {
     const element =
-        battleElement("battleError");
+        battleElement(
+            "battleError"
+        );
 
     if (!element) {
         return;
@@ -680,10 +835,14 @@ function hideBattleError() {
 
 function showLoading() {
     const setup =
-        battleElement("battleSetup");
+        battleElement(
+            "battleSetup"
+        );
 
     const loading =
-        battleElement("battleLoading");
+        battleElement(
+            "battleLoading"
+        );
 
     if (setup) {
         setup.style.display =
@@ -699,7 +858,9 @@ function showLoading() {
 
 function hideLoading() {
     const loading =
-        battleElement("battleLoading");
+        battleElement(
+            "battleLoading"
+        );
 
     if (loading) {
         loading.classList.remove(
@@ -922,7 +1083,8 @@ async function requestAIQuestions(
                 body: JSON.stringify({
                     mode: "game",
 
-                    type: "game_questions",
+                    type:
+                        "game_questions",
 
                     subject,
 
@@ -970,14 +1132,6 @@ async function requestAIQuestions(
         );
     }
 
-    /*
-       Main expected response:
-
-       {
-           questions: [...]
-       }
-    */
-
     if (
         data &&
         Array.isArray(
@@ -986,10 +1140,6 @@ async function requestAIQuestions(
     ) {
         return data.questions;
     }
-
-    /*
-       Support nested responses.
-    */
 
     if (
         data &&
@@ -1000,10 +1150,6 @@ async function requestAIQuestions(
     ) {
         return data.data.questions;
     }
-
-    /*
-       Support direct array response.
-    */
 
     if (
         Array.isArray(data)
@@ -1033,7 +1179,8 @@ function normalizeQuestions(
         .map(item => {
             if (
                 !item ||
-                typeof item !== "object"
+                typeof item !==
+                    "object"
             ) {
                 return null;
             }
@@ -1050,7 +1197,9 @@ function normalizeQuestions(
 
             if (
                 !question ||
-                !Array.isArray(options)
+                !Array.isArray(
+                    options
+                )
             ) {
                 return null;
             }
@@ -1089,10 +1238,6 @@ function normalizeQuestions(
                 item.correctOption ??
                 item.correctIndex;
 
-            /*
-               Convert A/B/C/D.
-            */
-
             if (
                 typeof answer ===
                 "string"
@@ -1110,7 +1255,9 @@ function normalizeQuestions(
                 ];
 
                 if (
-                    letters.includes(clean)
+                    letters.includes(
+                        clean
+                    )
                 ) {
                     answer =
                         letters.indexOf(
@@ -1143,7 +1290,9 @@ function normalizeQuestions(
                 Number(answer);
 
             if (
-                !Number.isInteger(answer) ||
+                !Number.isInteger(
+                    answer
+                ) ||
                 answer < 0 ||
                 answer > 3
             ) {
@@ -1191,7 +1340,9 @@ function createFallbackQuestions() {
                 source.question,
 
             options:
-                [...source.options],
+                [
+                    ...source.options
+                ],
 
             answer:
                 source.answer
@@ -1306,12 +1457,20 @@ function displayCurrentQuestion() {
 
     if (roundNumber) {
         roundNumber.textContent =
-            `Question ${index + 1} of ${QUESTIONS_PER_BATTLE}`;
+            `Question ${
+                index + 1
+            } of ${
+                QUESTIONS_PER_BATTLE
+            }`;
     }
 
     if (questionTopic) {
         questionTopic.textContent =
-            `${computerBattleState.selectedSubject} • ${computerBattleState.selectedTopic}`;
+            `${
+                computerBattleState.selectedSubject
+            } • ${
+                computerBattleState.selectedTopic
+            }`;
     }
 
     if (questionText) {
@@ -1326,7 +1485,11 @@ function displayCurrentQuestion() {
 
     if (progress) {
         progress.style.width =
-            `${(index / QUESTIONS_PER_BATTLE) * 100}%`;
+            `${
+                (index /
+                    QUESTIONS_PER_BATTLE) *
+                100
+            }%`;
     }
 
     if (answerGrid) {
@@ -1341,7 +1504,10 @@ function displayCurrentQuestion() {
         ];
 
         letters.forEach(
-            (letter, optionIndex) => {
+            (
+                letter,
+                optionIndex
+            ) => {
                 const button =
                     document.createElement(
                         "button"
@@ -1354,7 +1520,9 @@ function displayCurrentQuestion() {
                     "answer-button";
 
                 button.dataset.index =
-                    String(optionIndex);
+                    String(
+                        optionIndex
+                    );
 
                 button.innerHTML = `
                     <span class="answer-letter">
@@ -1449,12 +1617,14 @@ function updateTimerDisplay() {
     if (container) {
         container.classList.toggle(
             "warning",
-            computerBattleState.timeRemaining <= 7
+            computerBattleState.timeRemaining <=
+                7
         );
 
         container.classList.toggle(
             "danger",
-            computerBattleState.timeRemaining <= 3
+            computerBattleState.timeRemaining <=
+                3
         );
     }
 }
@@ -1576,7 +1746,10 @@ function markAnswers(
             ".answer-button"
         )
         .forEach(
-            (button, index) => {
+            (
+                button,
+                index
+            ) => {
                 button.disabled =
                     true;
 
@@ -1590,8 +1763,10 @@ function markAnswers(
                 }
 
                 if (
-                    index === selectedIndex &&
-                    selectedIndex !== correctIndex
+                    index ===
+                        selectedIndex &&
+                    selectedIndex !==
+                        correctIndex
                 ) {
                     button.classList.add(
                         "incorrect"
@@ -1712,10 +1887,14 @@ function calculateBattlePoints(
 ) {
     let points = 0;
 
-    if (result === "win") {
+    if (
+        result === "win"
+    ) {
         points = 100;
 
-    } else if (result === "draw") {
+    } else if (
+        result === "draw"
+    ) {
         points = 50;
 
     } else {
@@ -1723,7 +1902,9 @@ function calculateBattlePoints(
     }
 
     points +=
-        (Number(playerScore) || 0) * 5;
+        (Number(
+            playerScore
+        ) || 0) * 5;
 
     return points;
 }
@@ -1816,16 +1997,26 @@ async function recordCompletedBattle(
     }
 
     /*
-       Update Supabase leaderboard.
+       Resolve the configured Supabase client again.
+       This prevents stale/incorrect client references.
     */
 
+    computerBattleSupabase =
+        getComputerBattleSupabase();
+
     if (!computerBattleSupabase) {
+        console.warn(
+            "Computer Battle: Supabase client unavailable. Leaderboard update skipped."
+        );
+
         return;
     }
 
     try {
         const {
-            data: { user },
+            data: {
+                user
+            },
             error: userError
         } =
             await computerBattleSupabase
@@ -1836,6 +2027,10 @@ async function recordCompletedBattle(
             userError ||
             !user
         ) {
+            console.warn(
+                "Computer Battle: No authenticated user for leaderboard update."
+            );
+
             return;
         }
 
@@ -1875,7 +2070,9 @@ async function recordCompletedBattle(
             existing?.display_name ||
             user.user_metadata?.display_name ||
             user.user_metadata?.full_name ||
-            user.email?.split("@")[0] ||
+            user.email?.split(
+                "@"
+            )[0] ||
             "StudyMind Player";
 
         const currentPoints =
@@ -1917,7 +2114,8 @@ async function recordCompletedBattle(
             wins:
                 wins +
                 (
-                    result === "win"
+                    result ===
+                    "win"
                         ? 1
                         : 0
                 ),
@@ -1925,7 +2123,8 @@ async function recordCompletedBattle(
             losses:
                 losses +
                 (
-                    result === "loss"
+                    result ===
+                    "loss"
                         ? 1
                         : 0
                 ),
@@ -1933,7 +2132,8 @@ async function recordCompletedBattle(
             draws:
                 draws +
                 (
-                    result === "draw"
+                    result ===
+                    "draw"
                         ? 1
                         : 0
                 ),
@@ -1942,7 +2142,8 @@ async function recordCompletedBattle(
                 battlesPlayed + 1,
 
             updated_at:
-                new Date().toISOString()
+                new Date()
+                    .toISOString()
         };
 
         const {
@@ -2055,7 +2256,9 @@ function showResults(
             `+${points}`;
     }
 
-    if (result === "win") {
+    if (
+        result === "win"
+    ) {
         if (icon) {
             icon.textContent =
                 "🏆";
@@ -2076,7 +2279,9 @@ function showResults(
                 `You scored ${computerBattleState.playerScore}/10 and earned ${points} Battle Points.`;
         }
 
-    } else if (result === "draw") {
+    } else if (
+        result === "draw"
+    ) {
         if (icon) {
             icon.textContent =
                 "🤝";
@@ -2227,13 +2432,32 @@ function returnToGameMode() {
 ========================================================= */
 
 async function verifyComputerBattleUser() {
-    if (!computerBattleSupabase) {
-        return true;
+    /*
+       Resolve the ACTUAL configured client.
+    */
+
+    computerBattleSupabase =
+        getComputerBattleSupabase();
+
+    if (
+        !computerBattleSupabase
+    ) {
+        console.error(
+            "Computer Battle: window.supabaseClient is unavailable or is not a valid Supabase client."
+        );
+
+        showBattleError(
+            "Authentication is still loading. Please refresh the page and try again."
+        );
+
+        return false;
     }
 
     try {
         const {
-            data: { user },
+            data: {
+                user
+            },
             error
         } =
             await computerBattleSupabase
@@ -2246,6 +2470,10 @@ async function verifyComputerBattleUser() {
                 error
             );
 
+            showBattleError(
+                "We couldn't verify your account. Please refresh and try again."
+            );
+
             return false;
         }
 
@@ -2256,12 +2484,21 @@ async function verifyComputerBattleUser() {
             return false;
         }
 
+        console.log(
+            "Computer Battle authenticated user:",
+            user.id
+        );
+
         return true;
 
     } catch (error) {
         console.error(
             "Unexpected authentication error:",
             error
+        );
+
+        showBattleError(
+            "We couldn't verify your account. Please refresh and try again."
         );
 
         return false;
@@ -2273,6 +2510,18 @@ async function verifyComputerBattleUser() {
 ========================================================= */
 
 async function initializeComputerBattle() {
+    console.log(
+        "Computer Battle: Initializing..."
+    );
+
+    /*
+       Resolve Supabase before doing anything that depends
+       on authentication.
+    */
+
+    computerBattleSupabase =
+        getComputerBattleSupabase();
+
     const authenticated =
         await verifyComputerBattleUser();
 
@@ -2288,13 +2537,32 @@ async function initializeComputerBattle() {
         );
 
     if (subjectSelect) {
-        subjectSelect.addEventListener(
-            "change",
-            updateTopicOptions
-        );
+        /*
+           Prevent duplicate listeners if this function
+           is ever called more than once.
+        */
+
+        if (
+            subjectSelect.dataset
+                .battleListenerAttached !==
+            "true"
+        ) {
+            subjectSelect.addEventListener(
+                "change",
+                updateTopicOptions
+            );
+
+            subjectSelect.dataset
+                .battleListenerAttached =
+                "true";
+        }
     }
 
     updateScoreDisplay();
+
+    console.log(
+        "Computer Battle: Initialization complete."
+    );
 }
 
 /* =========================================================
