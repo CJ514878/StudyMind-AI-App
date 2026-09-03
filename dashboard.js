@@ -2452,7 +2452,7 @@ function renderGenerateQuestionsPrompt(
                 id="generateTopicQuestionsButton"
                 class="primary-button full-button"
             >
-                🧠 Generate 5 Questions
+                🧠 Start Knowledge Check
             </button>
 
             <div
