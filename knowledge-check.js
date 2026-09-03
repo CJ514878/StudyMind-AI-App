@@ -1247,131 +1247,85 @@ function submitKnowledgeCheck() {
 
 
 /* =========================================================
-   KNOWLEDGE CHECK — OPEN DEDICATED PAGE
+   SHOW RESULT
 ========================================================= */
 
-const KNOWLEDGE_CHECK_USAGE_KEY =
-    "studyMindKnowledgeCheckUsageCount";
+function showResult(score) {
 
-const KNOWLEDGE_CHECK_LIMIT = 5;
-
-const KNOWLEDGE_CHECK_TOPIC_KEY =
-    "studyMindKnowledgeCheckTopic";
-
-
-window.openKnowledgeCheckPage = function (topic) {
-
-    console.log(
-        "Opening Knowledge Check:",
-        topic
-    );
+    const percentage =
+        Math.round(
+            (
+                score /
+                KNOWLEDGE_CHECK_COUNT
+            ) * 100
+        );
 
 
-    /* -----------------------------------------
-       MAKE SURE TOPIC EXISTS
-    ----------------------------------------- */
+    const passed =
+        percentage >=
+        KNOWLEDGE_CHECK_PASS_PERCENTAGE;
+
+
+    $("knowledgeContent")
+        .style.display =
+        "none";
+
+
+    $("knowledgeResult")
+        .style.display =
+        "block";
+
+
+    $("knowledgeScore")
+        .textContent =
+        `${score}/${KNOWLEDGE_CHECK_COUNT}`;
+
+
+    if (passed) {
+
+        $("knowledgeResultIcon")
+            .textContent =
+            "🎉";
+
+
+        $("knowledgeResultTitle")
+            .textContent =
+            "Knowledge Check Passed";
+
+
+        $("knowledgeResultText")
+            .textContent =
+            `Great work! You scored ${percentage}%. You passed this Knowledge Check with ${score} out of ${KNOWLEDGE_CHECK_COUNT} correct answers.`;
+
+    } else {
+
+        $("knowledgeResultIcon")
+            .textContent =
+            "📚";
+
+
+        $("knowledgeResultTitle")
+            .textContent =
+            "Keep Studying";
+
+
+        $("knowledgeResultText")
+            .textContent =
+            `You scored ${percentage}%. You need at least ${KNOWLEDGE_CHECK_PASS_PERCENTAGE}% to pass. Review the topic and keep practicing.`;
+    }
+
 
     if (
-        !topic ||
-        !topic.name
+        window.MathJax &&
+        MathJax.typesetPromise
     ) {
 
-        alert(
-            "Please select a topic before starting the Knowledge Check."
-        );
-
-        return;
+        MathJax.typesetPromise()
+            .catch(() => {});
     }
+}
 
 
-    /* -----------------------------------------
-       CHECK FREE KNOWLEDGE CHECK LIMIT
-    ----------------------------------------- */
-
-    const usageCount =
-        Number(
-            localStorage.getItem(
-                KNOWLEDGE_CHECK_USAGE_KEY
-            )
-        ) || 0;
-
-
-    if (
-        usageCount >=
-        KNOWLEDGE_CHECK_LIMIT
-    ) {
-
-        alert(
-            "You have used all 5 of your free Knowledge Checks. Upgrade to Premium to continue."
-        );
-
-        return;
-    }
-
-
-    /* -----------------------------------------
-       CREATE TOPIC DATA
-    ----------------------------------------- */
-
-    const topicData = {
-
-        name:
-            topic.name,
-
-        subject:
-            topic.subject ||
-            topic.subjectName ||
-            "Senior Secondary",
-
-        key:
-            typeof getTopicKey === "function"
-                ? getTopicKey(topic)
-                : (
-                    `${topic.subject || "Senior Secondary"}::${topic.name}`
-                ),
-
-        /* Unique ID for this Knowledge Check */
-        checkId:
-            `${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`
-
-    };
-
-
-    /* -----------------------------------------
-       SAVE TOPIC FOR KNOWLEDGE CHECK PAGE
-    ----------------------------------------- */
-
-    try {
-
-        localStorage.setItem(
-            KNOWLEDGE_CHECK_TOPIC_KEY,
-            JSON.stringify(topicData)
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Could not save Knowledge Check topic:",
-            error
-        );
-
-        alert(
-            "Unable to start the Knowledge Check. Please try again."
-        );
-
-        return;
-    }
-
-
-    /* -----------------------------------------
-       OPEN DEDICATED KNOWLEDGE CHECK PAGE
-    ----------------------------------------- */
-
-    window.location.href =
-        "knowledge-check.html";
-};
 /* =========================================================
    MARK TOPIC AS KNOWLEDGE-CHECKED
 ========================================================= */
