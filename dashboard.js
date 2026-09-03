@@ -5294,7 +5294,6 @@ function renderCalendar() {
         !monthElement ||
         !daysContainer
     ) {
-
         return;
     }
 
@@ -5406,6 +5405,10 @@ function renderCalendar() {
             );
 
 
+        /* -----------------------------------------
+           TODAY
+        ----------------------------------------- */
+
         if (
             dateString ===
             todayString
@@ -5429,6 +5432,18 @@ function renderCalendar() {
 
             cell.classList.add(
                 "exam-day"
+            );
+
+            const examDot =
+                document.createElement(
+                    "span"
+                );
+
+            examDot.className =
+                "calendar-dot exam-dot";
+
+            cell.appendChild(
+                examDot
             );
 
         }
@@ -5487,7 +5502,6 @@ function formatDate(date) {
 
     ].join("-");
 }
-
 
 /* =========================================================
    SCHEDULE
