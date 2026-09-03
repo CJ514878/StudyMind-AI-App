@@ -2411,7 +2411,7 @@ const KNOWLEDGE_CHECK_TOPIC_KEY =
     "studyMindKnowledgeCheckTopic";
 
 
-function openKnowledgeCheckPage(topic) {
+window.openKnowledgeCheckPage = function (topic) {
 
     console.log(
         "Opening Knowledge Check:",
@@ -2480,7 +2480,13 @@ function openKnowledgeCheckPage(topic) {
                 ? getTopicKey(topic)
                 : (
                     `${topic.subject || "Senior Secondary"}::${topic.name}`
-                )
+                ),
+
+        /* Unique ID for this Knowledge Check */
+        checkId:
+            `${Date.now()}-${Math.random()
+                .toString(36)
+                .slice(2)}`
 
     };
 
@@ -2517,7 +2523,7 @@ function openKnowledgeCheckPage(topic) {
 
     window.location.href =
         "knowledge-check.html";
-}
+};
 /* =========================================================
    RENDER GENERATE QUESTIONS PROMPT
 ========================================================= */
