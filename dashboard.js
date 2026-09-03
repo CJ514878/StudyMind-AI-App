@@ -2480,7 +2480,7 @@ function renderGenerateQuestionsPrompt(
             "click",
             () => {
 
-                generateTopicQuestions(
+                 openKnowledgeCheckPage(
                     topic
                 );
 
@@ -3614,7 +3614,7 @@ function renderQuestionGenerationError(
             "click",
             () => {
 
-                generateTopicQuestions(
+                 openKnowledgeCheckPage(
                     topic
                 );
 
