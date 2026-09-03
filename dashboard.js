@@ -2398,7 +2398,126 @@ function hideKnowledgeCheck() {
         null;
 }
 
+/* =========================================================
+   KNOWLEDGE CHECK — OPEN DEDICATED PAGE
+========================================================= */
 
+const KNOWLEDGE_CHECK_USAGE_KEY =
+    "studyMindKnowledgeCheckUsageCount";
+
+const KNOWLEDGE_CHECK_LIMIT = 5;
+
+const KNOWLEDGE_CHECK_TOPIC_KEY =
+    "studyMindKnowledgeCheckTopic";
+
+
+function openKnowledgeCheckPage(topic) {
+
+    console.log(
+        "Opening Knowledge Check:",
+        topic
+    );
+
+
+    /* -----------------------------------------
+       MAKE SURE TOPIC EXISTS
+    ----------------------------------------- */
+
+    if (
+        !topic ||
+        !topic.name
+    ) {
+
+        alert(
+            "Please select a topic before starting the Knowledge Check."
+        );
+
+        return;
+    }
+
+
+    /* -----------------------------------------
+       CHECK FREE KNOWLEDGE CHECK LIMIT
+    ----------------------------------------- */
+
+    const usageCount =
+        Number(
+            localStorage.getItem(
+                KNOWLEDGE_CHECK_USAGE_KEY
+            )
+        ) || 0;
+
+
+    if (
+        usageCount >=
+        KNOWLEDGE_CHECK_LIMIT
+    ) {
+
+        alert(
+            "You have used all 5 of your free Knowledge Checks. Upgrade to Premium to continue."
+        );
+
+        return;
+    }
+
+
+    /* -----------------------------------------
+       CREATE TOPIC DATA
+    ----------------------------------------- */
+
+    const topicData = {
+
+        name:
+            topic.name,
+
+        subject:
+            topic.subject ||
+            topic.subjectName ||
+            "Senior Secondary",
+
+        key:
+            typeof getTopicKey === "function"
+                ? getTopicKey(topic)
+                : (
+                    `${topic.subject || "Senior Secondary"}::${topic.name}`
+                )
+
+    };
+
+
+    /* -----------------------------------------
+       SAVE TOPIC FOR KNOWLEDGE CHECK PAGE
+    ----------------------------------------- */
+
+    try {
+
+        localStorage.setItem(
+            KNOWLEDGE_CHECK_TOPIC_KEY,
+            JSON.stringify(topicData)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not save Knowledge Check topic:",
+            error
+        );
+
+        alert(
+            "Unable to start the Knowledge Check. Please try again."
+        );
+
+        return;
+    }
+
+
+    /* -----------------------------------------
+       OPEN DEDICATED KNOWLEDGE CHECK PAGE
+    ----------------------------------------- */
+
+    window.location.href =
+        "knowledge-check.html";
+}
 /* =========================================================
    RENDER GENERATE QUESTIONS PROMPT
 ========================================================= */
