@@ -1535,6 +1535,27 @@ img {
 }
 
 
+/* EXAM DAYS OVERRIDE THE STUDY-DAY DOT */
+
+.calendar-day.exam-day::after {
+    content: "";
+
+    width: 7px;
+    height: 7px;
+
+    position: absolute;
+
+    right: 12px;
+    bottom: 12px;
+
+    background: #f97316;
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 8px rgba(249, 115, 22, 0.4);
+}
+
 /* ============================================================
    27. COMPLETED DAY
 ============================================================ */
