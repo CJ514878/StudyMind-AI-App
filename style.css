@@ -4218,3 +4218,12 @@ SMALL MOBILE
     }
 
 }
+/* ============================================================
+   EXAM DAY — ORANGE MARKER
+============================================================ */
+
+.calendar-day.exam-day .calendar-dot,
+.calendar-day.exam-day::before {
+    background: #f97316 !important;
+    border-color: #f97316 !important;
+}
