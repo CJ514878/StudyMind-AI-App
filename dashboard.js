@@ -2193,76 +2193,7 @@ function completeCurrentTopic() {
     saveCompletionState();
 
 
-    /* -----------------------------------------
-       OPEN KNOWLEDGE CHECK
-    ----------------------------------------- */
-
-    activeKnowledgeCheckTopicKey =
-        key;
-
-
-    showKnowledgeCheck(
-        topic
-    );
-
-
-    renderProgress();
-
-    renderTopics();
-
-    renderStats();
-
-    renderDailyChallenge();
-
-    renderCalendar();
-
-    renderSchedule();
-
-    renderNextSession();
-
-
-    const nextTopic =
-        getNextIncompleteTopic(
-            currentTopicIndex
-        );
-
-
-    if (
-        nextTopic
-    ) {
-
-        const nextIndex =
-            allTopics.indexOf(
-                nextTopic
-            );
-
-
-        currentTopicIndex =
-            nextIndex;
-
-
-        saveCompletionState();
-
-
-        setTimeout(
-            () => {
-
-                renderCurrentTopic();
-
-
-                /* Re-open knowledge check
-                   for the topic just completed. */
-
-                showKnowledgeCheck(
-                    topic
-                );
-
-            },
-            50
-        );
-
-    }
-
+  
 
     /* -----------------------------------------
        TIMER
