@@ -1,68 +1,132 @@
 /* =========================================================
-   STUDYMIND AI — DASHBOARD JAVASCRIPT
+   STUDYMIND AI — DASHBOARD.JS
    COMPLETE REPLACEMENT
-   Matches dashboard.html exactly
-========================================================= */
+   =========================================================
+
+   Main responsibilities:
+   - Load StudyMind plan
+   - Display subjects/topics
+   - Track topic progress
+   - Study timer: 25 / 45 / 60 minutes
+   - Topic knowledge checks
+   - Generate exactly 5 AI questions
+   - 60% passing requirement
+   - Calendar / schedule
+   - Study streak
+   - AI question limit
+   - Theme
+   - Dashboard compatibility
+   ========================================================= */
 
 
 /* =========================================================
    CONFIGURATION
-========================================================= */
+   ========================================================= */
 
 const FREE_QUESTION_LIMIT = 5;
 
+const KNOWLEDGE_CHECK_QUESTION_COUNT = 5;
+
+const KNOWLEDGE_CHECK_PASS_PERCENTAGE = 60;
+
 const DEFAULT_TIMER_MINUTES = 25;
-const DEFAULT_TIMER_SECONDS = DEFAULT_TIMER_MINUTES * 60;
 
-const PLAN_KEY = "studyMindPlan";
-const COMPATIBILITY_PLAN_KEY = "studyData";
+const TIMER_OPTIONS = [25, 45, 60];
 
-const COMPLETED_TOPICS_KEY = "studyMindCompletedTopics";
-const COMPLETED_QUESTIONS_KEY = "studyMindCompletedQuestionTopics";
-const CURRENT_TOPIC_KEY = "studyMindCurrentTopicIndex";
-const TOPIC_QUESTIONS_KEY = "studyMindTopicQuestions";
+const DEFAULT_TIMER_SECONDS =
+    DEFAULT_TIMER_MINUTES * 60;
 
-const TIMER_SECONDS_KEY = "studyMindTimerSeconds";
-const TIMER_DURATION_KEY = "studyMindSelectedTimerSeconds";
-const TIMER_RUNNING_KEY = "studyMindTimerRunning";
 
-const THEME_KEY = "studyMindTheme";
+/* =========================================================
+   STORAGE KEYS
+   ========================================================= */
 
-const AI_QUESTION_COUNT_KEY = "aiQuestionCount";
+const PLAN_KEY =
+    "studyMindPlan";
 
-const STREAK_KEY = "studyMindStreak";
+const COMPATIBILITY_PLAN_KEY =
+    "studyData";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const COMPLETED_TOPICS_KEY =
+    "studyMindCompletedTopics";
+
+const COMPLETED_QUESTIONS_KEY =
+    "studyMindCompletedQuestionTopics";
+
+const CURRENT_TOPIC_KEY =
+    "studyMindCurrentTopicIndex";
+
+const TOPIC_QUESTIONS_KEY =
+    "studyMindTopicQuestions";
+
+const TIMER_SECONDS_KEY =
+    "studyMindTimerSeconds";
+
+const TIMER_DURATION_KEY =
+    "studyMindSelectedTimerSeconds";
+
+const TIMER_RUNNING_KEY =
+    "studyMindTimerRunning";
+
+const THEME_KEY =
+    "studyMindTheme";
+
+const AI_QUESTION_COUNT_KEY =
+    "aiQuestionCount";
+
+const AI_QUESTION_DATE_KEY =
+    "aiQuestionDate";
+
+const STREAK_KEY =
+    "studyMindStreak";
+
+const LAST_STUDY_DATE_KEY =
+    "lastStudyDate";
 
 
 /* =========================================================
    GLOBAL STATE
-========================================================= */
+   ========================================================= */
 
 let currentUser = null;
+
 let studyPlan = null;
 
+let normalizedSubjects = [];
+
+let allTopics = [];
+
 let completedTopics = [];
+
 let completedQuestionTopics = [];
 
 let currentTopicIndex = 0;
 
 let topicQuestions = {};
 
-let calendarDate = new Date();
+let activeKnowledgeCheckTopicKey = null;
 
-let selectedTimerSeconds = DEFAULT_TIMER_SECONDS;
-let timerSeconds = DEFAULT_TIMER_SECONDS;
+let knowledgeCheckGenerating = false;
 
-let timerRunning = false;
+let knowledgeCheckRequestId = 0;
+
+let timerSeconds =
+    DEFAULT_TIMER_SECONDS;
+
+let selectedTimerSeconds =
+    DEFAULT_TIMER_SECONDS;
+
 let timerInterval = null;
 
-let challengeCompleted = false;
+let timerRunning = false;
+
+let currentCalendarDate =
+    new Date();
 
 
 /* =========================================================
-   ELEMENT HELPER
-========================================================= */
+   ELEMENT SHORTCUT
+   ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
@@ -70,14 +134,15 @@ function $(id) {
 
 
 /* =========================================================
-   SAFE STORAGE HELPERS
-========================================================= */
+   SAFE JSON STORAGE
+   ========================================================= */
 
-function loadJSON(key, fallback = null) {
+function readJSON(key, fallback) {
 
     try {
 
-        const value = localStorage.getItem(key);
+        const value =
+            localStorage.getItem(key);
 
         if (!value) {
             return fallback;
@@ -88,7 +153,8 @@ function loadJSON(key, fallback = null) {
     } catch (error) {
 
         console.warn(
-            `StudyMind: Could not read ${key}`,
+            "StudyMind storage read error:",
+            key,
             error
         );
 
@@ -97,7 +163,7 @@ function loadJSON(key, fallback = null) {
 }
 
 
-function saveJSON(key, value) {
+function writeJSON(key, value) {
 
     try {
 
@@ -106,149 +172,43 @@ function saveJSON(key, value) {
             JSON.stringify(value)
         );
 
+        return true;
+
     } catch (error) {
 
         console.warn(
-            `StudyMind: Could not save ${key}`,
+            "StudyMind storage write error:",
+            key,
             error
         );
+
+        return false;
     }
-}
-
-
-function loadArray(key) {
-
-    const value = loadJSON(key, []);
-
-    return Array.isArray(value) ? value : [];
-}
-
-
-function loadObject(key) {
-
-    const value = loadJSON(key, {});
-
-    return value &&
-        typeof value === "object" &&
-        !Array.isArray(value)
-        ? value
-        : {};
-}
-
-
-function positiveNumber(value, fallback) {
-
-    const number = Number(value);
-
-    return Number.isFinite(number) && number > 0
-        ? number
-        : fallback;
-}
-
-
-/* =========================================================
-   DATE HELPERS
-========================================================= */
-
-function dateKey(date = new Date()) {
-
-    const year = date.getFullYear();
-
-    const month = String(
-        date.getMonth() + 1
-    ).padStart(2, "0");
-
-    const day = String(
-        date.getDate()
-    ).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-
-function parseDate(value) {
-
-    if (!value) {
-        return null;
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return null;
-    }
-
-    return date;
-}
-
-
-function startOfDay(date) {
-
-    const result = new Date(date);
-
-    result.setHours(0, 0, 0, 0);
-
-    return result;
-}
-
-
-function daysBetween(a, b) {
-
-    const first = startOfDay(a);
-    const second = startOfDay(b);
-
-    return Math.round(
-        (second - first) / DAY_MS
-    );
-}
-
-
-function formatDate(date) {
-
-    if (!date) {
-        return "";
-    }
-
-    return date.toLocaleDateString(
-        undefined,
-        {
-            weekday: "short",
-            month: "short",
-            day: "numeric"
-        }
-    );
-}
-
-
-function formatMonthYear(date) {
-
-    return date.toLocaleDateString(
-        undefined,
-        {
-            month: "long",
-            year: "numeric"
-        }
-    );
 }
 
 
 /* =========================================================
    TEXT HELPERS
-========================================================= */
+   ========================================================= */
 
 function cleanText(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
-    return String(value).trim();
+    return String(value)
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 
 function escapeHTML(value) {
 
-    return cleanText(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -257,388 +217,467 @@ function escapeHTML(value) {
 }
 
 
-function slugify(value) {
-
-    return cleanText(value)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-}
-
-
 /* =========================================================
    TOPIC NORMALIZATION
-========================================================= */
+   ========================================================= */
 
-function normalizeSubject(subject, index = 0) {
+function normalizeTopic(
+    topic,
+    subjectName = ""
+) {
 
-    if (typeof subject === "string") {
+    if (
+        typeof topic === "string"
+    ) {
 
-        return {
-            name: subject.trim(),
-            index
-        };
-    }
-
-    if (subject && typeof subject === "object") {
-
-        return {
-            name:
-                cleanText(
-                    subject.name ||
-                    subject.subject ||
-                    subject.title ||
-                    subject.label ||
-                    `Subject ${index + 1}`
-                ),
-
-            index
-        };
-    }
-
-    return {
-        name: `Subject ${index + 1}`,
-        index
-    };
-}
-
-
-function normalizeTopic(topic, index = 0, subjects = []) {
-
-    if (typeof topic === "string") {
+        const name =
+            cleanText(topic);
 
         return {
-            id: `${slugify(topic)}-${index}`,
-            name: topic.trim(),
-            description:
-                `Study ${topic.trim()} and complete the knowledge check.`,
+
+            id:
+                `${cleanText(subjectName)}::${name}`
+                    .toLowerCase(),
+
+            name,
+
             subject:
-                subjects.length
-                    ? subjects[index % subjects.length]
-                    : "",
-            index
+                cleanText(subjectName),
+
+            description:
+                `Study ${name} and complete the knowledge check.`,
+
+            raw:
+                topic
         };
     }
 
-    if (topic && typeof topic === "object") {
 
-        const name = cleanText(
+    if (
+        !topic ||
+        typeof topic !== "object"
+    ) {
+        return null;
+    }
+
+
+    const name =
+        cleanText(
             topic.name ||
             topic.topic ||
             topic.title ||
             topic.label ||
-            `Topic ${index + 1}`
+            topic.topicName
         );
 
+
+    if (!name) {
+        return null;
+    }
+
+
+    const subject =
+        cleanText(
+            topic.subject ||
+            topic.subjectName ||
+            topic.course ||
+            topic.subject_title ||
+            subjectName
+        );
+
+
+    const description =
+        cleanText(
+            topic.description ||
+            topic.desc ||
+            topic.details ||
+            `Study ${name} and complete the knowledge check.`
+        );
+
+
+    const id =
+        cleanText(
+            topic.id ||
+            topic.topicId ||
+            topic.key
+        ) ||
+        `${subject}::${name}`;
+
+
+    return {
+
+        id: String(id),
+
+        name,
+
+        subject,
+
+        description,
+
+        raw: topic
+    };
+}
+
+
+/* =========================================================
+   SUBJECT NORMALIZATION
+   ========================================================= */
+
+function normalizeSubject(
+    subject
+) {
+
+    if (
+        typeof subject === "string"
+    ) {
+
+        const name =
+            cleanText(subject);
+
+        if (!name) {
+            return null;
+        }
+
         return {
-            id:
-                cleanText(
-                    topic.id ||
-                    topic.key
-                ) ||
-                `${slugify(name)}-${index}`,
 
             name,
 
-            description:
-                cleanText(
-                    topic.description ||
-                    topic.desc ||
-                    topic.details
-                ) ||
-                `Study ${name} and complete the knowledge check.`,
-
-            subject:
-                cleanText(
-                    topic.subject ||
-                    topic.subjectName ||
-                    topic.course
-                ) ||
-                (
-                    subjects.length
-                        ? subjects[index % subjects.length]
-                        : ""
-                ),
-
-            index
+            topics: []
         };
     }
 
+
+    if (
+        !subject ||
+        typeof subject !== "object"
+    ) {
+        return null;
+    }
+
+
+    const name =
+        cleanText(
+            subject.name ||
+            subject.subject ||
+            subject.title ||
+            subject.subjectName ||
+            subject.course
+        );
+
+
+    if (!name) {
+        return null;
+    }
+
+
+    let rawTopics =
+        subject.topics ||
+        subject.topicList ||
+        subject.lessons ||
+        [];
+
+
+    if (
+        typeof rawTopics === "string"
+    ) {
+        rawTopics = rawTopics
+            .split(/\n|,/)
+            .map(item => item.trim())
+            .filter(Boolean);
+    }
+
+
+    if (!Array.isArray(rawTopics)) {
+        rawTopics = [];
+    }
+
+
+    const topics =
+        rawTopics
+            .map(topic =>
+                normalizeTopic(
+                    topic,
+                    name
+                )
+            )
+            .filter(Boolean);
+
+
     return {
-        id: `topic-${index}`,
-        name: `Topic ${index + 1}`,
-        description:
-            `Study Topic ${index + 1} and complete the knowledge check.`,
-        subject:
-            subjects.length
-                ? subjects[index % subjects.length]
-                : "",
-        index
+
+        name,
+
+        topics
+    };
+}
+
+
+/* =========================================================
+   PLAN NORMALIZATION
+   ========================================================= */
+
+function normalizePlan(rawPlan) {
+
+    if (!rawPlan) {
+        return null;
+    }
+
+
+    let plan =
+        rawPlan;
+
+
+    /*
+     * Some versions stored the plan inside
+     * data / plan / studyPlan.
+     */
+
+    if (
+        plan.studyPlan &&
+        typeof plan.studyPlan === "object"
+    ) {
+        plan = plan.studyPlan;
+    }
+
+
+    if (
+        plan.plan &&
+        typeof plan.plan === "object"
+    ) {
+        plan = plan.plan;
+    }
+
+
+    let rawSubjects =
+        plan.subjects ||
+        plan.subjectList ||
+        plan.courses ||
+        [];
+
+
+    /*
+     * Compatibility with older StudyMind versions
+     * where subjects were stored as a comma-separated
+     * string.
+     */
+
+    if (
+        typeof rawSubjects === "string"
+    ) {
+
+        rawSubjects =
+            rawSubjects
+                .split(/\n|,/)
+                .map(item => item.trim())
+                .filter(Boolean);
+    }
+
+
+    if (!Array.isArray(rawSubjects)) {
+        rawSubjects = [];
+    }
+
+
+    /*
+     * Some plans may have a topics array directly.
+     */
+
+    if (
+        rawSubjects.length === 0 &&
+        Array.isArray(plan.topics)
+    ) {
+
+        const grouped = {};
+
+        plan.topics.forEach(topic => {
+
+            const normalized =
+                normalizeTopic(
+                    topic,
+                    topic?.subject ||
+                    topic?.subjectName ||
+                    ""
+                );
+
+            if (!normalized) {
+                return;
+            }
+
+            const subjectName =
+                normalized.subject ||
+                "General";
+
+            if (!grouped[subjectName]) {
+                grouped[subjectName] = [];
+            }
+
+            grouped[subjectName].push(
+                normalized
+            );
+        });
+
+
+        rawSubjects =
+            Object.entries(grouped)
+                .map(
+                    ([name, topics]) => ({
+                        name,
+                        topics
+                    })
+                );
+    }
+
+
+    const subjects =
+        rawSubjects
+            .map(normalizeSubject)
+            .filter(Boolean);
+
+
+    /*
+     * Make sure topics are normalized even if the
+     * subject normalizer received already-normalized
+     * objects.
+     */
+
+    subjects.forEach(subject => {
+
+        subject.topics =
+            (subject.topics || [])
+                .map(topic =>
+                    normalizeTopic(
+                        topic,
+                        subject.name
+                    )
+                )
+                .filter(Boolean);
+
+    });
+
+
+    return {
+
+        ...plan,
+
+        subjects
     };
 }
 
 
 /* =========================================================
    LOAD STUDY PLAN
-========================================================= */
+   ========================================================= */
 
 function loadStudyPlan() {
 
-    let savedPlan = loadJSON(
-        PLAN_KEY,
-        null
-    );
-
-    /*
-       Compatibility fallback.
-
-       Home currently stores the plan in both:
-       studyMindPlan
-       studyData
-    */
-
-    if (
-        !savedPlan ||
-        typeof savedPlan !== "object"
-    ) {
-
-        savedPlan = loadJSON(
-            COMPATIBILITY_PLAN_KEY,
+    let rawPlan =
+        readJSON(
+            PLAN_KEY,
             null
         );
+
+
+    /*
+     * Compatibility fallback.
+     */
+
+    if (!rawPlan) {
+
+        rawPlan =
+            readJSON(
+                COMPATIBILITY_PLAN_KEY,
+                null
+            );
     }
 
 
-    if (
-        !savedPlan ||
-        typeof savedPlan !== "object"
-    ) {
+    if (!rawPlan) {
 
-        console.warn(
-            "StudyMind: No saved study plan found."
-        );
+        studyPlan = null;
 
-        studyPlan = {
-            examType: "",
-            examDate: null,
-            subjects: [],
-            topics: [],
-            studyHours: 0,
-            difficulty: "balanced",
-            daysLeft: 0,
-            studyStartDate: dateKey(),
-            createdAt: new Date().toISOString()
-        };
+        normalizedSubjects = [];
+
+        allTopics = [];
 
         return;
     }
 
 
-    const rawSubjects =
-        Array.isArray(savedPlan.subjects)
-            ? savedPlan.subjects
-            : [];
+    studyPlan =
+        normalizePlan(rawPlan);
 
 
-    const subjects = rawSubjects
-        .map((subject, index) =>
-            normalizeSubject(
-                subject,
-                index
-            )
-        )
-        .filter(subject =>
-            subject.name
-        );
+    if (!studyPlan) {
 
+        normalizedSubjects = [];
 
-    const rawTopics =
-        Array.isArray(savedPlan.topics)
-            ? savedPlan.topics
-            : [];
+        allTopics = [];
 
-
-    const topics = rawTopics
-        .map((topic, index) =>
-            normalizeTopic(
-                topic,
-                index,
-                subjects.map(
-                    subject => subject.name
-                )
-            )
-        )
-        .filter(topic =>
-            topic.name
-        );
-
-
-    let examDate =
-        savedPlan.examDate ||
-        savedPlan.testDate ||
-        savedPlan.date ||
-        null;
-
-
-    const parsedExamDate =
-        parseDate(examDate);
-
-
-    if (parsedExamDate) {
-
-        examDate =
-            dateKey(parsedExamDate);
-
-    } else {
-
-        examDate = null;
+        return;
     }
 
 
-    let studyStartDate =
-        savedPlan.studyStartDate ||
-        savedPlan.startDate ||
-        dateKey();
+    normalizedSubjects =
+        studyPlan.subjects || [];
 
 
-    const parsedStartDate =
-        parseDate(studyStartDate);
+    allTopics = [];
 
 
-    if (parsedStartDate) {
+    normalizedSubjects.forEach(
+        subject => {
 
-        studyStartDate =
-            dateKey(parsedStartDate);
+            (subject.topics || [])
+                .forEach(topic => {
 
-    } else {
+                    const normalized =
+                        normalizeTopic(
+                            topic,
+                            subject.name
+                        );
 
-        studyStartDate =
-            dateKey();
-    }
+                    if (!normalized) {
+                        return;
+                    }
 
+                    /*
+                     * If the topic did not have a
+                     * subject, inherit it.
+                     */
 
-    let studyHours =
-        Number(
-            savedPlan.studyHours ||
-            savedPlan.hoursPerDay ||
-            savedPlan.dailyHours ||
-            0
-        );
+                    if (!normalized.subject) {
+                        normalized.subject =
+                            subject.name;
+                    }
 
-
-    if (
-        !Number.isFinite(studyHours) ||
-        studyHours < 0
-    ) {
-
-        studyHours = 0;
-    }
-
-
-    let daysLeft =
-        Number(
-            savedPlan.daysLeft
-        );
-
-
-    if (
-        !Number.isFinite(daysLeft) ||
-        daysLeft < 0
-    ) {
-
-        if (examDate) {
-
-            daysLeft =
-                Math.max(
-                    0,
-                    daysBetween(
-                        new Date(),
-                        new Date(examDate)
-                    )
-                );
-
-        } else {
-
-            daysLeft = 0;
+                    allTopics.push(
+                        normalized
+                    );
+                });
         }
-    }
-
-
-    studyPlan = {
-
-        ...savedPlan,
-
-        examType:
-            cleanText(
-                savedPlan.examType ||
-                savedPlan.exam ||
-                savedPlan.testType
-            ),
-
-        examDate,
-
-        subjects,
-
-        topics,
-
-        studyHours,
-
-        difficulty:
-            cleanText(
-                savedPlan.difficulty ||
-                "balanced"
-            ),
-
-        daysLeft,
-
-        studyStartDate,
-
-        createdAt:
-            savedPlan.createdAt ||
-            new Date().toISOString()
-    };
+    );
 
 
     /*
-       Keep both storage keys synchronized.
-    */
+     * Keep both storage keys synchronized.
+     */
 
-    saveJSON(
+    writeJSON(
         PLAN_KEY,
         studyPlan
     );
 
-    saveJSON(
+    writeJSON(
         COMPATIBILITY_PLAN_KEY,
         studyPlan
     );
 
 
-    console.log(
-        "StudyMind Dashboard loaded plan:",
-        studyPlan
-    );
-}
+    /*
+     * Restore topic index.
+     */
 
-
-/* =========================================================
-   COMPLETION STORAGE
-========================================================= */
-
-function loadCompletionState() {
-
-    completedTopics =
-        loadArray(
-            COMPLETED_TOPICS_KEY
-        );
-
-    completedQuestionTopics =
-        loadArray(
-            COMPLETED_QUESTIONS_KEY
-        );
-
-
-    currentTopicIndex =
+    const savedIndex =
         Number(
             localStorage.getItem(
                 CURRENT_TOPIC_KEY
@@ -647,54 +686,280 @@ function loadCompletionState() {
 
 
     if (
-        !Number.isInteger(currentTopicIndex) ||
-        currentTopicIndex < 0
+        Number.isInteger(savedIndex) &&
+        savedIndex >= 0
     ) {
+
+        currentTopicIndex =
+            Math.min(
+                savedIndex,
+                Math.max(
+                    allTopics.length - 1,
+                    0
+                )
+            );
+
+    } else {
 
         currentTopicIndex = 0;
     }
 
 
-    topicQuestions =
-        loadObject(
-            TOPIC_QUESTIONS_KEY
+    /*
+     * Make the first incomplete topic
+     * the active topic.
+     */
+
+    const firstIncompleteIndex =
+        allTopics.findIndex(
+            topic =>
+                !isTopicCompleted(topic)
         );
 
 
     if (
-        studyPlan &&
-        studyPlan.topics.length
+        firstIncompleteIndex !== -1
     ) {
 
-        if (
-            currentTopicIndex >=
-            studyPlan.topics.length
-        ) {
-
-            currentTopicIndex =
-                Math.max(
-                    0,
-                    studyPlan.topics.length - 1
-                );
-        }
+        currentTopicIndex =
+            firstIncompleteIndex;
     }
 
 
-    saveJSON(
+    saveCurrentTopicIndex();
+}
+
+
+/* =========================================================
+   COMPLETION STORAGE
+   ========================================================= */
+
+function loadCompletionState() {
+
+    completedTopics =
+        readJSON(
+            COMPLETED_TOPICS_KEY,
+            []
+        );
+
+
+    completedQuestionTopics =
+        readJSON(
+            COMPLETED_QUESTIONS_KEY,
+            []
+        );
+
+
+    topicQuestions =
+        readJSON(
+            TOPIC_QUESTIONS_KEY,
+            {}
+        );
+
+
+    if (
+        !Array.isArray(completedTopics)
+    ) {
+        completedTopics = [];
+    }
+
+
+    if (
+        !Array.isArray(completedQuestionTopics)
+    ) {
+        completedQuestionTopics = [];
+    }
+
+
+    if (
+        !topicQuestions ||
+        typeof topicQuestions !== "object"
+    ) {
+        topicQuestions = {};
+    }
+}
+
+
+function saveCompletionState() {
+
+    writeJSON(
         COMPLETED_TOPICS_KEY,
         completedTopics
     );
 
-    saveJSON(
+    writeJSON(
         COMPLETED_QUESTIONS_KEY,
         completedQuestionTopics
     );
 
-    saveJSON(
+    writeJSON(
         TOPIC_QUESTIONS_KEY,
         topicQuestions
     );
+}
 
+
+/* =========================================================
+   TOPIC KEYS
+   ========================================================= */
+
+function getTopicKey(topic) {
+
+    if (!topic) {
+        return "";
+    }
+
+
+    return String(
+        topic.id ||
+        `${topic.subject || ""}::${topic.name || ""}`
+    )
+        .toLowerCase()
+        .trim();
+}
+
+
+/* =========================================================
+   TOPIC COMPLETION
+   ========================================================= */
+
+function isTopicCompleted(topic) {
+
+    const key =
+        getTopicKey(topic);
+
+    if (!key) {
+        return false;
+    }
+
+
+    return completedTopics.some(
+        item =>
+            String(item)
+                .toLowerCase()
+                .trim() === key
+    );
+}
+
+
+function isKnowledgeCheckCompleted(topic) {
+
+    const key =
+        getTopicKey(topic);
+
+    if (!key) {
+        return false;
+    }
+
+
+    return completedQuestionTopics.some(
+        item =>
+            String(item)
+                .toLowerCase()
+                .trim() === key
+    );
+}
+
+
+function markTopicCompleted(topic) {
+
+    const key =
+        getTopicKey(topic);
+
+    if (!key) {
+        return;
+    }
+
+
+    if (!completedTopics.includes(key)) {
+
+        completedTopics.push(key);
+
+        saveCompletionState();
+    }
+}
+
+
+function markKnowledgeCheckCompleted(topic) {
+
+    const key =
+        getTopicKey(topic);
+
+    if (!key) {
+        return;
+    }
+
+
+    if (
+        !completedQuestionTopics.includes(key)
+    ) {
+
+        completedQuestionTopics.push(
+            key
+        );
+
+        saveCompletionState();
+    }
+}
+
+
+/* =========================================================
+   CURRENT TOPIC
+   ========================================================= */
+
+function getCurrentTopic() {
+
+    if (!allTopics.length) {
+        return null;
+    }
+
+
+    /*
+     * Always prefer the first incomplete topic.
+     * This prevents the dashboard from becoming
+     * stuck on an already completed topic.
+     */
+
+    const firstIncomplete =
+        allTopics.findIndex(
+            topic =>
+                !isTopicCompleted(topic)
+        );
+
+
+    if (
+        firstIncomplete !== -1
+    ) {
+
+        currentTopicIndex =
+            firstIncomplete;
+
+        saveCurrentTopicIndex();
+
+        return allTopics[
+            currentTopicIndex
+        ];
+    }
+
+
+    /*
+     * Everything is complete.
+     */
+
+    currentTopicIndex =
+        Math.min(
+            currentTopicIndex,
+            allTopics.length - 1
+        );
+
+
+    return allTopics[
+        currentTopicIndex
+    ];
+}
+
+
+function saveCurrentTopicIndex() {
 
     localStorage.setItem(
         CURRENT_TOPIC_KEY,
@@ -703,558 +968,185 @@ function loadCompletionState() {
 }
 
 
-function topicKey(topic) {
+/* =========================================================
+   NEXT TOPIC
+   ========================================================= */
 
-    if (!topic) {
-        return "";
-    }
+function getNextIncompleteTopic() {
 
     return (
-        topic.id ||
-        slugify(topic.name)
-    );
-}
-
-
-function isTopicCompleted(topic) {
-
-    const key =
-        topicKey(topic);
-
-    return completedTopics.includes(
-        key
-    );
-}
-
-
-function isQuestionCheckCompleted(topic) {
-
-    const key =
-        topicKey(topic);
-
-    return completedQuestionTopics.includes(
-        key
+        allTopics.find(
+            topic =>
+                !isTopicCompleted(topic)
+        ) || null
     );
 }
 
 
 /* =========================================================
-   CURRENT TOPIC
-========================================================= */
+   PROGRESS
+   ========================================================= */
 
-function getCurrentTopic() {
+function getProgressPercentage() {
 
-    if (
-        !studyPlan ||
-        !Array.isArray(studyPlan.topics) ||
-        !studyPlan.topics.length
-    ) {
-
-        return null;
-    }
-
-
-    /*
-       Find the first incomplete topic
-       starting from the saved index.
-    */
-
-    for (
-        let i = currentTopicIndex;
-        i < studyPlan.topics.length;
-        i++
-    ) {
-
-        if (
-            !isTopicCompleted(
-                studyPlan.topics[i]
-            )
-        ) {
-
-            currentTopicIndex = i;
-
-            return studyPlan.topics[i];
-        }
-    }
-
-
-    /*
-       If everything after the saved index
-       is complete, look from the beginning.
-    */
-
-    for (
-        let i = 0;
-        i < currentTopicIndex;
-        i++
-    ) {
-
-        if (
-            !isTopicCompleted(
-                studyPlan.topics[i]
-            )
-        ) {
-
-            currentTopicIndex = i;
-
-            return studyPlan.topics[i];
-        }
-    }
-
-
-    /*
-       Everything is complete.
-    */
-
-    return studyPlan.topics[
-        studyPlan.topics.length - 1
-    ];
-}
-
-
-/* =========================================================
-   DASHBOARD STATS
-========================================================= */
-
-function updateDashboardStats() {
-
-    const weeklyHours =
-        $("weeklyHours");
-
-    const daysLeft =
-        $("daysLeft");
-
-    const dailyGoal =
-        $("dailyGoal");
-
-    const studyScore =
-        $("studyScore");
-
-
-    if (!studyPlan) {
-        return;
-    }
-
-
-    const dailyHours =
-        Number(
-            studyPlan.studyHours || 0
-        );
-
-
-    if (weeklyHours) {
-
-        weeklyHours.textContent =
-            `${(
-                dailyHours * 7
-            ).toFixed(
-                dailyHours % 1 ? 1 : 0
-            )} hrs`;
-    }
-
-
-    if (daysLeft) {
-
-        let remaining =
-            Number(
-                studyPlan.daysLeft || 0
-            );
-
-
-        if (studyPlan.examDate) {
-
-            remaining =
-                Math.max(
-                    0,
-                    daysBetween(
-                        new Date(),
-                        new Date(
-                            studyPlan.examDate
-                        )
-                    )
-                );
-        }
-
-
-        daysLeft.textContent =
-            remaining;
-    }
-
-
-    if (dailyGoal) {
-
-        dailyGoal.textContent =
-            `${dailyHours} hrs`;
-    }
-
-
-    if (studyScore) {
-
-        studyScore.textContent =
-            calculateStudyScore();
-    }
-}
-
-
-/* =========================================================
-   STUDY SCORE
-========================================================= */
-
-function calculateStudyScore() {
-
-    if (
-        !studyPlan ||
-        !studyPlan.topics.length
-    ) {
-
+    if (!allTopics.length) {
         return 0;
     }
 
 
-    const total =
-        studyPlan.topics.length;
-
-
-    const completed =
-        studyPlan.topics.filter(
-            topic =>
-                isTopicCompleted(topic)
+    const completedCount =
+        allTopics.filter(
+            isTopicCompleted
         ).length;
 
 
-    const topicScore =
-        (completed / total) * 70;
-
-
-    const questionScore =
-        total
-            ? (
-                studyPlan.topics.filter(
-                    topic =>
-                        isQuestionCheckCompleted(
-                            topic
-                        )
-                ).length /
-                total
-            ) * 20
-            : 0;
-
-
-    const streak =
-        Number(
-            localStorage.getItem(
-                STREAK_KEY
-            )
-        ) || 0;
-
-
-    const streakScore =
-        Math.min(
-            10,
-            streak
-        );
-
-
     return Math.round(
-        Math.min(
-            100,
-            topicScore +
-            questionScore +
-            streakScore
+        (
+            completedCount /
+            allTopics.length
+        ) * 100
+    );
+}
+
+
+/* =========================================================
+   DOM SETTER
+   ========================================================= */
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        $(id);
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        value ?? "";
+}
+
+
+function setHTML(
+    id,
+    value
+) {
+
+    const element =
+        $(id);
+
+    if (!element) {
+        return;
+    }
+
+
+    element.innerHTML =
+        value ?? "";
+}
+
+
+/* =========================================================
+   DASHBOARD SUMMARY
+   ========================================================= */
+
+function renderDashboardSummary() {
+
+    const totalSubjects =
+        normalizedSubjects.length;
+
+
+    const totalTopics =
+        allTopics.length;
+
+
+    const completedCount =
+        allTopics.filter(
+            isTopicCompleted
+        ).length;
+
+
+    const progress =
+        getProgressPercentage();
+
+
+    /*
+     * Support multiple possible IDs so this
+     * replacement remains compatible with
+     * different dashboard.html versions.
+     */
+
+    [
+        "subjectCount",
+        "totalSubjects"
+    ].forEach(id =>
+        setText(
+            id,
+            totalSubjects
         )
     );
-}
 
 
-/* =========================================================
-   SUBJECTS
-========================================================= */
-
-function renderSubjects() {
-
-    const container =
-        $("subjectList");
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.innerHTML = "";
-
-
-    if (
-        !studyPlan ||
-        !studyPlan.subjects.length
-    ) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>No subjects yet</strong>
-                <p>Create a study plan from the Home page.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    studyPlan.subjects.forEach(
-        (subject, index) => {
-
-            const subjectName =
-                typeof subject === "string"
-                    ? subject
-                    : subject.name;
-
-
-            const relatedTopics =
-                studyPlan.topics.filter(
-                    topic =>
-                        !topic.subject ||
-                        topic.subject === subjectName
-                );
-
-
-            const completed =
-                relatedTopics.filter(
-                    topic =>
-                        isTopicCompleted(topic)
-                ).length;
-
-
-            const total =
-                relatedTopics.length;
-
-
-            const percentage =
-                total
-                    ? Math.round(
-                        (
-                            completed /
-                            total
-                        ) * 100
-                    )
-                    : 0;
-
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "subject-item";
-
-
-            item.innerHTML = `
-                <div class="subject-item-header">
-                    <strong>
-                        📚 ${escapeHTML(subjectName)}
-                    </strong>
-
-                    <span>
-                        ${percentage}%
-                    </span>
-                </div>
-
-                <div class="progress-bar-container">
-                    <div
-                        style="width:${percentage}%"
-                    ></div>
-                </div>
-
-                <small>
-                    ${completed} of ${total} topics completed
-                </small>
-            `;
-
-
-            container.appendChild(item);
-        }
+    [
+        "topicCount",
+        "totalTopics"
+    ].forEach(id =>
+        setText(
+            id,
+            totalTopics
+        )
     );
-}
 
 
-/* =========================================================
-   TOPICS
-========================================================= */
-
-function renderTopics() {
-
-    const container =
-        $("topicList");
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.innerHTML = "";
-
-
-    if (
-        !studyPlan ||
-        !studyPlan.topics.length
-    ) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <strong>No topics yet</strong>
-                <p>Create a study plan with topics to begin.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    studyPlan.topics.forEach(
-        (topic, index) => {
-
-            const completed =
-                isTopicCompleted(topic);
-
-
-            const questionDone =
-                isQuestionCheckCompleted(
-                    topic
-                );
-
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "topic-item";
-
-
-            if (completed) {
-                item.classList.add(
-                    "completed"
-                );
-            }
-
-
-            if (
-                index === currentTopicIndex
-            ) {
-
-                item.classList.add(
-                    "active"
-                );
-            }
-
-
-            item.innerHTML = `
-                <div class="topic-item-header">
-
-                    <div>
-
-                        <strong>
-                            ${
-                                completed
-                                    ? "✅"
-                                    : index === currentTopicIndex
-                                        ? "📖"
-                                        : "○"
-                            }
-                            ${escapeHTML(topic.name)}
-                        </strong>
-
-                        ${
-                            topic.subject
-                                ? `
-                                    <small>
-                                        ${escapeHTML(topic.subject)}
-                                    </small>
-                                  `
-                                : ""
-                        }
-
-                    </div>
-
-                    <span>
-                        ${
-                            completed
-                                ? "Completed"
-                                : questionDone
-                                    ? "Checked"
-                                    : "Pending"
-                        }
-                    </span>
-
-                </div>
-
-                <p>
-                    ${escapeHTML(topic.description)}
-                </p>
-            `;
-
-
-            item.addEventListener(
-                "click",
-                () => {
-
-                    currentTopicIndex =
-                        index;
-
-                    localStorage.setItem(
-                        CURRENT_TOPIC_KEY,
-                        String(index)
-                    );
-
-                    renderCurrentTopic();
-
-                    renderTopics();
-
-                    window.scrollTo({
-                        top: 0,
-                        behavior: "smooth"
-                    });
-                }
-            );
-
-
-            container.appendChild(item);
-        }
+    [
+        "completedTopicCount",
+        "completedTopics"
+    ].forEach(id =>
+        setText(
+            id,
+            completedCount
+        )
     );
+
+
+    [
+        "progressPercentage",
+        "progressPercent",
+        "studyProgressPercent"
+    ].forEach(id =>
+        setText(
+            id,
+            `${progress}%`
+        )
+    );
+
+
+    [
+        "progressBar",
+        "studyProgressBar"
+    ].forEach(id => {
+
+        const element =
+            $(id);
+
+        if (!element) {
+            return;
+        }
+
+        element.style.width =
+            `${progress}%`;
+    });
 }
 
 
 /* =========================================================
    CURRENT TOPIC RENDER
-========================================================= */
+   ========================================================= */
 
 function renderCurrentTopic() {
-
-    const name =
-        $("currentTopicName");
-
-    const description =
-        $("currentTopicDescription");
-
-    const position =
-        $("topicPosition");
-
-    const badge =
-        $("topicStatusBadge");
-
-    const checkbox =
-        $("topicCompleteCheckbox");
-
-    const completionMessage =
-        $("topicCompletionMessage");
-
-    const nextMessage =
-        $("nextTopicMessage");
-
 
     const topic =
         getCurrentTopic();
@@ -1262,145 +1154,331 @@ function renderCurrentTopic() {
 
     if (!topic) {
 
-        if (name) {
-            name.textContent =
-                "No topic available";
-        }
-
-        if (description) {
-            description.textContent =
-                "Create a study plan with topics to begin.";
-        }
-
-        if (position) {
-            position.textContent =
-                "TOPIC 0 OF 0";
-        }
-
-        if (badge) {
-            badge.textContent =
-                "NO PLAN";
-        }
-
-        if (checkbox) {
-            checkbox.checked = false;
-            checkbox.disabled = true;
-        }
+        renderEmptyDashboard();
 
         return;
     }
 
 
-    const index =
-        studyPlan.topics.indexOf(
-            topic
+    const topicPosition =
+        allTopics.length
+            ? currentTopicIndex + 1
+            : 0;
+
+
+    setText(
+        "currentTopicName",
+        topic.name
+    );
+
+
+    setText(
+        "currentTopicDescription",
+        topic.description ||
+        `Study ${topic.name} and complete the knowledge check.`
+    );
+
+
+    setText(
+        "currentSubjectName",
+        topic.subject ||
+        "Subject"
+    );
+
+
+    setText(
+        "currentTopicSubject",
+        topic.subject ||
+        "Subject"
+    );
+
+
+    setText(
+        "topicPosition",
+        `TOPIC ${topicPosition} OF ${allTopics.length}`
+    );
+
+
+    const statusBadge =
+        $("topicStatusBadge");
+
+
+    if (statusBadge) {
+
+        statusBadge.textContent =
+            isTopicCompleted(topic)
+                ? "COMPLETED"
+                : "IN PROGRESS";
+
+        statusBadge.classList.toggle(
+            "completed",
+            isTopicCompleted(topic)
         );
 
-
-    const completed =
-        isTopicCompleted(topic);
-
-
-    if (name) {
-
-        name.textContent =
-            topic.name;
+        statusBadge.classList.toggle(
+            "in-progress",
+            !isTopicCompleted(topic)
+        );
     }
 
 
-    if (description) {
-
-        description.textContent =
-            topic.description;
-    }
-
-
-    if (position) {
-
-        position.textContent =
-            `TOPIC ${index + 1} OF ${studyPlan.topics.length}`;
-    }
-
-
-    if (badge) {
-
-        if (completed) {
-
-            badge.textContent =
-                "COMPLETED";
-
-        } else {
-
-            badge.textContent =
-                "IN PROGRESS";
-        }
-    }
+    const checkbox =
+        $("topicCompleteCheckbox");
 
 
     if (checkbox) {
 
         checkbox.checked =
-            completed;
+            isTopicCompleted(topic);
 
         checkbox.disabled =
-            completed;
+            isTopicCompleted(topic);
     }
 
 
-    if (completionMessage) {
+    const message =
+        $("topicCompletionMessage");
 
-        completionMessage.textContent =
-            completed
-                ? "This topic has been completed."
-                : "Tick this box when you are done studying this topic.";
+
+    if (message) {
+
+        message.textContent =
+            isTopicCompleted(topic)
+                ? "Topic completed. Complete the knowledge check below."
+                : "Study this topic, then mark it complete to unlock the knowledge check.";
     }
+
+
+    const nextMessage =
+        $("nextTopicMessage");
 
 
     if (nextMessage) {
 
         const nextTopic =
-            studyPlan.topics[
-                index + 1
-            ];
+            getNextIncompleteTopic();
 
 
-        if (completed && nextTopic) {
-
-            nextMessage.innerHTML = `
-                <strong>Next topic:</strong>
-                ${escapeHTML(nextTopic.name)}
-            `;
-
-        } else if (
-            completed &&
-            !nextTopic
+        if (
+            nextTopic &&
+            getTopicKey(nextTopic) !==
+                getTopicKey(topic)
         ) {
 
-            nextMessage.innerHTML = `
-                🎉 <strong>All topics completed!</strong>
-                Great work.
-            `;
+            nextMessage.textContent =
+                `Next: ${nextTopic.name}`;
+
+        } else if (
+            isTopicCompleted(topic) &&
+            allTopics.every(
+                isTopicCompleted
+            )
+        ) {
+
+            nextMessage.textContent =
+                "You have completed every topic in this study plan.";
 
         } else {
 
-            nextMessage.innerHTML = "";
+            nextMessage.textContent =
+                "";
         }
     }
 
 
-    /*
-       Restore knowledge check if it already exists.
-    */
-
-    renderKnowledgeCheckState(
-        topic
-    );
+    renderTopicList();
+    renderDashboardSummary();
 }
 
 
 /* =========================================================
-   TOPIC COMPLETION
-========================================================= */
+   EMPTY DASHBOARD
+   ========================================================= */
+
+function renderEmptyDashboard() {
+
+    setText(
+        "currentTopicName",
+        "No Topic Available"
+    );
+
+
+    setText(
+        "currentTopicDescription",
+        "Create a study plan with subjects and topics to begin studying."
+    );
+
+
+    setText(
+        "topicPosition",
+        "TOPIC 0 OF 0"
+    );
+
+
+    setText(
+        "currentSubjectName",
+        "No Subject"
+    );
+
+
+    setText(
+        "currentTopicSubject",
+        "No Subject"
+    );
+
+
+    const status =
+        $("topicStatusBadge");
+
+    if (status) {
+        status.textContent =
+            "WAITING FOR STUDY PLAN";
+    }
+
+
+    renderDashboardSummary();
+    renderTopicList();
+}
+
+
+/* =========================================================
+   TOPIC LIST
+   ========================================================= */
+
+function renderTopicList() {
+
+    const container =
+        $("topicList") ||
+        $("topicsList") ||
+        $("dashboardTopicList");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!allTopics.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <strong>No topics yet</strong>
+                <p>Create a study plan with topics to see them here.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        allTopics
+            .map((topic, index) => {
+
+                const completed =
+                    isTopicCompleted(topic);
+
+                const active =
+                    index ===
+                    currentTopicIndex;
+
+                return `
+                    <button
+                        type="button"
+                        class="dashboard-topic-item ${
+                            active
+                                ? "active"
+                                : ""
+                        } ${
+                            completed
+                                ? "completed"
+                                : ""
+                        }"
+                        data-topic-index="${index}"
+                    >
+
+                        <span class="topic-item-number">
+                            ${index + 1}
+                        </span>
+
+                        <span class="topic-item-content">
+
+                            <strong>
+                                ${escapeHTML(topic.name)}
+                            </strong>
+
+                            <small>
+                                ${escapeHTML(
+                                    topic.subject ||
+                                    "Subject"
+                                )}
+                            </small>
+
+                        </span>
+
+                        <span class="topic-item-status">
+                            ${
+                                completed
+                                    ? "✓"
+                                    : active
+                                        ? "→"
+                                        : ""
+                            }
+                        </span>
+
+                    </button>
+                `;
+            })
+            .join("");
+
+
+    container
+        .querySelectorAll(
+            "[data-topic-index]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const index =
+                        Number(
+                            button.dataset
+                                .topicIndex
+                        );
+
+                    if (
+                        !Number.isInteger(index) ||
+                        !allTopics[index]
+                    ) {
+                        return;
+                    }
+
+
+                    currentTopicIndex =
+                        index;
+
+                    saveCurrentTopicIndex();
+
+                    renderCurrentTopic();
+
+                    /*
+                     * Do not automatically open
+                     * knowledge checks for random
+                     * topic clicks.
+                     */
+
+                    hideKnowledgeCheck();
+                }
+            );
+        });
+}
+
+
+/* =========================================================
+   COMPLETE CURRENT TOPIC
+   ========================================================= */
 
 function completeCurrentTopic() {
 
@@ -1413,699 +1491,115 @@ function completeCurrentTopic() {
     }
 
 
-    const key =
-        topicKey(topic);
-
-
     if (
-        !completedTopics.includes(key)
+        isTopicCompleted(topic)
     ) {
 
-        completedTopics.push(key);
+        showKnowledgeCheck(topic);
+
+        return;
     }
 
 
-    saveJSON(
-        COMPLETED_TOPICS_KEY,
-        completedTopics
-    );
+    /*
+     * Mark the CURRENT topic complete first.
+     */
 
-
-    const index =
-        studyPlan.topics.indexOf(
-            topic
-        );
-
-
-    currentTopicIndex =
-        Math.min(
-            index + 1,
-            Math.max(
-                0,
-                studyPlan.topics.length - 1
-            )
-        );
-
-
-    localStorage.setItem(
-        CURRENT_TOPIC_KEY,
-        String(currentTopicIndex)
-    );
-
-
-    updateDashboardStats();
-
-    updateDashboardProgress();
-
-    renderCurrentTopic();
-
-    renderTopics();
-
-    renderCalendar();
-
-    renderSchedule();
-
-    updateNextBooking();
-
-    renderDailyChallenge();
+    markTopicCompleted(topic);
 
 
     /*
-       Open the knowledge check
-       after the user finishes studying.
-    */
+     * IMPORTANT:
+     *
+     * Store this exact topic as the active
+     * knowledge-check topic.
+     *
+     * We do NOT rely on getCurrentTopic()
+     * later because getCurrentTopic() will
+     * intentionally move to the next incomplete
+     * topic.
+     */
+
+    activeKnowledgeCheckTopicKey =
+        getTopicKey(topic);
+
+
+    /*
+     * Open the knowledge check for the
+     * topic that was JUST completed.
+     */
 
     showKnowledgeCheck(topic);
 
 
-    alert(
-        "Topic marked as completed. Now complete the knowledge check."
-    );
-}
+    /*
+     * Advance the dashboard to the next topic
+     * AFTER recording the knowledge-check topic.
+     */
 
-
-/* =========================================================
-   PROGRESS TRACKER
-========================================================= */
-
-function updateDashboardProgress() {
-
-    const percent =
-        $("progressPercent");
-
-    const count =
-        $("progressCount");
-
-    const bar =
-        $("progressBar");
-
-
-    if (
-        !studyPlan ||
-        !studyPlan.topics.length
-    ) {
-
-        if (percent) {
-            percent.textContent =
-                "0%";
-        }
-
-        if (count) {
-            count.textContent =
-                "0 of 0 topics completed";
-        }
-
-        if (bar) {
-            bar.style.width =
-                "0%";
-        }
-
-        return;
-    }
-
-
-    const total =
-        studyPlan.topics.length;
-
-
-    const completed =
-        studyPlan.topics.filter(
-            topic =>
-                isTopicCompleted(topic)
-        ).length;
-
-
-    const percentage =
-        Math.round(
-            (completed / total) * 100
+    const nextIndex =
+        allTopics.findIndex(
+            candidate =>
+                !isTopicCompleted(candidate)
         );
 
 
-    if (percent) {
+    if (nextIndex !== -1) {
 
-        percent.textContent =
-            `${percentage}%`;
+        currentTopicIndex =
+            nextIndex;
+
+    } else {
+
+        currentTopicIndex =
+            allTopics.length - 1;
     }
 
 
-    if (count) {
+    saveCurrentTopicIndex();
 
-        count.textContent =
-            `${completed} of ${total} topics completed`;
-    }
+    renderCurrentTopic();
 
+    renderDashboardSummary();
 
-    if (bar) {
-
-        bar.style.width =
-            `${percentage}%`;
-    }
-}
-
-
-/* =========================================================
-   CALENDAR
-========================================================= */
-
-function renderCalendar() {
-
-    const calendarDays =
-        $("calendarDays");
-
-    const calendarMonth =
-        $("calendarMonth");
-
-
-    if (!calendarDays) {
-        return;
-    }
-
-
-    if (calendarMonth) {
-
-        calendarMonth.textContent =
-            formatMonthYear(
-                calendarDate
-            );
-    }
-
-
-    calendarDays.innerHTML = "";
-
-
-    const year =
-        calendarDate.getFullYear();
-
-
-    const month =
-        calendarDate.getMonth();
-
-
-    const firstDay =
-        new Date(
-            year,
-            month,
-            1
-        );
-
-
-    const lastDay =
-        new Date(
-            year,
-            month + 1,
-            0
-        );
-
-
-    const firstWeekday =
-        firstDay.getDay();
-
-
-    const daysInMonth =
-        lastDay.getDate();
+    updateStreak();
 
 
     /*
-       Empty cells before day 1.
-    */
-
-    for (
-        let i = 0;
-        i < firstWeekday;
-        i++
-    ) {
-
-        const empty =
-            document.createElement(
-                "div"
-            );
-
-        empty.className =
-            "calendar-day empty";
-
-        calendarDays.appendChild(
-            empty
-        );
-    }
-
-
-    for (
-        let day = 1;
-        day <= daysInMonth;
-        day++
-    ) {
-
-        const date =
-            new Date(
-                year,
-                month,
-                day
-            );
-
-
-        const cell =
-            document.createElement(
-                "div"
-            );
-
-
-        cell.className =
-            "calendar-day";
-
-
-        const key =
-            dateKey(date);
-
-
-        const today =
-            key === dateKey();
-
-
-        const exam =
-            studyPlan &&
-            studyPlan.examDate &&
-            key === studyPlan.examDate;
-
-
-        const start =
-            studyPlan &&
-            studyPlan.studyStartDate
-                ? new Date(
-                    studyPlan.studyStartDate
-                )
-                : null;
-
-
-        const examDate =
-            studyPlan &&
-            studyPlan.examDate
-                ? new Date(
-                    studyPlan.examDate
-                )
-                : null;
-
-
-        const withinPlan =
-            start &&
-            examDate &&
-            startOfDay(date) >=
-                startOfDay(start) &&
-            startOfDay(date) <=
-                startOfDay(examDate);
-
-
-        /*
-           Sunday is treated as a break/rest day
-           unless it is the exam date.
-        */
-
-        const isSunday =
-            date.getDay() === 0;
-
-
-        if (today) {
-
-            cell.classList.add(
-                "today"
-            );
-        }
-
-
-        if (withinPlan) {
-
-            if (exam) {
-
-                cell.classList.add(
-                    "exam-day"
-                );
-
-            } else if (isSunday) {
-
-                cell.classList.add(
-                    "break-day"
-                );
-
-            } else {
-
-                cell.classList.add(
-                    "study-day"
-                );
-            }
-        }
-
-
-        /*
-           Mark dates that correspond to
-           completed topic sessions.
-        */
-
-        if (
-            withinPlan &&
-            !exam &&
-            !isSunday &&
-            studyPlan.topics.length
-        ) {
-
-            const planDay =
-                daysBetween(
-                    start,
-                    date
-                );
-
-
-            if (
-                planDay >= 0 &&
-                planDay <
-                    studyPlan.topics.length
-            ) {
-
-                const topic =
-                    studyPlan.topics[
-                        planDay
-                    ];
-
-
-                if (
-                    topic &&
-                    isTopicCompleted(topic)
-                ) {
-
-                    cell.classList.add(
-                        "completed-day"
-                    );
-                }
-            }
-        }
-
-
-        cell.innerHTML = `
-            <span class="calendar-number">
-                ${day}
-            </span>
-        `;
-
-
-        if (exam) {
-
-            cell.title =
-                studyPlan.examType
-                    ? `${studyPlan.examType} — Test / Exam`
-                    : "Test / Exam";
-        }
-
-
-        calendarDays.appendChild(
-            cell
-        );
-    }
-}
-
-
-/* =========================================================
-   SCHEDULE
-========================================================= */
-
-function renderSchedule() {
-
-    const container =
-        $("scheduleList");
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.innerHTML = "";
-
-
-    if (
-        !studyPlan ||
-        !studyPlan.topics.length
-    ) {
-
-        container.innerHTML = `
-            <div class="empty-schedule">
-                Your daily study sessions will appear here.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    const today =
-        new Date();
-
-
-    const dayOfPlan =
-        studyPlan.studyStartDate
-            ? daysBetween(
-                new Date(
-                    studyPlan.studyStartDate
-                ),
-                today
-            )
-            : 0;
-
-
-    const topic =
-        dayOfPlan >= 0 &&
-        dayOfPlan <
-            studyPlan.topics.length
-            ? studyPlan.topics[
-                dayOfPlan
-            ]
-            : getCurrentTopic();
-
-
-    const examDate =
-        parseDate(
-            studyPlan.examDate
-        );
-
-
-    const isExamDay =
-        examDate &&
-        dateKey(today) ===
-            dateKey(examDate);
-
-
-    if (isExamDay) {
-
-        container.innerHTML = `
-            <div class="schedule-item">
-                <div class="schedule-time">
-                    📅
-                </div>
-
-                <div class="schedule-content">
-                    <strong>
-                        ${escapeHTML(
-                            studyPlan.examType ||
-                            "Exam"
-                        )}
-                    </strong>
-
-                    <span>
-                        Today is your test / exam day.
-                    </span>
-                </div>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    if (today.getDay() === 0) {
-
-        container.innerHTML = `
-            <div class="schedule-item">
-                <div class="schedule-time">
-                    🌿
-                </div>
-
-                <div class="schedule-content">
-                    <strong>
-                        Rest / Break Day
-                    </strong>
-
-                    <span>
-                        Take time to recharge and prepare for your next study session.
-                    </span>
-                </div>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    if (!topic) {
-
-        container.innerHTML = `
-            <div class="empty-schedule">
-                No study session scheduled for today.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    const hours =
-        Number(
-            studyPlan.studyHours || 0
-        );
-
-
-    const duration =
-        hours > 0
-            ? `${hours} hr${hours === 1 ? "" : "s"}`
-            : "Study session";
-
-
-    container.innerHTML = `
-        <div class="schedule-item">
-
-            <div class="schedule-time">
-                🕒
-            </div>
-
-            <div class="schedule-content">
-
-                <strong>
-                    ${escapeHTML(topic.name)}
-                </strong>
-
-                <span>
-                    ${topic.subject
-                        ? escapeHTML(topic.subject)
-                        : "Study Session"}
-                    • ${duration}
-                </span>
-
-            </div>
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   NEXT BOOKING
-========================================================= */
-
-function updateNextBooking() {
-
-    const booking =
-        $("nextBooking");
-
-    const bookingTime =
-        $("nextBookingTime");
-
-
-    if (!booking || !bookingTime) {
-        return;
-    }
-
-
-    if (
-        !studyPlan ||
-        !studyPlan.topics.length
-    ) {
-
-        booking.textContent =
-            "No upcoming session yet";
-
-        bookingTime.textContent =
-            "Create a study plan to populate your calendar.";
-
-        return;
-    }
-
-
-    const today =
-        new Date();
-
-
-    const examDate =
-        parseDate(
-            studyPlan.examDate
-        );
-
-
-    if (
-        examDate &&
-        dateKey(today) ===
-            dateKey(examDate)
-    ) {
-
-        booking.textContent =
-            studyPlan.examType ||
-            "Exam Day";
-
-        bookingTime.textContent =
-            "Your test / exam is today.";
-
-        return;
-    }
-
-
-    if (today.getDay() === 0) {
-
-        booking.textContent =
-            "Break Day";
-
-        bookingTime.textContent =
-            "Rest and recharge today.";
-
-        return;
-    }
-
-
-    const topic =
-        getCurrentTopic();
-
-
-    if (!topic) {
-
-        booking.textContent =
-            "All topics completed";
-
-        bookingTime.textContent =
-            "Excellent work!";
-
-        return;
-    }
-
-
-    booking.textContent =
-        topic.name;
-
-
-    const hours =
-        Number(
-            studyPlan.studyHours || 0
-        );
-
-
-    bookingTime.textContent =
-        hours > 0
-            ? `${hours} hour${hours === 1 ? "" : "s"} study session`
-            : "Study session scheduled for today.";
+     * Keep the knowledge check open even though
+     * the current dashboard topic has moved on.
+     */
+
+    showKnowledgeCheck(topic);
 }
 
 
 /* =========================================================
    KNOWLEDGE CHECK
-========================================================= */
+   ========================================================= */
 
-function showKnowledgeCheck(topic) {
+function getKnowledgeCheckTopic() {
+
+    if (!activeKnowledgeCheckTopicKey) {
+        return null;
+    }
+
+
+    return (
+        allTopics.find(
+            topic =>
+                getTopicKey(topic) ===
+                activeKnowledgeCheckTopicKey
+        ) || null
+    );
+}
+
+
+function hideKnowledgeCheck() {
 
     const section =
-        $("topicQuestionsSection");
+        $("knowledgeCheckSection") ||
+        $("knowledgeCheck");
 
 
     if (!section) {
@@ -2114,7 +1608,57 @@ function showKnowledgeCheck(topic) {
 
 
     section.style.display =
-        "block";
+        "none";
+}
+
+
+function showKnowledgeCheck(topic) {
+
+    if (!topic) {
+        return;
+    }
+
+
+    activeKnowledgeCheckTopicKey =
+        getTopicKey(topic);
+
+
+    const section =
+        $("knowledgeCheckSection") ||
+        $("knowledgeCheck");
+
+
+    if (!section) {
+
+        console.warn(
+            "Knowledge check section not found in dashboard.html."
+        );
+
+        return;
+    }
+
+
+    section.style.display =
+        "";
+
+
+    setText(
+        "knowledgeCheckTopicName",
+        topic.name
+    );
+
+
+    setText(
+        "knowledgeCheckTopic",
+        topic.name
+    );
+
+
+    setText(
+        "knowledgeCheckSubject",
+        topic.subject ||
+        ""
+    );
 
 
     renderKnowledgeCheckState(
@@ -2122,102 +1666,55 @@ function showKnowledgeCheck(topic) {
     );
 
 
-    if (
-        section.scrollIntoView
-    ) {
+    /*
+     * If this topic has already been completed,
+     * show its result instead of generating
+     * another question set.
+     */
 
-        section.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+    if (
+        isKnowledgeCheckCompleted(topic)
+    ) {
+        return;
     }
 
 
+    const cachedQuestions =
+        topicQuestions[
+            getTopicKey(topic)
+        ];
+
+
     if (
-        !topicQuestions[
-            topicKey(topic)
-        ]
+        Array.isArray(cachedQuestions) &&
+        cachedQuestions.length >=
+            KNOWLEDGE_CHECK_QUESTION_COUNT
     ) {
 
-        generateTopicQuestions(
-            topic
+        renderKnowledgeCheckQuestions(
+            topic,
+            cachedQuestions
         );
+
+        return;
     }
-}
 
 
-function hideKnowledgeCheck() {
-
-    const section =
-        $("topicQuestionsSection");
-
-
-    if (section) {
-
-        section.style.display =
-            "none";
-    }
+    generateTopicQuestions(topic);
 }
 
 
 /* =========================================================
-   AI QUESTION LIMIT
-========================================================= */
+   KNOWLEDGE CHECK STATE
+   ========================================================= */
 
-function getAIQuestionCount() {
-
-    const count =
-        Number(
-            localStorage.getItem(
-                AI_QUESTION_COUNT_KEY
-            )
-        );
-
-
-    return Number.isFinite(count) &&
-        count >= 0
-        ? count
-        : 0;
-}
-
-
-function canAskAI() {
-
-    return (
-        getAIQuestionCount() <
-        FREE_QUESTION_LIMIT
-    );
-}
-
-
-function incrementAIQuestionCount() {
-
-    const count =
-        getAIQuestionCount() + 1;
-
-
-    localStorage.setItem(
-        AI_QUESTION_COUNT_KEY,
-        String(count)
-    );
-
-
-    return count;
-}
-
-
-/* =========================================================
-   GENERATE TOPIC QUESTIONS
-========================================================= */
-
-async function generateTopicQuestions(topic) {
+function renderKnowledgeCheckState(
+    topic
+) {
 
     const container =
-        $("topicQuestions");
-
-
-    const result =
-        $("topicQuestionResult");
+        $("knowledgeCheckContent") ||
+        $("knowledgeCheckQuestions");
 
 
     if (!container) {
@@ -2225,85 +1722,366 @@ async function generateTopicQuestions(topic) {
     }
 
 
-    if (!canAskAI()) {
+    if (
+        isKnowledgeCheckCompleted(topic)
+    ) {
 
         container.innerHTML = `
-            <div class="ai-limit-message">
-                <strong>Daily AI question limit reached.</strong>
+            <div class="knowledge-check-complete">
+
+                <div class="knowledge-check-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    Knowledge Check Complete
+                </h3>
+
                 <p>
-                    You have used all ${FREE_QUESTION_LIMIT}
-                    free AI question requests for today.
+                    You have successfully completed
+                    the knowledge check for
+                    <strong>
+                        ${escapeHTML(topic.name)}
+                    </strong>.
                 </p>
+
             </div>
         `;
-
-        if (result) {
-            result.textContent =
-                "Try again tomorrow or upgrade to Premium for more AI access.";
-        }
 
         return;
     }
 
 
+    /*
+     * If questions are already cached, render
+     * them instead of showing loading.
+     */
+
+    const questions =
+        topicQuestions[
+            getTopicKey(topic)
+        ];
+
+
+    if (
+        Array.isArray(questions) &&
+        questions.length >=
+            KNOWLEDGE_CHECK_QUESTION_COUNT
+    ) {
+        return;
+    }
+
+
+    /*
+     * Otherwise show loading state.
+     */
+
     container.innerHTML = `
-        <div class="loading-state">
-            🧠 StudyMind AI is preparing your knowledge check...
+        <div class="knowledge-check-loading">
+
+            <div class="loading-spinner"
+                 aria-hidden="true">
+            </div>
+
+            <h3>
+                Preparing 5 questions...
+            </h3>
+
+            <p>
+                StudyMind AI is creating a knowledge
+                check for <strong>
+                    ${escapeHTML(topic.name)}
+                </strong>.
+            </p>
+
+            <div
+                id="knowledgeCheckError"
+                class="knowledge-check-error"
+                style="display:none;"
+            ></div>
+
+            <button
+                type="button"
+                id="knowledgeCheckRetry"
+                class="knowledge-check-retry"
+                style="display:none;"
+            >
+                Retry
+            </button>
+
         </div>
     `;
 
 
-    if (result) {
-        result.textContent = "";
+    const retry =
+        $("knowledgeCheckRetry");
+
+
+    if (retry) {
+
+        retry.addEventListener(
+            "click",
+            () =>
+                generateTopicQuestions(
+                    topic,
+                    true
+                )
+        );
+    }
+}
+
+
+/* =========================================================
+   GENERATE TOPIC QUESTIONS
+   ========================================================= */
+
+async function generateTopicQuestions(
+    topic,
+    forceRetry = false
+) {
+
+    if (!topic) {
+        return;
+    }
+
+
+    const topicKey =
+        getTopicKey(topic);
+
+
+    if (!topicKey) {
+        return;
+    }
+
+
+    /*
+     * Prevent duplicate simultaneous requests.
+     */
+
+    if (
+        knowledgeCheckGenerating &&
+        !forceRetry
+    ) {
+        return;
+    }
+
+
+    knowledgeCheckGenerating =
+        true;
+
+
+    const requestId =
+        ++knowledgeCheckRequestId;
+
+
+    activeKnowledgeCheckTopicKey =
+        topicKey;
+
+
+    const container =
+        $("knowledgeCheckContent") ||
+        $("knowledgeCheckQuestions");
+
+
+    if (container) {
+
+        container.innerHTML = `
+            <div class="knowledge-check-loading">
+
+                <div class="loading-spinner"
+                     aria-hidden="true">
+                </div>
+
+                <h3>
+                    Preparing 5 questions...
+                </h3>
+
+                <p>
+                    Creating questions for
+                    <strong>
+                        ${escapeHTML(topic.name)}
+                    </strong>.
+                </p>
+
+                <div
+                    id="knowledgeCheckError"
+                    class="knowledge-check-error"
+                    style="display:none;"
+                ></div>
+
+                <button
+                    type="button"
+                    id="knowledgeCheckRetry"
+                    class="knowledge-check-retry"
+                    style="display:none;"
+                >
+                    Retry
+                </button>
+
+            </div>
+        `;
+
+
+        const retry =
+            $("knowledgeCheckRetry");
+
+
+        if (retry) {
+
+            retry.addEventListener(
+                "click",
+                () =>
+                    generateTopicQuestions(
+                        topic,
+                        true
+                    )
+            );
+        }
     }
 
 
     try {
 
-        const response =
-            await fetch(
-                "/api/generate-questions",
-                {
-                    method: "POST",
+        /*
+         * =====================================================
+         * FETCH API
+         * =====================================================
+         */
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+        const controller =
+            new AbortController();
 
-                    body: JSON.stringify({
 
-                        subject:
-                            topic.subject ||
-                            "Senior Secondary",
-
-                        topic:
-                            topic.name,
-
-                        count: 5,
-
-                        numberOfQuestions: 5,
-
-                        questionCount: 5,
-
-                        curriculum:
-                            "Nigerian Senior Secondary curriculum"
-                    })
-                }
+        const timeout =
+            setTimeout(
+                () => {
+                    controller.abort();
+                },
+                90000
             );
 
 
-        if (!response.ok) {
+        let response;
+
+
+        try {
+
+            response =
+                await fetch(
+                    "/api/generate-questions",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "Accept":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                subject:
+                                    topic.subject ||
+                                    "Senior Secondary",
+
+                                topic:
+                                    topic.name,
+
+                                numberOfQuestions:
+                                    KNOWLEDGE_CHECK_QUESTION_COUNT,
+
+                                questionCount:
+                                    KNOWLEDGE_CHECK_QUESTION_COUNT,
+
+                                count:
+                                    KNOWLEDGE_CHECK_QUESTION_COUNT,
+
+                                curriculum:
+                                    "Nigerian Senior Secondary curriculum",
+
+                                difficulty:
+                                    "mixed"
+                            }),
+
+                        signal:
+                            controller.signal
+                    }
+                );
+
+        } finally {
+
+            clearTimeout(
+                timeout
+            );
+        }
+
+
+        /*
+         * =====================================================
+         * READ RESPONSE
+         * =====================================================
+         */
+
+        let data = null;
+
+        const rawResponseText =
+            await response.text();
+
+
+        try {
+
+            data =
+                rawResponseText
+                    ? JSON.parse(
+                        rawResponseText
+                    )
+                    : null;
+
+        } catch (parseError) {
+
+            console.error(
+                "Knowledge check API returned non-JSON:",
+                rawResponseText
+            );
 
             throw new Error(
+                "The AI server returned an invalid response."
+            );
+        }
+
+
+        /*
+         * =====================================================
+         * HTTP ERROR
+         * =====================================================
+         */
+
+        if (!response.ok) {
+
+            const serverError =
+                data &&
+                (
+                    data.error ||
+                    data.message ||
+                    data.details
+                );
+
+
+            throw new Error(
+                serverError ||
                 `Question API returned ${response.status}`
             );
         }
 
 
-        const data =
-            await response.json();
-
+        /*
+         * =====================================================
+         * EXTRACT QUESTIONS
+         * =====================================================
+         */
 
         const questions =
             extractQuestions(
@@ -2312,32 +2090,78 @@ async function generateTopicQuestions(topic) {
 
 
         if (
-            !questions.length
+            !Array.isArray(questions) ||
+            questions.length <
+                KNOWLEDGE_CHECK_QUESTION_COUNT
         ) {
 
             throw new Error(
-                "AI returned no questions."
+                `The AI returned ${
+                    Array.isArray(questions)
+                        ? questions.length
+                        : 0
+                } valid questions instead of ${KNOWLEDGE_CHECK_QUESTION_COUNT}.`
             );
         }
 
 
-        topicQuestions[
-            topicKey(topic)
-        ] = questions;
+        /*
+         * Only continue if this is still the
+         * active request.
+         */
+
+        if (
+            requestId !==
+            knowledgeCheckRequestId
+        ) {
+            return;
+        }
 
 
-        saveJSON(
-            TOPIC_QUESTIONS_KEY,
-            topicQuestions
+        const normalizedQuestions =
+            questions
+                .slice(
+                    0,
+                    KNOWLEDGE_CHECK_QUESTION_COUNT
+                )
+                .map(
+                    normalizeQuestion
+                )
+                .filter(Boolean);
+
+
+        if (
+            normalizedQuestions.length <
+                KNOWLEDGE_CHECK_QUESTION_COUNT
+        ) {
+
+            throw new Error(
+                "The AI response contained invalid question data."
+            );
+        }
+
+
+        /*
+         * Cache the questions by the EXACT
+         * topic that generated them.
+         */
+
+        topicQuestions[topicKey] =
+            normalizedQuestions;
+
+
+        saveCompletionState();
+
+
+        /*
+         * Render immediately.
+         */
+
+        renderKnowledgeCheckQuestions(
+            topic,
+            normalizedQuestions
         );
 
-
-        incrementAIQuestionCount();
-
-
-        renderKnowledgeCheckState(
-            topic
-        );
 
     } catch (error) {
 
@@ -2347,143 +2171,126 @@ async function generateTopicQuestions(topic) {
         );
 
 
-        container.innerHTML = `
-            <div class="ai-error-message">
-                <strong>
-                    We couldn't generate the knowledge check.
-                </strong>
-
-                <p>
-                    Please try again in a moment.
-                </p>
-
-                <button
-                    type="button"
-                    id="retryTopicQuestions"
-                    class="primary-button"
-                >
-                    Try Again
-                </button>
-            </div>
-        `;
-
-
-        const retry =
-            $("retryTopicQuestions");
-
-
-        if (retry) {
-
-            retry.addEventListener(
-                "click",
-                () =>
-                    generateTopicQuestions(
-                        topic
-                    )
-            );
+        if (
+            requestId !==
+            knowledgeCheckRequestId
+        ) {
+            return;
         }
 
 
-        if (result) {
+        showKnowledgeCheckError(
+            topic,
+            error
+        );
 
-            result.textContent =
-                "";
-        }
+
+    } finally {
+
+        knowledgeCheckGenerating =
+            false;
     }
 }
 
 
 /* =========================================================
-   EXTRACT AI QUESTIONS
-========================================================= */
+   EXTRACT QUESTIONS
+   ========================================================= */
 
 function extractQuestions(data) {
 
-    if (!data) {
-        return [];
-    }
-
-
-    let questions = null;
-
-
     if (Array.isArray(data)) {
-
-        questions = data;
-
-    } else if (
-        Array.isArray(data.questions)
-    ) {
-
-        questions =
-            data.questions;
-
-    } else if (
-        Array.isArray(data.data)
-    ) {
-
-        questions =
-            data.data;
-
-    } else if (
-        data.result &&
-        Array.isArray(
-            data.result.questions
-        )
-    ) {
-
-        questions =
-            data.result.questions;
-
-    } else if (
-        data.output &&
-        Array.isArray(
-            data.output.questions
-        )
-    ) {
-
-        questions =
-            data.output.questions;
+        return data;
     }
 
 
-    if (!Array.isArray(questions)) {
+    if (!data || typeof data !== "object") {
         return [];
     }
 
 
-    return questions
-        .slice(0, 5)
-        .map(
-            (question, index) =>
-                normalizeQuestion(
-                    question,
-                    index
+    if (Array.isArray(data.questions)) {
+        return data.questions;
+    }
+
+
+    if (
+        data.data &&
+        Array.isArray(data.data.questions)
+    ) {
+        return data.data.questions;
+    }
+
+
+    if (
+        data.result &&
+        Array.isArray(data.result.questions)
+    ) {
+        return data.result.questions;
+    }
+
+
+    if (
+        data.output &&
+        Array.isArray(data.output.questions)
+    ) {
+        return data.output.questions;
+    }
+
+
+    /*
+     * Some OpenAI-style wrappers may return
+     * JSON inside an output_text property.
+     */
+
+    if (
+        typeof data.output_text ===
+            "string"
+    ) {
+
+        try {
+
+            const parsed =
+                JSON.parse(
+                    data.output_text
+                );
+
+            if (
+                parsed &&
+                Array.isArray(
+                    parsed.questions
                 )
-        )
-        .filter(Boolean);
+            ) {
+                return parsed.questions;
+            }
+
+        } catch {
+            // Ignore.
+        }
+    }
+
+
+    return [];
 }
 
 
 /* =========================================================
    NORMALIZE QUESTION
-========================================================= */
+   ========================================================= */
 
 function normalizeQuestion(
-    question,
-    index
+    question
 ) {
 
     if (
         !question ||
         typeof question !== "object"
     ) {
-
         return null;
     }
 
 
-    const text =
+    const questionText =
         cleanText(
             question.question ||
             question.text ||
@@ -2491,371 +2298,509 @@ function normalizeQuestion(
         );
 
 
-    if (!text) {
+    if (!questionText) {
         return null;
     }
 
 
     let options =
-        question.options ||
-        question.answers ||
-        question.choices;
-
-
-    if (
-        typeof options === "object" &&
-        !Array.isArray(options)
-    ) {
-
-        options =
-            Object.values(options);
-    }
-
-
-    if (!Array.isArray(options)) {
-        options = [];
-    }
+        Array.isArray(
+            question.options
+        )
+            ? question.options
+            : Array.isArray(
+                question.choices
+            )
+                ? question.choices
+                : [];
 
 
     options =
-        options
-            .map(option => {
-
-                if (
-                    option &&
-                    typeof option === "object"
-                ) {
-
-                    return cleanText(
-                        option.text ||
-                        option.label ||
-                        option.value
-                    );
-                }
-
-                return cleanText(
-                    option
-                );
-            })
-            .filter(Boolean)
-            .slice(0, 4);
+        options.map(
+            option =>
+                cleanText(option)
+        );
 
 
-    if (options.length < 2) {
+    if (
+        options.length !== 4 ||
+        options.some(
+            option => !option
+        )
+    ) {
         return null;
     }
 
 
-    let correct =
-        question.correctAnswer;
+    let answerValue =
+        question.answer;
 
 
     if (
-        correct === undefined ||
-        correct === null
+        answerValue === undefined ||
+        answerValue === null
     ) {
 
-        correct =
+        answerValue =
+            question.correctAnswer;
+    }
+
+
+    if (
+        answerValue === undefined ||
+        answerValue === null
+    ) {
+
+        answerValue =
             question.correct;
-
     }
 
 
-    if (
-        correct === undefined ||
-        correct === null
-    ) {
+    let answer =
+        Number(answerValue);
 
-        correct =
-            question.answer;
-    }
 
+    /*
+     * Handle A/B/C/D.
+     */
 
     if (
-        typeof correct === "number" &&
-        options[correct]
+        typeof answerValue ===
+            "string"
     ) {
 
-        correct =
-            options[correct];
-
-    } else if (
-        typeof correct === "string"
-    ) {
-
-        const letter =
-            correct
+        const value =
+            answerValue
                 .trim()
                 .toUpperCase();
 
 
-        const letters = [
-            "A",
-            "B",
-            "C",
-            "D"
-        ];
+        if (value === "A") {
+            answer = 0;
+        } else if (value === "B") {
+            answer = 1;
+        } else if (value === "C") {
+            answer = 2;
+        } else if (value === "D") {
+            answer = 3;
+        }
+    }
 
 
-        if (
-            letters.includes(
-                letter
+    /*
+     * Handle a correct-answer string
+     * that exactly matches an option.
+     */
+
+    if (
+        !Number.isInteger(answer) ||
+        answer < 0 ||
+        answer > 3
+    ) {
+
+        const answerText =
+            cleanText(
+                question.correctAnswer ||
+                question.correct ||
+                question.answer
             )
-        ) {
+                .toLowerCase();
 
-            correct =
-                options[
-                    letters.indexOf(
-                        letter
-                    )
-                ];
+
+        if (answerText) {
+
+            const foundIndex =
+                options.findIndex(
+                    option =>
+                        option
+                            .toLowerCase() ===
+                        answerText
+                );
+
+
+            if (foundIndex !== -1) {
+                answer = foundIndex;
+            }
         }
     }
 
 
     if (
-        correct === undefined ||
-        correct === null
+        !Number.isInteger(answer) ||
+        answer < 0 ||
+        answer > 3
     ) {
-
         return null;
     }
 
 
     return {
 
-        id:
-            question.id ||
-            `question-${index}`,
-
         question:
-            text,
+            questionText,
 
         options,
 
         correctAnswer:
-            cleanText(correct),
+            options[answer],
+
+        answer,
 
         explanation:
             cleanText(
                 question.explanation ||
-                question.reason
+                question.explanationText ||
+                ""
             )
     };
 }
 
 
 /* =========================================================
-   RENDER KNOWLEDGE CHECK
-========================================================= */
+   RENDER QUESTIONS
+   ========================================================= */
 
-function renderKnowledgeCheckState(topic) {
-
-    const section =
-        $("topicQuestionsSection");
+function renderKnowledgeCheckQuestions(
+    topic,
+    questions
+) {
 
     const container =
-        $("topicQuestions");
-
-    const result =
-        $("topicQuestionResult");
-
-    const submit =
-        $("submitTopicQuestions");
+        $("knowledgeCheckContent") ||
+        $("knowledgeCheckQuestions");
 
 
-    if (
-        !section ||
-        !container
-    ) {
-
+    if (!container) {
         return;
     }
 
 
     if (
-        !topic ||
-        !isTopicCompleted(topic)
+        !Array.isArray(questions) ||
+        questions.length < 5
     ) {
 
-        section.style.display =
-            "none";
+        showKnowledgeCheckError(
+            topic,
+            new Error(
+                "Not enough valid questions were returned."
+            )
+        );
 
         return;
     }
 
 
-    section.style.display =
-        "block";
+    const safeQuestions =
+        questions.slice(
+            0,
+            KNOWLEDGE_CHECK_QUESTION_COUNT
+        );
 
 
-    const key =
-        topicKey(topic);
+    container.innerHTML = `
 
+        <div class="knowledge-check-header">
 
-    const questions =
-        topicQuestions[key];
-
-
-    if (
-        isQuestionCheckCompleted(
-            topic
-        )
-    ) {
-
-        container.innerHTML = `
-            <div class="knowledge-complete">
-                <strong>✅ Knowledge check completed</strong>
-                <p>
-                    You have already completed the knowledge check for this topic.
-                </p>
-            </div>
-        `;
-
-
-        if (submit) {
-            submit.style.display =
-                "none";
-        }
-
-
-        if (result) {
-
-            result.textContent =
-                "This topic and its knowledge check are complete.";
-        }
-
-
-        return;
-    }
-
-
-    if (
-        !questions ||
-        !questions.length
-    ) {
-
-        container.innerHTML = `
-            <div class="loading-state">
-                🧠 Preparing your 5-question knowledge check...
-            </div>
-        `;
-
-
-        if (submit) {
-
-            submit.style.display =
-                "none";
-        }
-
-
-        return;
-    }
-
-
-    if (submit) {
-
-        submit.style.display =
-            "block";
-
-        submit.disabled =
-            false;
-    }
-
-
-    container.innerHTML = "";
-
-
-    questions.forEach(
-        (question, index) => {
-
-            const wrapper =
-                document.createElement(
-                    "div"
-                );
-
-
-            wrapper.className =
-                "knowledge-question";
-
-
-            wrapper.innerHTML = `
-                <div class="question-number">
-                    Question ${index + 1} of ${questions.length}
-                </div>
+            <div>
+                <span class="knowledge-check-badge">
+                    KNOWLEDGE CHECK
+                </span>
 
                 <h3>
-                    ${escapeHTML(
-                        question.question
-                    )}
+                    ${escapeHTML(topic.name)}
                 </h3>
 
-                <div class="question-options">
+                <p>
+                    Answer all 5 questions.
+                    You need at least 60% to pass.
+                </p>
+            </div>
 
-                    ${question.options
-                        .map(
-                            (
-                                option,
-                                optionIndex
-                            ) => `
-                                <label class="question-option">
+            <div class="knowledge-check-count">
+                5 QUESTIONS
+            </div>
 
-                                    <input
-                                        type="radio"
-                                        name="topic-question-${index}"
-                                        value="${escapeHTML(option)}"
-                                    >
-
-                                    <span>
-                                        ${String.fromCharCode(
-                                            65 + optionIndex
-                                        )}.
-                                        ${escapeHTML(option)}
-                                    </span>
-
-                                </label>
-                            `
-                        )
-                        .join("")}
-
-                </div>
-            `;
+        </div>
 
 
-            container.appendChild(
-                wrapper
-            );
-        }
-    );
+        <form
+            id="knowledgeCheckForm"
+            class="knowledge-check-form"
+        >
+
+            ${safeQuestions
+                .map(
+                    (question, index) => `
+
+                        <div
+                            class="knowledge-question"
+                            data-question-index="${index}"
+                        >
+
+                            <div class="knowledge-question-number">
+                                QUESTION ${index + 1} OF 5
+                            </div>
+
+                            <h4>
+                                ${escapeHTML(
+                                    question.question
+                                )}
+                            </h4>
+
+                            <div class="knowledge-options">
+
+                                ${question.options
+                                    .map(
+                                        (
+                                            option,
+                                            optionIndex
+                                        ) => `
+
+                                            <label
+                                                class="knowledge-option"
+                                            >
+
+                                                <input
+                                                    type="radio"
+                                                    name="knowledgeQuestion${index}"
+                                                    value="${optionIndex}"
+                                                    data-question-index="${index}"
+                                                />
+
+                                                <span
+                                                    class="knowledge-option-letter"
+                                                >
+                                                    ${
+                                                        [
+                                                            "A",
+                                                            "B",
+                                                            "C",
+                                                            "D"
+                                                        ][optionIndex]
+                                                    }
+                                                </span>
+
+                                                <span
+                                                    class="knowledge-option-text"
+                                                >
+                                                    ${escapeHTML(
+                                                        option
+                                                    )}
+                                                </span>
+
+                                            </label>
+
+                                        `
+                                    )
+                                    .join("")}
+
+                            </div>
+
+                        </div>
+
+                    `
+                )
+                .join("")}
+
+
+            <div
+                id="knowledgeCheckResult"
+                class="knowledge-check-result"
+                style="display:none;"
+            ></div>
+
+
+            <button
+                type="submit"
+                id="submitKnowledgeCheck"
+                class="knowledge-check-submit"
+            >
+                Submit Knowledge Check
+            </button>
+
+        </form>
+    `;
+
+
+    const form =
+        $("knowledgeCheckForm");
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                submitKnowledgeCheck(
+                    topic
+                );
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   KNOWLEDGE CHECK ERROR
+   ========================================================= */
+
+function showKnowledgeCheckError(
+    topic,
+    error
+) {
+
+    const container =
+        $("knowledgeCheckContent") ||
+        $("knowledgeCheckQuestions");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const message =
+        error &&
+        error.name ===
+            "AbortError"
+            ? "Question generation took too long. Please try again."
+            : error &&
+              error.message
+                ? error.message
+                : "We couldn't generate the questions right now.";
+
+
+    container.innerHTML = `
+
+        <div class="knowledge-check-loading knowledge-check-failed">
+
+            <div class="knowledge-check-error-icon">
+                !
+            </div>
+
+            <h3>
+                We couldn't prepare the questions
+            </h3>
+
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
+            <button
+                type="button"
+                id="knowledgeCheckRetry"
+                class="knowledge-check-retry"
+            >
+                Try Again
+            </button>
+
+        </div>
+    `;
+
+
+    const retry =
+        $("knowledgeCheckRetry");
+
+
+    if (retry) {
+
+        retry.addEventListener(
+            "click",
+            () =>
+                generateTopicQuestions(
+                    topic,
+                    true
+                )
+        );
+    }
 }
 
 
 /* =========================================================
    SUBMIT KNOWLEDGE CHECK
-========================================================= */
+   ========================================================= */
 
-function submitKnowledgeCheck() {
+function submitKnowledgeCheck(
+    suppliedTopic = null
+) {
+
+    /*
+     * CRITICAL FIX:
+     *
+     * Never use getCurrentTopic() here.
+     *
+     * The dashboard may already have advanced
+     * to Topic 2 while the visible knowledge
+     * check belongs to Topic 1.
+     */
 
     const topic =
-        getCurrentTopic();
+        suppliedTopic ||
+        getKnowledgeCheckTopic();
 
 
     if (!topic) {
+
+        console.error(
+            "Unable to determine knowledge-check topic."
+        );
+
         return;
     }
 
 
+    const topicKey =
+        getTopicKey(topic);
+
+
     const questions =
         topicQuestions[
-            topicKey(topic)
+            topicKey
         ];
 
 
     if (
-        !questions ||
-        !questions.length
+        !Array.isArray(questions) ||
+        questions.length <
+            KNOWLEDGE_CHECK_QUESTION_COUNT
     ) {
 
+        showKnowledgeCheckError(
+            topic,
+            new Error(
+                "Knowledge-check questions are not available."
+            )
+        );
+
+        return;
+    }
+
+
+    const form =
+        $("knowledgeCheckForm");
+
+
+    if (!form) {
+        return;
+    }
+
+
+    const submitButton =
+        $("submitKnowledgeCheck");
+
+
+    /*
+     * Prevent duplicate submission.
+     */
+
+    if (
+        submitButton &&
+        submitButton.disabled
+    ) {
         return;
     }
 
@@ -2865,154 +2810,220 @@ function submitKnowledgeCheck() {
     let unanswered = 0;
 
 
-    questions.forEach(
-        (question, index) => {
+    questions
+        .slice(
+            0,
+            KNOWLEDGE_CHECK_QUESTION_COUNT
+        )
+        .forEach(
+            (
+                question,
+                index
+            ) => {
 
-            const selected =
-                document.querySelector(
-                    `input[name="topic-question-${index}"]:checked`
-                );
+                const selected =
+                    form.querySelector(
+                        `input[name="knowledgeQuestion${index}"]:checked`
+                    );
 
 
-            if (!selected) {
+                if (!selected) {
 
-                unanswered++;
+                    unanswered++;
 
-                return;
+                    return;
+                }
+
+
+                const selectedIndex =
+                    Number(
+                        selected.value
+                    );
+
+
+                let correctIndex =
+                    Number(
+                        question.answer
+                    );
+
+
+                if (
+                    !Number.isInteger(
+                        correctIndex
+                    )
+                ) {
+
+                    correctIndex =
+                        question.options
+                            .findIndex(
+                                option =>
+                                    option
+                                        .toLowerCase()
+                                        .trim() ===
+                                    String(
+                                        question.correctAnswer ||
+                                        ""
+                                    )
+                                        .toLowerCase()
+                                        .trim()
+                            );
+                }
+
+
+                if (
+                    selectedIndex ===
+                    correctIndex
+                ) {
+                    score++;
+                }
             }
+        );
 
 
-            const answer =
-                cleanText(
-                    selected.value
-                );
-
-
-            if (
-                answer.toLowerCase() ===
-                cleanText(
-                    question.correctAnswer
-                ).toLowerCase()
-            ) {
-
-                score++;
-            }
-        }
-    );
-
-
-    const result =
-        $("topicQuestionResult");
-
+    /*
+     * Require all five questions.
+     */
 
     if (unanswered > 0) {
 
-        if (result) {
-
-            result.innerHTML = `
-                <strong>
-                    Please answer all ${unanswered}
-                    remaining question${unanswered === 1 ? "" : "s"}.
-                </strong>
-            `;
-        }
+        showKnowledgeCheckResult(
+            `Please answer all 5 questions before submitting.`,
+            false
+        );
 
         return;
     }
 
 
-    const total =
-        questions.length;
-
-
     const percentage =
         Math.round(
-            (score / total) * 100
+            (
+                score /
+                KNOWLEDGE_CHECK_QUESTION_COUNT
+            ) * 100
         );
 
 
-    if (result) {
+    const passed =
+        percentage >=
+        KNOWLEDGE_CHECK_PASS_PERCENTAGE;
 
-        result.innerHTML = `
-            <strong>
-                ${score}/${total} correct — ${percentage}%
-            </strong>
 
-            <p>
-                ${
-                    percentage >= 80
-                        ? "Excellent work! 🎉"
-                        : percentage >= 60
-                            ? "Good job. Keep reviewing the topic."
-                            : "Keep studying this topic and try again."
-                }
-            </p>
-        `;
+    if (passed) {
+
+        markKnowledgeCheckCompleted(
+            topic
+        );
+
+
+        showKnowledgeCheckResult(
+            `You scored ${score}/5 (${percentage}%). You passed the knowledge check!`,
+            true
+        );
+
+
+        if (submitButton) {
+            submitButton.disabled =
+                true;
+
+            submitButton.textContent =
+                "Knowledge Check Passed";
+        }
+
+
+        /*
+         * Update progress without changing
+         * the topic whose result is displayed.
+         */
+
+        renderDashboardSummary();
+        renderCurrentTopic();
+
+
+    } else {
+
+        showKnowledgeCheckResult(
+            `You scored ${score}/5 (${percentage}%). You need at least 60% to pass. Review the topic and try again.`,
+            false
+        );
+
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                false;
+
+            submitButton.textContent =
+                "Try Again";
+        }
+    }
+}
+
+
+/* =========================================================
+   KNOWLEDGE CHECK RESULT
+   ========================================================= */
+
+function showKnowledgeCheckResult(
+    message,
+    passed
+) {
+
+    const result =
+        $("knowledgeCheckResult");
+
+
+    if (!result) {
+        return;
     }
 
 
-    /*
-       Only mark the knowledge check complete
-       when the user passes it.
-    */
-
-    if (percentage >= 60) {
-
-        const key =
-            topicKey(topic);
+    result.style.display =
+        "";
 
 
-        if (
-            !completedQuestionTopics.includes(
-                key
-            )
-        ) {
-
-            completedQuestionTopics.push(
-                key
-            );
-        }
+    result.className =
+        `knowledge-check-result ${
+            passed
+                ? "passed"
+                : "failed"
+        }`;
 
 
-        saveJSON(
-            COMPLETED_QUESTIONS_KEY,
-            completedQuestionTopics
-        );
+    result.innerHTML = `
+
+        <div class="knowledge-result-icon">
+            ${
+                passed
+                    ? "✓"
+                    : "!"
+            }
+        </div>
+
+        <div>
+            ${escapeHTML(message)}
+        </div>
+
+    `;
 
 
-        updateDashboardStats();
+    if (passed) {
 
-
-        if (percentage >= 80) {
-
-            alert(
-                `Excellent! You scored ${score}/${total}.`
-            );
-
-        } else {
-
-            alert(
-                `Knowledge check completed: ${score}/${total}.`
-            );
-        }
-
-
-        renderTopics();
-
-        renderCurrentTopic();
-
-        renderDailyChallenge();
+        result.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
     }
 }
 
 
 /* =========================================================
    TIMER STORAGE
-========================================================= */
+   ========================================================= */
 
 function loadTimerState() {
 
-    const storedDuration =
+    const savedDuration =
         Number(
             localStorage.getItem(
                 TIMER_DURATION_KEY
@@ -3021,12 +3032,15 @@ function loadTimerState() {
 
 
     if (
-        Number.isFinite(storedDuration) &&
-        storedDuration > 0
+        TIMER_OPTIONS.includes(
+            Math.round(
+                savedDuration / 60
+            )
+        )
     ) {
 
         selectedTimerSeconds =
-            storedDuration;
+            savedDuration;
 
     } else {
 
@@ -3035,7 +3049,7 @@ function loadTimerState() {
     }
 
 
-    const storedSeconds =
+    const savedSeconds =
         Number(
             localStorage.getItem(
                 TIMER_SECONDS_KEY
@@ -3044,12 +3058,16 @@ function loadTimerState() {
 
 
     if (
-        Number.isFinite(storedSeconds) &&
-        storedSeconds >= 0
+        Number.isFinite(savedSeconds) &&
+        savedSeconds >= 0 &&
+        savedSeconds <=
+            selectedTimerSeconds
     ) {
 
         timerSeconds =
-            storedSeconds;
+            Math.floor(
+                savedSeconds
+            );
 
     } else {
 
@@ -3058,34 +3076,83 @@ function loadTimerState() {
     }
 
 
-    timerRunning =
-        localStorage.getItem(
-            TIMER_RUNNING_KEY
-        ) === "true";
-
-
     /*
-       Never automatically restart the timer
-       after refreshing the page.
-    */
+     * Never automatically restart a timer
+     * after a page reload.
+     */
 
-    if (timerRunning) {
+    timerRunning = false;
 
-        timerRunning = false;
+    localStorage.setItem(
+        TIMER_RUNNING_KEY,
+        "false"
+    );
 
-        localStorage.setItem(
-            TIMER_RUNNING_KEY,
-            "false"
-        );
-    }
+
+    renderTimer();
 }
 
 
 /* =========================================================
-   TIMER DISPLAY
-========================================================= */
+   TIMER SELECT
+   ========================================================= */
 
-function formatTimer(seconds) {
+function selectTimerDuration(
+    minutes
+) {
+
+    const numericMinutes =
+        Number(minutes);
+
+
+    if (
+        !TIMER_OPTIONS.includes(
+            numericMinutes
+        )
+    ) {
+        return;
+    }
+
+
+    stopTimer();
+
+
+    selectedTimerSeconds =
+        numericMinutes * 60;
+
+
+    timerSeconds =
+        selectedTimerSeconds;
+
+
+    localStorage.setItem(
+        TIMER_DURATION_KEY,
+        String(
+            selectedTimerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        TIMER_SECONDS_KEY,
+        String(
+            timerSeconds
+        )
+    );
+
+
+    renderTimer();
+    renderTimerButtons();
+}
+
+
+/* =========================================================
+   TIMER FORMAT
+   ========================================================= */
+
+function formatTime(
+    seconds
+) {
 
     const safeSeconds =
         Math.max(
@@ -3112,56 +3179,170 @@ function formatTimer(seconds) {
 }
 
 
-function updateTimerDisplay() {
+/* =========================================================
+   TIMER RENDER
+   ========================================================= */
 
-    const timer =
-        $("studyTimer");
+function renderTimer() {
 
-
-    if (!timer) {
-        return;
-    }
-
-
-    timer.textContent =
-        formatTimer(
+    const formatted =
+        formatTime(
             timerSeconds
         );
+
+
+    [
+        "studyTimer",
+        "timerDisplay",
+        "studyTimerDisplay",
+        "timer"
+    ].forEach(id => {
+
+        const element =
+            $(id);
+
+        if (!element) {
+            return;
+        }
+
+
+        element.textContent =
+            formatted;
+    });
+
+
+    [
+        "timerMinutes"
+    ].forEach(id => {
+
+        const element =
+            $(id);
+
+        if (!element) {
+            return;
+        }
+
+
+        element.textContent =
+            String(
+                Math.floor(
+                    timerSeconds / 60
+                )
+            );
+    });
+
+
+    const progress =
+        selectedTimerSeconds > 0
+            ? (
+                (
+                    selectedTimerSeconds -
+                    timerSeconds
+                ) /
+                selectedTimerSeconds
+            ) * 100
+            : 0;
+
+
+    [
+        "timerProgress",
+        "studyTimerProgress"
+    ].forEach(id => {
+
+        const element =
+            $(id);
+
+        if (!element) {
+            return;
+        }
+
+
+        element.style.width =
+            `${Math.min(
+                Math.max(progress, 0),
+                100
+            )}%`;
+    });
+
+
+    const timerStatus =
+        $("timerStatus");
+
+
+    if (timerStatus) {
+
+        if (timerRunning) {
+
+            timerStatus.textContent =
+                "STUDYING";
+
+        } else if (
+            timerSeconds === 0
+        ) {
+
+            timerStatus.textContent =
+                "TIME COMPLETE";
+
+        } else {
+
+            timerStatus.textContent =
+                "READY";
+        }
+    }
 }
 
 
 /* =========================================================
    TIMER BUTTONS
-========================================================= */
+   ========================================================= */
 
-function updateTimerButtons() {
+function renderTimerButtons() {
 
-    const start =
-        $("startTimerButton");
-
-    const pause =
-        $("pauseTimerButton");
-
-
-    if (start) {
-
-        start.disabled =
-            timerRunning ||
-            timerSeconds <= 0;
-    }
+    const containers = [
+        $("timerOptions"),
+        $("studyTimerOptions"),
+        $("timerDurationOptions")
+    ];
 
 
-    if (pause) {
+    containers.forEach(
+        container => {
 
-        pause.disabled =
-            !timerRunning;
-    }
+            if (!container) {
+                return;
+            }
+
+
+            container
+                .querySelectorAll(
+                    "[data-timer-minutes]"
+                )
+                .forEach(button => {
+
+                    const minutes =
+                        Number(
+                            button.dataset
+                                .timerMinutes
+                        );
+
+
+                    button.classList.toggle(
+                        "active",
+                        minutes ===
+                        Math.round(
+                            selectedTimerSeconds /
+                            60
+                        )
+                    );
+                });
+        }
+    );
 }
 
 
 /* =========================================================
    START TIMER
-========================================================= */
+   ========================================================= */
 
 function startTimer() {
 
@@ -3176,11 +3357,12 @@ function startTimer() {
 
         timerSeconds =
             selectedTimerSeconds;
+
+        renderTimer();
     }
 
 
-    timerRunning =
-        true;
+    timerRunning = true;
 
 
     localStorage.setItem(
@@ -3189,12 +3371,27 @@ function startTimer() {
     );
 
 
-    updateTimerButtons();
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+    }
 
 
     timerInterval =
         setInterval(
             () => {
+
+                if (
+                    timerSeconds <= 0
+                ) {
+
+                    finishTimer();
+
+                    return;
+                }
+
 
                 timerSeconds--;
 
@@ -3206,25 +3403,20 @@ function startTimer() {
                 );
 
 
-                updateTimerDisplay();
-
-
-                if (
-                    timerSeconds <= 0
-                ) {
-
-                    finishTimer();
-                }
+                renderTimer();
 
             },
             1000
         );
+
+
+    renderTimer();
 }
 
 
 /* =========================================================
    PAUSE TIMER
-========================================================= */
+   ========================================================= */
 
 function pauseTimer() {
 
@@ -3233,17 +3425,17 @@ function pauseTimer() {
     }
 
 
-    timerRunning =
-        false;
+    timerRunning = false;
 
 
-    clearInterval(
-        timerInterval
-    );
+    if (timerInterval) {
 
+        clearInterval(
+            timerInterval
+        );
 
-    timerInterval =
-        null;
+        timerInterval = null;
+    }
 
 
     localStorage.setItem(
@@ -3260,17 +3452,43 @@ function pauseTimer() {
     );
 
 
-    updateTimerButtons();
+    renderTimer();
+}
+
+
+/* =========================================================
+   STOP TIMER
+   ========================================================= */
+
+function stopTimer() {
+
+    timerRunning = false;
+
+
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval = null;
+    }
+
+
+    localStorage.setItem(
+        TIMER_RUNNING_KEY,
+        "false"
+    );
 }
 
 
 /* =========================================================
    RESET TIMER
-========================================================= */
+   ========================================================= */
 
 function resetTimer() {
 
-    pauseTimer();
+    stopTimer();
 
 
     timerSeconds =
@@ -3285,38 +3503,20 @@ function resetTimer() {
     );
 
 
-    updateTimerDisplay();
-
-    updateTimerButtons();
+    renderTimer();
 }
 
 
 /* =========================================================
-   TIMER FINISHED
-========================================================= */
+   TIMER COMPLETE
+   ========================================================= */
 
 function finishTimer() {
 
-    clearInterval(
-        timerInterval
-    );
-
-
-    timerInterval =
-        null;
-
-
-    timerRunning =
-        false;
+    stopTimer();
 
 
     timerSeconds = 0;
-
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "false"
-    );
 
 
     localStorage.setItem(
@@ -3325,293 +3525,611 @@ function finishTimer() {
     );
 
 
-    updateTimerDisplay();
-
-    updateTimerButtons();
+    renderTimer();
 
 
-    alert(
-        "🎉 Study session complete! Great work."
+    updateStreak();
+
+
+    /*
+     * Don't use a blocking alert unless the page
+     * has no notification system.
+     */
+
+    const status =
+        $("timerStatus");
+
+
+    if (status) {
+
+        status.textContent =
+            "TIME COMPLETE";
+    }
+
+
+    const event =
+        new CustomEvent(
+            "studyMindTimerComplete"
+        );
+
+
+    document.dispatchEvent(
+        event
     );
-
-
-    renderDailyChallenge();
 }
 
 
 /* =========================================================
-   TIMER DURATION CHANGE
-========================================================= */
+   TIMER EVENT BINDINGS
+   ========================================================= */
 
-function changeTimerDuration() {
+function bindTimerEvents() {
 
-    const select =
-        $("timerDuration");
-
-
-    if (!select) {
-        return;
-    }
+    const startButtons = [
+        $("startTimer"),
+        $("startStudyTimer"),
+        $("timerStart")
+    ];
 
 
-    const minutes =
+    startButtons.forEach(
+        button => {
+
+            if (!button) {
+                return;
+            }
+
+
+            button.addEventListener(
+                "click",
+                startTimer
+            );
+        }
+    );
+
+
+    const pauseButtons = [
+        $("pauseTimer"),
+        $("pauseStudyTimer"),
+        $("timerPause")
+    ];
+
+
+    pauseButtons.forEach(
+        button => {
+
+            if (!button) {
+                return;
+            }
+
+
+            button.addEventListener(
+                "click",
+                pauseTimer
+            );
+        }
+    );
+
+
+    const resetButtons = [
+        $("resetTimer"),
+        $("resetStudyTimer"),
+        $("timerReset")
+    ];
+
+
+    resetButtons.forEach(
+        button => {
+
+            if (!button) {
+                return;
+            }
+
+
+            button.addEventListener(
+                "click",
+                resetTimer
+            );
+        }
+    );
+
+
+    document
+        .querySelectorAll(
+            "[data-timer-minutes]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    selectTimerDuration(
+                        Number(
+                            button.dataset
+                                .timerMinutes
+                        )
+                    );
+                }
+            );
+        });
+
+
+    /*
+     * Compatibility with buttons whose IDs
+     * explicitly contain 25/45/60.
+     */
+
+    [
+        25,
+        45,
+        60
+    ].forEach(minutes => {
+
+        [
+            `timer${minutes}`,
+            `timer${minutes}Min`,
+            `timer${minutes}Minutes`,
+            `studyTimer${minutes}`
+        ].forEach(id => {
+
+            const button =
+                $(id);
+
+            if (!button) {
+                return;
+            }
+
+
+            button.addEventListener(
+                "click",
+                () =>
+                    selectTimerDuration(
+                        minutes
+                    )
+            );
+        });
+    });
+}
+
+
+/* =========================================================
+   STREAK
+   ========================================================= */
+
+function todayKey() {
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+
+    return `${year}-${month}-${day}`;
+}
+
+
+function yesterdayKey() {
+
+    const date =
+        new Date();
+
+
+    date.setDate(
+        date.getDate() - 1
+    );
+
+
+    const year =
+        date.getFullYear();
+
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+
+    return `${year}-${month}-${day}`;
+}
+
+
+function updateStreak() {
+
+    const today =
+        todayKey();
+
+
+    const lastStudyDate =
+        localStorage.getItem(
+            LAST_STUDY_DATE_KEY
+        );
+
+
+    let streak =
         Number(
-            select.value
+            localStorage.getItem(
+                STREAK_KEY
+            )
         );
 
 
     if (
-        !Number.isFinite(minutes) ||
-        minutes <= 0
+        !Number.isFinite(streak) ||
+        streak < 0
     ) {
+        streak = 0;
+    }
 
+
+    if (
+        lastStudyDate ===
+        today
+    ) {
+        renderStreak(streak);
         return;
     }
 
 
-    selectedTimerSeconds =
-        minutes * 60;
+    if (
+        lastStudyDate ===
+        yesterdayKey()
+    ) {
+
+        streak++;
+
+    } else {
+
+        streak = 1;
+    }
 
 
     localStorage.setItem(
-        TIMER_DURATION_KEY,
-        String(
-            selectedTimerSeconds
+        STREAK_KEY,
+        String(streak)
+    );
+
+
+    localStorage.setItem(
+        LAST_STUDY_DATE_KEY,
+        today
+    );
+
+
+    renderStreak(streak);
+}
+
+
+function renderStreak(
+    streak = null
+) {
+
+    if (streak === null) {
+
+        streak =
+            Number(
+                localStorage.getItem(
+                    STREAK_KEY
+                )
+            ) || 0;
+    }
+
+
+    [
+        "studyStreak",
+        "streakCount",
+        "currentStreak"
+    ].forEach(id =>
+        setText(
+            id,
+            streak
+        )
+    );
+}
+
+
+/* =========================================================
+   AI QUESTION DAILY LIMIT
+   ========================================================= */
+
+function getTodayAIQuestionCount() {
+
+    const today =
+        todayKey();
+
+
+    const storedDate =
+        localStorage.getItem(
+            AI_QUESTION_DATE_KEY
+        );
+
+
+    if (
+        storedDate !==
+        today
+    ) {
+
+        localStorage.setItem(
+            AI_QUESTION_DATE_KEY,
+            today
+        );
+
+        localStorage.setItem(
+            AI_QUESTION_COUNT_KEY,
+            "0"
+        );
+
+        return 0;
+    }
+
+
+    return (
+        Number(
+            localStorage.getItem(
+                AI_QUESTION_COUNT_KEY
+            )
+        ) || 0
+    );
+}
+
+
+function canAskAIQuestion() {
+
+    return (
+        getTodayAIQuestionCount() <
+        FREE_QUESTION_LIMIT
+    );
+}
+
+
+function incrementAIQuestionCount() {
+
+    const current =
+        getTodayAIQuestionCount();
+
+
+    const next =
+        current + 1;
+
+
+    localStorage.setItem(
+        AI_QUESTION_COUNT_KEY,
+        String(next)
+    );
+
+
+    renderAIQuestionLimit();
+}
+
+
+function renderAIQuestionLimit() {
+
+    const count =
+        getTodayAIQuestionCount();
+
+
+    const remaining =
+        Math.max(
+            FREE_QUESTION_LIMIT -
+            count,
+            0
+        );
+
+
+    [
+        "aiQuestionCount",
+        "questionsUsedToday"
+    ].forEach(id =>
+        setText(
+            id,
+            count
         )
     );
 
 
-    resetTimer();
-}
+    [
+        "aiQuestionsRemaining",
+        "questionsRemaining"
+    ].forEach(id =>
+        setText(
+            id,
+            remaining
+        )
+    );
 
-
-/* =========================================================
-   RESTORE TIMER SELECT
-========================================================= */
-
-function restoreTimerSelect() {
-
-    const select =
-        $("timerDuration");
-
-
-    if (!select) {
-        return;
-    }
-
-
-    const minutes =
-        Math.round(
-            selectedTimerSeconds / 60
-        );
-
-
-    const option =
-        Array.from(
-            select.options
-        ).find(
-            option =>
-                Number(
-                    option.value
-                ) === minutes
-        );
-
-
-    if (option) {
-
-        select.value =
-            String(minutes);
-
-    } else {
-
-        select.value =
-            "25";
-    }
-}
-
-
-/* =========================================================
-   DAILY CHALLENGE
-========================================================= */
-
-function renderDailyChallenge() {
-
-    const title =
-        $("dailyChallengeTitle");
-
-    const description =
-        $("dailyChallengeDescription");
 
     const progress =
-        $("dailyChallengeProgress");
-
-    const progressBar =
-        $("dailyChallengeProgressBar");
-
-    const button =
-        $("dailyChallengeButton");
+        (
+            count /
+            FREE_QUESTION_LIMIT
+        ) * 100;
 
 
-    const topic =
-        getCurrentTopic();
+    [
+        "aiQuestionProgress"
+    ].forEach(id => {
 
+        const element =
+            $(id);
 
-    if (!topic) {
-
-        if (title) {
-            title.textContent =
-                "🎉 Plan Complete";
+        if (!element) {
+            return;
         }
 
-        if (description) {
-            description.textContent =
-                "You have completed all the topics in your study plan.";
-        }
 
-        if (progress) {
-            progress.textContent =
-                "100%";
-        }
+        element.style.width =
+            `${Math.min(
+                progress,
+                100
+            )}%`;
+    });
+}
 
-        if (progressBar) {
-            progressBar.style.width =
-                "100%";
-        }
 
-        if (button) {
-            button.disabled =
-                true;
-        }
+/* =========================================================
+   AI ASK
+   ========================================================= */
 
-        return;
+async function askStudyMindAI(
+    message
+) {
+
+    const cleanMessage =
+        cleanText(message);
+
+
+    if (!cleanMessage) {
+
+        return {
+            success: false,
+            error:
+                "Please enter a question."
+        };
     }
 
 
-    const timerDone =
-        timerSeconds <= 0;
+    if (!canAskAIQuestion()) {
+
+        showPremiumMessage();
+
+        return {
+            success: false,
+            error:
+                "Daily free AI question limit reached."
+        };
+    }
 
 
-    const questionsDone =
-        isQuestionCheckCompleted(
-            topic
+    try {
+
+        const response =
+            await fetch(
+                "/api/ask-ai",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            message:
+                                cleanMessage
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json()
+                .catch(
+                    () => null
+                );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.error ||
+                `AI request failed with status ${response.status}`
+            );
+        }
+
+
+        if (
+            !data ||
+            data.success === false
+        ) {
+
+            throw new Error(
+                data?.error ||
+                "The AI server returned an invalid response."
+            );
+        }
+
+
+        incrementAIQuestionCount();
+
+
+        return {
+
+            success: true,
+
+            reply:
+                data.reply ||
+                data.answer ||
+                ""
+        };
+
+
+    } catch (error) {
+
+        console.error(
+            "StudyMind AI error:",
+            error
         );
 
 
-    let percentage = 0;
+        return {
 
+            success: false,
 
-    if (timerDone) {
-        percentage += 50;
-    }
-
-
-    if (questionsDone) {
-        percentage += 50;
-    }
-
-
-    if (title) {
-
-        title.textContent =
-            `📚 Study ${topic.name}`;
-    }
-
-
-    if (description) {
-
-        description.textContent =
-            `Study your current topic using the timer and complete today's knowledge check.`;
-    }
-
-
-    if (progress) {
-
-        progress.textContent =
-            `${percentage}%`;
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            `${percentage}%`;
-    }
-
-
-    if (button) {
-
-        button.disabled =
-            false;
-
-        button.textContent =
-            percentage >= 100
-                ? "✅ Challenge Complete"
-                : "🚀 Start Challenge";
+            error:
+                error.message ||
+                "Unable to contact StudyMind AI."
+        };
     }
 }
 
 
 /* =========================================================
-   DAILY CHALLENGE BUTTON
-========================================================= */
+   AI ASK UI
+   ========================================================= */
 
-function startDailyChallenge() {
+function bindAIAsk() {
 
-    const topic =
-        getCurrentTopic();
+    const input =
+        $("aiQuestionInput") ||
+        $("askAIInput") ||
+        $("aiInput");
 
-
-    if (!topic) {
-        return;
-    }
-
-
-    const section =
-        $("currentTopicSection");
-
-
-    if (section) {
-
-        section.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-
-
-    /*
-       If the timer is already at zero,
-       reset it before starting the challenge.
-    */
-
-    if (timerSeconds <= 0) {
-
-        resetTimer();
-    }
-
-
-    setTimeout(
-        () => {
-
-            if (!timerRunning) {
-
-                startTimer();
-            }
-
-        },
-        400
-    );
-}
-
-
-/* =========================================================
-   THEME
-========================================================= */
-
-function setupTheme() {
 
     const button =
-        $("themeButton");
+        $("askAIButton") ||
+        $("askAiButton") ||
+        $("aiAskButton");
+
+
+    const output =
+        $("aiAnswer") ||
+        $("aiResponse") ||
+        $("askAIResponse");
 
 
     if (!button) {
@@ -3619,511 +4137,861 @@ function setupTheme() {
     }
 
 
-    const savedTheme =
+    button.addEventListener(
+        "click",
+        async () => {
+
+            const message =
+                input
+                    ? input.value
+                    : "";
+
+
+            if (!canAskAIQuestion()) {
+
+                showPremiumMessage();
+
+                return;
+            }
+
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "Thinking...";
+
+
+            if (output) {
+
+                output.textContent =
+                    "StudyMind AI is thinking...";
+            }
+
+
+            const result =
+                await askStudyMindAI(
+                    message
+                );
+
+
+            button.disabled =
+                false;
+
+
+            button.textContent =
+                "Ask AI";
+
+
+            if (result.success) {
+
+                if (output) {
+
+                    output.textContent =
+                        result.reply;
+                }
+
+            } else {
+
+                if (output) {
+
+                    output.textContent =
+                        result.error;
+                }
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   PREMIUM MESSAGE
+   ========================================================= */
+
+function showPremiumMessage() {
+
+    const modal =
+        $("premiumModal");
+
+
+    if (modal) {
+
+        modal.style.display =
+            "";
+
+
+        return;
+    }
+
+
+    const output =
+        $("aiAnswer") ||
+        $("aiResponse");
+
+
+    if (output) {
+
+        output.innerHTML = `
+            <div class="premium-message">
+                <strong>
+                    Daily free AI limit reached
+                </strong>
+
+                <p>
+                    You've used your ${FREE_QUESTION_LIMIT}
+                    free AI questions for today.
+                    Premium gives you more AI access.
+                </p>
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================================
+   CALENDAR
+   ========================================================= */
+
+function renderCalendar() {
+
+    const calendar =
+        $("calendarDays");
+
+
+    if (!calendar) {
+        return;
+    }
+
+
+    const year =
+        currentCalendarDate
+            .getFullYear();
+
+
+    const month =
+        currentCalendarDate
+            .getMonth();
+
+
+    const monthName =
+        currentCalendarDate
+            .toLocaleDateString(
+                undefined,
+                {
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+
+
+    setText(
+        "calendarMonth",
+        monthName
+    );
+
+
+    const firstDay =
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
+
+
+    const daysInMonth =
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
+
+
+    const previousDays =
+        new Date(
+            year,
+            month,
+            0
+        ).getDate();
+
+
+    const cells = [];
+
+
+    /*
+     * Sunday-first calendar.
+     */
+
+    for (
+        let i = firstDay - 1;
+        i >= 0;
+        i--
+    ) {
+
+        cells.push({
+
+            day:
+                previousDays - i,
+
+            outside:
+                true
+        });
+    }
+
+
+    for (
+        let day = 1;
+        day <= daysInMonth;
+        day++
+    ) {
+
+        cells.push({
+
+            day,
+
+            outside:
+                false
+        });
+    }
+
+
+    while (
+        cells.length % 7 !== 0
+    ) {
+
+        cells.push({
+
+            day:
+                cells.length -
+                daysInMonth -
+                firstDay +
+                1,
+
+            outside:
+                true
+        });
+    }
+
+
+    const today =
+        new Date();
+
+
+    calendar.innerHTML =
+        cells
+            .map(cell => {
+
+                const isToday =
+                    !cell.outside &&
+                    cell.day ===
+                        today.getDate() &&
+                    month ===
+                        today.getMonth() &&
+                    year ===
+                        today.getFullYear();
+
+
+                return `
+                    <div
+                        class="calendar-day ${
+                            cell.outside
+                                ? "outside-month"
+                                : ""
+                        } ${
+                            isToday
+                                ? "today"
+                                : ""
+                        }"
+                    >
+                        ${cell.day}
+                    </div>
+                `;
+            })
+            .join("");
+}
+
+
+/* =========================================================
+   CALENDAR NAVIGATION
+   ========================================================= */
+
+function bindCalendar() {
+
+    const previous =
+        $("previousMonth") ||
+        $("calendarPrev");
+
+
+    const next =
+        $("nextMonth") ||
+        $("calendarNext");
+
+
+    if (previous) {
+
+        previous.addEventListener(
+            "click",
+            () => {
+
+                currentCalendarDate =
+                    new Date(
+                        currentCalendarDate
+                            .getFullYear(),
+                        currentCalendarDate
+                            .getMonth() - 1,
+                        1
+                    );
+
+                renderCalendar();
+            }
+        );
+    }
+
+
+    if (next) {
+
+        next.addEventListener(
+            "click",
+            () => {
+
+                currentCalendarDate =
+                    new Date(
+                        currentCalendarDate
+                            .getFullYear(),
+                        currentCalendarDate
+                            .getMonth() + 1,
+                        1
+                    );
+
+                renderCalendar();
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   SCHEDULE
+   ========================================================= */
+
+function renderSchedule() {
+
+    const schedule =
+        $("scheduleList");
+
+
+    if (!schedule) {
+        return;
+    }
+
+
+    const plan =
+        studyPlan || {};
+
+
+    const scheduleItems =
+        plan.schedule ||
+        plan.timetable ||
+        plan.studySchedule ||
+        [];
+
+
+    if (
+        Array.isArray(scheduleItems) &&
+        scheduleItems.length
+    ) {
+
+        schedule.innerHTML =
+            scheduleItems
+                .map(item => {
+
+                    const day =
+                        cleanText(
+                            item.day ||
+                            item.date ||
+                            item.type
+                        );
+
+
+                    const time =
+                        cleanText(
+                            item.time ||
+                            item.startTime ||
+                            item.duration
+                        );
+
+
+                    const subject =
+                        cleanText(
+                            item.subject ||
+                            item.title ||
+                            item.name
+                        );
+
+
+                    return `
+                        <div class="schedule-item">
+
+                            <div>
+                                <strong>
+                                    ${escapeHTML(
+                                        day ||
+                                        "Study Session"
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHTML(
+                                        subject
+                                    )}
+                                </span>
+                            </div>
+
+                            <time>
+                                ${escapeHTML(
+                                    time
+                                )}
+                            </time>
+
+                        </div>
+                    `;
+                })
+                .join("");
+
+
+        return;
+    }
+
+
+    /*
+     * If no explicit schedule exists, create a
+     * useful dashboard summary from the plan.
+     */
+
+    const topic =
+        getCurrentTopic();
+
+
+    if (!topic) {
+
+        schedule.innerHTML = `
+            <div class="empty-state">
+                No study schedule available yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    schedule.innerHTML = `
+
+        <div class="schedule-item">
+
+            <div>
+                <strong>
+                    Current Study Topic
+                </strong>
+
+                <span>
+                    ${escapeHTML(topic.name)}
+                </span>
+            </div>
+
+            <time>
+                ${DEFAULT_TIMER_MINUTES} mins
+            </time>
+
+        </div>
+
+        <div class="schedule-item">
+
+            <div>
+                <strong>
+                    Knowledge Check
+                </strong>
+
+                <span>
+                    5 questions
+                </span>
+            </div>
+
+            <time>
+                After study
+            </time>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   NEXT BOOKING
+   ========================================================= */
+
+function renderNextBooking() {
+
+    const nextTopic =
+        getNextIncompleteTopic();
+
+
+    if (!nextTopic) {
+
+        setText(
+            "nextBooking",
+            "All topics complete"
+        );
+
+
+        setText(
+            "nextBookingTime",
+            "Great work!"
+        );
+
+
+        return;
+    }
+
+
+    setText(
+        "nextBooking",
+        nextTopic.name
+    );
+
+
+    setText(
+        "nextBookingTime",
+        nextTopic.subject ||
+        "Study topic"
+    );
+}
+
+
+/* =========================================================
+   THEME
+   ========================================================= */
+
+function applyTheme(
+    theme
+) {
+
+    const normalized =
+        theme === "light"
+            ? "light"
+            : "dark";
+
+
+    document.documentElement
+        .setAttribute(
+            "data-theme",
+            normalized
+        );
+
+
+    document.body
+        ?.setAttribute(
+            "data-theme",
+            normalized
+        );
+
+
+    localStorage.setItem(
+        THEME_KEY,
+        normalized
+    );
+
+
+    const toggle =
+        $("themeToggle");
+
+
+    if (toggle) {
+
+        toggle.setAttribute(
+            "aria-pressed",
+            normalized === "light"
+                ? "true"
+                : "false"
+        );
+    }
+}
+
+
+function bindTheme() {
+
+    const saved =
         localStorage.getItem(
             THEME_KEY
         );
 
 
     applyTheme(
-        savedTheme ||
-        "dark"
+        saved === "light"
+            ? "light"
+            : "dark"
     );
 
 
-    button.addEventListener(
+    const toggle =
+        $("themeToggle");
+
+
+    if (!toggle) {
+        return;
+    }
+
+
+    toggle.addEventListener(
         "click",
         () => {
 
             const current =
-                document.body.classList.contains(
-                    "light-mode"
-                )
-                    ? "light"
-                    : "dark";
-
-
-            const next =
-                current === "dark"
-                    ? "light"
-                    : "dark";
+                document.documentElement
+                    .getAttribute(
+                        "data-theme"
+                    );
 
 
             applyTheme(
-                next
-            );
-
-
-            localStorage.setItem(
-                THEME_KEY,
-                next
+                current === "light"
+                    ? "dark"
+                    : "light"
             );
         }
     );
 }
 
 
-function applyTheme(theme) {
+/* =========================================================
+   TOPIC COMPLETION CHECKBOX
+   ========================================================= */
 
-    const button =
-        $("themeButton");
+function bindTopicCompletion() {
+
+    const checkbox =
+        $("topicCompleteCheckbox");
 
 
-    if (theme === "light") {
-
-        document.body.classList.add(
-            "light-mode"
-        );
-
-        if (button) {
-
-            button.textContent =
-                "☀️ Light Mode";
-        }
-
-    } else {
-
-        document.body.classList.remove(
-            "light-mode"
-        );
-
-        if (button) {
-
-            button.textContent =
-                "🌙 Dark Mode";
-        }
+    if (!checkbox) {
+        return;
     }
+
+
+    checkbox.addEventListener(
+        "change",
+        () => {
+
+            if (!checkbox.checked) {
+                return;
+            }
+
+
+            completeCurrentTopic();
+        }
+    );
+}
+
+
+/* =========================================================
+   COMPLETE TOPIC BUTTON
+   ========================================================= */
+
+function bindCompleteTopicButton() {
+
+    const buttons = [
+        $("completeTopicButton"),
+        $("completeCurrentTopic"),
+        $("markTopicComplete"),
+        $("finishTopicButton")
+    ];
+
+
+    buttons.forEach(
+        button => {
+
+            if (!button) {
+                return;
+            }
+
+
+            button.addEventListener(
+                "click",
+                completeCurrentTopic
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function bindNavigation() {
+
+    const homeButtons =
+        document.querySelectorAll(
+            "[data-dashboard-home], .back-home-button"
+        );
+
+
+    homeButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    window.location.href =
+                        "/home.html";
+                }
+            );
+        }
+    );
 }
 
 
 /* =========================================================
    AUTHENTICATION
-========================================================= */
+   ========================================================= */
 
 async function checkAuthentication() {
 
     /*
-       supabase.js should expose:
-       window.supabaseClient
-    */
-
-    const client =
-        window.supabaseClient;
-
-
-    if (
-        !client ||
-        !client.auth
-    ) {
-
-        console.warn(
-            "StudyMind: Supabase client is not available yet."
-        );
-
-        return true;
-    }
-
+     * If Supabase is available, use it.
+     *
+     * We intentionally do not redirect immediately
+     * if Supabase is not loaded because some versions
+     * of the dashboard can still render the locally
+     * stored plan.
+     */
 
     try {
 
-        const {
-            data,
-            error
-        } =
-            await client.auth.getUser();
+        if (
+            typeof window.supabase ===
+                "undefined" ||
+            !window.supabase
+        ) {
 
-
-        if (error) {
-
-            console.warn(
-                "StudyMind authentication check:",
-                error
-            );
-
-            return false;
+            return null;
         }
 
 
-        currentUser =
-            data &&
-            data.user
-                ? data.user
-                : null;
+        if (
+            typeof window.supabase.auth
+                ?.getSession !==
+                "function"
+        ) {
+
+            return null;
+        }
 
 
-        return Boolean(
-            currentUser
-        );
+        const result =
+            await window.supabase.auth
+                .getSession();
+
+
+        if (
+            result &&
+            result.data &&
+            result.data.session
+        ) {
+
+            currentUser =
+                result.data.session.user;
+
+            return currentUser;
+        }
+
+
+        return null;
+
 
     } catch (error) {
 
-        console.error(
-            "StudyMind auth error:",
+        console.warn(
+            "Supabase auth check failed:",
             error
         );
 
-        return false;
+        return null;
     }
 }
 
 
 /* =========================================================
-   NAVIGATION SAFETY
-========================================================= */
+   USER DISPLAY
+   ========================================================= */
 
-function setupNavigation() {
+function renderUser() {
 
-    /*
-       The HTML already contains the correct links.
-       This section only handles hash navigation.
-    */
-
-    const hash =
-        window.location.hash;
-
-
-    if (!hash) {
+    if (!currentUser) {
         return;
     }
 
 
-    setTimeout(
-        () => {
-
-            const target =
-                document.querySelector(
-                    hash
-                );
+    const name =
+        currentUser.user_metadata?.display_name ||
+        currentUser.user_metadata?.full_name ||
+        currentUser.email?.split("@")[0] ||
+        "Student";
 
 
-            if (target) {
+    [
+        "userName",
+        "studentName",
+        "welcomeName"
+    ].forEach(id =>
+        setText(
+            id,
+            name
+        )
+    );
 
-                target.scrollIntoView({
-                    behavior: "smooth"
-                });
-            }
 
-        },
-        250
+    [
+        "userEmail",
+        "studentEmail"
+    ].forEach(id =>
+        setText(
+            id,
+            currentUser.email || ""
+        )
     );
 }
 
 
 /* =========================================================
-   EVENT BINDING
-========================================================= */
-
-function bindEvents() {
-
-    const completeCheckbox =
-        $("topicCompleteCheckbox");
-
-
-    if (completeCheckbox) {
-
-        completeCheckbox.addEventListener(
-            "change",
-            () => {
-
-                if (
-                    completeCheckbox.checked
-                ) {
-
-                    completeCurrentTopic();
-                }
-            }
-        );
-    }
-
-
-    const submitQuestions =
-        $("submitTopicQuestions");
-
-
-    if (submitQuestions) {
-
-        submitQuestions.addEventListener(
-            "click",
-            submitKnowledgeCheck
-        );
-    }
-
-
-    const startTimerButton =
-        $("startTimerButton");
-
-
-    if (startTimerButton) {
-
-        startTimerButton.addEventListener(
-            "click",
-            startTimer
-        );
-    }
-
-
-    const pauseTimerButton =
-        $("pauseTimerButton");
-
-
-    if (pauseTimerButton) {
-
-        pauseTimerButton.addEventListener(
-            "click",
-            pauseTimer
-        );
-    }
-
-
-    const resetTimerButton =
-        $("resetTimerButton");
-
-
-    if (resetTimerButton) {
-
-        resetTimerButton.addEventListener(
-            "click",
-            resetTimer
-        );
-    }
-
-
-    const timerDuration =
-        $("timerDuration");
-
-
-    if (timerDuration) {
-
-        timerDuration.addEventListener(
-            "change",
-            changeTimerDuration
-        );
-    }
-
-
-    const previousMonth =
-        $("previousMonth");
-
-
-    if (previousMonth) {
-
-        previousMonth.addEventListener(
-            "click",
-            () => {
-
-                calendarDate =
-                    new Date(
-                        calendarDate.getFullYear(),
-                        calendarDate.getMonth() - 1,
-                        1
-                    );
-
-                renderCalendar();
-            }
-        );
-    }
-
-
-    const nextMonth =
-        $("nextMonth");
-
-
-    if (nextMonth) {
-
-        nextMonth.addEventListener(
-            "click",
-            () => {
-
-                calendarDate =
-                    new Date(
-                        calendarDate.getFullYear(),
-                        calendarDate.getMonth() + 1,
-                        1
-                    );
-
-                renderCalendar();
-            }
-        );
-    }
-
-
-    const dailyChallengeButton =
-        $("dailyChallengeButton");
-
-
-    if (dailyChallengeButton) {
-
-        dailyChallengeButton.addEventListener(
-            "click",
-            startDailyChallenge
-        );
-    }
-}
-
-
-/* =========================================================
-   PLAN VALIDATION
-========================================================= */
-
-function hasUsableStudyPlan() {
-
-    return Boolean(
-        studyPlan &&
-        Array.isArray(
-            studyPlan.subjects
-        ) &&
-        Array.isArray(
-            studyPlan.topics
-        ) &&
-        studyPlan.subjects.length > 0 &&
-        studyPlan.topics.length > 0
-    );
-}
-
-
-/* =========================================================
-   RENDER EVERYTHING
-========================================================= */
+   REFRESH DASHBOARD
+   ========================================================= */
 
 function renderEverything() {
 
-    updateDashboardStats();
-
-    updateDashboardProgress();
-
-    renderSubjects();
-
-    renderTopics();
-
     renderCurrentTopic();
+
+    renderDashboardSummary();
+
+    renderStreak();
+
+    renderAIQuestionLimit();
+
+    renderTimer();
+
+    renderTimerButtons();
 
     renderCalendar();
 
     renderSchedule();
 
-    updateNextBooking();
-
-    renderDailyChallenge();
-
-    updateTimerDisplay();
-
-    updateTimerButtons();
-
-    restoreTimerSelect();
-
-    setupNavigation();
+    renderNextBooking();
 }
 
 
 /* =========================================================
-   DASHBOARD STARTUP
-========================================================= */
-
-async function startDashboard() {
-
-    console.log(
-        "StudyMind Dashboard: starting..."
-    );
-
-
-    /*
-       IMPORTANT:
-       Load the Home page's saved plan BEFORE
-       rendering anything.
-    */
-
-    loadStudyPlan();
-
-    loadCompletionState();
-
-    loadTimerState();
-
-
-    /*
-       Make sure the selected timer matches
-       the HTML options.
-    */
-
-    restoreTimerSelect();
-
-
-    /*
-       If a plan exists, render it immediately.
-       Authentication is checked separately so
-       a delayed Supabase client does not cause
-       the dashboard to display empty data.
-    */
-
-    renderEverything();
-
-
-    const authenticated =
-        await checkAuthentication();
-
-
-    if (!authenticated) {
-
-        /*
-           Only redirect when Supabase actually
-           tells us there is no logged-in user.
-        */
-
-        window.location.href =
-            "login.html";
-
-        return;
-    }
-
-
-    /*
-       If there is no study plan, send the user
-       back to the generator.
-    */
-
-    if (!hasUsableStudyPlan()) {
-
-        console.warn(
-            "StudyMind: Dashboard has no usable study plan."
-        );
-
-
-        /*
-           Keep the dashboard usable instead of
-           immediately destroying the page.
-        */
-
-        renderEverything();
-
-        return;
-    }
-
-
-    /*
-       Final render after authentication.
-    */
-
-    renderEverything();
-
-
-    console.log(
-        "StudyMind Dashboard: ready.",
-        {
-            subjects:
-                studyPlan.subjects,
-
-            topics:
-                studyPlan.topics,
-
-            examDate:
-                studyPlan.examDate
-        }
-    );
-}
-
-
-/* =========================================================
-   GLOBAL STORAGE SYNC
-========================================================= */
+   STORAGE CHANGE SUPPORT
+   ========================================================= */
 
 window.addEventListener(
     "storage",
@@ -4134,85 +5002,168 @@ window.addEventListener(
             event.key === COMPATIBILITY_PLAN_KEY
         ) {
 
-            console.log(
-                "StudyMind: study plan changed."
-            );
-
-
             loadStudyPlan();
-
-            loadCompletionState();
 
             renderEverything();
         }
 
 
         if (
-            event.key === COMPLETED_TOPICS_KEY ||
-            event.key === COMPLETED_QUESTIONS_KEY
+            event.key ===
+                COMPLETED_TOPICS_KEY ||
+            event.key ===
+                COMPLETED_QUESTIONS_KEY
         ) {
 
             loadCompletionState();
 
             renderEverything();
         }
-    }
-);
-
-
-/* =========================================================
-   SAME-TAB PLAN SYNC
-========================================================= */
-
-window.addEventListener(
-    "studyMindPlanUpdated",
-    () => {
-
-        console.log(
-            "StudyMind: received plan update."
-        );
-
-
-        loadStudyPlan();
-
-        loadCompletionState();
-
-        renderEverything();
     }
 );
 
 
 /* =========================================================
    PAGE VISIBILITY
-========================================================= */
+   ========================================================= */
 
 document.addEventListener(
     "visibilitychange",
     () => {
 
         if (
-            document.visibilityState ===
-            "visible"
+            document.hidden
         ) {
 
-            /*
-               Re-read the plan when the user
-               returns to the dashboard.
-            */
+            if (timerRunning) {
 
-            loadStudyPlan();
-
-            loadCompletionState();
-
-            renderEverything();
+                localStorage.setItem(
+                    TIMER_SECONDS_KEY,
+                    String(
+                        timerSeconds
+                    )
+                );
+            }
         }
     }
 );
 
 
 /* =========================================================
-   DOM READY
-========================================================= */
+   BEFORE UNLOAD
+   ========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        localStorage.setItem(
+            TIMER_SECONDS_KEY,
+            String(
+                timerSeconds
+            )
+        );
+
+        localStorage.setItem(
+            TIMER_RUNNING_KEY,
+            "false"
+        );
+    }
+);
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+async function initializeDashboard() {
+
+    console.log(
+        "StudyMind Dashboard initializing..."
+    );
+
+
+    /*
+     * Load local state first so the UI can render
+     * immediately.
+     */
+
+    loadCompletionState();
+
+    loadStudyPlan();
+
+    loadTimerState();
+
+
+    /*
+     * Bind UI.
+     */
+
+    bindTheme();
+
+    bindTimerEvents();
+
+    bindTopicCompletion();
+
+    bindCompleteTopicButton();
+
+    bindAIAsk();
+
+    bindCalendar();
+
+    bindNavigation();
+
+
+    /*
+     * Render.
+     */
+
+    renderEverything();
+
+
+    /*
+     * Authentication can happen after the
+     * dashboard has rendered.
+     */
+
+    currentUser =
+        await checkAuthentication();
+
+
+    renderUser();
+
+
+    /*
+     * Make sure the daily AI counter is current.
+     */
+
+    renderAIQuestionLimit();
+
+
+    console.log(
+        "StudyMind Dashboard ready."
+    );
+
+    console.log(
+        "Subjects:",
+        normalizedSubjects
+    );
+
+    console.log(
+        "Topics:",
+        allTopics
+    );
+
+    console.log(
+        "Current topic:",
+        getCurrentTopic()
+    );
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
 
 if (
     document.readyState ===
@@ -4221,46 +5172,33 @@ if (
 
     document.addEventListener(
         "DOMContentLoaded",
-        () => {
-
-            setupTheme();
-
-            bindEvents();
-
-            startDashboard();
-        }
+        initializeDashboard
     );
 
 } else {
 
-    setupTheme();
-
-    bindEvents();
-
-    startDashboard();
+    initializeDashboard();
 }
 
 
 /* =========================================================
-   OPTIONAL GLOBAL FUNCTIONS
-========================================================= */
+   OPTIONAL GLOBAL API
+   =========================================================
+
+   These are exposed so existing dashboard.html
+   inline buttons or other scripts can continue
+   calling the functions.
+   ========================================================= */
 
 window.StudyMindDashboard = {
 
-    reload: () => {
+    getCurrentTopic,
 
-        loadStudyPlan();
+    completeCurrentTopic,
 
-        loadCompletionState();
+    generateTopicQuestions,
 
-        renderEverything();
-    },
-
-    getPlan: () =>
-        studyPlan,
-
-    getCurrentTopic: () =>
-        getCurrentTopic(),
+    submitKnowledgeCheck,
 
     startTimer,
 
@@ -4268,9 +5206,40 @@ window.StudyMindDashboard = {
 
     resetTimer,
 
-    renderCalendar,
+    selectTimerDuration,
 
-    renderSchedule,
+    askStudyMindAI,
 
-    updateDashboardProgress
+    renderEverything,
+
+    getProgressPercentage
 };
+
+
+/* =========================================================
+   LEGACY GLOBAL COMPATIBILITY
+   ========================================================= */
+
+window.startTimer =
+    startTimer;
+
+window.pauseTimer =
+    pauseTimer;
+
+window.resetTimer =
+    resetTimer;
+
+window.completeCurrentTopic =
+    completeCurrentTopic;
+
+window.generateTopicQuestions =
+    generateTopicQuestions;
+
+window.submitKnowledgeCheck =
+    submitKnowledgeCheck;
+
+window.selectTimerDuration =
+    selectTimerDuration;
+
+window.askStudyMindAI =
+    askStudyMindAI;
