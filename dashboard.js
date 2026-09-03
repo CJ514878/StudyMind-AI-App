@@ -2193,17 +2193,32 @@ function completeCurrentTopic() {
     saveCompletionState();
 
 
-  
-
     /* -----------------------------------------
-       TIMER
+       STOP STUDY TIMER
     ----------------------------------------- */
 
     stopTimer();
 
+
+    /* -----------------------------------------
+       SHOW KNOWLEDGE CHECK
+
+       IMPORTANT:
+       Do NOT call renderCurrentTopic() here.
+
+       renderCurrentTopic() looks for the next
+       incomplete topic. If we called it first,
+       the Knowledge Check would be associated
+       with the wrong topic.
+
+       Instead, immediately show the Knowledge
+       Check for the topic the student just
+       finished.
+    ----------------------------------------- */
+
+    showKnowledgeCheck(topic);
+
 }
-
-
 /* =========================================================
    KNOWLEDGE CHECK SECTION
 ========================================================= */
