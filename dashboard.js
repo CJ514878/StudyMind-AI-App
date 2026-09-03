@@ -96,7 +96,8 @@ const STREAK_KEY =
 
 const LAST_STUDY_DATE_KEY =
     "lastStudyDate";
-
+const COMPLETED_DAYS_KEY =
+    "studyMindCompletedDays";
 
 /* =========================================================
    GLOBAL STATE
