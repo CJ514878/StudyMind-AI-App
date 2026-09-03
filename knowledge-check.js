@@ -32,6 +32,12 @@ const KNOWLEDGE_SESSION_KEY =
 const KNOWLEDGE_COMPLETED_KEY =
     "studyMindCompletedQuestionTopics";
 
+const KNOWLEDGE_QUESTIONS_KEY =
+    "studyMindTopicQuestions";
+
+const QUESTION_REQUEST_TIMEOUT =
+    45000;
+
 
 /* =========================================================
    STATE
@@ -195,12 +201,25 @@ function renderTopic() {
         "Senior Secondary";
 
 
-    $("knowledgeSubject").textContent =
-        subject;
+    const subjectElement =
+        $("knowledgeSubject");
+
+    const topicElement =
+        $("knowledgeTopic");
 
 
-    $("knowledgeTopic").textContent =
-        knowledgeTopic.name;
+    if (subjectElement) {
+
+        subjectElement.textContent =
+            subject;
+    }
+
+
+    if (topicElement) {
+
+        topicElement.textContent =
+            knowledgeTopic.name;
+    }
 }
 
 
@@ -215,6 +234,11 @@ async function createKnowledgeCheck() {
 
     try {
 
+        console.log(
+            "Generating Knowledge Check questions..."
+        );
+
+
         const questions =
             await requestQuestions(
                 knowledgeTopic
@@ -223,7 +247,8 @@ async function createKnowledgeCheck() {
 
         if (
             !Array.isArray(questions) ||
-            questions.length < KNOWLEDGE_CHECK_COUNT
+            questions.length <
+            KNOWLEDGE_CHECK_COUNT
         ) {
 
             throw new Error(
@@ -254,16 +279,31 @@ async function createKnowledgeCheck() {
 
 
         /* -----------------------------------------
-           COUNT ONE USAGE ONLY AFTER SUCCESS
+           COUNT USAGE AFTER SUCCESS
         ----------------------------------------- */
 
         countKnowledgeCheckUsage();
 
 
+        /* -----------------------------------------
+           SAVE QUESTIONS
+        ----------------------------------------- */
+
+        saveKnowledgeQuestions();
+
+
+        /* -----------------------------------------
+           RENDER
+        ----------------------------------------- */
+
         renderQuestions();
 
-
         hideLoading();
+
+
+        console.log(
+            "Knowledge Check ready."
+        );
 
 
     } catch (error) {
@@ -288,6 +328,16 @@ async function createKnowledgeCheck() {
 
 function countKnowledgeCheckUsage() {
 
+    if (!knowledgeTopic) {
+        return;
+    }
+
+
+    const checkId =
+        knowledgeTopic.checkId ||
+        `${knowledgeTopic.name}-${Date.now()}`;
+
+
     const existingSession =
         sessionStorage.getItem(
             KNOWLEDGE_SESSION_KEY
@@ -298,7 +348,10 @@ function countKnowledgeCheckUsage() {
        PREVENT REFRESH FROM COUNTING AGAIN
     ----------------------------------------- */
 
-    if (existingSession) {
+    if (
+        existingSession ===
+        checkId
+    ) {
 
         return;
     }
@@ -309,18 +362,67 @@ function countKnowledgeCheckUsage() {
 
     localStorage.setItem(
         KNOWLEDGE_USAGE_KEY,
-        String(knowledgeUsageCount)
+        String(
+            knowledgeUsageCount
+        )
     );
 
 
     sessionStorage.setItem(
         KNOWLEDGE_SESSION_KEY,
-        Date.now().toString()
+        checkId
     );
 
 
     console.log(
         `Knowledge Check usage: ${knowledgeUsageCount}/${KNOWLEDGE_CHECK_LIMIT}`
+    );
+}
+
+
+/* =========================================================
+   SAVE QUESTIONS
+========================================================= */
+
+function saveKnowledgeQuestions() {
+
+    if (!knowledgeTopic) {
+        return;
+    }
+
+
+    const topicKey =
+        knowledgeTopic.key ||
+        createTopicKey(
+            knowledgeTopic
+        );
+
+
+    let storedQuestions =
+        readJSON(
+            KNOWLEDGE_QUESTIONS_KEY,
+            {}
+        );
+
+
+    if (
+        !storedQuestions ||
+        typeof storedQuestions !==
+        "object" ||
+        Array.isArray(storedQuestions)
+    ) {
+
+        storedQuestions = {};
+    }
+
+
+    storedQuestions[topicKey] =
+        knowledgeQuestions;
+
+
+    writeJSON(
+        KNOWLEDGE_QUESTIONS_KEY,
+        storedQuestions
     );
 }
 
@@ -369,8 +471,13 @@ async function requestQuestions(topic) {
 
     try {
 
+        console.log(
+            "Trying /api/generate-questions..."
+        );
+
+
         const response =
-            await fetch(
+            await fetchWithTimeout(
                 "/api/generate-questions",
                 {
                     method: "POST",
@@ -382,7 +489,8 @@ async function requestQuestions(topic) {
 
                     body:
                         JSON.stringify(payload)
-                }
+                },
+                QUESTION_REQUEST_TIMEOUT
             );
 
 
@@ -390,6 +498,7 @@ async function requestQuestions(topic) {
 
             const data =
                 await response.json();
+
 
             const questions =
                 extractQuestions(data);
@@ -400,15 +509,31 @@ async function requestQuestions(topic) {
                 KNOWLEDGE_CHECK_COUNT
             ) {
 
+                console.log(
+                    "Questions received from /api/generate-questions."
+                );
+
                 return questions;
             }
+
+
+            console.warn(
+                "generate-questions returned an invalid question list."
+            );
+
+        } else {
+
+            console.warn(
+                `generate-questions returned ${response.status}.`
+            );
         }
+
 
     } catch (error) {
 
         console.warn(
-            "generate-questions endpoint unavailable:",
-            error
+            "generate-questions failed:",
+            error.message
         );
     }
 
@@ -417,9 +542,72 @@ async function requestQuestions(topic) {
        FALLBACK TO ASK-AI
     ----------------------------------------- */
 
+    console.log(
+        "Trying /api/ask-ai fallback..."
+    );
+
+
     return requestQuestionsFromAskAI(
         topic
     );
+}
+
+
+/* =========================================================
+   FETCH WITH TIMEOUT
+========================================================= */
+
+async function fetchWithTimeout(
+    url,
+    options = {},
+    timeout = QUESTION_REQUEST_TIMEOUT
+) {
+
+    const controller =
+        new AbortController();
+
+
+    const timeoutId =
+        setTimeout(
+            () => {
+                controller.abort();
+            },
+            timeout
+        );
+
+
+    try {
+
+        return await fetch(
+            url,
+            {
+                ...options,
+                signal:
+                    controller.signal
+            }
+        );
+
+    } catch (error) {
+
+        if (
+            error.name ===
+            "AbortError"
+        ) {
+
+            throw new Error(
+                `The question service took too long to respond. Please try again.`
+            );
+        }
+
+
+        throw error;
+
+    } finally {
+
+        clearTimeout(
+            timeoutId
+        );
+    }
 }
 
 
@@ -447,7 +635,8 @@ Return ONLY valid JSON in this exact structure:
         "Option C",
         "Option D"
       ],
-      "answer": 0
+      "answer": 0,
+      "explanation": "Clear explanation of why the correct answer is correct and why the other choices are incorrect."
     }
   ]
 }
@@ -456,14 +645,16 @@ Rules:
 - Exactly 5 questions.
 - Exactly 4 options per question.
 - answer must be the zero-based number of the correct option.
+- Every question must contain an explanation.
 - Questions must test understanding of the topic.
-- Do not include explanations.
+- Questions should be appropriate for a Nigerian Senior Secondary student.
+- Explanations should be clear and educational.
 - Do not include markdown.
 - Do not include anything outside the JSON.`;
 
 
     const response =
-        await fetch(
+        await fetchWithTimeout(
             "/api/ask-ai",
             {
                 method: "POST",
@@ -475,15 +666,19 @@ Rules:
 
                 body:
                     JSON.stringify({
-                        message: prompt,
+
+                        message:
+                            prompt,
 
                         requestType:
                             "knowledge_check",
 
                         type:
                             "knowledge_check"
+
                     })
-            }
+            },
+            QUESTION_REQUEST_TIMEOUT
         );
 
 
@@ -492,12 +687,17 @@ Rules:
         let message =
             `Question API returned ${response.status}.`;
 
+
         try {
 
             const errorData =
                 await response.json();
 
-            if (errorData?.error) {
+
+            if (
+                errorData?.error
+            ) {
+
                 message =
                     errorData.error;
             }
@@ -505,7 +705,9 @@ Rules:
         } catch (_) {}
 
 
-        throw new Error(message);
+        throw new Error(
+            message
+        );
     }
 
 
@@ -514,7 +716,9 @@ Rules:
 
 
     const questions =
-        extractQuestions(data);
+        extractQuestions(
+            data
+        );
 
 
     if (
@@ -526,6 +730,11 @@ Rules:
             "The AI returned fewer than 5 questions."
         );
     }
+
+
+    console.log(
+        "Questions received from /api/ask-ai."
+    );
 
 
     return questions;
@@ -543,7 +752,10 @@ function extractQuestions(data) {
     }
 
 
-    if (Array.isArray(data)) {
+    if (
+        Array.isArray(data)
+    ) {
+
         return data;
     }
 
@@ -595,7 +807,9 @@ function extractQuestions(data) {
 
         data.content,
 
-        data.text
+        data.text,
+
+        data.message
 
     ];
 
@@ -606,7 +820,8 @@ function extractQuestions(data) {
     ) {
 
         if (
-            typeof text !== "string"
+            typeof text !==
+            "string"
         ) {
 
             continue;
@@ -614,7 +829,9 @@ function extractQuestions(data) {
 
 
         const parsed =
-            parseJSONFromText(text);
+            parseJSONFromText(
+                text
+            );
 
 
         if (
@@ -686,10 +903,15 @@ function parseJSONFromText(text) {
     ----------------------------------------- */
 
     const firstBrace =
-        cleaned.indexOf("{");
+        cleaned.indexOf(
+            "{"
+        );
+
 
     const lastBrace =
-        cleaned.lastIndexOf("}");
+        cleaned.lastIndexOf(
+            "}"
+        );
 
 
     if (
@@ -716,10 +938,15 @@ function parseJSONFromText(text) {
     ----------------------------------------- */
 
     const firstBracket =
-        cleaned.indexOf("[");
+        cleaned.indexOf(
+            "["
+        );
+
 
     const lastBracket =
-        cleaned.lastIndexOf("]");
+        cleaned.lastIndexOf(
+            "]"
+        );
 
 
     if (
@@ -753,7 +980,8 @@ function normalizeQuestion(raw) {
 
     if (
         !raw ||
-        typeof raw !== "object"
+        typeof raw !==
+        "object"
     ) {
 
         return null;
@@ -763,7 +991,8 @@ function normalizeQuestion(raw) {
     const questionText =
         raw.question ||
         raw.text ||
-        raw.prompt;
+        raw.prompt ||
+        raw.questionText;
 
 
     if (
@@ -792,37 +1021,48 @@ function normalizeQuestion(raw) {
 
     options =
         options
-            .map(option => {
+            .map(
+                option => {
 
-                if (
-                    typeof option ===
-                    "string"
-                ) {
+                    if (
+                        typeof option ===
+                        "string"
+                    ) {
 
-                    return option;
+                        return option;
+                    }
+
+
+                    if (
+                        option &&
+                        typeof option ===
+                        "object"
+                    ) {
+
+                        return (
+                            option.text ||
+                            option.label ||
+                            option.value ||
+                            ""
+                        );
+                    }
+
+
+                    return "";
                 }
-
-                if (
-                    option &&
-                    typeof option ===
-                    "object"
-                ) {
-
-                    return (
-                        option.text ||
-                        option.label ||
-                        option.value ||
-                        ""
-                    );
-                }
-
-                return "";
-            })
+            )
             .filter(Boolean)
-            .slice(0, 4);
+            .slice(
+                0,
+                4
+            );
 
 
-    if (options.length !== 4) {
+    if (
+        options.length !==
+        4
+    ) {
+
         return null;
     }
 
@@ -865,11 +1105,7 @@ function normalizeQuestion(raw) {
         const letter =
             answer
                 .trim()
-                .toUpperCase()
-                .replace(
-                    /[^A-D]/g,
-                    ""
-                );
+                .toUpperCase();
 
 
         if (
@@ -907,7 +1143,8 @@ function normalizeQuestion(raw) {
 
 
         if (
-            answerIndex !== -1
+            answerIndex !==
+            -1
         ) {
 
             answer =
@@ -927,6 +1164,41 @@ function normalizeQuestion(raw) {
     }
 
 
+    /* -----------------------------------------
+       EXPLANATION
+    ----------------------------------------- */
+
+    let explanation =
+        raw.explanation ||
+        raw.explanationText ||
+        raw.reason ||
+        raw.rationale ||
+        "";
+
+
+    if (
+        typeof explanation !==
+        "string"
+    ) {
+
+        explanation =
+            "";
+    }
+
+
+    explanation =
+        explanation.trim();
+
+
+    if (!explanation) {
+
+        explanation =
+            "The correct answer is " +
+            options[answer] +
+            ". Review this concept to strengthen your understanding.";
+    }
+
+
     return {
 
         question:
@@ -934,7 +1206,10 @@ function normalizeQuestion(raw) {
 
         options,
 
-        answer
+        answer,
+
+        explanation
+
     };
 }
 
@@ -950,6 +1225,11 @@ function renderQuestions() {
 
 
     if (!container) {
+
+        showError(
+            "The Knowledge Check page is missing the questions container."
+        );
+
         return;
     }
 
@@ -959,7 +1239,10 @@ function renderQuestions() {
 
 
     knowledgeQuestions.forEach(
-        (question, index) => {
+        (
+            question,
+            index
+        ) => {
 
             const card =
                 document.createElement(
@@ -1010,7 +1293,10 @@ function renderQuestions() {
 
 
             question.options.forEach(
-                (option, optionIndex) => {
+                (
+                    option,
+                    optionIndex
+                ) => {
 
                     const optionWrap =
                         document.createElement(
@@ -1031,14 +1317,19 @@ function renderQuestions() {
                     input.type =
                         "radio";
 
+
                     input.name =
                         `knowledge-question-${index}`;
+
 
                     input.id =
                         `knowledge-${index}-${optionIndex}`;
 
+
                     input.value =
-                        String(optionIndex);
+                        String(
+                            optionIndex
+                        );
 
 
                     const label =
@@ -1061,6 +1352,7 @@ function renderQuestions() {
                         input
                     );
 
+
                     optionWrap.appendChild(
                         label
                     );
@@ -1077,9 +1369,11 @@ function renderQuestions() {
                 number
             );
 
+
             card.appendChild(
                 questionText
             );
+
 
             card.appendChild(
                 options
@@ -1097,20 +1391,28 @@ function renderQuestions() {
         .querySelectorAll(
             ".knowledge-question-card input"
         )
-        .forEach(input => {
+        .forEach(
+            input => {
 
-            input.addEventListener(
-                "change",
-                updateProgress
-            );
-        });
-
-
-    $("knowledgeSubmit")
-        .addEventListener(
-            "click",
-            submitKnowledgeCheck
+                input.addEventListener(
+                    "change",
+                    updateProgress
+                );
+            }
         );
+
+
+    const submitButton =
+        $("knowledgeSubmit");
+
+
+    if (
+        submitButton
+    ) {
+
+        submitButton.onclick =
+            submitKnowledgeCheck;
+    }
 
 
     updateProgress();
@@ -1118,10 +1420,12 @@ function renderQuestions() {
 
     if (
         window.MathJax &&
-        MathJax.typesetPromise
+        typeof MathJax.typesetPromise ===
+        "function"
     ) {
 
-        MathJax.typesetPromise()
+        MathJax
+            .typesetPromise()
             .catch(() => {});
     }
 }
@@ -1149,6 +1453,7 @@ function updateProgress() {
 
 
         if (selected) {
+
             answered++;
         }
     }
@@ -1161,14 +1466,30 @@ function updateProgress() {
         ) * 100;
 
 
-    $("knowledgeProgressText")
-        .textContent =
-        `${answered} of ${KNOWLEDGE_CHECK_COUNT} answered`;
+    const progressText =
+        $("knowledgeProgressText");
 
 
-    $("knowledgeProgressBar")
-        .style.width =
-        `${percentage}%`;
+    const progressBar =
+        $("knowledgeProgressBar");
+
+
+    if (
+        progressText
+    ) {
+
+        progressText.textContent =
+            `${answered} of ${KNOWLEDGE_CHECK_COUNT} answered`;
+    }
+
+
+    if (
+        progressBar
+    ) {
+
+        progressBar.style.width =
+            `${percentage}%`;
+    }
 }
 
 
@@ -1178,7 +1499,10 @@ function updateProgress() {
 
 function submitKnowledgeCheck() {
 
-    if (knowledgeSubmitted) {
+    if (
+        knowledgeSubmitted
+    ) {
+
         return;
     }
 
@@ -1224,7 +1548,10 @@ function submitKnowledgeCheck() {
 
 
     knowledgeQuestions.forEach(
-        (question, index) => {
+        (
+            question,
+            index
+        ) => {
 
             if (
                 answers[index] ===
@@ -1238,7 +1565,8 @@ function submitKnowledgeCheck() {
 
 
     showResult(
-        score
+        score,
+        answers
     );
 
 
@@ -1250,7 +1578,10 @@ function submitKnowledgeCheck() {
    SHOW RESULT
 ========================================================= */
 
-function showResult(score) {
+function showResult(
+    score,
+    answers
+) {
 
     const percentage =
         Math.round(
@@ -1266,61 +1597,585 @@ function showResult(score) {
         KNOWLEDGE_CHECK_PASS_PERCENTAGE;
 
 
-    $("knowledgeContent")
-        .style.display =
-        "none";
+    const content =
+        $("knowledgeContent");
 
 
-    $("knowledgeResult")
-        .style.display =
-        "block";
+    const result =
+        $("knowledgeResult");
 
 
-    $("knowledgeScore")
-        .textContent =
-        `${score}/${KNOWLEDGE_CHECK_COUNT}`;
+    if (content) {
+
+        content.style.display =
+            "none";
+    }
+
+
+    if (result) {
+
+        result.style.display =
+            "block";
+    }
+
+
+    /* -----------------------------------------
+       BASIC RESULT
+    ----------------------------------------- */
+
+    const scoreElement =
+        $("knowledgeScore");
+
+
+    if (scoreElement) {
+
+        scoreElement.textContent =
+            `${score}/${KNOWLEDGE_CHECK_COUNT}`;
+    }
+
+
+    const iconElement =
+        $("knowledgeResultIcon");
+
+
+    const titleElement =
+        $("knowledgeResultTitle");
+
+
+    const textElement =
+        $("knowledgeResultText");
 
 
     if (passed) {
 
-        $("knowledgeResultIcon")
-            .textContent =
-            "🎉";
+        if (iconElement) {
+
+            iconElement.textContent =
+                "🎉";
+        }
 
 
-        $("knowledgeResultTitle")
-            .textContent =
-            "Knowledge Check Passed";
+        if (titleElement) {
+
+            titleElement.textContent =
+                "Knowledge Check Passed";
+        }
 
 
-        $("knowledgeResultText")
-            .textContent =
-            `Great work! You scored ${percentage}%. You passed this Knowledge Check with ${score} out of ${KNOWLEDGE_CHECK_COUNT} correct answers.`;
+        if (textElement) {
+
+            textElement.textContent =
+                `Great work! You scored ${percentage}%. You passed this Knowledge Check with ${score} out of ${KNOWLEDGE_CHECK_COUNT} correct answers.`;
+        }
 
     } else {
 
-        $("knowledgeResultIcon")
-            .textContent =
-            "📚";
+        if (iconElement) {
+
+            iconElement.textContent =
+                "📚";
+        }
 
 
-        $("knowledgeResultTitle")
-            .textContent =
-            "Keep Studying";
+        if (titleElement) {
+
+            titleElement.textContent =
+                "Keep Studying";
+        }
 
 
-        $("knowledgeResultText")
-            .textContent =
-            `You scored ${percentage}%. You need at least ${KNOWLEDGE_CHECK_PASS_PERCENTAGE}% to pass. Review the topic and keep practicing.`;
+        if (textElement) {
+
+            textElement.textContent =
+                `You scored ${percentage}%. You need at least ${KNOWLEDGE_CHECK_PASS_PERCENTAGE}% to pass. Review the corrections below and keep practicing.`;
+        }
+    }
+
+
+    /* -----------------------------------------
+       SHOW CORRECTIONS
+    ----------------------------------------- */
+
+    renderCorrections(
+        answers
+    );
+
+
+    /* -----------------------------------------
+       MATHJAX
+    ----------------------------------------- */
+
+    if (
+        window.MathJax &&
+        typeof MathJax.typesetPromise ===
+        "function"
+    ) {
+
+        MathJax
+            .typesetPromise()
+            .catch(() => {});
+    }
+}
+
+
+/* =========================================================
+   RENDER CORRECTIONS
+========================================================= */
+
+function renderCorrections(
+    answers
+) {
+
+    const result =
+        $("knowledgeResult");
+
+
+    if (!result) {
+        return;
+    }
+
+
+    /* -----------------------------------------
+       REMOVE OLD CORRECTIONS
+    ----------------------------------------- */
+
+    const oldCorrections =
+        $("knowledgeCorrections");
+
+
+    if (
+        oldCorrections
+    ) {
+
+        oldCorrections.remove();
+    }
+
+
+    const failedQuestions =
+        knowledgeQuestions
+            .map(
+                (
+                    question,
+                    index
+                ) => {
+
+                    return {
+
+                        question,
+
+                        index,
+
+                        userAnswer:
+                            answers[index]
+
+                    };
+                }
+            )
+            .filter(
+                item =>
+                    item.userAnswer !==
+                    item.question.answer
+            );
+
+
+    const corrections =
+        document.createElement(
+            "div"
+        );
+
+
+    corrections.id =
+        "knowledgeCorrections";
+
+
+    corrections.style.cssText = `
+        margin-top: 30px;
+        text-align: left;
+    `;
+
+
+    const heading =
+        document.createElement(
+            "h3"
+        );
+
+
+    heading.textContent =
+        failedQuestions.length
+            ? "📚 Review Your Mistakes"
+            : "🎯 Perfect Score";
+
+
+    heading.style.marginBottom =
+        "8px";
+
+
+    corrections.appendChild(
+        heading
+    );
+
+
+    const intro =
+        document.createElement(
+            "p"
+        );
+
+
+    intro.textContent =
+        failedQuestions.length
+            ? "Here are all the questions you missed, with the correct answers and explanations."
+            : "Excellent work! You answered all 5 questions correctly.";
+
+
+    intro.style.opacity =
+        "0.75";
+
+
+    intro.style.marginBottom =
+        "20px";
+
+
+    corrections.appendChild(
+        intro
+    );
+
+
+    /* -----------------------------------------
+       PERFECT SCORE
+    ----------------------------------------- */
+
+    if (
+        failedQuestions.length ===
+        0
+    ) {
+
+        const perfect =
+            document.createElement(
+                "div"
+            );
+
+
+        perfect.style.cssText = `
+            padding: 18px;
+            border-radius: 14px;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        `;
+
+
+        perfect.textContent =
+            "🎉 Perfect score! There are no corrections to review.";
+
+
+        corrections.appendChild(
+            perfect
+        );
+
+
+    } else {
+
+        /* -----------------------------------------
+           FAILED QUESTIONS
+        ----------------------------------------- */
+
+        failedQuestions.forEach(
+            item => {
+
+                const question =
+                    item.question;
+
+
+                const index =
+                    item.index;
+
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    "knowledge-correction-card";
+
+
+                card.style.cssText = `
+                    padding: 20px;
+                    margin-bottom: 16px;
+                    border-radius: 16px;
+                    border: 1px solid rgba(239, 68, 68, 0.25);
+                    background: rgba(239, 68, 68, 0.05);
+                `;
+
+
+                /* QUESTION */
+
+                const questionNumber =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                questionNumber.textContent =
+                    `❌ Question ${index + 1}`;
+
+
+                questionNumber.style.cssText = `
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                `;
+
+
+                card.appendChild(
+                    questionNumber
+                );
+
+
+                const questionText =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                questionText.textContent =
+                    question.question;
+
+
+                questionText.style.cssText = `
+                    font-size: 16px;
+                    font-weight: 600;
+                    line-height: 1.6;
+                    margin-bottom: 16px;
+                `;
+
+
+                card.appendChild(
+                    questionText
+                );
+
+
+                /* YOUR ANSWER */
+
+                const yourAnswer =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                yourAnswer.style.cssText = `
+                    margin-bottom: 10px;
+                    line-height: 1.5;
+                `;
+
+
+                const yourLabel =
+                    document.createElement(
+                        "strong"
+                    );
+
+
+                yourLabel.textContent =
+                    "Your answer: ";
+
+
+                yourAnswer.appendChild(
+                    yourLabel
+                );
+
+
+                const userAnswerText =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                userAnswerText.style.fontWeight =
+                    "600";
+
+
+                if (
+                    item.userAnswer >= 0 &&
+                    question.options[item.userAnswer]
+                ) {
+
+                    userAnswerText.textContent =
+                        `${String.fromCharCode(
+                            65 + item.userAnswer
+                        )}. ${question.options[item.userAnswer]}`;
+
+                } else {
+
+                    userAnswerText.textContent =
+                        "Not answered";
+                }
+
+
+                yourAnswer.appendChild(
+                    userAnswerText
+                );
+
+
+                card.appendChild(
+                    yourAnswer
+                );
+
+
+                /* CORRECT ANSWER */
+
+                const correctAnswer =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                correctAnswer.style.cssText = `
+                    margin-bottom: 16px;
+                    line-height: 1.5;
+                `;
+
+
+                const correctLabel =
+                    document.createElement(
+                        "strong"
+                    );
+
+
+                correctLabel.textContent =
+                    "Correct answer: ";
+
+
+                correctAnswer.appendChild(
+                    correctLabel
+                );
+
+
+                const correctText =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                correctText.style.cssText = `
+                    font-weight: 700;
+                `;
+
+
+                correctText.textContent =
+                    `${String.fromCharCode(
+                        65 + question.answer
+                    )}. ${question.options[question.answer]}`;
+
+
+                correctAnswer.appendChild(
+                    correctText
+                );
+
+
+                card.appendChild(
+                    correctAnswer
+                );
+
+
+                /* EXPLANATION */
+
+                const explanation =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                explanation.style.cssText = `
+                    padding: 15px;
+                    border-radius: 12px;
+                    background: rgba(59, 130, 246, 0.08);
+                    line-height: 1.65;
+                `;
+
+
+                const explanationTitle =
+                    document.createElement(
+                        "strong"
+                    );
+
+
+                explanationTitle.textContent =
+                    "💡 Explanation";
+
+
+                explanation.appendChild(
+                    explanationTitle
+                );
+
+
+                const explanationText =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                explanationText.textContent =
+                    question.explanation ||
+                    "Review this concept and try the question again.";
+
+
+                explanationText.style.marginTop =
+                    "7px";
+
+
+                explanation.appendChild(
+                    explanationText
+                );
+
+
+                card.appendChild(
+                    explanation
+                );
+
+
+                corrections.appendChild(
+                    card
+                );
+            }
+        );
+    }
+
+
+    /* -----------------------------------------
+       INSERT BEFORE BACK BUTTON
+    ----------------------------------------- */
+
+    const backButton =
+        result.querySelector(
+            "button"
+        );
+
+
+    if (
+        backButton
+    ) {
+
+        result.insertBefore(
+            corrections,
+            backButton.parentElement ||
+            backButton
+        );
+
+    } else {
+
+        result.appendChild(
+            corrections
+        );
     }
 
 
     if (
         window.MathJax &&
-        MathJax.typesetPromise
+        typeof MathJax.typesetPromise ===
+        "function"
     ) {
 
-        MathJax.typesetPromise()
+        MathJax
+            .typesetPromise()
             .catch(() => {});
     }
 }
@@ -1351,7 +2206,10 @@ function markTopicCompleted() {
         );
 
 
-    if (!Array.isArray(completed)) {
+    if (
+        !Array.isArray(completed)
+    ) {
+
         completed = [];
     }
 
@@ -1372,38 +2230,6 @@ function markTopicCompleted() {
             completed
         );
     }
-
-
-    /* -----------------------------------------
-       STORE QUESTIONS FOR DASHBOARD
-    ----------------------------------------- */
-
-    let storedQuestions =
-        readJSON(
-            "studyMindTopicQuestions",
-            {}
-        );
-
-
-    if (
-        !storedQuestions ||
-        typeof storedQuestions !==
-        "object" ||
-        Array.isArray(storedQuestions)
-    ) {
-
-        storedQuestions = {};
-    }
-
-
-    storedQuestions[topicKey] =
-        knowledgeQuestions;
-
-
-    writeJSON(
-        "studyMindTopicQuestions",
-        storedQuestions
-    );
 }
 
 
@@ -1438,88 +2264,196 @@ function createTopicKey(topic) {
 
 function showLoading() {
 
-    $("knowledgeLoading")
-        .style.display =
-        "block";
+    const loading =
+        $("knowledgeLoading");
 
-    $("knowledgeContent")
-        .style.display =
-        "none";
+    const content =
+        $("knowledgeContent");
 
-    $("knowledgeResult")
-        .style.display =
-        "none";
+    const result =
+        $("knowledgeResult");
 
-    $("knowledgeError")
-        .style.display =
-        "none";
+    const error =
+        $("knowledgeError");
 
-    $("knowledgeLimit")
-        .style.display =
-        "none";
+    const limit =
+        $("knowledgeLimit");
+
+
+    if (loading) {
+
+        loading.style.display =
+            "block";
+    }
+
+
+    if (content) {
+
+        content.style.display =
+            "none";
+    }
+
+
+    if (result) {
+
+        result.style.display =
+            "none";
+    }
+
+
+    if (error) {
+
+        error.style.display =
+            "none";
+    }
+
+
+    if (limit) {
+
+        limit.style.display =
+            "none";
+    }
 }
 
 
 function hideLoading() {
 
-    $("knowledgeLoading")
-        .style.display =
-        "none";
+    const loading =
+        $("knowledgeLoading");
 
-    $("knowledgeContent")
-        .style.display =
-        "block";
+    const content =
+        $("knowledgeContent");
+
+
+    if (loading) {
+
+        loading.style.display =
+            "none";
+    }
+
+
+    if (content) {
+
+        content.style.display =
+            "block";
+    }
 }
 
 
 function showLimit() {
 
-    $("knowledgeLoading")
-        .style.display =
-        "none";
+    const loading =
+        $("knowledgeLoading");
 
-    $("knowledgeContent")
-        .style.display =
-        "none";
+    const content =
+        $("knowledgeContent");
 
-    $("knowledgeResult")
-        .style.display =
-        "none";
+    const result =
+        $("knowledgeResult");
 
-    $("knowledgeError")
-        .style.display =
-        "none";
+    const error =
+        $("knowledgeError");
 
-    $("knowledgeLimit")
-        .style.display =
-        "block";
+    const limit =
+        $("knowledgeLimit");
+
+
+    if (loading) {
+
+        loading.style.display =
+            "none";
+    }
+
+
+    if (content) {
+
+        content.style.display =
+            "none";
+    }
+
+
+    if (result) {
+
+        result.style.display =
+            "none";
+    }
+
+
+    if (error) {
+
+        error.style.display =
+            "none";
+    }
+
+
+    if (limit) {
+
+        limit.style.display =
+            "block";
+    }
 }
 
 
 function showError(message) {
 
-    $("knowledgeLoading")
-        .style.display =
-        "none";
+    const loading =
+        $("knowledgeLoading");
 
-    $("knowledgeContent")
-        .style.display =
-        "none";
+    const content =
+        $("knowledgeContent");
 
-    $("knowledgeResult")
-        .style.display =
-        "none";
+    const result =
+        $("knowledgeResult");
 
-    $("knowledgeLimit")
-        .style.display =
-        "none";
+    const error =
+        $("knowledgeError");
 
-    $("knowledgeError")
-        .style.display =
-        "block";
+    const limit =
+        $("knowledgeLimit");
 
 
-    $("knowledgeErrorText")
-        .textContent =
-        message;
+    if (loading) {
+
+        loading.style.display =
+            "none";
+    }
+
+
+    if (content) {
+
+        content.style.display =
+            "none";
+    }
+
+
+    if (result) {
+
+        result.style.display =
+            "none";
+    }
+
+
+    if (limit) {
+
+        limit.style.display =
+            "none";
+    }
+
+
+    if (error) {
+
+        error.style.display =
+            "block";
+    }
+
+
+    const errorText =
+        $("knowledgeErrorText");
+
+
+    if (errorText) {
+
+        errorText.textContent =
+            message;
+    }
 }
