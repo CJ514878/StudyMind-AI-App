@@ -3859,7 +3859,30 @@ function submitKnowledgeCheck() {
             );
 
         }
+if (
+    !completedQuestionTopics.includes(
+        activeKnowledgeCheckTopicKey
+    )
+) {
 
+    completedQuestionTopics.push(
+        activeKnowledgeCheckTopicKey
+    );
+
+}
+
+
+/* -----------------------------------------
+   MARK TODAY COMPLETED
+
+   The student has now completed the
+   Knowledge Check successfully.
+----------------------------------------- */
+
+markTodayCompleted();
+
+
+saveCompletionState();
 
         saveCompletionState();
 
