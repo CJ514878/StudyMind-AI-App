@@ -1489,7 +1489,70 @@ function saveCompletionState() {
     );
 }
 
+/* =========================================================
+   DAILY CALENDAR COMPLETION
+========================================================= */
 
+function getCompletedDays() {
+
+    const stored =
+        readJSON(
+            COMPLETED_DAYS_KEY,
+            []
+        );
+
+    return Array.isArray(stored)
+        ? stored
+        : [];
+}
+
+
+/* =========================================================
+   MARK TODAY AS COMPLETED
+========================================================= */
+
+function markTodayCompleted() {
+
+    const today =
+        formatDate(
+            new Date()
+        );
+
+    const completedDays =
+        getCompletedDays();
+
+    if (
+        !completedDays.includes(today)
+    ) {
+
+        completedDays.push(
+            today
+        );
+
+        writeJSON(
+            COMPLETED_DAYS_KEY,
+            completedDays
+        );
+    }
+
+}
+
+
+/* =========================================================
+   CHECK WHETHER A DAY IS COMPLETED
+========================================================= */
+
+function isDayCompleted(
+    dateString
+) {
+
+    const completedDays =
+        getCompletedDays();
+
+    return completedDays.includes(
+        dateString
+    );
+}
 /* =========================================================
    TOPIC COMPLETION HELPERS
 ========================================================= */
