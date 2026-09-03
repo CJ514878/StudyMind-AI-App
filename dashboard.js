@@ -5438,6 +5438,16 @@ function renderCalendar() {
         new Date();
 
 
+    const todayString =
+        formatDate(
+            today
+        );
+
+
+    /* -----------------------------------------
+       EMPTY DAYS BEFORE MONTH START
+    ----------------------------------------- */
+
     for (
         let i = 0;
         i < firstDay;
@@ -5459,6 +5469,10 @@ function renderCalendar() {
         );
     }
 
+
+    /* -----------------------------------------
+       RENDER DAYS
+    ----------------------------------------- */
 
     for (
         let day = 1;
@@ -5494,10 +5508,30 @@ function renderCalendar() {
             );
 
 
-        const todayString =
-            formatDate(
-                today
+        const completed =
+            isDayCompleted(
+                dateString
             );
+
+
+        /* -----------------------------------------
+           COMPLETED DAY
+           
+           IMPORTANT:
+           Completed takes priority over
+           normal study-day styling.
+        ----------------------------------------- */
+
+        if (completed) {
+
+            cell.classList.add(
+                "completed-day"
+            );
+
+            cell.title =
+                "✓ Study day completed";
+
+        }
 
 
         /* -----------------------------------------
@@ -5529,13 +5563,16 @@ function renderCalendar() {
                 "exam-day"
             );
 
+
             const examDot =
                 document.createElement(
                     "span"
                 );
 
+
             examDot.className =
                 "calendar-dot exam-dot";
+
 
             cell.appendChild(
                 examDot
@@ -5564,13 +5601,36 @@ function renderCalendar() {
         }
 
 
+        /* -----------------------------------------
+           COMPLETED DAY GETS FINAL PRIORITY
+           
+           Remove the normal study/today styling
+           so CSS can display the completed day
+           clearly as green.
+        ----------------------------------------- */
+
+        if (completed) {
+
+            cell.classList.remove(
+                "study-day"
+            );
+
+            cell.classList.remove(
+                "today"
+            );
+
+            cell.classList.add(
+                "completed-day"
+            );
+
+        }
+
+
         daysContainer.appendChild(
             cell
         );
     }
 }
-
-
 /* =========================================================
    FORMAT DATE
 ========================================================= */
