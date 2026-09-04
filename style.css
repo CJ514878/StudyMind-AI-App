@@ -4279,3 +4279,557 @@ SMALL MOBILE
     border-color: rgba(245, 158, 11, 0.55);
     color: #fbbf24;
 }
+/* =========================================================
+   STUDYMIND AI — GLOBAL LIGHT / DARK MODE
+   ADD THIS TO THE VERY BOTTOM OF style.css
+========================================================= */
+
+
+/* =========================================================
+   SMOOTH THEME TRANSITION
+========================================================= */
+
+html,
+body,
+.navbar,
+main,
+section,
+footer,
+.card,
+.hero-card,
+.feature-card,
+.study-form,
+.form-group,
+.subject-topic-card,
+.topic-card,
+.schedule-card,
+.dashboard-card,
+.stat-card,
+.calendar,
+.calendar-day,
+input,
+textarea,
+select,
+button {
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark-mode,
+body.dark-mode {
+
+    background: #0b1220 !important;
+
+    color: #f8fafc !important;
+
+}
+
+
+html.dark-mode {
+
+    color-scheme: dark;
+
+}
+
+
+body.dark-mode {
+
+    background: #0b1220 !important;
+
+    color: #f8fafc !important;
+
+}
+
+
+/* NAVBAR */
+
+body.dark-mode .navbar {
+
+    background: #0b1220 !important;
+
+    color: #f8fafc !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.08) !important;
+
+}
+
+
+/* MAIN */
+
+body.dark-mode main,
+body.dark-mode section {
+
+    color: #f8fafc;
+
+}
+
+
+/* TEXT */
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+
+    color: #f8fafc !important;
+
+}
+
+
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode label,
+body.dark-mode small {
+
+    color: inherit;
+
+}
+
+
+/* INPUTS */
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+
+    background: #111c31 !important;
+
+    color: #f8fafc !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.14) !important;
+
+}
+
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+
+    color:
+        rgba(255, 255, 255, 0.5) !important;
+
+}
+
+
+/* CARDS */
+
+body.dark-mode .hero-card,
+body.dark-mode .feature-card,
+body.dark-mode .subject-topic-card,
+body.dark-mode .study-form,
+body.dark-mode .schedule-card,
+body.dark-mode .dashboard-card,
+body.dark-mode .stat-card,
+body.dark-mode .calendar,
+body.dark-mode .topic-card {
+
+    background: #111c31 !important;
+
+    color: #f8fafc !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.10) !important;
+
+}
+
+
+/* NAVIGATION LINKS */
+
+body.dark-mode .nav-links a {
+
+    color: #f8fafc !important;
+
+}
+
+
+/* LOGO */
+
+body.dark-mode .logo {
+
+    color: #f8fafc !important;
+
+}
+
+
+/* THEME BUTTON */
+
+body.dark-mode .theme-button {
+
+    background: #111c31 !important;
+
+    color: #ffffff !important;
+
+    border:
+        1px solid rgba(255, 255, 255, 0.14) !important;
+
+}
+
+
+/* CALENDAR */
+
+body.dark-mode .calendar-day {
+
+    background: #111c31 !important;
+
+    color: #f8fafc !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.10) !important;
+
+}
+
+
+body.dark-mode .calendar-day.empty {
+
+    background: transparent !important;
+
+}
+
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+
+html.light-mode,
+body.light-mode {
+
+    background: #f7f9fc !important;
+
+    color: #172033 !important;
+
+}
+
+
+html.light-mode {
+
+    color-scheme: light;
+
+}
+
+
+body.light-mode {
+
+    background: #f7f9fc !important;
+
+    color: #172033 !important;
+
+}
+
+
+/* NAVBAR */
+
+body.light-mode .navbar {
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    border-color: #e5e9f0 !important;
+
+    box-shadow:
+        0 2px 14px rgba(0, 0, 0, 0.06);
+
+}
+
+
+/* MAIN */
+
+body.light-mode main,
+body.light-mode section {
+
+    color: #172033;
+
+}
+
+
+/* HEADINGS */
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+
+    color: #172033 !important;
+
+}
+
+
+/* TEXT */
+
+body.light-mode p,
+body.light-mode span,
+body.light-mode label,
+body.light-mode small {
+
+    color: #4b5563;
+
+}
+
+
+/* LINKS */
+
+body.light-mode a {
+
+    color: inherit;
+
+}
+
+
+body.light-mode .nav-links a {
+
+    color: #172033 !important;
+
+}
+
+
+/* LOGO */
+
+body.light-mode .logo {
+
+    color: #172033 !important;
+
+}
+
+
+/* INPUTS */
+
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    border-color: #d9dee8 !important;
+
+}
+
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+
+    color: #8a94a6 !important;
+
+}
+
+
+/* CARDS */
+
+body.light-mode .hero-card,
+body.light-mode .feature-card,
+body.light-mode .subject-topic-card,
+body.light-mode .study-form,
+body.light-mode .schedule-card,
+body.light-mode .dashboard-card,
+body.light-mode .stat-card,
+body.light-mode .calendar,
+body.light-mode .topic-card {
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    border-color: #e1e6ef !important;
+
+    box-shadow:
+        0 8px 30px rgba(15, 23, 42, 0.06);
+
+}
+
+
+/* THEME BUTTON */
+
+body.light-mode .theme-button {
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    border:
+        1px solid #d9dee8 !important;
+
+}
+
+
+/* SUBJECT CARDS */
+
+body.light-mode .subject-topic-card h3,
+body.light-mode .subject-topic-card h4 {
+
+    color: #172033 !important;
+
+}
+
+
+body.light-mode .subject-topic-card small {
+
+    color: #6b7280 !important;
+
+}
+
+
+/* CALENDAR */
+
+body.light-mode .calendar-day {
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    border-color: #e1e6ef !important;
+
+}
+
+
+body.light-mode .calendar-day.empty {
+
+    background: transparent !important;
+
+}
+
+
+/* TODAY */
+
+body.light-mode .calendar-day.today {
+
+    border:
+        2px solid #172033 !important;
+
+}
+
+
+/* =========================================================
+   HTML BACKGROUND
+========================================================= */
+
+html {
+
+    background: #0b1220;
+
+}
+
+
+html.dark-mode {
+
+    background: #0b1220;
+
+}
+
+
+html.light-mode {
+
+    background: #f7f9fc;
+
+}
+
+
+/* =========================================================
+   FORM CONTROLS
+========================================================= */
+
+body.light-mode button,
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+
+    color-scheme: light;
+
+}
+
+
+body.dark-mode button,
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+
+    color-scheme: dark;
+
+}
+
+
+/* =========================================================
+   DIFFICULTY ROWS
+========================================================= */
+
+body.light-mode .topic-difficulty-row {
+
+    color: #172033;
+
+}
+
+
+body.dark-mode .topic-difficulty-row {
+
+    color: #f8fafc;
+
+}
+
+
+/* =========================================================
+   SUBJECT/TOPIC EMPTY MESSAGE
+========================================================= */
+
+body.light-mode .subject-topic-empty {
+
+    background: #ffffff !important;
+
+    color: #4b5563 !important;
+
+    border-color: #e1e6ef !important;
+
+}
+
+
+body.dark-mode .subject-topic-empty {
+
+    background: #111c31 !important;
+
+    color: #f8fafc !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.10) !important;
+
+}
+
+
+/* =========================================================
+   FORCE PAGE BACKGROUND
+========================================================= */
+
+body {
+
+    min-height: 100vh;
+
+}
+
+
+/* =========================================================
+   PREVENT WHITE FLASH
+========================================================= */
+
+html.dark-mode body {
+
+    background-color: #0b1220 !important;
+
+}
+
+
+html.light-mode body {
+
+    background-color: #f7f9fc !important;
+
+}
