@@ -1,167 +1,241 @@
 /* =========================================================
    STUDYMIND AI — KNOWLEDGE CHECK
-   DEDICATED 5-QUESTION PAGE
+   COMPLETE REPLACEMENT
 
-   FREE LIMIT:
-   5 KNOWLEDGE CHECK USAGES
-
-   PASS MARK:
-   60% = 3/5
+   5 QUESTIONS
+   60% PASS MARK
+   TOPIC-AWARE
+   RETURNS TO NEXT TOPIC
 ========================================================= */
+
+"use strict";
 
 
 /* =========================================================
    SETTINGS
 ========================================================= */
 
-const KNOWLEDGE_CHECK_COUNT = 5;
+const KNOWLEDGE_CHECK_COUNT =
+    5;
 
-const KNOWLEDGE_CHECK_PASS_PERCENTAGE = 60;
+const PASS_PERCENTAGE =
+    60;
 
-const KNOWLEDGE_CHECK_LIMIT = 5;
+const KNOWLEDGE_CHECK_LIMIT =
+    5;
 
-const KNOWLEDGE_TOPIC_KEY =
+
+const TOPIC_KEY =
     "studyMindKnowledgeCheckTopic";
 
-const KNOWLEDGE_USAGE_KEY =
+
+const USAGE_KEY =
     "studyMindKnowledgeCheckUsageCount";
 
-const KNOWLEDGE_SESSION_KEY =
-    "studyMindKnowledgeCheckCurrentSession";
 
-const KNOWLEDGE_COMPLETED_KEY =
+const COMPLETED_KEY =
     "studyMindCompletedQuestionTopics";
 
-const KNOWLEDGE_QUESTIONS_KEY =
-    "studyMindTopicQuestions";
 
-const QUESTION_REQUEST_TIMEOUT =
-    45000;
+const QUESTIONS_KEY =
+    "studyMindTopicQuestions";
 
 
 /* =========================================================
    STATE
 ========================================================= */
 
-let knowledgeTopic = null;
+let knowledgeTopic =
+    null;
 
-let knowledgeQuestions = [];
+let knowledgeQuestions =
+    [];
 
-let knowledgeSubmitted = false;
-
-let knowledgeUsageCount = 0;
+let knowledgeSubmitted =
+    false;
 
 
 /* =========================================================
    SHORTCUT
 ========================================================= */
 
-function $(id) {
-    return document.getElementById(id);
-}
+const $ =
+    id =>
+        document.getElementById(id);
 
 
 /* =========================================================
-   JSON HELPERS
+   STORAGE
 ========================================================= */
 
-function readJSON(key, fallback) {
+function readJSON(
+    key,
+    fallback = null
+) {
 
     try {
 
-        const value =
-            localStorage.getItem(key);
+        const raw =
+            localStorage.getItem(
+                key
+            );
 
-        if (!value) {
-            return fallback;
-        }
+        return raw
+            ? JSON.parse(raw)
+            : fallback;
 
-        return JSON.parse(value);
+    }
 
-    } catch (error) {
-
-        console.warn(
-            "Could not read storage:",
-            key,
-            error
-        );
+    catch {
 
         return fallback;
+
     }
+
 }
 
 
-function writeJSON(key, value) {
+function writeJSON(
+    key,
+    value
+) {
 
-    try {
+    localStorage.setItem(
 
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
+        key,
 
-        return true;
+        JSON.stringify(
+            value
+        )
 
-    } catch (error) {
+    );
 
-        console.warn(
-            "Could not write storage:",
-            key,
-            error
-        );
-
-        return false;
-    }
 }
 
 
 /* =========================================================
-   PAGE START
+   HELPERS
+========================================================= */
+
+function clean(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+
+}
+
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+function createTopicKey(
+    topic
+) {
+
+    if (
+        topic.key
+    ) {
+
+        return topic.key;
+
+    }
+
+
+    return `${
+
+        clean(
+            topic.subject ||
+            "Senior Secondary"
+        )
+            .toLowerCase()
+
+    }::${
+
+        clean(
+            topic.name
+        )
+            .toLowerCase()
+
+    }`;
+
+}
+
+
+/* =========================================================
+   INITIALIZE
 ========================================================= */
 
 document.addEventListener(
+
     "DOMContentLoaded",
+
     initializeKnowledgeCheck
+
 );
 
 
 async function initializeKnowledgeCheck() {
 
-    console.log(
-        "StudyMind Knowledge Check initializing..."
-    );
-
-
-    knowledgeUsageCount =
+    const usage =
         Number(
             localStorage.getItem(
-                KNOWLEDGE_USAGE_KEY
-            )
-        ) || 0;
+                USAGE_KEY
+            ) ||
+            0
+        );
 
-
-    /* -----------------------------------------
-       CHECK FREE LIMIT
-    ----------------------------------------- */
 
     if (
-        knowledgeUsageCount >=
+        usage >=
         KNOWLEDGE_CHECK_LIMIT
     ) {
 
         showLimit();
 
         return;
+
     }
 
 
-    /* -----------------------------------------
-       GET TOPIC
-    ----------------------------------------- */
-
     knowledgeTopic =
         readJSON(
-            KNOWLEDGE_TOPIC_KEY,
+            TOPIC_KEY,
             null
         );
 
@@ -172,141 +246,180 @@ async function initializeKnowledgeCheck() {
     ) {
 
         showError(
+
             "No Knowledge Check topic was selected. Please return to your dashboard and choose a topic."
+
         );
 
         return;
+
     }
 
 
     renderTopic();
 
 
-    /* -----------------------------------------
-       CREATE QUESTIONS
-    ----------------------------------------- */
-
-    await createKnowledgeCheck();
-}
-
-
-/* =========================================================
-   RENDER TOPIC
-========================================================= */
-
-function renderTopic() {
-
-    const subject =
-        knowledgeTopic.subject ||
-        "Senior Secondary";
-
-
-    const subjectElement =
-        $("knowledgeSubject");
-
-    const topicElement =
-        $("knowledgeTopic");
-
-
-    if (subjectElement) {
-
-        subjectElement.textContent =
-            subject;
-    }
-
-
-    if (topicElement) {
-
-        topicElement.textContent =
-            knowledgeTopic.name;
-    }
-}
-
-
-/* =========================================================
-   CREATE KNOWLEDGE CHECK
-========================================================= */
-
-async function createKnowledgeCheck() {
-
     showLoading();
 
 
     try {
 
-        console.log(
-            "Generating Knowledge Check questions..."
-        );
+        /*
+           Try stored questions first.
+        */
+
+        const stored =
+            readJSON(
+                QUESTIONS_KEY,
+                {}
+            );
 
 
-        const questions =
-            await requestQuestions(
+        const key =
+            createTopicKey(
                 knowledgeTopic
             );
 
 
+        const saved =
+            stored[key];
+
+
         if (
-            !Array.isArray(questions) ||
-            questions.length <
+            Array.isArray(
+                saved
+            ) &&
+            saved.length >=
             KNOWLEDGE_CHECK_COUNT
         ) {
 
-            throw new Error(
-                "The AI did not return enough questions."
-            );
+            knowledgeQuestions =
+
+                saved
+                    .slice(
+                        0,
+                        KNOWLEDGE_CHECK_COUNT
+                    )
+                    .map(
+                        normalizeQuestion
+                    )
+                    .filter(
+                        Boolean
+                    );
+
         }
 
 
-        knowledgeQuestions =
-            questions
-                .slice(
-                    0,
-                    KNOWLEDGE_CHECK_COUNT
-                )
-                .map(normalizeQuestion)
-                .filter(Boolean);
-
+        /*
+           If there aren't valid saved questions,
+           ask the API.
+        */
 
         if (
             knowledgeQuestions.length !==
             KNOWLEDGE_CHECK_COUNT
         ) {
 
-            throw new Error(
-                "The generated questions were not in the expected format."
+            knowledgeQuestions =
+                await requestQuestions();
+
+
+            stored[key] =
+                knowledgeQuestions;
+
+
+            writeJSON(
+                QUESTIONS_KEY,
+                stored
             );
+
         }
 
 
-        /* -----------------------------------------
-           COUNT USAGE AFTER SUCCESS
-        ----------------------------------------- */
+        /*
+           Count this Knowledge Check once.
+        */
 
-        countKnowledgeCheckUsage();
+        const checkId =
 
+            knowledgeTopic.checkId ||
 
-        /* -----------------------------------------
-           SAVE QUESTIONS
-        ----------------------------------------- */
-
-        saveKnowledgeQuestions();
+            `${key}-${Date.now()}`;
 
 
-        /* -----------------------------------------
-           RENDER
-        ----------------------------------------- */
+        const previousSession =
+            sessionStorage.getItem(
+                "studyMindKnowledgeCheckSession"
+            );
+
+
+        if (
+            previousSession !==
+            checkId
+        ) {
+
+            const newUsage =
+
+                Number(
+                    localStorage.getItem(
+                        USAGE_KEY
+                    ) ||
+                    0
+                ) +
+                1;
+
+
+            localStorage.setItem(
+
+                USAGE_KEY,
+
+                String(
+                    newUsage
+                )
+
+            );
+
+
+            sessionStorage.setItem(
+
+                "studyMindKnowledgeCheckSession",
+
+                checkId
+
+            );
+
+        }
+
+
+        if (
+            $("knowledgeLoading")
+        ) {
+
+            $("knowledgeLoading")
+                .style.display =
+                    "none";
+
+        }
+
+
+        if (
+            $("knowledgeContent")
+        ) {
+
+            $("knowledgeContent")
+                .style.display =
+                    "block";
+
+        }
+
 
         renderQuestions();
 
-        hideLoading();
+    }
 
-
-        console.log(
-            "Knowledge Check ready."
-        );
-
-
-    } catch (error) {
+    catch (
+        error
+    ) {
 
         console.error(
             "Knowledge Check error:",
@@ -315,115 +428,48 @@ async function createKnowledgeCheck() {
 
 
         showError(
+
             error.message ||
-            "Unable to prepare your Knowledge Check."
+
+            "Unable to prepare the Knowledge Check."
+
         );
+
     }
+
 }
 
 
 /* =========================================================
-   COUNT USAGE
+   TOPIC
 ========================================================= */
 
-function countKnowledgeCheckUsage() {
-
-    if (!knowledgeTopic) {
-        return;
-    }
-
-
-    const checkId =
-        knowledgeTopic.checkId ||
-        `${knowledgeTopic.name}-${Date.now()}`;
-
-
-    const existingSession =
-        sessionStorage.getItem(
-            KNOWLEDGE_SESSION_KEY
-        );
-
-
-    /* -----------------------------------------
-       PREVENT REFRESH FROM COUNTING AGAIN
-    ----------------------------------------- */
+function renderTopic() {
 
     if (
-        existingSession ===
-        checkId
+        $("knowledgeSubject")
     ) {
 
-        return;
+        $("knowledgeSubject")
+            .textContent =
+
+            knowledgeTopic.subject ||
+
+            "Senior Secondary";
+
     }
-
-
-    knowledgeUsageCount++;
-
-
-    localStorage.setItem(
-        KNOWLEDGE_USAGE_KEY,
-        String(
-            knowledgeUsageCount
-        )
-    );
-
-
-    sessionStorage.setItem(
-        KNOWLEDGE_SESSION_KEY,
-        checkId
-    );
-
-
-    console.log(
-        `Knowledge Check usage: ${knowledgeUsageCount}/${KNOWLEDGE_CHECK_LIMIT}`
-    );
-}
-
-
-/* =========================================================
-   SAVE QUESTIONS
-========================================================= */
-
-function saveKnowledgeQuestions() {
-
-    if (!knowledgeTopic) {
-        return;
-    }
-
-
-    const topicKey =
-        knowledgeTopic.key ||
-        createTopicKey(
-            knowledgeTopic
-        );
-
-
-    let storedQuestions =
-        readJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            {}
-        );
 
 
     if (
-        !storedQuestions ||
-        typeof storedQuestions !==
-        "object" ||
-        Array.isArray(storedQuestions)
+        $("knowledgeTopic")
     ) {
 
-        storedQuestions = {};
+        $("knowledgeTopic")
+            .textContent =
+                knowledgeTopic.name;
+
     }
 
-
-    storedQuestions[topicKey] =
-        knowledgeQuestions;
-
-
-    writeJSON(
-        KNOWLEDGE_QUESTIONS_KEY,
-        storedQuestions
-    );
 }
 
 
@@ -431,16 +477,16 @@ function saveKnowledgeQuestions() {
    REQUEST QUESTIONS
 ========================================================= */
 
-async function requestQuestions(topic) {
+async function requestQuestions() {
 
     const payload = {
 
         subject:
-            topic.subject ||
+            knowledgeTopic.subject ||
             "Senior Secondary",
 
         topic:
-            topic.name,
+            knowledgeTopic.name,
 
         numberOfQuestions:
             KNOWLEDGE_CHECK_COUNT,
@@ -462,173 +508,123 @@ async function requestQuestions(topic) {
 
         requestType:
             "knowledge_check"
+
     };
 
 
-    /* -----------------------------------------
-       PRIMARY ENDPOINT
-    ----------------------------------------- */
+    /*
+       PRIMARY API
+    */
 
     try {
 
-        console.log(
-            "Trying /api/generate-questions..."
-        );
-
-
         const response =
-            await fetchWithTimeout(
+            await fetch(
                 "/api/generate-questions",
                 {
-                    method: "POST",
+
+                    method:
+                        "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
-                        JSON.stringify(payload)
-                },
-                QUESTION_REQUEST_TIMEOUT
+                        JSON.stringify(
+                            payload
+                        )
+
+                }
             );
 
 
-        if (response.ok) {
+        if (
+            response.ok
+        ) {
 
             const data =
                 await response.json();
 
 
             const questions =
-                extractQuestions(data);
+                extractQuestions(
+                    data
+                )
+                    .map(
+                        normalizeQuestion
+                    )
+                    .filter(
+                        Boolean
+                    )
+                    .slice(
+                        0,
+                        KNOWLEDGE_CHECK_COUNT
+                    );
 
 
             if (
-                questions.length >=
+                questions.length ===
                 KNOWLEDGE_CHECK_COUNT
             ) {
 
-                console.log(
-                    "Questions received from /api/generate-questions."
-                );
-
                 return questions;
+
             }
 
-
-            console.warn(
-                "generate-questions returned an invalid question list."
-            );
-
-        } else {
-
-            console.warn(
-                `generate-questions returned ${response.status}.`
-            );
         }
 
+    }
 
-    } catch (error) {
+    catch (
+        error
+    ) {
 
         console.warn(
-            "generate-questions failed:",
-            error.message
+            "Primary question API failed:",
+            error
         );
+
     }
 
 
-    /* -----------------------------------------
-       FALLBACK TO ASK-AI
-    ----------------------------------------- */
+    /*
+       FALLBACK
+    */
 
-    console.log(
-        "Trying /api/ask-ai fallback..."
-    );
-
-
-    return requestQuestionsFromAskAI(
-        topic
-    );
-}
-
-
-/* =========================================================
-   FETCH WITH TIMEOUT
-========================================================= */
-
-async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = QUESTION_REQUEST_TIMEOUT
-) {
-
-    const controller =
-        new AbortController();
-
-
-    const timeoutId =
-        setTimeout(
-            () => {
-                controller.abort();
-            },
-            timeout
-        );
-
-
-    try {
-
-        return await fetch(
-            url,
+    const fallbackResponse =
+        await fetch(
+            "/api/ask-ai",
             {
-                ...options,
-                signal:
-                    controller.signal
-            }
-        );
 
-    } catch (error) {
+                method:
+                    "POST",
 
-        if (
-            error.name ===
-            "AbortError"
-        ) {
+                headers: {
 
-            throw new Error(
-                `The question service took too long to respond. Please try again.`
-            );
-        }
+                    "Content-Type":
+                        "application/json"
 
+                },
 
-        throw error;
+                body:
+                    JSON.stringify({
 
-    } finally {
+                        ...payload,
 
-        clearTimeout(
-            timeoutId
-        );
-    }
-}
+                        message:
 
+                            `Create exactly 5 multiple-choice knowledge-check questions for ${knowledgeTopic.subject}: ${knowledgeTopic.name}.
 
-/* =========================================================
-   ASK-AI FALLBACK
-========================================================= */
-
-async function requestQuestionsFromAskAI(topic) {
-
-    const prompt = `Create exactly 5 multiple-choice knowledge-check questions for a Nigerian Senior Secondary student.
-
-Subject: ${topic.subject || "Senior Secondary"}
-
-Topic: ${topic.name}
-
-Return ONLY valid JSON in this exact structure:
+Return JSON only:
 
 {
   "questions": [
     {
-      "question": "Question text",
+      "question": "Question",
       "options": [
         "Option A",
         "Option B",
@@ -636,108 +632,63 @@ Return ONLY valid JSON in this exact structure:
         "Option D"
       ],
       "answer": 0,
-      "explanation": "Clear explanation of why the correct answer is correct and why the other choices are incorrect."
+      "explanation": "Explanation"
     }
   ]
-}
-
-Rules:
-- Exactly 5 questions.
-- Exactly 4 options per question.
-- answer must be the zero-based number of the correct option.
-- Every question must contain an explanation.
-- Questions must test understanding of the topic.
-- Questions should be appropriate for a Nigerian Senior Secondary student.
-- Explanations should be clear and educational.
-- Do not include markdown.
-- Do not include anything outside the JSON.`;
-
-
-    const response =
-        await fetchWithTimeout(
-            "/api/ask-ai",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body:
-                    JSON.stringify({
-
-                        message:
-                            prompt,
-
-                        requestType:
-                            "knowledge_check",
-
-                        type:
-                            "knowledge_check"
+}`
 
                     })
-            },
-            QUESTION_REQUEST_TIMEOUT
-        );
 
-
-    if (!response.ok) {
-
-        let message =
-            `Question API returned ${response.status}.`;
-
-
-        try {
-
-            const errorData =
-                await response.json();
-
-
-            if (
-                errorData?.error
-            ) {
-
-                message =
-                    errorData.error;
             }
 
-        } catch (_) {}
-
-
-        throw new Error(
-            message
-        );
-    }
-
-
-    const data =
-        await response.json();
-
-
-    const questions =
-        extractQuestions(
-            data
         );
 
 
     if (
-        questions.length <
+        !fallbackResponse.ok
+    ) {
+
+        throw new Error(
+            "The question service could not generate the Knowledge Check."
+        );
+
+    }
+
+
+    const fallbackData =
+        await fallbackResponse.json();
+
+
+    const questions =
+        extractQuestions(
+            fallbackData
+        )
+            .map(
+                normalizeQuestion
+            )
+            .filter(
+                Boolean
+            )
+            .slice(
+                0,
+                KNOWLEDGE_CHECK_COUNT
+            );
+
+
+    if (
+        questions.length !==
         KNOWLEDGE_CHECK_COUNT
     ) {
 
         throw new Error(
-            "The AI returned fewer than 5 questions."
+            "The AI did not return exactly 5 usable questions."
         );
+
     }
 
 
-    console.log(
-        "Questions received from /api/ask-ai."
-    );
-
-
     return questions;
+
 }
 
 
@@ -745,18 +696,29 @@ Rules:
    EXTRACT QUESTIONS
 ========================================================= */
 
-function extractQuestions(data) {
+function extractQuestions(
+    data
+) {
 
-    if (!data) {
-        return [];
+    if (
+        Array.isArray(
+            data
+        )
+    ) {
+
+        return data;
+
     }
 
 
     if (
-        Array.isArray(data)
+        !data ||
+        typeof data !==
+        "object"
     ) {
 
-        return data;
+        return [];
+
     }
 
 
@@ -772,30 +734,28 @@ function extractQuestions(data) {
 
         data.response?.questions,
 
-        data.answer?.questions,
-
-        data.reply?.questions
+        data.answer?.questions
 
     ];
 
 
     for (
-        const candidate
+        const value
         of possibleArrays
     ) {
 
         if (
-            Array.isArray(candidate)
+            Array.isArray(
+                value
+            )
         ) {
 
-            return candidate;
+            return value;
+
         }
+
     }
 
-
-    /* -----------------------------------------
-       TEXT / JSON STRING
-    ----------------------------------------- */
 
     const possibleText = [
 
@@ -825,55 +785,56 @@ function extractQuestions(data) {
         ) {
 
             continue;
+
         }
 
 
         const parsed =
-            parseJSONFromText(
+            parseJSONText(
                 text
             );
 
 
         if (
-            parsed?.questions &&
             Array.isArray(
-                parsed.questions
+                parsed
             )
         ) {
 
-            return parsed.questions;
+            return parsed;
+
         }
 
 
         if (
-            Array.isArray(parsed)
+            Array.isArray(
+                parsed?.questions
+            )
         ) {
 
-            return parsed;
+            return parsed.questions;
+
         }
+
     }
 
 
     return [];
+
 }
 
 
 /* =========================================================
-   PARSE JSON FROM AI TEXT
+   PARSE AI JSON
 ========================================================= */
 
-function parseJSONFromText(text) {
+function parseJSONText(
+    text
+) {
 
-    let cleaned =
-        text.trim();
-
-
-    /* -----------------------------------------
-       REMOVE MARKDOWN FENCES
-    ----------------------------------------- */
-
-    cleaned =
-        cleaned
+    let value =
+        text
+            .trim()
             .replace(
                 /^```json\s*/i,
                 ""
@@ -885,90 +846,94 @@ function parseJSONFromText(text) {
             .replace(
                 /\s*```$/i,
                 ""
-            )
-            .trim();
+            );
 
 
     try {
 
         return JSON.parse(
-            cleaned
+            value
         );
 
-    } catch (_) {}
+    }
+
+    catch {}
 
 
-    /* -----------------------------------------
-       FIND JSON OBJECT
-    ----------------------------------------- */
-
-    const firstBrace =
-        cleaned.indexOf(
+    const firstObject =
+        value.indexOf(
             "{"
         );
 
 
-    const lastBrace =
-        cleaned.lastIndexOf(
+    const lastObject =
+        value.lastIndexOf(
             "}"
         );
 
 
     if (
-        firstBrace !== -1 &&
-        lastBrace !== -1 &&
-        lastBrace > firstBrace
+        firstObject >= 0 &&
+        lastObject >
+        firstObject
     ) {
 
         try {
 
             return JSON.parse(
-                cleaned.slice(
-                    firstBrace,
-                    lastBrace + 1
+
+                value.slice(
+                    firstObject,
+                    lastObject + 1
                 )
+
             );
 
-        } catch (_) {}
+        }
+
+        catch {}
+
     }
 
 
-    /* -----------------------------------------
-       FIND JSON ARRAY
-    ----------------------------------------- */
-
-    const firstBracket =
-        cleaned.indexOf(
+    const firstArray =
+        value.indexOf(
             "["
         );
 
 
-    const lastBracket =
-        cleaned.lastIndexOf(
+    const lastArray =
+        value.lastIndexOf(
             "]"
         );
 
 
     if (
-        firstBracket !== -1 &&
-        lastBracket !== -1 &&
-        lastBracket > firstBracket
+        firstArray >= 0 &&
+        lastArray >
+        firstArray
     ) {
 
         try {
 
             return JSON.parse(
-                cleaned.slice(
-                    firstBracket,
-                    lastBracket + 1
+
+                value.slice(
+                    firstArray,
+                    lastArray + 1
                 )
+
             );
 
-        } catch (_) {}
+        }
+
+        catch {}
+
     }
 
 
     return null;
+
 }
 
 
@@ -976,7 +941,9 @@ function parseJSONFromText(text) {
    NORMALIZE QUESTION
 ========================================================= */
 
-function normalizeQuestion(raw) {
+function normalizeQuestion(
+    raw
+) {
 
     if (
         !raw ||
@@ -985,117 +952,96 @@ function normalizeQuestion(raw) {
     ) {
 
         return null;
+
     }
 
 
-    const questionText =
-        raw.question ||
-        raw.text ||
-        raw.prompt ||
-        raw.questionText;
+    const question =
+        clean(
 
+            raw.question ||
 
-    if (
-        typeof questionText !==
-        "string" ||
-        !questionText.trim()
-    ) {
+            raw.text ||
 
-        return null;
-    }
+            raw.prompt ||
+
+            raw.questionText
+
+        );
 
 
     let options =
+
         raw.options ||
+
         raw.choices ||
+
         raw.answers;
 
 
     if (
-        !Array.isArray(options)
+        !question ||
+        !Array.isArray(
+            options
+        )
     ) {
 
         return null;
+
     }
 
 
     options =
+
         options
+
             .map(
-                option => {
+                option =>
 
-                    if (
-                        typeof option ===
-                        "string"
-                    ) {
+                    typeof option ===
+                    "string"
 
-                        return option;
-                    }
+                        ? clean(
+                            option
+                        )
 
+                        : clean(
 
-                    if (
-                        option &&
-                        typeof option ===
-                        "object"
-                    ) {
+                            option?.text ||
 
-                        return (
-                            option.text ||
-                            option.label ||
-                            option.value ||
-                            ""
-                        );
-                    }
+                            option?.label ||
 
+                            option?.value
 
-                    return "";
-                }
+                        )
+
             )
-            .filter(Boolean)
-            .slice(
-                0,
-                4
+
+            .filter(
+                Boolean
             );
 
 
     if (
-        options.length !==
-        4
+        options.length <
+        2
     ) {
 
         return null;
+
     }
 
 
     let answer =
+
         raw.answer ??
+
         raw.correctAnswer ??
+
         raw.correct ??
-        raw.correctOption;
 
+        raw.correctIndex;
 
-    /* -----------------------------------------
-       NUMERIC ANSWER
-    ----------------------------------------- */
-
-    if (
-        typeof answer ===
-        "string" &&
-        /^[0-3]$/.test(
-            answer.trim()
-        )
-    ) {
-
-        answer =
-            Number(
-                answer.trim()
-            );
-    }
-
-
-    /* -----------------------------------------
-       LETTER ANSWER
-    ----------------------------------------- */
 
     if (
         typeof answer ===
@@ -1105,112 +1051,104 @@ function normalizeQuestion(raw) {
         const letter =
             answer
                 .trim()
-                .toUpperCase();
+                .match(
+                    /^([A-D])$/i
+                );
 
 
         if (
-            ["A", "B", "C", "D"]
-                .includes(letter)
+            letter
         ) {
 
             answer =
-                "ABCD".indexOf(
-                    letter
-                );
+
+                letter[1]
+                    .toUpperCase()
+                    .charCodeAt(0) -
+                65;
+
         }
+
+        else {
+
+            const index =
+
+                options.findIndex(
+
+                    option =>
+
+                        clean(
+                            option
+                        )
+                            .toLowerCase() ===
+
+                        clean(
+                            answer
+                        )
+                            .toLowerCase()
+
+                );
+
+
+            answer =
+                index;
+
+        }
+
     }
 
 
-    /* -----------------------------------------
-       ANSWER TEXT
-    ----------------------------------------- */
+    answer =
+        Number(
+            answer
+        );
+
+
+    /*
+       Support both 0-based and 1-based AI answers.
+    */
 
     if (
-        typeof answer ===
-        "string"
+        answer >= 1 &&
+        answer <= options.length
     ) {
 
-        const answerIndex =
-            options.findIndex(
-                option =>
-                    option
-                        .trim()
-                        .toLowerCase() ===
-                    answer
-                        .trim()
-                        .toLowerCase()
-            );
+        answer -=
+            1;
 
-
-        if (
-            answerIndex !==
-            -1
-        ) {
-
-            answer =
-                answerIndex;
-        }
     }
 
 
     if (
-        typeof answer !==
-        "number" ||
+        !Number.isInteger(
+            answer
+        ) ||
         answer < 0 ||
-        answer > 3
+        answer >= options.length
     ) {
 
         return null;
-    }
 
-
-    /* -----------------------------------------
-       EXPLANATION
-    ----------------------------------------- */
-
-    let explanation =
-        raw.explanation ||
-        raw.explanationText ||
-        raw.reason ||
-        raw.rationale ||
-        "";
-
-
-    if (
-        typeof explanation !==
-        "string"
-    ) {
-
-        explanation =
-            "";
-    }
-
-
-    explanation =
-        explanation.trim();
-
-
-    if (!explanation) {
-
-        explanation =
-            "The correct answer is " +
-            options[answer] +
-            ". Review this concept to strengthen your understanding.";
     }
 
 
     return {
 
-        question:
-            questionText.trim(),
+        question,
 
         options,
 
         answer,
 
-        explanation
+        explanation:
+            clean(
+                raw.explanation ||
+                raw.reason ||
+                ""
+            )
 
     };
+
 }
 
 
@@ -1227,169 +1165,120 @@ function renderQuestions() {
     if (!container) {
 
         showError(
-            "The Knowledge Check page is missing the questions container."
+            "The Knowledge Check page is missing its questions container."
         );
 
         return;
+
     }
 
 
     container.innerHTML =
-        "";
 
+        knowledgeQuestions
 
-    knowledgeQuestions.forEach(
-        (
-            question,
-            index
-        ) => {
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "knowledge-question-card";
-
-
-            const number =
-                document.createElement(
-                    "div"
-                );
-
-
-            number.className =
-                "knowledge-question-number";
-
-
-            number.textContent =
-                `Question ${index + 1} of ${KNOWLEDGE_CHECK_COUNT}`;
-
-
-            const questionText =
-                document.createElement(
-                    "div"
-                );
-
-
-            questionText.className =
-                "knowledge-question";
-
-
-            questionText.textContent =
-                question.question;
-
-
-            const options =
-                document.createElement(
-                    "div"
-                );
-
-
-            options.className =
-                "knowledge-options";
-
-
-            question.options.forEach(
+            .map(
                 (
-                    option,
-                    optionIndex
-                ) => {
+                    question,
+                    index
+                ) => `
 
-                    const optionWrap =
-                        document.createElement(
-                            "div"
-                        );
+                    <div
+                        class="knowledge-question-card"
+                    >
 
+                        <div
+                            class="knowledge-question-number"
+                        >
 
-                    optionWrap.className =
-                        "knowledge-option";
+                            Question ${
+                                index + 1
+                            }
+                            of
+                            ${KNOWLEDGE_CHECK_COUNT}
 
-
-                    const input =
-                        document.createElement(
-                            "input"
-                        );
-
-
-                    input.type =
-                        "radio";
+                        </div>
 
 
-                    input.name =
-                        `knowledge-question-${index}`;
+                        <div
+                            class="knowledge-question"
+                        >
+
+                            ${escapeHTML(
+                                question.question
+                            )}
+
+                        </div>
 
 
-                    input.id =
-                        `knowledge-${index}-${optionIndex}`;
+                        <div
+                            class="knowledge-options"
+                        >
+
+                            ${
+
+                                question.options
+
+                                    .map(
+
+                                        (
+                                            option,
+                                            optionIndex
+                                        ) => `
+
+                                            <div
+                                                class="knowledge-option"
+                                            >
+
+                                                <input
+                                                    type="radio"
+                                                    id="knowledge-${index}-${optionIndex}"
+                                                    name="knowledge-question-${index}"
+                                                    value="${optionIndex}"
+                                                >
 
 
-                    input.value =
-                        String(
-                            optionIndex
-                        );
+                                                <label
+                                                    for="knowledge-${index}-${optionIndex}"
+                                                >
+
+                                                    ${
+                                                        String
+                                                            .fromCharCode(
+                                                                65 +
+                                                                optionIndex
+                                                            )
+                                                    }.
+
+                                                    ${escapeHTML(
+                                                        option
+                                                    )}
+
+                                                </label>
+
+                                            </div>
+
+                                        `
+
+                                    )
+
+                                    .join("")
+
+                            }
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+
+            .join("");
 
 
-                    const label =
-                        document.createElement(
-                            "label"
-                        );
-
-
-                    label.htmlFor =
-                        input.id;
-
-
-                    label.textContent =
-                        `${String.fromCharCode(
-                            65 + optionIndex
-                        )}. ${option}`;
-
-
-                    optionWrap.appendChild(
-                        input
-                    );
-
-
-                    optionWrap.appendChild(
-                        label
-                    );
-
-
-                    options.appendChild(
-                        optionWrap
-                    );
-                }
-            );
-
-
-            card.appendChild(
-                number
-            );
-
-
-            card.appendChild(
-                questionText
-            );
-
-
-            card.appendChild(
-                options
-            );
-
-
-            container.appendChild(
-                card
-            );
-        }
-    );
-
-
-    document
+    container
         .querySelectorAll(
-            ".knowledge-question-card input"
+            "input"
         )
         .forEach(
             input => {
@@ -1398,36 +1287,27 @@ function renderQuestions() {
                     "change",
                     updateProgress
                 );
+
             }
         );
 
 
-    const submitButton =
+    const submit =
         $("knowledgeSubmit");
 
 
     if (
-        submitButton
+        submit
     ) {
 
-        submitButton.onclick =
+        submit.onclick =
             submitKnowledgeCheck;
+
     }
 
 
     updateProgress();
 
-
-    if (
-        window.MathJax &&
-        typeof MathJax.typesetPromise ===
-        "function"
-    ) {
-
-        MathJax
-            .typesetPromise()
-            .catch(() => {});
-    }
 }
 
 
@@ -1437,59 +1317,71 @@ function renderQuestions() {
 
 function updateProgress() {
 
-    let answered = 0;
+    let answered =
+        0;
 
 
     for (
         let i = 0;
-        i < KNOWLEDGE_CHECK_COUNT;
+
+        i <
+        KNOWLEDGE_CHECK_COUNT;
+
         i++
     ) {
 
-        const selected =
+        if (
+
             document.querySelector(
+
                 `input[name="knowledge-question-${i}"]:checked`
-            );
 
+            )
 
-        if (selected) {
+        ) {
 
             answered++;
+
         }
+
     }
 
 
     const percentage =
-        (
-            answered /
-            KNOWLEDGE_CHECK_COUNT
-        ) * 100;
 
+        Math.round(
 
-    const progressText =
-        $("knowledgeProgressText");
+            (
+                answered /
+                KNOWLEDGE_CHECK_COUNT
+            ) *
+            100
 
-
-    const progressBar =
-        $("knowledgeProgressBar");
+        );
 
 
     if (
-        progressText
+        $("knowledgeProgressText")
     ) {
 
-        progressText.textContent =
-            `${answered} of ${KNOWLEDGE_CHECK_COUNT} answered`;
+        $("knowledgeProgressText")
+            .textContent =
+
+                `${answered} of ${KNOWLEDGE_CHECK_COUNT} answered`;
+
     }
 
 
     if (
-        progressBar
+        $("knowledgeProgressBar")
     ) {
 
-        progressBar.style.width =
-            `${percentage}%`;
+        $("knowledgeProgressBar")
+            .style.width =
+                `${percentage}%`;
+
     }
+
 }
 
 
@@ -1504,39 +1396,55 @@ function submitKnowledgeCheck() {
     ) {
 
         return;
+
     }
 
 
-    const answers = [];
+    const answers =
+        [];
 
 
     for (
         let i = 0;
-        i < KNOWLEDGE_CHECK_COUNT;
+
+        i <
+        KNOWLEDGE_CHECK_COUNT;
+
         i++
     ) {
 
         const selected =
+
             document.querySelector(
+
                 `input[name="knowledge-question-${i}"]:checked`
+
             );
 
 
         if (!selected) {
 
             alert(
-                `Please answer question ${i + 1} before submitting.`
+
+                `Please answer question ${
+                    i + 1
+                } before submitting.`
+
             );
 
             return;
+
         }
 
 
         answers.push(
+
             Number(
                 selected.value
             )
+
         );
+
     }
 
 
@@ -1544,24 +1452,67 @@ function submitKnowledgeCheck() {
         true;
 
 
-    let score = 0;
+    let score =
+        0;
 
 
-    knowledgeQuestions.forEach(
-        (
-            question,
-            index
-        ) => {
+    knowledgeQuestions
+        .forEach(
+            (
+                question,
+                index
+            ) => {
 
-            if (
-                answers[index] ===
-                question.answer
-            ) {
+                if (
 
-                score++;
+                    answers[index] ===
+                    question.answer
+
+                ) {
+
+                    score++;
+
+                }
+
             }
-        }
-    );
+        );
+
+
+    /*
+       Mark this topic's Knowledge Check
+       as completed.
+    */
+
+    markTopicCompleted();
+
+
+    /*
+       Disable answers.
+    */
+
+    document
+        .querySelectorAll(
+            "#knowledgeQuestions input"
+        )
+        .forEach(
+            input => {
+
+                input.disabled =
+                    true;
+
+            }
+        );
+
+
+    if (
+        $("knowledgeSubmit")
+    ) {
+
+        $("knowledgeSubmit")
+            .disabled =
+                true;
+
+    }
 
 
     showResult(
@@ -1569,13 +1520,93 @@ function submitKnowledgeCheck() {
         answers
     );
 
-
-    markTopicCompleted();
 }
 
 
 /* =========================================================
-   SHOW RESULT
+   MARK KNOWLEDGE CHECK COMPLETE
+========================================================= */
+
+function markTopicCompleted() {
+
+    if (
+        !knowledgeTopic
+    ) {
+
+        return;
+
+    }
+
+
+    const key =
+        createTopicKey(
+            knowledgeTopic
+        );
+
+
+    let completed =
+        readJSON(
+            COMPLETED_KEY,
+            []
+        );
+
+
+    if (
+        !Array.isArray(
+            completed
+        )
+    ) {
+
+        completed =
+            [];
+
+    }
+
+
+    if (
+        !completed.includes(
+            key
+        )
+    ) {
+
+        completed.push(
+            key
+        );
+
+    }
+
+
+    /*
+       Keep old topic-name format compatible.
+    */
+
+    if (
+
+        knowledgeTopic.name &&
+
+        !completed.includes(
+            knowledgeTopic.name
+        )
+
+    ) {
+
+        completed.push(
+            knowledgeTopic.name
+        );
+
+    }
+
+
+    writeJSON(
+        COMPLETED_KEY,
+        completed
+    );
+
+}
+
+
+/* =========================================================
+   RESULT
 ========================================================= */
 
 function showResult(
@@ -1584,677 +1615,285 @@ function showResult(
 ) {
 
     const percentage =
+
         Math.round(
+
             (
                 score /
                 KNOWLEDGE_CHECK_COUNT
-            ) * 100
+            ) *
+            100
+
         );
 
 
     const passed =
         percentage >=
-        KNOWLEDGE_CHECK_PASS_PERCENTAGE;
+        PASS_PERCENTAGE;
 
-
-    const content =
-        $("knowledgeContent");
-
-
-    const result =
-        $("knowledgeResult");
-
-
-    if (content) {
-
-        content.style.display =
-            "none";
-    }
-
-
-    if (result) {
-
-        result.style.display =
-            "block";
-    }
-
-
-    /* -----------------------------------------
-       BASIC RESULT
-    ----------------------------------------- */
-
-    const scoreElement =
-        $("knowledgeScore");
-
-
-    if (scoreElement) {
-
-        scoreElement.textContent =
-            `${score}/${KNOWLEDGE_CHECK_COUNT}`;
-    }
-
-
-    const iconElement =
-        $("knowledgeResultIcon");
-
-
-    const titleElement =
-        $("knowledgeResultTitle");
-
-
-    const textElement =
-        $("knowledgeResultText");
-
-
-    if (passed) {
-
-        if (iconElement) {
-
-            iconElement.textContent =
-                "🎉";
-        }
-
-
-        if (titleElement) {
-
-            titleElement.textContent =
-                "Knowledge Check Passed";
-        }
-
-
-        if (textElement) {
-
-            textElement.textContent =
-                `Great work! You scored ${percentage}%. You passed this Knowledge Check with ${score} out of ${KNOWLEDGE_CHECK_COUNT} correct answers.`;
-        }
-
-    } else {
-
-        if (iconElement) {
-
-            iconElement.textContent =
-                "📚";
-        }
-
-
-        if (titleElement) {
-
-            titleElement.textContent =
-                "Keep Studying";
-        }
-
-
-        if (textElement) {
-
-            textElement.textContent =
-                `You scored ${percentage}%. You need at least ${KNOWLEDGE_CHECK_PASS_PERCENTAGE}% to pass. Review the corrections below and keep practicing.`;
-        }
-    }
-
-
-    /* -----------------------------------------
-       SHOW CORRECTIONS
-    ----------------------------------------- */
-
-    renderCorrections(
-        answers
-    );
-
-
-    /* -----------------------------------------
-       MATHJAX
-    ----------------------------------------- */
 
     if (
-        window.MathJax &&
-        typeof MathJax.typesetPromise ===
-        "function"
+        $("knowledgeContent")
     ) {
 
-        MathJax
-            .typesetPromise()
-            .catch(() => {});
-    }
-}
+        $("knowledgeContent")
+            .style.display =
+                "none";
 
-
-/* =========================================================
-   RENDER CORRECTIONS
-========================================================= */
-
-function renderCorrections(
-    answers
-) {
-
-    const result =
-        $("knowledgeResult");
-
-
-    if (!result) {
-        return;
     }
 
 
-    /* -----------------------------------------
-       REMOVE OLD CORRECTIONS
-    ----------------------------------------- */
+    if (
+        $("knowledgeResult")
+    ) {
 
-    const oldCorrections =
+        $("knowledgeResult")
+            .style.display =
+                "block";
+
+    }
+
+
+    if (
+        $("knowledgeScore")
+    ) {
+
+        $("knowledgeScore")
+            .textContent =
+
+                `${score}/${KNOWLEDGE_CHECK_COUNT}`;
+
+    }
+
+
+    if (
+        $("knowledgeResultIcon")
+    ) {
+
+        $("knowledgeResultIcon")
+            .textContent =
+
+                passed
+                    ? "🎉"
+                    : "📚";
+
+    }
+
+
+    if (
+        $("knowledgeResultTitle")
+    ) {
+
+        $("knowledgeResultTitle")
+            .textContent =
+
+                passed
+
+                    ? "Knowledge Check Passed"
+
+                    : "Knowledge Check Complete";
+
+    }
+
+
+    if (
+        $("knowledgeResultText")
+    ) {
+
+        $("knowledgeResultText")
+            .textContent =
+
+                passed
+
+                    ?
+
+                    `Excellent! You scored ${percentage}%. Your next topic is ready on the dashboard.`
+
+                    :
+
+                    `You scored ${percentage}%. Your reading for this topic is recorded. Review the corrections and keep learning.`;
+
+    }
+
+
+    /*
+       CORRECTIONS
+    */
+
+    const corrections =
         $("knowledgeCorrections");
 
 
     if (
-        oldCorrections
+        corrections
     ) {
 
-        oldCorrections.remove();
-    }
+        corrections.innerHTML =
 
+            knowledgeQuestions
 
-    const failedQuestions =
-        knowledgeQuestions
-            .map(
-                (
-                    question,
-                    index
-                ) => {
-
-                    return {
-
+                .map(
+                    (
                         question,
+                        index
+                    ) => `
 
-                        index,
+                        <div
+                            style="
+                                margin:
+                                    12px 0;
+                                padding:
+                                    14px;
+                                border-radius:
+                                    12px;
+                                border:
+                                    1px solid
+                                    rgba(
+                                        127,
+                                        127,
+                                        127,
+                                        .2
+                                    );
+                            "
+                        >
 
-                        userAnswer:
-                            answers[index]
+                            <strong>
 
-                    };
-                }
-            )
-            .filter(
-                item =>
-                    item.userAnswer !==
-                    item.question.answer
-            );
+                                ${
+                                    index + 1
+                                }.
 
+                                ${escapeHTML(
+                                    question.question
+                                )}
 
-    const corrections =
-        document.createElement(
-            "div"
-        );
+                            </strong>
 
+                            <br>
 
-    corrections.id =
-        "knowledgeCorrections";
+                            <span>
 
+                                Your answer:
 
-    corrections.style.cssText = `
-        margin-top: 30px;
-        text-align: left;
-    `;
+                                ${escapeHTML(
+                                    question.options[
+                                        answers[index]
+                                    ]
+                                )}
 
+                            </span>
 
-    const heading =
-        document.createElement(
-            "h3"
-        );
+                            <br>
 
+                            <span>
 
-    heading.textContent =
-        failedQuestions.length
-            ? "📚 Review Your Mistakes"
-            : "🎯 Perfect Score";
+                                Correct answer:
 
+                                ${escapeHTML(
+                                    question.options[
+                                        question.answer
+                                    ]
+                                )}
 
-    heading.style.marginBottom =
-        "8px";
-
-
-    corrections.appendChild(
-        heading
-    );
-
-
-    const intro =
-        document.createElement(
-            "p"
-        );
-
-
-    intro.textContent =
-        failedQuestions.length
-            ? "Here are all the questions you missed, with the correct answers and explanations."
-            : "Excellent work! You answered all 5 questions correctly.";
+                            </span>
 
 
-    intro.style.opacity =
-        "0.75";
+                            ${
+                                question.explanation
+
+                                    ?
+
+                                    `
+
+                                        <br>
+
+                                        <small>
+
+                                            ${escapeHTML(
+                                                question.explanation
+                                            )}
+
+                                        </small>
+
+                                    `
+
+                                    :
+
+                                    ""
+
+                            }
+
+                        </div>
+
+                    `
+                )
+
+                .join("");
+
+    }
 
 
-    intro.style.marginBottom =
-        "20px";
+    /*
+       CONTINUE BUTTON
+    */
 
+    let button =
+        $("knowledgeContinueButton");
 
-    corrections.appendChild(
-        intro
-    );
-
-
-    /* -----------------------------------------
-       PERFECT SCORE
-    ----------------------------------------- */
 
     if (
-        failedQuestions.length ===
-        0
+        !button &&
+        $("knowledgeResult")
     ) {
 
-        const perfect =
+        button =
             document.createElement(
-                "div"
+                "button"
             );
 
 
-        perfect.style.cssText = `
-            padding: 18px;
-            border-radius: 14px;
-            background: rgba(34, 197, 94, 0.08);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        `;
+        button.id =
+            "knowledgeContinueButton";
 
 
-        perfect.textContent =
-            "🎉 Perfect score! There are no corrections to review.";
+        button.className =
+            "primary-button full-button";
 
 
-        corrections.appendChild(
-            perfect
-        );
+        button.textContent =
 
+            passed
 
-    } else {
+                ? "🚀 Continue to Dashboard"
 
-        /* -----------------------------------------
-           FAILED QUESTIONS
-        ----------------------------------------- */
+                : "📚 Return to Dashboard";
 
-        failedQuestions.forEach(
-            item => {
 
-                const question =
-                    item.question;
+        button.style.marginTop =
+            "20px";
 
 
-                const index =
-                    item.index;
+        button.addEventListener(
 
+            "click",
 
-                const card =
-                    document.createElement(
-                        "div"
-                    );
+            () => {
 
+                window.location.href =
+                    "dashboard.html";
 
-                card.className =
-                    "knowledge-correction-card";
-
-
-                card.style.cssText = `
-                    padding: 20px;
-                    margin-bottom: 16px;
-                    border-radius: 16px;
-                    border: 1px solid rgba(239, 68, 68, 0.25);
-                    background: rgba(239, 68, 68, 0.05);
-                `;
-
-
-                /* QUESTION */
-
-                const questionNumber =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                questionNumber.textContent =
-                    `❌ Question ${index + 1}`;
-
-
-                questionNumber.style.cssText = `
-                    font-weight: 700;
-                    margin-bottom: 12px;
-                `;
-
-
-                card.appendChild(
-                    questionNumber
-                );
-
-
-                const questionText =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                questionText.textContent =
-                    question.question;
-
-
-                questionText.style.cssText = `
-                    font-size: 16px;
-                    font-weight: 600;
-                    line-height: 1.6;
-                    margin-bottom: 16px;
-                `;
-
-
-                card.appendChild(
-                    questionText
-                );
-
-
-                /* YOUR ANSWER */
-
-                const yourAnswer =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                yourAnswer.style.cssText = `
-                    margin-bottom: 10px;
-                    line-height: 1.5;
-                `;
-
-
-                const yourLabel =
-                    document.createElement(
-                        "strong"
-                    );
-
-
-                yourLabel.textContent =
-                    "Your answer: ";
-
-
-                yourAnswer.appendChild(
-                    yourLabel
-                );
-
-
-                const userAnswerText =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                userAnswerText.style.fontWeight =
-                    "600";
-
-
-                if (
-                    item.userAnswer >= 0 &&
-                    question.options[item.userAnswer]
-                ) {
-
-                    userAnswerText.textContent =
-                        `${String.fromCharCode(
-                            65 + item.userAnswer
-                        )}. ${question.options[item.userAnswer]}`;
-
-                } else {
-
-                    userAnswerText.textContent =
-                        "Not answered";
-                }
-
-
-                yourAnswer.appendChild(
-                    userAnswerText
-                );
-
-
-                card.appendChild(
-                    yourAnswer
-                );
-
-
-                /* CORRECT ANSWER */
-
-                const correctAnswer =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                correctAnswer.style.cssText = `
-                    margin-bottom: 16px;
-                    line-height: 1.5;
-                `;
-
-
-                const correctLabel =
-                    document.createElement(
-                        "strong"
-                    );
-
-
-                correctLabel.textContent =
-                    "Correct answer: ";
-
-
-                correctAnswer.appendChild(
-                    correctLabel
-                );
-
-
-                const correctText =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                correctText.style.cssText = `
-                    font-weight: 700;
-                `;
-
-
-                correctText.textContent =
-                    `${String.fromCharCode(
-                        65 + question.answer
-                    )}. ${question.options[question.answer]}`;
-
-
-                correctAnswer.appendChild(
-                    correctText
-                );
-
-
-                card.appendChild(
-                    correctAnswer
-                );
-
-
-                /* EXPLANATION */
-
-                const explanation =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                explanation.style.cssText = `
-                    padding: 15px;
-                    border-radius: 12px;
-                    background: rgba(59, 130, 246, 0.08);
-                    line-height: 1.65;
-                `;
-
-
-                const explanationTitle =
-                    document.createElement(
-                        "strong"
-                    );
-
-
-                explanationTitle.textContent =
-                    "💡 Explanation";
-
-
-                explanation.appendChild(
-                    explanationTitle
-                );
-
-
-                const explanationText =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                explanationText.textContent =
-                    question.explanation ||
-                    "Review this concept and try the question again.";
-
-
-                explanationText.style.marginTop =
-                    "7px";
-
-
-                explanation.appendChild(
-                    explanationText
-                );
-
-
-                card.appendChild(
-                    explanation
-                );
-
-
-                corrections.appendChild(
-                    card
-                );
             }
+
         );
+
+
+        $("knowledgeResult")
+            .appendChild(
+                button
+            );
+
     }
 
-
-    /* -----------------------------------------
-       INSERT BEFORE BACK BUTTON
-    ----------------------------------------- */
-
-    const backButton =
-        result.querySelector(
-            "button"
-        );
-
-
-    if (
-        backButton
-    ) {
-
-        result.insertBefore(
-            corrections,
-            backButton.parentElement ||
-            backButton
-        );
-
-    } else {
-
-        result.appendChild(
-            corrections
-        );
-    }
-
-
-    if (
-        window.MathJax &&
-        typeof MathJax.typesetPromise ===
-        "function"
-    ) {
-
-        MathJax
-            .typesetPromise()
-            .catch(() => {});
-    }
-}
-
-
-/* =========================================================
-   MARK TOPIC AS KNOWLEDGE-CHECKED
-========================================================= */
-
-function markTopicCompleted() {
-
-    if (!knowledgeTopic) {
-        return;
-    }
-
-
-    const topicKey =
-        knowledgeTopic.key ||
-        createTopicKey(
-            knowledgeTopic
-        );
-
-
-    let completed =
-        readJSON(
-            KNOWLEDGE_COMPLETED_KEY,
-            []
-        );
-
-
-    if (
-        !Array.isArray(completed)
-    ) {
-
-        completed = [];
-    }
-
-
-    if (
-        !completed.includes(
-            topicKey
-        )
-    ) {
-
-        completed.push(
-            topicKey
-        );
-
-
-        writeJSON(
-            KNOWLEDGE_COMPLETED_KEY,
-            completed
-        );
-    }
-}
-
-
-/* =========================================================
-   TOPIC KEY
-========================================================= */
-
-function createTopicKey(topic) {
-
-    return [
-
-        topic.subject ||
-        "Senior Secondary",
-
-        topic.name ||
-        ""
-
-    ]
-        .join("::")
-        .toLowerCase()
-        .replace(
-            /\s+/g,
-            " "
-        )
-        .trim();
 }
 
 
@@ -2264,196 +1903,156 @@ function createTopicKey(topic) {
 
 function showLoading() {
 
-    const loading =
-        $("knowledgeLoading");
+    if (
+        $("knowledgeLoading")
+    ) {
 
-    const content =
-        $("knowledgeContent");
+        $("knowledgeLoading")
+            .style.display =
+                "block";
 
-    const result =
-        $("knowledgeResult");
-
-    const error =
-        $("knowledgeError");
-
-    const limit =
-        $("knowledgeLimit");
-
-
-    if (loading) {
-
-        loading.style.display =
-            "block";
     }
 
 
-    if (content) {
+    if (
+        $("knowledgeContent")
+    ) {
 
-        content.style.display =
-            "none";
+        $("knowledgeContent")
+            .style.display =
+                "none";
+
     }
 
 
-    if (result) {
+    if (
+        $("knowledgeResult")
+    ) {
 
-        result.style.display =
-            "none";
+        $("knowledgeResult")
+            .style.display =
+                "none";
+
     }
 
 
-    if (error) {
+    if (
+        $("knowledgeError")
+    ) {
 
-        error.style.display =
-            "none";
+        $("knowledgeError")
+            .style.display =
+                "none";
+
     }
 
 
-    if (limit) {
+    if (
+        $("knowledgeLimit")
+    ) {
 
-        limit.style.display =
-            "none";
-    }
-}
+        $("knowledgeLimit")
+            .style.display =
+                "none";
 
-
-function hideLoading() {
-
-    const loading =
-        $("knowledgeLoading");
-
-    const content =
-        $("knowledgeContent");
-
-
-    if (loading) {
-
-        loading.style.display =
-            "none";
     }
 
-
-    if (content) {
-
-        content.style.display =
-            "block";
-    }
 }
 
 
 function showLimit() {
 
-    const loading =
-        $("knowledgeLoading");
+    if (
+        $("knowledgeLoading")
+    ) {
 
-    const content =
-        $("knowledgeContent");
+        $("knowledgeLoading")
+            .style.display =
+                "none";
 
-    const result =
-        $("knowledgeResult");
-
-    const error =
-        $("knowledgeError");
-
-    const limit =
-        $("knowledgeLimit");
-
-
-    if (loading) {
-
-        loading.style.display =
-            "none";
     }
 
 
-    if (content) {
+    if (
+        $("knowledgeContent")
+    ) {
 
-        content.style.display =
-            "none";
+        $("knowledgeContent")
+            .style.display =
+                "none";
+
     }
 
 
-    if (result) {
+    if (
+        $("knowledgeResult")
+    ) {
 
-        result.style.display =
-            "none";
+        $("knowledgeResult")
+            .style.display =
+                "none";
+
     }
 
 
-    if (error) {
+    if (
+        $("knowledgeLimit")
+    ) {
 
-        error.style.display =
-            "none";
+        $("knowledgeLimit")
+            .style.display =
+                "block";
+
     }
 
-
-    if (limit) {
-
-        limit.style.display =
-            "block";
-    }
 }
 
 
-function showError(message) {
+function showError(
+    message
+) {
 
-    const loading =
-        $("knowledgeLoading");
+    if (
+        $("knowledgeLoading")
+    ) {
 
-    const content =
-        $("knowledgeContent");
+        $("knowledgeLoading")
+            .style.display =
+                "none";
 
-    const result =
-        $("knowledgeResult");
-
-    const error =
-        $("knowledgeError");
-
-    const limit =
-        $("knowledgeLimit");
-
-
-    if (loading) {
-
-        loading.style.display =
-            "none";
     }
 
 
-    if (content) {
+    if (
+        $("knowledgeContent")
+    ) {
 
-        content.style.display =
-            "none";
+        $("knowledgeContent")
+            .style.display =
+                "none";
+
     }
 
 
-    if (result) {
+    if (
+        $("knowledgeError")
+    ) {
 
-        result.style.display =
-            "none";
+        $("knowledgeError")
+            .style.display =
+                "block";
+
     }
 
 
-    if (limit) {
+    if (
+        $("knowledgeErrorText")
+    ) {
 
-        limit.style.display =
-            "none";
+        $("knowledgeErrorText")
+            .textContent =
+                message;
+
     }
 
-
-    if (error) {
-
-        error.style.display =
-            "block";
-    }
-
-
-    const errorText =
-        $("knowledgeErrorText");
-
-
-    if (errorText) {
-
-        errorText.textContent =
-            message;
-    }
 }
