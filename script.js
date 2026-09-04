@@ -1230,65 +1230,98 @@ function generateStudyPlan(
 
 
 /* =========================================================
-   THEME
+   STUDYMIND AI — GLOBAL THEME SYSTEM
 ========================================================= */
 
-function applyTheme() {
+const STUDYMIND_THEME_KEY = "studyMindTheme";
 
-    const saved =
-        localStorage.getItem(
-            THEME_KEY
-        ) ||
-        "light";
+function applyStudyMindTheme() {
+    const savedTheme =
+        localStorage.getItem(STUDYMIND_THEME_KEY) || "dark";
 
+    const isLight = savedTheme === "light";
+
+    document.documentElement.classList.toggle(
+        "light-mode",
+        isLight
+    );
+
+    document.body.classList.toggle(
+        "light-mode",
+        isLight
+    );
+
+    document.documentElement.classList.toggle(
+        "dark-mode",
+        !isLight
+    );
 
     document.body.classList.toggle(
         "dark-mode",
-        saved === "dark"
+        !isLight
     );
 
-
-    const button =
-        $("themeButton");
-
-
-    if (button) {
-
-        button.textContent =
-
-            saved === "dark"
-                ? "☀️ Light Mode"
-                : "🌙 Dark Mode";
-
-    }
-
+    updateStudyMindThemeButton();
 }
 
+function toggleStudyMindTheme() {
+    const isCurrentlyLight =
+        document.body.classList.contains("light-mode");
 
-function toggleTheme() {
-
-    const isDark =
-        document.body.classList.contains(
-            "dark-mode"
-        );
-
+    const newTheme =
+        isCurrentlyLight ? "dark" : "light";
 
     localStorage.setItem(
-
-        THEME_KEY,
-
-        isDark
-            ? "light"
-            : "dark"
-
+        STUDYMIND_THEME_KEY,
+        newTheme
     );
 
-
-    applyTheme();
-
+    applyStudyMindTheme();
 }
 
+function updateStudyMindThemeButton() {
+    const button =
+        document.getElementById("themeButton");
 
+    if (!button) return;
+
+    const isLight =
+        document.body.classList.contains("light-mode");
+
+    button.textContent =
+        isLight
+            ? "🌙 Dark Mode"
+            : "☀️ Light Mode";
+}
+
+/* Load saved theme immediately */
+applyStudyMindTheme();
+
+/* Connect theme button */
+document.addEventListener("DOMContentLoaded", () => {
+    const button =
+        document.getElementById("themeButton");
+
+    if (!button) return;
+
+    /*
+       Prevent duplicate event listeners if the
+       script is initialized more than once.
+    */
+    if (button.dataset.themeConnected === "true") {
+        updateStudyMindThemeButton();
+        return;
+    }
+
+    button.dataset.themeConnected = "true";
+
+    button.addEventListener(
+        "click",
+        toggleStudyMindTheme
+    );
+
+    updateStudyMindThemeButton();
+});
 /* =========================================================
    START
 ========================================================= */
