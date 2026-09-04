@@ -4279,3 +4279,264 @@ SMALL MOBILE
     border-color: rgba(245, 158, 11, 0.55);
     color: #fbbf24;
 }
+/* =========================================================
+   STUDYMIND AI — GLOBAL LIGHT / DARK MODE
+   FINAL THEME OVERRIDE
+========================================================= */
+
+/* Smooth theme transition */
+html,
+body,
+.navbar,
+section,
+main,
+footer,
+.card,
+.hero-card,
+.feature-card,
+.study-form,
+.form-group,
+.subject-topic-card,
+.topic-card,
+.schedule-card,
+.dashboard-card,
+.stat-card,
+.calendar,
+.calendar-day,
+.modal,
+input,
+textarea,
+select,
+button {
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark-mode,
+body.dark-mode {
+    background: #0b1220 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode {
+    color-scheme: dark;
+}
+
+body.dark-mode .navbar {
+    background: #0b1220 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode main,
+body.dark-mode section {
+    color: #f8fafc;
+}
+
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode label,
+body.dark-mode small {
+    color: inherit;
+}
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+    background: #111c31 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255,255,255,0.14) !important;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+    color: rgba(255,255,255,0.5) !important;
+}
+
+body.dark-mode .hero-card,
+body.dark-mode .feature-card,
+body.dark-mode .subject-topic-card,
+body.dark-mode .study-form,
+body.dark-mode .schedule-card,
+body.dark-mode .dashboard-card,
+body.dark-mode .stat-card,
+body.dark-mode .calendar,
+body.dark-mode .topic-card {
+    background: #111c31 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255,255,255,0.10) !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+
+html.light-mode,
+body.light-mode {
+    background: #f7f9fc !important;
+    color: #172033 !important;
+}
+
+body.light-mode {
+    color-scheme: light;
+}
+
+body.light-mode .navbar {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-color: #e5e9f0 !important;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+}
+
+body.light-mode main,
+body.light-mode section {
+    color: #172033;
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+    color: #172033 !important;
+}
+
+body.light-mode p,
+body.light-mode span,
+body.light-mode label,
+body.light-mode small {
+    color: #4b5563;
+}
+
+body.light-mode a {
+    color: inherit;
+}
+
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-color: #d9dee8 !important;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+    color: #8a94a6 !important;
+}
+
+body.light-mode .hero-card,
+body.light-mode .feature-card,
+body.light-mode .subject-topic-card,
+body.light-mode .study-form,
+body.light-mode .schedule-card,
+body.light-mode .dashboard-card,
+body.light-mode .stat-card,
+body.light-mode .calendar,
+body.light-mode .topic-card {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-color: #e1e6ef !important;
+    box-shadow: 0 8px 30px rgba(15,23,42,0.06);
+}
+
+
+/* =========================================================
+   LIGHT MODE — NAVIGATION
+========================================================= */
+
+body.light-mode .nav-links a {
+    color: #172033 !important;
+}
+
+body.light-mode .logo {
+    color: #172033 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — BUTTON
+========================================================= */
+
+body.light-mode .theme-button {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border: 1px solid #d9dee8 !important;
+}
+
+body.dark-mode .theme-button {
+    background: #111c31 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — FORM
+========================================================= */
+
+body.light-mode .subject-topic-card h3,
+body.light-mode .subject-topic-card h4 {
+    color: #172033 !important;
+}
+
+body.light-mode .subject-topic-card small {
+    color: #6b7280 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — CALENDAR
+========================================================= */
+
+body.light-mode .calendar-day {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-color: #e1e6ef !important;
+}
+
+body.light-mode .calendar-day.empty {
+    background: transparent !important;
+}
+
+body.light-mode .calendar-day.today {
+    border: 2px solid currentColor !important;
+}
+
+
+/* =========================================================
+   DARK MODE — CALENDAR
+========================================================= */
+
+body.dark-mode .calendar-day {
+    background: #111c31 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255,255,255,0.10) !important;
+}
+
+body.dark-mode .calendar-day.empty {
+    background: transparent !important;
+}
+
+
+/* =========================================================
+   PREVENT WHITE FLASH
+========================================================= */
+
+html {
+    background: #0b1220;
+}
+
+html.light-mode {
+    background: #f7f9fc;
+}
