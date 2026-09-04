@@ -1299,66 +1299,70 @@ function renderNextTopicMessage(
 
 function completeCurrentTopic() {
 
-    const topic =
-        getCurrentTopic();
-
+    const topic = getCurrentTopic();
 
     if (!topic) {
-
+        console.warn("No current topic available.");
         return;
-
     }
 
+    /*
+     * Create the exact topic object expected
+     * by knowledge-check.js
+     */
+    const knowledgeCheckTopic = {
+        id: topic.id || topic.key || "",
+        key: topic.key || topic.id || "",
+        name: topic.name || topic.title || "Untitled Topic",
+        title: topic.title || topic.name || "Untitled Topic",
+        subject: topic.subject || "",
+        description:
+            topic.description ||
+            `Study ${topic.name || "this topic"} and complete the Knowledge Check.`,
+        checkId:
+            `${topic.key || topic.id || topic.name}-${Date.now()}`
+    };
 
-    if (
-        isKnowledgeCheckCompleted(topic)
-    ) {
-
-        return;
-
-    }
-
-
-    const key =
-        getTopicKey(topic);
-
-
-    if (
-        !completedTopics.includes(key)
-    ) {
-
-        completedTopics.push(key);
-
-    }
-
-
+    /*
+     * Save the topic so knowledge-check.js
+     * knows exactly which topic to test.
+     */
     localStorage.setItem(
-        STUDYMIND_CONFIG.LAST_STUDY_DATE_KEY,
-        getTodayString()
+        "studyMindKnowledgeCheckTopic",
+        JSON.stringify(knowledgeCheckTopic)
     );
 
+    /*
+     * Mark the STUDY portion as finished.
+     * The topic is NOT fully completed yet.
+     */
+    const topicKey = getTopicKey(topic);
 
-    updateStudyStreak();
+    if (!completedTopics.includes(topicKey)) {
 
-    saveCompletionState();
+        completedTopics.push(topicKey);
 
+        setStoredJSON(
+            DASHBOARD_CONFIG.STORAGE.COMPLETED_TOPICS,
+            completedTopics
+        );
+    }
+
+    /*
+     * Stop the study timer.
+     */
     stopTimer();
 
-    showKnowledgeCheck(topic);
+    /*
+     * Update streak.
+     */
+    updateStreak();
 
-    renderCurrentTopic();
-
-    renderProgress();
-
-    renderTopics();
-
-    renderStats();
-
-    renderDailyChallenge();
-
+    /*
+     * Go to the dedicated Knowledge Check page.
+     */
+    window.location.href = "knowledge-check.html";
 }
-
-
 /* =========================================================
    KNOWLEDGE CHECK
 ========================================================= */
