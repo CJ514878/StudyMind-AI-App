@@ -4,6 +4,9 @@
 
    FEATURES:
    - Subject → Topic → Topic → Next Subject flow
+   - Persistent study session
+   - Persistent reading content
+   - Leave app and return without losing study state
    - Complete reading → Knowledge Check
    - Study streak connected to completed reading
    - 25 / 45 / 60 minute study timer
@@ -22,8 +25,11 @@
    STORAGE KEYS
 ========================================================= */
 
-const PLAN_KEY = "studyMindPlan";
-const LEGACY_PLAN_KEY = "studyData";
+const PLAN_KEY =
+    "studyMindPlan";
+
+const LEGACY_PLAN_KEY =
+    "studyData";
 
 const COMPLETED_KEY =
     "studyMindCompletedTopics";
@@ -36,6 +42,9 @@ const CURRENT_INDEX_KEY =
 
 const KNOWLEDGE_TOPIC_KEY =
     "studyMindKnowledgeCheckTopic";
+
+const KNOWLEDGE_QUESTIONS_KEY =
+    "studyMindTopicQuestions";
 
 const CELEBRATION_KEY =
     "studyMindCompletionCelebrationShown";
@@ -62,11 +71,20 @@ const LAST_STUDY_KEY =
     "lastStudyDate";
 
 
+/*
+ * NEW:
+ * Persistent study-session storage.
+ */
+const STUDY_SESSION_KEY =
+    "studyMindCurrentStudySession";
+
+
 /* =========================================================
    SETTINGS
 ========================================================= */
 
-const FREE_AI_LIMIT = 5;
+const FREE_AI_LIMIT =
+    5;
 
 const TIMER_OPTIONS = [
     25,
@@ -117,17 +135,33 @@ let timerInterval = null;
 
 let timerRunning = false;
 
-let calendarDate = new Date();
+let calendarDate =
+    new Date();
 
 let currentUser = null;
+
+
+/*
+ * Persistent reading state.
+ */
+let currentStudySession =
+    null;
+
+
+/*
+ * Prevent duplicate observers.
+ */
+let readingObserverStarted =
+    false;
 
 
 /* =========================================================
    ELEMENT HELPER
 ========================================================= */
 
-const $ = id =>
-    document.getElementById(id);
+const $ =
+    id =>
+        document.getElementById(id);
 
 
 /* =========================================================
@@ -142,7 +176,9 @@ function readJSON(
     try {
 
         const raw =
-            localStorage.getItem(key);
+            localStorage.getItem(
+                key
+            );
 
         return raw
             ? JSON.parse(raw)
@@ -151,6 +187,7 @@ function readJSON(
     } catch {
 
         return fallback;
+
     }
 }
 
@@ -160,10 +197,25 @@ function writeJSON(
     value
 ) {
 
-    localStorage.setItem(
-        key,
-        JSON.stringify(value)
-    );
+    try {
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "StudyMind storage error:",
+            error
+        );
+
+        return false;
+
+    }
 }
 
 
@@ -251,6 +303,7 @@ function normalizeTopic(
 
         return name
             ? {
+
                 id:
                     `topic-${index}-${name
                         .toLowerCase()
@@ -262,6 +315,7 @@ function normalizeTopic(
 
                 description:
                     `Study ${name} and complete the knowledge check.`
+
             }
             : null;
     }
@@ -273,6 +327,7 @@ function normalizeTopic(
     ) {
 
         return null;
+
     }
 
 
@@ -281,7 +336,9 @@ function normalizeTopic(
 
 
     if (!name) {
+
         return null;
+
     }
 
 
@@ -310,6 +367,7 @@ function normalizeTopic(
                 raw.desc
             ) ||
             `Study ${name} and complete the knowledge check.`
+
     };
 }
 
@@ -326,6 +384,7 @@ function normalizePlan(raw) {
     ) {
 
         return null;
+
     }
 
 
@@ -347,7 +406,7 @@ function normalizePlan(raw) {
 
 
     /* =====================================================
-       SUBJECTS WITH NESTED TOPICS
+       NESTED SUBJECTS
     ===================================================== */
 
     if (
@@ -375,7 +434,9 @@ function normalizePlan(raw) {
 
 
                 if (!name) {
+
                     return;
+
                 }
 
 
@@ -397,7 +458,10 @@ function normalizePlan(raw) {
                     topics:
                         nested
                             .map(
-                                (topic, i) =>
+                                (
+                                    topic,
+                                    i
+                                ) =>
                                     normalizeTopic(
                                         topic,
                                         name,
@@ -410,6 +474,7 @@ function normalizePlan(raw) {
 
             }
         );
+
     }
 
 
@@ -443,7 +508,11 @@ function normalizePlan(raw) {
 
 
             if (topic) {
-                flatTopics.push(topic);
+
+                flatTopics.push(
+                    topic
+                );
+
             }
 
         }
@@ -473,9 +542,12 @@ function normalizePlan(raw) {
             normalizedSubjects[0].topics =
                 flatTopics.map(
                     topic => ({
+
                         ...topic,
+
                         subject:
                             normalizedSubjects[0].name
+
                     })
                 );
 
@@ -502,9 +574,12 @@ function normalizePlan(raw) {
                             )
                             .map(
                                 topic => ({
+
                                     ...topic,
+
                                     subject:
                                         subject.name
+
                                 })
                             );
 
@@ -550,7 +625,7 @@ function normalizePlan(raw) {
 
 
     /* =====================================================
-       IF NO SUBJECTS EXIST
+       NO SUBJECTS
     ===================================================== */
 
     if (
@@ -572,13 +647,24 @@ function normalizePlan(raw) {
                 i
             ) => {
 
+                const cleanedName =
+                    clean(name);
+
+
+                if (!cleanedName) {
+
+                    return;
+
+                }
+
+
                 normalizedSubjects.push({
 
                     id:
                         `subject-${i + 1}`,
 
                     name:
-                        clean(name),
+                        cleanedName,
 
                     topics: []
 
@@ -586,46 +672,6 @@ function normalizePlan(raw) {
 
             }
         );
-
-
-        if (
-            !normalizedSubjects.length
-        ) {
-
-            const rawNames =
-                typeof plan.subjects === "string"
-
-                    ? plan.subjects.split(
-                        /[,;\n]+/
-                    )
-
-                    : [];
-
-
-            rawNames
-                .map(clean)
-                .filter(Boolean)
-                .forEach(
-                    (
-                        name,
-                        i
-                    ) => {
-
-                        normalizedSubjects.push({
-
-                            id:
-                                `subject-${i + 1}`,
-
-                            name,
-
-                            topics: []
-
-                        });
-
-                    }
-                );
-
-        }
 
 
         flatTopics.forEach(
@@ -664,7 +710,7 @@ function normalizePlan(raw) {
 
 
     /* =====================================================
-       REMOVE DUPLICATE TOPICS
+       REMOVE DUPLICATES
     ===================================================== */
 
     const seen =
@@ -769,7 +815,9 @@ function normalizePlan(raw) {
 function savePlan() {
 
     if (!studyPlan) {
+
         return;
+
     }
 
 
@@ -783,6 +831,7 @@ function savePlan() {
         LEGACY_PLAN_KEY,
         studyPlan
     );
+
 }
 
 
@@ -882,6 +931,7 @@ function loadCompletionState() {
         completedQuestionTopics = [];
 
     }
+
 }
 
 
@@ -905,6 +955,7 @@ function saveCompletionState() {
             currentTopicIndex
         )
     );
+
 }
 
 
@@ -925,6 +976,7 @@ function isCompleted(topic) {
         completedTopics.includes(key) ||
         completedTopics.includes(name)
     );
+
 }
 
 
@@ -941,15 +993,81 @@ function isQuestionCompleted(topic) {
         completedQuestionTopics.includes(key) ||
         completedQuestionTopics.includes(name)
     );
+
 }
 
 
 /* =========================================================
-   CURRENT TOPIC
+   FIND CURRENT TOPIC
 ========================================================= */
 
 function getCurrentTopic() {
 
+    /*
+     * First try the saved current topic.
+     */
+    if (
+        currentStudySession?.topicKey
+    ) {
+
+        const savedIndex =
+            allTopics.findIndex(
+                topic =>
+                    topicKey(topic) ===
+                    currentStudySession.topicKey
+            );
+
+
+        if (
+            savedIndex >= 0 &&
+            !isCompleted(
+                allTopics[savedIndex]
+            )
+        ) {
+
+            currentTopicIndex =
+                savedIndex;
+
+            return allTopics[
+                savedIndex
+            ];
+
+        }
+
+    }
+
+
+    /*
+     * Then try the stored index.
+     */
+    if (
+        currentTopicIndex >= 0 &&
+        currentTopicIndex < allTopics.length
+    ) {
+
+        const indexedTopic =
+            allTopics[
+                currentTopicIndex
+            ];
+
+
+        if (
+            indexedTopic &&
+            !isCompleted(
+                indexedTopic
+            )
+        ) {
+
+            return indexedTopic;
+
+        }
+
+    }
+
+
+    /*
+     * Finally find the first incomplete topic.
+     */
     const next =
         allTopics.findIndex(
             topic =>
@@ -965,6 +1083,7 @@ function getCurrentTopic() {
             allTopics.length;
 
         return null;
+
     }
 
 
@@ -972,7 +1091,10 @@ function getCurrentTopic() {
         next;
 
 
-    return allTopics[next];
+    return allTopics[
+        next
+    ];
+
 }
 
 
@@ -981,7 +1103,8 @@ function getCurrentTopic() {
 ========================================================= */
 
 function getNextIncompleteTopic(
-    fromIndex = currentTopicIndex
+    fromIndex =
+        currentTopicIndex
 ) {
 
     for (
@@ -1024,6 +1147,557 @@ function getNextIncompleteTopic(
 
 
     return null;
+
+}
+
+
+/* =========================================================
+   PERSISTENT STUDY SESSION
+========================================================= */
+
+function createStudySession(
+    topic = null
+) {
+
+    const saved =
+        readJSON(
+            STUDY_SESSION_KEY,
+            null
+        );
+
+
+    currentStudySession =
+        saved &&
+        typeof saved === "object"
+
+            ? saved
+
+            : {};
+
+
+    if (
+        topic
+    ) {
+
+        currentStudySession.topicKey =
+            topicKey(topic);
+
+        currentStudySession.topicId =
+            topic.id || "";
+
+        currentStudySession.topicName =
+            topic.name || "";
+
+        currentStudySession.subject =
+            topic.subject || "";
+
+        currentStudySession.topicIndex =
+            currentTopicIndex;
+
+    }
+
+
+    currentStudySession.lastOpened =
+        new Date().toISOString();
+
+
+    currentStudySession.readingStarted =
+        currentStudySession.readingStarted === true;
+
+
+    currentStudySession.readingCompleted =
+        currentStudySession.readingCompleted === true;
+
+
+    saveStudySession();
+
+}
+
+
+function saveStudySession() {
+
+    if (
+        !currentStudySession ||
+        typeof currentStudySession !== "object"
+    ) {
+
+        currentStudySession = {};
+
+    }
+
+
+    currentStudySession.currentTopicIndex =
+        currentTopicIndex;
+
+
+    currentStudySession.updatedAt =
+        new Date().toISOString();
+
+
+    writeJSON(
+        STUDY_SESSION_KEY,
+        currentStudySession
+    );
+
+}
+
+
+function loadStudySession() {
+
+    const saved =
+        readJSON(
+            STUDY_SESSION_KEY,
+            null
+        );
+
+
+    if (
+        !saved ||
+        typeof saved !== "object"
+    ) {
+
+        currentStudySession =
+            {};
+
+        return;
+
+    }
+
+
+    currentStudySession =
+        saved;
+
+
+    /*
+     * Restore current topic index when possible.
+     */
+    if (
+        Number.isInteger(
+            Number(
+                saved.currentTopicIndex
+            )
+        )
+    ) {
+
+        currentTopicIndex =
+            Number(
+                saved.currentTopicIndex
+            );
+
+    }
+
+
+    /*
+     * If a topic key was saved, locate that topic.
+     */
+    if (
+        saved.topicKey
+    ) {
+
+        const savedTopicIndex =
+            allTopics.findIndex(
+                topic =>
+                    topicKey(topic) ===
+                    saved.topicKey
+            );
+
+
+        if (
+            savedTopicIndex >= 0 &&
+            !isCompleted(
+                allTopics[
+                    savedTopicIndex
+                ]
+            )
+        ) {
+
+            currentTopicIndex =
+                savedTopicIndex;
+
+        }
+
+    }
+
+
+    localStorage.setItem(
+        CURRENT_INDEX_KEY,
+        String(
+            currentTopicIndex
+        )
+    );
+
+}
+
+
+/* =========================================================
+   READING PERSISTENCE
+========================================================= */
+
+/*
+ * These are the possible reading containers used by
+ * StudyMind dashboard versions.
+ *
+ * The system checks all of them automatically.
+ */
+const READING_SELECTORS = [
+
+    "#topicReading",
+
+    "#readingContent",
+
+    "#currentTopicReading",
+
+    "#studyReading",
+
+    "#readingSection",
+
+    "#topicContent",
+
+    "#studyContent",
+
+    ".topic-reading",
+
+    ".reading-content",
+
+    ".study-reading",
+
+    ".topic-content"
+
+];
+
+
+function findReadingElement() {
+
+    for (
+        const selector of
+        READING_SELECTORS
+    ) {
+
+        const element =
+            document.querySelector(
+                selector
+            );
+
+
+        if (element) {
+
+            return element;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+function getReadingElement() {
+
+    const element =
+        findReadingElement();
+
+
+    if (!element) {
+
+        return null;
+
+    }
+
+
+    return element;
+
+}
+
+
+function saveCurrentReading() {
+
+    const reading =
+        getReadingElement();
+
+
+    if (
+        !reading
+    ) {
+
+        return;
+
+    }
+
+
+    const html =
+        reading.innerHTML.trim();
+
+
+    const text =
+        reading.textContent.trim();
+
+
+    /*
+     * Don't save an empty placeholder.
+     */
+    if (
+        !html &&
+        !text
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !currentStudySession
+    ) {
+
+        currentStudySession =
+            {};
+
+    }
+
+
+    currentStudySession.readingHTML =
+        html;
+
+
+    currentStudySession.readingText =
+        text;
+
+
+    currentStudySession.readingSavedAt =
+        new Date().toISOString();
+
+
+    currentStudySession.readingStarted =
+        true;
+
+
+    const topic =
+        getCurrentTopic();
+
+
+    if (topic) {
+
+        currentStudySession.topicKey =
+            topicKey(topic);
+
+        currentStudySession.topicName =
+            topic.name;
+
+        currentStudySession.subject =
+            topic.subject;
+
+        currentStudySession.topicIndex =
+            currentTopicIndex;
+
+    }
+
+
+    saveStudySession();
+
+}
+
+
+function restoreCurrentReading() {
+
+    if (
+        !currentStudySession
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        !currentStudySession.readingHTML
+    ) {
+
+        return false;
+
+    }
+
+
+    const reading =
+        getReadingElement();
+
+
+    if (
+        !reading
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+     * Only restore the reading if it belongs
+     * to the current topic.
+     */
+    const topic =
+        getCurrentTopic();
+
+
+    if (
+        topic &&
+        currentStudySession.topicKey &&
+        currentStudySession.topicKey !==
+            topicKey(topic)
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+     * Don't overwrite newly generated reading
+     * content that is already on the page.
+     */
+    const currentHTML =
+        reading.innerHTML.trim();
+
+
+    if (
+        currentHTML &&
+        currentHTML.length > 20
+    ) {
+
+        return false;
+
+    }
+
+
+    reading.innerHTML =
+        currentStudySession.readingHTML;
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   START READING PERSISTENCE OBSERVER
+========================================================= */
+
+function startReadingPersistence() {
+
+    if (
+        readingObserverStarted
+    ) {
+
+        return;
+
+    }
+
+
+    const reading =
+        getReadingElement();
+
+
+    if (
+        !reading
+    ) {
+
+        /*
+         * The reading element may be created by another
+         * script after dashboard startup.
+         *
+         * Retry shortly.
+         */
+        setTimeout(
+            startReadingPersistence,
+            500
+        );
+
+        return;
+
+    }
+
+
+    readingObserverStarted =
+        true;
+
+
+    /*
+     * Restore previous reading.
+     */
+    restoreCurrentReading();
+
+
+    /*
+     * Save whenever AI reading content changes.
+     */
+    const observer =
+        new MutationObserver(
+            () => {
+
+                saveCurrentReading();
+
+            }
+        );
+
+
+    observer.observe(
+        reading,
+        {
+
+            childList:
+                true,
+
+            subtree:
+                true,
+
+            characterData:
+                true
+
+        }
+    );
+
+
+    /*
+     * Save when leaving the page.
+     */
+    window.addEventListener(
+        "beforeunload",
+        () => {
+
+            saveCurrentReading();
+
+            saveStudySession();
+
+            saveCompletionState();
+
+        }
+    );
+
+
+    /*
+     * Also save when the page becomes hidden.
+     */
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+
+            if (
+                document.visibilityState ===
+                "hidden"
+            ) {
+
+                saveCurrentReading();
+
+                saveStudySession();
+
+                saveCompletionState();
+
+            }
+
+        }
+    );
+
 }
 
 
@@ -1082,6 +1756,7 @@ async function checkAuthentication() {
         return false;
 
     }
+
 }
 
 
@@ -1090,6 +1765,18 @@ async function checkAuthentication() {
 ========================================================= */
 
 async function logoutStudyMind() {
+
+    /*
+     * Save everything before leaving.
+     */
+    saveCurrentReading();
+
+    saveStudySession();
+
+    saveCompletionState();
+
+    saveTimer();
+
 
     try {
 
@@ -1113,6 +1800,7 @@ async function logoutStudyMind() {
 
     window.location.href =
         "login.html";
+
 }
 
 
@@ -1155,10 +1843,10 @@ function calculateDaysLeft() {
             (
                 exam -
                 today
-            ) /
-            86400000
+            ) / 86400000
         )
     );
+
 }
 
 
@@ -1235,7 +1923,9 @@ function renderStats() {
         );
 
 
-    if ($("progressPercent")) {
+    if (
+        $("progressPercent")
+    ) {
 
         $("progressPercent")
             .textContent =
@@ -1244,7 +1934,9 @@ function renderStats() {
     }
 
 
-    if ($("scoreProgressBar")) {
+    if (
+        $("scoreProgressBar")
+    ) {
 
         $("scoreProgressBar")
             .style.width =
@@ -1253,7 +1945,9 @@ function renderStats() {
     }
 
 
-    if ($("progressBar")) {
+    if (
+        $("progressBar")
+    ) {
 
         $("progressBar")
             .style.width =
@@ -1262,7 +1956,9 @@ function renderStats() {
     }
 
 
-    if ($("progressCount")) {
+    if (
+        $("progressCount")
+    ) {
 
         $("progressCount")
             .textContent =
@@ -1271,7 +1967,9 @@ function renderStats() {
     }
 
 
-    if ($("scoreMessage")) {
+    if (
+        $("scoreMessage")
+    ) {
 
         $("scoreMessage")
             .textContent =
@@ -1282,6 +1980,7 @@ function renderStats() {
                 : "Keep going — consistency builds mastery.";
 
     }
+
 }
 
 
@@ -1296,7 +1995,9 @@ function renderSubjects() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -1313,6 +2014,7 @@ function renderSubjects() {
 
 
                     return `
+
                         <div
                             class="
                                 subject-item
@@ -1336,11 +2038,13 @@ function renderSubjects() {
                             </span>
 
                         </div>
+
                     `;
 
                 }
             )
             .join("");
+
 }
 
 
@@ -1355,7 +2059,9 @@ function renderTopics() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -1417,6 +2123,7 @@ function renderTopics() {
                 `
             )
             .join("");
+
 }
 
 
@@ -1533,12 +2240,17 @@ function renderCurrentTopic() {
         maybeShowCompletionCelebration();
 
         return;
+
     }
 
 
     /* =====================================================
        CURRENT TOPIC
     ===================================================== */
+
+    currentTopicIndex =
+        allTopics.indexOf(topic);
+
 
     if (position) {
 
@@ -1620,7 +2332,26 @@ function renderCurrentTopic() {
     }
 
 
+    /*
+     * Save the fact that this topic is now the
+     * active persistent study session.
+     */
+    createStudySession(
+        topic
+    );
+
+
+    /*
+     * Try to restore its saved reading.
+     */
+    setTimeout(
+        restoreCurrentReading,
+        100
+    );
+
+
     hideKnowledgeCheck();
+
 }
 
 
@@ -1644,8 +2375,15 @@ function completeCurrentTopic() {
     }
 
 
+    /*
+     * Save reading one last time before marking
+     * the topic complete.
+     */
+    saveCurrentReading();
+
+
     /* =====================================================
-       MARK TOPIC AS COMPLETED
+       MARK COMPLETE
     ===================================================== */
 
     const key =
@@ -1666,17 +2404,27 @@ function completeCurrentTopic() {
 
 
     /* =====================================================
-       SAVE READING COMPLETION
-       
-       THIS IS THE CONNECTION TO THE STREAK.
-       
-       Completing today's reading registers TODAY as
-       a study day.
-
-       Multiple topics completed on the same day do NOT
-       increase the streak multiple times.
+       READING COMPLETION
     ===================================================== */
 
+    if (
+        currentStudySession
+    ) {
+
+        currentStudySession.readingCompleted =
+            true;
+
+        currentStudySession.completedAt =
+            new Date().toISOString();
+
+        saveStudySession();
+
+    }
+
+
+    /*
+     * Register today's study completion.
+     */
     if (
         typeof window.registerStudyCompletion ===
         "function"
@@ -1685,10 +2433,6 @@ function completeCurrentTopic() {
         window.registerStudyCompletion();
 
     } else {
-
-        /*
-         * Fallback in case streak.js has not loaded.
-         */
 
         const today =
             new Date()
@@ -1731,6 +2475,87 @@ function completeCurrentTopic() {
 
 
     /* =====================================================
+       PREPARE NEXT STUDY SESSION
+    ===================================================== */
+
+    if (next) {
+
+        /*
+         * A new topic gets a fresh reading state.
+         */
+        currentStudySession = {
+
+            topicKey:
+                topicKey(next),
+
+            topicId:
+                next.id || "",
+
+            topicName:
+                next.name || "",
+
+            subject:
+                next.subject || "",
+
+            topicIndex:
+                currentTopicIndex,
+
+            currentTopicIndex,
+
+            readingHTML:
+                "",
+
+            readingText:
+                "",
+
+            readingStarted:
+                false,
+
+            readingCompleted:
+                false,
+
+            createdAt:
+                new Date().toISOString(),
+
+            updatedAt:
+                new Date().toISOString()
+
+        };
+
+
+        saveStudySession();
+
+    } else {
+
+        /*
+         * Entire plan is complete.
+         */
+        currentStudySession = {
+
+            currentTopicIndex:
+                allTopics.length,
+
+            readingCompleted:
+                true,
+
+            planCompleted:
+                true,
+
+            completedAt:
+                new Date().toISOString(),
+
+            updatedAt:
+                new Date().toISOString()
+
+        };
+
+
+        saveStudySession();
+
+    }
+
+
+    /* =====================================================
        UPDATE DASHBOARD
     ===================================================== */
 
@@ -1752,12 +2577,13 @@ function completeCurrentTopic() {
 
 
     /* =====================================================
-       OPEN KNOWLEDGE CHECK
+       KNOWLEDGE CHECK
     ===================================================== */
 
     openKnowledgeCheckPage(
         topic
     );
+
 }
 
 
@@ -1770,7 +2596,9 @@ function openKnowledgeCheckPage(
 ) {
 
     if (!topic) {
+
         return;
+
     }
 
 
@@ -1828,6 +2656,7 @@ function openKnowledgeCheckPage(
 
     window.location.href =
         "knowledge-check.html";
+
 }
 
 
@@ -1847,6 +2676,7 @@ function hideKnowledgeCheck() {
             "none";
 
     }
+
 }
 
 
@@ -1890,7 +2720,9 @@ function maybeShowCompletionCelebration() {
 
 
     if (old) {
+
         old.remove();
+
     }
 
 
@@ -2008,22 +2840,31 @@ function maybeShowCompletionCelebration() {
         </div>
 
         <style>
+
             @keyframes smCelebrate {
 
                 from {
+
                     opacity:0;
+
                     transform:
                         translateY(18px)
                         scale(.96);
+
                 }
 
                 to {
+
                     opacity:1;
+
                     transform:none;
+
                 }
 
             }
+
         </style>
+
     `;
 
 
@@ -2036,8 +2877,10 @@ function maybeShowCompletionCelebration() {
         "closeStudyMindCelebration"
     )?.addEventListener(
         "click",
-        () => overlay.remove()
+        () =>
+            overlay.remove()
     );
+
 }
 
 
@@ -2142,11 +2985,12 @@ function renderDailyChallenge() {
         $("dailyChallengeButton")
     ) {
 
-        $("dailyChallengeButton")
+        $("dailyChallengeButton)
             .disabled =
             done;
 
     }
+
 }
 
 
@@ -2185,6 +3029,7 @@ function formatTimer(
         2,
         "0"
     )}`;
+
 }
 
 
@@ -2232,11 +3077,11 @@ function renderTimer() {
         $("timerDuration")
             .value =
             String(
-                selectedTimerSeconds /
-                60
+                selectedTimerSeconds / 60
             );
 
     }
+
 }
 
 
@@ -2256,6 +3101,7 @@ function saveTimer() {
             selectedTimerSeconds
         )
     );
+
 }
 
 
@@ -2308,6 +3154,7 @@ function startTimer() {
 
 
     renderTimer();
+
 }
 
 
@@ -2335,12 +3182,14 @@ function pauseTimer() {
     saveTimer();
 
     renderTimer();
+
 }
 
 
 function stopTimer() {
 
     pauseTimer();
+
 }
 
 
@@ -2356,6 +3205,7 @@ function resetTimer() {
     saveTimer();
 
     renderTimer();
+
 }
 
 
@@ -2387,6 +3237,7 @@ function changeTimerDuration(
 
 
     resetTimer();
+
 }
 
 
@@ -2407,6 +3258,7 @@ function dateKey(date) {
         2,
         "0"
     )}`;
+
 }
 
 
@@ -2551,11 +3403,6 @@ function renderCalendar() {
         }
 
 
-        /*
-         * After exam date there is NO
-         * study/rest/test/exam label.
-         */
-
         if (
             examKey &&
             key > examKey
@@ -2576,6 +3423,7 @@ function renderCalendar() {
 
 
             continue;
+
         }
 
 
@@ -2634,6 +3482,7 @@ function renderCalendar() {
         );
 
     }
+
 }
 
 
@@ -2645,6 +3494,7 @@ function previousMonth() {
 
 
     renderCalendar();
+
 }
 
 
@@ -2656,6 +3506,7 @@ function nextMonth() {
 
 
     renderCalendar();
+
 }
 
 
@@ -2670,7 +3521,9 @@ function renderSchedule() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -2681,13 +3534,16 @@ function renderSchedule() {
     if (!topic) {
 
         container.innerHTML = `
+
             <div class="empty-schedule">
                 🎉 Your study plan is complete.
             </div>
+
         `;
 
 
         return;
+
     }
 
 
@@ -2710,7 +3566,8 @@ function renderSchedule() {
     container.innerHTML =
         Array.from(
             {
-                length: hours
+                length:
+                    hours
             },
             (
                 _,
@@ -2720,6 +3577,7 @@ function renderSchedule() {
                 <div class="schedule-card">
 
                     <h4>
+
                         ${escapeHTML(
                             formatClock(
                                 startHour + i
@@ -2733,20 +3591,25 @@ function renderSchedule() {
                                 startHour + i + 1
                             )
                         )}
+
                     </h4>
 
                     <p>
+
                         <strong>
                             ${escapeHTML(
                                 topic.subject
                             )}
                         </strong>
+
                     </p>
 
                     <span>
+
                         ${escapeHTML(
                             topic.name
                         )}
+
                     </span>
 
                 </div>
@@ -2754,6 +3617,7 @@ function renderSchedule() {
             `
         )
         .join("");
+
 }
 
 
@@ -2775,11 +3639,14 @@ function formatClock(
 
 
     if (!h) {
+
         h = 12;
+
     }
 
 
     return `${h}:00 ${period}`;
+
 }
 
 
@@ -2817,6 +3684,7 @@ function renderNextSession() {
                 : "All topics completed";
 
     }
+
 }
 
 
@@ -2857,6 +3725,7 @@ function aiCount() {
             AI_COUNT_KEY
         ) || 0
     );
+
 }
 
 
@@ -2873,6 +3742,7 @@ function recordAIQuestion() {
 
 
     return count;
+
 }
 
 
@@ -2887,7 +3757,9 @@ function showPremiumMessage() {
 
 
     if (existing) {
+
         existing.remove();
+
     }
 
 
@@ -2908,8 +3780,7 @@ function showPremiumMessage() {
                 position:fixed;
                 inset:0;
                 z-index:99998;
-                background:
-                    rgba(0,0,0,.7);
+                background:rgba(0,0,0,.7);
                 display:flex;
                 align-items:center;
                 justify-content:center;
@@ -2973,6 +3844,7 @@ function showPremiumMessage() {
             () =>
                 modal.remove()
         );
+
 }
 
 
@@ -3047,8 +3919,10 @@ async function askAI() {
                         "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
@@ -3105,6 +3979,7 @@ async function askAI() {
             `⚠️ ${error.message}`;
 
     }
+
 }
 
 
@@ -3158,6 +4033,7 @@ function initializeTheme() {
 
 
     updateThemeButton();
+
 }
 
 
@@ -3182,6 +4058,7 @@ function toggleTheme() {
 
 
     initializeTheme();
+
 }
 
 
@@ -3192,7 +4069,9 @@ function updateThemeButton() {
 
 
     if (!button) {
+
         return;
+
     }
 
 
@@ -3222,6 +4101,7 @@ function updateThemeButton() {
             ? "Switch to Light Mode"
             : "Switch to Dark Mode"
     );
+
 }
 
 
@@ -3370,6 +4250,7 @@ function bindEvents() {
             "click",
             logoutStudyMind
         );
+
 }
 
 
@@ -3387,7 +4268,7 @@ async function startDashboard() {
 
 
     /* =====================================================
-       LOAD STUDY PLAN
+       LOAD PLAN
     ===================================================== */
 
     if (
@@ -3403,10 +4284,17 @@ async function startDashboard() {
 
 
     /* =====================================================
-       LOAD COMPLETION STATE
+       LOAD COMPLETION
     ===================================================== */
 
     loadCompletionState();
+
+
+    /* =====================================================
+       LOAD PERSISTENT SESSION
+    ===================================================== */
+
+    loadStudySession();
 
 
     /* =====================================================
@@ -3430,7 +4318,7 @@ async function startDashboard() {
 
 
     /* =====================================================
-       CHECK TOPICS
+       TOPICS
     ===================================================== */
 
     if (
@@ -3510,6 +4398,44 @@ async function startDashboard() {
 
     renderCalendar();
 
+
+    /* =====================================================
+       START READING PERSISTENCE
+    ===================================================== */
+
+    startReadingPersistence();
+
+
+    /*
+     * Try again after other dashboard scripts have
+     * finished generating their reading container.
+     */
+    setTimeout(
+        () => {
+
+            restoreCurrentReading();
+
+            startReadingPersistence();
+
+        },
+        750
+    );
+
+
+    /*
+     * Save current state periodically.
+     */
+    setInterval(
+        () => {
+
+            saveCurrentReading();
+
+            saveStudySession();
+
+        },
+        5000
+    );
+
 }
 
 
@@ -3586,6 +4512,22 @@ window.toggleTheme =
     toggleTheme;
 
 
+/*
+ * Expose persistence functions so other
+ * StudyMind scripts can save generated readings.
+ */
+window.saveCurrentReading =
+    saveCurrentReading;
+
+
+window.restoreCurrentReading =
+    restoreCurrentReading;
+
+
+window.saveStudySession =
+    saveStudySession;
+
+
 /* =========================================================
    INITIALIZE
 ========================================================= */
@@ -3605,4 +4547,3 @@ if (
     startDashboard();
 
 }
-
