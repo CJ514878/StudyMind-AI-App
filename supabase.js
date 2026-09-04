@@ -12,31 +12,34 @@ const SUPABASE_PUBLISHABLE_KEY =
 CREATE SUPABASE CLIENT
 ========================================= */
 
-if (
-typeof window.supabase === "undefined"
-) {
+if (typeof window.supabase === "undefined") {
+
+
 console.error(
-"StudyMind AI: Supabase library failed to load."
+    "StudyMind AI: Supabase library failed to load."
 );
+
+
 } else {
 
 
-const supabaseClient =
+/*
+   Create the client directly on window.
+
+   This is important because dashboard.js,
+   knowledge-check.js and game-mode.js
+   all need access to the same client.
+*/
+
+window.supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
     );
 
-
-/*
-   Make the client available globally.
-
-   This allows game-mode.js and the other
-   StudyMind pages to use the same client.
-*/
-
-window.supabaseClient =
-    supabaseClient;
+console.log(
+    "StudyMind AI: Supabase client initialized."
+);
 
 
 }
