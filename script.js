@@ -18,11 +18,6 @@
 
    This structure is saved into localStorage and is used
    by dashboard.js to move through subjects in order.
-
-   THEME:
-   - Light Mode
-   - Dark Mode
-   - Saved between pages and refreshes
 ========================================================= */
 
 "use strict";
@@ -319,6 +314,7 @@ Topic 3"
                 `
             )
             .join("");
+
 
 
     syncLegacyTopicsField();
@@ -887,11 +883,6 @@ function generateStudyPlan(
     }
 
 
-    /*
-       Create the difficulty controls before
-       collecting their values.
-    */
-
     renderDifficultyFields(
         subjectData
     );
@@ -907,14 +898,6 @@ function generateStudyPlan(
     /*
        IMPORTANT:
        This preserves subject order.
-
-       Subject 1 topics
-       ↓
-       Subject 2 topics
-       ↓
-       Subject 3 topics
-       ↓
-       etc.
     */
 
     const allTopics =
@@ -1055,8 +1038,9 @@ function generateStudyPlan(
 
         examDate,
 
-
         /*
+           THIS IS THE IMPORTANT PART.
+
            Subjects remain objects with their
            own topic arrays.
         */
@@ -1065,7 +1049,6 @@ function generateStudyPlan(
             subjectData,
 
         subjectNames,
-
 
         /*
            Flat topics are also kept for
@@ -1126,8 +1109,7 @@ function generateStudyPlan(
 
 
     /*
-       BRAND NEW PLAN
-       Reset old topic progress.
+       BRAND NEW PLAN = RESET OLD TOPIC PROGRESS.
     */
 
     localStorage.removeItem(
@@ -1155,20 +1137,11 @@ function generateStudyPlan(
     );
 
 
-    /*
-       Save to the main storage key.
-    */
-
     writeJSON(
         PLAN_KEY,
         studyData
     );
 
-
-    /*
-       Save the same structure to the old
-       compatibility key.
-    */
 
     writeJSON(
         COMPATIBILITY_PLAN_KEY,
@@ -1257,118 +1230,42 @@ function generateStudyPlan(
 
 
 /* =========================================================
-   THEME SYSTEM
-   =========================================================
-
-   IMPORTANT:
-
-   Everything uses the SAME key:
-
-       studyMindTheme
-
-   Values:
-
-       "light"
-       "dark"
-
-   We apply the class to BOTH html and body.
-
-   This makes the theme work even when CSS is
-   targeting either html.dark-mode or body.dark-mode.
-========================================================= */
-
-
-/* =========================================================
-   APPLY THEME
+   THEME
 ========================================================= */
 
 function applyTheme() {
 
-    /*
-       Default to light mode if the user has
-       never selected a theme.
-    */
-
-    const savedTheme =
+    const saved =
         localStorage.getItem(
             THEME_KEY
         ) ||
         "light";
 
 
-    const isLight =
-        savedTheme === "light";
-
-
-    const isDark =
-        savedTheme === "dark";
-
-
-    /*
-       HTML element.
-    */
-
-    document.documentElement.classList.toggle(
-        "light-mode",
-        isLight
-    );
-
-    document.documentElement.classList.toggle(
-        "dark-mode",
-        isDark
-    );
-
-
-    /*
-       BODY element.
-    */
-
-    document.body.classList.toggle(
-        "light-mode",
-        isLight
-    );
-
     document.body.classList.toggle(
         "dark-mode",
-        isDark
+        saved === "dark"
     );
 
-
-    /*
-       Tell the browser which colour scheme
-       the page is using.
-    */
-
-    document.documentElement.style.colorScheme =
-        isDark
-            ? "dark"
-            : "light";
-
-
-    /*
-       Update button.
-    */
-
-    updateThemeButton();
-
-}
-
-
-/* =========================================================
-   UPDATE THEME BUTTON
-========================================================= */
-
-function updateThemeButton() {
 
     const button =
         $("themeButton");
 
-    if (!button) {
 
-        return;
+    if (button) {
+
+        button.textContent =
+
+            saved === "dark"
+                ? "☀️ Light Mode"
+                : "🌙 Dark Mode";
 
     }
 
+}
+
+
+function toggleTheme() {
 
     const isDark =
         document.body.classList.contains(
@@ -1376,73 +1273,16 @@ function updateThemeButton() {
         );
 
 
-    if (isDark) {
-
-        button.textContent =
-            "☀️ Light Mode";
-
-        button.setAttribute(
-            "aria-label",
-            "Switch to Light Mode"
-        );
-
-        button.setAttribute(
-            "title",
-            "Switch to Light Mode"
-        );
-
-    } else {
-
-        button.textContent =
-            "🌙 Dark Mode";
-
-        button.setAttribute(
-            "aria-label",
-            "Switch to Dark Mode"
-        );
-
-        button.setAttribute(
-            "title",
-            "Switch to Dark Mode"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   TOGGLE THEME
-========================================================= */
-
-function toggleTheme() {
-
-    const currentTheme =
-        localStorage.getItem(
-            THEME_KEY
-        ) ||
-        "light";
-
-
-    const newTheme =
-        currentTheme === "dark"
-            ? "light"
-            : "dark";
-
-
-    /*
-       Save the new theme.
-    */
-
     localStorage.setItem(
+
         THEME_KEY,
-        newTheme
+
+        isDark
+            ? "light"
+            : "dark"
+
     );
 
-
-    /*
-       Immediately apply it.
-    */
 
     applyTheme();
 
@@ -1455,49 +1295,15 @@ function toggleTheme() {
 
 function initializeHome() {
 
-    /*
-       Apply saved theme immediately.
-    */
-
     applyTheme();
 
 
-    /*
-       Theme button.
-    */
+    $("themeButton")
+        ?.addEventListener(
+            "click",
+            toggleTheme
+        );
 
-    const themeButton =
-        $("themeButton");
-
-
-    if (themeButton) {
-
-        /*
-           Prevent duplicate listeners.
-        */
-
-        if (
-            themeButton.dataset.themeConnected !==
-            "true"
-        ) {
-
-            themeButton.dataset.themeConnected =
-                "true";
-
-
-            themeButton.addEventListener(
-                "click",
-                toggleTheme
-            );
-
-        }
-
-    }
-
-
-    /*
-       Start button.
-    */
 
     $("startButton")
         ?.addEventListener(
@@ -1514,10 +1320,6 @@ function initializeHome() {
         );
 
 
-    /*
-       Subjects.
-    */
-
     $("subjects")
         ?.addEventListener(
             "input",
@@ -1532,20 +1334,12 @@ function initializeHome() {
         );
 
 
-    /*
-       Topic fields.
-    */
-
     $("subjectTopicFields")
         ?.addEventListener(
             "input",
             syncLegacyTopicsField
         );
 
-
-    /*
-       Study plan form.
-    */
 
     $("studyForm")
         ?.addEventListener(
@@ -1554,18 +1348,10 @@ function initializeHome() {
         );
 
 
-    /*
-       Render topic boxes.
-    */
-
     renderSubjectTopicFields();
 
 }
 
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
 
 if (
     document.readyState ===
