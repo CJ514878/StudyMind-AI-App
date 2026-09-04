@@ -2,22 +2,17 @@
    STUDYMIND AI — HOME / STUDY PLAN GENERATOR
    COMPLETE REPLACEMENT
 
-   SUBJECT → TOPIC STRUCTURE
-
-   Example:
-
-   Mathematics
-      Algebra
-      Quadratic Equations
-      Trigonometry
-
-   Physics
-      Motion
-      Forces
-      Energy
-
-   This structure is saved into localStorage and is used
-   by dashboard.js to move through subjects in order.
+   FIXED:
+   - Create My Study Plan button
+   - Subject → Topic fields
+   - Generate My Plan
+   - Topic difficulty
+   - Study plan localStorage
+   - Dashboard redirect
+   - Light / Dark mode
+   - No duplicate theme systems
+   - No undefined functions
+   - Preserves subject order
 ========================================================= */
 
 "use strict";
@@ -59,13 +54,13 @@ const CELEBRATION_KEY =
    SHORTCUT
 ========================================================= */
 
-const $ =
-    id =>
-        document.getElementById(id);
+function $(id) {
+    return document.getElementById(id);
+}
 
 
 /* =========================================================
-   HELPERS
+   BASIC HELPERS
 ========================================================= */
 
 function cleanText(value) {
@@ -100,21 +95,25 @@ function escapeHTML(value) {
 }
 
 
-function readJSON(
-    key,
-    fallback = null
-) {
+function readJSON(key, fallback = null) {
 
     try {
 
         const raw =
             localStorage.getItem(key);
 
-        return raw
-            ? JSON.parse(raw)
-            : fallback;
+        if (!raw) {
+            return fallback;
+        }
 
-    } catch {
+        return JSON.parse(raw);
+
+    } catch (error) {
+
+        console.warn(
+            `Could not read localStorage key "${key}".`,
+            error
+        );
 
         return fallback;
 
@@ -123,15 +122,27 @@ function readJSON(
 }
 
 
-function writeJSON(
-    key,
-    value
-) {
+function writeJSON(key, value) {
 
-    localStorage.setItem(
-        key,
-        JSON.stringify(value)
-    );
+    try {
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            `Could not save localStorage key "${key}".`,
+            error
+        );
+
+        return false;
+
+    }
 
 }
 
@@ -149,12 +160,8 @@ function formatTime(hour) {
     let displayHour =
         hour % 12;
 
-    if (
-        displayHour === 0
-    ) {
-
+    if (displayHour === 0) {
         displayHour = 12;
-
     }
 
     return `${displayHour}:00 ${period}`;
@@ -163,7 +170,7 @@ function formatTime(hour) {
 
 
 /* =========================================================
-   GET SUBJECTS
+   GET SUBJECT NAMES
 ========================================================= */
 
 function getSubjectNames() {
@@ -172,22 +179,15 @@ function getSubjectNames() {
         $("subjects");
 
     if (!input) {
-
         return [];
-
     }
 
     return [
         ...new Set(
-
             input.value
-
                 .split(/[,;\n]+/)
-
                 .map(cleanText)
-
                 .filter(Boolean)
-
         )
     ];
 
@@ -195,7 +195,53 @@ function getSubjectNames() {
 
 
 /* =========================================================
-   DYNAMIC TOPIC BOXES
+   SAVE CURRENT TOPIC TEXT
+========================================================= */
+
+function getExistingTopicValues() {
+
+    const container =
+        $("subjectTopicFields");
+
+    const values = {};
+
+    if (!container) {
+        return values;
+    }
+
+    container
+        .querySelectorAll(".subject-topic-card")
+        .forEach(card => {
+
+            const subject =
+                cleanText(
+                    card.dataset.subject
+                );
+
+            const textarea =
+                card.querySelector(
+                    ".subject-topic-input"
+                );
+
+            if (
+                subject &&
+                textarea
+            ) {
+
+                values[subject] =
+                    textarea.value;
+
+            }
+
+        });
+
+    return values;
+
+}
+
+
+/* =========================================================
+   DYNAMIC SUBJECT → TOPIC FIELDS
 ========================================================= */
 
 function renderSubjectTopicFields() {
@@ -204,18 +250,17 @@ function renderSubjectTopicFields() {
         $("subjectTopicFields");
 
     if (!container) {
-
         return;
-
     }
 
     const subjects =
         getSubjectNames();
 
+    const oldValues =
+        getExistingTopicValues();
 
-    if (
-        subjects.length === 0
-    ) {
+
+    if (subjects.length === 0) {
 
         container.innerHTML = `
 
@@ -228,50 +273,22 @@ function renderSubjectTopicFields() {
 
         `;
 
+        syncLegacyTopicsField();
+
         return;
 
     }
 
 
-    /*
-       Preserve existing topic text when the user
-       edits the subject list.
-    */
-
-    const oldValues = {};
-
-
-    container
-        .querySelectorAll(
-            ".subject-topic-card"
-        )
-        .forEach(card => {
-
-            const subject =
-                card.dataset.subject ||
-                "";
-
-            const textarea =
-                card.querySelector("textarea");
-
-            if (
-                subject &&
-                textarea
-            ) {
-
-                oldValues[subject] =
-                    textarea.value;
-
-            }
-
-        });
-
-
     container.innerHTML =
 
         subjects
-            .map(
-                subject => `
+            .map(subject => {
+
+                const existing =
+                    oldValues[subject] || "";
+
+                return `
 
                     <div
                         class="subject-topic-card"
@@ -300,9 +317,7 @@ function renderSubjectTopicFields() {
 Topic 2
 Topic 3"
                             aria-label="Topics for ${escapeHTML(subject)}"
-                        >${escapeHTML(
-                            oldValues[subject] || ""
-                        )}</textarea>
+                        >${escapeHTML(existing)}</textarea>
 
                         <small>
                             One topic per line,
@@ -311,10 +326,10 @@ Topic 3"
 
                     </div>
 
-                `
-            )
-            .join("");
+                `;
 
+            })
+            .join("");
 
 
     syncLegacyTopicsField();
@@ -332,98 +347,68 @@ function collectSubjectTopicData() {
         $("subjectTopicFields");
 
     if (!container) {
-
         return [];
-
     }
 
-
     return [
-
-        ...container
-            .querySelectorAll(
-                ".subject-topic-card"
-            )
-
+        ...container.querySelectorAll(
+            ".subject-topic-card"
+        )
     ]
 
-        .map(
-            (
-                card,
-                subjectIndex
-            ) => {
+        .map((card, subjectIndex) => {
 
-                const subject =
-                    cleanText(
-                        card.dataset.subject
-                    );
+            const subject =
+                cleanText(
+                    card.dataset.subject
+                );
 
-                const textarea =
-                    card.querySelector(
-                        "textarea"
-                    );
+            const textarea =
+                card.querySelector(
+                    ".subject-topic-input"
+                );
 
+            const rawTopics =
+                textarea
+                    ? textarea.value
+                        .split(/[\n,;]+/)
+                        .map(cleanText)
+                        .filter(Boolean)
+                    : [];
 
-                const rawTopics =
-                    textarea
+            const uniqueTopics =
+                [
+                    ...new Set(rawTopics)
+                ];
 
-                        ? textarea.value
+            return {
 
-                            .split(
-                                /[\n,;]+/
-                            )
+                id:
+                    `subject-${subjectIndex + 1}-${slugify(subject)}`,
 
-                            .map(
-                                cleanText
-                            )
+                name:
+                    subject,
 
-                            .filter(
-                                Boolean
-                            )
+                topics:
+                    uniqueTopics.map(
+                        (name, topicIndex) => ({
 
-                        : [];
+                            id:
+                                `topic-${subjectIndex + 1}-${topicIndex + 1}-${slugify(name)}`,
 
+                            name,
 
-                const uniqueTopics =
-                    [
-                        ...new Set(
-                            rawTopics
-                        )
-                    ];
+                            subject,
 
+                            description:
+                                `Study ${name} for ${subject} and complete the knowledge check.`
 
-                return {
+                        })
+                    )
 
-                    id:
-                        `subject-${subjectIndex + 1}-${slugify(subject)}`,
+            };
 
-                    name:
-                        subject,
-
-                    topics:
-                        uniqueTopics.map(
-                            (
-                                name,
-                                topicIndex
-                            ) => ({
-
-                                id:
-                                    `topic-${subjectIndex + 1}-${topicIndex + 1}-${slugify(name)}`,
-
-                                name,
-
-                                subject,
-
-                                description:
-                                    `Study ${name} for ${subject} and complete the knowledge check.`
-
-                            })
-                        )
-
-                };
-
-            }
-        )
+        })
 
         .filter(
             subject =>
@@ -434,7 +419,7 @@ function collectSubjectTopicData() {
 
 
 /* =========================================================
-   LEGACY TOPICS FIELD
+   SYNC LEGACY TOPICS FIELD
 ========================================================= */
 
 function syncLegacyTopicsField() {
@@ -443,44 +428,34 @@ function syncLegacyTopicsField() {
         $("topics");
 
     if (!hidden) {
-
         return;
-
     }
-
 
     const subjectData =
         collectSubjectTopicData();
 
-
     hidden.value =
 
         subjectData
+            .map(subject => {
 
-            .map(
-                subject =>
+                return `${subject.name}: ${subject.topics
+                    .map(topic => topic.name)
+                    .join(", ")}`;
 
-                    `${subject.name}: ${subject.topics
-                        .map(topic => topic.name)
-                        .join(", ")}`
-            )
-
+            })
             .join("\n");
 
 }
 
 
 /* =========================================================
-   VALIDATION
+   VALIDATE SUBJECTS + TOPICS
 ========================================================= */
 
-function validateSubjectTopics(
-    subjectData
-) {
+function validateSubjectTopics(subjectData) {
 
-    if (
-        subjectData.length === 0
-    ) {
+    if (subjectData.length === 0) {
 
         alert(
             "Please enter at least one subject."
@@ -498,12 +473,9 @@ function validateSubjectTopics(
         );
 
 
-    if (
-        missingTopics.length > 0
-    ) {
+    if (missingTopics.length > 0) {
 
         alert(
-
             `Please enter at least one topic for: ${
                 missingTopics
                     .map(
@@ -512,7 +484,6 @@ function validateSubjectTopics(
                     )
                     .join(", ")
             }.`
-
         );
 
         return false;
@@ -526,20 +497,16 @@ function validateSubjectTopics(
 
 
 /* =========================================================
-   DIFFICULTY
+   RENDER TOPIC DIFFICULTY
 ========================================================= */
 
-function renderDifficultyFields(
-    subjectData
-) {
+function renderDifficultyFields(subjectData) {
 
     const section =
         $("difficultySection");
 
     if (!section) {
-
         return;
-
     }
 
 
@@ -563,90 +530,70 @@ function renderDifficultyFields(
                 need the most attention.
             </p>
 
-            ${
+            ${subjectData
+                .map(subject => `
 
-                subjectData
+                    <div
+                        style="
+                            margin-top:18px;
+                        "
+                    >
 
-                    .map(
+                        <h4>
+                            ${escapeHTML(
+                                subject.name
+                            )}
+                        </h4>
 
-                        subject => `
+                        ${subject.topics
+                            .map(topic => `
 
-                            <div
-                                style="
-                                    margin-top:18px;
-                                "
-                            >
+                                <div
+                                    class="topic-difficulty-row"
+                                >
 
-                                <h4>
-                                    ${escapeHTML(
-                                        subject.name
-                                    )}
-                                </h4>
+                                    <span>
+                                        ${escapeHTML(
+                                            topic.name
+                                        )}
+                                    </span>
 
-                                ${
+                                    <select
+                                        class="topic-level"
+                                        data-subject="${escapeHTML(
+                                            subject.name
+                                        )}"
+                                        data-topic="${escapeHTML(
+                                            topic.name
+                                        )}"
+                                    >
 
-                                    subject.topics
+                                        <option value="strong">
+                                            Strong
+                                        </option>
 
-                                        .map(
+                                        <option
+                                            value="okay"
+                                            selected
+                                        >
+                                            Okay
+                                        </option>
 
-                                            topic => `
+                                        <option value="weak">
+                                            Weak
+                                        </option>
 
-                                                <div
-                                                    class="topic-difficulty-row"
-                                                >
+                                    </select>
 
-                                                    <span>
-                                                        ${escapeHTML(
-                                                            topic.name
-                                                        )}
-                                                    </span>
+                                </div>
 
-                                                    <select
-                                                        class="topic-level"
-                                                        data-subject="${escapeHTML(
-                                                            subject.name
-                                                        )}"
-                                                        data-topic="${escapeHTML(
-                                                            topic.name
-                                                        )}"
-                                                    >
+                            `)
+                            .join("")}
 
-                                                        <option value="strong">
-                                                            Strong
-                                                        </option>
+                    </div>
 
-                                                        <option
-                                                            value="okay"
-                                                            selected
-                                                        >
-                                                            Okay
-                                                        </option>
-
-                                                        <option value="weak">
-                                                            Weak
-                                                        </option>
-
-                                                    </select>
-
-                                                </div>
-
-                                            `
-
-                                        )
-
-                                        .join("")
-
-                                }
-
-                            </div>
-
-                        `
-
-                    )
-
-                    .join("")
-
-            }
+                `)
+                .join("")}
 
         </div>
 
@@ -662,324 +609,77 @@ function renderDifficultyFields(
 function collectDifficultyData() {
 
     const topicDifficulty = {};
-
     const topicPriority = {};
 
 
     document
-        .querySelectorAll(
-            ".topic-level"
-        )
-        .forEach(
-            select => {
+        .querySelectorAll(".topic-level")
+        .forEach(select => {
 
-                const subject =
-                    cleanText(
-                        select.dataset.subject
-                    );
+            const subject =
+                cleanText(
+                    select.dataset.subject
+                );
 
-                const topic =
-                    cleanText(
-                        select.dataset.topic
-                    );
+            const topic =
+                cleanText(
+                    select.dataset.topic
+                );
 
-                const difficulty =
-                    select.value ||
-                    "okay";
+            const difficulty =
+                select.value || "okay";
 
 
-                if (
-                    !topicDifficulty[subject]
-                ) {
+            if (!topicDifficulty[subject]) {
 
-                    topicDifficulty[subject] =
-                        {};
-
-                }
-
-
-                if (
-                    !topicPriority[subject]
-                ) {
-
-                    topicPriority[subject] =
-                        {};
-
-                }
-
-
-                topicDifficulty[subject][topic] =
-                    difficulty;
-
-
-                topicPriority[subject][topic] =
-
-                    difficulty === "weak"
-                        ? 3
-                        : difficulty === "okay"
-                            ? 2
-                            : 1;
+                topicDifficulty[subject] =
+                    {};
 
             }
-        );
+
+
+            if (!topicPriority[subject]) {
+
+                topicPriority[subject] =
+                    {};
+
+            }
+
+
+            topicDifficulty[subject][topic] =
+                difficulty;
+
+
+            topicPriority[subject][topic] =
+
+                difficulty === "weak"
+                    ? 3
+                    : difficulty === "okay"
+                        ? 2
+                        : 1;
+
+        });
 
 
     return {
-
         topicDifficulty,
-
         topicPriority
-
     };
 
 }
 
 
 /* =========================================================
-   GENERATE PLAN
+   GENERATE TIMETABLE
 ========================================================= */
 
-function generateStudyPlan(
-    event
+function generateTimetable(
+    subjectNames,
+    hoursPerDay,
+    startHour
 ) {
 
-    event.preventDefault();
-
-
-    syncLegacyTopicsField();
-
-
-    const curriculum =
-        cleanText(
-            $("curriculum")?.value
-        ) ||
-        "Nigerian Senior Secondary Curriculum";
-
-
-    const examDate =
-        $("examDate")?.value ||
-        "";
-
-
-    const hoursPerDay =
-        Number(
-            $("hoursPerDay")?.value ||
-            0
-        );
-
-
-    const startTime =
-        $("startTime")?.value ||
-        "16:00";
-
-
-    const difficulty =
-        $("difficulty")?.value ||
-        "balanced";
-
-
-    if (!examDate) {
-
-        alert(
-            "Please select your exam date."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        hoursPerDay <= 0
-    ) {
-
-        alert(
-            "Please select your available study hours."
-        );
-
-        return;
-
-    }
-
-
-    const today =
-        new Date();
-
-    today.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-
-    const exam =
-        new Date(
-            `${examDate}T00:00:00`
-        );
-
-
-    exam.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-
-    if (
-        Number.isNaN(
-            exam.getTime()
-        )
-    ) {
-
-        alert(
-            "Please enter a valid exam date."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        exam < today
-    ) {
-
-        alert(
-            "The exam date has already passed. Please choose a future date."
-        );
-
-        return;
-
-    }
-
-
-    const daysLeft =
-        Math.max(
-            0,
-            Math.ceil(
-                (
-                    exam.getTime() -
-                    today.getTime()
-                ) /
-                86400000
-            )
-        );
-
-
-    const subjectData =
-        collectSubjectTopicData();
-
-
-    if (
-        !validateSubjectTopics(
-            subjectData
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    renderDifficultyFields(
-        subjectData
-    );
-
-
-    const {
-        topicDifficulty,
-        topicPriority
-    } =
-        collectDifficultyData();
-
-
-    /*
-       IMPORTANT:
-       This preserves subject order.
-    */
-
-    const allTopics =
-        subjectData.flatMap(
-            subject =>
-                subject.topics
-        );
-
-
-    const subjectNames =
-        subjectData.map(
-            subject =>
-                subject.name
-        );
-
-
-    const dayNames = [
-
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-
-    ];
-
-
-    const todayName =
-        dayNames[
-            new Date().getDay()
-        ];
-
-
-    const todaySubject =
-        subjectNames[
-            new Date().getDay() %
-            subjectNames.length
-        ];
-
-
-    const startHour =
-        Number(
-            startTime.split(":")[0]
-        ) || 16;
-
-
-    let urgency;
-
-
-    if (
-        daysLeft > 90
-    ) {
-
-        urgency =
-            "🟢 You have plenty of time. Focus on learning new concepts.";
-
-    } else if (
-        daysLeft > 30
-    ) {
-
-        urgency =
-            "🟡 Your exam is getting closer. Start practicing regularly.";
-
-    } else if (
-        daysLeft > 7
-    ) {
-
-        urgency =
-            "🟠 Your exam is close. Increase revision and practice.";
-
-    } else {
-
-        urgency =
-            "🔴 Your exam is just around the corner! Focus on revision and practice.";
-
-    }
-
-
     const timetableData = [];
-
 
     for (
         let hourIndex = 0;
@@ -1019,12 +719,289 @@ function generateStudyPlan(
         }
 
 
-        timetableData.push(
-            row
-        );
+        timetableData.push(row);
 
     }
 
+
+    return timetableData;
+
+}
+
+
+/* =========================================================
+   GENERATE STUDY PLAN
+========================================================= */
+
+function generateStudyPlan(event) {
+
+    if (event) {
+        event.preventDefault();
+    }
+
+
+    const curriculum =
+        cleanText(
+            $("curriculum")?.value
+        ) ||
+        "Nigerian Senior Secondary Curriculum";
+
+
+    const examDate =
+        $("examDate")?.value ||
+        "";
+
+
+    const hoursPerDay =
+        Number(
+            $("hoursPerDay")?.value ||
+            0
+        );
+
+
+    const startTime =
+        $("startTime")?.value ||
+        "16:00";
+
+
+    const difficulty =
+        $("difficulty")?.value ||
+        "balanced";
+
+
+    /* -----------------------------------------------------
+       BASIC VALIDATION
+    ----------------------------------------------------- */
+
+    if (!examDate) {
+
+        alert(
+            "Please select your exam date."
+        );
+
+        return;
+
+    }
+
+
+    if (hoursPerDay <= 0) {
+
+        alert(
+            "Please select your available study hours."
+        );
+
+        return;
+
+    }
+
+
+    /* -----------------------------------------------------
+       DATE VALIDATION
+    ----------------------------------------------------- */
+
+    const today =
+        new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    const exam =
+        new Date(
+            `${examDate}T00:00:00`
+        );
+
+    exam.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    if (
+        Number.isNaN(
+            exam.getTime()
+        )
+    ) {
+
+        alert(
+            "Please enter a valid exam date."
+        );
+
+        return;
+
+    }
+
+
+    if (exam < today) {
+
+        alert(
+            "The exam date has already passed. Please choose a future date."
+        );
+
+        return;
+
+    }
+
+
+    const daysLeft =
+        Math.max(
+            0,
+            Math.ceil(
+                (
+                    exam.getTime() -
+                    today.getTime()
+                ) / 86400000
+            )
+        );
+
+
+    /* -----------------------------------------------------
+       SUBJECT + TOPICS
+    ----------------------------------------------------- */
+
+    syncLegacyTopicsField();
+
+
+    const subjectData =
+        collectSubjectTopicData();
+
+
+    if (
+        !validateSubjectTopics(
+            subjectData
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    /* -----------------------------------------------------
+       DIFFICULTY
+    ----------------------------------------------------- */
+
+    renderDifficultyFields(
+        subjectData
+    );
+
+
+    const {
+        topicDifficulty,
+        topicPriority
+    } =
+        collectDifficultyData();
+
+
+    /* -----------------------------------------------------
+       TOPICS
+    ----------------------------------------------------- */
+
+    const allTopics =
+        subjectData.flatMap(
+            subject =>
+                subject.topics
+        );
+
+
+    const subjectNames =
+        subjectData.map(
+            subject =>
+                subject.name
+        );
+
+
+    /* -----------------------------------------------------
+       TODAY
+    ----------------------------------------------------- */
+
+    const dayNames = [
+
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+
+    ];
+
+
+    const todayName =
+        dayNames[
+            new Date().getDay()
+        ];
+
+
+    const todaySubject =
+        subjectNames[
+            new Date().getDay() %
+            subjectNames.length
+        ];
+
+
+    /* -----------------------------------------------------
+       START TIME
+    ----------------------------------------------------- */
+
+    const startHour =
+        Number(
+            startTime.split(":")[0]
+        ) || 16;
+
+
+    /* -----------------------------------------------------
+       URGENCY
+    ----------------------------------------------------- */
+
+    let urgency;
+
+
+    if (daysLeft > 90) {
+
+        urgency =
+            "🟢 You have plenty of time. Focus on learning new concepts.";
+
+    } else if (daysLeft > 30) {
+
+        urgency =
+            "🟡 Your exam is getting closer. Start practicing regularly.";
+
+    } else if (daysLeft > 7) {
+
+        urgency =
+            "🟠 Your exam is close. Increase revision and practice.";
+
+    } else {
+
+        urgency =
+            "🔴 Your exam is just around the corner! Focus on revision and practice.";
+
+    }
+
+
+    /* -----------------------------------------------------
+       TIMETABLE
+    ----------------------------------------------------- */
+
+    const timetableData =
+        generateTimetable(
+            subjectNames,
+            hoursPerDay,
+            startHour
+        );
+
+
+    /* -----------------------------------------------------
+       COMPLETE PLAN OBJECT
+    ----------------------------------------------------- */
 
     const studyData = {
 
@@ -1038,22 +1015,10 @@ function generateStudyPlan(
 
         examDate,
 
-        /*
-           THIS IS THE IMPORTANT PART.
-
-           Subjects remain objects with their
-           own topic arrays.
-        */
-
         subjects:
             subjectData,
 
         subjectNames,
-
-        /*
-           Flat topics are also kept for
-           compatibility with older dashboard code.
-        */
 
         topics:
             allTopics,
@@ -1108,9 +1073,9 @@ function generateStudyPlan(
     };
 
 
-    /*
-       BRAND NEW PLAN = RESET OLD TOPIC PROGRESS.
-    */
+    /* -----------------------------------------------------
+       RESET OLD PLAN PROGRESS
+    ----------------------------------------------------- */
 
     localStorage.removeItem(
         COMPLETED_TOPICS_KEY
@@ -1137,17 +1102,41 @@ function generateStudyPlan(
     );
 
 
-    writeJSON(
-        PLAN_KEY,
-        studyData
-    );
+    /* -----------------------------------------------------
+       SAVE PLAN
+    ----------------------------------------------------- */
+
+    const savedMainPlan =
+        writeJSON(
+            PLAN_KEY,
+            studyData
+        );
 
 
-    writeJSON(
-        COMPATIBILITY_PLAN_KEY,
-        studyData
-    );
+    const savedCompatibilityPlan =
+        writeJSON(
+            COMPATIBILITY_PLAN_KEY,
+            studyData
+        );
 
+
+    if (
+        !savedMainPlan ||
+        !savedCompatibilityPlan
+    ) {
+
+        alert(
+            "Your study plan could not be saved. Please check your browser storage and try again."
+        );
+
+        return;
+
+    }
+
+
+    /* -----------------------------------------------------
+       SHOW PREVIEW
+    ----------------------------------------------------- */
 
     const preview =
         $("studyPlan");
@@ -1219,9 +1208,9 @@ function generateStudyPlan(
     }
 
 
-    /*
-       Move to dashboard.
-    */
+    /* -----------------------------------------------------
+       GO TO DASHBOARD
+    ----------------------------------------------------- */
 
     window.location.href =
         "dashboard.html";
@@ -1230,170 +1219,399 @@ function generateStudyPlan(
 
 
 /* =========================================================
-   STUDYMIND AI — GLOBAL THEME SYSTEM
+   THEME SYSTEM
 ========================================================= */
 
-const STUDYMIND_THEME_KEY = "studyMindTheme";
-
 function applyStudyMindTheme() {
+
     const savedTheme =
-        localStorage.getItem(STUDYMIND_THEME_KEY) || "dark";
+        localStorage.getItem(
+            THEME_KEY
+        ) || "dark";
 
-    const isLight = savedTheme === "light";
+
+    const isLight =
+        savedTheme === "light";
+
 
     document.documentElement.classList.toggle(
         "light-mode",
         isLight
     );
 
-    document.body.classList.toggle(
-        "light-mode",
-        isLight
-    );
 
     document.documentElement.classList.toggle(
         "dark-mode",
         !isLight
     );
 
-    document.body.classList.toggle(
-        "dark-mode",
-        !isLight
-    );
+
+    if (document.body) {
+
+        document.body.classList.toggle(
+            "light-mode",
+            isLight
+        );
+
+        document.body.classList.toggle(
+            "dark-mode",
+            !isLight
+        );
+
+    }
+
+
+    document.documentElement.style.colorScheme =
+        isLight
+            ? "light"
+            : "dark";
+
 
     updateStudyMindThemeButton();
+
 }
 
+
 function toggleStudyMindTheme() {
-    const isCurrentlyLight =
-        document.body.classList.contains("light-mode");
+
+    const currentTheme =
+        localStorage.getItem(
+            THEME_KEY
+        ) || "dark";
+
 
     const newTheme =
-        isCurrentlyLight ? "dark" : "light";
+        currentTheme === "dark"
+            ? "light"
+            : "dark";
+
 
     localStorage.setItem(
-        STUDYMIND_THEME_KEY,
+        THEME_KEY,
         newTheme
     );
 
+
     applyStudyMindTheme();
+
 }
 
-function updateStudyMindThemeButton() {
-    const button =
-        document.getElementById("themeButton");
 
-    if (!button) return;
+function updateStudyMindThemeButton() {
+
+    const button =
+        $("themeButton");
+
+    if (!button) {
+        return;
+    }
+
 
     const isLight =
-        document.body.classList.contains("light-mode");
+        document.body
+            ?.classList
+            .contains("light-mode");
+
 
     button.textContent =
         isLight
             ? "🌙 Dark Mode"
             : "☀️ Light Mode";
+
+
+    button.setAttribute(
+        "aria-label",
+        isLight
+            ? "Switch to Dark Mode"
+            : "Switch to Light Mode"
+    );
+
+
+    button.setAttribute(
+        "title",
+        isLight
+            ? "Switch to Dark Mode"
+            : "Switch to Light Mode"
+    );
+
 }
 
-/* Load saved theme immediately */
-applyStudyMindTheme();
 
-/* Connect theme button */
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================================================
+   CREATE STUDY PLAN BUTTON
+========================================================= */
+
+function connectStartButton() {
+
     const button =
-        document.getElementById("themeButton");
+        $("startButton");
 
-    if (!button) return;
-
-    /*
-       Prevent duplicate event listeners if the
-       script is initialized more than once.
-    */
-    if (button.dataset.themeConnected === "true") {
-        updateStudyMindThemeButton();
+    if (!button) {
         return;
     }
 
-    button.dataset.themeConnected = "true";
+
+    if (
+        button.dataset.connected === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    button.dataset.connected =
+        "true";
+
 
     button.addEventListener(
         "click",
-        toggleStudyMindTheme
+        function(event) {
+
+            event.preventDefault();
+
+
+            const generator =
+                $("generator");
+
+
+            if (!generator) {
+
+                console.warn(
+                    "StudyMind AI: #generator section was not found."
+                );
+
+                return;
+
+            }
+
+
+            generator.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        }
     );
 
-    updateStudyMindThemeButton();
-});
+}
+
+
 /* =========================================================
-   START
+   THEME BUTTON
+========================================================= */
+
+function connectThemeButton() {
+
+    const button =
+        $("themeButton");
+
+    if (!button) {
+        return;
+    }
+
+
+    if (
+        button.dataset.connected === "true"
+    ) {
+
+        updateStudyMindThemeButton();
+
+        return;
+
+    }
+
+
+    button.dataset.connected =
+        "true";
+
+
+    button.addEventListener(
+        "click",
+        function(event) {
+
+            event.preventDefault();
+
+            toggleStudyMindTheme();
+
+        }
+    );
+
+
+    updateStudyMindThemeButton();
+
+}
+
+
+/* =========================================================
+   SUBJECT INPUT
+========================================================= */
+
+function connectSubjectInputs() {
+
+    const subjects =
+        $("subjects");
+
+    if (!subjects) {
+        return;
+    }
+
+
+    if (
+        subjects.dataset.connected === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    subjects.dataset.connected =
+        "true";
+
+
+    subjects.addEventListener(
+        "input",
+        function() {
+
+            renderSubjectTopicFields();
+
+        }
+    );
+
+
+    subjects.addEventListener(
+        "change",
+        function() {
+
+            renderSubjectTopicFields();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   TOPIC INPUT
+========================================================= */
+
+function connectTopicFields() {
+
+    const container =
+        $("subjectTopicFields");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        container.dataset.connected === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    container.dataset.connected =
+        "true";
+
+
+    container.addEventListener(
+        "input",
+        function() {
+
+            syncLegacyTopicsField();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   STUDY FORM
+========================================================= */
+
+function connectStudyForm() {
+
+    const form =
+        $("studyForm");
+
+    if (!form) {
+        return;
+    }
+
+
+    if (
+        form.dataset.connected === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    form.dataset.connected =
+        "true";
+
+
+    form.addEventListener(
+        "submit",
+        generateStudyPlan
+    );
+
+}
+
+
+/* =========================================================
+   INITIALIZE HOME
 ========================================================= */
 
 function initializeHome() {
 
-    applyTheme();
+    /* Apply saved theme first */
+    applyStudyMindTheme();
 
 
-    $("themeButton")
-        ?.addEventListener(
-            "click",
-            toggleTheme
-        );
+    /* Connect all Home controls */
+    connectThemeButton();
+
+    connectStartButton();
+
+    connectSubjectInputs();
+
+    connectTopicFields();
+
+    connectStudyForm();
 
 
-    $("startButton")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                $("generator")
-                    ?.scrollIntoView({
-                        behavior:
-                            "smooth"
-                    });
-
-            }
-        );
-
-
-    $("subjects")
-        ?.addEventListener(
-            "input",
-            renderSubjectTopicFields
-        );
-
-
-    $("subjects")
-        ?.addEventListener(
-            "change",
-            renderSubjectTopicFields
-        );
-
-
-    $("subjectTopicFields")
-        ?.addEventListener(
-            "input",
-            syncLegacyTopicsField
-        );
-
-
-    $("studyForm")
-        ?.addEventListener(
-            "submit",
-            generateStudyPlan
-        );
-
-
+    /* Render initial topic state */
     renderSubjectTopicFields();
+
+
+    /* Make sure hidden legacy field is synchronized */
+    syncLegacyTopicsField();
 
 }
 
 
+/* =========================================================
+   START APP
+========================================================= */
+
 if (
-    document.readyState ===
-    "loading"
+    document.readyState === "loading"
 ) {
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeHome
+        initializeHome,
+        {
+            once: true
+        }
     );
 
 } else {
