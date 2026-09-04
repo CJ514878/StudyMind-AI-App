@@ -2,39 +2,28 @@
    STUDYMIND AI — DASHBOARD.JS
    COMPLETE REPLACEMENT
 
-   FLOW:
-
-   SUBJECT 1
-      ↓
-   TOPIC 1
-      ↓
-   TOPIC 2
-      ↓
-   TOPIC 3
-      ↓
-   SUBJECT 2
-      ↓
-   TOPIC 1
-      ↓
-   TOPIC 2
-      ↓
-   EVERYTHING COMPLETE
-      ↓
-   🎉 CONGRATULATIONS POPUP
+   FEATURES:
+   - Subject → Topic → Topic → Next Subject flow
+   - Complete reading → Knowledge Check
+   - Study streak connected to completed reading
+   - 25 / 45 / 60 minute study timer
+   - AI questions
+   - Progress tracking
+   - Calendar
+   - Daily challenge
+   - Completion celebration
+   - Light / Dark Mode
 ========================================================= */
 
 "use strict";
 
 
 /* =========================================================
-   STORAGE
+   STORAGE KEYS
 ========================================================= */
 
-const PLAN_KEY =
-    "studyMindPlan";
-
-const LEGACY_PLAN_KEY =
-    "studyData";
+const PLAN_KEY = "studyMindPlan";
+const LEGACY_PLAN_KEY = "studyData";
 
 const COMPLETED_KEY =
     "studyMindCompletedTopics";
@@ -77,8 +66,7 @@ const LAST_STUDY_KEY =
    SETTINGS
 ========================================================= */
 
-const FREE_AI_LIMIT =
-    5;
+const FREE_AI_LIMIT = 5;
 
 const TIMER_OPTIONS = [
     25,
@@ -91,23 +79,18 @@ const DEFAULT_TIMER_SECONDS =
 
 
 /* =========================================================
-   STATE
+   GLOBAL STATE
 ========================================================= */
 
-let studyPlan =
-    null;
+let studyPlan = null;
 
-let subjects =
-    [];
+let subjects = [];
 
-let allTopics =
-    [];
+let allTopics = [];
 
-let completedTopics =
-    [];
+let completedTopics = [];
 
-let completedQuestionTopics =
-    [];
+let completedQuestionTopics = [];
 
 let currentTopicIndex =
     Number(
@@ -116,51 +99,39 @@ let currentTopicIndex =
         )
     ) || 0;
 
-
 let timerSeconds =
     Number(
         localStorage.getItem(
             TIMER_SECONDS_KEY
         )
-    ) ||
-    DEFAULT_TIMER_SECONDS;
-
+    ) || DEFAULT_TIMER_SECONDS;
 
 let selectedTimerSeconds =
     Number(
         localStorage.getItem(
             TIMER_DURATION_KEY
         )
-    ) ||
-    DEFAULT_TIMER_SECONDS;
+    ) || DEFAULT_TIMER_SECONDS;
 
+let timerInterval = null;
 
-let timerInterval =
-    null;
+let timerRunning = false;
 
-let timerRunning =
-    false;
+let calendarDate = new Date();
 
-
-let calendarDate =
-    new Date();
-
-
-let currentUser =
-    null;
+let currentUser = null;
 
 
 /* =========================================================
-   SHORTCUT
+   ELEMENT HELPER
 ========================================================= */
 
-const $ =
-    id =>
-        document.getElementById(id);
+const $ = id =>
+    document.getElementById(id);
 
 
 /* =========================================================
-   STORAGE HELPERS
+   JSON HELPERS
 ========================================================= */
 
 function readJSON(
@@ -171,9 +142,7 @@ function readJSON(
     try {
 
         const raw =
-            localStorage.getItem(
-                key
-            );
+            localStorage.getItem(key);
 
         return raw
             ? JSON.parse(raw)
@@ -182,9 +151,7 @@ function readJSON(
     } catch {
 
         return fallback;
-
     }
-
 }
 
 
@@ -197,7 +164,6 @@ function writeJSON(
         key,
         JSON.stringify(value)
     );
-
 }
 
 
@@ -210,12 +176,8 @@ function clean(value) {
     return String(
         value ?? ""
     )
-        .replace(
-            /\s+/g,
-            " "
-        )
+        .replace(/\s+/g, " ")
         .trim();
-
 }
 
 
@@ -224,27 +186,11 @@ function escapeHTML(value) {
     return String(
         value ?? ""
     )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -252,74 +198,36 @@ function escapeHTML(value) {
    TOPIC HELPERS
 ========================================================= */
 
-function topicName(
-    topic
-) {
+function topicKey(topic) {
 
-    if (
-        typeof topic ===
-        "string"
-    ) {
-
-        return clean(
-            topic
-        );
-
-    }
-
-
-    return clean(
-
-        topic?.name ||
-
-        topic?.topic ||
-
-        topic?.title
-
-    );
-
-}
-
-
-function topicSubject(
-    topic
-) {
-
-    return clean(
-
+    return `${clean(
         topic?.subject ||
-
-        topic?.subjectName ||
-
-        ""
-
-    );
-
+        "Senior Secondary"
+    ).toLowerCase()}::${clean(
+        topic?.name
+    ).toLowerCase()}`;
 }
 
 
-function topicKey(
-    topic
-) {
+function topicName(topic) {
 
-    return `${
+    return clean(
+        typeof topic === "string"
+            ? topic
+            : topic?.name ||
+              topic?.topic ||
+              topic?.title
+    );
+}
 
-        topicSubject(
-            topic
-        )
 
-            .toLowerCase()
+function topicSubject(topic) {
 
-    }::${
-
-        topicName(
-            topic
-        )
-
-            .toLowerCase()
-
-    }`;
-
+    return clean(
+        topic?.subject ||
+        topic?.subjectName ||
+        ""
+    );
 }
 
 
@@ -334,61 +242,46 @@ function normalizeTopic(
 ) {
 
     if (
-        typeof raw ===
-        "string" ||
-        typeof raw ===
-        "number"
+        typeof raw === "string" ||
+        typeof raw === "number"
     ) {
 
         const name =
             clean(raw);
 
+        return name
+            ? {
+                id:
+                    `topic-${index}-${name
+                        .toLowerCase()
+                        .replace(/\W+/g, "-")}`,
 
-        if (!name) {
+                name,
 
-            return null;
+                subject,
 
-        }
-
-
-        return {
-
-            id:
-                `topic-${index}-${name}`,
-
-            name,
-
-            subject,
-
-            description:
-                `Study ${name} and complete the knowledge check.`
-
-        };
-
+                description:
+                    `Study ${name} and complete the knowledge check.`
+            }
+            : null;
     }
 
 
     if (
         !raw ||
-        typeof raw !==
-        "object"
+        typeof raw !== "object"
     ) {
 
         return null;
-
     }
 
 
     const name =
-        topicName(
-            raw
-        );
+        topicName(raw);
 
 
     if (!name) {
-
         return null;
-
     }
 
 
@@ -417,9 +310,7 @@ function normalizeTopic(
                 raw.desc
             ) ||
             `Study ${name} and complete the knowledge check.`
-
     };
-
 }
 
 
@@ -427,56 +318,37 @@ function normalizeTopic(
    NORMALIZE PLAN
 ========================================================= */
 
-function normalizePlan(
-    raw
-) {
+function normalizePlan(raw) {
 
     if (
         !raw ||
-        typeof raw !==
-        "object"
+        typeof raw !== "object"
     ) {
 
         return null;
-
     }
 
 
     const plan =
-
         raw.studyPlan &&
-        typeof raw.studyPlan ===
-        "object"
+        typeof raw.studyPlan === "object"
 
             ? raw.studyPlan
 
             : raw.plan &&
-              typeof raw.plan ===
-              "object"
+              typeof raw.plan === "object"
 
                 ? raw.plan
 
                 : raw;
 
 
-    const normalizedSubjects =
-        [];
+    const normalizedSubjects = [];
 
 
-    /*
-       NEW FORMAT:
-
-       subjects: [
-          {
-             name: "Mathematics",
-             topics: [...]
-          },
-          {
-             name: "Physics",
-             topics: [...]
-          }
-       ]
-    */
+    /* =====================================================
+       SUBJECTS WITH NESTED TOPICS
+    ===================================================== */
 
     if (
         Array.isArray(
@@ -484,162 +356,126 @@ function normalizePlan(
         )
     ) {
 
-        plan.subjects
-            .forEach(
-                (
-                    rawSubject,
-                    subjectIndex
-                ) => {
-
-                    const name =
-
-                        clean(
-
-                            typeof rawSubject ===
-                            "string"
-
-                                ? rawSubject
-
-                                : rawSubject?.name ||
-                                  rawSubject?.subject ||
-                                  rawSubject?.title
-
-                        );
-
-
-                    if (!name) {
-
-                        return;
-
-                    }
-
-
-                    const nestedTopics =
-
-                        Array.isArray(
-                            rawSubject?.topics
-                        )
-
-                            ? rawSubject.topics
-
-                            : [];
-
-
-                    normalizedSubjects.push({
-
-                        id:
-                            `subject-${subjectIndex + 1}`,
-
-                        name,
-
-                        topics:
-                            nestedTopics
-
-                                .map(
-                                    (
-                                        topic,
-                                        topicIndex
-                                    ) =>
-                                        normalizeTopic(
-                                            topic,
-                                            name,
-                                            topicIndex
-                                        )
-                                )
-
-                                .filter(
-                                    Boolean
-                                )
-
-                    });
-
-                }
-            );
-
-    }
-
-
-    /*
-       TOP LEVEL TOPICS
-    */
-
-    const topLevelTopics =
-
-        Array.isArray(
-            plan.topics
-        )
-
-            ? plan.topics
-
-            : [];
-
-
-    const flatTopics =
-        [];
-
-
-    topLevelTopics
-        .forEach(
+        plan.subjects.forEach(
             (
-                rawTopic,
-                index
+                rawSubject,
+                subjectIndex
             ) => {
 
-                const topic =
-                    normalizeTopic(
-                        rawTopic,
-                        topicSubject(
-                            rawTopic
-                        ),
-                        index
+                const name =
+                    clean(
+                        typeof rawSubject === "string"
+
+                            ? rawSubject
+
+                            : rawSubject?.name ||
+                              rawSubject?.subject ||
+                              rawSubject?.title
                     );
 
 
-                if (topic) {
-
-                    flatTopics.push(
-                        topic
-                    );
-
+                if (!name) {
+                    return;
                 }
+
+
+                const nested =
+                    Array.isArray(
+                        rawSubject?.topics
+                    )
+                        ? rawSubject.topics
+                        : [];
+
+
+                normalizedSubjects.push({
+
+                    id:
+                        `subject-${subjectIndex + 1}`,
+
+                    name,
+
+                    topics:
+                        nested
+                            .map(
+                                (topic, i) =>
+                                    normalizeTopic(
+                                        topic,
+                                        name,
+                                        i
+                                    )
+                            )
+                            .filter(Boolean)
+
+                });
 
             }
         );
+    }
 
 
-    /*
-       If subjects do not contain topics,
-       use the top-level topics.
-    */
+    /* =====================================================
+       TOP-LEVEL TOPICS
+    ===================================================== */
 
-    const hasNestedTopics =
+    const topLevelTopics =
+        Array.isArray(
+            plan.topics
+        )
+            ? plan.topics
+            : [];
+
+
+    const flatTopics = [];
+
+
+    topLevelTopics.forEach(
+        (
+            rawTopic,
+            i
+        ) => {
+
+            const topic =
+                normalizeTopic(
+                    rawTopic,
+                    topicSubject(rawTopic),
+                    i
+                );
+
+
+            if (topic) {
+                flatTopics.push(topic);
+            }
+
+        }
+    );
+
+
+    const hasNested =
         normalizedSubjects.some(
             subject =>
                 subject.topics.length
         );
 
 
+    /* =====================================================
+       ASSIGN FLAT TOPICS
+    ===================================================== */
+
     if (
-        !hasNestedTopics &&
+        !hasNested &&
         flatTopics.length
     ) {
 
         if (
-            normalizedSubjects.length ===
-            1
+            normalizedSubjects.length === 1
         ) {
 
             normalizedSubjects[0].topics =
-
                 flatTopics.map(
                     topic => ({
-
                         ...topic,
-
                         subject:
-                            normalizedSubjects[0]
-                                .name
-
+                            normalizedSubjects[0].name
                     })
                 );
 
@@ -652,140 +488,226 @@ function normalizePlan(
             )
         ) {
 
-            normalizedSubjects
-                .forEach(
-                    subject => {
+            normalizedSubjects.forEach(
+                subject => {
 
-                        subject.topics =
-
-                            flatTopics
-
-                                .filter(
-                                    topic =>
-                                        topic.subject
-                                            .toLowerCase() ===
+                    subject.topics =
+                        flatTopics
+                            .filter(
+                                topic =>
+                                    topic.subject
+                                        .toLowerCase() ===
+                                    subject.name
+                                        .toLowerCase()
+                            )
+                            .map(
+                                topic => ({
+                                    ...topic,
+                                    subject:
                                         subject.name
-                                            .toLowerCase()
-                                )
+                                })
+                            );
 
-                                .map(
-                                    topic => ({
-
-                                        ...topic,
-
-                                        subject:
-                                            subject.name
-
-                                    })
-                                );
-
-                    }
-                );
+                }
+            );
 
         }
 
         else {
 
-            /*
-               Legacy plans had subjects and
-               topics separately.
+            flatTopics.forEach(
+                (
+                    topic,
+                    i
+                ) => {
 
-               Distribute old topics across
-               subjects so old plans still work.
-            */
-
-            flatTopics
-                .forEach(
-                    (
-                        topic,
-                        index
-                    ) => {
-
-                        const subject =
-
-                            normalizedSubjects[
-                                index %
-                                normalizedSubjects.length
-                            ];
+                    const subject =
+                        normalizedSubjects[
+                            i %
+                            normalizedSubjects.length
+                        ];
 
 
-                        if (subject) {
+                    if (subject) {
 
-                            subject.topics.push({
+                        subject.topics.push({
 
-                                ...topic,
+                            ...topic,
 
-                                subject:
-                                    subject.name
+                            subject:
+                                subject.name
 
-                            });
-
-                        }
+                        });
 
                     }
-                );
+
+                }
+            );
 
         }
 
     }
 
 
-    /*
-       REMOVE DUPLICATES WHILE PRESERVING
-       SUBJECT ORDER.
-    */
+    /* =====================================================
+       IF NO SUBJECTS EXIST
+    ===================================================== */
 
-    const seen =
-        new Set();
+    if (
+        !normalizedSubjects.length &&
+        flatTopics.length
+    ) {
 
-
-    normalizedSubjects
-        .forEach(
-            subject => {
-
-                subject.topics =
-
-                    subject.topics
-                        .filter(
-                            topic => {
-
-                                topic.subject =
-                                    subject.name;
+        const names =
+            Array.isArray(
+                plan.subjectNames
+            )
+                ? plan.subjectNames
+                : [];
 
 
-                                const key =
-                                    topicKey(
-                                        topic
-                                    );
+        names.forEach(
+            (
+                name,
+                i
+            ) => {
 
+                normalizedSubjects.push({
 
-                                if (
-                                    seen.has(
-                                        key
-                                    )
-                                ) {
+                    id:
+                        `subject-${i + 1}`,
 
-                                    return false;
+                    name:
+                        clean(name),
 
-                                }
+                    topics: []
 
-
-                                seen.add(
-                                    key
-                                );
-
-
-                                return true;
-
-                            }
-                        );
+                });
 
             }
         );
 
 
-    const orderedTopics =
+        if (
+            !normalizedSubjects.length
+        ) {
 
+            const rawNames =
+                typeof plan.subjects === "string"
+
+                    ? plan.subjects.split(
+                        /[,;\n]+/
+                    )
+
+                    : [];
+
+
+            rawNames
+                .map(clean)
+                .filter(Boolean)
+                .forEach(
+                    (
+                        name,
+                        i
+                    ) => {
+
+                        normalizedSubjects.push({
+
+                            id:
+                                `subject-${i + 1}`,
+
+                            name,
+
+                            topics: []
+
+                        });
+
+                    }
+                );
+
+        }
+
+
+        flatTopics.forEach(
+            (
+                topic,
+                i
+            ) => {
+
+                const subject =
+                    normalizedSubjects[
+                        i %
+                        Math.max(
+                            normalizedSubjects.length,
+                            1
+                        )
+                    ];
+
+
+                if (subject) {
+
+                    subject.topics.push({
+
+                        ...topic,
+
+                        subject:
+                            subject.name
+
+                    });
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       REMOVE DUPLICATE TOPICS
+    ===================================================== */
+
+    const seen =
+        new Set();
+
+
+    normalizedSubjects.forEach(
+        subject => {
+
+            subject.topics =
+                subject.topics.filter(
+                    topic => {
+
+                        topic.subject =
+                            subject.name;
+
+
+                        const key =
+                            topicKey(topic);
+
+
+                        if (
+                            !key ||
+                            seen.has(key)
+                        ) {
+
+                            return false;
+
+                        }
+
+
+                        seen.add(key);
+
+                        return true;
+
+                    }
+                );
+
+        }
+    );
+
+
+    const orderedTopics =
         normalizedSubjects.flatMap(
             subject =>
                 subject.topics
@@ -815,10 +737,7 @@ function normalizePlan(
             ) ||
             new Date()
                 .toISOString()
-                .slice(
-                    0,
-                    10
-                ),
+                .slice(0, 10),
 
         studyHours:
             Number(
@@ -840,7 +759,30 @@ function normalizePlan(
             orderedTopics
 
     };
+}
 
+
+/* =========================================================
+   SAVE PLAN
+========================================================= */
+
+function savePlan() {
+
+    if (!studyPlan) {
+        return;
+    }
+
+
+    writeJSON(
+        PLAN_KEY,
+        studyPlan
+    );
+
+
+    writeJSON(
+        LEGACY_PLAN_KEY,
+        studyPlan
+    );
 }
 
 
@@ -862,18 +804,14 @@ function loadStudyPlan() {
 
 
     studyPlan =
-        normalizePlan(
-            raw
-        );
+        normalizePlan(raw);
 
 
     if (!studyPlan) {
 
-        subjects =
-            [];
+        subjects = [];
 
-        allTopics =
-            [];
+        allTopics = [];
 
         return false;
 
@@ -901,46 +839,11 @@ function loadStudyPlan() {
 
 
     return true;
-
 }
 
 
 /* =========================================================
-   SAVE PLAN
-========================================================= */
-
-function savePlan() {
-
-    if (!studyPlan) {
-
-        return;
-
-    }
-
-
-    /*
-       Save the structured subjects.
-
-       DO NOT flatten subjects back into
-       strings.
-    */
-
-    writeJSON(
-        PLAN_KEY,
-        studyPlan
-    );
-
-
-    writeJSON(
-        LEGACY_PLAN_KEY,
-        studyPlan
-    );
-
-}
-
-
-/* =========================================================
-   COMPLETION
+   COMPLETION STATE
 ========================================================= */
 
 function loadCompletionState() {
@@ -965,8 +868,7 @@ function loadCompletionState() {
         )
     ) {
 
-        completedTopics =
-            [];
+        completedTopics = [];
 
     }
 
@@ -977,11 +879,9 @@ function loadCompletionState() {
         )
     ) {
 
-        completedQuestionTopics =
-            [];
+        completedQuestionTopics = [];
 
     }
-
 }
 
 
@@ -1000,191 +900,93 @@ function saveCompletionState() {
 
 
     localStorage.setItem(
-
         CURRENT_INDEX_KEY,
-
         String(
             currentTopicIndex
         )
-
     );
-
 }
 
 
-function isCompleted(
-    topic
-) {
+/* =========================================================
+   COMPLETION CHECKS
+========================================================= */
+
+function isCompleted(topic) {
 
     const key =
-        topicKey(
-            topic
-        );
+        topicKey(topic);
 
     const name =
-        topicName(
-            topic
-        );
+        topicName(topic);
 
 
     return (
-
-        completedTopics.includes(
-            key
-        ) ||
-
-        completedTopics.includes(
-            name
-        )
-
+        completedTopics.includes(key) ||
+        completedTopics.includes(name)
     );
-
 }
 
 
-function isQuestionCompleted(
-    topic
-) {
+function isQuestionCompleted(topic) {
 
     const key =
-        topicKey(
-            topic
-        );
+        topicKey(topic);
 
     const name =
-        topicName(
-            topic
-        );
+        topicName(topic);
 
 
     return (
-
-        completedQuestionTopics.includes(
-            key
-        ) ||
-
-        completedQuestionTopics.includes(
-            name
-        )
-
+        completedQuestionTopics.includes(key) ||
+        completedQuestionTopics.includes(name)
     );
-
 }
 
 
 /* =========================================================
    CURRENT TOPIC
-
-   THIS IS THE CORE FIX.
-
-   We do not trust the old saved index to determine
-   what the student should see.
-
-   We ALWAYS find the first incomplete topic in
-   subject/topic order.
 ========================================================= */
 
 function getCurrentTopic() {
 
-    if (
-        !allTopics.length
-    ) {
-
-        return null;
-
-    }
-
-
-    const nextIndex =
-
+    const next =
         allTopics.findIndex(
             topic =>
-                !isCompleted(
-                    topic
-                )
+                !isCompleted(topic)
         );
 
 
-    /*
-       EVERYTHING IS COMPLETE.
-    */
-
     if (
-        nextIndex === -1
+        next === -1
     ) {
 
         currentTopicIndex =
             allTopics.length;
 
-
-        localStorage.setItem(
-
-            CURRENT_INDEX_KEY,
-
-            String(
-                currentTopicIndex
-            )
-
-        );
-
-
         return null;
-
     }
 
 
-    /*
-       IMPORTANT:
-
-       This automatically moves from:
-
-       Mathematics → Algebra
-       Mathematics → Quadratic Equations
-       Mathematics → Trigonometry
-       Physics → Motion
-
-       without needing the user to manually
-       choose another topic.
-    */
-
     currentTopicIndex =
-        nextIndex;
+        next;
 
 
-    localStorage.setItem(
-
-        CURRENT_INDEX_KEY,
-
-        String(
-            currentTopicIndex
-        )
-
-    );
-
-
-    return allTopics[
-        nextIndex
-    ];
-
+    return allTopics[next];
 }
 
 
 /* =========================================================
-   NEXT TOPIC
+   NEXT INCOMPLETE TOPIC
 ========================================================= */
 
 function getNextIncompleteTopic(
-    fromIndex =
-        currentTopicIndex
+    fromIndex = currentTopicIndex
 ) {
 
     for (
-        let i =
-            fromIndex + 1;
-
-        i <
-        allTopics.length;
-
+        let i = fromIndex + 1;
+        i < allTopics.length;
         i++
     ) {
 
@@ -1201,17 +1003,10 @@ function getNextIncompleteTopic(
     }
 
 
-    /*
-       Safety fallback.
-    */
-
     for (
         let i = 0;
-
         i <= fromIndex &&
-        i <
-        allTopics.length;
-
+        i < allTopics.length;
         i++
     ) {
 
@@ -1229,7 +1024,6 @@ function getNextIncompleteTopic(
 
 
     return null;
-
 }
 
 
@@ -1248,10 +1042,6 @@ async function checkAuthentication() {
         if (
             !client?.auth
         ) {
-
-            console.error(
-                "StudyMind: Supabase client is not available."
-            );
 
             return false;
 
@@ -1281,12 +1071,10 @@ async function checkAuthentication() {
 
         return true;
 
-    } catch (
-        error
-    ) {
+    } catch (error) {
 
         console.error(
-            "StudyMind authentication error:",
+            "StudyMind auth error:",
             error
         );
 
@@ -1294,29 +1082,42 @@ async function checkAuthentication() {
         return false;
 
     }
-
 }
 
+
+/* =========================================================
+   LOGOUT
+========================================================= */
 
 async function logoutStudyMind() {
 
     try {
 
-        await window
-            .supabaseClient
-            ?.auth
-            ?.signOut();
+        if (
+            window.supabaseClient?.auth
+        ) {
 
-    } catch {}
+            await window
+                .supabaseClient
+                .auth
+                .signOut();
+
+        }
+
+    } catch {
+
+        /* Ignore logout errors */
+
+    }
+
 
     window.location.href =
         "login.html";
-
 }
 
 
 /* =========================================================
-   STATS
+   DAYS LEFT
 ========================================================= */
 
 function calculateDaysLeft() {
@@ -1349,9 +1150,7 @@ function calculateDaysLeft() {
 
 
     return Math.max(
-
         0,
-
         Math.ceil(
             (
                 exam -
@@ -1359,11 +1158,13 @@ function calculateDaysLeft() {
             ) /
             86400000
         )
-
     );
-
 }
 
+
+/* =========================================================
+   STATS
+========================================================= */
 
 function renderStats() {
 
@@ -1374,17 +1175,13 @@ function renderStats() {
 
 
     const score =
-
         allTopics.length
-
             ? Math.round(
                 (
                     completed /
                     allTopics.length
-                ) *
-                100
+                ) * 100
             )
-
             : 0;
 
 
@@ -1394,8 +1191,7 @@ function renderStats() {
             Number(
                 studyPlan?.studyHours ||
                 0
-            ) *
-            7,
+            ) * 7,
 
         daysLeft:
             calculateDaysLeft(),
@@ -1409,34 +1205,26 @@ function renderStats() {
         studyScore:
             score,
 
-        scoreDisplay:
-            score,
-
         streak:
             Number(
                 localStorage.getItem(
                     STREAK_KEY
-                ) ||
-                0
-            )
+                ) || 0
+            ),
+
+        scoreDisplay:
+            score
 
     };
 
 
-    Object.entries(
-        values
-    )
+    Object.entries(values)
         .forEach(
             (
-                [
-                    id,
-                    value
-                ]
+                [id, value]
             ) => {
 
-                if (
-                    $(id)
-                ) {
+                if ($(id)) {
 
                     $(id).textContent =
                         value;
@@ -1447,57 +1235,46 @@ function renderStats() {
         );
 
 
-    if (
-        $("progressPercent")
-    ) {
+    if ($("progressPercent")) {
 
         $("progressPercent")
             .textContent =
-                `${score}%`;
+            `${score}%`;
 
     }
 
 
-    if (
-        $("progressBar")
-    ) {
-
-        $("progressBar")
-            .style.width =
-                `${score}%`;
-
-    }
-
-
-    if (
-        $("scoreProgressBar")
-    ) {
+    if ($("scoreProgressBar")) {
 
         $("scoreProgressBar")
             .style.width =
-                `${score}%`;
+            `${score}%`;
 
     }
 
 
-    if (
-        $("progressCount")
-    ) {
+    if ($("progressBar")) {
 
-        $("progressCount")
-            .textContent =
-                `${completed} of ${allTopics.length} topics completed`;
+        $("progressBar")
+            .style.width =
+            `${score}%`;
 
     }
 
 
-    if (
-        $("scoreMessage")
-    ) {
+    if ($("progressCount")) {
+
+        $("progressCount")
+            .textContent =
+            `${completed} of ${allTopics.length} topics completed`;
+
+    }
+
+
+    if ($("scoreMessage")) {
 
         $("scoreMessage")
             .textContent =
-
             score >= 100
 
                 ? "All topics completed. Excellent work!"
@@ -1505,7 +1282,6 @@ function renderStats() {
                 : "Keep going — consistency builds mastery.";
 
     }
-
 }
 
 
@@ -1520,36 +1296,28 @@ function renderSubjects() {
 
 
     if (!container) {
-
         return;
-
     }
 
 
     container.innerHTML =
-
         subjects
-
             .map(
                 subject => {
 
                     const done =
-
-                        subject.topics.length > 0 &&
-
+                        subject.topics.length &&
                         subject.topics.every(
                             isCompleted
                         );
 
 
                     return `
-
                         <div
-                            class="subject-item ${
-                                done
-                                    ? "completed"
-                                    : ""
-                            }"
+                            class="
+                                subject-item
+                                ${done ? "completed" : ""}
+                            "
                         >
 
                             <strong>
@@ -1560,24 +1328,19 @@ function renderSubjects() {
 
                             <span>
                                 ${
-                                    subject.topics
-                                        .filter(
-                                            isCompleted
-                                        )
-                                        .length
+                                    subject.topics.filter(
+                                        isCompleted
+                                    ).length
                                 }/${subject.topics.length}
                                 topics
                             </span>
 
                         </div>
-
                     `;
 
                 }
             )
-
             .join("");
-
 }
 
 
@@ -1592,16 +1355,12 @@ function renderTopics() {
 
 
     if (!container) {
-
         return;
-
     }
 
 
     container.innerHTML =
-
         subjects
-
             .map(
                 subject => `
 
@@ -1610,16 +1369,14 @@ function renderTopics() {
                     >
 
                         <h4>
-                            📚 ${escapeHTML(
+                            📚
+                            ${escapeHTML(
                                 subject.name
                             )}
                         </h4>
 
-
                         ${
-
                             subject.topics
-
                                 .map(
                                     topic => `
 
@@ -1627,9 +1384,7 @@ function renderTopics() {
                                             class="
                                                 topic-list-item
                                                 ${
-                                                    isCompleted(
-                                                        topic
-                                                    )
+                                                    isCompleted(topic)
                                                         ? "completed"
                                                         : ""
                                                 }
@@ -1638,9 +1393,7 @@ function renderTopics() {
 
                                             <span>
                                                 ${
-                                                    isCompleted(
-                                                        topic
-                                                    )
+                                                    isCompleted(topic)
                                                         ? "✓"
                                                         : "○"
                                                 }
@@ -1656,20 +1409,20 @@ function renderTopics() {
 
                                     `
                                 )
-
                                 .join("")
-
                         }
 
                     </div>
 
                 `
             )
-
             .join("");
-
 }
 
+
+/* =========================================================
+   PROGRESS
+========================================================= */
 
 function renderProgress() {
 
@@ -1679,7 +1432,7 @@ function renderProgress() {
 
 
 /* =========================================================
-   CURRENT TOPIC DISPLAY
+   CURRENT TOPIC
 ========================================================= */
 
 function renderCurrentTopic() {
@@ -1691,34 +1444,28 @@ function renderCurrentTopic() {
     const name =
         $("currentTopicName");
 
-
     const description =
         $("currentTopicDescription");
-
 
     const position =
         $("topicPosition");
 
-
     const badge =
         $("topicStatusBadge");
-
 
     const checkbox =
         $("topicCompleteCheckbox");
 
-
     const message =
         $("topicCompletionMessage");
-
 
     const nextMessage =
         $("nextTopicMessage");
 
 
-    /*
+    /* =====================================================
        ALL COMPLETE
-    */
+    ===================================================== */
 
     if (!topic) {
 
@@ -1783,23 +1530,19 @@ function renderCurrentTopic() {
 
         hideKnowledgeCheck();
 
-
         maybeShowCompletionCelebration();
 
-
         return;
-
     }
 
 
-    /*
-       POSITION
-    */
+    /* =====================================================
+       CURRENT TOPIC
+    ===================================================== */
 
     if (position) {
 
         position.textContent =
-
             `TOPIC ${
                 currentTopicIndex + 1
             } OF ${
@@ -1809,10 +1552,6 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-       NAME
-    */
-
     if (name) {
 
         name.textContent =
@@ -1820,10 +1559,6 @@ function renderCurrentTopic() {
 
     }
 
-
-    /*
-       DESCRIPTION
-    */
 
     if (description) {
 
@@ -1833,10 +1568,6 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-       BADGE
-    */
-
     if (badge) {
 
         badge.textContent =
@@ -1844,10 +1575,6 @@ function renderCurrentTopic() {
 
     }
 
-
-    /*
-       CHECKBOX
-    */
 
     if (checkbox) {
 
@@ -1860,14 +1587,9 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-       SUBJECT MESSAGE
-    */
-
     if (message) {
 
         message.textContent =
-
             `📚 ${
                 topic.subject ||
                 "Subject"
@@ -1875,10 +1597,6 @@ function renderCurrentTopic() {
 
     }
 
-
-    /*
-       NEXT TOPIC
-    */
 
     const next =
         getNextIncompleteTopic(
@@ -1888,39 +1606,26 @@ function renderCurrentTopic() {
 
     if (nextMessage) {
 
-        if (next) {
+        nextMessage.innerHTML =
+            next
 
-            nextMessage.innerHTML =
+                ? `➡️ Next: <strong>${escapeHTML(
+                    next.subject
+                )}</strong> — ${escapeHTML(
+                    next.name
+                )}`
 
-                `➡️ Next: <strong>${
-                    escapeHTML(
-                        next.subject
-                    )
-                }</strong> — ${
-                    escapeHTML(
-                        next.name
-                    )
-                }`;
-
-        } else {
-
-            nextMessage.innerHTML =
-                "🏁 This is your final topic.";
-
-        }
+                : "🏁 This is your final topic.";
 
     }
 
 
     hideKnowledgeCheck();
-
 }
 
 
 /* =========================================================
    COMPLETE CURRENT TOPIC
-
-   THIS IS THE OTHER MAJOR FIX.
 ========================================================= */
 
 function completeCurrentTopic() {
@@ -1929,17 +1634,9 @@ function completeCurrentTopic() {
         getCurrentTopic();
 
 
-    if (!topic) {
-
-        return;
-
-    }
-
-
     if (
-        isCompleted(
-            topic
-        )
+        !topic ||
+        isCompleted(topic)
     ) {
 
         return;
@@ -1947,25 +1644,19 @@ function completeCurrentTopic() {
     }
 
 
+    /* =====================================================
+       MARK TOPIC AS COMPLETED
+    ===================================================== */
+
     const key =
-        topicKey(
-            topic
-        );
+        topicKey(topic);
 
-
-    /*
-       Store the subject::topic key.
-    */
 
     completedTopics =
         completedTopics.filter(
             value =>
-
-                value !==
-                topic.name &&
-
-                value !==
-                key
+                value !== topic.name &&
+                value !== key
         );
 
 
@@ -1974,37 +1665,48 @@ function completeCurrentTopic() {
     );
 
 
-    /*
-       Update streak.
-    */
+    /* =====================================================
+       SAVE READING COMPLETION
+       
+       THIS IS THE CONNECTION TO THE STREAK.
+       
+       Completing today's reading registers TODAY as
+       a study day.
 
-    localStorage.setItem(
+       Multiple topics completed on the same day do NOT
+       increase the streak multiple times.
+    ===================================================== */
 
-        LAST_STUDY_KEY,
+    if (
+        typeof window.registerStudyCompletion ===
+        "function"
+    ) {
 
-        new Date()
-            .toISOString()
-            .slice(
-                0,
-                10
-            )
+        window.registerStudyCompletion();
 
-    );
+    } else {
+
+        /*
+         * Fallback in case streak.js has not loaded.
+         */
+
+        const today =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
 
 
-    updateStudyStreak();
+        localStorage.setItem(
+            LAST_STUDY_KEY,
+            today
+        );
+
+    }
 
 
-    /*
-       FIND NEXT TOPIC.
-
-       Because allTopics is ordered by subject,
-       this automatically stays inside the current
-       subject until its topics are finished.
-
-       Once that subject has no incomplete topics,
-       it automatically enters the next subject.
-    */
+    /* =====================================================
+       FIND NEXT TOPIC
+    ===================================================== */
 
     const next =
         getNextIncompleteTopic(
@@ -2012,30 +1714,25 @@ function completeCurrentTopic() {
         );
 
 
-    if (next) {
-
-        currentTopicIndex =
-            allTopics.indexOf(
-                next
-            );
-
-    } else {
-
-        currentTopicIndex =
-            allTopics.length;
-
-    }
+    currentTopicIndex =
+        next
+            ? allTopics.indexOf(next)
+            : allTopics.length;
 
 
     saveCompletionState();
 
 
+    /* =====================================================
+       STOP TIMER
+    ===================================================== */
+
     stopTimer();
 
 
-    /*
-       Refresh dashboard.
-    */
+    /* =====================================================
+       UPDATE DASHBOARD
+    ===================================================== */
 
     renderCurrentTopic();
 
@@ -2045,6 +1742,8 @@ function completeCurrentTopic() {
 
     renderTopics();
 
+    renderDailyChallenge();
+
     renderSchedule();
 
     renderNextSession();
@@ -2052,20 +1751,13 @@ function completeCurrentTopic() {
     renderCalendar();
 
 
-    /*
-       Open the knowledge check for the topic
-       that was just studied.
-
-       The NEXT topic is already saved above.
-
-       Therefore after returning from the Knowledge
-       Check, the dashboard will display the next topic.
-    */
+    /* =====================================================
+       OPEN KNOWLEDGE CHECK
+    ===================================================== */
 
     openKnowledgeCheckPage(
         topic
     );
-
 }
 
 
@@ -2078,9 +1770,7 @@ function openKnowledgeCheckPage(
 ) {
 
     if (!topic) {
-
         return;
-
     }
 
 
@@ -2088,8 +1778,7 @@ function openKnowledgeCheckPage(
         Number(
             localStorage.getItem(
                 "studyMindKnowledgeCheckUsageCount"
-            ) ||
-            0
+            ) || 0
         );
 
 
@@ -2107,18 +1796,14 @@ function openKnowledgeCheckPage(
 
 
     writeJSON(
-
         KNOWLEDGE_TOPIC_KEY,
-
         {
 
             id:
                 topic.id,
 
             key:
-                topicKey(
-                    topic
-                ),
+                topicKey(topic),
 
             name:
                 topic.name,
@@ -2133,21 +1818,22 @@ function openKnowledgeCheckPage(
                 topic.description,
 
             checkId:
-
                 `${Date.now()}-${Math.random()
                     .toString(36)
                     .slice(2)}`
 
         }
-
     );
 
 
     window.location.href =
         "knowledge-check.html";
-
 }
 
+
+/* =========================================================
+   HIDE KNOWLEDGE CHECK
+========================================================= */
 
 function hideKnowledgeCheck() {
 
@@ -2161,26 +1847,17 @@ function hideKnowledgeCheck() {
             "none";
 
     }
-
 }
 
 
 /* =========================================================
-   FINAL COMPLETION POPUP
+   COMPLETION CELEBRATION
 ========================================================= */
 
 function maybeShowCompletionCelebration() {
 
     if (
-        !allTopics.length
-    ) {
-
-        return;
-
-    }
-
-
-    if (
+        !allTopics.length ||
         !allTopics.every(
             isCompleted
         )
@@ -2194,8 +1871,7 @@ function maybeShowCompletionCelebration() {
     if (
         localStorage.getItem(
             CELEBRATION_KEY
-        ) ===
-        "true"
+        ) === "true"
     ) {
 
         return;
@@ -2204,11 +1880,8 @@ function maybeShowCompletionCelebration() {
 
 
     localStorage.setItem(
-
         CELEBRATION_KEY,
-
         "true"
-
     );
 
 
@@ -2217,9 +1890,7 @@ function maybeShowCompletionCelebration() {
 
 
     if (old) {
-
         old.remove();
-
     }
 
 
@@ -2255,20 +1926,22 @@ function maybeShowCompletionCelebration() {
                     text-align:center;
                     padding:44px 28px;
                     border-radius:30px;
-                    background:
-                        linear-gradient(
-                            145deg,
-                            #18233d,
-                            #0b1220
-                        );
-                    border:
-                        1px solid
-                        rgba(255,255,255,.15);
+                    background:linear-gradient(
+                        145deg,
+                        #18233d,
+                        #0b1220
+                    );
+                    border:1px solid rgba(
+                        255,
+                        255,
+                        255,
+                        .15
+                    );
                     box-shadow:
                         0 35px 100px
                         rgba(0,0,0,.5);
                     animation:
-                        studyMindCelebrate
+                        smCelebrate
                         .4s
                         ease-out;
                 "
@@ -2284,7 +1957,6 @@ function maybeShowCompletionCelebration() {
                     🎉
                 </div>
 
-
                 <div
                     style="
                         font-size:12px;
@@ -2296,7 +1968,6 @@ function maybeShowCompletionCelebration() {
                     STUDYMIND AI
                 </div>
 
-
                 <h2
                     style="
                         font-size:32px;
@@ -2307,7 +1978,6 @@ function maybeShowCompletionCelebration() {
                     Congratulations! 🏆
                 </h2>
 
-
                 <p
                     style="
                         font-size:18px;
@@ -2317,17 +1987,11 @@ function maybeShowCompletionCelebration() {
                             0 0 28px;
                     "
                 >
-
-                    You have finished reading
-                    for today.
-
+                    You have finished reading for today.
                     <br>
-
                     Every subject and every topic
                     in your study plan is complete.
-
                 </p>
-
 
                 <button
                     id="closeStudyMindCelebration"
@@ -2343,35 +2007,23 @@ function maybeShowCompletionCelebration() {
 
         </div>
 
-
         <style>
-
-            @keyframes studyMindCelebrate {
+            @keyframes smCelebrate {
 
                 from {
-
                     opacity:0;
-
                     transform:
                         translateY(18px)
                         scale(.96);
-
                 }
 
                 to {
-
                     opacity:1;
-
-                    transform:
-                        translateY(0)
-                        scale(1);
-
+                    transform:none;
                 }
 
             }
-
         </style>
-
     `;
 
 
@@ -2380,13 +2032,12 @@ function maybeShowCompletionCelebration() {
     );
 
 
-    $("closeStudyMindCelebration")
-        ?.addEventListener(
-            "click",
-            () =>
-                overlay.remove()
-        );
-
+    $(
+        "closeStudyMindCelebration"
+    )?.addEventListener(
+        "click",
+        () => overlay.remove()
+    );
 }
 
 
@@ -2401,15 +2052,10 @@ function renderDailyChallenge() {
 
 
     const done =
-
         topic
 
-            ? isCompleted(
-                topic
-            ) &&
-              isQuestionCompleted(
-                topic
-            )
+            ? isCompleted(topic) &&
+              isQuestionCompleted(topic)
 
             : allTopics.length > 0 &&
               allTopics.every(
@@ -2458,7 +2104,6 @@ function renderDailyChallenge() {
 
 
     const progress =
-
         done
 
             ? 100
@@ -2477,7 +2122,7 @@ function renderDailyChallenge() {
 
         $("dailyChallengeProgress")
             .textContent =
-                `${progress}%`;
+            `${progress}%`;
 
     }
 
@@ -2488,7 +2133,7 @@ function renderDailyChallenge() {
 
         $("dailyChallengeProgressBar")
             .style.width =
-                `${progress}%`;
+            `${progress}%`;
 
     }
 
@@ -2499,10 +2144,9 @@ function renderDailyChallenge() {
 
         $("dailyChallengeButton")
             .disabled =
-                done;
+            done;
 
     }
-
 }
 
 
@@ -2519,8 +2163,7 @@ function formatTimer(
             Math.max(
                 0,
                 seconds
-            ) /
-            60
+            ) / 60
         );
 
 
@@ -2528,8 +2171,7 @@ function formatTimer(
         Math.max(
             0,
             seconds
-        ) %
-        60;
+        ) % 60;
 
 
     return `${String(
@@ -2543,33 +2185,6 @@ function formatTimer(
         2,
         "0"
     )}`;
-
-}
-
-
-function saveTimer() {
-
-    localStorage.setItem(
-
-        TIMER_SECONDS_KEY,
-
-        String(
-            timerSeconds
-        )
-
-    );
-
-
-    localStorage.setItem(
-
-        TIMER_DURATION_KEY,
-
-        String(
-            selectedTimerSeconds
-        )
-
-    );
-
 }
 
 
@@ -2581,9 +2196,9 @@ function renderTimer() {
 
         $("studyTimer")
             .textContent =
-                formatTimer(
-                    timerSeconds
-                );
+            formatTimer(
+                timerSeconds
+            );
 
     }
 
@@ -2594,7 +2209,7 @@ function renderTimer() {
 
         $("startTimerButton")
             .disabled =
-                timerRunning;
+            timerRunning;
 
     }
 
@@ -2605,7 +2220,7 @@ function renderTimer() {
 
         $("pauseTimerButton")
             .disabled =
-                !timerRunning;
+            !timerRunning;
 
     }
 
@@ -2616,13 +2231,31 @@ function renderTimer() {
 
         $("timerDuration")
             .value =
-                String(
-                    selectedTimerSeconds /
-                    60
-                );
+            String(
+                selectedTimerSeconds /
+                60
+            );
 
     }
+}
 
+
+function saveTimer() {
+
+    localStorage.setItem(
+        TIMER_SECONDS_KEY,
+        String(
+            timerSeconds
+        )
+    );
+
+
+    localStorage.setItem(
+        TIMER_DURATION_KEY,
+        String(
+            selectedTimerSeconds
+        )
+    );
 }
 
 
@@ -2649,13 +2282,11 @@ function startTimer() {
 
 
                 if (
-                    timerSeconds <=
-                    0
+                    timerSeconds <= 0
                 ) {
 
                     timerSeconds =
                         0;
-
 
                     stopTimer();
 
@@ -2672,13 +2303,11 @@ function startTimer() {
                 renderTimer();
 
             },
-
             1000
         );
 
 
     renderTimer();
-
 }
 
 
@@ -2706,14 +2335,12 @@ function pauseTimer() {
     saveTimer();
 
     renderTimer();
-
 }
 
 
 function stopTimer() {
 
     pauseTimer();
-
 }
 
 
@@ -2729,7 +2356,6 @@ function resetTimer() {
     saveTimer();
 
     renderTimer();
-
 }
 
 
@@ -2738,9 +2364,7 @@ function changeTimerDuration(
 ) {
 
     const value =
-        Number(
-            minutes
-        );
+        Number(minutes);
 
 
     if (
@@ -2755,18 +2379,14 @@ function changeTimerDuration(
 
 
     selectedTimerSeconds =
-        value *
-        60;
+        value * 60;
 
 
     timerSeconds =
         selectedTimerSeconds;
 
 
-    saveTimer();
-
-    renderTimer();
-
+    resetTimer();
 }
 
 
@@ -2774,36 +2394,19 @@ function changeTimerDuration(
    CALENDAR
 ========================================================= */
 
-function dateKey(
-    date
-) {
+function dateKey(date) {
 
-    return `${
-
-        date.getFullYear()
-
-    }-${
-
-        String(
-            date.getMonth() + 1
-        )
-            .padStart(
-                2,
-                "0"
-            )
-
-    }-${
-
-        String(
-            date.getDate()
-        )
-            .padStart(
-                2,
-                "0"
-            )
-
-    }`;
-
+    return `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+    ).padStart(
+        2,
+        "0"
+    )}-${String(
+        date.getDate()
+    ).padStart(
+        2,
+        "0"
+    )}`;
 }
 
 
@@ -2811,7 +2414,6 @@ function renderCalendar() {
 
     const month =
         $("calendarMonth");
-
 
     const days =
         $("calendarDays");
@@ -2830,23 +2432,19 @@ function renderCalendar() {
     const year =
         calendarDate.getFullYear();
 
-
     const monthIndex =
         calendarDate.getMonth();
 
 
     month.textContent =
-
         calendarDate.toLocaleString(
             "en-US",
             {
-
                 month:
                     "long",
 
                 year:
                     "numeric"
-
             }
         );
 
@@ -2911,23 +2509,21 @@ function renderCalendar() {
 
 
     for (
-        let day = 1;
-        day <= total;
-        day++
+        let d = 1;
+        d <= total;
+        d++
     ) {
 
         const date =
             new Date(
                 year,
                 monthIndex,
-                day
+                d
             );
 
 
         const key =
-            dateKey(
-                date
-            );
+            dateKey(date);
 
 
         const cell =
@@ -2941,14 +2537,11 @@ function renderCalendar() {
 
 
         cell.textContent =
-            String(
-                day
-            );
+            String(d);
 
 
         if (
-            key ===
-            today
+            key === today
         ) {
 
             cell.classList.add(
@@ -2959,17 +2552,13 @@ function renderCalendar() {
 
 
         /*
-           IMPORTANT:
-
-           Anything AFTER the exam date is
-           NOT a study day, rest day, test day
-           or exam day.
-        */
+         * After exam date there is NO
+         * study/rest/test/exam label.
+         */
 
         if (
             examKey &&
-            key >
-            examKey
+            key > examKey
         ) {
 
             cell.classList.add(
@@ -2987,17 +2576,11 @@ function renderCalendar() {
 
 
             continue;
-
         }
 
 
-        /*
-           EXAM DAY
-        */
-
         if (
-            key ===
-            examKey
+            key === examKey
         ) {
 
             cell.classList.add(
@@ -3010,27 +2593,15 @@ function renderCalendar() {
 
         }
 
-        /*
-           STUDY PERIOD
-        */
-
         else if (
-
             startKey &&
             key >= startKey &&
             key < examKey
-
         ) {
 
-            /*
-               Saturday + Sunday = rest.
-            */
-
             if (
-                date.getDay() ===
-                0 ||
-                date.getDay() ===
-                6
+                date.getDay() === 0 ||
+                date.getDay() === 6
             ) {
 
                 cell.classList.add(
@@ -3063,75 +2634,34 @@ function renderCalendar() {
         );
 
     }
-
 }
 
 
 function previousMonth() {
 
     calendarDate.setMonth(
-
-        calendarDate.getMonth() -
-        1
-
+        calendarDate.getMonth() - 1
     );
 
 
     renderCalendar();
-
 }
 
 
 function nextMonth() {
 
     calendarDate.setMonth(
-
-        calendarDate.getMonth() +
-        1
-
+        calendarDate.getMonth() + 1
     );
 
 
     renderCalendar();
-
 }
 
 
 /* =========================================================
    SCHEDULE
 ========================================================= */
-
-function formatClock(
-    hour
-) {
-
-    hour %=
-        24;
-
-
-    const period =
-        hour >= 12
-            ? "PM"
-            : "AM";
-
-
-    let h =
-        hour % 12;
-
-
-    if (
-        h === 0
-    ) {
-
-        h = 12;
-
-    }
-
-
-    return `${h}:00 ${period}`;
-
-}
-
 
 function renderSchedule() {
 
@@ -3140,9 +2670,7 @@ function renderSchedule() {
 
 
     if (!container) {
-
         return;
-
     }
 
 
@@ -3153,17 +2681,13 @@ function renderSchedule() {
     if (!topic) {
 
         container.innerHTML = `
-
             <div class="empty-schedule">
-
                 🎉 Your study plan is complete.
-
             </div>
-
         `;
 
-        return;
 
+        return;
     }
 
 
@@ -3179,80 +2703,89 @@ function renderSchedule() {
             String(
                 studyPlan?.startTime ||
                 "16:00"
-            )
-                .split(":")[0]
-        ) ||
-        16;
+            ).split(":")[0]
+        ) || 16;
 
 
     container.innerHTML =
+        Array.from(
+            {
+                length: hours
+            },
+            (
+                _,
+                i
+            ) => `
 
-        Array
-            .from(
-                {
-                    length:
-                        hours
-                }
-            )
+                <div class="schedule-card">
 
-            .map(
-                (
-                    _,
-                    index
-                ) => `
+                    <h4>
+                        ${escapeHTML(
+                            formatClock(
+                                startHour + i
+                            )
+                        )}
 
-                    <div class="schedule-card">
+                        -
 
-                        <h4>
+                        ${escapeHTML(
+                            formatClock(
+                                startHour + i + 1
+                            )
+                        )}
+                    </h4>
 
+                    <p>
+                        <strong>
                             ${escapeHTML(
-                                formatClock(
-                                    startHour +
-                                    index
-                                )
+                                topic.subject
                             )}
+                        </strong>
+                    </p>
 
-                            -
+                    <span>
+                        ${escapeHTML(
+                            topic.name
+                        )}
+                    </span>
 
-                            ${escapeHTML(
-                                formatClock(
-                                    startHour +
-                                    index +
-                                    1
-                                )
-                            )}
+                </div>
 
-                        </h4>
-
-
-                        <p>
-
-                            <strong>
-                                ${escapeHTML(
-                                    topic.subject
-                                )}
-                            </strong>
-
-                        </p>
-
-
-                        <span>
-
-                            ${escapeHTML(
-                                topic.name
-                            )}
-
-                        </span>
-
-                    </div>
-
-                `
-            )
-
-            .join("");
-
+            `
+        )
+        .join("");
 }
 
+
+function formatClock(
+    hour
+) {
+
+    hour %= 24;
+
+
+    const period =
+        hour >= 12
+            ? "PM"
+            : "AM";
+
+
+    let h =
+        hour % 12;
+
+
+    if (!h) {
+        h = 12;
+    }
+
+
+    return `${h}:00 ${period}`;
+}
+
+
+/* =========================================================
+   NEXT SESSION
+========================================================= */
 
 function renderNextSession() {
 
@@ -3266,11 +2799,8 @@ function renderNextSession() {
 
         $("nextBooking")
             .textContent =
-
             topic
-
                 ? topic.name
-
                 : "Complete";
 
     }
@@ -3282,116 +2812,16 @@ function renderNextSession() {
 
         $("nextBookingTime")
             .textContent =
-
             topic
-
                 ? topic.subject
-
                 : "All topics completed";
 
     }
-
 }
 
 
 /* =========================================================
-   STREAK
-========================================================= */
-
-function updateStudyStreak() {
-
-    const today =
-        new Date()
-            .toISOString()
-            .slice(
-                0,
-                10
-            );
-
-
-    const last =
-        localStorage.getItem(
-            LAST_STUDY_KEY
-        );
-
-
-    let streak =
-        Number(
-            localStorage.getItem(
-                STREAK_KEY
-            ) ||
-            0
-        );
-
-
-    if (
-        last ===
-        today
-    ) {
-
-        return;
-
-    }
-
-
-    if (last) {
-
-        const difference =
-
-            Math.round(
-
-                (
-
-                    new Date(
-                        `${today}T00:00:00`
-                    )
-
-                    -
-
-                    new Date(
-                        `${last}T00:00:00`
-                    )
-
-                ) /
-
-                86400000
-
-            );
-
-
-        streak =
-
-            difference === 1
-
-                ? streak + 1
-
-                : 1;
-
-    }
-
-    else {
-
-        streak =
-            1;
-
-    }
-
-
-    localStorage.setItem(
-
-        STREAK_KEY,
-
-        String(
-            streak
-        )
-
-    );
-
-}
-
-
-/* =========================================================
-   AI
+   AI QUESTION LIMIT
 ========================================================= */
 
 function aiCount() {
@@ -3399,17 +2829,13 @@ function aiCount() {
     const today =
         new Date()
             .toISOString()
-            .slice(
-                0,
-                10
-            );
+            .slice(0, 10);
 
 
     if (
         localStorage.getItem(
             AI_DATE_KEY
-        ) !==
-        today
+        ) !== today
     ) {
 
         localStorage.setItem(
@@ -3427,39 +2853,32 @@ function aiCount() {
 
 
     return Number(
-
         localStorage.getItem(
             AI_COUNT_KEY
-        ) ||
-        0
-
+        ) || 0
     );
-
 }
 
 
 function recordAIQuestion() {
 
     const count =
-        aiCount() +
-        1;
+        aiCount() + 1;
 
 
     localStorage.setItem(
-
         AI_COUNT_KEY,
-
-        String(
-            count
-        )
-
+        String(count)
     );
 
 
     return count;
-
 }
 
+
+/* =========================================================
+   PREMIUM MESSAGE
+========================================================= */
 
 function showPremiumMessage() {
 
@@ -3467,12 +2886,8 @@ function showPremiumMessage() {
         $("premiumModal");
 
 
-    if (
-        existing
-    ) {
-
+    if (existing) {
         existing.remove();
-
     }
 
 
@@ -3493,7 +2908,8 @@ function showPremiumMessage() {
                 position:fixed;
                 inset:0;
                 z-index:99998;
-                background:rgba(0,0,0,.7);
+                background:
+                    rgba(0,0,0,.7);
                 display:flex;
                 align-items:center;
                 justify-content:center;
@@ -3522,23 +2938,15 @@ function showPremiumMessage() {
                     💎
                 </div>
 
-
                 <h2>
                     StudyMind AI Premium
                 </h2>
 
-
                 <p>
-
-                    You've used your
-                    5 free AI questions
-                    for today.
-
-                    Premium features
-                    are coming soon.
-
+                    You've used your 5 free AI
+                    questions for today.
+                    Premium features are coming soon.
                 </p>
-
 
                 <button
                     id="closePremium"
@@ -3565,9 +2973,12 @@ function showPremiumMessage() {
             () =>
                 modal.remove()
         );
-
 }
 
+
+/* =========================================================
+   ASK AI
+========================================================= */
 
 async function askAI() {
 
@@ -3623,6 +3034,10 @@ async function askAI() {
 
     try {
 
+        const topic =
+            getCurrentTopic();
+
+
         const response =
             await fetch(
                 "/api/chat",
@@ -3632,10 +3047,8 @@ async function askAI() {
                         "POST",
 
                     headers: {
-
                         "Content-Type":
                             "application/json"
-
                     },
 
                     body:
@@ -3644,16 +3057,15 @@ async function askAI() {
                             message:
                                 question,
 
-                            question,
+                            question:
+                                question,
 
                             topic:
-                                getCurrentTopic()
-                                    ?.name ||
+                                topic?.name ||
                                 "",
 
                             subject:
-                                getCurrentTopic()
-                                    ?.subject ||
+                                topic?.subject ||
                                 ""
 
                         })
@@ -3671,10 +3083,8 @@ async function askAI() {
         ) {
 
             throw new Error(
-
                 data?.error ||
                 "AI request failed."
-
             );
 
         }
@@ -3684,29 +3094,17 @@ async function askAI() {
 
 
         output.textContent =
-
             data.reply ||
-
             data.answer ||
-
             data.message ||
-
             "I couldn't generate a response.";
 
-    }
-
-    catch (
-        error
-    ) {
+    } catch (error) {
 
         output.textContent =
-
-            `⚠️ ${
-                error.message
-            }`;
+            `⚠️ ${error.message}`;
 
     }
-
 }
 
 
@@ -3716,70 +3114,126 @@ async function askAI() {
 
 function initializeTheme() {
 
-    const saved =
+    const savedTheme =
         localStorage.getItem(
             THEME_KEY
-        ) ||
-        "dark";
+        ) || "light";
 
 
-    document.body.classList.toggle(
+    const isLight =
+        savedTheme === "light";
 
-        "dark-mode",
+    const isDark =
+        savedTheme === "dark";
 
-        saved ===
-        "dark"
 
+    document.documentElement.classList.toggle(
+        "light-mode",
+        isLight
     );
 
 
-    if (
-        $("themeButton")
-    ) {
+    document.documentElement.classList.toggle(
+        "dark-mode",
+        isDark
+    );
 
-        $("themeButton")
-            .textContent =
 
-            saved === "dark"
+    document.body.classList.toggle(
+        "light-mode",
+        isLight
+    );
 
-                ? "☀️ Light Mode"
 
-                : "🌙 Dark Mode";
+    document.body.classList.toggle(
+        "dark-mode",
+        isDark
+    );
 
-    }
 
+    document.documentElement.style.colorScheme =
+        isDark
+            ? "dark"
+            : "light";
+
+
+    updateThemeButton();
 }
 
 
 function toggleTheme() {
 
-    const dark =
+    const currentTheme =
+        localStorage.getItem(
+            THEME_KEY
+        ) || "light";
+
+
+    const newTheme =
+        currentTheme === "dark"
+            ? "light"
+            : "dark";
+
+
+    localStorage.setItem(
+        THEME_KEY,
+        newTheme
+    );
+
+
+    initializeTheme();
+}
+
+
+function updateThemeButton() {
+
+    const button =
+        $("themeButton");
+
+
+    if (!button) {
+        return;
+    }
+
+
+    const isDark =
         document.body.classList.contains(
             "dark-mode"
         );
 
 
-    localStorage.setItem(
+    button.textContent =
+        isDark
+            ? "☀️ Light Mode"
+            : "🌙 Dark Mode";
 
-        THEME_KEY,
 
-        dark
-            ? "light"
-            : "dark"
-
+    button.setAttribute(
+        "aria-label",
+        isDark
+            ? "Switch to Light Mode"
+            : "Switch to Dark Mode"
     );
 
 
-    initializeTheme();
-
+    button.setAttribute(
+        "title",
+        isDark
+            ? "Switch to Light Mode"
+            : "Switch to Dark Mode"
+    );
 }
 
 
 /* =========================================================
-   EVENTS
+   EVENT BINDING
 ========================================================= */
 
 function bindEvents() {
+
+    /* =====================================================
+       COMPLETE READING
+    ===================================================== */
 
     $("topicCompleteCheckbox")
         ?.addEventListener(
@@ -3797,6 +3251,10 @@ function bindEvents() {
             }
         );
 
+
+    /* =====================================================
+       TIMER
+    ===================================================== */
 
     $("startTimerButton")
         ?.addEventListener(
@@ -3829,6 +3287,10 @@ function bindEvents() {
         );
 
 
+    /* =====================================================
+       CALENDAR
+    ===================================================== */
+
     $("previousMonth")
         ?.addEventListener(
             "click",
@@ -3843,6 +3305,10 @@ function bindEvents() {
         );
 
 
+    /* =====================================================
+       AI
+    ===================================================== */
+
     $("askAIButton")
         ?.addEventListener(
             "click",
@@ -3850,42 +3316,79 @@ function bindEvents() {
         );
 
 
-    $("themeButton")
-        ?.addEventListener(
+    /* =====================================================
+       THEME
+    ===================================================== */
+
+    const themeButton =
+        $("themeButton");
+
+
+    if (
+        themeButton &&
+        themeButton.dataset.themeConnected !==
+            "true"
+    ) {
+
+        themeButton.dataset.themeConnected =
+            "true";
+
+
+        themeButton.addEventListener(
             "click",
             toggleTheme
         );
 
+    }
+
+
+    /* =====================================================
+       DAILY CHALLENGE
+    ===================================================== */
 
     $("dailyChallengeButton")
         ?.addEventListener(
             "click",
-            () =>
+            () => {
+
                 $("currentTopicSection")
                     ?.scrollIntoView({
                         behavior:
                             "smooth"
-                    })
+                    });
+
+            }
         );
 
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
 
     $("logoutButton")
         ?.addEventListener(
             "click",
             logoutStudyMind
         );
-
 }
 
 
 /* =========================================================
-   START DASHBOARD
+   DASHBOARD STARTUP
 ========================================================= */
 
 async function startDashboard() {
 
+    /* =====================================================
+       THEME
+    ===================================================== */
+
     initializeTheme();
 
+
+    /* =====================================================
+       LOAD STUDY PLAN
+    ===================================================== */
 
     if (
         !loadStudyPlan()
@@ -3899,8 +3402,16 @@ async function startDashboard() {
     }
 
 
+    /* =====================================================
+       LOAD COMPLETION STATE
+    ===================================================== */
+
     loadCompletionState();
 
+
+    /* =====================================================
+       AUTH
+    ===================================================== */
 
     const authenticated =
         await checkAuthentication();
@@ -3918,6 +3429,10 @@ async function startDashboard() {
     }
 
 
+    /* =====================================================
+       CHECK TOPICS
+    ===================================================== */
+
     if (
         !allTopics.length
     ) {
@@ -3930,8 +3445,16 @@ async function startDashboard() {
     }
 
 
+    /* =====================================================
+       TIMER VALIDATION
+    ===================================================== */
+
     if (
-        !TIMER_OPTIONS.includes(
+        ![
+            25,
+            45,
+            60
+        ].includes(
             selectedTimerSeconds /
             60
         )
@@ -3946,7 +3469,7 @@ async function startDashboard() {
     if (
         timerSeconds <= 0 ||
         timerSeconds >
-        selectedTimerSeconds
+            selectedTimerSeconds
     ) {
 
         timerSeconds =
@@ -3958,8 +3481,16 @@ async function startDashboard() {
     saveTimer();
 
 
+    /* =====================================================
+       EVENTS
+    ===================================================== */
+
     bindEvents();
 
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
 
     renderStats();
 
@@ -3983,7 +3514,7 @@ async function startDashboard() {
 
 
 /* =========================================================
-   GLOBALS
+   GLOBAL FUNCTIONS
 ========================================================= */
 
 window.openDashboard =
@@ -4051,8 +3582,12 @@ window.recordAIQuestion =
     recordAIQuestion;
 
 
+window.toggleTheme =
+    toggleTheme;
+
+
 /* =========================================================
-   START
+   INITIALIZE
 ========================================================= */
 
 if (
@@ -4065,10 +3600,9 @@ if (
         startDashboard
     );
 
-}
-
-else {
+} else {
 
     startDashboard();
 
 }
+
