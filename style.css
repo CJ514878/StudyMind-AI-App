@@ -4248,3 +4248,34 @@ SMALL MOBILE
     background: #f97316 !important;
     border-color: #f97316 !important;
 }
+/* =========================================================
+   CALENDAR DAY COLORS
+========================================================= */
+
+/* 🔵 STUDY DAYS */
+.calendar-day.study-day {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.45);
+    color: #3b82f6;
+}
+
+/* 🟣 REST DAYS — SATURDAY */
+.calendar-day.rest-day {
+    background: rgba(139, 92, 246, 0.18);
+    border-color: rgba(139, 92, 246, 0.55);
+    color: #a78bfa;
+}
+
+/* 🔴 EXAM DAY ALWAYS OVERRIDES REST DAY */
+.calendar-day.exam-day {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.55);
+    color: #f87171;
+}
+
+/* 🟠 TEST DAY */
+.calendar-day.test-day {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.55);
+    color: #fbbf24;
+}
