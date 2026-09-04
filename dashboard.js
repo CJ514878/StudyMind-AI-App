@@ -36,6 +36,9 @@
    - Timer persistence
    - Study streak
    - Calendar
+   - Blue study days
+   - Purple Saturday rest days
+   - Saturday exam overrides rest day
    - Schedule
    - AI progress analysis
    - Ask StudyMind AI
@@ -55,6 +58,8 @@ const FREE_QUESTION_LIMIT = 5;
 const KNOWLEDGE_CHECK_COUNT = 5;
 
 const KNOWLEDGE_CHECK_PASS_PERCENTAGE = 60;
+
+const KNOWLEDGE_CHECK_LIMIT = 5;
 
 const TIMER_OPTIONS = [25, 45, 60];
 
@@ -932,18 +937,6 @@ function normalizePlan(
 
     /* =====================================================
        TOP-LEVEL TOPICS
-
-       script.js normally stores:
-
-       topics: [...]
-
-       not:
-
-       subjects: [
-           {
-               topics: [...]
-           }
-       ]
     ===================================================== */
 
     if (
@@ -1244,10 +1237,6 @@ function saveCompletionState() {
 
 /* =========================================================
    PROGRESS
-
-   A topic is considered fully complete
-   only after the Knowledge Check has been
-   completed successfully.
 ========================================================= */
 
 function getProgress() {
@@ -1561,11 +1550,6 @@ function renderGreeting() {
     }
 
 
-    /*
-     * Support common alternative IDs
-     * without requiring HTML changes.
-     */
-
     const alternatives = [
 
         "welcomeMessage",
@@ -1786,10 +1770,6 @@ function renderTopics() {
             .join("");
 
 
-    /*
-     * Allow users to select a topic.
-     */
-
     const topicItems =
         elements.topicList.querySelectorAll(
             "[data-topic-index]"
@@ -1923,7 +1903,6 @@ function renderCurrentTopic() {
 
         hideDashboardKnowledgeCheck();
 
-
         return;
     }
 
@@ -1988,14 +1967,6 @@ function renderCurrentTopic() {
         elements.topicCompleteCheckbox
     ) {
 
-        /*
-         * If the Knowledge Check has already
-         * been passed, the checkbox stays checked.
-         *
-         * Otherwise the user can check it to
-         * launch the Knowledge Check.
-         */
-
         elements.topicCompleteCheckbox.disabled =
             completed;
 
@@ -2057,32 +2028,12 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-     * IMPORTANT:
-     *
-     * The dashboard no longer generates
-     * Knowledge Check questions.
-     *
-     * The dedicated knowledge-check.html
-     * page handles that.
-     */
-
     hideDashboardKnowledgeCheck();
 }
 
 
 /* =========================================================
    KNOWLEDGE CHECK — DEDICATED PAGE
-
-   THIS IS THE IMPORTANT FIX.
-
-   The dashboard only:
-   1. Saves the topic.
-   2. Stops the timer.
-   3. Updates study streak.
-   4. Redirects to knowledge-check.html.
-
-   It does NOT mark the topic fully complete.
 ========================================================= */
 
 function openKnowledgeCheckPage(
@@ -2120,13 +2071,6 @@ function openKnowledgeCheckPage(
     }
 
 
-    /*
-     * Check the global free Knowledge Check limit.
-     *
-     * The actual Knowledge Check page also
-     * checks this limit.
-     */
-
     const usageCount =
         Number(
             localStorage.getItem(
@@ -2145,11 +2089,6 @@ function openKnowledgeCheckPage(
         return;
     }
 
-
-    /*
-     * Build EXACTLY the data expected by
-     * knowledge-check.js.
-     */
 
     const topicData = {
 
@@ -2208,11 +2147,6 @@ function openKnowledgeCheckPage(
         );
 
 
-        /*
-         * Also save the current topic index
-         * so the dashboard knows where to return.
-         */
-
         localStorage.setItem(
             CURRENT_TOPIC_KEY,
             String(
@@ -2221,21 +2155,11 @@ function openKnowledgeCheckPage(
         );
 
 
-        /*
-         * Record that the student finished
-         * the STUDY portion.
-         *
-         * We deliberately DO NOT put the
-         * topic in completedTopics here.
-         *
-         * The topic becomes fully completed
-         * after the Knowledge Check passes.
-         */
-
         localStorage.setItem(
             LAST_STUDY_DATE_KEY,
             todayKey()
         );
+
 
         localStorage.setItem(
             LAST_STUDY_DATE_COMPATIBILITY_KEY,
@@ -2246,20 +2170,8 @@ function openKnowledgeCheckPage(
         updateStreak();
 
 
-        /*
-         * Stop the study timer.
-         */
-
         stopTimer();
 
-
-        /*
-         * Redirect to the dedicated page.
-         *
-         * Use replace rather than opening a new
-         * tab/window. This makes the intended flow
-         * clear and prevents popup blockers.
-         */
 
         window.location.assign(
             "knowledge-check.html"
@@ -2280,11 +2192,6 @@ function openKnowledgeCheckPage(
 }
 
 
-/*
- * Expose globally so buttons or other scripts
- * can call it.
- */
-
 window.openKnowledgeCheckPage =
     openKnowledgeCheckPage;
 
@@ -2292,9 +2199,6 @@ window.openKnowledgeCheckPage =
 /* =========================================================
    KNOWLEDGE CHECK LIMIT
 ========================================================= */
-
-const KNOWLEDGE_CHECK_LIMIT = 5;
-
 
 function showPremiumKnowledgeCheckMessage() {
 
@@ -2347,8 +2251,6 @@ function showPremiumKnowledgeCheckMessage() {
 
 /* =========================================================
    DASHBOARD KNOWLEDGE CHECK HIDDEN
-
-   Kept for compatibility with older dashboard HTML.
 ========================================================= */
 
 function hideDashboardKnowledgeCheck() {
@@ -2369,14 +2271,6 @@ function hideDashboardKnowledgeCheck() {
 
 function showKnowledgeCheck(topic) {
 
-    /*
-     * Compatibility wrapper.
-     *
-     * IMPORTANT:
-     * This no longer generates questions
-     * inside dashboard.
-     */
-
     openKnowledgeCheckPage(
         topic
     );
@@ -2389,9 +2283,6 @@ window.showKnowledgeCheck =
 
 /* =========================================================
    LEGACY GENERATE FUNCTION
-
-   Any old dashboard code that calls this
-   will now open the dedicated page.
 ========================================================= */
 
 function generateTopicQuestions(
@@ -2427,8 +2318,6 @@ window.generateTopicQuestions =
 
 /* =========================================================
    TOPIC COMPLETION HANDLER
-
-   THIS IS THE MAIN BUTTON / CHECKBOX FIX.
 ========================================================= */
 
 function completeCurrentTopic() {
@@ -2451,10 +2340,6 @@ function completeCurrentTopic() {
     }
 
 
-    /*
-     * If already completed, do nothing.
-     */
-
     if (
         isTopicCompleted(
             topic
@@ -2473,11 +2358,6 @@ function completeCurrentTopic() {
     }
 
 
-    /*
-     * Only react when the user actually
-     * checks the checkbox.
-     */
-
     if (
         !elements.topicCompleteCheckbox ||
         !elements.topicCompleteCheckbox.checked
@@ -2485,13 +2365,6 @@ function completeCurrentTopic() {
 
         return;
     }
-
-
-    /*
-     * DO NOT mark the topic as completed here.
-     *
-     * The Knowledge Check must be passed first.
-     */
 
 
     if (
@@ -2502,11 +2375,6 @@ function completeCurrentTopic() {
             "Opening your 5-question Knowledge Check...";
     }
 
-
-    /*
-     * Give the UI a tiny moment to register
-     * the checkbox before redirecting.
-     */
 
     openKnowledgeCheckPage(
         topic
@@ -2519,13 +2387,7 @@ window.completeCurrentTopic =
 
 
 /* =========================================================
-   UNCHECK HANDLER
-
-   Because checking launches the page immediately,
-   the user normally never gets a chance to
-   uncheck it.
-
-   This is kept safe for compatibility.
+   UNCHECK / CHECK HANDLER
 ========================================================= */
 
 function handleTopicCompletionChange() {
@@ -2576,14 +2438,12 @@ function updateStreak() {
     }
 
 
-    /*
-     * Already counted today.
-     */
-
     if (
         lastStudyDate ===
         today
     ) {
+
+        renderStreak();
 
         return;
     }
@@ -2958,10 +2818,6 @@ function updateTimerDisplay() {
     }
 
 
-    /*
-     * Support alternative timer displays.
-     */
-
     [
         "timerDisplay",
         "studyTimerDisplay",
@@ -3030,11 +2886,6 @@ function syncTimerDurationControl() {
         );
 
 
-    /*
-     * If the control is a SELECT,
-     * select the matching option.
-     */
-
     if (
         elements.timerDuration.tagName ===
         "SELECT"
@@ -3096,11 +2947,6 @@ function handleTimerDurationChange() {
         );
 
 
-    /*
-     * Some existing HTML may use
-     * text such as "25 minutes".
-     */
-
     if (
         !Number.isFinite(minutes)
     ) {
@@ -3132,11 +2978,6 @@ function handleTimerDurationChange() {
         return;
     }
 
-
-    /*
-     * Keep timer choices professional
-     * and restricted to 25 / 45 / 60.
-     */
 
     if (
         !TIMER_OPTIONS.includes(
@@ -3627,11 +3468,38 @@ function restoreTimerState() {
     updateTimerDisplay();
 
     updateTimerButtons();
+
+    syncTimerDurationControl();
 }
 
 
 /* =========================================================
    CALENDAR
+========================================================= */
+
+/*
+   CALENDAR DAY RULES
+
+   Monday-Friday:
+   🔵 STUDY DAY
+
+   Saturday:
+   🟣 REST DAY
+
+   Exam day:
+   🔴 EXAM DAY
+
+   IMPORTANT:
+   Exam day ALWAYS overrides the Saturday
+   rest-day rule.
+
+   Therefore:
+
+   Saturday + No Exam = Purple Rest Day
+
+   Saturday + Exam = Exam Day
+
+   Normal weekday = Blue Study Day
 ========================================================= */
 
 function renderCalendar() {
@@ -3719,6 +3587,47 @@ function renderCalendar() {
         todayKey();
 
 
+    /*
+     * Get exam date safely.
+     */
+
+    let examDateKey = "";
+
+
+    if (
+        studyPlan &&
+        studyPlan.examDate
+    ) {
+
+        const examDate =
+            new Date(
+                studyPlan.examDate
+            );
+
+
+        if (
+            !Number.isNaN(
+                examDate.getTime()
+            )
+        ) {
+
+            examDateKey =
+                formatDateKey(
+                    examDate
+                );
+        }
+    }
+
+
+    /*
+     * Get any test dates that may exist
+     * in the study plan.
+     */
+
+    const testDateKeys =
+        getCalendarTestDateKeys();
+
+
     for (
         let day = 1;
         day <= totalDays;
@@ -3739,19 +3648,67 @@ function renderCalendar() {
             );
 
 
+        const weekday =
+            date.getDay();
+
+
         const isToday =
             key === today;
 
 
-        const isExam =
-            studyPlan &&
-            studyPlan.examDate &&
-            formatDateKey(
-                new Date(
-                    studyPlan.examDate
-                )
-            ) === key;
+        /*
+         * EXAM HAS HIGHEST PRIORITY.
+         */
 
+        const isExam =
+            key === examDateKey;
+
+
+        /*
+         * TEST HAS SECOND PRIORITY.
+         */
+
+        const isTest =
+            !isExam &&
+            testDateKeys.has(
+                key
+            );
+
+
+        /*
+         * Saturday is always the default
+         * rest day unless there is an exam.
+         */
+
+        const isSaturday =
+            weekday === 6;
+
+
+        const isRestDay =
+            !isExam &&
+            !isTest &&
+            isSaturday;
+
+
+        /*
+         * Normal weekdays are study days.
+         */
+
+        const isStudyDay =
+            !isExam &&
+            !isTest &&
+            !isRestDay;
+
+
+        /*
+         * Build classes.
+         *
+         * These classes allow style.css to make:
+         *
+         * .study-day = blue
+         * .rest-day  = purple
+         * .exam-day  = exam styling
+         */
 
         const classes = [
 
@@ -3759,6 +3716,18 @@ function renderCalendar() {
 
             isToday
                 ? "today"
+                : "",
+
+            isStudyDay
+                ? "study-day"
+                : "",
+
+            isRestDay
+                ? "rest-day"
+                : "",
+
+            isTest
+                ? "test-day"
                 : "",
 
             isExam
@@ -3770,22 +3739,56 @@ function renderCalendar() {
             .join(" ");
 
 
+        /*
+         * Day label.
+         */
+
+        let label = "";
+
+
+        if (isExam) {
+
+            label =
+                `<small>EXAM</small>`;
+
+        } else if (isTest) {
+
+            label =
+                `<small>TEST</small>`;
+
+        } else if (isRestDay) {
+
+            label =
+                `<small>REST</small>`;
+
+        } else if (isStudyDay) {
+
+            label =
+                `<small>STUDY</small>`;
+        }
+
+
         html += `
 
             <div
                 class="${classes}"
                 data-date="${key}"
+                data-day-type="${
+                    isExam
+                        ? "exam"
+                        : isTest
+                            ? "test"
+                            : isRestDay
+                                ? "rest"
+                                : "study"
+                }"
             >
 
                 <span>
                     ${day}
                 </span>
 
-                ${
-                    isExam
-                        ? `<small>EXAM</small>`
-                        : ""
-                }
+                ${label}
 
             </div>
 
@@ -3797,6 +3800,213 @@ function renderCalendar() {
         html;
 }
 
+
+/* =========================================================
+   CALENDAR TEST DATE HELPERS
+========================================================= */
+
+function getCalendarTestDateKeys() {
+
+    const keys =
+        new Set();
+
+
+    if (!studyPlan) {
+        return keys;
+    }
+
+
+    const possibleContainers = [
+
+        studyPlan.testDate,
+
+        studyPlan.test_date,
+
+        studyPlan.testDates,
+
+        studyPlan.test_dates,
+
+        studyPlan.tests,
+
+        studyPlan.testDays,
+
+        studyPlan.test_days
+
+    ];
+
+
+    possibleContainers.forEach(
+        value => {
+
+            addCalendarDateValues(
+                value,
+                keys
+            );
+        }
+    );
+
+
+    return keys;
+}
+
+
+/* =========================================================
+   ADD CALENDAR DATE VALUES
+========================================================= */
+
+function addCalendarDateValues(
+    value,
+    keys
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return;
+    }
+
+
+    /*
+     * Direct date string.
+     */
+
+    if (
+        typeof value === "string"
+    ) {
+
+        const cleaned =
+            cleanText(value);
+
+
+        if (!cleaned) {
+            return;
+        }
+
+
+        const date =
+            new Date(
+                cleaned
+            );
+
+
+        if (
+            !Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            keys.add(
+                formatDateKey(
+                    date
+                )
+            );
+        }
+
+
+        return;
+    }
+
+
+    /*
+     * Date object.
+     */
+
+    if (
+        value instanceof Date
+    ) {
+
+        if (
+            !Number.isNaN(
+                value.getTime()
+            )
+        ) {
+
+            keys.add(
+                formatDateKey(
+                    value
+                )
+            );
+        }
+
+
+        return;
+    }
+
+
+    /*
+     * Arrays.
+     */
+
+    if (
+        Array.isArray(value)
+    ) {
+
+        value.forEach(
+            item => {
+
+                addCalendarDateValues(
+                    item,
+                    keys
+                );
+            }
+        );
+
+
+        return;
+    }
+
+
+    /*
+     * Objects containing dates.
+     */
+
+    if (
+        typeof value === "object"
+    ) {
+
+        const possibleDateValues = [
+
+            value.date,
+
+            value.testDate,
+
+            value.test_date,
+
+            value.examDate,
+
+            value.exam_date,
+
+            value.day,
+
+            value.datetime,
+
+            value.dateTime
+
+        ];
+
+
+        possibleDateValues.forEach(
+            dateValue => {
+
+                if (
+                    dateValue
+                ) {
+
+                    addCalendarDateValues(
+                        dateValue,
+                        keys
+                    );
+                }
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   SCHEDULE
+========================================================= */
 
 function renderSchedule() {
 
@@ -4160,11 +4370,6 @@ async function askStudyMindAI() {
     }
 
 
-    /*
-     * Count the question only when
-     * we actually send the request.
-     */
-
     recordAIQuestion();
 
 
@@ -4353,11 +4558,6 @@ Keep the response concise and readable.
 
 
     } catch (error) {
-
-        /*
-         * Give the question back if the API
-         * request failed.
-         */
 
         const count =
             getAIQuestionCount();
@@ -5027,10 +5227,7 @@ function bindEvents() {
 
 
     /*
-     * THIS IS THE CRITICAL EVENT.
-     *
-     * Checking the checkbox sends the user
-     * to the separate Knowledge Check page.
+     * Knowledge Check
      */
 
     if (
@@ -5242,7 +5439,8 @@ async function initializeDashboard() {
 
 
     /*
-     * Safety: only allow 25 / 45 / 60.
+     * Safety:
+     * only allow 25 / 45 / 60.
      */
 
     const selectedMinutes =
