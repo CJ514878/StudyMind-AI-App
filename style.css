@@ -4540,3 +4540,84 @@ html {
 html.light-mode {
     background: #f7f9fc;
 }
+/* =========================================================
+   STUDYMIND AI — TODAY'S FOCUS AI THEME FIX
+========================================================= */
+
+/* LIGHT MODE */
+body.light-mode .today-focus,
+body.light-mode .focus-card,
+body.light-mode .today-focus-card,
+body.light-mode .personalized-study-plan {
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-color: #e1e6ef !important;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* LIGHT MODE TEXT */
+body.light-mode .today-focus h1,
+body.light-mode .today-focus h2,
+body.light-mode .today-focus h3,
+body.light-mode .today-focus h4,
+body.light-mode .today-focus p,
+body.light-mode .today-focus span,
+body.light-mode .focus-card h1,
+body.light-mode .focus-card h2,
+body.light-mode .focus-card h3,
+body.light-mode .focus-card h4,
+body.light-mode .focus-card p,
+body.light-mode .focus-card span {
+    color: #172033 !important;
+}
+
+
+/* DARK MODE */
+body.dark-mode .today-focus,
+body.dark-mode .focus-card,
+body.dark-mode .today-focus-card,
+body.dark-mode .personalized-study-plan {
+    background: #111c31 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    box-shadow: none !important;
+}
+
+/* DARK MODE TEXT */
+body.dark-mode .today-focus h1,
+body.dark-mode .today-focus h2,
+body.dark-mode .today-focus h3,
+body.dark-mode .today-focus h4,
+body.dark-mode .today-focus p,
+body.dark-mode .today-focus span,
+body.dark-mode .focus-card h1,
+body.dark-mode .focus-card h2,
+body.dark-mode .focus-card h3,
+body.dark-mode .focus-card h4,
+body.dark-mode .focus-card p,
+body.dark-mode .focus-card span {
+    color: #f8fafc !important;
+}
+
+
+/* =========================================================
+   SUBJECT PROGRESS ROWS
+========================================================= */
+
+body.light-mode .today-focus .subject,
+body.light-mode .today-focus .subject-row,
+body.light-mode .focus-card .subject,
+body.light-mode .focus-card .subject-row {
+    background: #f7f9fc !important;
+    color: #172033 !important;
+    border-color: #e1e6ef !important;
+}
+
+body.dark-mode .today-focus .subject,
+body.dark-mode .today-focus .subject-row,
+body.dark-mode .focus-card .subject,
+body.dark-mode .focus-card .subject-row {
+    background: #0b1220 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
