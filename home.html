@@ -61,6 +61,123 @@
 .topic-difficulty-row select{
     min-width:130px;
 }
+
+
+/* =========================================================
+   PREMIUM CTA — HOME PAGE
+========================================================= */
+
+.premium-cta-section {
+    padding: 90px 24px;
+}
+
+.premium-cta-card {
+    position: relative;
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 56px 48px;
+    border-radius: 30px;
+    overflow: hidden;
+    text-align: center;
+    background: linear-gradient(135deg, #111827 0%, #172554 55%, #1e1b4b 100%);
+    border: 1px solid rgba(129, 140, 248, .32);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+}
+
+.premium-cta-card::before,
+.premium-cta-card::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(129, 140, 248, .13);
+    filter: blur(8px);
+}
+
+.premium-cta-card::before {
+    top: -110px;
+    left: -80px;
+}
+
+.premium-cta-card::after {
+    right: -90px;
+    bottom: -120px;
+}
+
+.premium-cta-content {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.premium-cta-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .16);
+    font-size: 34px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, .18);
+}
+
+.premium-cta-card .eyebrow {
+    color: #c7d2fe;
+}
+
+.premium-cta-card h2 {
+    margin: 12px 0 14px;
+    color: #ffffff;
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.premium-cta-card p {
+    margin: 0 auto 28px;
+    color: rgba(255, 255, 255, .78);
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+.premium-cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 210px;
+    padding: 15px 26px;
+    border: 0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .20);
+}
+
+.premium-cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .28);
+}
+
+@media (max-width: 640px) {
+    .premium-cta-section {
+        padding: 64px 18px;
+    }
+
+    .premium-cta-card {
+        padding: 42px 24px;
+        border-radius: 24px;
+    }
+}
+
 </style>
 
 </head>
@@ -185,13 +302,7 @@
             >
                 Explore Features
             </a>
-<a
-    href="#"
-    id="premiumButton"
-    class="secondary-button"
->
-    💎 Explore Premium
-</a>
+
         </div>
 
     </div>
@@ -731,6 +842,41 @@
 
 </main>
 
+
+
+
+<!-- =========================
+     PREMIUM CTA
+========================= -->
+<section class="premium-cta-section" id="premium">
+    <div class="premium-cta-card">
+        <div class="premium-cta-content">
+            <div class="premium-cta-icon">💎</div>
+
+            <span class="eyebrow">
+                STUDYMIND PREMIUM
+            </span>
+
+            <h2>
+                Take your studying further.
+            </h2>
+
+            <p>
+                Unlock more powerful StudyMind AI features,
+                deeper study support and more ways to stay
+                on top of your preparation.
+            </p>
+
+            <button
+                id="premiumButton"
+                class="premium-cta-button"
+                type="button"
+            >
+                💎 Explore Premium <span aria-hidden="true">→</span>
+            </button>
+        </div>
+    </div>
+</section>
 
 
 <!-- =========================
