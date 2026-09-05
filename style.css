@@ -4621,3 +4621,717 @@ body.dark-mode .focus-card .subject-row {
     color: #f8fafc !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
 }
+/* =========================================================
+   STUDYMIND PREMIUM — GOLD EXPERIENCE
+========================================================= */
+
+:root {
+    --premium-gold: #f5c451;
+    --premium-gold-light: #ffe7a3;
+    --premium-gold-dark: #b8860b;
+    --premium-gold-glow: rgba(245, 196, 81, 0.25);
+}
+
+
+/* =========================================================
+   PREMIUM GLOBAL THEME
+========================================================= */
+
+html.study-mind-premium,
+body.study-mind-premium {
+
+    --primary-color: #d9a928;
+    --primary: #d9a928;
+    --accent: #f5c451;
+
+}
+
+
+body.study-mind-premium {
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(245, 196, 81, 0.08),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            rgba(217, 169, 40, 0.06),
+            transparent 35%
+        );
+}
+
+
+/* =========================================================
+   PREMIUM NAVIGATION
+========================================================= */
+
+body.study-mind-premium nav,
+body.study-mind-premium .navbar,
+body.study-mind-premium .nav-bar {
+
+    border-bottom-color:
+        rgba(245, 196, 81, 0.35);
+
+}
+
+
+body.study-mind-premium nav a:hover,
+body.study-mind-premium .navbar a:hover {
+
+    color:
+        var(--premium-gold) !important;
+}
+
+
+/* =========================================================
+   PREMIUM BUTTONS
+========================================================= */
+
+body.study-mind-premium
+button.primary-button,
+body.study-mind-premium
+button.primary-button:hover {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #f5c451,
+            #d9a928
+        );
+
+    color:
+        #17120a;
+
+    border-color:
+        rgba(255, 231, 163, 0.6);
+
+    box-shadow:
+        0 8px 28px
+        rgba(245, 196, 81, 0.22);
+}
+
+
+/* =========================================================
+   PREMIUM CARDS
+========================================================= */
+
+body.study-mind-premium
+.card,
+body.study-mind-premium
+.dashboard-card,
+body.study-mind-premium
+.feature-card {
+
+    border-color:
+        rgba(245, 196, 81, 0.22);
+
+}
+
+
+body.study-mind-premium
+.card:hover,
+body.study-mind-premium
+.dashboard-card:hover,
+body.study-mind-premium
+.feature-card:hover {
+
+    border-color:
+        rgba(245, 196, 81, 0.45);
+
+    box-shadow:
+        0 12px 35px
+        rgba(245, 196, 81, 0.10);
+}
+
+
+/* =========================================================
+   PREMIUM BADGE
+========================================================= */
+
+.study-mind-premium-badge {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    gap:
+        6px;
+
+    padding:
+        6px 12px;
+
+    border-radius:
+        999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8f6810,
+            #f5c451
+        );
+
+    color:
+        #17120a;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.08em;
+
+    box-shadow:
+        0 5px 18px
+        rgba(245, 196, 81, 0.22);
+}
+
+
+/* =========================================================
+   PREMIUM MODAL
+========================================================= */
+
+.sm-premium-overlay {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        999999;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        20px;
+
+    background:
+        rgba(3, 7, 18, 0.78);
+
+    backdrop-filter:
+        blur(12px);
+}
+
+
+.sm-premium-modal {
+
+    position:
+        relative;
+
+    width:
+        min(680px, 100%);
+
+    max-height:
+        calc(100vh - 40px);
+
+    overflow-y:
+        auto;
+
+    padding:
+        34px;
+
+    border:
+        1px solid
+        rgba(245, 196, 81, 0.35);
+
+    border-radius:
+        26px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #101827,
+            #0b1220
+        );
+
+    color:
+        #ffffff;
+
+    box-shadow:
+        0 30px 100px
+        rgba(0, 0, 0, 0.55),
+        0 0 60px
+        rgba(245, 196, 81, 0.10);
+}
+
+
+.sm-premium-close {
+
+    position:
+        absolute;
+
+    top:
+        16px;
+
+    right:
+        18px;
+
+    width:
+        38px;
+
+    height:
+        38px;
+
+    border:
+        0;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(255,255,255,0.08);
+
+    color:
+        #ffffff;
+
+    font-size:
+        25px;
+
+    cursor:
+        pointer;
+}
+
+
+.sm-premium-crown {
+
+    width:
+        70px;
+
+    height:
+        70px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    margin:
+        0 auto 14px;
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8f6810,
+            #f5c451,
+            #ffe7a3
+        );
+
+    font-size:
+        34px;
+
+    box-shadow:
+        0 12px 35px
+        rgba(245, 196, 81, 0.25);
+}
+
+
+.sm-premium-eyebrow {
+
+    text-align:
+        center;
+
+    color:
+        var(--premium-gold);
+
+    font-size:
+        12px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.16em;
+
+    margin-bottom:
+        8px;
+}
+
+
+.sm-premium-modal h2 {
+
+    margin:
+        0;
+
+    text-align:
+        center;
+
+    font-size:
+        clamp(28px, 5vw, 42px);
+}
+
+
+.sm-premium-subtitle {
+
+    max-width:
+        560px;
+
+    margin:
+        12px auto 25px;
+
+    text-align:
+        center;
+
+    color:
+        rgba(255,255,255,0.68);
+
+    line-height:
+        1.65;
+}
+
+
+/* =========================================================
+   PREMIUM FEATURES
+========================================================= */
+
+.sm-premium-features {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap:
+        12px;
+}
+
+
+.sm-premium-feature {
+
+    display:
+        flex;
+
+    gap:
+        12px;
+
+    padding:
+        15px;
+
+    border:
+        1px solid
+        rgba(245,196,81,0.12);
+
+    border-radius:
+        16px;
+
+    background:
+        rgba(255,255,255,0.035);
+}
+
+
+.sm-premium-feature > span {
+
+    font-size:
+        24px;
+}
+
+
+.sm-premium-feature strong {
+
+    display:
+        block;
+
+    margin-bottom:
+        4px;
+}
+
+
+.sm-premium-feature small {
+
+    display:
+        block;
+
+    color:
+        rgba(255,255,255,0.58);
+
+    line-height:
+        1.45;
+}
+
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+.sm-premium-divider {
+
+    height:
+        1px;
+
+    margin:
+        25px 0;
+
+    background:
+        rgba(255,255,255,0.10);
+}
+
+
+.sm-premium-modal h3 {
+
+    margin:
+        0 0 14px;
+
+    text-align:
+        center;
+}
+
+
+.sm-payment-options {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap:
+        10px;
+}
+
+
+.sm-payment-button {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        8px;
+
+    min-height:
+        70px;
+
+    padding:
+        12px;
+
+    border:
+        1px solid
+        rgba(245,196,81,0.18);
+
+    border-radius:
+        15px;
+
+    background:
+        rgba(255,255,255,0.045);
+
+    color:
+        #ffffff;
+
+    cursor:
+        pointer;
+
+    transition:
+        0.2s ease;
+}
+
+
+.sm-payment-button:hover {
+
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(245,196,81,0.55);
+
+    background:
+        rgba(245,196,81,0.08);
+
+}
+
+
+.sm-payment-button:disabled {
+
+    opacity:
+        0.55;
+
+    cursor:
+        wait;
+
+}
+
+
+.sm-payment-button > span:first-child {
+
+    font-size:
+        22px;
+}
+
+
+.sm-payment-button strong,
+.sm-payment-button small {
+
+    display:
+        block;
+}
+
+
+.sm-payment-button small {
+
+    margin-top:
+        3px;
+
+    color:
+        rgba(255,255,255,0.5);
+
+}
+
+
+.sm-premium-payment-status {
+
+    min-height:
+        22px;
+
+    margin-top:
+        14px;
+
+    text-align:
+        center;
+
+    font-size:
+        14px;
+}
+
+
+.sm-premium-payment-status.loading {
+
+    color:
+        var(--premium-gold);
+}
+
+
+.sm-premium-payment-status.error {
+
+    color:
+        #ff7b7b;
+}
+
+
+.sm-premium-secure {
+
+    margin:
+        15px 0 0;
+
+    text-align:
+        center;
+
+    color:
+        rgba(255,255,255,0.45);
+
+    font-size:
+        12px;
+}
+
+
+/* =========================================================
+   PREMIUM ACTIVE
+========================================================= */
+
+.sm-premium-active-list {
+
+    display:
+        grid;
+
+    gap:
+        9px;
+
+    margin:
+        25px 0;
+
+    padding:
+        18px;
+
+    border-radius:
+        16px;
+
+    background:
+        rgba(245,196,81,0.07);
+
+    color:
+        rgba(255,255,255,0.82);
+}
+
+
+.sm-premium-main-button {
+
+    width:
+        100%;
+
+    padding:
+        15px;
+
+    border:
+        0;
+
+    border-radius:
+        13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #f5c451
+        );
+
+    color:
+        #17120a;
+
+    font-weight:
+        800;
+
+    font-size:
+        15px;
+
+    cursor:
+        pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .sm-premium-modal {
+        padding:
+            25px 18px;
+    }
+
+    .sm-premium-features {
+        grid-template-columns:
+            1fr;
+    }
+
+    .sm-payment-options {
+        grid-template-columns:
+            1fr;
+    }
+
+}
