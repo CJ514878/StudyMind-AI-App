@@ -70,11 +70,6 @@ const STREAK_KEY =
 const LAST_STUDY_KEY =
     "lastStudyDate";
 
-
-/*
- * NEW:
- * Persistent study-session storage.
- */
 const STUDY_SESSION_KEY =
     "studyMindCurrentStudySession";
 
@@ -140,17 +135,8 @@ let calendarDate =
 
 let currentUser = null;
 
+let currentStudySession = null;
 
-/*
- * Persistent reading state.
- */
-let currentStudySession =
-    null;
-
-
-/*
- * Prevent duplicate observers.
- */
 let readingObserverStarted =
     false;
 
@@ -159,9 +145,8 @@ let readingObserverStarted =
    ELEMENT HELPER
 ========================================================= */
 
-const $ =
-    id =>
-        document.getElementById(id);
+const $ = id =>
+    document.getElementById(id);
 
 
 /* =========================================================
@@ -176,19 +161,23 @@ function readJSON(
     try {
 
         const raw =
-            localStorage.getItem(
-                key
-            );
+            localStorage.getItem(key);
 
         return raw
             ? JSON.parse(raw)
             : fallback;
 
-    } catch {
+    } catch (error) {
+
+        console.error(
+            "StudyMind JSON read error:",
+            error
+        );
 
         return fallback;
 
     }
+
 }
 
 
@@ -216,6 +205,7 @@ function writeJSON(
         return false;
 
     }
+
 }
 
 
@@ -230,6 +220,7 @@ function clean(value) {
     )
         .replace(/\s+/g, " ")
         .trim();
+
 }
 
 
@@ -243,23 +234,13 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
 /* =========================================================
    TOPIC HELPERS
 ========================================================= */
-
-function topicKey(topic) {
-
-    return `${clean(
-        topic?.subject ||
-        "Senior Secondary"
-    ).toLowerCase()}::${clean(
-        topic?.name
-    ).toLowerCase()}`;
-}
-
 
 function topicName(topic) {
 
@@ -270,6 +251,7 @@ function topicName(topic) {
               topic?.topic ||
               topic?.title
     );
+
 }
 
 
@@ -280,6 +262,19 @@ function topicSubject(topic) {
         topic?.subjectName ||
         ""
     );
+
+}
+
+
+function topicKey(topic) {
+
+    return `${clean(
+        topic?.subject ||
+        "Senior Secondary"
+    ).toLowerCase()}::${clean(
+        topicName(topic)
+    ).toLowerCase()}`;
+
 }
 
 
@@ -301,23 +296,28 @@ function normalizeTopic(
         const name =
             clean(raw);
 
-        return name
-            ? {
+        if (!name) {
 
-                id:
-                    `topic-${index}-${name
-                        .toLowerCase()
-                        .replace(/\W+/g, "-")}`,
+            return null;
 
-                name,
+        }
 
-                subject,
+        return {
 
-                description:
-                    `Study ${name} and complete the knowledge check.`
+            id:
+                `topic-${index}-${name
+                    .toLowerCase()
+                    .replace(/\W+/g, "-")}`,
 
-            }
-            : null;
+            name,
+
+            subject,
+
+            description:
+                `Study ${name} and complete the knowledge check.`
+
+        };
+
     }
 
 
@@ -334,7 +334,6 @@ function normalizeTopic(
     const name =
         topicName(raw);
 
-
     if (!name) {
 
         return null;
@@ -350,7 +349,9 @@ function normalizeTopic(
                 raw.topicId ||
                 raw.topic_id
             ) ||
-            `topic-${index}-${name}`,
+            `topic-${index}-${name
+                .toLowerCase()
+                .replace(/\W+/g, "-")}`,
 
         name,
 
@@ -369,6 +370,7 @@ function normalizeTopic(
             `Study ${name} and complete the knowledge check.`
 
     };
+
 }
 
 
@@ -424,9 +426,7 @@ function normalizePlan(raw) {
                 const name =
                     clean(
                         typeof rawSubject === "string"
-
                             ? rawSubject
-
                             : rawSubject?.name ||
                               rawSubject?.subject ||
                               rawSubject?.title
@@ -451,6 +451,9 @@ function normalizePlan(raw) {
                 normalizedSubjects.push({
 
                     id:
+                        clean(
+                            rawSubject?.id
+                        ) ||
                         `subject-${subjectIndex + 1}`,
 
                     name,
@@ -522,7 +525,7 @@ function normalizePlan(raw) {
     const hasNested =
         normalizedSubjects.some(
             subject =>
-                subject.topics.length
+                subject.topics.length > 0
         );
 
 
@@ -567,10 +570,12 @@ function normalizePlan(raw) {
                         flatTopics
                             .filter(
                                 topic =>
-                                    topic.subject
-                                        .toLowerCase() ===
-                                    subject.name
-                                        .toLowerCase()
+                                    clean(
+                                        topic.subject
+                                    ).toLowerCase() ===
+                                    clean(
+                                        subject.name
+                                    ).toLowerCase()
                             )
                             .map(
                                 topic => ({
@@ -596,6 +601,15 @@ function normalizePlan(raw) {
                     i
                 ) => {
 
+                    if (
+                        !normalizedSubjects.length
+                    ) {
+
+                        return;
+
+                    }
+
+
                     const subject =
                         normalizedSubjects[
                             i %
@@ -603,18 +617,14 @@ function normalizePlan(raw) {
                         ];
 
 
-                    if (subject) {
+                    subject.topics.push({
 
-                        subject.topics.push({
+                        ...topic,
 
-                            ...topic,
+                        subject:
+                            subject.name
 
-                            subject:
-                                subject.name
-
-                        });
-
-                    }
+                    });
 
                 }
             );
@@ -680,28 +690,30 @@ function normalizePlan(raw) {
                 i
             ) => {
 
+                if (
+                    !normalizedSubjects.length
+                ) {
+
+                    return;
+
+                }
+
+
                 const subject =
                     normalizedSubjects[
                         i %
-                        Math.max(
-                            normalizedSubjects.length,
-                            1
-                        )
+                        normalizedSubjects.length
                     ];
 
 
-                if (subject) {
+                subject.topics.push({
 
-                    subject.topics.push({
+                    ...topic,
 
-                        ...topic,
+                    subject:
+                        subject.name
 
-                        subject:
-                            subject.name
-
-                    });
-
-                }
+                });
 
             }
         );
@@ -798,6 +810,12 @@ function normalizePlan(raw) {
             ) ||
             "balanced",
 
+        startTime:
+            clean(
+                plan.startTime
+            ) ||
+            "16:00",
+
         subjects:
             normalizedSubjects,
 
@@ -805,6 +823,7 @@ function normalizePlan(raw) {
             orderedTopics
 
     };
+
 }
 
 
@@ -868,16 +887,22 @@ function loadStudyPlan() {
 
 
     subjects =
-        studyPlan.subjects ||
-        [];
+        Array.isArray(
+            studyPlan.subjects
+        )
+            ? studyPlan.subjects
+            : [];
 
 
     allTopics =
-        studyPlan.topics ||
-        subjects.flatMap(
-            subject =>
-                subject.topics
-        );
+        Array.isArray(
+            studyPlan.topics
+        )
+            ? studyPlan.topics
+            : subjects.flatMap(
+                subject =>
+                    subject.topics || []
+            );
 
 
     studyPlan.topics =
@@ -888,6 +913,7 @@ function loadStudyPlan() {
 
 
     return true;
+
 }
 
 
@@ -897,40 +923,34 @@ function loadStudyPlan() {
 
 function loadCompletionState() {
 
-    completedTopics =
+    const savedCompleted =
         readJSON(
             COMPLETED_KEY,
             []
         );
 
 
-    completedQuestionTopics =
+    const savedQuestions =
         readJSON(
             COMPLETED_Q_KEY,
             []
         );
 
 
-    if (
-        !Array.isArray(
-            completedTopics
+    completedTopics =
+        Array.isArray(
+            savedCompleted
         )
-    ) {
-
-        completedTopics = [];
-
-    }
+            ? savedCompleted
+            : [];
 
 
-    if (
-        !Array.isArray(
-            completedQuestionTopics
+    completedQuestionTopics =
+        Array.isArray(
+            savedQuestions
         )
-    ) {
-
-        completedQuestionTopics = [];
-
-    }
+            ? savedQuestions
+            : [];
 
 }
 
@@ -1003,9 +1023,6 @@ function isQuestionCompleted(topic) {
 
 function getCurrentTopic() {
 
-    /*
-     * First try the saved current topic.
-     */
     if (
         currentStudySession?.topicKey
     ) {
@@ -1037,9 +1054,6 @@ function getCurrentTopic() {
     }
 
 
-    /*
-     * Then try the stored index.
-     */
     if (
         currentTopicIndex >= 0 &&
         currentTopicIndex < allTopics.length
@@ -1053,9 +1067,7 @@ function getCurrentTopic() {
 
         if (
             indexedTopic &&
-            !isCompleted(
-                indexedTopic
-            )
+            !isCompleted(indexedTopic)
         ) {
 
             return indexedTopic;
@@ -1065,9 +1077,6 @@ function getCurrentTopic() {
     }
 
 
-    /*
-     * Finally find the first incomplete topic.
-     */
     const next =
         allTopics.findIndex(
             topic =>
@@ -1166,33 +1175,100 @@ function createStudySession(
         );
 
 
-    currentStudySession =
+    if (
         saved &&
         typeof saved === "object"
-
-            ? saved
-
-            : {};
-
-
-    if (
-        topic
     ) {
 
-        currentStudySession.topicKey =
+        currentStudySession =
+            saved;
+
+    }
+
+    else {
+
+        currentStudySession =
+            {};
+
+    }
+
+
+    if (topic) {
+
+        const key =
             topicKey(topic);
 
-        currentStudySession.topicId =
-            topic.id || "";
 
-        currentStudySession.topicName =
-            topic.name || "";
+        /*
+         * Only replace topic-specific session data
+         * when switching to a genuinely different topic.
+         */
+        if (
+            currentStudySession.topicKey !== key
+        ) {
 
-        currentStudySession.subject =
-            topic.subject || "";
+            currentStudySession = {
 
-        currentStudySession.topicIndex =
-            currentTopicIndex;
+                topicKey:
+                    key,
+
+                topicId:
+                    topic.id || "",
+
+                topicName:
+                    topic.name || "",
+
+                subject:
+                    topic.subject || "",
+
+                topicIndex:
+                    currentTopicIndex,
+
+                currentTopicIndex,
+
+                readingHTML:
+                    "",
+
+                readingText:
+                    "",
+
+                readingStarted:
+                    false,
+
+                readingCompleted:
+                    false,
+
+                createdAt:
+                    new Date().toISOString(),
+
+                updatedAt:
+                    new Date().toISOString()
+
+            };
+
+        }
+
+        else {
+
+            currentStudySession.topicKey =
+                key;
+
+            currentStudySession.topicId =
+                topic.id || "";
+
+            currentStudySession.topicName =
+                topic.name || "";
+
+            currentStudySession.subject =
+                topic.subject || "";
+
+            currentStudySession.topicIndex =
+                currentTopicIndex;
+
+            currentStudySession.currentTopicIndex =
+                currentTopicIndex;
+
+        }
 
     }
 
@@ -1221,7 +1297,8 @@ function saveStudySession() {
         typeof currentStudySession !== "object"
     ) {
 
-        currentStudySession = {};
+        currentStudySession =
+            {};
 
     }
 
@@ -1257,7 +1334,7 @@ function loadStudySession() {
     ) {
 
         currentStudySession =
-            {};
+            null;
 
         return;
 
@@ -1268,9 +1345,6 @@ function loadStudySession() {
         saved;
 
 
-    /*
-     * Restore current topic index when possible.
-     */
     if (
         Number.isInteger(
             Number(
@@ -1287,9 +1361,6 @@ function loadStudySession() {
     }
 
 
-    /*
-     * If a topic key was saved, locate that topic.
-     */
     if (
         saved.topicKey
     ) {
@@ -1333,12 +1404,6 @@ function loadStudySession() {
    READING PERSISTENCE
 ========================================================= */
 
-/*
- * These are the possible reading containers used by
- * StudyMind dashboard versions.
- *
- * The system checks all of them automatically.
- */
 const READING_SELECTORS = [
 
     "#topicReading",
@@ -1395,18 +1460,7 @@ function findReadingElement() {
 
 function getReadingElement() {
 
-    const element =
-        findReadingElement();
-
-
-    if (!element) {
-
-        return null;
-
-    }
-
-
-    return element;
+    return findReadingElement();
 
 }
 
@@ -1417,11 +1471,19 @@ function saveCurrentReading() {
         getReadingElement();
 
 
-    if (
-        !reading
-    ) {
+    if (!reading) {
 
         return;
+
+    }
+
+
+    if (
+        !currentStudySession
+    ) {
+
+        currentStudySession =
+            {};
 
     }
 
@@ -1435,7 +1497,8 @@ function saveCurrentReading() {
 
 
     /*
-     * Don't save an empty placeholder.
+     * Don't overwrite a saved reading with
+     * an empty container.
      */
     if (
         !html &&
@@ -1447,12 +1510,26 @@ function saveCurrentReading() {
     }
 
 
-    if (
-        !currentStudySession
-    ) {
+    const topic =
+        getCurrentTopic();
 
-        currentStudySession =
-            {};
+
+    if (topic) {
+
+        currentStudySession.topicKey =
+            topicKey(topic);
+
+        currentStudySession.topicId =
+            topic.id || "";
+
+        currentStudySession.topicName =
+            topic.name || "";
+
+        currentStudySession.subject =
+            topic.subject || "";
+
+        currentStudySession.topicIndex =
+            currentTopicIndex;
 
     }
 
@@ -1473,27 +1550,6 @@ function saveCurrentReading() {
         true;
 
 
-    const topic =
-        getCurrentTopic();
-
-
-    if (topic) {
-
-        currentStudySession.topicKey =
-            topicKey(topic);
-
-        currentStudySession.topicName =
-            topic.name;
-
-        currentStudySession.subject =
-            topic.subject;
-
-        currentStudySession.topicIndex =
-            currentTopicIndex;
-
-    }
-
-
     saveStudySession();
 
 }
@@ -1502,15 +1558,7 @@ function saveCurrentReading() {
 function restoreCurrentReading() {
 
     if (
-        !currentStudySession
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
+        !currentStudySession ||
         !currentStudySession.readingHTML
     ) {
 
@@ -1523,19 +1571,13 @@ function restoreCurrentReading() {
         getReadingElement();
 
 
-    if (
-        !reading
-    ) {
+    if (!reading) {
 
         return false;
 
     }
 
 
-    /*
-     * Only restore the reading if it belongs
-     * to the current topic.
-     */
     const topic =
         getCurrentTopic();
 
@@ -1552,14 +1594,14 @@ function restoreCurrentReading() {
     }
 
 
-    /*
-     * Don't overwrite newly generated reading
-     * content that is already on the page.
-     */
     const currentHTML =
         reading.innerHTML.trim();
 
 
+    /*
+     * If the page already contains generated
+     * reading content, leave it alone.
+     */
     if (
         currentHTML &&
         currentHTML.length > 20
@@ -1580,7 +1622,7 @@ function restoreCurrentReading() {
 
 
 /* =========================================================
-   START READING PERSISTENCE OBSERVER
+   READING OBSERVER
 ========================================================= */
 
 function startReadingPersistence() {
@@ -1588,6 +1630,8 @@ function startReadingPersistence() {
     if (
         readingObserverStarted
     ) {
+
+        restoreCurrentReading();
 
         return;
 
@@ -1598,16 +1642,8 @@ function startReadingPersistence() {
         getReadingElement();
 
 
-    if (
-        !reading
-    ) {
+    if (!reading) {
 
-        /*
-         * The reading element may be created by another
-         * script after dashboard startup.
-         *
-         * Retry shortly.
-         */
         setTimeout(
             startReadingPersistence,
             500
@@ -1622,20 +1658,27 @@ function startReadingPersistence() {
         true;
 
 
-    /*
-     * Restore previous reading.
-     */
     restoreCurrentReading();
 
 
-    /*
-     * Save whenever AI reading content changes.
-     */
+    let saveTimeout =
+        null;
+
+
     const observer =
         new MutationObserver(
             () => {
 
-                saveCurrentReading();
+                clearTimeout(
+                    saveTimeout
+                );
+
+
+                saveTimeout =
+                    setTimeout(
+                        saveCurrentReading,
+                        300
+                    );
 
             }
         );
@@ -1658,9 +1701,6 @@ function startReadingPersistence() {
     );
 
 
-    /*
-     * Save when leaving the page.
-     */
     window.addEventListener(
         "beforeunload",
         () => {
@@ -1671,13 +1711,12 @@ function startReadingPersistence() {
 
             saveCompletionState();
 
+            saveTimer();
+
         }
     );
 
 
-    /*
-     * Also save when the page becomes hidden.
-     */
     document.addEventListener(
         "visibilitychange",
         () => {
@@ -1692,6 +1731,8 @@ function startReadingPersistence() {
                 saveStudySession();
 
                 saveCompletionState();
+
+                saveTimer();
 
             }
 
@@ -1716,6 +1757,10 @@ async function checkAuthentication() {
         if (
             !client?.auth
         ) {
+
+            console.warn(
+                "StudyMind: Supabase client not available."
+            );
 
             return false;
 
@@ -1752,7 +1797,6 @@ async function checkAuthentication() {
             error
         );
 
-
         return false;
 
     }
@@ -1766,9 +1810,6 @@ async function checkAuthentication() {
 
 async function logoutStudyMind() {
 
-    /*
-     * Save everything before leaving.
-     */
     saveCurrentReading();
 
     saveStudySession();
@@ -1791,9 +1832,12 @@ async function logoutStudyMind() {
 
         }
 
-    } catch {
+    } catch (error) {
 
-        /* Ignore logout errors */
+        console.warn(
+            "Logout error:",
+            error
+        );
 
     }
 
@@ -1873,32 +1917,36 @@ function renderStats() {
             : 0;
 
 
+    const streak =
+        Number(
+            localStorage.getItem(
+                STREAK_KEY
+            ) || 0
+        );
+
+
+    const hours =
+        Number(
+            studyPlan?.studyHours ||
+            0
+        );
+
+
     const values = {
 
         weeklyHours:
-            Number(
-                studyPlan?.studyHours ||
-                0
-            ) * 7,
+            hours * 7,
 
         daysLeft:
             calculateDaysLeft(),
 
         dailyGoal:
-            `${Number(
-                studyPlan?.studyHours ||
-                0
-            )} hrs`,
+            `${hours} hrs`,
 
         studyScore:
             score,
 
-        streak:
-            Number(
-                localStorage.getItem(
-                    STREAK_KEY
-                ) || 0
-            ),
+        streak,
 
         scoreDisplay:
             score
@@ -2006,11 +2054,22 @@ function renderSubjects() {
             .map(
                 subject => {
 
+                    const topicCount =
+                        subject.topics?.length || 0;
+
+
+                    const completedCount =
+                        (subject.topics || [])
+                            .filter(
+                                isCompleted
+                            )
+                            .length;
+
+
                     const done =
-                        subject.topics.length &&
-                        subject.topics.every(
-                            isCompleted
-                        );
+                        topicCount > 0 &&
+                        completedCount ===
+                            topicCount;
 
 
                     return `
@@ -2029,11 +2088,7 @@ function renderSubjects() {
                             </strong>
 
                             <span>
-                                ${
-                                    subject.topics.filter(
-                                        isCompleted
-                                    ).length
-                                }/${subject.topics.length}
+                                ${completedCount}/${topicCount}
                                 topics
                             </span>
 
@@ -2082,7 +2137,7 @@ function renderTopics() {
                         </h4>
 
                         ${
-                            subject.topics
+                            (subject.topics || [])
                                 .map(
                                     topic => `
 
@@ -2252,6 +2307,14 @@ function renderCurrentTopic() {
         allTopics.indexOf(topic);
 
 
+    localStorage.setItem(
+        CURRENT_INDEX_KEY,
+        String(
+            currentTopicIndex
+        )
+    );
+
+
     if (position) {
 
         position.textContent =
@@ -2332,18 +2395,11 @@ function renderCurrentTopic() {
     }
 
 
-    /*
-     * Save the fact that this topic is now the
-     * active persistent study session.
-     */
     createStudySession(
         topic
     );
 
 
-    /*
-     * Try to restore its saved reading.
-     */
     setTimeout(
         restoreCurrentReading,
         100
@@ -2376,25 +2432,23 @@ function completeCurrentTopic() {
 
 
     /*
-     * Save reading one last time before marking
-     * the topic complete.
+     * Save the reading before completion.
      */
     saveCurrentReading();
 
-
-    /* =====================================================
-       MARK COMPLETE
-    ===================================================== */
 
     const key =
         topicKey(topic);
 
 
+    /*
+     * Prevent duplicate completion entries.
+     */
     completedTopics =
         completedTopics.filter(
             value =>
-                value !== topic.name &&
-                value !== key
+                value !== key &&
+                value !== topic.name
         );
 
 
@@ -2403,10 +2457,9 @@ function completeCurrentTopic() {
     );
 
 
-    /* =====================================================
-       READING COMPLETION
-    ===================================================== */
-
+    /*
+     * Mark reading complete.
+     */
     if (
         currentStudySession
     ) {
@@ -2423,7 +2476,7 @@ function completeCurrentTopic() {
 
 
     /*
-     * Register today's study completion.
+     * Register study streak.
      */
     if (
         typeof window.registerStudyCompletion ===
@@ -2432,7 +2485,9 @@ function completeCurrentTopic() {
 
         window.registerStudyCompletion();
 
-    } else {
+    }
+
+    else {
 
         const today =
             new Date()
@@ -2448,10 +2503,9 @@ function completeCurrentTopic() {
     }
 
 
-    /* =====================================================
-       FIND NEXT TOPIC
-    ===================================================== */
-
+    /*
+     * Find next topic.
+     */
     const next =
         getNextIncompleteTopic(
             currentTopicIndex
@@ -2467,22 +2521,17 @@ function completeCurrentTopic() {
     saveCompletionState();
 
 
-    /* =====================================================
-       STOP TIMER
-    ===================================================== */
-
+    /*
+     * Stop timer.
+     */
     stopTimer();
 
 
-    /* =====================================================
-       PREPARE NEXT STUDY SESSION
-    ===================================================== */
-
+    /*
+     * Prepare next topic.
+     */
     if (next) {
 
-        /*
-         * A new topic gets a fresh reading state.
-         */
         currentStudySession = {
 
             topicKey:
@@ -2525,11 +2574,10 @@ function completeCurrentTopic() {
 
         saveStudySession();
 
-    } else {
+    }
 
-        /*
-         * Entire plan is complete.
-         */
+    else {
+
         currentStudySession = {
 
             currentTopicIndex:
@@ -2555,10 +2603,9 @@ function completeCurrentTopic() {
     }
 
 
-    /* =====================================================
-       UPDATE DASHBOARD
-    ===================================================== */
-
+    /*
+     * Refresh dashboard.
+     */
     renderCurrentTopic();
 
     renderProgress();
@@ -2576,10 +2623,10 @@ function completeCurrentTopic() {
     renderCalendar();
 
 
-    /* =====================================================
-       KNOWLEDGE CHECK
-    ===================================================== */
-
+    /*
+     * Send the user to the Knowledge Check
+     * for the topic they just finished.
+     */
     openKnowledgeCheckPage(
         topic
     );
@@ -2611,12 +2658,10 @@ function openKnowledgeCheckPage(
 
 
     if (
-        usage >= 5
+        usage >= FREE_AI_LIMIT
     ) {
 
-        alert(
-            "You have used all 5 free Knowledge Checks. Premium is coming soon."
-        );
+        showPremiumMessage();
 
         return;
 
@@ -2651,6 +2696,16 @@ function openKnowledgeCheckPage(
                     .slice(2)}`
 
         }
+    );
+
+
+    /*
+     * Clear old generated questions so the
+     * Knowledge Check page generates questions
+     * for the newly completed topic.
+     */
+    localStorage.removeItem(
+        KNOWLEDGE_QUESTIONS_KEY
     );
 
 
@@ -2803,8 +2858,7 @@ function maybeShowCompletionCelebration() {
                 <h2
                     style="
                         font-size:32px;
-                        margin:
-                            0 0 12px;
+                        margin:0 0 12px;
                     "
                 >
                     Congratulations! 🏆
@@ -2815,8 +2869,7 @@ function maybeShowCompletionCelebration() {
                         font-size:18px;
                         line-height:1.6;
                         opacity:.88;
-                        margin:
-                            0 0 28px;
+                        margin:0 0 28px;
                     "
                 >
                     You have finished reading for today.
@@ -2877,8 +2930,11 @@ function maybeShowCompletionCelebration() {
         "closeStudyMindCelebration"
     )?.addEventListener(
         "click",
-        () =>
-            overlay.remove()
+        () => {
+
+            overlay.remove();
+
+        }
     );
 
 }
@@ -2981,6 +3037,9 @@ function renderDailyChallenge() {
     }
 
 
+    /*
+     * FIXED SYNTAX ERROR.
+     */
     if (
         $("dailyChallengeButton")
     ) {
@@ -3002,20 +3061,21 @@ function formatTimer(
     seconds
 ) {
 
+    const safeSeconds =
+        Math.max(
+            0,
+            Number(seconds) || 0
+        );
+
+
     const mins =
         Math.floor(
-            Math.max(
-                0,
-                seconds
-            ) / 60
+            safeSeconds / 60
         );
 
 
     const secs =
-        Math.max(
-            0,
-            seconds
-        ) % 60;
+        safeSeconds % 60;
 
 
     return `${String(
@@ -3077,7 +3137,8 @@ function renderTimer() {
         $("timerDuration")
             .value =
             String(
-                selectedTimerSeconds / 60
+                selectedTimerSeconds /
+                60
             );
 
     }
@@ -3116,6 +3177,16 @@ function startTimer() {
     }
 
 
+    if (
+        timerSeconds <= 0
+    ) {
+
+        timerSeconds =
+            selectedTimerSeconds;
+
+    }
+
+
     timerRunning =
         true;
 
@@ -3133,6 +3204,7 @@ function startTimer() {
 
                     timerSeconds =
                         0;
+
 
                     stopTimer();
 
@@ -3236,7 +3308,9 @@ function changeTimerDuration(
         selectedTimerSeconds;
 
 
-    resetTimer();
+    saveTimer();
+
+    renderTimer();
 
 }
 
@@ -3428,6 +3502,7 @@ function renderCalendar() {
 
 
         if (
+            examKey &&
             key === examKey
         ) {
 
@@ -3443,6 +3518,7 @@ function renderCalendar() {
 
         else if (
             startKey &&
+            examKey &&
             key >= startKey &&
             key < examKey
         ) {
@@ -3548,18 +3624,29 @@ function renderSchedule() {
 
 
     const hours =
-        Number(
-            studyPlan?.studyHours ||
-            1
+        Math.max(
+            1,
+            Number(
+                studyPlan?.studyHours ||
+                1
+            )
         );
+
+
+    const startTime =
+        String(
+            studyPlan?.startTime ||
+            "16:00"
+        );
+
+
+    const startParts =
+        startTime.split(":");
 
 
     const startHour =
         Number(
-            String(
-                studyPlan?.startTime ||
-                "16:00"
-            ).split(":")[0]
+            startParts[0]
         ) || 16;
 
 
@@ -3625,7 +3712,8 @@ function formatClock(
     hour
 ) {
 
-    hour %= 24;
+    hour =
+        ((Number(hour) % 24) + 24) % 24;
 
 
     const period =
@@ -3795,9 +3883,13 @@ function showPremiumMessage() {
                     padding:34px;
                     border-radius:24px;
                     background:#101a2e;
+                    color:white;
                     border:
                         1px solid
                         rgba(255,255,255,.15);
+                    box-shadow:
+                        0 25px 80px
+                        rgba(0,0,0,.45);
                 "
             >
 
@@ -3948,8 +4040,20 @@ async function askAI() {
             );
 
 
-        const data =
-            await response.json();
+        let data = null;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            data =
+                {};
+
+        }
 
 
         if (
@@ -3975,8 +4079,17 @@ async function askAI() {
 
     } catch (error) {
 
+        console.error(
+            "StudyMind AI error:",
+            error
+        );
+
+
         output.textContent =
-            `⚠️ ${error.message}`;
+            `⚠️ ${
+                error?.message ||
+                "Something went wrong."
+            }`;
 
     }
 
@@ -3997,6 +4110,7 @@ function initializeTheme() {
 
     const isLight =
         savedTheme === "light";
+
 
     const isDark =
         savedTheme === "dark";
@@ -4111,10 +4225,9 @@ function updateThemeButton() {
 
 function bindEvents() {
 
-    /* =====================================================
-       COMPLETE READING
-    ===================================================== */
-
+    /*
+     * Complete reading.
+     */
     $("topicCompleteCheckbox")
         ?.addEventListener(
             "change",
@@ -4132,10 +4245,9 @@ function bindEvents() {
         );
 
 
-    /* =====================================================
-       TIMER
-    ===================================================== */
-
+    /*
+     * Timer.
+     */
     $("startTimerButton")
         ?.addEventListener(
             "click",
@@ -4167,10 +4279,9 @@ function bindEvents() {
         );
 
 
-    /* =====================================================
-       CALENDAR
-    ===================================================== */
-
+    /*
+     * Calendar.
+     */
     $("previousMonth")
         ?.addEventListener(
             "click",
@@ -4185,10 +4296,9 @@ function bindEvents() {
         );
 
 
-    /* =====================================================
-       AI
-    ===================================================== */
-
+    /*
+     * AI.
+     */
     $("askAIButton")
         ?.addEventListener(
             "click",
@@ -4196,10 +4306,9 @@ function bindEvents() {
         );
 
 
-    /* =====================================================
-       THEME
-    ===================================================== */
-
+    /*
+     * Theme.
+     */
     const themeButton =
         $("themeButton");
 
@@ -4222,10 +4331,9 @@ function bindEvents() {
     }
 
 
-    /* =====================================================
-       DAILY CHALLENGE
-    ===================================================== */
-
+    /*
+     * Daily challenge.
+     */
     $("dailyChallengeButton")
         ?.addEventListener(
             "click",
@@ -4241,10 +4349,9 @@ function bindEvents() {
         );
 
 
-    /* =====================================================
-       LOGOUT
-    ===================================================== */
-
+    /*
+     * Logout.
+     */
     $("logoutButton")
         ?.addEventListener(
             "click",
@@ -4260,181 +4367,241 @@ function bindEvents() {
 
 async function startDashboard() {
 
-    /* =====================================================
-       THEME
-    ===================================================== */
+    try {
 
-    initializeTheme();
+        /*
+         * Theme.
+         */
+        initializeTheme();
 
 
-    /* =====================================================
-       LOAD PLAN
-    ===================================================== */
+        /*
+         * Load plan.
+         */
+        if (
+            !loadStudyPlan()
+        ) {
 
-    if (
-        !loadStudyPlan()
-    ) {
+            window.location.href =
+                "home.html#generator";
 
-        window.location.href =
-            "home.html#generator";
+            return;
 
-        return;
+        }
+
+
+        /*
+         * Load completion state.
+         */
+        loadCompletionState();
+
+
+        /*
+         * Load persistent study session.
+         */
+        loadStudySession();
+
+
+        /*
+         * Authentication.
+         */
+        const authenticated =
+            await checkAuthentication();
+
+
+        if (
+            !authenticated
+        ) {
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        /*
+         * Topics must exist.
+         */
+        if (
+            !allTopics.length
+        ) {
+
+            window.location.href =
+                "home.html#generator";
+
+            return;
+
+        }
+
+
+        /*
+         * Make sure current index is valid.
+         */
+        if (
+            currentTopicIndex < 0 ||
+            currentTopicIndex >
+                allTopics.length
+        ) {
+
+            currentTopicIndex =
+                0;
+
+        }
+
+
+        /*
+         * Validate timer duration.
+         */
+        if (
+            !TIMER_OPTIONS.includes(
+                selectedTimerSeconds /
+                60
+            )
+        ) {
+
+            selectedTimerSeconds =
+                DEFAULT_TIMER_SECONDS;
+
+        }
+
+
+        /*
+         * Validate timer remaining time.
+         */
+        if (
+            timerSeconds <= 0 ||
+            timerSeconds >
+                selectedTimerSeconds
+        ) {
+
+            timerSeconds =
+                selectedTimerSeconds;
+
+        }
+
+
+        saveTimer();
+
+
+        /*
+         * Bind dashboard events.
+         */
+        bindEvents();
+
+
+        /*
+         * Render everything.
+         */
+        renderStats();
+
+        renderSubjects();
+
+        renderTopics();
+
+        renderCurrentTopic();
+
+        renderDailyChallenge();
+
+        renderTimer();
+
+        renderSchedule();
+
+        renderNextSession();
+
+        renderCalendar();
+
+
+        /*
+         * Start reading persistence.
+         */
+        startReadingPersistence();
+
+
+        /*
+         * Give other dashboard scripts time
+         * to create the reading element.
+         */
+        setTimeout(
+            () => {
+
+                restoreCurrentReading();
+
+                startReadingPersistence();
+
+            },
+            750
+        );
+
+
+        /*
+         * Save state every 5 seconds.
+         */
+        setInterval(
+            () => {
+
+                saveCurrentReading();
+
+                saveStudySession();
+
+                saveCompletionState();
+
+                saveTimer();
+
+            },
+            5000
+        );
+
+    } catch (error) {
+
+        console.error(
+            "StudyMind dashboard startup error:",
+            error
+        );
+
+
+        /*
+         * Don't silently leave the user
+         * on a broken dashboard.
+         */
+        const errorBox =
+            document.createElement(
+                "div"
+            );
+
+
+        errorBox.style.cssText = `
+            position:fixed;
+            left:20px;
+            right:20px;
+            bottom:20px;
+            z-index:999999;
+            padding:18px 20px;
+            border-radius:16px;
+            background:#7f1d1d;
+            color:#fff;
+            font-family:Arial,sans-serif;
+            box-shadow:0 15px 50px rgba(0,0,0,.3);
+        `;
+
+
+        errorBox.innerHTML = `
+            <strong>StudyMind Dashboard Error</strong>
+            <div style="margin-top:6px;font-size:14px;">
+                ${escapeHTML(
+                    error?.message ||
+                    "The dashboard could not initialize."
+                )}
+            </div>
+        `;
+
+
+        document.body.appendChild(
+            errorBox
+        );
 
     }
-
-
-    /* =====================================================
-       LOAD COMPLETION
-    ===================================================== */
-
-    loadCompletionState();
-
-
-    /* =====================================================
-       LOAD PERSISTENT SESSION
-    ===================================================== */
-
-    loadStudySession();
-
-
-    /* =====================================================
-       AUTH
-    ===================================================== */
-
-    const authenticated =
-        await checkAuthentication();
-
-
-    if (
-        !authenticated
-    ) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-
-    /* =====================================================
-       TOPICS
-    ===================================================== */
-
-    if (
-        !allTopics.length
-    ) {
-
-        window.location.href =
-            "home.html#generator";
-
-        return;
-
-    }
-
-
-    /* =====================================================
-       TIMER VALIDATION
-    ===================================================== */
-
-    if (
-        ![
-            25,
-            45,
-            60
-        ].includes(
-            selectedTimerSeconds /
-            60
-        )
-    ) {
-
-        selectedTimerSeconds =
-            DEFAULT_TIMER_SECONDS;
-
-    }
-
-
-    if (
-        timerSeconds <= 0 ||
-        timerSeconds >
-            selectedTimerSeconds
-    ) {
-
-        timerSeconds =
-            selectedTimerSeconds;
-
-    }
-
-
-    saveTimer();
-
-
-    /* =====================================================
-       EVENTS
-    ===================================================== */
-
-    bindEvents();
-
-
-    /* =====================================================
-       RENDER
-    ===================================================== */
-
-    renderStats();
-
-    renderSubjects();
-
-    renderTopics();
-
-    renderCurrentTopic();
-
-    renderDailyChallenge();
-
-    renderTimer();
-
-    renderSchedule();
-
-    renderNextSession();
-
-    renderCalendar();
-
-
-    /* =====================================================
-       START READING PERSISTENCE
-    ===================================================== */
-
-    startReadingPersistence();
-
-
-    /*
-     * Try again after other dashboard scripts have
-     * finished generating their reading container.
-     */
-    setTimeout(
-        () => {
-
-            restoreCurrentReading();
-
-            startReadingPersistence();
-
-        },
-        750
-    );
-
-
-    /*
-     * Save current state periodically.
-     */
-    setInterval(
-        () => {
-
-            saveCurrentReading();
-
-            saveStudySession();
-
-        },
-        5000
-    );
 
 }
 
@@ -4512,10 +4679,6 @@ window.toggleTheme =
     toggleTheme;
 
 
-/*
- * Expose persistence functions so other
- * StudyMind scripts can save generated readings.
- */
 window.saveCurrentReading =
     saveCurrentReading;
 
@@ -4542,7 +4705,9 @@ if (
         startDashboard
     );
 
-} else {
+}
+
+else {
 
     startDashboard();
 
