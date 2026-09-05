@@ -2555,7 +2555,184 @@ function initializeHome() {
 
 }
 
+/* =========================================================
+   PREMIUM BUTTON — HOME PAGE
+========================================================= */
 
+function openPremiumOffer() {
+
+    const existing =
+        document.getElementById(
+            "studyMindPremiumModal"
+        );
+
+    if (existing) {
+        existing.remove();
+    }
+
+    const modal =
+        document.createElement("div");
+
+    modal.id =
+        "studyMindPremiumModal";
+
+    modal.innerHTML = `
+
+        <div
+            style="
+                position:fixed;
+                inset:0;
+                background:rgba(0,0,0,.72);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                z-index:99999;
+                padding:20px;
+            "
+        >
+
+            <div
+                style="
+                    width:min(460px,100%);
+                    padding:32px;
+                    border-radius:24px;
+                    background:#0f172a;
+                    color:white;
+                    border:1px solid rgba(96,165,250,.25);
+                    box-shadow:0 25px 70px rgba(0,0,0,.45);
+                    text-align:center;
+                "
+            >
+
+                <button
+                    id="closePremiumButton"
+                    aria-label="Close"
+                    style="
+                        position:absolute;
+                        margin-left:185px;
+                        margin-top:-18px;
+                        background:transparent;
+                        border:0;
+                        color:#94a3b8;
+                        font-size:28px;
+                        cursor:pointer;
+                    "
+                >
+                    ×
+                </button>
+
+                <div
+                    style="
+                        font-size:48px;
+                        margin-bottom:10px;
+                    "
+                >
+                    💎
+                </div>
+
+                <h2>
+                    StudyMind AI Premium
+                </h2>
+
+                <p
+                    style="
+                        opacity:.75;
+                        line-height:1.7;
+                    "
+                >
+                    Unlimited AI help and more
+                    study features are coming soon.
+                </p>
+
+                <button
+                    id="premiumComingSoonButton"
+                    class="premium-button"
+                    style="
+                        width:100%;
+                        margin-top:18px;
+                    "
+                >
+                    Coming Soon 🚀
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeButton =
+        document.getElementById(
+            "closePremiumButton"
+        );
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            () => modal.remove()
+        );
+
+    }
+
+    const comingSoonButton =
+        document.getElementById(
+            "premiumComingSoonButton"
+        );
+
+    if (comingSoonButton) {
+
+        comingSoonButton.addEventListener(
+            "click",
+            () => {
+
+                alert(
+                    "Premium is coming soon! 🚀"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CONNECT HOME PREMIUM BUTTON
+========================================================= */
+
+function connectPremiumButton() {
+
+    const button =
+        $("premiumButton");
+
+    if (!button) {
+        return;
+    }
+
+    if (
+        button.dataset.connected === "true"
+    ) {
+        return;
+    }
+
+    button.dataset.connected =
+        "true";
+
+    button.addEventListener(
+        "click",
+        function(event) {
+
+            event.preventDefault();
+
+            openPremiumOffer();
+
+        }
+    );
+
+}
 /* =========================================================
    START APP
 ========================================================= */
