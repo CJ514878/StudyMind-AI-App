@@ -2985,7 +2985,7 @@ function renderDailyChallenge() {
         $("dailyChallengeButton")
     ) {
 
-        $("dailyChallengeButton)
+        $("dailyChallengeButton")
             .disabled =
             done;
 
