@@ -1,814 +1,972 @@
 /* =========================================================
    STUDYMIND AI — PREMIUM SYSTEM
-   REAL SUPABASE-BACKED PREMIUM ENTITLEMENT
-========================================================= */
+   ========================================================= */
 
-"use strict";
+(function () {
 
-const STUDYMIND_PREMIUM_KEY = "studyMindPremiumState";
-const STUDYMIND_THEME_KEY = "studyMindTheme";
-
-let studyMindPremium = false;
-let studyMindPremiumLoaded = false;
+    "use strict";
 
 
-/* =========================================================
-   SUPABASE CLIENT
-========================================================= */
+    /* =====================================================
+       STORAGE
+       ===================================================== */
 
-function getPremiumSupabase() {
-    if (
-        typeof supabaseClient !== "undefined" &&
-        supabaseClient
-    ) {
-        return supabaseClient;
+    const PREMIUM_CACHE_KEY =
+        "studyMindPremium";
+
+    const PREMIUM_EVENT =
+        "studyMindPremiumChanged";
+
+
+    /* =====================================================
+       GLOBAL STATE
+       ===================================================== */
+
+    let premiumStatus = false;
+
+    let premiumLoaded = false;
+
+
+    /* =====================================================
+       BASIC HELPERS
+       ===================================================== */
+
+    function isPremium() {
+        return premiumStatus === true;
     }
 
-    if (
-        typeof supabase !== "undefined" &&
-        supabase
-    ) {
-        return supabase;
+
+    function isStudyMindPremium() {
+        return premiumStatus === true;
     }
 
-    return null;
-}
 
+    function getCachedPremiumStatus() {
 
-/* =========================================================
-   PREMIUM STATUS
-========================================================= */
+        try {
 
-function isStudyMindPremium() {
-    return studyMindPremium === true;
-}
+            return (
+                localStorage.getItem(
+                    PREMIUM_CACHE_KEY
+                ) === "true"
+            );
 
-
-async function loadStudyMindPremium() {
-
-    const client =
-        getPremiumSupabase();
-
-    if (!client) {
-        studyMindPremium = false;
-        studyMindPremiumLoaded = true;
-        applyStudyMindPremiumTheme();
-        return false;
-    }
-
-    try {
-
-        const {
-            data: {
-                session
-            }
-        } =
-            await client.auth.getSession();
-
-        if (!session) {
-
-            studyMindPremium = false;
-            studyMindPremiumLoaded = true;
-
-            applyStudyMindPremiumTheme();
+        } catch {
 
             return false;
+
         }
 
+    }
 
-        const response =
-            await fetch(
-                "/api/premium/status",
-                {
-                    method: "GET",
 
-                    headers: {
-                        "Authorization":
-                            `Bearer ${session.access_token}`
-                    }
-                }
+    function saveCachedPremiumStatus(value) {
+
+        try {
+
+            localStorage.setItem(
+                PREMIUM_CACHE_KEY,
+                value ? "true" : "false"
             );
 
+        } catch {}
 
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-            throw new Error(
-                data?.error ||
-                "Unable to load Premium status."
-            );
-        }
+    }
 
 
-        studyMindPremium =
-            data?.premium === true;
+    /* =====================================================
+       APPLY PREMIUM THEME
+       ===================================================== */
+
+    function applyPremiumTheme() {
+
+        const enabled =
+            premiumStatus === true;
 
 
-        studyMindPremiumLoaded =
-            true;
-
-
-        /*
-         * Keep a local cache ONLY for UI restoration.
-         *
-         * This is NOT the source of truth.
-         */
-        localStorage.setItem(
-            STUDYMIND_PREMIUM_KEY,
-            JSON.stringify({
-                premium:
-                    studyMindPremium,
-
-                checkedAt:
-                    Date.now()
-            })
+        document.documentElement.classList.toggle(
+            "study-mind-premium",
+            enabled
         );
 
 
-        applyStudyMindPremiumTheme();
+        if (document.body) {
+
+            document.body.classList.toggle(
+                "study-mind-premium",
+                enabled
+            );
+
+        }
+
 
         updatePremiumUI();
 
+    }
 
-        return studyMindPremium;
 
-    } catch (error) {
+    /* =====================================================
+       PREMIUM UI
+       ===================================================== */
 
-        console.error(
-            "StudyMind Premium status error:",
-            error
+    function updatePremiumUI() {
+
+        const buttons =
+            document.querySelectorAll(
+                "[data-premium-button]"
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                if (premiumStatus) {
+
+                    button.textContent =
+                        "👑 Premium Active";
+
+                    button.classList.add(
+                        "premium-active"
+                    );
+
+                }
+
+            }
         );
 
+
+        const badges =
+            document.querySelectorAll(
+                "[data-premium-badge]"
+            );
+
+
+        badges.forEach(
+            badge => {
+
+                badge.textContent =
+                    premiumStatus
+                        ? "👑 PREMIUM"
+                        : "FREE";
+
+            }
+        );
+
+
+        document.dispatchEvent(
+            new CustomEvent(
+                PREMIUM_EVENT,
+                {
+                    detail: {
+                        premium:
+                            premiumStatus
+                    }
+                }
+            )
+        );
+
+    }
+
+
+    /* =====================================================
+       AUTH SESSION
+       ===================================================== */
+
+    async function getAccessToken() {
+
+        try {
+
+            if (
+                typeof window.supabaseClient ===
+                "undefined"
+            ) {
+                return null;
+            }
+
+
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient
+                    .auth
+                    .getSession();
+
+
+            if (error) {
+
+                console.warn(
+                    "Could not get Supabase session:",
+                    error
+                );
+
+                return null;
+
+            }
+
+
+            return (
+                data?.session?.access_token ||
+                null
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Premium auth error:",
+                error
+            );
+
+            return null;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       LOAD PREMIUM STATUS
+       ===================================================== */
+
+    async function loadStudyMindPremium() {
 
         /*
-         * Never grant Premium because of
-         * a localStorage value.
+         * Immediately restore the visual state
+         * from the local cache.
+         *
+         * This is ONLY a visual cache.
+         * The server remains the source of truth.
          */
-        studyMindPremium = false;
-        studyMindPremiumLoaded = true;
 
-        applyStudyMindPremiumTheme();
-
-        return false;
-    }
-}
+        premiumStatus =
+            getCachedPremiumStatus();
 
 
-/* =========================================================
-   PREMIUM THEME
-========================================================= */
-
-function applyStudyMindPremiumTheme() {
-
-    const html =
-        document.documentElement;
-
-    const body =
-        document.body;
+        applyPremiumTheme();
 
 
-    if (isStudyMindPremium()) {
+        const token =
+            await getAccessToken();
 
-        html.classList.add(
-            "study-mind-premium"
-        );
 
-        if (body) {
-            body.classList.add(
-                "study-mind-premium"
-            );
+        if (!token) {
+
+            premiumStatus = false;
+
+            saveCachedPremiumStatus(false);
+
+            applyPremiumTheme();
+
+            premiumLoaded = true;
+
+            return false;
+
         }
 
-        html.dataset.premium =
-            "true";
 
-    } else {
+        try {
 
-        html.classList.remove(
-            "study-mind-premium"
-        );
+            const response =
+                await fetch(
+                    "/api/premium/status",
+                    {
+                        method: "GET",
 
-        if (body) {
-            body.classList.remove(
-                "study-mind-premium"
-            );
-        }
-
-        delete html.dataset.premium;
-    }
-}
-
-
-/* =========================================================
-   PREMIUM UI
-========================================================= */
-
-function updatePremiumUI() {
-
-    const buttons =
-        document.querySelectorAll(
-            "[data-premium-feature]"
-        );
-
-
-    buttons.forEach(
-        button => {
-
-            if (isStudyMindPremium()) {
-
-                button.classList.add(
-                    "premium-unlocked"
+                        headers: {
+                            "Authorization":
+                                `Bearer ${token}`
+                        }
+                    }
                 );
 
-                button.classList.remove(
-                    "premium-locked"
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data?.error ||
+                    "Could not check Premium status."
                 );
 
-            } else {
-
-                button.classList.remove(
-                    "premium-unlocked"
-                );
             }
+
+
+            premiumStatus =
+                data?.premium === true;
+
+
+            saveCachedPremiumStatus(
+                premiumStatus
+            );
+
+
+            applyPremiumTheme();
+
+
+            premiumLoaded = true;
+
+
+            return premiumStatus;
+
+        } catch (error) {
+
+            console.warn(
+                "Premium status check failed:",
+                error
+            );
+
+
+            /*
+             * Never grant Premium because
+             * the status request failed.
+             */
+
+            premiumStatus = false;
+
+            saveCachedPremiumStatus(false);
+
+            applyPremiumTheme();
+
+            premiumLoaded = true;
+
+            return false;
+
         }
-    );
 
-
-    const badges =
-        document.querySelectorAll(
-            ".study-mind-premium-badge"
-        );
-
-
-    badges.forEach(
-        badge => {
-
-            badge.textContent =
-                isStudyMindPremium()
-                    ? "💎 PREMIUM"
-                    : "FREE";
-        }
-    );
-}
-
-
-/* =========================================================
-   PREMIUM MODAL
-========================================================= */
-
-function openPremiumOffer() {
-
-    if (isStudyMindPremium()) {
-
-        showPremiumAlreadyActive();
-
-        return;
     }
 
 
-    const existing =
-        document.getElementById(
-            "studyMindPremiumModal"
-        );
+    /* =====================================================
+       WAIT FOR PREMIUM STATUS
+       ===================================================== */
+
+    async function waitForPremiumStatus() {
+
+        if (premiumLoaded) {
+
+            return premiumStatus;
+
+        }
 
 
-    if (existing) {
-        existing.remove();
+        return await loadStudyMindPremium();
+
     }
 
 
-    const modal =
-        document.createElement(
-            "div"
-        );
+    /* =====================================================
+       PREMIUM OFFER MODAL
+       ===================================================== */
+
+    function openPremiumOffer() {
+
+        if (premiumStatus) {
+
+            showPremiumAlreadyActive();
+
+            return;
+
+        }
 
 
-    modal.id =
-        "studyMindPremiumModal";
+        closePremiumModal();
 
 
-    modal.innerHTML = `
+        const overlay =
+            document.createElement("div");
 
-        <div class="sm-premium-overlay">
 
-            <div class="sm-premium-modal">
+        overlay.id =
+            "studyMindPremiumModal";
+
+
+        overlay.className =
+            "study-mind-premium-overlay";
+
+
+        overlay.innerHTML = `
+
+            <div
+                class="study-mind-premium-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="premiumModalTitle"
+            >
 
                 <button
                     type="button"
-                    class="sm-premium-close"
-                    id="closeStudyMindPremium"
+                    class="premium-modal-close"
+                    id="premiumModalClose"
                     aria-label="Close"
                 >
                     ×
                 </button>
 
 
-                <div class="sm-premium-crown">
-                    💎
+                <div class="premium-modal-icon">
+                    👑
                 </div>
 
 
-                <div class="sm-premium-eyebrow">
-                    STUDYMIND PREMIUM
-                </div>
+                <span class="premium-modal-label">
+                    STUDYMIND AI PREMIUM
+                </span>
 
 
-                <h2>
-                    Study without limits.
+                <h2 id="premiumModalTitle">
+                    Unlock the full StudyMind experience.
                 </h2>
 
 
-                <p class="sm-premium-subtitle">
-                    Unlock the full StudyMind AI
-                    experience and get more from
-                    every study session.
+                <p class="premium-modal-description">
+                    Get unlimited AI assistance, larger
+                    knowledge checks, unlimited battles,
+                    1v1 access and more.
                 </p>
 
 
-                <div class="sm-premium-features">
+                <div class="premium-benefits">
 
-                    <div class="sm-premium-feature">
-                        <span>🤖</span>
-                        <div>
-                            <strong>
-                                Unlimited AI
-                            </strong>
-                            <small>
-                                Ask StudyMind AI
-                                whenever you need help.
-                            </small>
-                        </div>
+                    <div>
+                        <span>✓</span>
+                        <strong>Unlimited AI tools</strong>
                     </div>
 
-
-                    <div class="sm-premium-feature">
-                        <span>🧠</span>
-                        <div>
-                            <strong>
-                                Up to 60 questions
-                            </strong>
-                            <small>
-                                Build deeper knowledge
-                                checks for every topic.
-                            </small>
-                        </div>
+                    <div>
+                        <span>✓</span>
+                        <strong>
+                            5–60 question knowledge checks
+                        </strong>
                     </div>
 
-
-                    <div class="sm-premium-feature">
-                        <span>⚔️</span>
-                        <div>
-                            <strong>
-                                Unlimited Game Mode
-                            </strong>
-                            <small>
-                                Play battles without the
-                                free-user limit.
-                            </small>
-                        </div>
+                    <div>
+                        <span>✓</span>
+                        <strong>
+                            Unlimited Game Mode battles
+                        </strong>
                     </div>
 
-
-                    <div class="sm-premium-feature">
-                        <span>🏆</span>
-                        <div>
-                            <strong>
-                                1v1 & Tournaments
-                            </strong>
-                            <small>
-                                Unlock Premium competitive
-                                features.
-                            </small>
-                        </div>
+                    <div>
+                        <span>✓</span>
+                        <strong>
+                            Premium 1v1 access
+                        </strong>
                     </div>
 
-
-                    <div class="sm-premium-feature">
-                        <span>✨</span>
-                        <div>
-                            <strong>
-                                Premium Gold Experience
-                            </strong>
-                            <small>
-                                Your StudyMind interface
-                                gets the Premium treatment.
-                            </small>
-                        </div>
+                    <div>
+                        <span>✓</span>
+                        <strong>
+                            Premium gold experience
+                        </strong>
                     </div>
 
                 </div>
 
 
-                <div class="sm-premium-divider"></div>
-
-
-                <h3>
+                <div class="premium-payment-title">
                     Choose your payment method
-                </h3>
+                </div>
 
 
-                <div class="sm-payment-options">
+                <div class="premium-payment-options">
 
                     <button
                         type="button"
-                        class="sm-payment-button"
-                        data-payment-provider="paystack"
+                        class="premium-payment-button"
+                        data-provider="paystack"
                     >
-                        <span>💳</span>
+                        <span>🇳🇬</span>
                         <span>
                             <strong>Paystack</strong>
-                            <small>Pay securely</small>
+                            <small>
+                                Nigerian payment
+                            </small>
                         </span>
                     </button>
 
 
                     <button
                         type="button"
-                        class="sm-payment-button"
-                        data-payment-provider="flutterwave"
+                        class="premium-payment-button"
+                        data-provider="flutterwave"
                     >
                         <span>💳</span>
                         <span>
                             <strong>Flutterwave</strong>
-                            <small>Pay securely</small>
+                            <small>
+                                Card & local payment
+                            </small>
                         </span>
                     </button>
 
 
                     <button
                         type="button"
-                        class="sm-payment-button"
-                        data-payment-provider="stripe"
+                        class="premium-payment-button"
+                        data-provider="stripe"
                     >
-                        <span>💳</span>
+                        <span>🌎</span>
                         <span>
                             <strong>Stripe</strong>
-                            <small>Pay securely</small>
+                            <small>
+                                International payment
+                            </small>
                         </span>
                     </button>
 
                 </div>
 
 
-                <div
-                    id="smPremiumPaymentStatus"
-                    class="sm-premium-payment-status"
-                ></div>
-
-
-                <p class="sm-premium-secure">
-                    🔒 Secure payment • Premium is
-                    attached to your StudyMind account
+                <p class="premium-secure-note">
+                    🔒 Payment is processed securely by
+                    your selected payment provider.
                 </p>
+
+
+                <div
+                    id="premiumPaymentStatus"
+                    class="premium-payment-status"
+                ></div>
 
             </div>
 
-        </div>
-    `;
+        `;
 
 
-    document.body.appendChild(
-        modal
-    );
-
-
-    const closeButton =
-        document.getElementById(
-            "closeStudyMindPremium"
+        document.body.appendChild(
+            overlay
         );
 
 
-    if (closeButton) {
-
-        closeButton.addEventListener(
-            "click",
-            closePremiumOffer
-        );
-    }
+        const closeButton =
+            document.getElementById(
+                "premiumModalClose"
+            );
 
 
-    const overlay =
-        modal.querySelector(
-            ".sm-premium-overlay"
-        );
+        if (closeButton) {
 
+            closeButton.addEventListener(
+                "click",
+                closePremiumModal
+            );
 
-    if (overlay) {
+        }
+
 
         overlay.addEventListener(
             "click",
             event => {
 
                 if (
-                    event.target ===
-                    overlay
+                    event.target === overlay
                 ) {
-                    closePremiumOffer();
+
+                    closePremiumModal();
+
                 }
+
             }
         );
-    }
 
 
-    const paymentButtons =
-        modal.querySelectorAll(
-            "[data-payment-provider]"
-        );
+        overlay
+            .querySelectorAll(
+                "[data-provider]"
+            )
+            .forEach(
+                button => {
 
+                    button.addEventListener(
+                        "click",
+                        () => {
 
-    paymentButtons.forEach(
-        button => {
+                            beginPremiumPayment(
+                                button.dataset.provider
+                            );
 
-            button.addEventListener(
-                "click",
-                function () {
-
-                    const provider =
-                        this.dataset
-                            .paymentProvider;
-
-                    beginPremiumPayment(
-                        provider
+                        }
                     );
-                }
-            );
-        }
-    );
-}
 
-
-function closePremiumOffer() {
-
-    const modal =
-        document.getElementById(
-            "studyMindPremiumModal"
-        );
-
-    if (modal) {
-        modal.remove();
-    }
-}
-
-
-/* =========================================================
-   PAYMENT
-========================================================= */
-
-async function beginPremiumPayment(
-    provider
-) {
-
-    const client =
-        getPremiumSupabase();
-
-
-    if (!client) {
-
-        alert(
-            "Please refresh the page and try again."
-        );
-
-        return;
-    }
-
-
-    const {
-        data: {
-            session
-        }
-    } =
-        await client.auth.getSession();
-
-
-    if (!session) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-    }
-
-
-    const status =
-        document.getElementById(
-            "smPremiumPaymentStatus"
-        );
-
-
-    if (status) {
-
-        status.textContent =
-            "⏳ Preparing secure checkout...";
-
-        status.className =
-            "sm-premium-payment-status loading";
-    }
-
-
-    const buttons =
-        document.querySelectorAll(
-            "[data-payment-provider]"
-        );
-
-
-    buttons.forEach(
-        button => {
-            button.disabled = true;
-        }
-    );
-
-
-    try {
-
-        const response =
-            await fetch(
-                "/api/premium/create-checkout",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${session.access_token}`
-                    },
-
-                    body:
-                        JSON.stringify({
-                            provider
-                        })
                 }
             );
 
-
-        const data =
-            await response.json();
+    }
 
 
-        if (!response.ok) {
-            throw new Error(
-                data?.error ||
-                "Unable to start payment."
+    /* =====================================================
+       CLOSE MODAL
+       ===================================================== */
+
+    function closePremiumModal() {
+
+        const modal =
+            document.getElementById(
+                "studyMindPremiumModal"
             );
+
+
+        if (modal) {
+
+            modal.remove();
+
         }
 
+    }
 
-        if (
-            !data.checkoutUrl
-        ) {
-            throw new Error(
-                "Payment provider did not return a checkout URL."
+
+    /* =====================================================
+       PAYMENT
+       ===================================================== */
+
+    async function beginPremiumPayment(
+        provider
+    ) {
+
+        const status =
+            document.getElementById(
+                "premiumPaymentStatus"
             );
-        }
-
-
-        window.location.href =
-            data.checkoutUrl;
-
-
-    } catch (error) {
-
-        console.error(
-            "Premium payment error:",
-            error
-        );
 
 
         if (status) {
 
-            status.textContent =
-                error.message ||
-                "Unable to start payment.";
+            status.innerHTML =
+                "⏳ Preparing secure checkout...";
 
-            status.className =
-                "sm-premium-payment-status error";
         }
 
 
-        buttons.forEach(
-            button => {
-                button.disabled = false;
+        const token =
+            await getAccessToken();
+
+
+        if (!token) {
+
+            if (status) {
+
+                status.innerHTML =
+                    "🔒 Please log in before purchasing Premium.";
+
             }
-        );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/premium/create-checkout",
+                    {
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${token}`
+
+                        },
+
+                        body:
+                            JSON.stringify({
+                                provider
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data?.error ||
+                    "Could not start payment."
+                );
+
+            }
+
+
+            if (!data.checkoutUrl) {
+
+                throw new Error(
+                    "Payment provider did not return a checkout URL."
+                );
+
+            }
+
+
+            window.location.href =
+                data.checkoutUrl;
+
+        } catch (error) {
+
+            console.error(
+                "Premium payment error:",
+                error
+            );
+
+
+            if (status) {
+
+                status.innerHTML =
+                    `❌ ${escapePremiumText(
+                        error.message
+                    )}`;
+
+            }
+
+        }
+
     }
-}
 
 
-/* =========================================================
-   ALREADY PREMIUM
-========================================================= */
+    /* =====================================================
+       ALREADY PREMIUM
+       ===================================================== */
 
-function showPremiumAlreadyActive() {
+    function showPremiumAlreadyActive() {
 
-    const existing =
-        document.getElementById(
-            "studyMindPremiumModal"
-        );
+        closePremiumModal();
 
 
-    if (existing) {
-        existing.remove();
-    }
+        const overlay =
+            document.createElement("div");
 
 
-    const modal =
-        document.createElement(
-            "div"
-        );
+        overlay.id =
+            "studyMindPremiumModal";
 
 
-    modal.id =
-        "studyMindPremiumModal";
+        overlay.className =
+            "study-mind-premium-overlay";
 
 
-    modal.innerHTML = `
+        overlay.innerHTML = `
 
-        <div class="sm-premium-overlay">
-
-            <div class="sm-premium-modal sm-premium-active">
-
-                <div class="sm-premium-crown">
-                    👑
-                </div>
-
-                <div class="sm-premium-eyebrow">
-                    STUDYMIND PREMIUM
-                </div>
-
-                <h2>
-                    Premium is active.
-                </h2>
-
-                <p>
-                    You already have full Premium
-                    access on this StudyMind account.
-                </p>
-
-                <div class="sm-premium-active-list">
-
-                    <div>✓ Unlimited AI</div>
-                    <div>✓ Up to 60-question knowledge checks</div>
-                    <div>✓ Unlimited Game Mode</div>
-                    <div>✓ 1v1 access</div>
-                    <div>✓ Tournament access</div>
-                    <div>✓ Premium Gold Experience</div>
-
-                </div>
+            <div class="study-mind-premium-modal">
 
                 <button
                     type="button"
-                    class="sm-premium-main-button"
-                    onclick="closePremiumOffer()"
+                    class="premium-modal-close"
+                    id="premiumActiveClose"
                 >
-                    Continue Studying →
+                    ×
+                </button>
+
+
+                <div class="premium-modal-icon">
+                    👑
+                </div>
+
+
+                <span class="premium-modal-label">
+                    PREMIUM ACTIVE
+                </span>
+
+
+                <h2>
+                    You're already Premium.
+                </h2>
+
+
+                <p class="premium-modal-description">
+                    Your StudyMind AI account has full
+                    Premium access.
+                </p>
+
+
+                <div class="premium-active-list">
+
+                    <div>✓ Unlimited AI</div>
+
+                    <div>✓ 5–60 question knowledge checks</div>
+
+                    <div>✓ Unlimited Game Mode</div>
+
+                    <div>✓ Premium 1v1 access</div>
+
+                    <div>✓ Gold Premium experience</div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="premium-modal-primary"
+                    id="premiumActiveContinue"
+                >
+                    Continue studying →
                 </button>
 
             </div>
 
-        </div>
-    `;
+        `;
 
 
-    document.body.appendChild(
-        modal
-    );
-}
+        document.body.appendChild(
+            overlay
+        );
 
 
-/* =========================================================
-   GLOBAL API
-========================================================= */
-
-window.isStudyMindPremium =
-    isStudyMindPremium;
-
-window.loadStudyMindPremium =
-    loadStudyMindPremium;
-
-window.openPremiumOffer =
-    openPremiumOffer;
-
-window.closePremiumOffer =
-    closePremiumOffer;
-
-window.applyStudyMindPremiumTheme =
-    applyStudyMindPremiumTheme;
+        document
+            .getElementById(
+                "premiumActiveClose"
+            )
+            ?.addEventListener(
+                "click",
+                closePremiumModal
+            );
 
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async function () {
-
-        applyStudyMindPremiumTheme();
-
-        await loadStudyMindPremium();
+        document
+            .getElementById(
+                "premiumActiveContinue"
+            )
+            ?.addEventListener(
+                "click",
+                closePremiumModal
+            );
 
     }
-);
+
+
+    /* =====================================================
+       ESCAPE TEXT
+       ===================================================== */
+
+    function escapePremiumText(
+        value
+    ) {
+
+        return String(value || "")
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    /* =====================================================
+       INITIALISE
+       ===================================================== */
+
+    function initialisePremium() {
+
+        /*
+         * Apply cached theme immediately.
+         */
+
+        premiumStatus =
+            getCachedPremiumStatus();
+
+
+        applyPremiumTheme();
+
+
+        /*
+         * Then verify against the server.
+         */
+
+        setTimeout(
+            () => {
+
+                loadStudyMindPremium();
+
+            },
+            0
+        );
+
+    }
+
+
+    /* =====================================================
+       GLOBAL API
+       ===================================================== */
+
+    window.isStudyMindPremium =
+        isStudyMindPremium;
+
+
+    window.isPremium =
+        isPremium;
+
+
+    window.loadStudyMindPremium =
+        loadStudyMindPremium;
+
+
+    window.waitForPremiumStatus =
+        waitForPremiumStatus;
+
+
+    window.openPremiumOffer =
+        openPremiumOffer;
+
+
+    window.closePremiumModal =
+        closePremiumModal;
+
+
+    window.beginPremiumPayment =
+        beginPremiumPayment;
+
+
+    window.applyPremiumTheme =
+        applyPremiumTheme;
+
+
+    window.getStudyMindPremiumStatus =
+        () => premiumStatus;
+
+
+    /* =====================================================
+       START
+       ===================================================== */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialisePremium
+        );
+
+    } else {
+
+        initialisePremium();
+
+    }
+
+})();
