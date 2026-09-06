@@ -2519,27 +2519,141 @@ function connectStudyForm() {
 
 function openHomePremiumOffer() {
 
-    /*
-     * Use the new central Premium system.
-     */
+    const existing =
+        $("studyMindHomePremiumModal");
 
-    if (
-        typeof window.openPremiumOffer ===
-        "function"
-    ) {
-        window.openPremiumOffer();
-        return;
+    if (existing) {
+        existing.remove();
     }
 
+    const modal =
+        document.createElement("div");
 
-    /*
-     * Fallback if premium.js has not loaded.
-     */
+    modal.id =
+        "studyMindHomePremiumModal";
 
-    alert(
-        "Premium is currently unavailable. Please refresh the page and try again."
-    );
+    modal.innerHTML = `
+        <div
+            style="
+                position:fixed;
+                inset:0;
+                z-index:99999;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                padding:20px;
+                background:rgba(2,6,23,.78);
+                backdrop-filter:blur(8px);
+            "
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="homePremiumTitle"
+                style="
+                    position:relative;
+                    width:min(480px,100%);
+                    padding:38px 32px 32px;
+                    border-radius:26px;
+                    background:#0f172a;
+                    color:#fff;
+                    border:1px solid rgba(129,140,248,.32);
+                    box-shadow:0 30px 90px rgba(0,0,0,.50);
+                    text-align:center;
+                "
+            >
+                <button
+                    id="closeHomePremiumButton"
+                    type="button"
+                    aria-label="Close Premium offer"
+                    style="
+                        position:absolute;
+                        top:12px;
+                        right:14px;
+                        width:40px;
+                        height:40px;
+                        border:0;
+                        border-radius:12px;
+                        background:rgba(255,255,255,.07);
+                        color:#cbd5e1;
+                        font-size:25px;
+                        cursor:pointer;
+                    "
+                >×</button>
+
+                <div style="font-size:52px;margin-bottom:12px;">💎</div>
+
+                <h2 id="homePremiumTitle" style="margin:0 0 12px;">
+                    StudyMind AI Premium
+                </h2>
+
+                <p style="margin:0;color:#cbd5e1;line-height:1.7;">
+                    Premium features are coming soon.
+                    We’re building a more powerful StudyMind
+                    experience for students who want to go further.
+                </p>
+
+                <button
+                    id="homePremiumComingSoonButton"
+                    type="button"
+                    style="
+                        width:100%;
+                        margin-top:24px;
+                        padding:14px 20px;
+                        border:0;
+                        border-radius:13px;
+                        background:#fff;
+                        color:#111827;
+                        font:inherit;
+                        font-weight:800;
+                        cursor:pointer;
+                    "
+                >
+                    Coming Soon 🚀
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeButton =
+        $("closeHomePremiumButton");
+
+    if (closeButton) {
+        closeButton.addEventListener(
+            "click",
+            () => modal.remove()
+        );
+    }
+
+    const comingSoonButton =
+        $("homePremiumComingSoonButton");
+
+    if (comingSoonButton) {
+        comingSoonButton.addEventListener(
+            "click",
+            () => {
+                alert("Premium is coming soon! 🚀");
+            }
+        );
+    }
+
+    modal
+        .querySelector("[role=dialog]")
+        ?.addEventListener("click", event => {
+            event.stopPropagation();
+        });
+
+    modal
+        .firstElementChild
+        ?.addEventListener("click", event => {
+            if (event.target === modal.firstElementChild) {
+                modal.remove();
+            }
+        });
 }
+
 function connectPremiumButton() {
 
     const button =
@@ -2549,18 +2663,22 @@ function connectPremiumButton() {
         return;
     }
 
+    if (button.dataset.connected === "true") {
+        return;
+    }
+
+    button.dataset.connected = "true";
+
     button.addEventListener(
         "click",
-        event => {
-
+        function(event) {
             event.preventDefault();
-
-            window.location.href =
-                "premium.html";
-
+            openHomePremiumOffer();
         }
     );
 }
+
+
 /* =========================================================
    INITIALIZE HOME
 ========================================================= */
