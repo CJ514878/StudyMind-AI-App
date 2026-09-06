@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>StudyMind AI — Golden Premium</title>
+
+    <meta
+        name="description"
+        content="StudyMind AI Golden Premium Experience"
+    >
+
+    <style>
+        /* =========================================================
+           STUDYMIND AI — GOLDEN PREMIUM APP
+        ========================================================= */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #070b14;
+            --bg2: #0b1020;
+            --card: rgba(16, 23, 39, 0.88);
+            --card2: rgba(22, 30, 49, 0.92);
+            --gold: #f5c542;
+            --gold-light: #ffe28a;
+            --gold-dark: #b88900;
+            --text: #f7f8fb;
+            --muted: #9ba5b7;
+            --border: rgba(245, 197, 66, 0.18);
+            --success: #39d98a;
+            --danger: #ff6868;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            background:
+                radial-gradient(
+                    circle at 15% 10%,
+                    rgba(245, 197, 66, 0.10),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at 85% 20%,
+                    rgba(245, 197, 66, 0.07),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    135deg,
+                    #050811 0%,
+                    #0a0f1c 45%,
+                    #070b14 100%
+                );
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        button,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* =========================================================
+           ACCESS LOADING SCREEN
+        ========================================================= */
+
+        #accessScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #050811;
+            transition: opacity 0.35s ease;
+        }
+
+        .access-box {
+            width: min(90%, 430px);
+            padding: 40px 28px;
+            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: rgba(12, 17, 29, 0.96);
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.45),
+                0 0 60px rgba(245, 197, 66, 0.05);
+        }
+
+        .access-crown {
+            font-size: 44px;
+            margin-bottom: 18px;
+        }
+
+        .access-box h2 {
+            margin-bottom: 10px;
+        }
+
+        .access-box p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            margin: 24px auto 0;
+            border: 3px solid rgba(245, 197, 66, 0.18);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================================
+           MAIN APP
+        ========================================================= */
+
+        #premiumApp {
+            display: none;
+        }
+
+        .container {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        /* =========================================================
+           NAVBAR
+        ========================================================= */
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(5, 8, 17, 0.82);
+            backdrop-filter: blur(18px);
+        }
+
+        .nav-inner {
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 20px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #fff0a8,
+                    var(--gold),
+                    var(--gold-dark)
+                );
+            color: #151000;
+            box-shadow: 0 8px 30px rgba(245, 197, 66, 0.18);
+        }
+
+        .premium-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            color: #171200;
+            background: linear-gradient(
+                135deg,
+                var(--gold-light),
+                var(--gold)
+            );
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-button {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+            transition: 0.2s ease;
+        }
+
+        .nav-button:hover {
+            border-color: var(--border);
+            transform: translateY(-1px);
+        }
+
+        /* =========================================================
+           HERO
+        ========================================================= */
+
+        .hero {
+            padding: 72px 0 45px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .hero-card {
+            position: relative;
+            overflow: hidden;
+            padding: 44px;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(245, 197, 66, 0.08),
+                    rgba(16, 23, 39, 0.92) 50%
+                );
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            right: -130px;
+            top: -130px;
+            border-radius: 50%;
+            background: rgba(245, 197, 66, 0.09);
+            filter: blur(4px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-light);
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 18px;
+            letter-spacing: 0.4px;
+        }
+
+        .hero h1 {
+            max-width: 720px;
+            font-size: clamp(38px, 6vw, 68px);
+            line-height: 0.98;
+            letter-spacing: -2.5px;
+            margin-bottom: 22px;
+        }
+
+        .gold-text {
+            color: var(--gold);
+        }
+
+        .hero-description {
+            max-width: 650px;
+            color: var(--muted);
+            font-size: 17px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .primary-button {
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: #171200;
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffe999,
+                    var(--gold)
+                );
+            font-weight: 900;
+            box-shadow:
+                0 12px 28px rgba(245, 197, 66, 0.17);
+            transition: 0.2s ease;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 16px 34px rgba(245, 197, 66, 0.25);
+        }
+
+        .secondary-button {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+            font-weight: 700;
+            transition: 0.2s ease;
+        }
+
+        .secondary-button:hover {
+            border-color: var(--border);
+            transform: translateY(-2px);
+        }
+
+        /* =========================================================
+           STATUS CARD
+        ========================================================= */
+
+        .status-card {
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            background: var(--card);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .status-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .status-title {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .active-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            color: #06170f;
+            background: var(--success);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .status-crown {
+            font-size: 72px;
+            margin: 30px 0 20px;
+        }
+
+        .status-card h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status-card p {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .account-email {
+            margin-top: 22px;
+            padding: 13px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--gold-light);
+            font-size: 13px;
+            word-break: break-word;
+        }
+
+        /* =========================================================
+           SECTION
+        ========================================================= */
+
+        .section {
+            padding: 28px 0 70px;
+        }
+
+        .section-heading {
+            margin-bottom: 24px;
+        }
+
+        .section-heading h2 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .section-heading p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* =========================================================
+           FEATURE GRID
+        ========================================================= */
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            min-height: 210px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 20px;
+            background: var(--card);
+            transition: 0.22s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.20);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: rgba(245, 197, 66, 0.10);
+            font-size: 23px;
+            margin-bottom: 18px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 9px;
+            font-size: 18px;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* =========================================================
+           QUICK ACTIONS
+        ========================================================= */
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .action-card {
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 18px;
+            padding: 22px;
+            background: var(--card);
+            text-align: left;
+            transition: 0.2s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border);
+        }
+
+        .action-card .action-icon {
+            font-size: 26px;
+            margin-bottom: 14px;
+        }
+
+        .action-card h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .action-card p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* =========================================================
+           AI SECTION
+        ========================================================= */
+
+        .ai-panel {
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 28px;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(245, 197, 66, 0.07),
+                    rgba(16, 23, 39, 0.9)
+                );
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .ai-header h2 {
+            font-size: 25px;
+            margin-bottom: 7px;
+        }
+
+        .ai-header p {
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .unlimited-badge {
+            flex-shrink: 0;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(245, 197, 66, 0.12);
+            border: 1px solid var(--border);
+            color: var(--gold-light);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .ai-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        #aiQuestion {
+            flex: 1;
+            min-height: 52px;
+            resize: vertical;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 13px;
+            outline: none;
+            padding: 14px 16px;
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        #aiQuestion:focus {
+            border-color: rgba(245, 197, 66, 0.42);
+        }
+
+        #askAIButton {
+            align-self: stretch;
+            min-width: 130px;
+        }
+
+        #aiResponse {
+            display: none;
+            margin-top: 18px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.16);
+            color: #e8ebf1;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        #aiResponse.loading {
+            color: var(--gold-light);
+        }
+
+        /* =========================================================
+           TOOLS
+        ========================================================= */
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .tool-card {
+            padding: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 20px;
+            background: var(--card);
+        }
+
+        .tool-card h3 {
+            margin-bottom: 8px;
+        }
+
+        .tool-card > p {
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .timer-display {
+            font-size: 54px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--gold-light);
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .timer-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .timer-option {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 9px;
+            padding: 8px 12px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .timer-option.active,
+        .timer-option:hover {
+            color: #171200;
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .timer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .timer-buttons button {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-weight: 800;
+        }
+
+        .stats-list {
+            display: grid;
+            gap: 11px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .stat-row span:first-child {
+            color: var(--muted);
+        }
+
+        .stat-value {
+            color: var(--gold-light);
+            font-weight: 900;
+        }
+
+        /* =========================================================
+           GOLD CTA
+        ========================================================= */
+
+        .gold-cta {
+            position: relative;
+            overflow: hidden;
+            margin-top: 15px;
+            padding: 45px 30px;
+            text-align: center;
+            border: 1px solid rgba(245, 197, 66, 0.30);
+            border-radius: 28px;
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(245, 197, 66, 0.13),
+                    transparent 60%
+                ),
+                rgba(16, 23, 39, 0.92);
+        }
+
+        .gold-cta h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .gold-cta p {
+            max-width: 650px;
+            margin: 0 auto 22px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+
+        footer {
+            padding: 35px 0 50px;
+            text-align: center;
+            color: #6f7889;
+            font-size: 13px;
+        }
+
+        footer strong {
+            color: var(--gold);
+        }
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .container {
+                width: min(100% - 22px, 1180px);
+            }
+
+            .nav-inner {
+                min-height: 68px;
+            }
+
+            .brand span:last-child {
+                display: none;
+            }
+
+            .premium-label {
+                display: none;
+            }
+
+            .nav-button {
+                padding: 9px 11px;
+                font-size: 13px;
+            }
+
+            .hero {
+                padding-top: 35px;
+            }
+
+            .hero-card,
+            .status-card {
+                padding: 26px;
+                border-radius: 21px;
+            }
+
+            .hero h1 {
+                letter-spacing: -1.5px;
+            }
+
+            .feature-grid,
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-header {
+                flex-direction: column;
+            }
+
+            .ai-input-row {
+                flex-direction: column;
+            }
+
+            #askAIButton {
+                min-height: 48px;
+            }
+
+            .timer-display {
+                font-size: 43px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         ACCESS VERIFICATION
+    ========================================================= -->
+
+    <div id="accessScreen">
+        <div class="access-box">
+            <div class="access-crown">👑</div>
+
+            <h2>Verifying Premium Access</h2>
+
+            <p>
+                StudyMind AI is checking your account.
+            </p>
+
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         PREMIUM APP
+    ========================================================= -->
+
+    <div id="premiumApp">
+
+        <!-- NAVBAR -->
+
+        <nav class="navbar">
+            <div class="container nav-inner">
+
+                <a href="home.html" class="brand">
+                    <div class="brand-icon">🧠</div>
+                    <span>StudyMind AI</span>
+                </a>
+
+                <div class="nav-actions">
+
+                    <span class="premium-label">
+                        👑 GOLDEN PREMIUM
+                    </span>
+
+                    <button
+                        class="nav-button"
+                        id="dashboardButton"
+                    >
+                        Dashboard
+                    </button>
+
+                    <button
+                        class="nav-button"
+                        id="homeButton"
+                    >
+                        Home
+                    </button>
+
+                </div>
+
+            </div>
+        </nav>
+
+
+        <!-- HERO -->
+
+        <main>
+
+            <section class="hero">
+                <div class="container hero-grid">
+
+                    <div class="hero-card">
+
+                        <div class="eyebrow">
+                            ✨ PREMIUM EXPERIENCE UNLOCKED
+                        </div>
+
+                        <h1>
+                            Welcome to the
+                            <span class="gold-text">
+                                Golden
+                            </span>
+                            StudyMind experience.
+                        </h1>
+
+                        <p class="hero-description">
+                            Your complete AI-powered study workspace,
+                            built for deeper learning, smarter preparation,
+                            and unlimited access to your StudyMind tools.
+                        </p>
+
+                        <div class="hero-buttons">
+
+                            <button
+                                class="primary-button"
+                                id="startStudyingButton"
+                            >
+                                🚀 Start Studying
+                            </button>
+
+                            <button
+                                class="secondary-button"
+                                id="gameModeButton"
+                            >
+                                🎮 Game Mode
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="status-card">
+
+                        <div class="status-top">
+
+                            <div>
+                                <div class="status-title">
+                                    ACCOUNT STATUS
+                                </div>
+                            </div>
+
+                            <div class="active-badge">
+                                ● ACTIVE
+                            </div>
+
+                        </div>
+
+                        <div class="status-crown">
+                            👑
+                        </div>
+
+                        <h2>
+                            Golden Premium
+                        </h2>
+
+                        <p>
+                            Unlimited StudyMind AI access is enabled
+                            for this authorized account.
+                        </p>
+
+                        <div
+                            class="account-email"
+                            id="accountEmail"
+                        >
+                            Verifying account...
+                        </div>
+
+                    </div>
+
+                </div>
+            </section>
+
+
+            <!-- PREMIUM FEATURES -->
+
+            <section class="section">
+
+                <div class="container">
+
+                    <div class="section-heading">
+
+                        <h2>
+                            Everything unlocked
+                        </h2>
+
+                        <p>
+                            Your Premium workspace gives you access
+                            to the full StudyMind experience.
+                        </p>
+
+                    </div>
+
+
+                    <div class="feature-grid">
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                🤖
+                            </div>
+
+                            <h3>
+                                Unlimited AI Assistance
+                            </h3>
+
+                            <p>
+                                Ask StudyMind AI questions while studying
+                                without the normal five-question daily limit.
+                            </p>
+
+                        </div>
+
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                📝
+                            </div>
+
+                            <h3>
+                                Advanced Knowledge Checks
+                            </h3>
+
+                            <p>
+                                Test yourself on your study topics with
+                                customizable knowledge checks.
+                            </p>
+
+                        </div>
+
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                📚
+                            </div>
+
+                            <h3>
+                                AI Summarizer
+                            </h3>
+
+                            <p>
+                                Turn your study material into concise,
+                                useful summaries and key points.
+                            </p>
+
+                        </div>
+
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                🎮
+                            </div>
+
+                            <h3>
+                                Premium Game Mode
+                            </h3>
+
+                            <p>
+                                Challenge yourself with StudyMind battles
+                                and access the complete game experience.
+                            </p>
+
+                        </div>
+
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                📈
+                            </div>
+
+                            <h3>
+                                Advanced Progress
+                            </h3>
+
+                            <p>
+                                Track your study activity, streaks,
+                                progress and performance.
+                            </p>
+
+                        </div>
+
+
+                        <div class="feature-card">
+
+                            <div class="feature-icon">
+                                ✨
+                            </div>
+
+                            <h3>
+                                Golden Experience
+                            </h3>
+
+                            <p>
+                                Enjoy the premium StudyMind interface
+                                with your tools organized in one place.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- QUICK ACTIONS -->
+
+            <section class="section">
+
+                <div class="container">
+
+                    <div class="section-heading">
+
+                        <h2>
+                            Quick actions
+                        </h2>
+
+                        <p>
+                            Jump straight into the part of StudyMind
+                            you want to use.
+                        </p>
+
+                    </div>
+
+
+                    <div class="action-grid">
+
+                        <button
+                            class="action-card"
+                            id="studyPlanAction"
+                        >
+
+                            <div class="action-icon">
+                                📖
+                            </div>
+
+                            <h3>
+                                Study Plan
+                            </h3>
+
+                            <p>
+                                Open your personalized study plan.
+                            </p>
+
+                        </button>
+
+
+                        <button
+                            class="action-card"
+                            id="knowledgeCheckAction"
+                        >
+
+                            <div class="action-icon">
+                                🧠
+                            </div>
+
+                            <h3>
+                                Knowledge Check
+                            </h3>
+
+                            <p>
+                                Test what you have learned.
+                            </p>
+
+                        </button>
+
+
+                        <button
+                            class="action-card"
+                            id="summarizerAction"
+                        >
+
+                            <div class="action-icon">
+                                📄
+                            </div>
+
+                            <h3>
+                                AI Summarizer
+                            </h3>
+
+                            <p>
+                                Summarize your study material.
+                            </p>
+
+                        </button>
+
+
+                        <button
+                            class="action-card"
+                            id="battleAction"
+                        >
+
+                            <div class="action-icon">
+                                ⚔️
+                            </div>
+
+                            <h3>
+                                Game Mode
+                            </h3>
+
+                            <p>
+                                Enter the StudyMind battle arena.
+                            </p>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- AI ASSISTANT -->
+
+            <section class="section">
+
+                <div class="container">
+
+                    <div class="ai-panel">
+
+                        <div class="ai-header">
+
+                            <div>
+
+                                <h2>
+                                    🤖 Ask StudyMind AI
+                                </h2>
+
+                                <p>
+                                    Premium AI assistance is available
+                                    without the normal daily question limit.
+                                </p>
+
+                            </div>
+
+                            <div class="unlimited-badge">
+                                ♾️ UNLIMITED
+                            </div>
+
+                        </div>
+
+
+                        <div class="ai-input-row">
+
+                            <textarea
+                                id="aiQuestion"
+                                placeholder="Ask anything about what you're studying..."
+                                rows="2"
+                            ></textarea>
+
+                            <button
+                                class="primary-button"
+                                id="askAIButton"
+                            >
+                                Ask AI
+                            </button>
+
+                        </div>
+
+
+                        <div id="aiResponse"></div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- PREMIUM TOOLS -->
+
+            <section class="section">
+
+                <div class="container">
+
+                    <div class="section-heading">
+
+                        <h2>
+                            Premium tools
+                        </h2>
+
+                        <p>
+                            Stay organized and keep your study momentum going.
+                        </p>
+
+                    </div>
+
+
+                    <div class="tools-grid">
+
+                        <!-- TIMER -->
+
+                        <div class="tool-card">
+
+                            <h3>
+                                ⏱️ Study Timer
+                            </h3>
+
+                            <p>
+                                Choose a focused study session.
+                            </p>
+
+                            <div
+                                class="timer-display"
+                                id="timerDisplay"
+                            >
+                                25:00
+                            </div>
+
+
+                            <div class="timer-options">
+
+                                <button
+                                    class="timer-option active"
+                                    data-minutes="25"
+                                >
+                                    25 min
+                                </button>
+
+                                <button
+                                    class="timer-option"
+                                    data-minutes="45"
+                                >
+                                    45 min
+                                </button>
+
+                                <button
+                                    class="timer-option"
+                                    data-minutes="60"
+                                >
+                                    60 min
+                                </button>
+
+                            </div>
+
+
+                            <div class="timer-buttons">
+
+                                <button
+                                    class="primary-button"
+                                    id="timerStart"
+                                >
+                                    Start
+                                </button>
+
+                                <button
+                                    class="secondary-button"
+                                    id="timerPause"
+                                >
+                                    Pause
+                                </button>
+
+                                <button
+                                    class="secondary-button"
+                                    id="timerReset"
+                                >
+                                    Reset
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- STATS -->
+
+                        <div class="tool-card">
+
+                            <h3>
+                                📊 Your Study Stats
+                            </h3>
+
+                            <p>
+                                A quick look at your current study activity.
+                            </p>
+
+
+                            <div class="stats-list">
+
+                                <div class="stat-row">
+                                    <span>
+                                        Study streak
+                                    </span>
+
+                                    <span
+                                        class="stat-value"
+                                        id="streakValue"
+                                    >
+                                        0 days
+                                    </span>
+                                </div>
+
+
+                                <div class="stat-row">
+                                    <span>
+                                        Completed topics
+                                    </span>
+
+                                    <span
+                                        class="stat-value"
+                                        id="completedTopicsValue"
+                                    >
+                                        0
+                                    </span>
+                                </div>
+
+
+                                <div class="stat-row">
+                                    <span>
+                                        Study plans
+                                    </span>
+
+                                    <span
+                                        class="stat-value"
+                                        id="studyPlansValue"
+                                    >
+                                        0
+                                    </span>
+                                </div>
+
+
+                                <div class="stat-row">
+                                    <span>
+                                        AI questions
+                                    </span>
+
+                                    <span
+                                        class="stat-value"
+                                        id="aiQuestionsValue"
+                                    >
+                                        Unlimited
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- GOLD CTA -->
+
+            <section class="section">
+
+                <div class="container">
+
+                    <div class="gold-cta">
+
+                        <div class="eyebrow">
+                            👑 GOLDEN PREMIUM
+                        </div>
+
+                        <h2>
+                            Ready to get studying?
+                        </h2>
+
+                        <p>
+                            Open your StudyMind dashboard and continue
+                            exactly where you left off.
+                        </p>
+
+                        <button
+                            class="primary-button"
+                            id="goldDashboardButton"
+                        >
+                            Open My Dashboard →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <!-- FOOTER -->
+
+        <footer>
+            <div class="container">
+                <strong>StudyMind AI</strong>
+                · Golden Premium Experience
+            </div>
+        </footer>
+
+    </div>
+
+
+    <!-- =========================================================
+         SUPABASE
+    ========================================================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+        /* =========================================================
+           STUDYMIND AI — SUPABASE CONFIGURATION
+        ========================================================= */
+
+        const SUPABASE_URL =
+            "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+
+        window.supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_PUBLISHABLE_KEY
+            );
+
+
+        /* =========================================================
+           PREMIUM ACCESS CONTROL
+           
+           ONLY THIS ACCOUNT CAN ENTER:
+           studymindaiofficial@gmail.com
+        ========================================================= */
+
+        const PREMIUM_ALLOWED_EMAIL =
+            "studymindaiofficial@gmail.com";
+
+
+        async function verifyPremiumAppAccess() {
+
+            const accessScreen =
+                document.getElementById("accessScreen");
+
+            const premiumApp =
+                document.getElementById("premiumApp");
+
+
+            try {
+
+                const {
+                    data: { user },
+                    error
+                } =
+                    await window.supabaseClient.auth.getUser();
+
+
+                /* -------------------------------------------------
+                   NO USER
+                ------------------------------------------------- */
+
+                if (error || !user) {
+
+                    window.location.replace("login.html");
+
+                    return;
+                }
+
+
+                /* -------------------------------------------------
+                   GET ACTUAL AUTHENTICATED EMAIL
+                ------------------------------------------------- */
+
+                const userEmail =
+                    String(user.email || "")
+                        .trim()
+                        .toLowerCase();
+
+
+                /* -------------------------------------------------
+                   ACCESS CHECK
+                ------------------------------------------------- */
+
+                if (
+                    userEmail !==
+                    PREMIUM_ALLOWED_EMAIL
+                ) {
+
+                    alert(
+                        "Access denied. This Premium app is only available to the official StudyMind AI account."
+                    );
+
+
+                    try {
+
+                        await window.supabaseClient.auth.signOut();
+
+                    } catch (signOutError) {
+
+                        console.error(
+                            "Sign-out error:",
+                            signOutError
+                        );
+                    }
+
+
+                    window.location.replace(
+                        "login.html"
+                    );
+
+                    return;
+                }
+
+
+                /* -------------------------------------------------
+                   AUTHORIZED ACCOUNT
+                ------------------------------------------------- */
+
+                const accountEmail =
+                    document.getElementById(
+                        "accountEmail"
+                    );
+
+
+                if (accountEmail) {
+
+                    accountEmail.textContent =
+                        user.email;
+                }
+
+
+                accessScreen.style.opacity = "0";
+
+                setTimeout(() => {
+
+                    accessScreen.style.display =
+                        "none";
+
+                    premiumApp.style.display =
+                        "block";
+
+                }, 350);
+
+
+                initializePremiumApp();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Premium access verification failed:",
+                    error
+                );
+
+
+                try {
+
+                    await window.supabaseClient.auth.signOut();
+
+                } catch (signOutError) {
+
+                    console.error(
+                        "Sign-out error:",
+                        signOutError
+                    );
+                }
+
+
+                window.location.replace(
+                    "login.html"
+                );
+            }
+        }
+
+
+        /* =========================================================
+           PREMIUM APP INITIALIZATION
+        ========================================================= */
+
+        function initializePremiumApp() {
+
+            setupNavigation();
+
+            setupAI();
+
+            setupTimer();
+
+            loadStudyStats();
+        }
+
+
+        /* =========================================================
+           NAVIGATION
+        ========================================================= */
+
+        function setupNavigation() {
+
+            const goHome = () => {
+                window.location.href = "home.html";
+            };
+
+
+            const goDashboard = () => {
+                window.location.href =
+                    "dashboard.html";
+            };
+
+
+            const goGameMode = () => {
+                window.location.href =
+                    "game-mode.html";
+            };
+
+
+            document
+                .getElementById("homeButton")
+                ?.addEventListener(
+                    "click",
+                    goHome
+                );
+
+
+            document
+                .getElementById("dashboardButton")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+
+
+            document
+                .getElementById("startStudyingButton")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+
+
+            document
+                .getElementById("studyPlanAction")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+
+
+            document
+                .getElementById("knowledgeCheckAction")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+
+
+            document
+                .getElementById("summarizerAction")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+
+
+            document
+                .getElementById("gameModeButton")
+                ?.addEventListener(
+                    "click",
+                    goGameMode
+                );
+
+
+            document
+                .getElementById("battleAction")
+                ?.addEventListener(
+                    "click",
+                    goGameMode
+                );
+
+
+            document
+                .getElementById("goldDashboardButton")
+                ?.addEventListener(
+                    "click",
+                    goDashboard
+                );
+        }
+
+
+        /* =========================================================
+           AI ASSISTANT
+        ========================================================= */
+
+        function setupAI() {
+
+            const askButton =
+                document.getElementById(
+                    "askAIButton"
+                );
+
+            const questionInput =
+                document.getElementById(
+                    "aiQuestion"
+                );
+
+            const responseBox =
+                document.getElementById(
+                    "aiResponse"
+                );
+
+
+            if (
+                !askButton ||
+                !questionInput ||
+                !responseBox
+            ) {
+                return;
+            }
+
+
+            async function askAI() {
+
+                const question =
+                    questionInput.value.trim();
+
+
+                if (!question) {
+
+                    responseBox.style.display =
+                        "block";
+
+                    responseBox.textContent =
+                        "Please enter a question first.";
+
+                    return;
+                }
+
+
+                askButton.disabled = true;
+
+                askButton.textContent =
+                    "Thinking...";
+
+
+                responseBox.style.display =
+                    "block";
+
+                responseBox.classList.add(
+                    "loading"
+                );
+
+                responseBox.textContent =
+                    "StudyMind AI is thinking...";
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/chat",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    message:
+                                        question,
+
+                                    prompt:
+                                        question,
+
+                                    isPremium: true,
+
+                                    premium: true
+                                })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data?.error ||
+                            "AI request failed."
+                        );
+                    }
+
+
+                    const answer =
+                        data?.reply ||
+                        data?.message ||
+                        data?.response ||
+                        data?.answer ||
+                        "I couldn't generate a response right now.";
+
+
+                    responseBox.classList.remove(
+                        "loading"
+                    );
+
+                    responseBox.textContent =
+                        answer;
+
+
+                } catch (error) {
+
+                    console.error(
+                        "AI error:",
+                        error
+                    );
+
+
+                    responseBox.classList.remove(
+                        "loading"
+                    );
+
+                    responseBox.textContent =
+                        "Sorry, I couldn't connect to StudyMind AI right now. Please try again.";
+                }
+
+
+                askButton.disabled = false;
+
+                askButton.textContent =
+                    "Ask AI";
+            }
+
+
+            askButton.addEventListener(
+                "click",
+                askAI
+            );
+
+
+            questionInput.addEventListener(
+                "keydown",
+                event => {
+
+                    if (
+                        event.key === "Enter" &&
+                        !event.shiftKey
+                    ) {
+
+                        event.preventDefault();
+
+                        askAI();
+                    }
+                }
+            );
+        }
+
+
+        /* =========================================================
+           STUDY TIMER
+           
+           OPTIONS:
+           25 MINUTES
+           45 MINUTES
+           60 MINUTES
+        ========================================================= */
+
+        let timerSeconds = 25 * 60;
+
+        let timerInterval = null;
+
+        let timerRunning = false;
+
+
+        function formatTime(seconds) {
+
+            const minutes =
+                Math.floor(
+                    seconds / 60
+                );
+
+            const remainingSeconds =
+                seconds % 60;
+
+
+            return (
+                String(minutes).padStart(2, "0") +
+                ":" +
+                String(remainingSeconds).padStart(2, "0")
+            );
+        }
+
+
+        function updateTimerDisplay() {
+
+            const display =
+                document.getElementById(
+                    "timerDisplay"
+                );
+
+
+            if (!display) {
+                return;
+            }
+
+
+            display.textContent =
+                formatTime(
+                    timerSeconds
+                );
+        }
+
+
+        function setupTimer() {
+
+            const options =
+                document.querySelectorAll(
+                    ".timer-option"
+                );
+
+
+            options.forEach(option => {
+
+                option.addEventListener(
+                    "click",
+                    () => {
+
+                        if (timerRunning) {
+                            return;
+                        }
+
+
+                        options.forEach(
+                            item =>
+                                item.classList.remove(
+                                    "active"
+                                )
+                        );
+
+
+                        option.classList.add(
+                            "active"
+                        );
+
+
+                        const minutes =
+                            Number(
+                                option.dataset.minutes
+                            );
+
+
+                        timerSeconds =
+                            minutes * 60;
+
+
+                        updateTimerDisplay();
+                    }
+                );
+            });
+
+
+            document
+                .getElementById("timerStart")
+                ?.addEventListener(
+                    "click",
+                    startTimer
+                );
+
+
+            document
+                .getElementById("timerPause")
+                ?.addEventListener(
+                    "click",
+                    pauseTimer
+                );
+
+
+            document
+                .getElementById("timerReset")
+                ?.addEventListener(
+                    "click",
+                    resetTimer
+                );
+
+
+            updateTimerDisplay();
+        }
+
+
+        function startTimer() {
+
+            if (timerRunning) {
+                return;
+            }
+
+
+            if (timerSeconds <= 0) {
+                return;
+            }
+
+
+            timerRunning = true;
+
+
+            timerInterval =
+                setInterval(
+                    () => {
+
+                        timerSeconds--;
+
+                        updateTimerDisplay();
+
+
+                        if (
+                            timerSeconds <= 0
+                        ) {
+
+                            pauseTimer();
+
+                            alert(
+                                "🎉 Study session complete! Great work."
+                            );
+                        }
+
+                    },
+                    1000
+                );
+        }
+
+
+        function pauseTimer() {
+
+            timerRunning = false;
+
+
+            if (timerInterval) {
+
+                clearInterval(
+                    timerInterval
+                );
+
+                timerInterval = null;
+            }
+        }
+
+
+        function resetTimer() {
+
+            pauseTimer();
+
+
+            const activeOption =
+                document.querySelector(
+                    ".timer-option.active"
+                );
+
+
+            const minutes =
+                activeOption
+                    ? Number(
+                        activeOption.dataset.minutes
+                    )
+                    : 25;
+
+
+            timerSeconds =
+                minutes * 60;
+
+
+            updateTimerDisplay();
+        }
+
+
+        /* =========================================================
+           STUDY STATISTICS
+        ========================================================= */
+
+        function loadStudyStats() {
+
+            try {
+
+                const completedTopics =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "studyMindCompletedTopics"
+                        ) || "[]"
+                    );
+
+
+                const completedTopicsValue =
+                    document.getElementById(
+                        "completedTopicsValue"
+                    );
+
+
+                if (completedTopicsValue) {
+
+                    completedTopicsValue.textContent =
+                        Array.isArray(
+                            completedTopics
+                        )
+                            ? completedTopics.length
+                            : 0;
+                }
+
+
+                const studyPlan =
+                    localStorage.getItem(
+                        "studyMindPlan"
+                    );
+
+
+                const studyPlansValue =
+                    document.getElementById(
+                        "studyPlansValue"
+                    );
+
+
+                if (studyPlansValue) {
+
+                    studyPlansValue.textContent =
+                        studyPlan
+                            ? "1"
+                            : "0";
+                }
+
+
+                const streak =
+                    calculateStreak();
+
+
+                const streakValue =
+                    document.getElementById(
+                        "streakValue"
+                    );
+
+
+                if (streakValue) {
+
+                    streakValue.textContent =
+                        `${streak} ${
+                            streak === 1
+                                ? "day"
+                                : "days"
+                        }`;
+                }
+
+
+                const aiQuestionsValue =
+                    document.getElementById(
+                        "aiQuestionsValue"
+                    );
+
+
+                if (aiQuestionsValue) {
+
+                    aiQuestionsValue.textContent =
+                        "Unlimited";
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Could not load study stats:",
+                    error
+                );
+            }
+        }
+
+
+        function calculateStreak() {
+
+            const lastStudyDate =
+                localStorage.getItem(
+                    "lastStudyDate"
+                );
+
+
+            if (!lastStudyDate) {
+                return 0;
+            }
+
+
+            const lastDate =
+                new Date(
+                    lastStudyDate
+                );
+
+
+            if (
+                Number.isNaN(
+                    lastDate.getTime()
+                )
+            ) {
+                return 0;
+            }
+
+
+            const today =
+                new Date();
+
+
+            const startToday =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    today.getDate()
+                );
+
+
+            const startLast =
+                new Date(
+                    lastDate.getFullYear(),
+                    lastDate.getMonth(),
+                    lastDate.getDate()
+                );
+
+
+            const difference =
+                Math.floor(
+                    (
+                        startToday -
+                        startLast
+                    ) /
+                    (1000 * 60 * 60 * 24)
+                );
+
+
+            if (difference === 0) {
+                return 1;
+            }
+
+
+            if (difference === 1) {
+
+                const storedStreak =
+                    Number(
+                        localStorage.getItem(
+                            "studyMindStreak"
+                        ) || "1"
+                    );
+
+
+                return Math.max(
+                    1,
+                    storedStreak
+                );
+            }
+
+
+            return 0;
+        }
+
+
+        /* =========================================================
+           AUTH STATE PROTECTION
+           
+           If the user signs out or changes account while this
+           page is open, immediately remove access.
+        ========================================================= */
+
+        window.supabaseClient.auth.onAuthStateChange(
+            async (event, session) => {
+
+                if (
+                    event === "SIGNED_OUT" ||
+                    !session?.user
+                ) {
+
+                    window.location.replace(
+                        "login.html"
+                    );
+
+                    return;
+                }
+
+
+                const email =
+                    String(
+                        session.user.email || ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                if (
+                    email !==
+                    PREMIUM_ALLOWED_EMAIL
+                ) {
+
+                    try {
+
+                        await window.supabaseClient.auth.signOut();
+
+                    } catch (error) {
+
+                        console.error(
+                            "Sign-out error:",
+                            error
+                        );
+                    }
+
+
+                    window.location.replace(
+                        "login.html"
+                    );
+                }
+            }
+        );
+
+
+        /* =========================================================
+           START ACCESS VERIFICATION
+        ========================================================= */
+
+        verifyPremiumAppAccess();
+
+    </script>
+
+</body>
+</html>
