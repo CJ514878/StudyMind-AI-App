@@ -1,1863 +1,2319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>StudyMind AI — Golden Premium</title>
+<title>StudyMind AI — Golden Premium Dashboard</title>
 
-    <meta
-        name="description"
-        content="StudyMind AI Golden Premium Experience"
-    >
+<meta
+    name="description"
+    content="StudyMind AI Golden Premium Dashboard"
+>
 
-    <style>
-        /* =========================================================
-           STUDYMIND AI — GOLDEN PREMIUM APP
-        ========================================================= */
+<style>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+/* =========================================================
+   STUDYMIND AI — GOLDEN PREMIUM DASHBOARD
+========================================================= */
 
-        :root {
-            --bg: #070b14;
-            --bg2: #0b1020;
-            --card: rgba(16, 23, 39, 0.88);
-            --card2: rgba(22, 30, 49, 0.92);
-            --gold: #f5c542;
-            --gold-light: #ffe28a;
-            --gold-dark: #b88900;
-            --text: #f7f8fb;
-            --muted: #9ba5b7;
-            --border: rgba(245, 197, 66, 0.18);
-            --success: #39d98a;
-            --danger: #ff6868;
-        }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-        body {
-            min-height: 100vh;
-            font-family:
-                Inter,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
+:root {
+    --bg: #05070d;
+    --bg2: #090d17;
+    --card: rgba(15, 20, 32, 0.92);
+    --card2: rgba(20, 26, 40, 0.96);
 
-            background:
-                radial-gradient(
-                    circle at 15% 10%,
-                    rgba(245, 197, 66, 0.10),
-                    transparent 28%
-                ),
-                radial-gradient(
-                    circle at 85% 20%,
-                    rgba(245, 197, 66, 0.07),
-                    transparent 30%
-                ),
-                linear-gradient(
-                    135deg,
-                    #050811 0%,
-                    #0a0f1c 45%,
-                    #070b14 100%
-                );
+    --gold: #f5c542;
+    --gold-light: #ffe8a0;
+    --gold-bright: #ffd95a;
+    --gold-dark: #a87900;
 
-            color: var(--text);
-            overflow-x: hidden;
-        }
+    --text: #f8f9fc;
+    --muted: #98a2b5;
 
-        button,
-        input,
-        textarea {
-            font: inherit;
-        }
+    --border: rgba(245, 197, 66, 0.20);
 
-        button {
-            cursor: pointer;
-        }
+    --success: #39d98a;
+    --danger: #ff6b6b;
+    --blue: #5c9dff;
+}
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+html {
+    scroll-behavior: smooth;
+}
 
-        /* =========================================================
-           ACCESS LOADING SCREEN
-        ========================================================= */
+body {
+    min-height: 100vh;
 
-        #accessScreen {
-            position: fixed;
-            inset: 0;
-            z-index: 99999;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+    color: var(--text);
 
-            background: #050811;
+    background:
+        radial-gradient(
+            circle at 10% 0%,
+            rgba(245, 197, 66, 0.13),
+            transparent 27%
+        ),
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(245, 197, 66, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 50% 100%,
+            rgba(245, 197, 66, 0.05),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #03050a,
+            #080c16 50%,
+            #05070d
+        );
 
-            transition:
-                opacity 0.35s ease;
-        }
+    overflow-x: hidden;
+}
 
-        .access-box {
-            width: min(90%, 430px);
-            padding: 40px 28px;
+button,
+input,
+textarea {
+    font: inherit;
+}
 
-            text-align: center;
+button {
+    cursor: pointer;
+}
 
-            border: 1px solid var(--border);
-            border-radius: 24px;
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-            background: rgba(12, 17, 29, 0.96);
+/* =========================================================
+   ACCESS SCREEN
+========================================================= */
 
-            box-shadow:
-                0 30px 80px rgba(0, 0, 0, 0.45),
-                0 0 60px rgba(245, 197, 66, 0.05);
-        }
+#accessScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
 
-        .access-crown {
-            font-size: 44px;
-            margin-bottom: 18px;
-        }
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-        .access-box h2 {
-            margin-bottom: 10px;
-        }
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(245, 197, 66, 0.08),
+            #03050a 55%
+        );
 
-        .access-box p {
-            color: var(--muted);
-            line-height: 1.6;
-        }
+    transition: opacity .35s ease;
+}
 
-        .spinner {
-            width: 30px;
-            height: 30px;
+.access-box {
+    width: min(90%, 430px);
 
-            margin: 24px auto 0;
+    padding: 42px 28px;
 
-            border:
-                3px solid rgba(245, 197, 66, 0.18);
+    text-align: center;
 
-            border-top-color: var(--gold);
+    border:
+        1px solid var(--border);
 
-            border-radius: 50%;
+    border-radius: 26px;
 
-            animation:
-                spin 0.8s linear infinite;
-        }
+    background:
+        rgba(9, 13, 23, .97);
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.55),
+        0 0 70px rgba(245,197,66,.07);
+}
 
-        /* =========================================================
-           MAIN APP
-        ========================================================= */
+.access-crown {
+    font-size: 48px;
+    margin-bottom: 18px;
+}
 
-        #premiumApp {
-            display: none;
-        }
+.access-box h2 {
+    margin-bottom: 10px;
+}
 
-        .container {
-            width: min(
-                1180px,
-                calc(100% - 32px)
+.access-box p {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+
+    margin: 25px auto 0;
+
+    border:
+        3px solid rgba(245,197,66,.16);
+
+    border-top-color:
+        var(--gold);
+
+    border-radius: 50%;
+
+    animation:
+        spin .8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
+#premiumApp {
+    display: none;
+}
+
+.container {
+    width: min(
+        1200px,
+        calc(100% - 32px)
+    );
+
+    margin: 0 auto;
+}
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    border-bottom:
+        1px solid rgba(245,197,66,.12);
+
+    background:
+        rgba(4,7,13,.86);
+
+    backdrop-filter:
+        blur(20px);
+}
+
+.nav-inner {
+    min-height: 74px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.brand-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff1aa,
+            var(--gold),
+            var(--gold-dark)
+        );
+
+    color: #171200;
+
+    box-shadow:
+        0 8px 35px rgba(245,197,66,.22);
+}
+
+.premium-label {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 7px 12px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        );
+
+    color: #171200;
+
+    font-size: 10px;
+    font-weight: 1000;
+
+    letter-spacing: .8px;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.nav-button {
+    padding: 10px 14px;
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    border-radius: 10px;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color: var(--text);
+
+    font-weight: 700;
+
+    transition: .2s ease;
+}
+
+.nav-button:hover {
+    border-color: var(--border);
+    color: var(--gold-light);
+    transform: translateY(-1px);
+}
+
+.nav-button.active {
+    border-color: var(--gold);
+    color: #171200;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        );
+}
+
+/* =========================================================
+   GOLD DASHBOARD HEADER
+========================================================= */
+
+.dashboard-header {
+    padding: 48px 0 25px;
+}
+
+.dashboard-header-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr auto;
+
+    gap: 25px;
+
+    align-items: center;
+}
+
+.dashboard-eyebrow {
+    color: var(--gold-light);
+
+    font-size: 12px;
+    font-weight: 900;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 12px;
+}
+
+.dashboard-header h1 {
+    font-size:
+        clamp(32px, 5vw, 54px);
+
+    line-height: 1;
+
+    letter-spacing: -2px;
+
+    margin-bottom: 14px;
+}
+
+.gold-text {
+    color: var(--gold);
+}
+
+.dashboard-subtitle {
+    max-width: 680px;
+
+    color: var(--muted);
+
+    font-size: 16px;
+
+    line-height: 1.65;
+}
+
+.premium-status {
+    min-width: 210px;
+
+    padding: 22px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245,197,66,.11),
+            rgba(15,20,32,.94)
+        );
+
+    box-shadow:
+        0 15px 50px rgba(0,0,0,.25);
+}
+
+.premium-status-label {
+    color: var(--muted);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    margin-bottom: 7px;
+}
+
+.premium-status-value {
+    color: var(--gold-light);
+
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.account-email {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    margin-top: 8px;
+
+    word-break: break-word;
+}
+
+/* =========================================================
+   DASHBOARD GRID
+========================================================= */
+
+.dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        1.5fr .8fr;
+
+    gap: 18px;
+}
+
+.card {
+    border:
+        1px solid rgba(255,255,255,.07);
+
+    border-radius: 22px;
+
+    background:
+        var(--card);
+
+    box-shadow:
+        0 20px 65px rgba(0,0,0,.18);
+}
+
+.card.gold-border {
+    border-color: var(--border);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245,197,66,.07),
+            rgba(15,20,32,.95)
+        );
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 24px 24px 0;
+}
+
+.card-header h2 {
+    font-size: 21px;
+}
+
+.card-header p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-top: 5px;
+}
+
+/* =========================================================
+   CURRENT STUDY SESSION
+========================================================= */
+
+.current-session {
+    padding: 24px;
+}
+
+.session-status {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 7px 11px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(57,217,138,.12);
+
+    color:
+        var(--success);
+
+    border:
+        1px solid rgba(57,217,138,.18);
+
+    font-size: 10px;
+    font-weight: 900;
+
+    margin-bottom: 18px;
+}
+
+.session-topic {
+    font-size:
+        clamp(25px, 4vw, 37px);
+
+    line-height: 1.1;
+
+    margin-bottom: 10px;
+}
+
+.session-description {
+    color: var(--muted);
+
+    line-height: 1.6;
+
+    margin-bottom: 22px;
+}
+
+.session-meta {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+}
+
+.meta-box {
+    padding: 14px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(255,255,255,.035);
+}
+
+.meta-label {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .5px;
+
+    margin-bottom: 6px;
+}
+
+.meta-value {
+    color: var(--gold-light);
+
+    font-weight: 900;
+
+    font-size: 15px;
+}
+
+.progress-wrapper {
+    margin-bottom: 20px;
+}
+
+.progress-top {
+    display: flex;
+    justify-content: space-between;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    margin-bottom: 8px;
+}
+
+.progress-top strong {
+    color: var(--gold-light);
+}
+
+.progress-bar {
+    height: 9px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,.07);
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light),
+            var(--gold)
+        );
+
+    box-shadow:
+        0 0 15px rgba(245,197,66,.3);
+
+    transition:
+        width .5s ease;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 9px;
+}
+
+.primary-button {
+    border: none;
+
+    padding: 13px 18px;
+
+    border-radius: 11px;
+
+    color: #171200;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffeaa1,
+            var(--gold)
+        );
+
+    font-weight: 900;
+
+    box-shadow:
+        0 10px 28px rgba(245,197,66,.16);
+
+    transition: .2s ease;
+}
+
+.primary-button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 15px 35px rgba(245,197,66,.24);
+}
+
+.secondary-button {
+    padding: 13px 18px;
+
+    border:
+        1px solid rgba(255,255,255,.09);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color: var(--text);
+
+    font-weight: 700;
+
+    transition: .2s ease;
+}
+
+.secondary-button:hover {
+    border-color: var(--border);
+    color: var(--gold-light);
+}
+
+/* =========================================================
+   RIGHT STATS
+========================================================= */
+
+.stats-card {
+    padding-bottom: 24px;
+}
+
+.stats-list {
+    display: grid;
+
+    gap: 10px;
+
+    padding: 20px 24px 0;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 14px;
+
+    border-radius: 13px;
+
+    background:
+        rgba(255,255,255,.035);
+}
+
+.stat-name {
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+.stat-value {
+    color: var(--gold-light);
+
+    font-size: 17px;
+    font-weight: 900;
+}
+
+/* =========================================================
+   TOPIC PROGRESS
+========================================================= */
+
+.section {
+    padding: 22px 0;
+}
+
+.section-heading {
+    margin-bottom: 16px;
+}
+
+.section-heading h2 {
+    font-size: 24px;
+}
+
+.section-heading p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    margin-top: 5px;
+}
+
+.topic-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap: 13px;
+}
+
+.topic-card {
+    padding: 20px;
+
+    border:
+        1px solid rgba(255,255,255,.07);
+
+    border-radius: 18px;
+
+    background:
+        var(--card);
+
+    transition: .2s ease;
+}
+
+.topic-card:hover {
+    transform: translateY(-3px);
+
+    border-color: var(--border);
+}
+
+.topic-number {
+    color: var(--gold);
+
+    font-size: 11px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+
+    margin-bottom: 10px;
+}
+
+.topic-card h3 {
+    font-size: 17px;
+
+    margin-bottom: 7px;
+}
+
+.topic-card p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-bottom: 15px;
+}
+
+.topic-mini-progress {
+    height: 6px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,.07);
+
+    overflow: hidden;
+}
+
+.topic-mini-fill {
+    height: 100%;
+
+    width: 0;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold)
+        );
+}
+
+.topic-status {
+    color: var(--gold-light);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    margin-top: 8px;
+}
+
+/* =========================================================
+   CALENDAR / SCHEDULE
+========================================================= */
+
+.schedule-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 18px;
+}
+
+.calendar-card,
+.schedule-card {
+    padding-bottom: 22px;
+}
+
+.calendar {
+    padding: 20px 24px 0;
+}
+
+.calendar-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 15px;
+}
+
+.calendar-title strong {
+    color: var(--gold-light);
+}
+
+.calendar-week {
+    display: grid;
+
+    grid-template-columns:
+        repeat(7,1fr);
+
+    gap: 5px;
+
+    margin-bottom: 6px;
+}
+
+.calendar-week span {
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.calendar-days {
+    display: grid;
+
+    grid-template-columns:
+        repeat(7,1fr);
+
+    gap: 5px;
+}
+
+.calendar-day {
+    min-height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    background:
+        rgba(255,255,255,.025);
+}
+
+.calendar-day.today {
+    color: #171200;
+
+    background:
+        var(--gold);
+
+    font-weight: 900;
+
+    box-shadow:
+        0 0 18px rgba(245,197,66,.22);
+}
+
+.calendar-day.study {
+    border:
+        1px solid rgba(245,197,66,.15);
+}
+
+.schedule-list {
+    display: grid;
+
+    gap: 9px;
+
+    padding: 20px 24px 0;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 13px;
+
+    border-radius: 13px;
+
+    background:
+        rgba(255,255,255,.035);
+}
+
+.schedule-icon {
+    width: 37px;
+    height: 37px;
+
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 11px;
+
+    background:
+        rgba(245,197,66,.10);
+}
+
+.schedule-info {
+    flex: 1;
+}
+
+.schedule-info strong {
+    display: block;
+
+    font-size: 13px;
+
+    margin-bottom: 3px;
+}
+
+.schedule-info span {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+/* =========================================================
+   AI
+========================================================= */
+
+.ai-panel {
+    padding: 25px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245,197,66,.08),
+            rgba(13,18,29,.95)
+        );
+}
+
+.ai-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 17px;
+}
+
+.ai-header h2 {
+    font-size: 22px;
+}
+
+.ai-header p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-top: 5px;
+}
+
+.unlimited-badge {
+    flex-shrink: 0;
+
+    padding: 7px 11px;
+
+    border-radius: 999px;
+
+    color: var(--gold-light);
+
+    border:
+        1px solid var(--border);
+
+    background:
+        rgba(245,197,66,.08);
+
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.ai-input-row {
+    display: flex;
+
+    gap: 9px;
+}
+
+#aiQuestion {
+    flex: 1;
+
+    min-height: 53px;
+
+    resize: vertical;
+
+    padding: 14px;
+
+    outline: none;
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    border-radius: 12px;
+
+    color: var(--text);
+
+    background:
+        rgba(0,0,0,.22);
+}
+
+#aiQuestion:focus {
+    border-color:
+        rgba(245,197,66,.45);
+}
+
+#askAIButton {
+    min-width: 120px;
+}
+
+#aiResponse {
+    display: none;
+
+    margin-top: 15px;
+
+    padding: 17px;
+
+    border-radius: 13px;
+
+    border:
+        1px solid rgba(255,255,255,.07);
+
+    background:
+        rgba(0,0,0,.18);
+
+    color: #e9edf5;
+
+    line-height: 1.7;
+
+    white-space: pre-wrap;
+}
+
+#aiResponse.loading {
+    color: var(--gold-light);
+}
+
+/* =========================================================
+   TOOLS
+========================================================= */
+
+.tools-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 18px;
+}
+
+.tool-card {
+    padding: 24px;
+
+    border:
+        1px solid rgba(255,255,255,.07);
+
+    border-radius: 20px;
+
+    background:
+        var(--card);
+}
+
+.tool-card h3 {
+    font-size: 19px;
+
+    margin-bottom: 6px;
+}
+
+.tool-card > p {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+.timer-display {
+    text-align: center;
+
+    margin: 23px 0;
+
+    color: var(--gold-light);
+
+    font-size: 55px;
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+    text-shadow:
+        0 0 25px rgba(245,197,66,.14);
+}
+
+.timer-options {
+    display: flex;
+    justify-content: center;
+
+    gap: 7px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 13px;
+}
+
+.timer-option {
+    padding: 8px 12px;
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    border-radius: 9px;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+.timer-option.active,
+.timer-option:hover {
+    color: #171200;
+
+    background:
+        var(--gold);
+
+    border-color:
+        var(--gold);
+}
+
+.timer-buttons {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 7px;
+}
+
+/* =========================================================
+   PREMIUM FEATURES
+========================================================= */
+
+.feature-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap: 12px;
+}
+
+.feature {
+    padding: 19px;
+
+    border:
+        1px solid rgba(245,197,66,.10);
+
+    border-radius: 16px;
+
+    background:
+        rgba(15,20,32,.80);
+}
+
+.feature-icon {
+    font-size: 24px;
+
+    margin-bottom: 12px;
+}
+
+.feature h3 {
+    font-size: 14px;
+
+    margin-bottom: 6px;
+}
+
+.feature p {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {
+    padding: 35px 0 50px;
+
+    text-align: center;
+
+    color: #697386;
+
+    font-size: 12px;
+}
+
+footer strong {
+    color: var(--gold);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .topic-grid {
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .feature-grid {
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+}
+
+@media (max-width: 700px) {
+
+    .container {
+        width:
+            min(
+                100% - 22px,
+                1200px
             );
-
-            margin: 0 auto;
-        }
-
-        /* =========================================================
-           NAVBAR
-        ========================================================= */
-
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-
-            border-bottom:
-                1px solid rgba(255, 255, 255, 0.06);
-
-            background:
-                rgba(5, 8, 17, 0.82);
-
-            backdrop-filter:
-                blur(18px);
-        }
-
-        .nav-inner {
-            min-height: 76px;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 20px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-
-            gap: 12px;
-
-            font-weight: 800;
-            font-size: 20px;
-        }
-
-        .brand-icon {
-            width: 42px;
-            height: 42px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 13px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #fff0a8,
-                    var(--gold),
-                    var(--gold-dark)
-                );
-
-            color: #151000;
-
-            box-shadow:
-                0 8px 30px
-                rgba(245, 197, 66, 0.18);
-        }
-
-        .premium-label {
-            display: inline-flex;
-            align-items: center;
-
-            gap: 6px;
-
-            padding: 7px 12px;
-
-            border-radius: 999px;
-
-            color: #171200;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--gold-light),
-                    var(--gold)
-                );
-
-            font-size: 11px;
-            font-weight: 900;
-
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-button {
-            border:
-                1px solid rgba(255, 255, 255, 0.08);
-
-            border-radius: 10px;
-
-            padding: 10px 15px;
-
-            color: var(--text);
-
-            background:
-                rgba(255, 255, 255, 0.04);
-
-            transition: 0.2s ease;
-        }
-
-        .nav-button:hover {
-            border-color: var(--border);
-            transform: translateY(-1px);
-        }
-
-        /* =========================================================
-           HERO
-        ========================================================= */
-
-        .hero {
-            padding: 72px 0 45px;
-        }
-
-        .hero-grid {
-            display: grid;
-
-            grid-template-columns:
-                1.25fr 0.75fr;
-
-            gap: 28px;
-
-            align-items: stretch;
-        }
-
-        .hero-card {
-            position: relative;
-            overflow: hidden;
-
-            padding: 44px;
-
-            border:
-                1px solid var(--border);
-
-            border-radius: 28px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(245, 197, 66, 0.08),
-                    rgba(16, 23, 39, 0.92) 50%
-                );
-
-            box-shadow:
-                0 30px 90px
-                rgba(0, 0, 0, 0.28);
-        }
-
-        .hero-card::after {
-            content: "";
-
-            position: absolute;
-
-            width: 280px;
-            height: 280px;
-
-            right: -130px;
-            top: -130px;
-
-            border-radius: 50%;
-
-            background:
-                rgba(245, 197, 66, 0.09);
-
-            filter: blur(4px);
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-
-            gap: 8px;
-
-            color: var(--gold-light);
-
-            font-weight: 800;
-            font-size: 13px;
-
-            margin-bottom: 18px;
-
-            letter-spacing: 0.4px;
-        }
-
-        .hero h1 {
-            max-width: 720px;
-
-            font-size:
-                clamp(38px, 6vw, 68px);
-
-            line-height: 0.98;
-
-            letter-spacing: -2.5px;
-
-            margin-bottom: 22px;
-        }
-
-        .gold-text {
-            color: var(--gold);
-        }
-
-        .hero-description {
-            max-width: 650px;
-
-            color: var(--muted);
-
-            font-size: 17px;
-
-            line-height: 1.7;
-
-            margin-bottom: 30px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            flex-wrap: wrap;
-
-            gap: 12px;
-        }
-
-        .primary-button {
-            border: none;
-
-            padding: 14px 20px;
-
-            border-radius: 12px;
-
-            color: #171200;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ffe999,
-                    var(--gold)
-                );
-
-            font-weight: 900;
-
-            box-shadow:
-                0 12px 28px
-                rgba(245, 197, 66, 0.17);
-
-            transition: 0.2s ease;
-        }
-
-        .primary-button:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 16px 34px
-                rgba(245, 197, 66, 0.25);
-        }
-
-        .secondary-button {
-            border:
-                1px solid rgba(255, 255, 255, 0.10);
-
-            padding: 14px 20px;
-
-            border-radius: 12px;
-
-            color: var(--text);
-
-            background:
-                rgba(255, 255, 255, 0.04);
-
-            font-weight: 700;
-
-            transition: 0.2s ease;
-        }
-
-        .secondary-button:hover {
-            border-color: var(--border);
-
-            transform: translateY(-2px);
-        }
-
-        /* =========================================================
-           STATUS CARD
-        ========================================================= */
-
-        .status-card {
-            padding: 30px;
-
-            border:
-                1px solid var(--border);
-
-            border-radius: 28px;
-
-            background: var(--card);
-
-            display: flex;
-            flex-direction: column;
-
-            justify-content: space-between;
-        }
-
-        .status-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 12px;
-        }
-
-        .status-title {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .active-badge {
-            display: inline-flex;
-            align-items: center;
-
-            gap: 7px;
-
-            padding: 8px 12px;
-
-            border-radius: 999px;
-
-            color: #06170f;
-
-            background: var(--success);
-
-            font-size: 11px;
-            font-weight: 900;
-
-            text-transform: uppercase;
-        }
-
-        .status-crown {
-            font-size: 72px;
-
-            margin: 30px 0 20px;
-        }
-
-        .status-card h2 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-
-        .status-card p {
-            color: var(--muted);
-            line-height: 1.65;
-        }
-
-        .account-email {
-            margin-top: 22px;
-
-            padding: 13px 14px;
-
-            border-radius: 12px;
-
-            background:
-                rgba(255, 255, 255, 0.035);
-
-            color: var(--gold-light);
-
-            font-size: 13px;
-
-            word-break: break-word;
-        }
-
-        /* =========================================================
-           SECTION
-        ========================================================= */
-
-        .section {
-            padding: 28px 0 70px;
-        }
-
-        .section-heading {
-            margin-bottom: 24px;
-        }
-
-        .section-heading h2 {
-            font-size: 30px;
-            margin-bottom: 8px;
-        }
-
-        .section-heading p {
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        /* =========================================================
-           FEATURE GRID
-        ========================================================= */
-
-        .feature-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(3, 1fr);
-
-            gap: 16px;
-        }
-
-        .feature-card {
-            min-height: 210px;
-
-            padding: 25px;
-
-            border:
-                1px solid rgba(255, 255, 255, 0.07);
-
-            border-radius: 20px;
-
-            background: var(--card);
-
-            transition: 0.22s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-
-            border-color: var(--border);
-
-            box-shadow:
-                0 20px 50px
-                rgba(0, 0, 0, 0.20);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 14px;
-
-            background:
-                rgba(245, 197, 66, 0.10);
-
-            font-size: 23px;
-
-            margin-bottom: 18px;
-        }
-
-        .feature-card h3 {
-            margin-bottom: 9px;
-            font-size: 18px;
-        }
-
-        .feature-card p {
-            color: var(--muted);
-
-            line-height: 1.6;
-
-            font-size: 14px;
-        }
-
-        /* =========================================================
-           QUICK ACTIONS
-        ========================================================= */
-
-        .action-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(4, 1fr);
-
-            gap: 14px;
-        }
-
-        .action-card {
-            border:
-                1px solid rgba(255, 255, 255, 0.07);
-
-            border-radius: 18px;
-
-            padding: 22px;
-
-            background: var(--card);
-
-            text-align: left;
-
-            transition: 0.2s ease;
-        }
-
-        .action-card:hover {
-            transform: translateY(-3px);
-            border-color: var(--border);
-        }
-
-        .action-card .action-icon {
-            font-size: 26px;
-            margin-bottom: 14px;
-        }
-
-        .action-card h3 {
-            font-size: 16px;
-            margin-bottom: 6px;
-        }
-
-        .action-card p {
-            color: var(--muted);
-
-            font-size: 13px;
-
-            line-height: 1.5;
-        }
-
-        /* =========================================================
-           AI SECTION
-        ========================================================= */
-
-        .ai-panel {
-            border:
-                1px solid var(--border);
-
-            border-radius: 25px;
-
-            padding: 28px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(245, 197, 66, 0.07),
-                    rgba(16, 23, 39, 0.9)
-                );
-        }
-
-        .ai-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-
-            gap: 20px;
-
-            margin-bottom: 20px;
-        }
-
-        .ai-header h2 {
-            font-size: 25px;
-            margin-bottom: 7px;
-        }
-
-        .ai-header p {
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .unlimited-badge {
-            flex-shrink: 0;
-
-            padding: 8px 12px;
-
-            border-radius: 999px;
-
-            background:
-                rgba(245, 197, 66, 0.12);
-
-            border:
-                1px solid var(--border);
-
-            color: var(--gold-light);
-
-            font-size: 11px;
-            font-weight: 900;
-        }
-
-        .ai-input-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        #aiQuestion {
-            flex: 1;
-
-            min-height: 52px;
-
-            resize: vertical;
-
-            border:
-                1px solid rgba(255, 255, 255, 0.08);
-
-            border-radius: 13px;
-
-            outline: none;
-
-            padding: 14px 16px;
-
-            color: var(--text);
-
-            background:
-                rgba(0, 0, 0, 0.18);
-        }
-
-        #aiQuestion:focus {
-            border-color:
-                rgba(245, 197, 66, 0.42);
-        }
-
-        #askAIButton {
-            align-self: stretch;
-            min-width: 130px;
-        }
-
-        #aiResponse {
-            display: none;
-
-            margin-top: 18px;
-
-            padding: 20px;
-
-            border:
-                1px solid rgba(255, 255, 255, 0.07);
-
-            border-radius: 15px;
-
-            background:
-                rgba(0, 0, 0, 0.16);
-
-            color: #e8ebf1;
-
-            line-height: 1.7;
-
-            white-space: pre-wrap;
-        }
-
-        #aiResponse.loading {
-            color: var(--gold-light);
-        }
-
-        /* =========================================================
-           TOOLS
-        ========================================================= */
-
-        .tools-grid {
-            display: grid;
-
-            grid-template-columns:
-                1fr 1fr;
-
-            gap: 18px;
-        }
-
-        .tool-card {
-            padding: 26px;
-
-            border:
-                1px solid rgba(255, 255, 255, 0.07);
-
-            border-radius: 20px;
-
-            background: var(--card);
-        }
-
-        .tool-card h3 {
-            margin-bottom: 8px;
-        }
-
-        .tool-card > p {
-            color: var(--muted);
-
-            line-height: 1.6;
-
-            font-size: 14px;
-
-            margin-bottom: 20px;
-        }
-
-        .timer-display {
-            font-size: 54px;
-
-            font-weight: 900;
-
-            letter-spacing: 2px;
-
-            color: var(--gold-light);
-
-            text-align: center;
-
-            margin: 20px 0;
-        }
-
-        .timer-options {
-            display: flex;
-
-            justify-content: center;
-
-            flex-wrap: wrap;
-
-            gap: 8px;
-
-            margin-bottom: 14px;
-        }
-
-        .timer-option {
-            border:
-                1px solid rgba(255, 255, 255, 0.08);
-
-            border-radius: 9px;
-
-            padding: 8px 12px;
-
-            color: var(--muted);
-
-            background:
-                rgba(255, 255, 255, 0.035);
-        }
-
-        .timer-option.active,
-        .timer-option:hover {
-            color: #171200;
-
-            background: var(--gold);
-
-            border-color: var(--gold);
-        }
-
-        .timer-buttons {
-            display: flex;
-
-            justify-content: center;
-
-            gap: 8px;
-        }
-
-        .timer-buttons button {
-            border: none;
-
-            border-radius: 10px;
-
-            padding: 10px 16px;
-
-            font-weight: 800;
-        }
-
-        .stats-list {
-            display: grid;
-            gap: 11px;
-        }
-
-        .stat-row {
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            gap: 15px;
-
-            padding: 14px;
-
-            border-radius: 12px;
-
-            background:
-                rgba(255, 255, 255, 0.035);
-        }
-
-        .stat-row span:first-child {
-            color: var(--muted);
-        }
-
-        .stat-value {
-            color: var(--gold-light);
-            font-weight: 900;
-        }
-
-        /* =========================================================
-           GOLD CTA
-        ========================================================= */
-
-        .gold-cta {
-            position: relative;
-            overflow: hidden;
-
-            margin-top: 15px;
-
-            padding: 45px 30px;
-
-            text-align: center;
-
-            border:
-                1px solid rgba(245, 197, 66, 0.30);
-
-            border-radius: 28px;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(245, 197, 66, 0.13),
-                    transparent 60%
-                ),
-                rgba(16, 23, 39, 0.92);
-        }
-
-        .gold-cta h2 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .gold-cta p {
-            max-width: 650px;
-
-            margin: 0 auto 22px;
-
-            color: var(--muted);
-
-            line-height: 1.6;
-        }
-
-        /* =========================================================
-           FOOTER
-        ========================================================= */
-
-        footer {
-            padding: 35px 0 50px;
-
-            text-align: center;
-
-            color: #6f7889;
-
-            font-size: 13px;
-        }
-
-        footer strong {
-            color: var(--gold);
-        }
-
-        /* =========================================================
-           RESPONSIVE
-        ========================================================= */
-
-        @media (max-width: 900px) {
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .feature-grid {
-                grid-template-columns:
-                    repeat(2, 1fr);
-            }
-
-            .action-grid {
-                grid-template-columns:
-                    repeat(2, 1fr);
-            }
-
-            .tools-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 650px) {
-
-            .container {
-                width:
-                    min(
-                        100% - 22px,
-                        1180px
-                    );
-            }
-
-            .nav-inner {
-                min-height: 68px;
-            }
-
-            .brand span:last-child {
-                display: none;
-            }
-
-            .premium-label {
-                display: none;
-            }
-
-            .nav-button {
-                padding: 9px 11px;
-                font-size: 13px;
-            }
-
-            .hero {
-                padding-top: 35px;
-            }
-
-            .hero-card,
-            .status-card {
-                padding: 26px;
-                border-radius: 21px;
-            }
-
-            .hero h1 {
-                letter-spacing: -1.5px;
-            }
-
-            .feature-grid,
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .ai-header {
-                flex-direction: column;
-            }
-
-            .ai-input-row {
-                flex-direction: column;
-            }
-
-            #askAIButton {
-                min-height: 48px;
-            }
-
-            .timer-display {
-                font-size: 43px;
-            }
-        }
-    </style>
+    }
+
+    .nav-inner {
+        min-height: 66px;
+    }
+
+    .brand span:last-child {
+        display: none;
+    }
+
+    .premium-label {
+        display: none;
+    }
+
+    .nav-button {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .dashboard-header {
+        padding-top: 32px;
+    }
+
+    .dashboard-header-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .premium-status {
+        width: 100%;
+    }
+
+    .session-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .topic-grid,
+    .schedule-grid,
+    .tools-grid,
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-input-row {
+        flex-direction: column;
+    }
+
+    #askAIButton {
+        min-height: 48px;
+    }
+
+    .timer-display {
+        font-size: 44px;
+    }
+
+}
+
+</style>
 </head>
 
 <body>
 
-    <!-- =========================================================
-         ACCESS VERIFICATION
-    ========================================================= -->
+<!-- =========================================================
+     ACCESS VERIFICATION
+========================================================= -->
 
-    <div id="accessScreen">
+<div id="accessScreen">
 
-        <div class="access-box">
+    <div class="access-box">
 
-            <div class="access-crown">
-                👑
-            </div>
-
-            <h2>
-                Verifying Premium Access
-            </h2>
-
-            <p>
-                StudyMind AI is checking your account.
-            </p>
-
-            <div class="spinner"></div>
-
+        <div class="access-crown">
+            👑
         </div>
+
+        <h2>
+            Verifying Golden Premium
+        </h2>
+
+        <p>
+            StudyMind AI is securely checking your account.
+        </p>
+
+        <div class="spinner"></div>
 
     </div>
 
+</div>
 
-    <!-- =========================================================
-         PREMIUM APP
-    ========================================================= -->
 
-    <div id="premiumApp">
+<!-- =========================================================
+     PREMIUM DASHBOARD
+========================================================= -->
 
-        <!-- =====================================================
-             NAVBAR
-        ====================================================== -->
+<div id="premiumApp">
 
-        <nav class="navbar">
+    <!-- =====================================================
+         NAVBAR
+    ====================================================== -->
 
-            <div class="container nav-inner">
+    <nav class="navbar">
 
-                <a
-                    href="home.html"
-                    class="brand"
+        <div class="container nav-inner">
+
+            <a
+                href="home.html"
+                class="brand"
+            >
+
+                <div class="brand-icon">
+                    🧠
+                </div>
+
+                <span>
+                    StudyMind AI
+                </span>
+
+            </a>
+
+
+            <div class="nav-actions">
+
+                <span class="premium-label">
+                    👑 GOLDEN PREMIUM
+                </span>
+
+                <button
+                    class="nav-button active"
+                    id="dashboardButton"
                 >
+                    Dashboard
+                </button>
 
-                    <div class="brand-icon">
-                        🧠
+                <button
+                    class="nav-button"
+                    id="gameModeButton"
+                >
+                    🎮 Game
+                </button>
+
+                <button
+                    class="nav-button"
+                    id="homeButton"
+                >
+                    Home
+                </button>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <!-- =====================================================
+         DASHBOARD HEADER
+    ====================================================== -->
+
+    <main>
+
+        <section class="dashboard-header">
+
+            <div class="container dashboard-header-grid">
+
+                <div>
+
+                    <div class="dashboard-eyebrow">
+                        👑 GOLDEN PREMIUM DASHBOARD
                     </div>
 
-                    <span>
-                        StudyMind AI
-                    </span>
+                    <h1>
+                        Welcome back,
+                        <span
+                            class="gold-text"
+                            id="welcomeName"
+                        >
+                            Scholar
+                        </span>
+                        ✨
+                    </h1>
 
-                </a>
+                    <p class="dashboard-subtitle">
+                        Your complete Premium study workspace.
+                        Continue your study plan, track your progress,
+                        ask unlimited AI questions, and keep building
+                        your streak.
+                    </p>
+
+                </div>
 
 
-                <div class="nav-actions">
+                <div class="premium-status">
 
-                    <span class="premium-label">
-                        👑 GOLDEN PREMIUM
-                    </span>
+                    <div class="premium-status-label">
+                        ACCOUNT STATUS
+                    </div>
 
-                    <button
-                        class="nav-button"
-                        id="dashboardButton"
+                    <div class="premium-status-value">
+                        👑 Golden Premium
+                    </div>
+
+                    <div
+                        class="account-email"
+                        id="accountEmail"
                     >
-                        Dashboard
-                    </button>
-
-                    <button
-                        class="nav-button"
-                        id="homeButton"
-                    >
-                        Home
-                    </button>
+                        Verifying account...
+                    </div>
 
                 </div>
 
             </div>
 
-        </nav>
+        </section>
 
 
-        <!-- =====================================================
-             MAIN
-        ====================================================== -->
+        <!-- =================================================
+             MAIN DASHBOARD
+        ================================================== -->
 
-        <main>
+        <section class="section">
 
-            <!-- HERO -->
+            <div class="container dashboard-grid">
 
-            <section class="hero">
+                <!-- CURRENT SESSION -->
 
-                <div class="container hero-grid">
+                <div class="card gold-border">
 
-                    <div class="hero-card">
+                    <div class="current-session">
 
-                        <div class="eyebrow">
-                            ✨ PREMIUM EXPERIENCE UNLOCKED
+                        <div class="session-status">
+                            ● STUDY SESSION
                         </div>
 
-                        <h1>
-                            Welcome to the
-                            <span class="gold-text">
-                                Golden
-                            </span>
-                            StudyMind experience.
-                        </h1>
+                        <h2
+                            class="session-topic"
+                            id="currentTopicName"
+                        >
+                            No active topic
+                        </h2>
 
-                        <p class="hero-description">
-                            Your complete AI-powered study workspace,
-                            built for deeper learning, smarter preparation,
-                            and unlimited access to your StudyMind tools.
+                        <p
+                            class="session-description"
+                            id="currentTopicDescription"
+                        >
+                            Create a study plan from the Home page
+                            to begin your Premium study session.
                         </p>
 
-                        <div class="hero-buttons">
+
+                        <div class="session-meta">
+
+                            <div class="meta-box">
+
+                                <div class="meta-label">
+                                    Topic
+                                </div>
+
+                                <div
+                                    class="meta-value"
+                                    id="topicPosition"
+                                >
+                                    0 of 0
+                                </div>
+
+                            </div>
+
+
+                            <div class="meta-box">
+
+                                <div class="meta-label">
+                                    Status
+                                </div>
+
+                                <div
+                                    class="meta-value"
+                                    id="topicStatus"
+                                >
+                                    Ready
+                                </div>
+
+                            </div>
+
+
+                            <div class="meta-box">
+
+                                <div class="meta-label">
+                                    Session
+                                </div>
+
+                                <div
+                                    class="meta-value"
+                                    id="sessionDuration"
+                                >
+                                    25 min
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="progress-wrapper">
+
+                            <div class="progress-top">
+
+                                <span>
+                                    Study progress
+                                </span>
+
+                                <strong
+                                    id="overallProgressText"
+                                >
+                                    0%
+                                </strong>
+
+                            </div>
+
+                            <div class="progress-bar">
+
+                                <div
+                                    class="progress-fill"
+                                    id="overallProgressFill"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="button-row">
 
                             <button
                                 class="primary-button"
-                                id="startStudyingButton"
+                                id="continueStudyingButton"
                             >
-                                🚀 Start Studying
+                                🚀 Continue Studying
                             </button>
 
                             <button
                                 class="secondary-button"
-                                id="gameModeButton"
+                                id="completeTopicButton"
                             >
-                                🎮 Game Mode
+                                ✓ I Finished This Topic
                             </button>
 
                         </div>
 
                     </div>
 
+                </div>
 
-                    <div class="status-card">
 
-                        <div class="status-top">
+                <!-- STATS -->
 
-                            <div>
+                <div class="card stats-card">
 
-                                <div class="status-title">
-                                    ACCOUNT STATUS
-                                </div>
+                    <div class="card-header">
 
-                            </div>
+                        <div>
 
-                            <div class="active-badge">
-                                ● ACTIVE
-                            </div>
+                            <h2>
+                                📊 Your Progress
+                            </h2>
+
+                            <p>
+                                Your current StudyMind activity.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stats-list">
+
+                        <div class="stat">
+
+                            <span class="stat-name">
+                                Study streak
+                            </span>
+
+                            <span
+                                class="stat-value"
+                                id="streakValue"
+                            >
+                                0 days
+                            </span>
 
                         </div>
 
 
-                        <div class="status-crown">
-                            👑
+                        <div class="stat">
+
+                            <span class="stat-name">
+                                Completed topics
+                            </span>
+
+                            <span
+                                class="stat-value"
+                                id="completedTopicsValue"
+                            >
+                                0
+                            </span>
+
                         </div>
 
 
-                        <h2>
-                            Golden Premium
-                        </h2>
+                        <div class="stat">
 
+                            <span class="stat-name">
+                                Study plans
+                            </span>
+
+                            <span
+                                class="stat-value"
+                                id="studyPlansValue"
+                            >
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="stat">
+
+                            <span class="stat-name">
+                                AI questions
+                            </span>
+
+                            <span class="stat-value">
+                                Unlimited
+                            </span>
+
+                        </div>
+
+
+                        <div class="stat">
+
+                            <span class="stat-name">
+                                Battle access
+                            </span>
+
+                            <span class="stat-value">
+                                Unlimited
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TOPIC PROGRESS
+        ================================================== -->
+
+        <section class="section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <h2>
+                        📚 Your Study Topics
+                    </h2>
+
+                    <p>
+                        Track every topic from your current study plan.
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="topic-grid"
+                    id="topicGrid"
+                >
+
+                    <div class="topic-card">
+
+                        <div class="topic-number">
+                            STUDY PLAN
+                        </div>
+
+                        <h3>
+                            No study plan yet
+                        </h3>
 
                         <p>
-                            Unlimited StudyMind AI access is enabled
-                            for this authorized account.
+                            Generate a study plan from the Home page
+                            to see your topics here.
+                        </p>
+
+                        <div class="topic-mini-progress">
+
+                            <div
+                                class="topic-mini-fill"
+                                style="width:0%"
+                            ></div>
+
+                        </div>
+
+                        <div class="topic-status">
+                            Waiting for plan
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CALENDAR + SCHEDULE
+        ================================================== -->
+
+        <section class="section">
+
+            <div class="container schedule-grid">
+
+                <div class="card calendar-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h2>
+                                📅 Study Calendar
+                            </h2>
+
+                            <p>
+                                Keep track of your study days.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calendar">
+
+                        <div class="calendar-title">
+
+                            <strong id="calendarMonth">
+                                This Month
+                            </strong>
+
+                        </div>
+
+
+                        <div class="calendar-week">
+
+                            <span>Sun</span>
+                            <span>Mon</span>
+                            <span>Tue</span>
+                            <span>Wed</span>
+                            <span>Thu</span>
+                            <span>Fri</span>
+                            <span>Sat</span>
+
+                        </div>
+
+
+                        <div
+                            class="calendar-days"
+                            id="calendarDays"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card schedule-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h2>
+                                🗓️ Today's Schedule
+                            </h2>
+
+                            <p>
+                                Your upcoming StudyMind sessions.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="schedule-list"
+                        id="scheduleList"
+                    >
+
+                        <div class="schedule-item">
+
+                            <div class="schedule-icon">
+                                📖
+                            </div>
+
+                            <div class="schedule-info">
+
+                                <strong>
+                                    Study Session
+                                </strong>
+
+                                <span>
+                                    Your schedule will appear here.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             AI ASSISTANT
+        ================================================== -->
+
+        <section class="section">
+
+            <div class="container">
+
+                <div class="ai-panel">
+
+                    <div class="ai-header">
+
+                        <div>
+
+                            <h2>
+                                🤖 Ask StudyMind AI
+                            </h2>
+
+                            <p>
+                                Premium AI assistance with no five-question
+                                daily limit.
+                            </p>
+
+                        </div>
+
+                        <div class="unlimited-badge">
+                            ♾️ UNLIMITED
+                        </div>
+
+                    </div>
+
+
+                    <div class="ai-input-row">
+
+                        <textarea
+                            id="aiQuestion"
+                            rows="2"
+                            placeholder="Ask anything about what you're studying..."
+                        ></textarea>
+
+
+                        <button
+                            class="primary-button"
+                            id="askAIButton"
+                        >
+                            Ask AI
+                        </button>
+
+                    </div>
+
+
+                    <div id="aiResponse"></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PREMIUM TOOLS
+        ================================================== -->
+
+        <section class="section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <h2>
+                        ⚡ Premium Study Tools
+                    </h2>
+
+                    <p>
+                        Everything you need to stay focused.
+                    </p>
+
+                </div>
+
+
+                <div class="tools-grid">
+
+                    <!-- TIMER -->
+
+                    <div class="tool-card">
+
+                        <h3>
+                            ⏱️ Study Timer
+                        </h3>
+
+                        <p>
+                            Choose a focused study session.
                         </p>
 
 
                         <div
-                            class="account-email"
-                            id="accountEmail"
+                            class="timer-display"
+                            id="timerDisplay"
                         >
-                            Verifying account...
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 PREMIUM FEATURES
-            ================================================== -->
-
-            <section class="section">
-
-                <div class="container">
-
-                    <div class="section-heading">
-
-                        <h2>
-                            Everything unlocked
-                        </h2>
-
-                        <p>
-                            Your Premium workspace gives you access
-                            to the full StudyMind experience.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-grid">
-
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                🤖
-                            </div>
-
-                            <h3>
-                                Unlimited AI Assistance
-                            </h3>
-
-                            <p>
-                                Ask StudyMind AI questions while studying
-                                without the normal five-question daily limit.
-                            </p>
-
+                            25:00
                         </div>
 
 
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                📝
-                            </div>
-
-                            <h3>
-                                Advanced Knowledge Checks
-                            </h3>
-
-                            <p>
-                                Test yourself on your study topics with
-                                customizable knowledge checks.
-                            </p>
-
-                        </div>
-
-
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                📚
-                            </div>
-
-                            <h3>
-                                AI Summarizer
-                            </h3>
-
-                            <p>
-                                Turn your study material into concise,
-                                useful summaries and key points.
-                            </p>
-
-                        </div>
-
-
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                🎮
-                            </div>
-
-                            <h3>
-                                Premium Game Mode
-                            </h3>
-
-                            <p>
-                                Challenge yourself with StudyMind battles
-                                and access the complete game experience.
-                            </p>
-
-                        </div>
-
-
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                📈
-                            </div>
-
-                            <h3>
-                                Advanced Progress
-                            </h3>
-
-                            <p>
-                                Track your study activity, streaks,
-                                progress and performance.
-                            </p>
-
-                        </div>
-
-
-                        <div class="feature-card">
-
-                            <div class="feature-icon">
-                                ✨
-                            </div>
-
-                            <h3>
-                                Golden Experience
-                            </h3>
-
-                            <p>
-                                Enjoy the premium StudyMind interface
-                                with your tools organized in one place.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 QUICK ACTIONS
-            ================================================== -->
-
-            <section class="section">
-
-                <div class="container">
-
-                    <div class="section-heading">
-
-                        <h2>
-                            Quick actions
-                        </h2>
-
-                        <p>
-                            Jump straight into the part of StudyMind
-                            you want to use.
-                        </p>
-
-                    </div>
-
-
-                    <div class="action-grid">
-
-                        <button
-                            class="action-card"
-                            id="studyPlanAction"
-                        >
-
-                            <div class="action-icon">
-                                📖
-                            </div>
-
-                            <h3>
-                                Study Plan
-                            </h3>
-
-                            <p>
-                                Open your personalized study plan.
-                            </p>
-
-                        </button>
-
-
-                        <button
-                            class="action-card"
-                            id="knowledgeCheckAction"
-                        >
-
-                            <div class="action-icon">
-                                🧠
-                            </div>
-
-                            <h3>
-                                Knowledge Check
-                            </h3>
-
-                            <p>
-                                Test what you have learned.
-                            </p>
-
-                        </button>
-
-
-                        <button
-                            class="action-card"
-                            id="summarizerAction"
-                        >
-
-                            <div class="action-icon">
-                                📄
-                            </div>
-
-                            <h3>
-                                AI Summarizer
-                            </h3>
-
-                            <p>
-                                Summarize your study material.
-                            </p>
-
-                        </button>
-
-
-                        <button
-                            class="action-card"
-                            id="battleAction"
-                        >
-
-                            <div class="action-icon">
-                                ⚔️
-                            </div>
-
-                            <h3>
-                                Game Mode
-                            </h3>
-
-                            <p>
-                                Enter the StudyMind battle arena.
-                            </p>
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 AI ASSISTANT
-            ================================================== -->
-
-            <section class="section">
-
-                <div class="container">
-
-                    <div class="ai-panel">
-
-                        <div class="ai-header">
-
-                            <div>
-
-                                <h2>
-                                    🤖 Ask StudyMind AI
-                                </h2>
-
-                                <p>
-                                    Premium AI assistance is available
-                                    without the normal daily question limit.
-                                </p>
-
-                            </div>
-
-
-                            <div class="unlimited-badge">
-                                ♾️ UNLIMITED
-                            </div>
-
-                        </div>
-
-
-                        <div class="ai-input-row">
-
-                            <textarea
-                                id="aiQuestion"
-                                placeholder="Ask anything about what you're studying..."
-                                rows="2"
-                            ></textarea>
-
+                        <div class="timer-options">
 
                             <button
-                                class="primary-button"
-                                id="askAIButton"
+                                class="timer-option active"
+                                data-minutes="25"
                             >
-                                Ask AI
+                                25 min
+                            </button>
+
+                            <button
+                                class="timer-option"
+                                data-minutes="45"
+                            >
+                                45 min
+                            </button>
+
+                            <button
+                                class="timer-option"
+                                data-minutes="60"
+                            >
+                                60 min
                             </button>
 
                         </div>
 
 
-                        <div id="aiResponse"></div>
+                        <div class="timer-buttons">
 
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 PREMIUM TOOLS
-            ================================================== -->
-
-            <section class="section">
-
-                <div class="container">
-
-                    <div class="section-heading">
-
-                        <h2>
-                            Premium tools
-                        </h2>
-
-                        <p>
-                            Stay organized and keep your study momentum going.
-                        </p>
-
-                    </div>
-
-
-                    <div class="tools-grid">
-
-                        <!-- TIMER -->
-
-                        <div class="tool-card">
-
-                            <h3>
-                                ⏱️ Study Timer
-                            </h3>
-
-                            <p>
-                                Choose a focused study session.
-                            </p>
-
-
-                            <div
-                                class="timer-display"
-                                id="timerDisplay"
+                            <button
+                                class="primary-button"
+                                id="timerStart"
                             >
-                                25:00
-                            </div>
+                                Start
+                            </button>
 
+                            <button
+                                class="secondary-button"
+                                id="timerPause"
+                            >
+                                Pause
+                            </button>
 
-                            <div class="timer-options">
-
-                                <button
-                                    class="timer-option active"
-                                    data-minutes="25"
-                                >
-                                    25 min
-                                </button>
-
-                                <button
-                                    class="timer-option"
-                                    data-minutes="45"
-                                >
-                                    45 min
-                                </button>
-
-                                <button
-                                    class="timer-option"
-                                    data-minutes="60"
-                                >
-                                    60 min
-                                </button>
-
-                            </div>
-
-
-                            <div class="timer-buttons">
-
-                                <button
-                                    class="primary-button"
-                                    id="timerStart"
-                                >
-                                    Start
-                                </button>
-
-                                <button
-                                    class="secondary-button"
-                                    id="timerPause"
-                                >
-                                    Pause
-                                </button>
-
-                                <button
-                                    class="secondary-button"
-                                    id="timerReset"
-                                >
-                                    Reset
-                                </button>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- STATS -->
-
-                        <div class="tool-card">
-
-                            <h3>
-                                📊 Your Study Stats
-                            </h3>
-
-                            <p>
-                                A quick look at your current study activity.
-                            </p>
-
-
-                            <div class="stats-list">
-
-                                <div class="stat-row">
-
-                                    <span>
-                                        Study streak
-                                    </span>
-
-                                    <span
-                                        class="stat-value"
-                                        id="streakValue"
-                                    >
-                                        0 days
-                                    </span>
-
-                                </div>
-
-
-                                <div class="stat-row">
-
-                                    <span>
-                                        Completed topics
-                                    </span>
-
-                                    <span
-                                        class="stat-value"
-                                        id="completedTopicsValue"
-                                    >
-                                        0
-                                    </span>
-
-                                </div>
-
-
-                                <div class="stat-row">
-
-                                    <span>
-                                        Study plans
-                                    </span>
-
-                                    <span
-                                        class="stat-value"
-                                        id="studyPlansValue"
-                                    >
-                                        0
-                                    </span>
-
-                                </div>
-
-
-                                <div class="stat-row">
-
-                                    <span>
-                                        AI questions
-                                    </span>
-
-                                    <span
-                                        class="stat-value"
-                                        id="aiQuestionsValue"
-                                    >
-                                        Unlimited
-                                    </span>
-
-                                </div>
-
-                            </div>
+                            <button
+                                class="secondary-button"
+                                id="timerReset"
+                            >
+                                Reset
+                            </button>
 
                         </div>
 
                     </div>
 
-                </div>
 
-            </section>
+                    <!-- KNOWLEDGE CHECK -->
 
+                    <div class="tool-card">
 
-            <!-- =================================================
-                 GOLD CTA
-            ================================================== -->
-
-            <section class="section">
-
-                <div class="container">
-
-                    <div class="gold-cta">
-
-                        <div class="eyebrow">
-                            👑 GOLDEN PREMIUM
-                        </div>
-
-                        <h2>
-                            Ready to get studying?
-                        </h2>
+                        <h3>
+                            🧠 Knowledge Check
+                        </h3>
 
                         <p>
-                            Open your StudyMind dashboard and continue
-                            exactly where you left off.
+                            Test yourself after completing your study topic.
                         </p>
+
+                        <div style="
+                            margin-top:22px;
+                            padding:20px;
+                            border-radius:15px;
+                            background:rgba(245,197,66,.06);
+                            border:1px solid rgba(245,197,66,.12);
+                        ">
+
+                            <div style="
+                                color:var(--gold-light);
+                                font-size:30px;
+                                margin-bottom:10px;
+                            ">
+                                🏆
+                            </div>
+
+                            <strong
+                                id="knowledgeCheckStatus"
+                            >
+                                Complete a topic to begin.
+                            </strong>
+
+                            <p style="
+                                margin-top:8px;
+                                color:var(--muted);
+                                font-size:12px;
+                            ">
+                                Your knowledge checks help you measure
+                                what you actually remember.
+                            </p>
+
+                        </div>
 
                         <button
                             class="primary-button"
-                            id="goldDashboardButton"
+                            id="knowledgeCheckButton"
+                            style="margin-top:15px;"
                         >
-                            Open My Dashboard →
+                            Start Knowledge Check
                         </button>
 
                     </div>
 
                 </div>
 
-            </section>
+            </div>
 
-        </main>
+        </section>
 
 
-        <!-- FOOTER -->
+        <!-- =================================================
+             PREMIUM FEATURES
+        ================================================== -->
 
-        <footer>
+        <section class="section">
 
             <div class="container">
 
-                <strong>
-                    StudyMind AI
-                </strong>
+                <div class="section-heading">
 
-                · Golden Premium Experience
+                    <h2>
+                        👑 Golden Premium
+                    </h2>
+
+                    <p>
+                        Your Premium account unlocks the complete StudyMind
+                        experience.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-grid">
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            🤖
+                        </div>
+
+                        <h3>
+                            Unlimited AI
+                        </h3>
+
+                        <p>
+                            Ask StudyMind AI as many study questions as you need.
+                        </p>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            📝
+                        </div>
+
+                        <h3>
+                            Knowledge Checks
+                        </h3>
+
+                        <p>
+                            Test your understanding after every topic.
+                        </p>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            📄
+                        </div>
+
+                        <h3>
+                            AI Summarizer
+                        </h3>
+
+                        <p>
+                            Turn study material into useful summaries.
+                        </p>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ⚔️
+                        </div>
+
+                        <h3>
+                            Unlimited Battles
+                        </h3>
+
+                        <p>
+                            Access the full StudyMind Game Mode.
+                        </p>
+
+                    </div>
+
+                </div>
 
             </div>
 
-        </footer>
+        </section>
 
-    </div>
+    </main>
 
 
-    <!-- =========================================================
-         SUPABASE
-    ========================================================= -->
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
 
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <footer>
+
+        <div class="container">
+
+            <strong>
+                StudyMind AI
+            </strong>
+
+            · Golden Premium Dashboard
+
+        </div>
+
+    </footer>
+
+</div>
+
+
+<!-- =========================================================
+     SUPABASE
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
 /* =========================================================
-   STUDYMIND AI — GOLDEN PREMIUM ACCESS SYSTEM
-   ========================================================= */
+   STUDYMIND AI — GOLDEN PREMIUM DASHBOARD SYSTEM
+========================================================= */
 
 "use strict";
 
 
 /* =========================================================
-   SUPABASE CONFIGURATION
-   ========================================================= */
+   SUPABASE
+========================================================= */
 
 const SUPABASE_URL =
     "https://bicnrbqqvucgpbwudmit.supabase.co";
@@ -1865,10 +2321,9 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
 
+const PREMIUM_ALLOWED_EMAIL =
+    "studymindaiofficial@gmail.com";
 
-/* =========================================================
-   CREATE SUPABASE CLIENT
-   ========================================================= */
 
 if (
     !window.supabase ||
@@ -1891,27 +2346,20 @@ if (
 
 
 /* =========================================================
-   GOLDEN PREMIUM AUTHORIZED ACCOUNT
-   ========================================================= */
-
-const PREMIUM_ALLOWED_EMAIL =
-    "studymindaiofficial@gmail.com";
-
-
-/* =========================================================
    STATE
-   ========================================================= */
+========================================================= */
 
-let premiumAccessVerified =
-    false;
+let premiumAccessVerified = false;
+let accessRedirectInProgress = false;
 
-let accessRedirectInProgress =
-    false;
+let timerSeconds = 25 * 60;
+let timerInterval = null;
+let timerRunning = false;
 
 
 /* =========================================================
-   EMAIL NORMALIZATION
-   ========================================================= */
+   HELPERS
+========================================================= */
 
 function normalizeEmail(email) {
 
@@ -1922,71 +2370,13 @@ function normalizeEmail(email) {
 }
 
 
-/* =========================================================
-   REDIRECT TO LOGIN
-   ========================================================= */
-
 function redirectToLogin() {
 
     if (accessRedirectInProgress) {
         return;
     }
 
-    accessRedirectInProgress =
-        true;
-
-    window.location.replace(
-        "login.html"
-    );
-
-}
-
-
-/* =========================================================
-   DENY ACCESS
-   ========================================================= */
-
-async function denyPremiumAccess() {
-
-    if (accessRedirectInProgress) {
-        return;
-    }
-
-    accessRedirectInProgress =
-        true;
-
-
-    console.error(
-        "StudyMind Golden Premium access denied."
-    );
-
-
-    try {
-
-        if (
-            window.supabaseClient
-        ) {
-
-            await window.supabaseClient
-                .auth
-                .signOut();
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Could not sign out unauthorized account:",
-            error
-        );
-
-    }
-
-
-    alert(
-        "Premium access is currently available only to the official StudyMind AI account."
-    );
-
+    accessRedirectInProgress = true;
 
     window.location.replace(
         "login.html"
@@ -1997,13 +2387,11 @@ async function denyPremiumAccess() {
 
 /* =========================================================
    GET AUTHENTICATED USER
-   ========================================================= */
+========================================================= */
 
 async function getAuthenticatedUser() {
 
-    if (
-        !window.supabaseClient
-    ) {
+    if (!window.supabaseClient) {
 
         throw new Error(
             "Supabase client is not available."
@@ -2011,10 +2399,6 @@ async function getAuthenticatedUser() {
 
     }
 
-
-    /*
-     * First check the current session.
-     */
 
     const {
         data: sessionData,
@@ -2047,11 +2431,6 @@ async function getAuthenticatedUser() {
     }
 
 
-    /*
-     * If there was no session user,
-     * ask Supabase for the authenticated user.
-     */
-
     const {
         data: userData,
         error: userError
@@ -2079,8 +2458,8 @@ async function getAuthenticatedUser() {
 
 
 /* =========================================================
-   VERIFY GOLDEN PREMIUM ACCESS
-   ========================================================= */
+   PREMIUM ACCESS
+========================================================= */
 
 async function verifyPremiumAppAccess() {
 
@@ -2102,16 +2481,10 @@ async function verifyPremiumAppAccess() {
         );
 
 
-        /*
-         * Make sure Supabase loaded.
-         */
-
-        if (
-            !window.supabaseClient
-        ) {
+        if (!window.supabaseClient) {
 
             console.error(
-                "StudyMind: Supabase client is missing."
+                "StudyMind: Supabase client missing."
             );
 
             alert(
@@ -2125,22 +2498,14 @@ async function verifyPremiumAppAccess() {
         }
 
 
-        /*
-         * Get the real authenticated user.
-         */
-
         const user =
             await getAuthenticatedUser();
 
 
-        /*
-         * No logged-in account.
-         */
-
         if (!user) {
 
             console.warn(
-                "StudyMind: No authenticated account found."
+                "StudyMind: No authenticated account."
             );
 
             redirectToLogin();
@@ -2150,28 +2515,16 @@ async function verifyPremiumAppAccess() {
         }
 
 
-        /*
-         * Get the real Supabase email.
-         */
-
         const authenticatedEmail =
             normalizeEmail(
                 user.email
             );
-
 
         const allowedEmail =
             normalizeEmail(
                 PREMIUM_ALLOWED_EMAIL
             );
 
-
-        /*
-         * IMPORTANT DEBUG INFORMATION.
-         *
-         * This intentionally logs only the email,
-         * never the access token.
-         */
 
         console.log(
             "=========================================="
@@ -2197,47 +2550,55 @@ async function verifyPremiumAppAccess() {
         );
 
         console.log(
-            "Supabase user ID:",
-            user.id
-        );
-
-        console.log(
             "=========================================="
         );
 
-
-        /*
-         * EXACT ACCOUNT CHECK
-         */
 
         if (
             authenticatedEmail !==
             allowedEmail
         ) {
 
-            await denyPremiumAccess();
+            console.error(
+                "StudyMind: Golden Premium access denied."
+            );
+
+
+            try {
+
+                await window.supabaseClient
+                    .auth
+                    .signOut();
+
+            } catch (error) {
+
+                console.error(
+                    "Sign out failed:",
+                    error
+                );
+
+            }
+
+
+            alert(
+                "Premium access is currently available only to the official StudyMind AI account."
+            );
+
+
+            redirectToLogin();
 
             return;
 
         }
 
 
-        /*
-         * OFFICIAL ACCOUNT VERIFIED
-         */
-
-        premiumAccessVerified =
-            true;
+        premiumAccessVerified = true;
 
 
         console.log(
             "StudyMind: GOLDEN PREMIUM ACCESS VERIFIED."
         );
 
-
-        /*
-         * Display the authenticated account.
-         */
 
         const accountEmail =
             document.getElementById(
@@ -2254,15 +2615,13 @@ async function verifyPremiumAppAccess() {
 
 
         /*
-         * Initialize the application.
+         * Create the dashboard.
          */
 
-        initializePremiumApp();
+        initializePremiumDashboard(
+            user
+        );
 
-
-        /*
-         * Show the Golden Premium application.
-         */
 
         if (premiumApp) {
 
@@ -2271,10 +2630,6 @@ async function verifyPremiumAppAccess() {
 
         }
 
-
-        /*
-         * Remove verification screen.
-         */
 
         if (accessScreen) {
 
@@ -2301,12 +2656,6 @@ async function verifyPremiumAppAccess() {
             error
         );
 
-
-        /*
-         * Never allow access when verification
-         * fails unexpectedly.
-         */
-
         redirectToLogin();
 
     }
@@ -2316,11 +2665,9 @@ async function verifyPremiumAppAccess() {
 
 /* =========================================================
    AUTH STATE PROTECTION
-   ========================================================= */
+========================================================= */
 
-if (
-    window.supabaseClient
-) {
+if (window.supabaseClient) {
 
     window.supabaseClient.auth.onAuthStateChange(
         (event, session) => {
@@ -2330,10 +2677,6 @@ if (
                 event
             );
 
-
-            /*
-             * User signed out.
-             */
 
             if (
                 event === "SIGNED_OUT"
@@ -2346,10 +2689,6 @@ if (
             }
 
 
-            /*
-             * No session.
-             */
-
             if (
                 !session?.user
             ) {
@@ -2361,31 +2700,25 @@ if (
             }
 
 
-            /*
-             * If the page was already verified,
-             * make sure the account remains the
-             * authorized account.
-             */
-
             if (
                 premiumAccessVerified
             ) {
 
-                const currentEmail =
+                const email =
                     normalizeEmail(
                         session.user.email
                     );
 
 
                 if (
-                    currentEmail !==
+                    email !==
                     normalizeEmail(
                         PREMIUM_ALLOWED_EMAIL
                     )
                 ) {
 
                     console.error(
-                        "StudyMind: Unauthorized account detected after verification."
+                        "StudyMind: Unauthorized account detected."
                     );
 
 
@@ -2412,7 +2745,6 @@ if (
                             } catch (error) {
 
                                 console.error(
-                                    "Account sign-out error:",
                                     error
                                 );
 
@@ -2438,156 +2770,1519 @@ if (
 
 
 /* =========================================================
-   PREMIUM APP INITIALIZATION
-   ========================================================= */
+   INITIALIZE DASHBOARD
+========================================================= */
 
-function initializePremiumApp() {
+function initializePremiumDashboard(user) {
 
     setupNavigation();
 
-    setupAI();
+    setupDashboardData();
 
     setupTimer();
 
-    loadStudyStats();
+    setupAI();
+
+    setupCalendar();
+
+    loadStudyTopics();
+
+    loadSchedule();
+
+    updateWelcomeName(user);
+
+}
+
+
+/* =========================================================
+   WELCOME NAME
+========================================================= */
+
+function updateWelcomeName(user) {
+
+    const welcomeName =
+        document.getElementById(
+            "welcomeName"
+        );
+
+
+    if (!welcomeName) {
+        return;
+    }
+
+
+    const metadata =
+        user?.user_metadata || {};
+
+
+    const name =
+        metadata.username ||
+        metadata.user_name ||
+        metadata.full_name ||
+        metadata.name ||
+        user?.email?.split("@")[0] ||
+        "Scholar";
+
+
+    const cleanName =
+        String(name)
+            .trim()
+            .split(" ")[0];
+
+
+    welcomeName.textContent =
+        cleanName || "Scholar";
 
 }
 
 
 /* =========================================================
    NAVIGATION
-   ========================================================= */
+========================================================= */
 
 function setupNavigation() {
 
-    const goHome = () => {
-
-        window.location.href =
-            "home.html";
-
-    };
-
-
-    const goDashboard = () => {
-
-        window.location.href =
-            "dashboard.html";
-
-    };
-
-
-    const goGameMode = () => {
-
-        window.location.href =
-            "game-mode.html";
-
-    };
-
-
     document
-        .getElementById(
-            "homeButton"
-        )
+        .getElementById("homeButton")
         ?.addEventListener(
             "click",
-            goHome
+            () => {
+
+                window.location.href =
+                    "home.html";
+
+            }
         );
 
 
     document
-        .getElementById(
-            "dashboardButton"
-        )
+        .getElementById("gameModeButton")
         ?.addEventListener(
             "click",
-            goDashboard
+            () => {
+
+                window.location.href =
+                    "game-mode.html";
+
+            }
         );
 
 
+    /*
+     * Dashboard button intentionally stays
+     * on the Golden Premium dashboard.
+     */
+
     document
-        .getElementById(
-            "startStudyingButton"
-        )
+        .getElementById("dashboardButton")
         ?.addEventListener(
             "click",
-            goDashboard
+            () => {
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+
+            }
         );
 
 
+    /*
+     * Continue studying stays inside the
+     * Golden Premium dashboard.
+     */
+
     document
-        .getElementById(
-            "studyPlanAction"
-        )
+        .getElementById("continueStudyingButton")
         ?.addEventListener(
             "click",
-            goDashboard
+            () => {
+
+                document
+                    .getElementById(
+                        "aiQuestion"
+                    )
+                    ?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+            }
         );
 
 
+    /*
+     * Finishing a topic updates the
+     * Premium dashboard immediately.
+     */
+
     document
-        .getElementById(
-            "knowledgeCheckAction"
-        )
+        .getElementById("completeTopicButton")
         ?.addEventListener(
             "click",
-            goDashboard
+            completeCurrentTopic
         );
 
 
-    document
-        .getElementById(
-            "summarizerAction"
-        )
-        ?.addEventListener(
-            "click",
-            goDashboard
-        );
-
+    /*
+     * Knowledge check button.
+     */
 
     document
-        .getElementById(
-            "gameModeButton"
-        )
+        .getElementById("knowledgeCheckButton")
         ?.addEventListener(
             "click",
-            goGameMode
-        );
-
-
-    document
-        .getElementById(
-            "battleAction"
-        )
-        ?.addEventListener(
-            "click",
-            goGameMode
-        );
-
-
-    document
-        .getElementById(
-            "goldDashboardButton"
-        )
-        ?.addEventListener(
-            "click",
-            goDashboard
+            openKnowledgeCheck
         );
 
 }
 
 
 /* =========================================================
+   STUDY PLAN DATA
+========================================================= */
+
+function getStudyPlan() {
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                "studyMindPlan"
+            );
+
+
+        if (!raw) {
+            return null;
+        }
+
+
+        return JSON.parse(raw);
+
+    } catch (error) {
+
+        console.error(
+            "Could not read StudyMind plan:",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+
+/* =========================================================
+   EXTRACT TOPICS
+========================================================= */
+
+function extractTopics(plan) {
+
+    if (!plan) {
+        return [];
+    }
+
+
+    if (Array.isArray(plan)) {
+        return plan;
+    }
+
+
+    if (Array.isArray(plan.topics)) {
+        return plan.topics;
+    }
+
+
+    if (
+        Array.isArray(
+            plan.studyTopics
+        )
+    ) {
+
+        return plan.studyTopics;
+
+    }
+
+
+    if (
+        Array.isArray(
+            plan.subjects
+        )
+    ) {
+
+        const result = [];
+
+
+        plan.subjects.forEach(
+            subject => {
+
+                if (
+                    Array.isArray(
+                        subject.topics
+                    )
+                ) {
+
+                    subject.topics.forEach(
+                        topic => {
+
+                            result.push({
+                                subject:
+                                    subject.name ||
+                                    subject.subject ||
+                                    "",
+                                ...(
+                                    typeof topic === "object"
+                                        ? topic
+                                        : {
+                                            topic
+                                        }
+                                )
+                            });
+
+                        }
+                    );
+
+                }
+
+            }
+        );
+
+
+        return result;
+
+    }
+
+
+    return [];
+
+}
+
+
+/* =========================================================
+   CURRENT TOPIC
+========================================================= */
+
+function getCurrentTopicIndex() {
+
+    const value =
+        Number(
+            localStorage.getItem(
+                "studyMindCurrentTopicIndex"
+            ) || "0"
+        );
+
+
+    return Number.isFinite(value)
+        ? Math.max(0, value)
+        : 0;
+
+}
+
+
+function getCompletedTopics() {
+
+    try {
+
+        const completed =
+            JSON.parse(
+                localStorage.getItem(
+                    "studyMindCompletedTopics"
+                ) || "[]"
+            );
+
+
+        return Array.isArray(
+            completed
+        )
+            ? completed
+            : [];
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+
+/* =========================================================
+   DASHBOARD DATA
+========================================================= */
+
+function setupDashboardData() {
+
+    const plan =
+        getStudyPlan();
+
+    const topics =
+        extractTopics(plan);
+
+    const completed =
+        getCompletedTopics();
+
+
+    const total =
+        topics.length;
+
+
+    const completedCount =
+        completed.length;
+
+
+    const progress =
+        total > 0
+            ? Math.min(
+                100,
+                Math.round(
+                    (
+                        completedCount /
+                        total
+                    ) * 100
+                )
+            )
+            : 0;
+
+
+    const progressFill =
+        document.getElementById(
+            "overallProgressFill"
+        );
+
+
+    const progressText =
+        document.getElementById(
+            "overallProgressText"
+        );
+
+
+    if (progressFill) {
+
+        progressFill.style.width =
+            `${progress}%`;
+
+    }
+
+
+    if (progressText) {
+
+        progressText.textContent =
+            `${progress}%`;
+
+    }
+
+
+    const completedValue =
+        document.getElementById(
+            "completedTopicsValue"
+        );
+
+
+    if (completedValue) {
+
+        completedValue.textContent =
+            completedCount;
+
+    }
+
+
+    const plansValue =
+        document.getElementById(
+            "studyPlansValue"
+        );
+
+
+    if (plansValue) {
+
+        plansValue.textContent =
+            plan ? "1" : "0";
+
+    }
+
+
+    updateCurrentTopic(
+        topics,
+        completed
+    );
+
+
+    updateStreak();
+
+}
+
+
+/* =========================================================
+   CURRENT TOPIC DISPLAY
+========================================================= */
+
+function updateCurrentTopic(
+    topics,
+    completed
+) {
+
+    const name =
+        document.getElementById(
+            "currentTopicName"
+        );
+
+    const description =
+        document.getElementById(
+            "currentTopicDescription"
+        );
+
+    const position =
+        document.getElementById(
+            "topicPosition"
+        );
+
+    const status =
+        document.getElementById(
+            "topicStatus"
+        );
+
+
+    if (!topics.length) {
+
+        if (name) {
+            name.textContent =
+                "No active topic";
+        }
+
+        if (description) {
+
+            description.textContent =
+                "Create a study plan from the Home page to begin your Premium study session.";
+
+        }
+
+        if (position) {
+            position.textContent =
+                "0 of 0";
+        }
+
+        if (status) {
+            status.textContent =
+                "Ready";
+        }
+
+        return;
+
+    }
+
+
+    let index =
+        getCurrentTopicIndex();
+
+
+    if (index >= topics.length) {
+        index = topics.length - 1;
+    }
+
+
+    const topic =
+        topics[index];
+
+
+    const topicName =
+        typeof topic === "string"
+            ? topic
+            : (
+                topic?.topic ||
+                topic?.name ||
+                topic?.title ||
+                topic?.subject ||
+                "Untitled Topic"
+            );
+
+
+    const topicDescription =
+        typeof topic === "object"
+            ? (
+                topic.description ||
+                topic.details ||
+                `Study ${topicName} and complete the knowledge check when you are finished.`
+            )
+            : `Study ${topicName} and complete the knowledge check when you are finished.`;
+
+
+    if (name) {
+        name.textContent =
+            topicName;
+    }
+
+
+    if (description) {
+        description.textContent =
+            topicDescription;
+    }
+
+
+    if (position) {
+
+        position.textContent =
+            `${index + 1} of ${topics.length}`;
+
+    }
+
+
+    const isCompleted =
+        isTopicCompleted(
+            topic,
+            index,
+            completed
+        );
+
+
+    if (status) {
+
+        status.textContent =
+            isCompleted
+                ? "Completed"
+                : "In Progress";
+
+    }
+
+
+    const duration =
+        document.getElementById(
+            "sessionDuration"
+        );
+
+
+    if (duration) {
+
+        duration.textContent =
+            "25 min";
+
+    }
+
+}
+
+
+/* =========================================================
+   TOPIC COMPLETION
+========================================================= */
+
+function getTopicKey(topic, index) {
+
+    if (
+        typeof topic === "string"
+    ) {
+
+        return topic;
+
+    }
+
+
+    return (
+        topic?.id ||
+        topic?.topic ||
+        topic?.name ||
+        topic?.title ||
+        `topic-${index}`
+    );
+
+}
+
+
+function isTopicCompleted(
+    topic,
+    index,
+    completed
+) {
+
+    const key =
+        String(
+            getTopicKey(
+                topic,
+                index
+            )
+        );
+
+
+    return completed.some(
+        item => {
+
+            if (
+                typeof item === "string"
+            ) {
+
+                return item === key;
+
+            }
+
+
+            return (
+                String(
+                    item?.id ||
+                    item?.topic ||
+                    item?.name ||
+                    item?.title ||
+                    ""
+                ) === key
+            );
+
+        }
+    );
+
+}
+
+
+function completeCurrentTopic() {
+
+    const plan =
+        getStudyPlan();
+
+    const topics =
+        extractTopics(plan);
+
+
+    if (!topics.length) {
+
+        alert(
+            "Create a study plan first."
+        );
+
+        return;
+
+    }
+
+
+    let index =
+        getCurrentTopicIndex();
+
+
+    if (index >= topics.length) {
+        index = topics.length - 1;
+    }
+
+
+    const topic =
+        topics[index];
+
+
+    const key =
+        getTopicKey(
+            topic,
+            index
+        );
+
+
+    const completed =
+        getCompletedTopics();
+
+
+    const alreadyCompleted =
+        isTopicCompleted(
+            topic,
+            index,
+            completed
+        );
+
+
+    if (!alreadyCompleted) {
+
+        completed.push(
+            key
+        );
+
+
+        localStorage.setItem(
+            "studyMindCompletedTopics",
+            JSON.stringify(
+                completed
+            )
+        );
+
+    }
+
+
+    localStorage.setItem(
+        "lastStudyDate",
+        new Date().toISOString()
+    );
+
+
+    localStorage.setItem(
+        "studyMindStreak",
+        String(
+            Math.max(
+                1,
+                Number(
+                    localStorage.getItem(
+                        "studyMindStreak"
+                    ) || "1"
+                )
+            )
+        )
+    );
+
+
+    if (
+        index <
+        topics.length - 1
+    ) {
+
+        localStorage.setItem(
+            "studyMindCurrentTopicIndex",
+            String(index + 1)
+        );
+
+    }
+
+
+    setupDashboardData();
+
+    loadStudyTopics();
+
+    updateKnowledgeCheckStatus();
+
+
+    alert(
+        "🎉 Topic completed! Great work."
+    );
+
+}
+
+
+/* =========================================================
+   TOPIC CARDS
+========================================================= */
+
+function loadStudyTopics() {
+
+    const grid =
+        document.getElementById(
+            "topicGrid"
+        );
+
+
+    if (!grid) {
+        return;
+    }
+
+
+    const plan =
+        getStudyPlan();
+
+    const topics =
+        extractTopics(plan);
+
+    const completed =
+        getCompletedTopics();
+
+
+    if (!topics.length) {
+
+        grid.innerHTML = `
+            <div class="topic-card">
+                <div class="topic-number">
+                    STUDY PLAN
+                </div>
+
+                <h3>
+                    No study plan yet
+                </h3>
+
+                <p>
+                    Generate a study plan from the Home page
+                    to see your topics here.
+                </p>
+
+                <div class="topic-mini-progress">
+                    <div
+                        class="topic-mini-fill"
+                        style="width:0%"
+                    ></div>
+                </div>
+
+                <div class="topic-status">
+                    Waiting for plan
+                </div>
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    grid.innerHTML =
+        topics
+            .map(
+                (topic, index) => {
+
+                    const topicName =
+                        typeof topic === "string"
+                            ? topic
+                            : (
+                                topic?.topic ||
+                                topic?.name ||
+                                topic?.title ||
+                                topic?.subject ||
+                                "Untitled Topic"
+                            );
+
+
+                    const topicDescription =
+                        typeof topic === "object"
+                            ? (
+                                topic.description ||
+                                topic.details ||
+                                "Study this topic and complete its knowledge check."
+                            )
+                            : "Study this topic and complete its knowledge check.";
+
+
+                    const done =
+                        isTopicCompleted(
+                            topic,
+                            index,
+                            completed
+                        );
+
+
+                    const progress =
+                        done ? 100 : 0;
+
+
+                    return `
+                        <div class="topic-card">
+
+                            <div class="topic-number">
+                                TOPIC ${index + 1}
+                            </div>
+
+                            <h3>
+                                ${escapeHtml(topicName)}
+                            </h3>
+
+                            <p>
+                                ${escapeHtml(topicDescription)}
+                            </p>
+
+                            <div class="topic-mini-progress">
+
+                                <div
+                                    class="topic-mini-fill"
+                                    style="width:${progress}%"
+                                ></div>
+
+                            </div>
+
+                            <div class="topic-status">
+                                ${
+                                    done
+                                        ? "✓ Completed"
+                                        : "In Progress"
+                                }
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value || "")
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =========================================================
+   STREAK
+========================================================= */
+
+function updateStreak() {
+
+    const streak =
+        calculateStreak();
+
+
+    const element =
+        document.getElementById(
+            "streakValue"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            `${streak} ${
+                streak === 1
+                    ? "day"
+                    : "days"
+            }`;
+
+    }
+
+}
+
+
+function calculateStreak() {
+
+    const lastStudyDate =
+        localStorage.getItem(
+            "lastStudyDate"
+        );
+
+
+    if (!lastStudyDate) {
+        return 0;
+    }
+
+
+    const last =
+        new Date(
+            lastStudyDate
+        );
+
+
+    if (
+        Number.isNaN(
+            last.getTime()
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    const today =
+        new Date();
+
+
+    const todayStart =
+        new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+        );
+
+
+    const lastStart =
+        new Date(
+            last.getFullYear(),
+            last.getMonth(),
+            last.getDate()
+        );
+
+
+    const difference =
+        Math.floor(
+            (
+                todayStart -
+                lastStart
+            ) /
+            86400000
+        );
+
+
+    if (difference === 0) {
+        return 1;
+    }
+
+
+    if (difference === 1) {
+
+        return Math.max(
+            1,
+            Number(
+                localStorage.getItem(
+                    "studyMindStreak"
+                ) || "1"
+            )
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+/* =========================================================
+   KNOWLEDGE CHECK
+========================================================= */
+
+function updateKnowledgeCheckStatus() {
+
+    const status =
+        document.getElementById(
+            "knowledgeCheckStatus"
+        );
+
+
+    const button =
+        document.getElementById(
+            "knowledgeCheckButton"
+        );
+
+
+    const plan =
+        getStudyPlan();
+
+    const topics =
+        extractTopics(plan);
+
+    const completed =
+        getCompletedTopics();
+
+
+    if (!topics.length) {
+
+        if (status) {
+
+            status.textContent =
+                "Create a study plan first.";
+
+        }
+
+        if (button) {
+
+            button.textContent =
+                "Create Study Plan";
+
+        }
+
+        return;
+
+    }
+
+
+    const index =
+        getCurrentTopicIndex();
+
+
+    const topic =
+        topics[
+            Math.min(
+                index,
+                topics.length - 1
+            )
+        ];
+
+
+    const done =
+        isTopicCompleted(
+            topic,
+            Math.min(
+                index,
+                topics.length - 1
+            ),
+            completed
+        );
+
+
+    if (done) {
+
+        if (status) {
+
+            status.textContent =
+                "Topic completed — knowledge check ready.";
+
+        }
+
+        if (button) {
+
+            button.textContent =
+                "Start Knowledge Check";
+
+        }
+
+    } else {
+
+        if (status) {
+
+            status.textContent =
+                "Finish your current topic first.";
+
+        }
+
+        if (button) {
+
+            button.textContent =
+                "Knowledge Check";
+
+        }
+
+    }
+
+}
+
+
+function openKnowledgeCheck() {
+
+    const plan =
+        getStudyPlan();
+
+    const topics =
+        extractTopics(plan);
+
+
+    if (!topics.length) {
+
+        window.location.href =
+            "home.html";
+
+        return;
+
+    }
+
+
+    const index =
+        getCurrentTopicIndex();
+
+    const topic =
+        topics[
+            Math.min(
+                index,
+                topics.length - 1
+            )
+        ];
+
+
+    const completed =
+        getCompletedTopics();
+
+
+    if (
+        !isTopicCompleted(
+            topic,
+            Math.min(
+                index,
+                topics.length - 1
+            ),
+            completed
+        )
+    ) {
+
+        alert(
+            "📚 Finish studying the current topic first, then your knowledge check will unlock."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Keep the existing Knowledge Check system
+     * available through dashboard.html if it is
+     * already implemented there.
+     *
+     * The Premium dashboard itself remains golden.
+     */
+
+    window.location.href =
+        "dashboard.html";
+
+}
+
+
+/* =========================================================
+   CALENDAR
+========================================================= */
+
+function setupCalendar() {
+
+    const daysContainer =
+        document.getElementById(
+            "calendarDays"
+        );
+
+    const monthLabel =
+        document.getElementById(
+            "calendarMonth"
+        );
+
+
+    if (
+        !daysContainer ||
+        !monthLabel
+    ) {
+
+        return;
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+    const month =
+        now.getMonth();
+
+
+    monthLabel.textContent =
+        now.toLocaleDateString(
+            undefined,
+            {
+                month: "long",
+                year: "numeric"
+            }
+        );
+
+
+    const firstDay =
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
+
+
+    const daysInMonth =
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
+
+
+    daysContainer.innerHTML = "";
+
+
+    for (
+        let i = 0;
+        i < firstDay;
+        i++
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "calendar-day";
+
+        empty.style.visibility =
+            "hidden";
+
+        daysContainer.appendChild(
+            empty
+        );
+
+    }
+
+
+    for (
+        let day = 1;
+        day <= daysInMonth;
+        day++
+    ) {
+
+        const cell =
+            document.createElement(
+                "div"
+            );
+
+
+        cell.className =
+            "calendar-day";
+
+
+        cell.textContent =
+            day;
+
+
+        if (
+            day ===
+            now.getDate()
+        ) {
+
+            cell.classList.add(
+                "today"
+            );
+
+        }
+
+
+        daysContainer.appendChild(
+            cell
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SCHEDULE
+========================================================= */
+
+function loadSchedule() {
+
+    const list =
+        document.getElementById(
+            "scheduleList"
+        );
+
+
+    if (!list) {
+        return;
+    }
+
+
+    const plan =
+        getStudyPlan();
+
+
+    const topics =
+        extractTopics(plan);
+
+
+    if (!topics.length) {
+
+        return;
+
+    }
+
+
+    const index =
+        getCurrentTopicIndex();
+
+
+    const current =
+        topics[
+            Math.min(
+                index,
+                topics.length - 1
+            )
+        ];
+
+
+    const topicName =
+        typeof current === "string"
+            ? current
+            : (
+                current?.topic ||
+                current?.name ||
+                current?.title ||
+                "Study Session"
+            );
+
+
+    list.innerHTML = `
+
+        <div class="schedule-item">
+
+            <div class="schedule-icon">
+                📖
+            </div>
+
+            <div class="schedule-info">
+
+                <strong>
+                    Current Study Topic
+                </strong>
+
+                <span>
+                    ${escapeHtml(topicName)}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="schedule-item">
+
+            <div class="schedule-icon">
+                🧠
+            </div>
+
+            <div class="schedule-info">
+
+                <strong>
+                    Knowledge Check
+                </strong>
+
+                <span>
+                    Complete the topic before testing yourself.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="schedule-item">
+
+            <div class="schedule-icon">
+                ⏱️
+            </div>
+
+            <div class="schedule-info">
+
+                <strong>
+                    Focus Session
+                </strong>
+
+                <span>
+                    Use the Premium 25, 45 or 60 minute timer.
+                </span>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
    AI ASSISTANT
-   ========================================================= */
+========================================================= */
 
 function setupAI() {
 
-    const askButton =
+    const button =
         document.getElementById(
             "askAIButton"
         );
 
-    const questionInput =
+    const input =
         document.getElementById(
             "aiQuestion"
         );
@@ -2599,8 +4294,8 @@ function setupAI() {
 
 
     if (
-        !askButton ||
-        !questionInput ||
+        !button ||
+        !input ||
         !responseBox
     ) {
 
@@ -2612,7 +4307,7 @@ function setupAI() {
     async function askAI() {
 
         const question =
-            questionInput.value.trim();
+            input.value.trim();
 
 
         if (!question) {
@@ -2628,11 +4323,12 @@ function setupAI() {
         }
 
 
-        askButton.disabled =
+        button.disabled =
             true;
 
-        askButton.textContent =
+        button.textContent =
             "Thinking...";
+
 
         responseBox.style.display =
             "block";
@@ -2682,9 +4378,7 @@ function setupAI() {
                 await response.json();
 
 
-            if (
-                !response.ok
-            ) {
+            if (!response.ok) {
 
                 throw new Error(
                     data?.error ||
@@ -2713,7 +4407,7 @@ function setupAI() {
         } catch (error) {
 
             console.error(
-                "AI error:",
+                "Premium AI error:",
                 error
             );
 
@@ -2728,22 +4422,22 @@ function setupAI() {
         }
 
 
-        askButton.disabled =
+        button.disabled =
             false;
 
-        askButton.textContent =
+        button.textContent =
             "Ask AI";
 
     }
 
 
-    askButton.addEventListener(
+    button.addEventListener(
         "click",
         askAI
     );
 
 
-    questionInput.addEventListener(
+    input.addEventListener(
         "keydown",
         event => {
 
@@ -2765,18 +4459,8 @@ function setupAI() {
 
 
 /* =========================================================
-   STUDY TIMER
-   ========================================================= */
-
-let timerSeconds =
-    25 * 60;
-
-let timerInterval =
-    null;
-
-let timerRunning =
-    false;
-
+   TIMER
+========================================================= */
 
 function formatTime(seconds) {
 
@@ -2786,7 +4470,7 @@ function formatTime(seconds) {
         );
 
 
-    const remainingSeconds =
+    const remaining =
         seconds % 60;
 
 
@@ -2794,7 +4478,7 @@ function formatTime(seconds) {
         String(minutes)
             .padStart(2, "0") +
         ":" +
-        String(remainingSeconds)
+        String(remaining)
             .padStart(2, "0")
     );
 
@@ -2809,15 +4493,14 @@ function updateTimerDisplay() {
         );
 
 
-    if (!display) {
-        return;
+    if (display) {
+
+        display.textContent =
+            formatTime(
+                timerSeconds
+            );
+
     }
-
-
-    display.textContent =
-        formatTime(
-            timerSeconds
-        );
 
 }
 
@@ -2837,12 +4520,8 @@ function setupTimer() {
                 "click",
                 () => {
 
-                    if (
-                        timerRunning
-                    ) {
-
+                    if (timerRunning) {
                         return;
-
                     }
 
 
@@ -2859,14 +4538,26 @@ function setupTimer() {
                     );
 
 
-                    const minutes =
+                    timerSeconds =
                         Number(
                             option.dataset.minutes
+                        ) * 60;
+
+
+                    const sessionDuration =
+                        document.getElementById(
+                            "sessionDuration"
                         );
 
 
-                    timerSeconds =
-                        minutes * 60;
+                    if (
+                        sessionDuration
+                    ) {
+
+                        sessionDuration.textContent =
+                            `${option.dataset.minutes} min`;
+
+                    }
 
 
                     updateTimerDisplay();
@@ -2879,9 +4570,7 @@ function setupTimer() {
 
 
     document
-        .getElementById(
-            "timerStart"
-        )
+        .getElementById("timerStart")
         ?.addEventListener(
             "click",
             startTimer
@@ -2889,9 +4578,7 @@ function setupTimer() {
 
 
     document
-        .getElementById(
-            "timerPause"
-        )
+        .getElementById("timerPause")
         ?.addEventListener(
             "click",
             pauseTimer
@@ -2899,9 +4586,7 @@ function setupTimer() {
 
 
     document
-        .getElementById(
-            "timerReset"
-        )
+        .getElementById("timerReset")
         ?.addEventListener(
             "click",
             resetTimer
@@ -2915,21 +4600,13 @@ function setupTimer() {
 
 function startTimer() {
 
-    if (
-        timerRunning
-    ) {
-
+    if (timerRunning) {
         return;
-
     }
 
 
-    if (
-        timerSeconds <= 0
-    ) {
-
+    if (timerSeconds <= 0) {
         return;
-
     }
 
 
@@ -2953,9 +4630,17 @@ function startTimer() {
                     pauseTimer();
 
 
+                    localStorage.setItem(
+                        "lastStudyDate",
+                        new Date().toISOString()
+                    );
+
+
                     alert(
                         "🎉 Study session complete! Great work."
                     );
+
+                    updateStreak();
 
                 }
 
@@ -2972,9 +4657,7 @@ function pauseTimer() {
         false;
 
 
-    if (
-        timerInterval
-    ) {
+    if (timerInterval) {
 
         clearInterval(
             timerInterval
@@ -2993,16 +4676,16 @@ function resetTimer() {
     pauseTimer();
 
 
-    const activeOption =
+    const active =
         document.querySelector(
             ".timer-option.active"
         );
 
 
     const minutes =
-        activeOption
+        active
             ? Number(
-                activeOption.dataset.minutes
+                active.dataset.minutes
             )
             : 25;
 
@@ -3017,234 +4700,36 @@ function resetTimer() {
 
 
 /* =========================================================
-   STUDY STATISTICS
-   ========================================================= */
+   INITIALIZATION
+========================================================= */
 
-function loadStudyStats() {
+function startPremiumDashboard() {
 
-    try {
+    if (
+        document.readyState ===
+        "loading"
+    ) {
 
-        const completedTopics =
-            JSON.parse(
-                localStorage.getItem(
-                    "studyMindCompletedTopics"
-                ) || "[]"
-            );
-
-
-        const completedTopicsValue =
-            document.getElementById(
-                "completedTopicsValue"
-            );
-
-
-        if (
-            completedTopicsValue
-        ) {
-
-            completedTopicsValue.textContent =
-                Array.isArray(
-                    completedTopics
-                )
-                    ? completedTopics.length
-                    : 0;
-
-        }
-
-
-        const studyPlan =
-            localStorage.getItem(
-                "studyMindPlan"
-            );
-
-
-        const studyPlansValue =
-            document.getElementById(
-                "studyPlansValue"
-            );
-
-
-        if (
-            studyPlansValue
-        ) {
-
-            studyPlansValue.textContent =
-                studyPlan
-                    ? "1"
-                    : "0";
-
-        }
-
-
-        const streak =
-            calculateStreak();
-
-
-        const streakValue =
-            document.getElementById(
-                "streakValue"
-            );
-
-
-        if (
-            streakValue
-        ) {
-
-            streakValue.textContent =
-                `${streak} ${
-                    streak === 1
-                        ? "day"
-                        : "days"
-                }`;
-
-        }
-
-
-        const aiQuestionsValue =
-            document.getElementById(
-                "aiQuestionsValue"
-            );
-
-
-        if (
-            aiQuestionsValue
-        ) {
-
-            aiQuestionsValue.textContent =
-                "Unlimited";
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Could not load study stats:",
-            error
+        document.addEventListener(
+            "DOMContentLoaded",
+            verifyPremiumAppAccess,
+            {
+                once: true
+            }
         );
+
+    } else {
+
+        verifyPremiumAppAccess();
 
     }
 
 }
 
 
-function calculateStreak() {
-
-    const lastStudyDate =
-        localStorage.getItem(
-            "lastStudyDate"
-        );
-
-
-    if (
-        !lastStudyDate
-    ) {
-
-        return 0;
-
-    }
-
-
-    const lastDate =
-        new Date(
-            lastStudyDate
-        );
-
-
-    if (
-        Number.isNaN(
-            lastDate.getTime()
-        )
-    ) {
-
-        return 0;
-
-    }
-
-
-    const today =
-        new Date();
-
-
-    const startToday =
-        new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate()
-        );
-
-
-    const startLast =
-        new Date(
-            lastDate.getFullYear(),
-            lastDate.getMonth(),
-            lastDate.getDate()
-        );
-
-
-    const difference =
-        Math.floor(
-            (
-                startToday -
-                startLast
-            ) /
-            (1000 * 60 * 60 * 24)
-        );
-
-
-    if (
-        difference === 0
-    ) {
-
-        return 1;
-
-    }
-
-
-    if (
-        difference === 1
-    ) {
-
-        const storedStreak =
-            Number(
-                localStorage.getItem(
-                    "studyMindStreak"
-                ) || "1"
-            );
-
-
-        return Math.max(
-            1,
-            storedStreak
-        );
-
-    }
-
-
-    return 0;
-
-}
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        verifyPremiumAppAccess
-    );
-
-} else {
-
-    verifyPremiumAppAccess();
-
-}
+startPremiumDashboard();
 
 </script>
+
 </body>
 </html>
