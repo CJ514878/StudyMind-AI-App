@@ -2549,22 +2549,18 @@ function connectPremiumButton() {
         return;
     }
 
-    if (button.dataset.connected === "true") {
-        return;
-    }
-
-    button.dataset.connected = "true";
-
     button.addEventListener(
         "click",
-        function(event) {
+        event => {
+
             event.preventDefault();
-            openHomePremiumOffer();
+
+            window.location.href =
+                "premium.html";
+
         }
     );
 }
-
-
 /* =========================================================
    INITIALIZE HOME
 ========================================================= */
