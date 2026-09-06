@@ -1548,151 +1548,215 @@
             );
 
 
-        /* =========================================================
-           PREMIUM ACCESS CONTROL
-           
-           ONLY THIS ACCOUNT CAN ENTER:
-           studymindaiofficial@gmail.com
-        ========================================================= */
+      /* =========================================================
+   PREMIUM ACCESS CONTROL
 
-        const PREMIUM_ALLOWED_EMAIL =
-            "studymindaiofficial@gmail.com";
+   ONLY THIS ACCOUNT CAN ENTER:
+   studymindaiofficial@gmail.com
+========================================================= */
 
-
-        async function verifyPremiumAppAccess() {
-
-            const accessScreen =
-                document.getElementById("accessScreen");
-
-            const premiumApp =
-                document.getElementById("premiumApp");
+const PREMIUM_ALLOWED_EMAIL =
+    "studymindaiofficial@gmail.com";
 
 
-            try {
+async function verifyPremiumAppAccess() {
 
-                const {
-                    data: { user },
-                    error
-                } =
-                    await window.supabaseClient.auth.getUser();
+    const accessScreen =
+        document.getElementById("accessScreen");
 
-
-                /* -------------------------------------------------
-                   NO USER
-                ------------------------------------------------- */
-
-                if (error || !user) {
-
-                    window.location.replace("login.html");
-
-                    return;
-                }
+    const premiumApp =
+        document.getElementById("premiumApp");
 
 
-                /* -------------------------------------------------
-                   GET ACTUAL AUTHENTICATED EMAIL
-                ------------------------------------------------- */
+    try {
 
-                const userEmail =
-                    String(user.email || "")
-                        .trim()
-                        .toLowerCase();
+        /* =====================================================
+           GET CURRENT SESSION
+        ===================================================== */
 
-
-                /* -------------------------------------------------
-                   ACCESS CHECK
-                ------------------------------------------------- */
-
-                if (
-                    userEmail !==
-                    PREMIUM_ALLOWED_EMAIL
-                ) {
-
-                    alert(
-                        "Access denied. This Premium app is only available to the official StudyMind AI account."
-                    );
+        const {
+            data: sessionData,
+            error: sessionError
+        } =
+            await window.supabaseClient.auth.getSession();
 
 
-                    try {
+        if (sessionError) {
 
-                        await window.supabaseClient.auth.signOut();
+            console.error(
+                "Session error:",
+                sessionError
+            );
 
-                    } catch (signOutError) {
+            window.location.replace(
+                "login.html"
+            );
 
-                        console.error(
-                            "Sign-out error:",
-                            signOutError
-                        );
-                    }
-
-
-                    window.location.replace(
-                        "login.html"
-                    );
-
-                    return;
-                }
+            return;
+        }
 
 
-                /* -------------------------------------------------
-                   AUTHORIZED ACCOUNT
-                ------------------------------------------------- */
-
-                const accountEmail =
-                    document.getElementById(
-                        "accountEmail"
-                    );
+        let user =
+            sessionData?.session?.user || null;
 
 
-                if (accountEmail) {
+        /* =====================================================
+           FALLBACK: GET AUTHENTICATED USER
+        ===================================================== */
 
-                    accountEmail.textContent =
-                        user.email;
-                }
+        if (!user) {
 
-
-                accessScreen.style.opacity = "0";
-
-                setTimeout(() => {
-
-                    accessScreen.style.display =
-                        "none";
-
-                    premiumApp.style.display =
-                        "block";
-
-                }, 350);
+            const {
+                data: userData,
+                error: userError
+            } =
+                await window.supabaseClient.auth.getUser();
 
 
-                initializePremiumApp();
-
-
-            } catch (error) {
-
-                console.error(
-                    "Premium access verification failed:",
-                    error
-                );
-
-
-                try {
-
-                    await window.supabaseClient.auth.signOut();
-
-                } catch (signOutError) {
-
-                    console.error(
-                        "Sign-out error:",
-                        signOutError
-                    );
-                }
-
+            if (
+                userError ||
+                !userData?.user
+            ) {
 
                 window.location.replace(
                     "login.html"
                 );
+
+                return;
             }
+
+
+            user =
+                userData.user;
         }
+
+
+        /* =====================================================
+           GET EMAIL
+        ===================================================== */
+
+        const userEmail =
+            String(
+                user.email || ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        console.log(
+            "Logged-in StudyMind account:",
+            userEmail
+        );
+
+
+        /* =====================================================
+           CHECK AUTHORIZED ACCOUNT
+        ===================================================== */
+
+        if (
+            userEmail !==
+            PREMIUM_ALLOWED_EMAIL
+        ) {
+
+            console.error(
+                "Premium access denied.",
+                {
+                    loggedInAccount:
+                        userEmail,
+                    allowedAccount:
+                        PREMIUM_ALLOWED_EMAIL
+                }
+            );
+
+
+            await window.supabaseClient.auth.signOut();
+
+
+            alert(
+                "Premium access is currently available only to the official StudyMind AI account."
+            );
+
+
+            window.location.replace(
+                "login.html"
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           AUTHORIZED ACCOUNT
+        ===================================================== */
+
+        const accountEmail =
+            document.getElementById(
+                "accountEmail"
+            );
+
+
+        if (accountEmail) {
+
+            accountEmail.textContent =
+                user.email;
+        }
+
+
+        /* =====================================================
+           SHOW PREMIUM APP
+        ===================================================== */
+
+        initializePremiumApp();
+
+
+        if (accessScreen) {
+
+            accessScreen.style.opacity =
+                "0";
+
+
+            setTimeout(() => {
+
+                accessScreen.style.display =
+                    "none";
+
+            }, 350);
+        }
+
+
+        if (premiumApp) {
+
+            premiumApp.style.display =
+                "block";
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Premium access verification failed:",
+            error
+        );
+
+
+        try {
+
+            await window.supabaseClient.auth.signOut();
+
+        } catch (signOutError) {
+
+            console.error(
+                "Sign-out error:",
+                signOutError
+            );
+        }
+
+
+        window.location.replace(
+            "login.html"
+        );
+    }
+}
 
 
         /* =========================================================
