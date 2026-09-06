@@ -14,7 +14,12 @@
    - Current reading/session is preserved when archiving
    - Dashboard redirect
    - Light / Dark mode
+   - Premium status verification
+   - Golden Premium Home for verified Premium users
+   - Free users keep normal Home
+   - Premium CTA changes automatically
    - No duplicate theme systems
+   - No duplicate Premium button functions
    - No undefined functions
    - Preserves subject order
 ========================================================= */
@@ -31,6 +36,7 @@ const PLAN_KEY =
 
 const COMPATIBILITY_PLAN_KEY =
     "studyData";
+
 
 /* ---------------------------------------------------------
    MULTI-PLAN STORAGE
@@ -78,11 +84,40 @@ const TIMER_DURATION_KEY =
 
 
 /* =========================================================
+   PREMIUM
+========================================================= */
+
+/*
+   IMPORTANT:
+
+   This email is NOT being used to grant Premium.
+
+   Premium access is determined by the secure backend
+   endpoint:
+
+       /api/premium/status
+
+   The backend checks the user's authenticated account
+   against the Premium subscription table.
+
+   This Home page only applies the golden UI after the
+   backend confirms:
+
+       { premium: true }
+*/
+
+const PREMIUM_STATUS_ENDPOINT =
+    "/api/premium/status";
+
+
+/* =========================================================
    SHORTCUT
 ========================================================= */
 
 function $(id) {
+
     return document.getElementById(id);
+
 }
 
 
@@ -122,7 +157,10 @@ function escapeHTML(value) {
 }
 
 
-function readJSON(key, fallback = null) {
+function readJSON(
+    key,
+    fallback = null
+) {
 
     try {
 
@@ -149,7 +187,10 @@ function readJSON(key, fallback = null) {
 }
 
 
-function writeJSON(key, value) {
+function writeJSON(
+    key,
+    value
+) {
 
     try {
 
@@ -199,13 +240,6 @@ function formatTime(hour) {
 /* =========================================================
    MULTI-PLAN HELPERS
 ========================================================= */
-
-/*
-   Every generated study plan receives its own permanent ID.
-
-   Example:
-   plan-1756981234567-a8k3p
-*/
 
 function createPlanId() {
 
@@ -295,17 +329,9 @@ function setActivePlanId(planId) {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    CAPTURE CURRENT PLAN STATE
----------------------------------------------------------
-
-   This is extremely important.
-
-   Before a new plan is created, we take the current plan
-   and everything associated with it and put it inside its
-   own saved-plan record.
-
---------------------------------------------------------- */
+========================================================= */
 
 function captureCurrentPlanState() {
 
@@ -458,9 +484,9 @@ function captureCurrentPlanState() {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    PLAN DISPLAY TITLE
---------------------------------------------------------- */
+========================================================= */
 
 function getPlanDisplayTitle(plan) {
 
@@ -481,7 +507,9 @@ function getPlanDisplayTitle(plan) {
         subjectNames.length > 0
     ) {
 
-        if (subjectNames.length === 1) {
+        if (
+            subjectNames.length === 1
+        ) {
 
             return (
                 subjectNames[0] +
@@ -523,15 +551,9 @@ function getPlanDisplayTitle(plan) {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    ARCHIVE CURRENT PLAN
----------------------------------------------------------
-
-   The old plan is NOT deleted.
-
-   It gets added to studyMindPlans.
-
---------------------------------------------------------- */
+========================================================= */
 
 function archiveCurrentPlan() {
 
@@ -585,9 +607,9 @@ function archiveCurrentPlan() {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    CREATE NEW PLAN RECORD
---------------------------------------------------------- */
+========================================================= */
 
 function createNewPlanRecord(
     studyData
@@ -655,9 +677,9 @@ function createNewPlanRecord(
 }
 
 
-/* ---------------------------------------------------------
-   SAVE NEW PLAN TO MULTI-PLAN STORAGE
---------------------------------------------------------- */
+/* =========================================================
+   SAVE NEW PLAN RECORD
+========================================================= */
 
 function saveNewPlanRecord(
     newRecord
@@ -693,9 +715,9 @@ function saveNewPlanRecord(
 }
 
 
-/* ---------------------------------------------------------
-   RESET ONLY THE ACTIVE/NEW PLAN STATE
---------------------------------------------------------- */
+/* =========================================================
+   RESET ACTIVE / NEW PLAN STATE
+========================================================= */
 
 function resetForNewPlan() {
 
@@ -742,14 +764,9 @@ function resetForNewPlan() {
 }
 
 
-/* ---------------------------------------------------------
-   ENSURE LEGACY PLAN IS MIGRATED
----------------------------------------------------------
-
-   If an older version of StudyMind already has a plan in
-   studyMindPlan but no multi-plan record exists, preserve it.
-
---------------------------------------------------------- */
+/* =========================================================
+   MIGRATE LEGACY PLAN
+========================================================= */
 
 function migrateLegacyPlanIfNeeded() {
 
@@ -789,11 +806,6 @@ function migrateLegacyPlanIfNeeded() {
         }
 
 
-        /*
-           There are saved plans but no valid active ID.
-           Create an active record around the existing plan.
-        */
-
         const migrated =
             createNewPlanRecord(
                 existingPlan
@@ -808,21 +820,19 @@ function migrateLegacyPlanIfNeeded() {
 
         if (saved) {
 
-            /*
-               Preserve existing progress rather than resetting it.
-            */
-
             const completedTopics =
                 readJSON(
                     COMPLETED_TOPICS_KEY,
                     []
                 );
 
+
             const completedQuestions =
                 readJSON(
                     COMPLETED_QUESTIONS_KEY,
                     []
                 );
+
 
             const currentIndex =
                 Number(
@@ -885,12 +895,6 @@ function migrateLegacyPlanIfNeeded() {
 
     }
 
-
-    /*
-       No multi-plan storage exists yet.
-
-       Migrate the existing plan into the new system.
-    */
 
     const migrated =
         createNewPlanRecord(
@@ -982,7 +986,7 @@ function migrateLegacyPlanIfNeeded() {
 
 
 /* =========================================================
-   GET SUBJECT NAMES
+   SUBJECT NAMES
 ========================================================= */
 
 function getSubjectNames() {
@@ -993,6 +997,7 @@ function getSubjectNames() {
     if (!input) {
         return [];
     }
+
 
     return [
         ...new Set(
@@ -1007,7 +1012,7 @@ function getSubjectNames() {
 
 
 /* =========================================================
-   SAVE CURRENT TOPIC TEXT
+   SAVE EXISTING TOPIC VALUES
 ========================================================= */
 
 function getExistingTopicValues() {
@@ -1017,9 +1022,11 @@ function getExistingTopicValues() {
 
     const values = {};
 
+
     if (!container) {
         return values;
     }
+
 
     container
         .querySelectorAll(
@@ -1032,10 +1039,12 @@ function getExistingTopicValues() {
                     card.dataset.subject
                 );
 
+
             const textarea =
                 card.querySelector(
                     ".subject-topic-input"
                 );
+
 
             if (
                 subject &&
@@ -1048,6 +1057,7 @@ function getExistingTopicValues() {
             }
 
         });
+
 
     return values;
 
@@ -1063,12 +1073,15 @@ function renderSubjectTopicFields() {
     const container =
         $("subjectTopicFields");
 
+
     if (!container) {
         return;
     }
 
+
     const subjects =
         getSubjectNames();
+
 
     const oldValues =
         getExistingTopicValues();
@@ -1087,6 +1100,7 @@ function renderSubjectTopicFields() {
 
         `;
 
+
         syncLegacyTopicsField();
 
         return;
@@ -1101,6 +1115,7 @@ function renderSubjectTopicFields() {
 
                 const existing =
                     oldValues[subject] || "";
+
 
                 return `
 
@@ -1160,9 +1175,11 @@ function collectSubjectTopicData() {
     const container =
         $("subjectTopicFields");
 
+
     if (!container) {
         return [];
     }
+
 
     return [
         ...container.querySelectorAll(
@@ -1177,10 +1194,12 @@ function collectSubjectTopicData() {
                     card.dataset.subject
                 );
 
+
             const textarea =
                 card.querySelector(
                     ".subject-topic-input"
                 );
+
 
             const rawTopics =
                 textarea
@@ -1190,10 +1209,12 @@ function collectSubjectTopicData() {
                         .filter(Boolean)
                     : [];
 
+
             const uniqueTopics =
                 [
                     ...new Set(rawTopics)
                 ];
+
 
             return {
 
@@ -1241,12 +1262,15 @@ function syncLegacyTopicsField() {
     const hidden =
         $("topics");
 
+
     if (!hidden) {
         return;
     }
 
+
     const subjectData =
         collectSubjectTopicData();
+
 
     hidden.value =
 
@@ -1326,6 +1350,7 @@ function renderDifficultyFields(
 
     const section =
         $("difficultySection");
+
 
     if (!section) {
         return;
@@ -1445,10 +1470,12 @@ function collectDifficultyData() {
                     select.dataset.subject
                 );
 
+
             const topic =
                 cleanText(
                     select.dataset.topic
                 );
+
 
             const difficulty =
                 select.value ||
@@ -1848,8 +1875,7 @@ function generateStudyPlan(
 
 
     /* =====================================================
-       IMPORTANT:
-       ARCHIVE THE OLD PLAN BEFORE CREATING THE NEW ONE
+       ARCHIVE OLD PLAN
     ===================================================== */
 
     const oldPlan =
@@ -1861,52 +1887,7 @@ function generateStudyPlan(
 
     if (oldPlan) {
 
-        /*
-           If this is the first time multi-plan storage
-           is being used, migrate the current plan first.
-        */
-
-        const existingPlans =
-            getSavedPlans();
-
-
-        const activeId =
-            getActivePlanId();
-
-
-        let alreadyArchived =
-            false;
-
-
-        if (
-            activeId &&
-            existingPlans.some(
-                savedPlan =>
-                    savedPlan &&
-                    savedPlan.id === activeId
-            )
-        ) {
-
-            alreadyArchived =
-                true;
-
-        }
-
-
-        if (!alreadyArchived) {
-
-            archiveCurrentPlan();
-
-        } else {
-
-            /*
-               Update the active saved record with the
-               latest progress before switching away.
-            */
-
-            archiveCurrentPlan();
-
-        }
+        archiveCurrentPlan();
 
     }
 
@@ -2013,7 +1994,7 @@ function generateStudyPlan(
 
 
     /* -----------------------------------------------------
-       RESET PROGRESS FOR NEW PLAN ONLY
+       RESET PROGRESS
     ----------------------------------------------------- */
 
     resetForNewPlan();
@@ -2021,11 +2002,6 @@ function generateStudyPlan(
 
     /* -----------------------------------------------------
        SAVE ACTIVE PLAN TO LEGACY KEYS
-       -----------------------------------------------------
-
-       These keys are kept because your existing Dashboard
-       and other StudyMind files still use them.
-
     ----------------------------------------------------- */
 
     const savedMainPlan =
@@ -2057,7 +2033,7 @@ function generateStudyPlan(
 
 
     /* -----------------------------------------------------
-       MAKE SURE THE NEW PLAN RECORD IS STILL ACTIVE
+       KEEP NEW PLAN ACTIVE
     ----------------------------------------------------- */
 
     setActivePlanId(
@@ -2184,6 +2160,7 @@ function applyStudyMindTheme() {
             isLight
         );
 
+
         document.body.classList.toggle(
             "dark-mode",
             !isLight
@@ -2241,6 +2218,7 @@ function updateStudyMindThemeButton() {
     const button =
         $("themeButton");
 
+
     if (!button) {
         return;
     }
@@ -2286,6 +2264,7 @@ function connectStartButton() {
 
     const button =
         $("startButton");
+
 
     if (!button) {
         return;
@@ -2352,6 +2331,7 @@ function connectThemeButton() {
     const button =
         $("themeButton");
 
+
     if (!button) {
         return;
     }
@@ -2397,6 +2377,7 @@ function connectSubjectInputs() {
 
     const subjects =
         $("subjects");
+
 
     if (!subjects) {
         return;
@@ -2447,6 +2428,7 @@ function connectTopicFields() {
     const container =
         $("subjectTopicFields");
 
+
     if (!container) {
         return;
     }
@@ -2486,6 +2468,7 @@ function connectStudyForm() {
     const form =
         $("studyForm");
 
+
     if (!form) {
         return;
     }
@@ -2519,11 +2502,25 @@ function connectStudyForm() {
 function openHomePremiumOffer() {
 
     /*
-       Premium now has its own dedicated page.
-       The Home Premium button should take the user
-       directly to premium.html instead of opening
-       the old "Coming Soon" popup.
+       Free users go to the Premium purchase page.
+
+       Verified Premium users are sent to their
+       Premium workspace instead.
     */
+
+    if (
+        document.body.classList.contains(
+            "premium-home"
+        )
+    ) {
+
+        window.location.href =
+            "premium-app.html";
+
+        return;
+
+    }
+
 
     window.location.href =
         "premium.html";
@@ -2531,10 +2528,15 @@ function openHomePremiumOffer() {
 }
 
 
+/* =========================================================
+   PREMIUM BUTTON
+========================================================= */
+
 function connectPremiumButton() {
 
     const button =
         $("premiumButton");
+
 
     if (!button) {
         return;
@@ -2566,28 +2568,426 @@ function connectPremiumButton() {
     );
 
 }
-function connectPremiumButton() {
 
-    const button =
+
+/* =========================================================
+   PREMIUM HOME UI
+========================================================= */
+
+function enablePremiumHome() {
+
+    if (!document.body) {
+        return;
+    }
+
+
+    /*
+       Prevent duplicate application.
+    */
+
+    if (
+        document.body.classList.contains(
+            "premium-home"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    document.body.classList.add(
+        "premium-home"
+    );
+
+
+    /* -----------------------------------------------------
+       PREMIUM CTA
+    ----------------------------------------------------- */
+
+    const premiumButton =
         $("premiumButton");
 
-    if (!button) {
+
+    const premiumEyebrow =
+        $("premiumEyebrow");
+
+
+    const premiumTitle =
+        $("premiumTitle");
+
+
+    const premiumDescription =
+        $("premiumDescription");
+
+
+    if (premiumEyebrow) {
+
+        premiumEyebrow.textContent =
+            "STUDYMIND PREMIUM";
+
+    }
+
+
+    if (premiumTitle) {
+
+        premiumTitle.textContent =
+            "Welcome to your Premium experience.";
+
+    }
+
+
+    if (premiumDescription) {
+
+        premiumDescription.textContent =
+            "Enjoy the full StudyMind AI experience with powerful Premium features, deeper study support and an elevated golden workspace.";
+
+    }
+
+
+    if (premiumButton) {
+
+        premiumButton.href =
+            "premium-app.html";
+
+        premiumButton.innerHTML =
+            '👑 Open Premium Experience <span aria-hidden="true">→</span>';
+
+    }
+
+
+    /*
+       Reconnect the button logic after changing its
+       destination.
+    */
+
+    if (premiumButton) {
+
+        premiumButton.dataset.connected =
+            "false";
+
+        connectPremiumButton();
+
+    }
+
+}
+
+
+/* =========================================================
+   DISABLE PREMIUM HOME
+========================================================= */
+
+function disablePremiumHome() {
+
+    if (!document.body) {
         return;
     }
 
-    if (button.dataset.connected === "true") {
-        return;
+
+    document.body.classList.remove(
+        "premium-home"
+    );
+
+
+    const premiumButton =
+        $("premiumButton");
+
+
+    const premiumEyebrow =
+        $("premiumEyebrow");
+
+
+    const premiumTitle =
+        $("premiumTitle");
+
+
+    const premiumDescription =
+        $("premiumDescription");
+
+
+    if (premiumEyebrow) {
+
+        premiumEyebrow.textContent =
+            "STUDYMIND PREMIUM";
+
     }
 
-    button.dataset.connected = "true";
 
-    button.addEventListener(
-        "click",
-        function(event) {
-            event.preventDefault();
-            openHomePremiumOffer();
+    if (premiumTitle) {
+
+        premiumTitle.textContent =
+            "Take your studying further.";
+
+    }
+
+
+    if (premiumDescription) {
+
+        premiumDescription.textContent =
+            "Unlock more powerful StudyMind AI features, deeper study support and more ways to stay on top of your preparation.";
+
+    }
+
+
+    if (premiumButton) {
+
+        premiumButton.href =
+            "premium.html";
+
+        premiumButton.innerHTML =
+            '💎 Explore Premium <span aria-hidden="true">→</span>';
+
+    }
+
+}
+
+
+/* =========================================================
+   CHECK PREMIUM STATUS
+========================================================= */
+
+async function checkPremiumStatus() {
+
+    /*
+       Supabase must be loaded by home.html before this
+       function runs.
+    */
+
+    if (
+        !window.supabase ||
+        typeof window.supabase.createClient !==
+            "function"
+    ) {
+
+        console.warn(
+            "StudyMind AI: Supabase client library is not loaded. Premium UI will remain disabled."
+        );
+
+        disablePremiumHome();
+
+        return false;
+
+    }
+
+
+    try {
+
+        /*
+           Create the Supabase client locally if Home has
+           not already created one.
+        */
+
+        if (
+            !window.supabaseClient
+        ) {
+
+            const SUPABASE_URL =
+                "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+
+            const SUPABASE_PUBLISHABLE_KEY =
+                "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+
+            window.supabaseClient =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_PUBLISHABLE_KEY
+                );
+
+        }
+
+
+        const supabaseClient =
+            window.supabaseClient;
+
+
+        /*
+           Get the current authenticated session.
+        */
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } =
+            await supabaseClient.auth.getSession();
+
+
+        if (
+            sessionError ||
+            !sessionData ||
+            !sessionData.session
+        ) {
+
+            disablePremiumHome();
+
+            return false;
+
+        }
+
+
+        const session =
+            sessionData.session;
+
+
+        /*
+           Ask the secure backend for Premium status.
+
+           The access token proves which authenticated
+           user is making the request.
+        */
+
+        const response =
+            await fetch(
+                PREMIUM_STATUS_ENDPOINT,
+                {
+
+                    method:
+                        "GET",
+
+                    headers: {
+
+                        "Authorization":
+                            `Bearer ${session.access_token}`,
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    cache:
+                        "no-store"
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            console.warn(
+                "StudyMind AI: Premium status request failed.",
+                response.status
+            );
+
+
+            disablePremiumHome();
+
+            return false;
+
+        }
+
+
+        const result =
+            await response.json();
+
+
+        /*
+           ONLY the backend response can enable the
+           golden Premium Home.
+        */
+
+        if (
+            result &&
+            result.premium === true
+        ) {
+
+            enablePremiumHome();
+
+            return true;
+
+        }
+
+
+        disablePremiumHome();
+
+        return false;
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind AI: Premium status check failed.",
+            error
+        );
+
+
+        disablePremiumHome();
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM AUTH STATE LISTENER
+========================================================= */
+
+function connectPremiumAuthListener() {
+
+    if (
+        !window.supabaseClient
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        window.studyMindPremiumAuthListenerConnected
+    ) {
+
+        return;
+
+    }
+
+
+    window.studyMindPremiumAuthListenerConnected =
+        true;
+
+
+    window.supabaseClient.auth.onAuthStateChange(
+        function() {
+
+            /*
+               Give Supabase a moment to update its session
+               before checking Premium again.
+            */
+
+            setTimeout(
+                function() {
+
+                    checkPremiumStatus();
+
+                },
+                0
+            );
+
         }
     );
+
+}
+
+
+/* =========================================================
+   INITIALIZE PREMIUM SYSTEM
+========================================================= */
+
+async function initializePremiumHomeSystem() {
+
+    /*
+       Premium status is checked independently from the
+       study-plan system.
+
+       A failed Premium check NEVER prevents the normal
+       StudyMind Home from working.
+    */
+
+    await checkPremiumStatus();
+
+    connectPremiumAuthListener();
+
 }
 
 
@@ -2605,16 +3005,21 @@ function initializeHome() {
     migrateLegacyPlanIfNeeded();
 
 
-    /* Apply saved theme first */
+    /*
+       Apply saved theme first.
+    */
 
     applyStudyMindTheme();
 
 
-    /* Connect all Home controls */
+    /*
+       Connect all Home controls.
+    */
 
     connectThemeButton();
 
     connectStartButton();
+
     connectPremiumButton();
 
     connectSubjectInputs();
@@ -2624,14 +3029,26 @@ function initializeHome() {
     connectStudyForm();
 
 
-    /* Render initial topic state */
+    /*
+       Render initial topic state.
+    */
 
     renderSubjectTopicFields();
 
 
-    /* Make sure hidden legacy field is synchronized */
+    /*
+       Keep legacy field synchronized.
+    */
 
     syncLegacyTopicsField();
+
+
+    /*
+       Premium is checked separately so a Premium API
+       failure cannot break the Home page.
+    */
+
+    initializePremiumHomeSystem();
 
 }
 
@@ -2677,3 +3094,17 @@ window.archiveCurrentStudyPlan =
 
 window.migrateLegacyStudyPlan =
     migrateLegacyPlanIfNeeded;
+
+
+/* =========================================================
+   GLOBAL PREMIUM HELPERS
+========================================================= */
+
+window.checkStudyMindPremiumStatus =
+    checkPremiumStatus;
+
+window.enableStudyMindPremiumHome =
+    enablePremiumHome;
+
+window.disableStudyMindPremiumHome =
+    disablePremiumHome;
