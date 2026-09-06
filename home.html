@@ -10,14 +10,175 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        StudyMind AI — Smart Study Planning
-    </title>
+    <title>StudyMind AI</title>
 
     <link
         rel="stylesheet"
         href="style.css"
     >
+
+<style>
+.subject-topic-fields{
+    display:grid;
+    gap:18px;
+    margin-top:10px;
+}
+
+.subject-topic-card{
+    padding:20px;
+    border:1px solid rgba(127,127,127,.22);
+    border-radius:18px;
+    background:rgba(127,127,127,.05);
+}
+
+.subject-topic-card h3{
+    margin:0 0 10px;
+}
+
+.subject-topic-card textarea{
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    box-sizing:border-box;
+}
+
+.subject-topic-empty{
+    padding:18px;
+    border:1px dashed rgba(127,127,127,.35);
+    border-radius:14px;
+    opacity:.75;
+    text-align:center;
+}
+
+.topic-difficulty-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 0;
+}
+
+.topic-difficulty-row select{
+    min-width:130px;
+}
+
+
+/* =========================================================
+   PREMIUM CTA — HOME PAGE
+========================================================= */
+
+.premium-cta-section {
+    padding: 90px 24px;
+}
+
+.premium-cta-card {
+    position: relative;
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 56px 48px;
+    border-radius: 30px;
+    overflow: hidden;
+    text-align: center;
+    background: linear-gradient(135deg, #111827 0%, #172554 55%, #1e1b4b 100%);
+    border: 1px solid rgba(129, 140, 248, .32);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+}
+
+.premium-cta-card::before,
+.premium-cta-card::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(129, 140, 248, .13);
+    filter: blur(8px);
+}
+
+.premium-cta-card::before {
+    top: -110px;
+    left: -80px;
+}
+
+.premium-cta-card::after {
+    right: -90px;
+    bottom: -120px;
+}
+
+.premium-cta-content {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.premium-cta-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .16);
+    font-size: 34px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, .18);
+}
+
+.premium-cta-card .eyebrow {
+    color: #c7d2fe;
+}
+
+.premium-cta-card h2 {
+    margin: 12px 0 14px;
+    color: #ffffff;
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.premium-cta-card p {
+    margin: 0 auto 28px;
+    color: rgba(255, 255, 255, .78);
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+.premium-cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 210px;
+    padding: 15px 26px;
+    border: 0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .20);
+}
+
+.premium-cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .28);
+}
+
+@media (max-width: 640px) {
+    .premium-cta-section {
+        padding: 64px 18px;
+    }
+
+    .premium-cta-card {
+        padding: 42px 24px;
+        border-radius: 24px;
+    }
+}
+
+</style>
 
 </head>
 
@@ -25,107 +186,114 @@
 <body>
 
 
-<!-- =========================================================
+<!-- =========================
      NAVIGATION
-========================================================= -->
+========================= -->
 
 <nav class="navbar">
 
-    <div class="nav-container">
-
-        <a
-            href="home.html"
-            class="nav-logo"
-        >
-            🧠 StudyMind AI
-        </a>
+    <h2 class="logo">
+        StudyMind AI
+    </h2>
 
 
-        <div class="nav-links">
+    <ul class="nav-links">
 
+        <li>
             <a href="#home">
                 Home
             </a>
+        </li>
 
+        <li>
             <a href="#features">
                 Features
             </a>
+        </li>
 
+        <li>
             <a href="#how-it-works">
                 How It Works
             </a>
+        </li>
 
+        <li>
             <a href="#contact">
                 Contact
             </a>
+        </li>
 
+        <li>
             <a href="dashboard.html">
                 Dashboard
             </a>
+        </li>
+<li>
+    <a href="game-mode.html">
+        Game Mode
+    </a>
+</li>
+    </ul>
 
-            <a href="game-mode.html">
-                Game Mode
-            </a>
 
-        </div>
-
-
-        <button
-            id="themeButton"
-            class="theme-toggle"
-            type="button"
-            aria-label="Toggle theme"
-        >
-            🌙
-        </button>
-
-    </div>
+    <button
+        id="themeButton"
+        class="theme-button"
+    >
+        🌙 Dark Mode
+    </button>
 
 </nav>
 
 
 
-<!-- =========================================================
+<!-- =========================
+     MAIN
+========================= -->
+
+<main>
+
+
+<!-- =========================
      HERO
-========================================================= -->
+========================= -->
 
 <section
+    class="hero"
     id="home"
-    class="hero-section"
 >
 
     <div class="hero-content">
 
-        <span class="hero-badge">
-            🧠 AI-POWERED STUDYING
+        <span class="eyebrow">
+            AI-POWERED STUDYING
         </span>
 
 
         <h1>
-            Study smarter.
+            Study smarter.<br>
+
             <span>
                 Achieve more.
             </span>
         </h1>
 
 
-        <p class="hero-description">
-
-            StudyMind AI creates personalized study plans,
-            organizes your subjects and topics, and helps you
-            prepare smarter for your exams.
-
+        <p>
+            StudyMind AI turns your subjects, topics,
+            exam dates and available study time into
+            a personalized study plan built around you.
         </p>
 
 
-        <div class="hero-buttons">
+        <div class="hero-actions">
 
-            <a
-                href="#create-plan"
+            <button
+                id="startButton"
                 class="primary-button"
             >
-                Create My Study Plan →
-            </a>
+                Create My Study Plan
+            </button>
 
 
             <a
@@ -139,44 +307,47 @@
 
     </div>
 
+
+
+  
 </section>
 
 
 
-<!-- =========================================================
+<!-- =========================
      FEATURES
-========================================================= -->
+========================= -->
 
 <section
+    class="features section"
     id="features"
-    class="features-section"
 >
 
     <div class="section-heading">
 
-        <span class="section-eyebrow">
-            POWERFUL TOOLS
+        <span class="eyebrow">
+            EVERYTHING YOU NEED
         </span>
 
         <h2>
-            Everything you need to study better.
+            Built for serious studying
         </h2>
 
         <p>
-            StudyMind AI brings your studying,
-            planning and revision into one place.
+            From planning to practice,
+            StudyMind AI keeps your preparation organized.
         </p>
 
     </div>
 
 
-    <div class="features-grid">
 
+    <div class="feature-grid">
 
-        <div class="feature-card">
+        <article class="feature-card">
 
             <div class="feature-icon">
-                📚
+                🧠
             </div>
 
             <h3>
@@ -184,75 +355,94 @@
             </h3>
 
             <p>
-                Build a study plan around your subjects,
-                topics, available time and exam dates.
+                Generate a study plan based on your
+                subjects, topics, available time and exam goals.
             </p>
 
-        </div>
+        </article>
 
 
 
-        <div class="feature-card">
+        <article class="feature-card">
 
             <div class="feature-icon">
-                🤖
+                📅
             </div>
 
             <h3>
-                AI Study Support
+                Smart Calendar
             </h3>
 
             <p>
-                Ask StudyMind AI questions about the
-                topics you are studying.
+                See study sessions, tests and important
+                dates in one organized calendar.
             </p>
 
-        </div>
+        </article>
 
 
 
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                📝
-            </div>
-
-            <h3>
-                Knowledge Checks
-            </h3>
-
-            <p>
-                Test your understanding after studying
-                each topic.
-            </p>
-
-        </div>
-
-
-
-        <div class="feature-card">
+        <article class="feature-card">
 
             <div class="feature-icon">
                 ⏱️
             </div>
 
             <h3>
-                Smart Study Timer
+                Smart Timetable
             </h3>
 
             <p>
-                Stay focused with flexible study sessions
-                designed around your schedule.
+                Turn your study goals into practical
+                daily sessions you can follow.
             </p>
 
-        </div>
+        </article>
 
 
 
-        <div class="feature-card">
+        <article class="feature-card">
 
             <div class="feature-icon">
-                📊
+                🎯
+            </div>
+
+            <h3>
+                Exam Preparation
+            </h3>
+
+            <p>
+                Prepare for WAEC, NECO, school-based
+                tests and other assessments.
+            </p>
+
+        </article>
+
+
+
+        <article class="feature-card">
+
+            <div class="feature-icon">
+                📄
+            </div>
+
+            <h3>
+                Notes & Summaries
+            </h3>
+
+            <p>
+                Organize important material and focus
+                on the information that matters most.
+            </p>
+
+        </article>
+
+
+
+        <article class="feature-card">
+
+            <div class="feature-icon">
+                🔥
             </div>
 
             <h3>
@@ -260,30 +450,11 @@
             </h3>
 
             <p>
-                Keep track of your completed topics,
-                study progress and performance.
+                Track your streak, score, completed
+                topics and study progress.
             </p>
 
-        </div>
-
-
-
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                🎮
-            </div>
-
-            <h3>
-                Game Mode
-            </h3>
-
-            <p>
-                Turn revision into a challenge and
-                compete while learning.
-            </p>
-
-        </div>
+        </article>
 
     </div>
 
@@ -291,85 +462,91 @@
 
 
 
-<!-- =========================================================
+<!-- =========================
      HOW IT WORKS
-========================================================= -->
+========================= -->
 
 <section
+    class="how-it-works section"
     id="how-it-works"
-    class="how-section"
 >
 
     <div class="section-heading">
 
-        <span class="section-eyebrow">
-            HOW IT WORKS
+        <span class="eyebrow">
+            SIMPLE WORKFLOW
         </span>
 
         <h2>
-            Your study journey, simplified.
+            How StudyMind AI works
         </h2>
+
+        <p>
+            A clear path from your goals to your
+            daily study routine.
+        </p>
 
     </div>
 
 
+
     <div class="steps-grid">
 
-
-        <div class="step-card">
+        <article class="step-card">
 
             <div class="step-number">
                 01
             </div>
 
             <h3>
-                Tell StudyMind what you're studying
+                Tell us about your studies
             </h3>
 
             <p>
-                Add your curriculum, exam date,
-                subjects and topics.
+                Select your curriculum, subjects,
+                topics, exam date and available study time.
             </p>
 
-        </div>
+        </article>
 
 
 
-        <div class="step-card">
+        <article class="step-card">
 
             <div class="step-number">
                 02
             </div>
 
             <h3>
-                Generate your plan
+                Let AI organize it
             </h3>
 
             <p>
-                StudyMind creates an organized plan
-                based on your available study time.
+                StudyMind AI turns your information
+                into priorities, sessions and a
+                structured timetable.
             </p>
 
-        </div>
+        </article>
 
 
 
-        <div class="step-card">
+        <article class="step-card">
 
             <div class="step-number">
                 03
             </div>
 
             <h3>
-                Study and track your progress
+                Study and track progress
             </h3>
 
             <p>
-                Study your topics, complete knowledge
-                checks and monitor your progress.
+                Study each topic, use the timer,
+                complete your topics and test yourself.
             </p>
 
-        </div>
+        </article>
 
     </div>
 
@@ -377,65 +554,97 @@
 
 
 
-<!-- =========================================================
-     CREATE STUDY PLAN
-========================================================= -->
+<!-- =========================
+     STUDY PLAN GENERATOR
+========================= -->
 
 <section
-    id="create-plan"
-    class="planner-section"
+    class="generator-section section"
+    id="generator"
 >
 
-    <div class="section-heading">
+    <div class="section-heading left">
 
-        <span class="section-eyebrow">
-            GET STARTED
+        <span class="eyebrow">
+            START PLANNING
         </span>
 
         <h2>
-            Create My Study Plan
+            Create your study plan
         </h2>
 
         <p>
-            Tell StudyMind AI what you need to study.
+            Enter your information below and
+            StudyMind AI will organize your plan.
         </p>
 
     </div>
 
 
-    <div class="planner-card">
+    <form
+        id="studyForm"
+        class="study-form"
+    >
 
 
-        <!-- CURRICULUM -->
+        <!-- CURRICULUM + EXAM -->
 
-        <div class="form-group">
+        <div class="form-grid">
 
-            <label for="curriculum">
-                Curriculum / Exam
-            </label>
+            <div class="form-group">
 
-            <input
-                id="curriculum"
-                type="text"
-                placeholder="e.g. WAEC, JAMB, GCSE, SAT"
-            >
+                <label for="curriculum">
+                    Curriculum
+                </label>
 
-        </div>
+                <select
+                    id="curriculum"
+                    required
+                >
+
+                    <option value="">
+                        Select curriculum
+                    </option>
+
+                    <option value="Nigerian Senior Secondary Curriculum">
+                        Nigerian Senior Secondary Curriculum
+                    </option>
+
+                    <option value="WAEC">
+                        WAEC
+                    </option>
+
+                    <option value="NECO">
+                        NECO
+                    </option>
+
+                    <option value="JAMB">
+                        JAMB
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
 
 
 
-        <!-- EXAM DATE -->
+            <div class="form-group">
 
-        <div class="form-group">
+                <label for="examDate">
+                    Exam Date
+                </label>
 
-            <label for="examDate">
-                Exam Date
-            </label>
+                <input
+                    type="date"
+                    id="examDate"
+                    required
+                >
 
-            <input
-                id="examDate"
-                type="date"
-            >
+            </div>
 
         </div>
 
@@ -450,130 +659,152 @@
             </label>
 
             <input
-                id="subjects"
                 type="text"
-                placeholder="e.g. Mathematics, Biology, Physics"
+                id="subjects"
+                placeholder="e.g. Mathematics, Physics, Chemistry"
+                required
             >
 
             <small>
-                Separate subjects with commas.
+                Enter your subjects separated by commas.
+                A separate topic space will automatically
+                appear for every subject.
             </small>
 
         </div>
 
 
 
-        <!-- TOPICS -->
+        <!-- DYNAMIC TOPICS -->
 
         <div class="form-group">
 
             <label>
-                Topics
+                Topics for each subject
             </label>
 
-            <div id="topicFields">
 
-                <div class="topic-row">
+            <div
+                id="subjectTopicFields"
+                class="subject-topic-fields"
+            >
 
-                    <input
-                        class="topic-input"
-                        type="text"
-                        placeholder="Enter a topic"
-                    >
+                <div class="subject-topic-empty">
 
-                    <select
-                        class="difficulty-select"
-                    >
-
-                        <option value="medium">
-                            Medium
-                        </option>
-
-                        <option value="weak">
-                            Weak
-                        </option>
-
-                        <option value="strong">
-                            Strong
-                        </option>
-
-                    </select>
+                    Enter your subjects above and
+                    separate topic spaces will appear here.
 
                 </div>
 
             </div>
 
 
-            <button
-                id="addTopicButton"
-                class="small-button"
-                type="button"
-            >
-                + Add Topic
-            </button>
+            <small>
+                Enter each topic on a new line or
+                separate topics with commas.
+            </small>
 
         </div>
 
 
 
-        <!-- STUDY HOURS -->
+        <!-- OLD COMPATIBILITY FIELD -->
 
-        <div class="form-group">
+        <textarea
+            id="topics"
+            hidden
+        ></textarea>
 
-            <label for="studyHours">
-                Study Hours Per Day
-            </label>
 
-            <input
-                id="studyHours"
-                type="number"
-                min="0.5"
-                step="0.5"
-                placeholder="e.g. 2"
-            >
+
+        <!-- STUDY TIME -->
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label for="hoursPerDay">
+                    Available Study Hours Per Day
+                </label>
+
+                <select
+                    id="hoursPerDay"
+                    required
+                >
+
+                    <option value="">
+                        Select hours
+                    </option>
+
+                    <option value="1">
+                        1 hour
+                    </option>
+
+                    <option value="2">
+                        2 hours
+                    </option>
+
+                    <option value="3">
+                        3 hours
+                    </option>
+
+                    <option value="4">
+                        4 hours
+                    </option>
+
+                    <option value="5">
+                        5 hours
+                    </option>
+
+                    <option value="6">
+                        6+ hours
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label for="startTime">
+                    Preferred Study Start Time
+                </label>
+
+                <input
+                    type="time"
+                    id="startTime"
+                    value="16:00"
+                    required
+                >
+
+            </div>
 
         </div>
 
 
 
-        <!-- START TIME -->
-
-        <div class="form-group">
-
-            <label for="startTime">
-                Preferred Start Time
-            </label>
-
-            <input
-                id="startTime"
-                type="time"
-                value="16:00"
-            >
-
-        </div>
-
-
-
-        <!-- DIFFICULTY -->
+        <!-- INTENSITY -->
 
         <div class="form-group">
 
             <label for="difficulty">
-                Overall Difficulty
+                Study Intensity
             </label>
 
             <select id="difficulty">
 
-                <option value="medium">
-                    Medium
+                <option value="balanced">
+                    Balanced
                 </option>
 
-                <option value="weak">
-                    Weak
+                <option value="light">
+                    Light
                 </option>
 
-                <option value="strong">
-                    Strong
+                <option value="intensive">
+                    Intensive
                 </option>
 
             </select>
@@ -582,44 +813,45 @@
 
 
 
-        <!-- GENERATE -->
-
-        <button
-            id="generateButton"
-            class="generate-button"
-            type="button"
-        >
-            🚀 Generate My Study Plan
-        </button>
-
-
         <div
-            id="formMessage"
-            class="form-message"
+            id="difficultySection"
+            class="difficulty-section"
         ></div>
 
-    </div>
+
+
+        <button
+            type="submit"
+            id="generateButton"
+            class="primary-button full-button"
+        >
+            Generate My Plan
+        </button>
+
+    </form>
+
+
+
+    <div
+        id="studyPlan"
+        class="study-plan hidden"
+    ></div>
 
 </section>
 
 
+</main>
 
-<!-- =========================================================
+
+
+
+<!-- =========================
      PREMIUM CTA
-========================================================= -->
-
-<section
-    class="premium-cta-section"
-    id="premium"
->
-
+========================= -->
+<section class="premium-cta-section" id="premium">
     <div class="premium-cta-card">
-
         <div class="premium-cta-content">
-
-            <div class="premium-cta-icon">
-                💎
-            </div>
+            <div class="premium-cta-icon">💎</div>
 
             <span class="eyebrow">
                 STUDYMIND PREMIUM
@@ -635,16 +867,96 @@
                 on top of your preparation.
             </p>
 
-
-            <a
+            <button
                 id="premiumButton"
                 class="premium-cta-button"
-                href="premium.html"
+                type="button"
             >
-                💎 Explore Premium
-                <span aria-hidden="true">
-                    →
-                </span>
+                💎 Explore Premium <span aria-hidden="true">→</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+
+<!-- =========================
+     CONTACT
+========================= -->
+
+<section
+    class="contact-section"
+    id="contact"
+>
+
+    <div class="contact-container">
+
+        <div class="contact-header">
+
+            <span class="section-label">
+                CONTACT
+            </span>
+
+            <h2>
+                Get in Touch
+            </h2>
+
+            <p>
+                Have a question, suggestion, or need help
+                with StudyMind AI? We'd love to hear from you.
+            </p>
+
+        </div>
+
+
+
+        <div class="contact-cards">
+
+            <a
+                href="mailto:studymindaiofficial@gmail.com"
+                class="contact-card"
+            >
+
+                <div class="contact-icon">
+                    ✉️
+                </div>
+
+                <div class="contact-info">
+
+                    <span>
+                        Email
+                    </span>
+
+                    <strong>
+                        studymindaiofficial@gmail.com
+                    </strong>
+
+                </div>
+
+            </a>
+
+
+
+            <a
+                href="tel:08148165088"
+                class="contact-card"
+            >
+
+                <div class="contact-icon">
+                    📞
+                </div>
+
+                <div class="contact-info">
+
+                    <span>
+                        Phone
+                    </span>
+
+                    <strong>
+                        08148165088
+                    </strong>
+
+                </div>
+
             </a>
 
         </div>
@@ -655,94 +967,27 @@
 
 
 
-<!-- =========================================================
-     CONTACT
-========================================================= -->
-
-<section
-    id="contact"
-    class="contact-section"
->
-
-    <div class="section-heading">
-
-        <span class="section-eyebrow">
-            CONTACT
-        </span>
-
-        <h2>
-            Need help?
-        </h2>
-
-        <p>
-            Get in touch with the StudyMind AI team.
-        </p>
-
-    </div>
-
-
-    <div class="contact-grid">
-
-
-        <div class="contact-card">
-
-            <div class="contact-icon">
-                ✉️
-            </div>
-
-            <h3>
-                Email
-            </h3>
-
-            <p>
-                studymindaiofficial@gmail.com
-            </p>
-
-        </div>
-
-
-
-        <div class="contact-card">
-
-            <div class="contact-icon">
-                📞
-            </div>
-
-            <h3>
-                Phone
-            </h3>
-
-            <p>
-                08148165088
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================================================
+<!-- =========================
      FOOTER
-========================================================= -->
+========================= -->
 
-<footer class="footer">
+<footer class="site-footer">
 
-    <div class="footer-container">
+    <div class="footer-content">
 
-        <div>
+        <div class="footer-brand">
 
-            <strong>
-                🧠 StudyMind AI
-            </strong>
+            <h3>
+                StudyMind AI
+            </h3>
 
             <p>
-                Study smarter. Achieve more.
+                Plan smarter. Study consistently.
+                Progress with purpose.
             </p>
 
         </div>
+
 
 
         <div class="footer-links">
@@ -755,6 +1000,14 @@
                 Features
             </a>
 
+            <a href="#how-it-works">
+                How It Works
+            </a>
+
+            <a href="#generator">
+                Create Plan
+            </a>
+
             <a href="#contact">
                 Contact
             </a>
@@ -764,10 +1017,12 @@
     </div>
 
 
+
     <div class="footer-bottom">
 
-        © 2026 StudyMind AI.
-        All rights reserved.
+        <p>
+            © 2026 StudyMind AI. All rights reserved.
+        </p>
 
     </div>
 
@@ -775,20 +1030,7 @@
 
 
 
-<!-- =========================================================
-     SCRIPTS
-========================================================= -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
-<script src="supabase.js"></script>
-
-<script src="premium.js"></script>
-
 <script src="script.js"></script>
-
 
 </body>
 
