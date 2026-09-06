@@ -1652,28 +1652,56 @@
             );
 
 
-        /* =================================================
-           PREMIUM BUTTONS
-        ================================================= */
+/* =================================================
+   PREMIUM BUTTONS
+================================================= */
 
-        document
-            .getElementById(
-                "unlockPremiumButton"
-            )
-            ?.addEventListener(
-                "click",
-                openPaymentOptions
+async function openGoldenPremiumApp() {
+    try {
+        const { data: { user } } =
+            await window.supabaseClient.auth.getUser();
+
+        if (!user) {
+            alert("Please log in first.");
+            window.location.href = "login.html";
+            return;
+        }
+
+        const allowedEmail = "studymindaiofficial@gmail.com";
+
+        if (
+            !user.email ||
+            user.email.toLowerCase() !== allowedEmail
+        ) {
+            alert(
+                "Premium access is currently available only to the official StudyMind AI account."
             );
+            return;
+        }
+
+        window.location.href = "premium-app.html";
+
+    } catch (error) {
+        console.error("Premium access check failed:", error);
+        alert("Unable to verify Premium access. Please try again.");
+    }
+}
 
 
-        document
-            .getElementById(
-                "bottomPremiumButton"
-            )
-            ?.addEventListener(
-                "click",
-                openPaymentOptions
-            );
+document
+    .getElementById("unlockPremiumButton")
+    ?.addEventListener(
+        "click",
+        openGoldenPremiumApp
+    );
+
+
+document
+    .getElementById("bottomPremiumButton")
+    ?.addEventListener(
+        "click",
+        openGoldenPremiumApp
+    );
 
 
         /* =================================================
