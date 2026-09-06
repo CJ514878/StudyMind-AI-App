@@ -18,6 +18,11 @@
     >
 
 <style>
+
+/* =========================================================
+   SUBJECT / TOPIC FIELDS
+========================================================= */
+
 .subject-topic-fields{
     display:grid;
     gap:18px;
@@ -64,7 +69,7 @@
 
 
 /* =========================================================
-   PREMIUM CTA — HOME PAGE
+   NORMAL PREMIUM CTA
 ========================================================= */
 
 .premium-cta-section {
@@ -79,7 +84,12 @@
     border-radius: 30px;
     overflow: hidden;
     text-align: center;
-    background: linear-gradient(135deg, #111827 0%, #172554 55%, #1e1b4b 100%);
+    background: linear-gradient(
+        135deg,
+        #111827 0%,
+        #172554 55%,
+        #1e1b4b 100%
+    );
     border: 1px solid rgba(129, 140, 248, .32);
     box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
 }
@@ -167,7 +177,448 @@
     box-shadow: 0 18px 38px rgba(0, 0, 0, .28);
 }
 
+
+/* =========================================================
+   PREMIUM HOME EXPERIENCE
+   ONLY ENABLED AFTER VERIFIED PREMIUM ACCESS
+========================================================= */
+
+body.premium-home {
+    --premium-bg: #070b14;
+    --premium-bg-2: #0b1020;
+    --premium-card: rgba(16, 23, 39, .88);
+    --premium-gold: #f5c542;
+    --premium-gold-light: #ffe28a;
+    --premium-gold-dark: #b88900;
+    --premium-text: #f7f8fb;
+    --premium-muted: #9ba5b7;
+    --premium-border: rgba(245, 197, 66, .20);
+
+    background:
+        radial-gradient(
+            circle at 10% 0%,
+            rgba(245,197,66,.10),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(245,197,66,.07),
+            transparent 28%
+        ),
+        linear-gradient(
+            180deg,
+            var(--premium-bg),
+            var(--premium-bg-2)
+        );
+
+    color: var(--premium-text);
+}
+
+
+/* =========================================================
+   PREMIUM NAVBAR
+========================================================= */
+
+body.premium-home .navbar {
+    background: rgba(7, 11, 20, .92);
+    border-bottom: 1px solid var(--premium-border);
+    box-shadow: 0 10px 35px rgba(0,0,0,.28);
+}
+
+body.premium-home .logo {
+    color: var(--premium-gold);
+}
+
+body.premium-home .nav-links a {
+    color: #dce2ed;
+    transition:
+        color .2s ease,
+        text-shadow .2s ease;
+}
+
+body.premium-home .nav-links a:hover {
+    color: var(--premium-gold-light);
+    text-shadow: 0 0 14px rgba(245,197,66,.25);
+}
+
+body.premium-home .theme-button {
+    background: rgba(245,197,66,.08);
+    border-color: var(--premium-border);
+    color: var(--premium-gold-light);
+}
+
+
+/* =========================================================
+   PREMIUM HERO
+========================================================= */
+
+body.premium-home .hero {
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            rgba(245,197,66,.12),
+            transparent 38%
+        );
+}
+
+body.premium-home .hero .eyebrow {
+    color: var(--premium-gold);
+}
+
+body.premium-home .hero h1 {
+    color: #ffffff;
+}
+
+body.premium-home .hero h1 span {
+    background: linear-gradient(
+        135deg,
+        #f5c542,
+        #ffe28a,
+        #c99516
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.premium-home .hero p {
+    color: var(--premium-muted);
+}
+
+body.premium-home .primary-button {
+    background: linear-gradient(
+        135deg,
+        var(--premium-gold),
+        var(--premium-gold-dark)
+    );
+    color: #171100;
+    border: 1px solid rgba(255,226,138,.55);
+    box-shadow:
+        0 12px 30px rgba(245,197,66,.18),
+        inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+body.premium-home .primary-button:hover {
+    box-shadow:
+        0 18px 42px rgba(245,197,66,.28),
+        inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+body.premium-home .secondary-button {
+    background: rgba(245,197,66,.06);
+    border-color: var(--premium-border);
+    color: var(--premium-gold-light);
+}
+
+
+/* =========================================================
+   PREMIUM SECTIONS
+========================================================= */
+
+body.premium-home .section-heading .eyebrow,
+body.premium-home .section-label {
+    color: var(--premium-gold);
+}
+
+body.premium-home .section-heading h2,
+body.premium-home .contact-header h2 {
+    color: #ffffff;
+}
+
+body.premium-home .section-heading p,
+body.premium-home .contact-header p {
+    color: var(--premium-muted);
+}
+
+
+/* =========================================================
+   PREMIUM FEATURE CARDS
+========================================================= */
+
+body.premium-home .feature-card,
+body.premium-home .step-card {
+    background: var(--premium-card);
+    border-color: var(--premium-border);
+    box-shadow:
+        0 18px 50px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.025);
+    transition:
+        transform .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+}
+
+body.premium-home .feature-card:hover,
+body.premium-home .step-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(245,197,66,.45);
+    box-shadow:
+        0 24px 60px rgba(0,0,0,.30),
+        0 0 28px rgba(245,197,66,.07);
+}
+
+body.premium-home .feature-icon {
+    filter: drop-shadow(0 0 12px rgba(245,197,66,.18));
+}
+
+body.premium-home .feature-card h3,
+body.premium-home .step-card h3 {
+    color: #ffffff;
+}
+
+body.premium-home .feature-card p,
+body.premium-home .step-card p {
+    color: var(--premium-muted);
+}
+
+body.premium-home .step-number {
+    color: var(--premium-gold);
+}
+
+
+/* =========================================================
+   PREMIUM GENERATOR
+========================================================= */
+
+body.premium-home .generator-section {
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(245,197,66,.035),
+            transparent 45%
+        );
+}
+
+body.premium-home .study-form {
+    background: var(--premium-card);
+    border-color: var(--premium-border);
+    box-shadow: 0 25px 70px rgba(0,0,0,.28);
+}
+
+body.premium-home .form-group label {
+    color: #f3f5f9;
+}
+
+body.premium-home .form-group small {
+    color: var(--premium-muted);
+}
+
+body.premium-home .form-group input,
+body.premium-home .form-group select,
+body.premium-home .form-group textarea,
+body.premium-home .subject-topic-card textarea {
+    background: rgba(5, 9, 17, .72);
+    color: #ffffff;
+    border-color: rgba(245,197,66,.16);
+}
+
+body.premium-home .form-group input:focus,
+body.premium-home .form-group select:focus,
+body.premium-home .form-group textarea:focus,
+body.premium-home .subject-topic-card textarea:focus {
+    border-color: rgba(245,197,66,.60);
+    box-shadow: 0 0 0 3px rgba(245,197,66,.08);
+    outline: none;
+}
+
+body.premium-home .subject-topic-card {
+    background: rgba(245,197,66,.035);
+    border-color: var(--premium-border);
+}
+
+body.premium-home .subject-topic-card h3 {
+    color: var(--premium-gold-light);
+}
+
+body.premium-home .subject-topic-empty {
+    border-color: rgba(245,197,66,.25);
+    color: var(--premium-muted);
+}
+
+
+/* =========================================================
+   PREMIUM STUDY PLAN
+========================================================= */
+
+body.premium-home .study-plan {
+    background: var(--premium-card);
+    border-color: var(--premium-border);
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   PREMIUM CTA
+========================================================= */
+
+body.premium-home .premium-cta-section {
+    padding-top: 70px;
+}
+
+body.premium-home .premium-cta-card {
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(245,197,66,.16),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(245,197,66,.10),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #0b0f18,
+            #15120a 55%,
+            #0c0f18
+        );
+
+    border-color: rgba(245,197,66,.38);
+
+    box-shadow:
+        0 28px 80px rgba(0,0,0,.38),
+        0 0 50px rgba(245,197,66,.06);
+}
+
+body.premium-home .premium-cta-card::before,
+body.premium-home .premium-cta-card::after {
+    background: rgba(245,197,66,.10);
+}
+
+body.premium-home .premium-cta-icon {
+    background: rgba(245,197,66,.08);
+    border-color: rgba(245,197,66,.30);
+    box-shadow:
+        0 0 30px rgba(245,197,66,.10);
+}
+
+body.premium-home .premium-cta-card .eyebrow {
+    color: var(--premium-gold);
+}
+
+body.premium-home .premium-cta-card h2 {
+    color: #ffffff;
+}
+
+body.premium-home .premium-cta-card p {
+    color: var(--premium-muted);
+}
+
+body.premium-home .premium-cta-button {
+    background: linear-gradient(
+        135deg,
+        #f5c542,
+        #b88900
+    );
+    color: #171100;
+    box-shadow:
+        0 14px 35px rgba(245,197,66,.18);
+}
+
+body.premium-home .premium-cta-button:hover {
+    box-shadow:
+        0 20px 45px rgba(245,197,66,.28);
+}
+
+
+/* =========================================================
+   PREMIUM CONTACT
+========================================================= */
+
+body.premium-home .contact-section {
+    background: transparent;
+}
+
+body.premium-home .contact-card {
+    background: var(--premium-card);
+    border-color: var(--premium-border);
+    color: #ffffff;
+    transition:
+        transform .2s ease,
+        border-color .2s ease;
+}
+
+body.premium-home .contact-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(245,197,66,.42);
+}
+
+body.premium-home .contact-icon {
+    color: var(--premium-gold);
+}
+
+body.premium-home .contact-info span {
+    color: var(--premium-muted);
+}
+
+body.premium-home .contact-info strong {
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   PREMIUM FOOTER
+========================================================= */
+
+body.premium-home .site-footer {
+    background: #050810;
+    border-top: 1px solid var(--premium-border);
+}
+
+body.premium-home .footer-brand h3 {
+    color: var(--premium-gold);
+}
+
+body.premium-home .footer-brand p {
+    color: var(--premium-muted);
+}
+
+body.premium-home .footer-links a {
+    color: #aeb7c7;
+}
+
+body.premium-home .footer-links a:hover {
+    color: var(--premium-gold-light);
+}
+
+body.premium-home .footer-bottom {
+    border-top-color: rgba(245,197,66,.10);
+    color: #727d90;
+}
+
+
+/* =========================================================
+   PREMIUM BADGE
+========================================================= */
+
+.premium-home-badge {
+    display: none;
+}
+
+body.premium-home .premium-home-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(245,197,66,.10);
+    border: 1px solid rgba(245,197,66,.28);
+    color: #ffe28a;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    vertical-align: middle;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media (max-width: 640px) {
+
     .premium-cta-section {
         padding: 64px 18px;
     }
@@ -176,6 +627,7 @@
         padding: 42px 24px;
         border-radius: 24px;
     }
+
 }
 
 </style>
@@ -194,6 +646,9 @@
 
     <h2 class="logo">
         StudyMind AI
+        <span class="premium-home-badge">
+            👑 PREMIUM
+        </span>
     </h2>
 
 
@@ -228,11 +683,13 @@
                 Dashboard
             </a>
         </li>
-<li>
-    <a href="game-mode.html">
-        Game Mode
-    </a>
-</li>
+
+        <li>
+            <a href="game-mode.html">
+                Game Mode
+            </a>
+        </li>
+
     </ul>
 
 
@@ -307,9 +764,6 @@
 
     </div>
 
-
-
-  
 </section>
 
 
@@ -844,39 +1298,58 @@
 
 
 
-
 <!-- =========================
      PREMIUM CTA
 ========================= -->
-<section class="premium-cta-section" id="premium">
+
+<section
+    class="premium-cta-section"
+    id="premium"
+>
+
     <div class="premium-cta-card">
+
         <div class="premium-cta-content">
-            <div class="premium-cta-icon">💎</div>
+
+            <div class="premium-cta-icon">
+                💎
+            </div>
+
 
             <span class="eyebrow">
-                STUDYMIND PREMIUM
+                <span id="premiumEyebrow">
+                    STUDYMIND PREMIUM
+                </span>
             </span>
 
-            <h2>
+
+            <h2 id="premiumTitle">
                 Take your studying further.
             </h2>
 
-            <p>
+
+            <p id="premiumDescription">
                 Unlock more powerful StudyMind AI features,
                 deeper study support and more ways to stay
                 on top of your preparation.
             </p>
 
-          <a
-    id="premiumButton"
-    class="premium-cta-button"
-    href="premium.html"
->
-    💎 Explore Premium <span aria-hidden="true">→</span>
-</a>
+
+            <a
+                id="premiumButton"
+                class="premium-cta-button"
+                href="premium.html"
+            >
+                💎 Explore Premium
+                <span aria-hidden="true">→</span>
+            </a>
+
         </div>
+
     </div>
+
 </section>
+
 
 
 <!-- =========================
@@ -1030,7 +1503,236 @@
 
 
 
+<!-- =========================================================
+     SUPABASE
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<!-- =========================================================
+     PREMIUM STATUS CHECK
+     
+     This does NOT grant Premium.
+     It only asks the secure backend whether the
+     currently authenticated account has an active Premium
+     subscription.
+========================================================= -->
+
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    const SUPABASE_URL =
+        "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+
+    const supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+
+    window.supabaseClient = supabaseClient;
+
+
+    async function applyPremiumHome() {
+
+        try {
+
+            const {
+                data: sessionData,
+                error: sessionError
+            } = await supabaseClient.auth.getSession();
+
+
+            if (
+                sessionError ||
+                !sessionData ||
+                !sessionData.session
+            ) {
+
+                return;
+
+            }
+
+
+            const session =
+                sessionData.session;
+
+
+            const response =
+                await fetch(
+                    "/api/premium/status",
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " +
+                                session.access_token,
+
+                            "Content-Type":
+                                "application/json"
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                console.warn(
+                    "Premium status could not be verified."
+                );
+
+                return;
+
+            }
+
+
+            const result =
+                await response.json();
+
+
+            /*
+             * GOLDEN HOME ONLY IF BACKEND
+             * CONFIRMS PREMIUM.
+             */
+
+            if (result && result.premium === true) {
+
+                document.body.classList.add(
+                    "premium-home"
+                );
+
+
+                const premiumButton =
+                    document.getElementById(
+                        "premiumButton"
+                    );
+
+
+                const premiumEyebrow =
+                    document.getElementById(
+                        "premiumEyebrow"
+                    );
+
+
+                const premiumTitle =
+                    document.getElementById(
+                        "premiumTitle"
+                    );
+
+
+                const premiumDescription =
+                    document.getElementById(
+                        "premiumDescription"
+                    );
+
+
+                if (premiumEyebrow) {
+
+                    premiumEyebrow.textContent =
+                        "STUDYMIND PREMIUM";
+
+                }
+
+
+                if (premiumTitle) {
+
+                    premiumTitle.textContent =
+                        "Welcome to your Premium experience.";
+
+                }
+
+
+                if (premiumDescription) {
+
+                    premiumDescription.textContent =
+                        "Enjoy the full StudyMind AI experience with powerful Premium features, deeper study support and an elevated golden workspace.";
+
+                }
+
+
+                if (premiumButton) {
+
+                    premiumButton.href =
+                        "premium-app.html";
+
+                    premiumButton.innerHTML =
+                        '👑 Open Premium Experience <span aria-hidden="true">→</span>';
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Premium Home check failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+     * Run after the page loads.
+     */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            applyPremiumHome
+        );
+
+    } else {
+
+        applyPremiumHome();
+
+    }
+
+
+    /*
+     * Re-check if the authentication state changes.
+     */
+
+    supabaseClient.auth.onAuthStateChange(
+        function () {
+
+            setTimeout(
+                applyPremiumHome,
+                0
+            );
+
+        }
+    );
+
+})();
+
+</script>
+
+
+
+<!-- =========================================================
+     EXISTING STUDYMIND JAVASCRIPT
+========================================================= -->
+
 <script src="script.js"></script>
+
 
 </body>
 
