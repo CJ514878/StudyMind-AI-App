@@ -49,6 +49,7 @@
                 BlinkMacSystemFont,
                 "Segoe UI",
                 sans-serif;
+
             background:
                 radial-gradient(
                     circle at 15% 10%,
@@ -66,6 +67,7 @@
                     #0a0f1c 45%,
                     #070b14 100%
                 );
+
             color: var(--text);
             overflow-x: hidden;
         }
@@ -93,20 +95,28 @@
             position: fixed;
             inset: 0;
             z-index: 99999;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
             background: #050811;
-            transition: opacity 0.35s ease;
+
+            transition:
+                opacity 0.35s ease;
         }
 
         .access-box {
             width: min(90%, 430px);
             padding: 40px 28px;
+
             text-align: center;
+
             border: 1px solid var(--border);
             border-radius: 24px;
+
             background: rgba(12, 17, 29, 0.96);
+
             box-shadow:
                 0 30px 80px rgba(0, 0, 0, 0.45),
                 0 0 60px rgba(245, 197, 66, 0.05);
@@ -129,11 +139,18 @@
         .spinner {
             width: 30px;
             height: 30px;
+
             margin: 24px auto 0;
-            border: 3px solid rgba(245, 197, 66, 0.18);
+
+            border:
+                3px solid rgba(245, 197, 66, 0.18);
+
             border-top-color: var(--gold);
+
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+
+            animation:
+                spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -151,7 +168,11 @@
         }
 
         .container {
-            width: min(1180px, calc(100% - 32px));
+            width: min(
+                1180px,
+                calc(100% - 32px)
+            );
+
             margin: 0 auto;
         }
 
@@ -163,23 +184,33 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(5, 8, 17, 0.82);
-            backdrop-filter: blur(18px);
+
+            border-bottom:
+                1px solid rgba(255, 255, 255, 0.06);
+
+            background:
+                rgba(5, 8, 17, 0.82);
+
+            backdrop-filter:
+                blur(18px);
         }
 
         .nav-inner {
             min-height: 76px;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             gap: 20px;
         }
 
         .brand {
             display: flex;
             align-items: center;
+
             gap: 12px;
+
             font-weight: 800;
             font-size: 20px;
         }
@@ -187,9 +218,12 @@
         .brand-icon {
             width: 42px;
             height: 42px;
+
             display: grid;
             place-items: center;
+
             border-radius: 13px;
+
             background:
                 linear-gradient(
                     135deg,
@@ -197,24 +231,36 @@
                     var(--gold),
                     var(--gold-dark)
                 );
+
             color: #151000;
-            box-shadow: 0 8px 30px rgba(245, 197, 66, 0.18);
+
+            box-shadow:
+                0 8px 30px
+                rgba(245, 197, 66, 0.18);
         }
 
         .premium-label {
             display: inline-flex;
             align-items: center;
+
             gap: 6px;
+
             padding: 7px 12px;
+
             border-radius: 999px;
+
             color: #171200;
-            background: linear-gradient(
-                135deg,
-                var(--gold-light),
-                var(--gold)
-            );
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--gold-light),
+                    var(--gold)
+                );
+
             font-size: 11px;
             font-weight: 900;
+
             letter-spacing: 0.7px;
             text-transform: uppercase;
         }
@@ -226,11 +272,18 @@
         }
 
         .nav-button {
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border:
+                1px solid rgba(255, 255, 255, 0.08);
+
             border-radius: 10px;
+
             padding: 10px 15px;
+
             color: var(--text);
-            background: rgba(255, 255, 255, 0.04);
+
+            background:
+                rgba(255, 255, 255, 0.04);
+
             transition: 0.2s ease;
         }
 
@@ -249,54 +302,83 @@
 
         .hero-grid {
             display: grid;
-            grid-template-columns: 1.25fr 0.75fr;
+
+            grid-template-columns:
+                1.25fr 0.75fr;
+
             gap: 28px;
+
             align-items: stretch;
         }
 
         .hero-card {
             position: relative;
             overflow: hidden;
+
             padding: 44px;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 28px;
+
             background:
                 linear-gradient(
                     145deg,
                     rgba(245, 197, 66, 0.08),
                     rgba(16, 23, 39, 0.92) 50%
                 );
-            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+
+            box-shadow:
+                0 30px 90px
+                rgba(0, 0, 0, 0.28);
         }
 
         .hero-card::after {
             content: "";
+
             position: absolute;
+
             width: 280px;
             height: 280px;
+
             right: -130px;
             top: -130px;
+
             border-radius: 50%;
-            background: rgba(245, 197, 66, 0.09);
+
+            background:
+                rgba(245, 197, 66, 0.09);
+
             filter: blur(4px);
         }
 
         .eyebrow {
             display: inline-flex;
             align-items: center;
+
             gap: 8px;
+
             color: var(--gold-light);
+
             font-weight: 800;
             font-size: 13px;
+
             margin-bottom: 18px;
+
             letter-spacing: 0.4px;
         }
 
         .hero h1 {
             max-width: 720px;
-            font-size: clamp(38px, 6vw, 68px);
+
+            font-size:
+                clamp(38px, 6vw, 68px);
+
             line-height: 0.98;
+
             letter-spacing: -2.5px;
+
             margin-bottom: 22px;
         }
 
@@ -306,53 +388,77 @@
 
         .hero-description {
             max-width: 650px;
+
             color: var(--muted);
+
             font-size: 17px;
+
             line-height: 1.7;
+
             margin-bottom: 30px;
         }
 
         .hero-buttons {
             display: flex;
             flex-wrap: wrap;
+
             gap: 12px;
         }
 
         .primary-button {
             border: none;
+
             padding: 14px 20px;
+
             border-radius: 12px;
+
             color: #171200;
+
             background:
                 linear-gradient(
                     135deg,
                     #ffe999,
                     var(--gold)
                 );
+
             font-weight: 900;
+
             box-shadow:
-                0 12px 28px rgba(245, 197, 66, 0.17);
+                0 12px 28px
+                rgba(245, 197, 66, 0.17);
+
             transition: 0.2s ease;
         }
 
         .primary-button:hover {
             transform: translateY(-2px);
+
             box-shadow:
-                0 16px 34px rgba(245, 197, 66, 0.25);
+                0 16px 34px
+                rgba(245, 197, 66, 0.25);
         }
 
         .secondary-button {
-            border: 1px solid rgba(255, 255, 255, 0.10);
+            border:
+                1px solid rgba(255, 255, 255, 0.10);
+
             padding: 14px 20px;
+
             border-radius: 12px;
+
             color: var(--text);
-            background: rgba(255, 255, 255, 0.04);
+
+            background:
+                rgba(255, 255, 255, 0.04);
+
             font-weight: 700;
+
             transition: 0.2s ease;
         }
 
         .secondary-button:hover {
             border-color: var(--border);
+
             transform: translateY(-2px);
         }
 
@@ -362,11 +468,17 @@
 
         .status-card {
             padding: 30px;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 28px;
+
             background: var(--card);
+
             display: flex;
             flex-direction: column;
+
             justify-content: space-between;
         }
 
@@ -374,6 +486,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             gap: 12px;
         }
 
@@ -385,18 +498,26 @@
         .active-badge {
             display: inline-flex;
             align-items: center;
+
             gap: 7px;
+
             padding: 8px 12px;
+
             border-radius: 999px;
+
             color: #06170f;
+
             background: var(--success);
+
             font-size: 11px;
             font-weight: 900;
+
             text-transform: uppercase;
         }
 
         .status-crown {
             font-size: 72px;
+
             margin: 30px 0 20px;
         }
 
@@ -412,11 +533,18 @@
 
         .account-email {
             margin-top: 22px;
+
             padding: 13px 14px;
+
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.035);
+
+            background:
+                rgba(255, 255, 255, 0.035);
+
             color: var(--gold-light);
+
             font-size: 13px;
+
             word-break: break-word;
         }
 
@@ -448,33 +576,52 @@
 
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
             gap: 16px;
         }
 
         .feature-card {
             min-height: 210px;
+
             padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.07);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.07);
+
             border-radius: 20px;
+
             background: var(--card);
+
             transition: 0.22s ease;
         }
 
         .feature-card:hover {
             transform: translateY(-4px);
+
             border-color: var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.20);
+
+            box-shadow:
+                0 20px 50px
+                rgba(0, 0, 0, 0.20);
         }
 
         .feature-icon {
             width: 48px;
             height: 48px;
+
             display: grid;
             place-items: center;
+
             border-radius: 14px;
-            background: rgba(245, 197, 66, 0.10);
+
+            background:
+                rgba(245, 197, 66, 0.10);
+
             font-size: 23px;
+
             margin-bottom: 18px;
         }
 
@@ -485,7 +632,9 @@
 
         .feature-card p {
             color: var(--muted);
+
             line-height: 1.6;
+
             font-size: 14px;
         }
 
@@ -495,16 +644,25 @@
 
         .action-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
             gap: 14px;
         }
 
         .action-card {
-            border: 1px solid rgba(255, 255, 255, 0.07);
+            border:
+                1px solid rgba(255, 255, 255, 0.07);
+
             border-radius: 18px;
+
             padding: 22px;
+
             background: var(--card);
+
             text-align: left;
+
             transition: 0.2s ease;
         }
 
@@ -525,7 +683,9 @@
 
         .action-card p {
             color: var(--muted);
+
             font-size: 13px;
+
             line-height: 1.5;
         }
 
@@ -534,9 +694,13 @@
         ========================================================= */
 
         .ai-panel {
-            border: 1px solid var(--border);
+            border:
+                1px solid var(--border);
+
             border-radius: 25px;
+
             padding: 28px;
+
             background:
                 linear-gradient(
                     145deg,
@@ -549,7 +713,9 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
+
             gap: 20px;
+
             margin-bottom: 20px;
         }
 
@@ -565,11 +731,19 @@
 
         .unlimited-badge {
             flex-shrink: 0;
+
             padding: 8px 12px;
+
             border-radius: 999px;
-            background: rgba(245, 197, 66, 0.12);
-            border: 1px solid var(--border);
+
+            background:
+                rgba(245, 197, 66, 0.12);
+
+            border:
+                1px solid var(--border);
+
             color: var(--gold-light);
+
             font-size: 11px;
             font-weight: 900;
         }
@@ -581,18 +755,29 @@
 
         #aiQuestion {
             flex: 1;
+
             min-height: 52px;
+
             resize: vertical;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.08);
+
             border-radius: 13px;
+
             outline: none;
+
             padding: 14px 16px;
+
             color: var(--text);
-            background: rgba(0, 0, 0, 0.18);
+
+            background:
+                rgba(0, 0, 0, 0.18);
         }
 
         #aiQuestion:focus {
-            border-color: rgba(245, 197, 66, 0.42);
+            border-color:
+                rgba(245, 197, 66, 0.42);
         }
 
         #askAIButton {
@@ -602,13 +787,23 @@
 
         #aiResponse {
             display: none;
+
             margin-top: 18px;
+
             padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.07);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.07);
+
             border-radius: 15px;
-            background: rgba(0, 0, 0, 0.16);
+
+            background:
+                rgba(0, 0, 0, 0.16);
+
             color: #e8ebf1;
+
             line-height: 1.7;
+
             white-space: pre-wrap;
         }
 
@@ -622,14 +817,21 @@
 
         .tools-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+
+            grid-template-columns:
+                1fr 1fr;
+
             gap: 18px;
         }
 
         .tool-card {
             padding: 26px;
-            border: 1px solid rgba(255, 255, 255, 0.07);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.07);
+
             border-radius: 20px;
+
             background: var(--card);
         }
 
@@ -639,53 +841,78 @@
 
         .tool-card > p {
             color: var(--muted);
+
             line-height: 1.6;
+
             font-size: 14px;
+
             margin-bottom: 20px;
         }
 
         .timer-display {
             font-size: 54px;
+
             font-weight: 900;
+
             letter-spacing: 2px;
+
             color: var(--gold-light);
+
             text-align: center;
+
             margin: 20px 0;
         }
 
         .timer-options {
             display: flex;
+
             justify-content: center;
+
             flex-wrap: wrap;
+
             gap: 8px;
+
             margin-bottom: 14px;
         }
 
         .timer-option {
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border:
+                1px solid rgba(255, 255, 255, 0.08);
+
             border-radius: 9px;
+
             padding: 8px 12px;
+
             color: var(--muted);
-            background: rgba(255, 255, 255, 0.035);
+
+            background:
+                rgba(255, 255, 255, 0.035);
         }
 
         .timer-option.active,
         .timer-option:hover {
             color: #171200;
+
             background: var(--gold);
+
             border-color: var(--gold);
         }
 
         .timer-buttons {
             display: flex;
+
             justify-content: center;
+
             gap: 8px;
         }
 
         .timer-buttons button {
             border: none;
+
             border-radius: 10px;
+
             padding: 10px 16px;
+
             font-weight: 800;
         }
 
@@ -696,12 +923,19 @@
 
         .stat-row {
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
             gap: 15px;
+
             padding: 14px;
+
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.035);
+
+            background:
+                rgba(255, 255, 255, 0.035);
         }
 
         .stat-row span:first-child {
@@ -720,11 +954,18 @@
         .gold-cta {
             position: relative;
             overflow: hidden;
+
             margin-top: 15px;
+
             padding: 45px 30px;
+
             text-align: center;
-            border: 1px solid rgba(245, 197, 66, 0.30);
+
+            border:
+                1px solid rgba(245, 197, 66, 0.30);
+
             border-radius: 28px;
+
             background:
                 radial-gradient(
                     circle at center,
@@ -741,8 +982,11 @@
 
         .gold-cta p {
             max-width: 650px;
+
             margin: 0 auto 22px;
+
             color: var(--muted);
+
             line-height: 1.6;
         }
 
@@ -752,8 +996,11 @@
 
         footer {
             padding: 35px 0 50px;
+
             text-align: center;
+
             color: #6f7889;
+
             font-size: 13px;
         }
 
@@ -766,16 +1013,19 @@
         ========================================================= */
 
         @media (max-width: 900px) {
+
             .hero-grid {
                 grid-template-columns: 1fr;
             }
 
             .feature-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns:
+                    repeat(2, 1fr);
             }
 
             .action-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns:
+                    repeat(2, 1fr);
             }
 
             .tools-grid {
@@ -784,8 +1034,13 @@
         }
 
         @media (max-width: 650px) {
+
             .container {
-                width: min(100% - 22px, 1180px);
+                width:
+                    min(
+                        100% - 22px,
+                        1180px
+                    );
             }
 
             .nav-inner {
@@ -850,17 +1105,25 @@
     ========================================================= -->
 
     <div id="accessScreen">
-        <div class="access-box">
-            <div class="access-crown">👑</div>
 
-            <h2>Verifying Premium Access</h2>
+        <div class="access-box">
+
+            <div class="access-crown">
+                👑
+            </div>
+
+            <h2>
+                Verifying Premium Access
+            </h2>
 
             <p>
                 StudyMind AI is checking your account.
             </p>
 
             <div class="spinner"></div>
+
         </div>
+
     </div>
 
 
@@ -870,15 +1133,29 @@
 
     <div id="premiumApp">
 
-        <!-- NAVBAR -->
+        <!-- =====================================================
+             NAVBAR
+        ====================================================== -->
 
         <nav class="navbar">
+
             <div class="container nav-inner">
 
-                <a href="home.html" class="brand">
-                    <div class="brand-icon">🧠</div>
-                    <span>StudyMind AI</span>
+                <a
+                    href="home.html"
+                    class="brand"
+                >
+
+                    <div class="brand-icon">
+                        🧠
+                    </div>
+
+                    <span>
+                        StudyMind AI
+                    </span>
+
                 </a>
+
 
                 <div class="nav-actions">
 
@@ -903,14 +1180,20 @@
                 </div>
 
             </div>
+
         </nav>
 
 
-        <!-- HERO -->
+        <!-- =====================================================
+             MAIN
+        ====================================================== -->
 
         <main>
 
+            <!-- HERO -->
+
             <section class="hero">
+
                 <div class="container hero-grid">
 
                     <div class="hero-card">
@@ -959,9 +1242,11 @@
                         <div class="status-top">
 
                             <div>
+
                                 <div class="status-title">
                                     ACCOUNT STATUS
                                 </div>
+
                             </div>
 
                             <div class="active-badge">
@@ -970,18 +1255,22 @@
 
                         </div>
 
+
                         <div class="status-crown">
                             👑
                         </div>
+
 
                         <h2>
                             Golden Premium
                         </h2>
 
+
                         <p>
                             Unlimited StudyMind AI access is enabled
                             for this authorized account.
                         </p>
+
 
                         <div
                             class="account-email"
@@ -993,10 +1282,13 @@
                     </div>
 
                 </div>
+
             </section>
 
 
-            <!-- PREMIUM FEATURES -->
+            <!-- =================================================
+                 PREMIUM FEATURES
+            ================================================== -->
 
             <section class="section">
 
@@ -1132,7 +1424,9 @@
             </section>
 
 
-            <!-- QUICK ACTIONS -->
+            <!-- =================================================
+                 QUICK ACTIONS
+            ================================================== -->
 
             <section class="section">
 
@@ -1240,7 +1534,9 @@
             </section>
 
 
-            <!-- AI ASSISTANT -->
+            <!-- =================================================
+                 AI ASSISTANT
+            ================================================== -->
 
             <section class="section">
 
@@ -1263,6 +1559,7 @@
 
                             </div>
 
+
                             <div class="unlimited-badge">
                                 ♾️ UNLIMITED
                             </div>
@@ -1277,6 +1574,7 @@
                                 placeholder="Ask anything about what you're studying..."
                                 rows="2"
                             ></textarea>
+
 
                             <button
                                 class="primary-button"
@@ -1297,7 +1595,9 @@
             </section>
 
 
-            <!-- PREMIUM TOOLS -->
+            <!-- =================================================
+                 PREMIUM TOOLS
+            ================================================== -->
 
             <section class="section">
 
@@ -1329,6 +1629,7 @@
                             <p>
                                 Choose a focused study session.
                             </p>
+
 
                             <div
                                 class="timer-display"
@@ -1408,6 +1709,7 @@
                             <div class="stats-list">
 
                                 <div class="stat-row">
+
                                     <span>
                                         Study streak
                                     </span>
@@ -1418,10 +1720,12 @@
                                     >
                                         0 days
                                     </span>
+
                                 </div>
 
 
                                 <div class="stat-row">
+
                                     <span>
                                         Completed topics
                                     </span>
@@ -1432,10 +1736,12 @@
                                     >
                                         0
                                     </span>
+
                                 </div>
 
 
                                 <div class="stat-row">
+
                                     <span>
                                         Study plans
                                     </span>
@@ -1446,10 +1752,12 @@
                                     >
                                         0
                                     </span>
+
                                 </div>
 
 
                                 <div class="stat-row">
+
                                     <span>
                                         AI questions
                                     </span>
@@ -1460,6 +1768,7 @@
                                     >
                                         Unlimited
                                     </span>
+
                                 </div>
 
                             </div>
@@ -1473,7 +1782,9 @@
             </section>
 
 
-            <!-- GOLD CTA -->
+            <!-- =================================================
+                 GOLD CTA
+            ================================================== -->
 
             <section class="section">
 
@@ -1513,10 +1824,17 @@
         <!-- FOOTER -->
 
         <footer>
+
             <div class="container">
-                <strong>StudyMind AI</strong>
+
+                <strong>
+                    StudyMind AI
+                </strong>
+
                 · Golden Premium Experience
+
             </div>
+
         </footer>
 
     </div>
@@ -1530,6 +1848,7 @@
 
 
     <script>
+
         /* =========================================================
            STUDYMIND AI — SUPABASE CONFIGURATION
         ========================================================= */
@@ -1548,215 +1867,417 @@
             );
 
 
-      /* =========================================================
-   PREMIUM ACCESS CONTROL
+        /* =========================================================
+           PREMIUM ACCESS CONTROL
 
-   ONLY THIS ACCOUNT CAN ENTER:
-   studymindaiofficial@gmail.com
-========================================================= */
+           ONLY THIS ACCOUNT CAN ENTER:
 
-const PREMIUM_ALLOWED_EMAIL =
-    "studymindaiofficial@gmail.com";
+           studymindaiofficial@gmail.com
+        ========================================================= */
 
-
-async function verifyPremiumAppAccess() {
-
-    const accessScreen =
-        document.getElementById("accessScreen");
-
-    const premiumApp =
-        document.getElementById("premiumApp");
+        const PREMIUM_ALLOWED_EMAIL =
+            "studymindaiofficial@gmail.com";
 
 
-    try {
+        let premiumAccessVerified = false;
 
-        /* =====================================================
-           GET CURRENT SESSION
-        ===================================================== */
-
-        const {
-            data: sessionData,
-            error: sessionError
-        } =
-            await window.supabaseClient.auth.getSession();
+        let accessRedirectInProgress = false;
 
 
-        if (sessionError) {
+        /* =========================================================
+           NORMALIZE EMAIL
+        ========================================================= */
 
-            console.error(
-                "Session error:",
-                sessionError
-            );
+        function normalizeEmail(email) {
 
-            window.location.replace(
-                "login.html"
-            );
-
-            return;
-        }
-
-
-        let user =
-            sessionData?.session?.user || null;
-
-
-        /* =====================================================
-           FALLBACK: GET AUTHENTICATED USER
-        ===================================================== */
-
-        if (!user) {
-
-            const {
-                data: userData,
-                error: userError
-            } =
-                await window.supabaseClient.auth.getUser();
-
-
-            if (
-                userError ||
-                !userData?.user
-            ) {
-
-                window.location.replace(
-                    "login.html"
-                );
-
-                return;
-            }
-
-
-            user =
-                userData.user;
-        }
-
-
-        /* =====================================================
-           GET EMAIL
-        ===================================================== */
-
-        const userEmail =
-            String(
-                user.email || ""
-            )
+            return String(email || "")
                 .trim()
                 .toLowerCase();
 
-
-        console.log(
-            "Logged-in StudyMind account:",
-            userEmail
-        );
+        }
 
 
-        /* =====================================================
-           CHECK AUTHORIZED ACCOUNT
-        ===================================================== */
+        /* =========================================================
+           REDIRECT TO LOGIN
 
-        if (
-            userEmail !==
-            PREMIUM_ALLOWED_EMAIL
+           Prevents multiple simultaneous redirects.
+        ========================================================= */
+
+        function redirectToLogin() {
+
+            if (accessRedirectInProgress) {
+                return;
+            }
+
+            accessRedirectInProgress = true;
+
+            window.location.replace(
+                "login.html"
+            );
+        }
+
+
+        /* =========================================================
+           DENY ACCESS
+        ========================================================= */
+
+        async function denyPremiumAccess(
+            showAlert = true
         ) {
 
-            console.error(
-                "Premium access denied.",
-                {
-                    loggedInAccount:
-                        userEmail,
-                    allowedAccount:
-                        PREMIUM_ALLOWED_EMAIL
-                }
+            if (accessRedirectInProgress) {
+                return;
+            }
+
+            accessRedirectInProgress = true;
+
+
+            console.warn(
+                "StudyMind Golden Premium access denied."
             );
 
 
-            await window.supabaseClient.auth.signOut();
+            try {
+
+                await window.supabaseClient.auth.signOut();
+
+            } catch (error) {
+
+                console.error(
+                    "Sign-out error:",
+                    error
+                );
+
+            }
 
 
-            alert(
-                "Premium access is currently available only to the official StudyMind AI account."
-            );
+            if (showAlert) {
+
+                alert(
+                    "Premium access is currently available only to the official StudyMind AI account."
+                );
+
+            }
 
 
             window.location.replace(
                 "login.html"
             );
-
-            return;
         }
 
 
-        /* =====================================================
-           AUTHORIZED ACCOUNT
-        ===================================================== */
+        /* =========================================================
+           VERIFY PREMIUM ACCESS
 
-        const accountEmail =
-            document.getElementById(
-                "accountEmail"
-            );
+           IMPORTANT:
+           We use getUser() as the authoritative Supabase
+           authentication check.
+
+           We do NOT use localStorage or a fake premium flag.
+        ========================================================= */
+
+        async function verifyPremiumAppAccess() {
+
+            const accessScreen =
+                document.getElementById(
+                    "accessScreen"
+                );
+
+            const premiumApp =
+                document.getElementById(
+                    "premiumApp"
+                );
 
 
-        if (accountEmail) {
+            try {
 
-            accountEmail.textContent =
-                user.email;
+                /* =================================================
+                   GET AUTHENTICATED SUPABASE USER
+                ================================================= */
+
+                const {
+                    data,
+                    error
+                } =
+                    await window.supabaseClient.auth.getUser();
+
+
+                if (error) {
+
+                    console.error(
+                        "Supabase getUser error:",
+                        error
+                    );
+
+                    redirectToLogin();
+
+                    return;
+                }
+
+
+                const user =
+                    data?.user || null;
+
+
+                /* =================================================
+                   NO AUTHENTICATED USER
+                ================================================= */
+
+                if (!user) {
+
+                    console.warn(
+                        "No authenticated StudyMind user found."
+                    );
+
+                    redirectToLogin();
+
+                    return;
+                }
+
+
+                /* =================================================
+                   GET ACTUAL AUTHENTICATED EMAIL
+                ================================================= */
+
+                const userEmail =
+                    normalizeEmail(
+                        user.email
+                    );
+
+
+                console.log(
+                    "StudyMind authenticated email:",
+                    userEmail
+                );
+
+
+                console.log(
+                    "StudyMind allowed email:",
+                    PREMIUM_ALLOWED_EMAIL
+                );
+
+
+                /* =================================================
+                   EXACT ACCOUNT CHECK
+                ================================================= */
+
+                if (
+                    userEmail !==
+                    PREMIUM_ALLOWED_EMAIL
+                ) {
+
+                    console.error(
+                        "Premium access denied.",
+                        {
+                            authenticatedEmail:
+                                userEmail,
+                            allowedEmail:
+                                PREMIUM_ALLOWED_EMAIL
+                        }
+                    );
+
+
+                    await denyPremiumAccess(
+                        true
+                    );
+
+                    return;
+                }
+
+
+                /* =================================================
+                   OFFICIAL ACCOUNT VERIFIED
+                ================================================= */
+
+                premiumAccessVerified = true;
+
+
+                console.log(
+                    "Golden Premium access verified."
+                );
+
+
+                const accountEmail =
+                    document.getElementById(
+                        "accountEmail"
+                    );
+
+
+                if (accountEmail) {
+
+                    accountEmail.textContent =
+                        user.email;
+                }
+
+
+                /* =================================================
+                   INITIALIZE APP
+                ================================================= */
+
+                initializePremiumApp();
+
+
+                /* =================================================
+                   SHOW PREMIUM APP
+                ================================================= */
+
+                if (premiumApp) {
+
+                    premiumApp.style.display =
+                        "block";
+                }
+
+
+                if (accessScreen) {
+
+                    accessScreen.style.opacity =
+                        "0";
+
+
+                    setTimeout(() => {
+
+                        accessScreen.style.display =
+                            "none";
+
+                    }, 350);
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Premium access verification failed:",
+                    error
+                );
+
+
+                redirectToLogin();
+            }
         }
 
 
-        /* =====================================================
-           SHOW PREMIUM APP
-        ===================================================== */
+        /* =========================================================
+           AUTH STATE PROTECTION
 
-        initializePremiumApp();
+           This protects the page if the user signs out or
+           switches accounts while the page is open.
 
+           IMPORTANT:
+           We do NOT immediately run signOut() inside the
+           auth callback. That can cause an authentication race.
+        ========================================================= */
 
-        if (accessScreen) {
+        window.supabaseClient.auth.onAuthStateChange(
+            (event, session) => {
 
-            accessScreen.style.opacity =
-                "0";
-
-
-            setTimeout(() => {
-
-                accessScreen.style.display =
-                    "none";
-
-            }, 350);
-        }
+                console.log(
+                    "Supabase auth event:",
+                    event
+                );
 
 
-        if (premiumApp) {
+                /* ================================================
+                   USER SIGNED OUT
+                ================================================= */
 
-            premiumApp.style.display =
-                "block";
-        }
+                if (
+                    event === "SIGNED_OUT"
+                ) {
+
+                    if (
+                        !accessRedirectInProgress
+                    ) {
+
+                        redirectToLogin();
+
+                    }
+
+                    return;
+                }
 
 
-    } catch (error) {
+                /* ================================================
+                   SESSION DISAPPEARED
+                ================================================= */
 
-        console.error(
-            "Premium access verification failed:",
-            error
+                if (
+                    !session?.user
+                ) {
+
+                    if (
+                        !accessRedirectInProgress
+                    ) {
+
+                        redirectToLogin();
+
+                    }
+
+                    return;
+                }
+
+
+                /* ================================================
+                   IF ACCESS WAS ALREADY VERIFIED, CHECK AGAIN
+                   FOR ACCOUNT SWITCHES.
+                ================================================= */
+
+                const email =
+                    normalizeEmail(
+                        session.user.email
+                    );
+
+
+                if (
+                    premiumAccessVerified &&
+                    email !==
+                        PREMIUM_ALLOWED_EMAIL
+                ) {
+
+                    /*
+                       Delay the sign-out slightly so Supabase
+                       can finish its current auth event cleanly.
+                    */
+
+                    setTimeout(
+                        async () => {
+
+                            if (
+                                accessRedirectInProgress
+                            ) {
+                                return;
+                            }
+
+
+                            accessRedirectInProgress =
+                                true;
+
+
+                            try {
+
+                                await window.supabaseClient.auth.signOut();
+
+                            } catch (error) {
+
+                                console.error(
+                                    "Account switch sign-out error:",
+                                    error
+                                );
+
+                            }
+
+
+                            window.location.replace(
+                                "login.html"
+                            );
+
+                        },
+                        50
+                    );
+
+                }
+
+            }
         );
-
-
-        try {
-
-            await window.supabaseClient.auth.signOut();
-
-        } catch (signOutError) {
-
-            console.error(
-                "Sign-out error:",
-                signOutError
-            );
-        }
-
-
-        window.location.replace(
-            "login.html"
-        );
-    }
-}
 
 
         /* =========================================================
@@ -1772,6 +2293,7 @@ async function verifyPremiumAppAccess() {
             setupTimer();
 
             loadStudyStats();
+
         }
 
 
@@ -1782,24 +2304,33 @@ async function verifyPremiumAppAccess() {
         function setupNavigation() {
 
             const goHome = () => {
-                window.location.href = "home.html";
+
+                window.location.href =
+                    "home.html";
+
             };
 
 
             const goDashboard = () => {
+
                 window.location.href =
                     "dashboard.html";
+
             };
 
 
             const goGameMode = () => {
+
                 window.location.href =
                     "game-mode.html";
+
             };
 
 
             document
-                .getElementById("homeButton")
+                .getElementById(
+                    "homeButton"
+                )
                 ?.addEventListener(
                     "click",
                     goHome
@@ -1807,7 +2338,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("dashboardButton")
+                .getElementById(
+                    "dashboardButton"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
@@ -1815,7 +2348,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("startStudyingButton")
+                .getElementById(
+                    "startStudyingButton"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
@@ -1823,7 +2358,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("studyPlanAction")
+                .getElementById(
+                    "studyPlanAction"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
@@ -1831,7 +2368,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("knowledgeCheckAction")
+                .getElementById(
+                    "knowledgeCheckAction"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
@@ -1839,7 +2378,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("summarizerAction")
+                .getElementById(
+                    "summarizerAction"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
@@ -1847,7 +2388,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("gameModeButton")
+                .getElementById(
+                    "gameModeButton"
+                )
                 ?.addEventListener(
                     "click",
                     goGameMode
@@ -1855,7 +2398,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("battleAction")
+                .getElementById(
+                    "battleAction"
+                )
                 ?.addEventListener(
                     "click",
                     goGameMode
@@ -1863,11 +2408,14 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("goldDashboardButton")
+                .getElementById(
+                    "goldDashboardButton"
+                )
                 ?.addEventListener(
                     "click",
                     goDashboard
                 );
+
         }
 
 
@@ -1898,7 +2446,9 @@ async function verifyPremiumAppAccess() {
                 !questionInput ||
                 !responseBox
             ) {
+
                 return;
+
             }
 
 
@@ -1920,7 +2470,9 @@ async function verifyPremiumAppAccess() {
                 }
 
 
-                askButton.disabled = true;
+                askButton.disabled =
+                    true;
+
 
                 askButton.textContent =
                     "Thinking...";
@@ -1929,9 +2481,11 @@ async function verifyPremiumAppAccess() {
                 responseBox.style.display =
                     "block";
 
+
                 responseBox.classList.add(
                     "loading"
                 );
+
 
                 responseBox.textContent =
                     "StudyMind AI is thinking...";
@@ -1950,17 +2504,22 @@ async function verifyPremiumAppAccess() {
                                         "application/json"
                                 },
 
-                                body: JSON.stringify({
-                                    message:
-                                        question,
+                                body:
+                                    JSON.stringify({
 
-                                    prompt:
-                                        question,
+                                        message:
+                                            question,
 
-                                    isPremium: true,
+                                        prompt:
+                                            question,
 
-                                    premium: true
-                                })
+                                        isPremium:
+                                            true,
+
+                                        premium:
+                                            true
+
+                                    })
                             }
                         );
 
@@ -1975,6 +2534,7 @@ async function verifyPremiumAppAccess() {
                             data?.error ||
                             "AI request failed."
                         );
+
                     }
 
 
@@ -1989,6 +2549,7 @@ async function verifyPremiumAppAccess() {
                     responseBox.classList.remove(
                         "loading"
                     );
+
 
                     responseBox.textContent =
                         answer;
@@ -2006,15 +2567,20 @@ async function verifyPremiumAppAccess() {
                         "loading"
                     );
 
+
                     responseBox.textContent =
                         "Sorry, I couldn't connect to StudyMind AI right now. Please try again.";
+
                 }
 
 
-                askButton.disabled = false;
+                askButton.disabled =
+                    false;
+
 
                 askButton.textContent =
                     "Ask AI";
+
             }
 
 
@@ -2036,44 +2602,51 @@ async function verifyPremiumAppAccess() {
                         event.preventDefault();
 
                         askAI();
+
                     }
+
                 }
             );
+
         }
 
 
         /* =========================================================
            STUDY TIMER
-           
-           OPTIONS:
-           25 MINUTES
-           45 MINUTES
-           60 MINUTES
         ========================================================= */
 
-        let timerSeconds = 25 * 60;
+        let timerSeconds =
+            25 * 60;
 
-        let timerInterval = null;
+        let timerInterval =
+            null;
 
-        let timerRunning = false;
+        let timerRunning =
+            false;
 
 
-        function formatTime(seconds) {
+        function formatTime(
+            seconds
+        ) {
 
             const minutes =
                 Math.floor(
                     seconds / 60
                 );
 
+
             const remainingSeconds =
                 seconds % 60;
 
 
             return (
-                String(minutes).padStart(2, "0") +
+                String(minutes)
+                    .padStart(2, "0") +
                 ":" +
-                String(remainingSeconds).padStart(2, "0")
+                String(remainingSeconds)
+                    .padStart(2, "0")
             );
+
         }
 
 
@@ -2094,6 +2667,7 @@ async function verifyPremiumAppAccess() {
                 formatTime(
                     timerSeconds
                 );
+
         }
 
 
@@ -2105,48 +2679,56 @@ async function verifyPremiumAppAccess() {
                 );
 
 
-            options.forEach(option => {
+            options.forEach(
+                option => {
 
-                option.addEventListener(
-                    "click",
-                    () => {
+                    option.addEventListener(
+                        "click",
+                        () => {
 
-                        if (timerRunning) {
-                            return;
-                        }
-
-
-                        options.forEach(
-                            item =>
-                                item.classList.remove(
-                                    "active"
-                                )
-                        );
+                            if (
+                                timerRunning
+                            ) {
+                                return;
+                            }
 
 
-                        option.classList.add(
-                            "active"
-                        );
-
-
-                        const minutes =
-                            Number(
-                                option.dataset.minutes
+                            options.forEach(
+                                item =>
+                                    item.classList.remove(
+                                        "active"
+                                    )
                             );
 
 
-                        timerSeconds =
-                            minutes * 60;
+                            option.classList.add(
+                                "active"
+                            );
 
 
-                        updateTimerDisplay();
-                    }
-                );
-            });
+                            const minutes =
+                                Number(
+                                    option.dataset.minutes
+                                );
+
+
+                            timerSeconds =
+                                minutes * 60;
+
+
+                            updateTimerDisplay();
+
+                        }
+                    );
+
+                }
+            );
 
 
             document
-                .getElementById("timerStart")
+                .getElementById(
+                    "timerStart"
+                )
                 ?.addEventListener(
                     "click",
                     startTimer
@@ -2154,7 +2736,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("timerPause")
+                .getElementById(
+                    "timerPause"
+                )
                 ?.addEventListener(
                     "click",
                     pauseTimer
@@ -2162,7 +2746,9 @@ async function verifyPremiumAppAccess() {
 
 
             document
-                .getElementById("timerReset")
+                .getElementById(
+                    "timerReset"
+                )
                 ?.addEventListener(
                     "click",
                     resetTimer
@@ -2170,22 +2756,28 @@ async function verifyPremiumAppAccess() {
 
 
             updateTimerDisplay();
+
         }
 
 
         function startTimer() {
 
-            if (timerRunning) {
+            if (
+                timerRunning
+            ) {
                 return;
             }
 
 
-            if (timerSeconds <= 0) {
+            if (
+                timerSeconds <= 0
+            ) {
                 return;
             }
 
 
-            timerRunning = true;
+            timerRunning =
+                true;
 
 
             timerInterval =
@@ -2203,30 +2795,39 @@ async function verifyPremiumAppAccess() {
 
                             pauseTimer();
 
+
                             alert(
                                 "🎉 Study session complete! Great work."
                             );
+
                         }
 
                     },
                     1000
                 );
+
         }
 
 
         function pauseTimer() {
 
-            timerRunning = false;
+            timerRunning =
+                false;
 
 
-            if (timerInterval) {
+            if (
+                timerInterval
+            ) {
 
                 clearInterval(
                     timerInterval
                 );
 
-                timerInterval = null;
+                timerInterval =
+                    null;
+
             }
+
         }
 
 
@@ -2254,6 +2855,7 @@ async function verifyPremiumAppAccess() {
 
 
             updateTimerDisplay();
+
         }
 
 
@@ -2279,7 +2881,9 @@ async function verifyPremiumAppAccess() {
                     );
 
 
-                if (completedTopicsValue) {
+                if (
+                    completedTopicsValue
+                ) {
 
                     completedTopicsValue.textContent =
                         Array.isArray(
@@ -2287,6 +2891,7 @@ async function verifyPremiumAppAccess() {
                         )
                             ? completedTopics.length
                             : 0;
+
                 }
 
 
@@ -2302,12 +2907,15 @@ async function verifyPremiumAppAccess() {
                     );
 
 
-                if (studyPlansValue) {
+                if (
+                    studyPlansValue
+                ) {
 
                     studyPlansValue.textContent =
                         studyPlan
                             ? "1"
                             : "0";
+
                 }
 
 
@@ -2321,7 +2929,9 @@ async function verifyPremiumAppAccess() {
                     );
 
 
-                if (streakValue) {
+                if (
+                    streakValue
+                ) {
 
                     streakValue.textContent =
                         `${streak} ${
@@ -2329,6 +2939,7 @@ async function verifyPremiumAppAccess() {
                                 ? "day"
                                 : "days"
                         }`;
+
                 }
 
 
@@ -2338,12 +2949,14 @@ async function verifyPremiumAppAccess() {
                     );
 
 
-                if (aiQuestionsValue) {
+                if (
+                    aiQuestionsValue
+                ) {
 
                     aiQuestionsValue.textContent =
                         "Unlimited";
-                }
 
+                }
 
             } catch (error) {
 
@@ -2351,7 +2964,9 @@ async function verifyPremiumAppAccess() {
                     "Could not load study stats:",
                     error
                 );
+
             }
+
         }
 
 
@@ -2363,8 +2978,12 @@ async function verifyPremiumAppAccess() {
                 );
 
 
-            if (!lastStudyDate) {
+            if (
+                !lastStudyDate
+            ) {
+
                 return 0;
+
             }
 
 
@@ -2379,7 +2998,9 @@ async function verifyPremiumAppAccess() {
                     lastDate.getTime()
                 )
             ) {
+
                 return 0;
+
             }
 
 
@@ -2413,12 +3034,18 @@ async function verifyPremiumAppAccess() {
                 );
 
 
-            if (difference === 0) {
+            if (
+                difference === 0
+            ) {
+
                 return 1;
+
             }
 
 
-            if (difference === 1) {
+            if (
+                difference === 1
+            ) {
 
                 const storedStreak =
                     Number(
@@ -2432,72 +3059,17 @@ async function verifyPremiumAppAccess() {
                     1,
                     storedStreak
                 );
+
             }
 
 
             return 0;
+
         }
 
 
         /* =========================================================
-           AUTH STATE PROTECTION
-           
-           If the user signs out or changes account while this
-           page is open, immediately remove access.
-        ========================================================= */
-
-        window.supabaseClient.auth.onAuthStateChange(
-            async (event, session) => {
-
-                if (
-                    event === "SIGNED_OUT" ||
-                    !session?.user
-                ) {
-
-                    window.location.replace(
-                        "login.html"
-                    );
-
-                    return;
-                }
-
-
-                const email =
-                    String(
-                        session.user.email || ""
-                    )
-                        .trim()
-                        .toLowerCase();
-
-
-                if (
-                    email !==
-                    PREMIUM_ALLOWED_EMAIL
-                ) {
-
-                    try {
-
-                        await window.supabaseClient.auth.signOut();
-
-                    } catch (error) {
-
-                        console.error(
-                            "Sign-out error:",
-                            error
-                        );
-                    }
-
-
-                    window.location.replace(
-                        "login.html"
-                    );
-                }
-            }
-        );
-
-
-        /* =========================================================
-           START ACCESS VERIFICATION
+           START
         ========================================================= */
 
         verifyPremiumAppAccess();
