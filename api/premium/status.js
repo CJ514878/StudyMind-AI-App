@@ -13,11 +13,7 @@ const SUPABASE_SERVICE_ROLE_KEY =
    RESPONSE HELPER
    ========================================================= */
 
-function send(
-    res,
-    status,
-    data
-) {
+function send(res, status, data) {
 
     return res
         .status(status)
@@ -30,31 +26,49 @@ function send(
    GET USER FROM ACCESS TOKEN
    ========================================================= */
 
-async function getUserFromToken(
-    token
-) {
+async function getUserFromToken(token) {
 
-    const response =
-        await fetch(
-            `${SUPABASE_URL}/auth/v1/user`,
-            {
-                method: "GET",
-
-                headers: {
-                    "Authorization":
-                        `Bearer ${token}`,
-
-                    "apikey":
-                        process.env.SUPABASE_ANON_KEY
-                }
-            }
+    if (
+        !SUPABASE_URL ||
+        !SUPABASE_SERVICE_ROLE_KEY
+    ) {
+        throw new Error(
+            "Supabase server configuration is missing."
         );
+    }
+
+
+    const response = await fetch(
+        `${SUPABASE_URL}/auth/v1/user`,
+        {
+            method: "GET",
+
+            headers: {
+                "Authorization":
+                    `Bearer ${token}`,
+
+                /*
+                 * Supabase accepts the service-role
+                 * key for this server-side request.
+                 */
+                "apikey":
+                    SUPABASE_SERVICE_ROLE_KEY
+            }
+        }
+    );
 
 
     if (!response.ok) {
 
-        return null;
+        const errorText =
+            await response.text();
 
+        console.error(
+            "Supabase authentication error:",
+            errorText
+        );
+
+        return null;
     }
 
 
@@ -64,18 +78,80 @@ async function getUserFromToken(
 
 
 /* =========================================================
+   CHECK PREMIUM SUBSCRIPTION
+   ========================================================= */
+
+async function checkPremiumSubscription(userId) {
+
+    const url =
+        `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
+        `?user_id=eq.${encodeURIComponent(userId)}` +
+        `&status=eq.active` +
+        `&is_premium=eq.true` +
+        `&select=id` +
+        `&limit=1`;
+
+
+    const response = await fetch(
+        url,
+        {
+            method: "GET",
+
+            headers: {
+                "apikey":
+                    SUPABASE_SERVICE_ROLE_KEY,
+
+                "Authorization":
+                    `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+
+                "Content-Type":
+                    "application/json"
+            }
+        }
+    );
+
+
+    if (!response.ok) {
+
+        const errorText =
+            await response.text();
+
+        console.error(
+            "Premium database error:",
+            errorText
+        );
+
+        throw new Error(
+            "Premium database request failed."
+        );
+
+    }
+
+
+    const rows =
+        await response.json();
+
+
+    return (
+        Array.isArray(rows) &&
+        rows.length > 0
+    );
+
+}
+
+
+/* =========================================================
    HANDLER
    ========================================================= */
 
 module.exports =
-    async function handler(
-        req,
-        res
-    ) {
+    async function handler(req, res) {
 
-        if (
-            req.method !== "GET"
-        ) {
+        /*
+         * Only GET is allowed.
+         */
+
+        if (req.method !== "GET") {
 
             return send(
                 res,
@@ -90,11 +166,18 @@ module.exports =
         }
 
 
+        /*
+         * Check server configuration.
+         */
+
         if (
             !SUPABASE_URL ||
-            !SUPABASE_SERVICE_ROLE_KEY ||
-            !process.env.SUPABASE_ANON_KEY
+            !SUPABASE_SERVICE_ROLE_KEY
         ) {
+
+            console.error(
+                "Missing Supabase server environment variables."
+            );
 
             return send(
                 res,
@@ -102,12 +185,16 @@ module.exports =
                 {
                     premium: false,
                     error:
-                        "Supabase environment variables are missing."
+                        "Supabase server configuration is missing."
                 }
             );
 
         }
 
+
+        /*
+         * Read Authorization header.
+         */
 
         const authorization =
             req.headers.authorization ||
@@ -134,7 +221,9 @@ module.exports =
 
 
         const token =
-            authorization.slice(7).trim();
+            authorization
+                .slice(7)
+                .trim();
 
 
         if (!token) {
@@ -154,15 +243,18 @@ module.exports =
 
         try {
 
+            /*
+             * Validate the Supabase
+             * access token.
+             */
+
             const user =
                 await getUserFromToken(
                     token
                 );
 
 
-            if (
-                !user?.id
-            ) {
+            if (!user?.id) {
 
                 return send(
                     res,
@@ -177,59 +269,21 @@ module.exports =
             }
 
 
-            const response =
-                await fetch(
-                    `${SUPABASE_URL}/rest/v1/premium_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&is_premium=eq.true&select=id&limit=1`,
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "apikey":
-                                SUPABASE_SERVICE_ROLE_KEY,
-
-                            "Authorization":
-                                `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-
-                            "Content-Type":
-                                "application/json"
-                        }
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                const errorText =
-                    await response.text();
-
-
-                console.error(
-                    "Premium database error:",
-                    errorText
-                );
-
-
-                return send(
-                    res,
-                    500,
-                    {
-                        premium: false,
-                        error:
-                            "Could not check Premium status."
-                    }
-                );
-
-            }
-
-
-            const rows =
-                await response.json();
-
+            /*
+             * Check the database for an
+             * active Premium subscription.
+             */
 
             const premium =
-                Array.isArray(rows) &&
-                rows.length > 0;
+                await checkPremiumSubscription(
+                    user.id
+                );
 
+
+            /*
+             * Return the server's
+             * authoritative Premium state.
+             */
 
             return send(
                 res,
