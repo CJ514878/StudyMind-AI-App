@@ -1844,399 +1844,550 @@
          SUPABASE
     ========================================================= -->
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+/* =========================================================
+   STUDYMIND AI — GOLDEN PREMIUM ACCESS SYSTEM
+   ========================================================= */
+
+"use strict";
 
 
-    <script>
+/* =========================================================
+   SUPABASE CONFIGURATION
+   ========================================================= */
 
-        /* =========================================================
-           STUDYMIND AI — SUPABASE CONFIGURATION
-        ========================================================= */
+const SUPABASE_URL =
+    "https://bicnrbqqvucgpbwudmit.supabase.co";
 
-        const SUPABASE_URL =
-            "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-        const SUPABASE_PUBLISHABLE_KEY =
-            "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
 
 
-        window.supabaseClient =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_PUBLISHABLE_KEY
-            );
+/* =========================================================
+   CREATE SUPABASE CLIENT
+   ========================================================= */
+
+if (
+    !window.supabase ||
+    typeof window.supabase.createClient !== "function"
+) {
+
+    console.error(
+        "StudyMind: Supabase library failed to load."
+    );
+
+} else {
+
+    window.supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+}
 
 
-        /* =========================================================
-           PREMIUM ACCESS CONTROL
+/* =========================================================
+   GOLDEN PREMIUM AUTHORIZED ACCOUNT
+   ========================================================= */
 
-           ONLY THIS ACCOUNT CAN ENTER:
-
-           studymindaiofficial@gmail.com
-        ========================================================= */
-
-        const PREMIUM_ALLOWED_EMAIL =
-            "studymindaiofficial@gmail.com";
+const PREMIUM_ALLOWED_EMAIL =
+    "studymindaiofficial@gmail.com";
 
 
-        let premiumAccessVerified = false;
+/* =========================================================
+   STATE
+   ========================================================= */
 
-        let accessRedirectInProgress = false;
+let premiumAccessVerified =
+    false;
 
-
-        /* =========================================================
-           NORMALIZE EMAIL
-        ========================================================= */
-
-        function normalizeEmail(email) {
-
-            return String(email || "")
-                .trim()
-                .toLowerCase();
-
-        }
+let accessRedirectInProgress =
+    false;
 
 
-        /* =========================================================
-           REDIRECT TO LOGIN
+/* =========================================================
+   EMAIL NORMALIZATION
+   ========================================================= */
 
-           Prevents multiple simultaneous redirects.
-        ========================================================= */
+function normalizeEmail(email) {
 
-        function redirectToLogin() {
+    return String(email || "")
+        .trim()
+        .toLowerCase();
 
-            if (accessRedirectInProgress) {
-                return;
-            }
-
-            accessRedirectInProgress = true;
-
-            window.location.replace(
-                "login.html"
-            );
-        }
+}
 
 
-        /* =========================================================
-           DENY ACCESS
-        ========================================================= */
+/* =========================================================
+   REDIRECT TO LOGIN
+   ========================================================= */
 
-        async function denyPremiumAccess(
-            showAlert = true
+function redirectToLogin() {
+
+    if (accessRedirectInProgress) {
+        return;
+    }
+
+    accessRedirectInProgress =
+        true;
+
+    window.location.replace(
+        "login.html"
+    );
+
+}
+
+
+/* =========================================================
+   DENY ACCESS
+   ========================================================= */
+
+async function denyPremiumAccess() {
+
+    if (accessRedirectInProgress) {
+        return;
+    }
+
+    accessRedirectInProgress =
+        true;
+
+
+    console.error(
+        "StudyMind Golden Premium access denied."
+    );
+
+
+    try {
+
+        if (
+            window.supabaseClient
         ) {
 
-            if (accessRedirectInProgress) {
-                return;
-            }
+            await window.supabaseClient
+                .auth
+                .signOut();
 
-            accessRedirectInProgress = true;
+        }
 
+    } catch (error) {
+
+        console.error(
+            "Could not sign out unauthorized account:",
+            error
+        );
+
+    }
+
+
+    alert(
+        "Premium access is currently available only to the official StudyMind AI account."
+    );
+
+
+    window.location.replace(
+        "login.html"
+    );
+
+}
+
+
+/* =========================================================
+   GET AUTHENTICATED USER
+   ========================================================= */
+
+async function getAuthenticatedUser() {
+
+    if (
+        !window.supabaseClient
+    ) {
+
+        throw new Error(
+            "Supabase client is not available."
+        );
+
+    }
+
+
+    /*
+     * First check the current session.
+     */
+
+    const {
+        data: sessionData,
+        error: sessionError
+    } =
+        await window.supabaseClient
+            .auth
+            .getSession();
+
+
+    if (sessionError) {
+
+        console.error(
+            "Supabase session error:",
+            sessionError
+        );
+
+    }
+
+
+    const sessionUser =
+        sessionData?.session?.user ||
+        null;
+
+
+    if (sessionUser) {
+
+        return sessionUser;
+
+    }
+
+
+    /*
+     * If there was no session user,
+     * ask Supabase for the authenticated user.
+     */
+
+    const {
+        data: userData,
+        error: userError
+    } =
+        await window.supabaseClient
+            .auth
+            .getUser();
+
+
+    if (userError) {
+
+        console.error(
+            "Supabase getUser error:",
+            userError
+        );
+
+        return null;
+
+    }
+
+
+    return userData?.user || null;
+
+}
+
+
+/* =========================================================
+   VERIFY GOLDEN PREMIUM ACCESS
+   ========================================================= */
+
+async function verifyPremiumAppAccess() {
+
+    const accessScreen =
+        document.getElementById(
+            "accessScreen"
+        );
+
+    const premiumApp =
+        document.getElementById(
+            "premiumApp"
+        );
+
+
+    try {
+
+        console.log(
+            "StudyMind: Starting Golden Premium verification..."
+        );
+
+
+        /*
+         * Make sure Supabase loaded.
+         */
+
+        if (
+            !window.supabaseClient
+        ) {
+
+            console.error(
+                "StudyMind: Supabase client is missing."
+            );
+
+            alert(
+                "StudyMind could not connect to the authentication system. Please refresh the page."
+            );
+
+            redirectToLogin();
+
+            return;
+
+        }
+
+
+        /*
+         * Get the real authenticated user.
+         */
+
+        const user =
+            await getAuthenticatedUser();
+
+
+        /*
+         * No logged-in account.
+         */
+
+        if (!user) {
 
             console.warn(
-                "StudyMind Golden Premium access denied."
+                "StudyMind: No authenticated account found."
             );
 
+            redirectToLogin();
 
-            try {
+            return;
 
-                await window.supabaseClient.auth.signOut();
-
-            } catch (error) {
-
-                console.error(
-                    "Sign-out error:",
-                    error
-                );
-
-            }
-
-
-            if (showAlert) {
-
-                alert(
-                    "Premium access is currently available only to the official StudyMind AI account."
-                );
-
-            }
-
-
-            window.location.replace(
-                "login.html"
-            );
         }
 
 
-        /* =========================================================
-           VERIFY PREMIUM ACCESS
+        /*
+         * Get the real Supabase email.
+         */
 
-           IMPORTANT:
-           We use getUser() as the authoritative Supabase
-           authentication check.
+        const authenticatedEmail =
+            normalizeEmail(
+                user.email
+            );
 
-           We do NOT use localStorage or a fake premium flag.
-        ========================================================= */
 
-        async function verifyPremiumAppAccess() {
+        const allowedEmail =
+            normalizeEmail(
+                PREMIUM_ALLOWED_EMAIL
+            );
 
-            const accessScreen =
-                document.getElementById(
-                    "accessScreen"
-                );
 
-            const premiumApp =
-                document.getElementById(
-                    "premiumApp"
-                );
+        /*
+         * IMPORTANT DEBUG INFORMATION.
+         *
+         * This intentionally logs only the email,
+         * never the access token.
+         */
 
+        console.log(
+            "=========================================="
+        );
 
-            try {
+        console.log(
+            "STUDYMIND GOLDEN PREMIUM AUTH CHECK"
+        );
 
-                /* =================================================
-                   GET AUTHENTICATED SUPABASE USER
-                ================================================= */
+        console.log(
+            "Authenticated email:",
+            authenticatedEmail
+        );
 
-                const {
-                    data,
-                    error
-                } =
-                    await window.supabaseClient.auth.getUser();
+        console.log(
+            "Authorized email:",
+            allowedEmail
+        );
 
+        console.log(
+            "Email matches:",
+            authenticatedEmail === allowedEmail
+        );
 
-                if (error) {
+        console.log(
+            "Supabase user ID:",
+            user.id
+        );
 
-                    console.error(
-                        "Supabase getUser error:",
-                        error
-                    );
+        console.log(
+            "=========================================="
+        );
 
-                    redirectToLogin();
 
-                    return;
-                }
+        /*
+         * EXACT ACCOUNT CHECK
+         */
 
+        if (
+            authenticatedEmail !==
+            allowedEmail
+        ) {
 
-                const user =
-                    data?.user || null;
+            await denyPremiumAccess();
 
+            return;
 
-                /* =================================================
-                   NO AUTHENTICATED USER
-                ================================================= */
+        }
 
-                if (!user) {
 
-                    console.warn(
-                        "No authenticated StudyMind user found."
-                    );
+        /*
+         * OFFICIAL ACCOUNT VERIFIED
+         */
 
-                    redirectToLogin();
+        premiumAccessVerified =
+            true;
 
-                    return;
-                }
 
+        console.log(
+            "StudyMind: GOLDEN PREMIUM ACCESS VERIFIED."
+        );
 
-                /* =================================================
-                   GET ACTUAL AUTHENTICATED EMAIL
-                ================================================= */
 
-                const userEmail =
-                    normalizeEmail(
-                        user.email
-                    );
+        /*
+         * Display the authenticated account.
+         */
 
+        const accountEmail =
+            document.getElementById(
+                "accountEmail"
+            );
 
-                console.log(
-                    "StudyMind authenticated email:",
-                    userEmail
-                );
 
+        if (accountEmail) {
 
-                console.log(
-                    "StudyMind allowed email:",
-                    PREMIUM_ALLOWED_EMAIL
-                );
+            accountEmail.textContent =
+                user.email;
 
+        }
 
-                /* =================================================
-                   EXACT ACCOUNT CHECK
-                ================================================= */
 
-                if (
-                    userEmail !==
-                    PREMIUM_ALLOWED_EMAIL
-                ) {
+        /*
+         * Initialize the application.
+         */
 
-                    console.error(
-                        "Premium access denied.",
-                        {
-                            authenticatedEmail:
-                                userEmail,
-                            allowedEmail:
-                                PREMIUM_ALLOWED_EMAIL
-                        }
-                    );
+        initializePremiumApp();
 
 
-                    await denyPremiumAccess(
-                        true
-                    );
+        /*
+         * Show the Golden Premium application.
+         */
 
-                    return;
-                }
+        if (premiumApp) {
 
+            premiumApp.style.display =
+                "block";
 
-                /* =================================================
-                   OFFICIAL ACCOUNT VERIFIED
-                ================================================= */
+        }
 
-                premiumAccessVerified = true;
 
+        /*
+         * Remove verification screen.
+         */
 
-                console.log(
-                    "Golden Premium access verified."
-                );
+        if (accessScreen) {
 
+            accessScreen.style.opacity =
+                "0";
 
-                const accountEmail =
-                    document.getElementById(
-                        "accountEmail"
-                    );
 
+            setTimeout(
+                () => {
 
-                if (accountEmail) {
+                    accessScreen.style.display =
+                        "none";
 
-                    accountEmail.textContent =
-                        user.email;
-                }
+                },
+                350
+            );
 
+        }
 
-                /* =================================================
-                   INITIALIZE APP
-                ================================================= */
+    } catch (error) {
 
-                initializePremiumApp();
+        console.error(
+            "StudyMind Golden Premium verification failed:",
+            error
+        );
 
 
-                /* =================================================
-                   SHOW PREMIUM APP
-                ================================================= */
+        /*
+         * Never allow access when verification
+         * fails unexpectedly.
+         */
 
-                if (premiumApp) {
+        redirectToLogin();
 
-                    premiumApp.style.display =
-                        "block";
-                }
+    }
 
+}
 
-                if (accessScreen) {
 
-                    accessScreen.style.opacity =
-                        "0";
+/* =========================================================
+   AUTH STATE PROTECTION
+   ========================================================= */
 
+if (
+    window.supabaseClient
+) {
 
-                    setTimeout(() => {
+    window.supabaseClient.auth.onAuthStateChange(
+        (event, session) => {
 
-                        accessScreen.style.display =
-                            "none";
+            console.log(
+                "StudyMind Supabase auth event:",
+                event
+            );
 
-                    }, 350);
-                }
 
+            /*
+             * User signed out.
+             */
 
-            } catch (error) {
-
-                console.error(
-                    "Premium access verification failed:",
-                    error
-                );
-
+            if (
+                event === "SIGNED_OUT"
+            ) {
 
                 redirectToLogin();
+
+                return;
+
             }
-        }
 
 
-        /* =========================================================
-           AUTH STATE PROTECTION
+            /*
+             * No session.
+             */
 
-           This protects the page if the user signs out or
-           switches accounts while the page is open.
+            if (
+                !session?.user
+            ) {
 
-           IMPORTANT:
-           We do NOT immediately run signOut() inside the
-           auth callback. That can cause an authentication race.
-        ========================================================= */
+                redirectToLogin();
 
-        window.supabaseClient.auth.onAuthStateChange(
-            (event, session) => {
+                return;
 
-                console.log(
-                    "Supabase auth event:",
-                    event
-                );
+            }
 
 
-                /* ================================================
-                   USER SIGNED OUT
-                ================================================= */
+            /*
+             * If the page was already verified,
+             * make sure the account remains the
+             * authorized account.
+             */
 
-                if (
-                    event === "SIGNED_OUT"
-                ) {
+            if (
+                premiumAccessVerified
+            ) {
 
-                    if (
-                        !accessRedirectInProgress
-                    ) {
-
-                        redirectToLogin();
-
-                    }
-
-                    return;
-                }
-
-
-                /* ================================================
-                   SESSION DISAPPEARED
-                ================================================= */
-
-                if (
-                    !session?.user
-                ) {
-
-                    if (
-                        !accessRedirectInProgress
-                    ) {
-
-                        redirectToLogin();
-
-                    }
-
-                    return;
-                }
-
-
-                /* ================================================
-                   IF ACCESS WAS ALREADY VERIFIED, CHECK AGAIN
-                   FOR ACCOUNT SWITCHES.
-                ================================================= */
-
-                const email =
+                const currentEmail =
                     normalizeEmail(
                         session.user.email
                     );
 
 
                 if (
-                    premiumAccessVerified &&
-                    email !==
+                    currentEmail !==
+                    normalizeEmail(
                         PREMIUM_ALLOWED_EMAIL
+                    )
                 ) {
 
-                    /*
-                       Delay the sign-out slightly so Supabase
-                       can finish its current auth event cleanly.
-                    */
+                    console.error(
+                        "StudyMind: Unauthorized account detected after verification."
+                    );
+
 
                     setTimeout(
                         async () => {
@@ -2254,12 +2405,14 @@
 
                             try {
 
-                                await window.supabaseClient.auth.signOut();
+                                await window.supabaseClient
+                                    .auth
+                                    .signOut();
 
                             } catch (error) {
 
                                 console.error(
-                                    "Account switch sign-out error:",
+                                    "Account sign-out error:",
                                     error
                                 );
 
@@ -2271,810 +2424,827 @@
                             );
 
                         },
-                        50
+                        100
                     );
 
                 }
 
             }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   PREMIUM APP INITIALIZATION
+   ========================================================= */
+
+function initializePremiumApp() {
+
+    setupNavigation();
+
+    setupAI();
+
+    setupTimer();
+
+    loadStudyStats();
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function setupNavigation() {
+
+    const goHome = () => {
+
+        window.location.href =
+            "home.html";
+
+    };
+
+
+    const goDashboard = () => {
+
+        window.location.href =
+            "dashboard.html";
+
+    };
+
+
+    const goGameMode = () => {
+
+        window.location.href =
+            "game-mode.html";
+
+    };
+
+
+    document
+        .getElementById(
+            "homeButton"
+        )
+        ?.addEventListener(
+            "click",
+            goHome
         );
 
 
-        /* =========================================================
-           PREMIUM APP INITIALIZATION
-        ========================================================= */
-
-        function initializePremiumApp() {
-
-            setupNavigation();
-
-            setupAI();
-
-            setupTimer();
-
-            loadStudyStats();
-
-        }
+    document
+        .getElementById(
+            "dashboardButton"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
 
 
-        /* =========================================================
-           NAVIGATION
-        ========================================================= */
-
-        function setupNavigation() {
-
-            const goHome = () => {
-
-                window.location.href =
-                    "home.html";
-
-            };
+    document
+        .getElementById(
+            "startStudyingButton"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
 
 
-            const goDashboard = () => {
-
-                window.location.href =
-                    "dashboard.html";
-
-            };
-
-
-            const goGameMode = () => {
-
-                window.location.href =
-                    "game-mode.html";
-
-            };
+    document
+        .getElementById(
+            "studyPlanAction"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
 
 
-            document
-                .getElementById(
-                    "homeButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    goHome
-                );
+    document
+        .getElementById(
+            "knowledgeCheckAction"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
 
 
-            document
-                .getElementById(
-                    "dashboardButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+    document
+        .getElementById(
+            "summarizerAction"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
 
 
-            document
-                .getElementById(
-                    "startStudyingButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+    document
+        .getElementById(
+            "gameModeButton"
+        )
+        ?.addEventListener(
+            "click",
+            goGameMode
+        );
 
 
-            document
-                .getElementById(
-                    "studyPlanAction"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+    document
+        .getElementById(
+            "battleAction"
+        )
+        ?.addEventListener(
+            "click",
+            goGameMode
+        );
 
 
-            document
-                .getElementById(
-                    "knowledgeCheckAction"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+    document
+        .getElementById(
+            "goldDashboardButton"
+        )
+        ?.addEventListener(
+            "click",
+            goDashboard
+        );
+
+}
 
 
-            document
-                .getElementById(
-                    "summarizerAction"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+/* =========================================================
+   AI ASSISTANT
+   ========================================================= */
+
+function setupAI() {
+
+    const askButton =
+        document.getElementById(
+            "askAIButton"
+        );
+
+    const questionInput =
+        document.getElementById(
+            "aiQuestion"
+        );
+
+    const responseBox =
+        document.getElementById(
+            "aiResponse"
+        );
 
 
-            document
-                .getElementById(
-                    "gameModeButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    goGameMode
-                );
+    if (
+        !askButton ||
+        !questionInput ||
+        !responseBox
+    ) {
+
+        return;
+
+    }
 
 
-            document
-                .getElementById(
-                    "battleAction"
-                )
-                ?.addEventListener(
-                    "click",
-                    goGameMode
-                );
+    async function askAI() {
+
+        const question =
+            questionInput.value.trim();
 
 
-            document
-                .getElementById(
-                    "goldDashboardButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    goDashboard
-                );
+        if (!question) {
+
+            responseBox.style.display =
+                "block";
+
+            responseBox.textContent =
+                "Please enter a question first.";
+
+            return;
 
         }
 
 
-        /* =========================================================
-           AI ASSISTANT
-        ========================================================= */
+        askButton.disabled =
+            true;
 
-        function setupAI() {
+        askButton.textContent =
+            "Thinking...";
 
-            const askButton =
-                document.getElementById(
-                    "askAIButton"
+        responseBox.style.display =
+            "block";
+
+        responseBox.classList.add(
+            "loading"
+        );
+
+        responseBox.textContent =
+            "StudyMind AI is thinking...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/chat",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                message:
+                                    question,
+
+                                prompt:
+                                    question,
+
+                                isPremium:
+                                    true,
+
+                                premium:
+                                    true
+
+                            })
+                    }
                 );
 
-            const questionInput =
-                document.getElementById(
-                    "aiQuestion"
-                );
 
-            const responseBox =
-                document.getElementById(
-                    "aiResponse"
-                );
+            const data =
+                await response.json();
 
 
             if (
-                !askButton ||
-                !questionInput ||
-                !responseBox
+                !response.ok
             ) {
 
-                return;
-
-            }
-
-
-            async function askAI() {
-
-                const question =
-                    questionInput.value.trim();
-
-
-                if (!question) {
-
-                    responseBox.style.display =
-                        "block";
-
-                    responseBox.textContent =
-                        "Please enter a question first.";
-
-                    return;
-                }
-
-
-                askButton.disabled =
-                    true;
-
-
-                askButton.textContent =
-                    "Thinking...";
-
-
-                responseBox.style.display =
-                    "block";
-
-
-                responseBox.classList.add(
-                    "loading"
+                throw new Error(
+                    data?.error ||
+                    "AI request failed."
                 );
 
-
-                responseBox.textContent =
-                    "StudyMind AI is thinking...";
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            "/api/chat",
-                            {
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-
-                                body:
-                                    JSON.stringify({
-
-                                        message:
-                                            question,
-
-                                        prompt:
-                                            question,
-
-                                        isPremium:
-                                            true,
-
-                                        premium:
-                                            true
-
-                                    })
-                            }
-                        );
-
-
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            data?.error ||
-                            "AI request failed."
-                        );
-
-                    }
-
-
-                    const answer =
-                        data?.reply ||
-                        data?.message ||
-                        data?.response ||
-                        data?.answer ||
-                        "I couldn't generate a response right now.";
-
-
-                    responseBox.classList.remove(
-                        "loading"
-                    );
-
-
-                    responseBox.textContent =
-                        answer;
-
-
-                } catch (error) {
-
-                    console.error(
-                        "AI error:",
-                        error
-                    );
-
-
-                    responseBox.classList.remove(
-                        "loading"
-                    );
-
-
-                    responseBox.textContent =
-                        "Sorry, I couldn't connect to StudyMind AI right now. Please try again.";
-
-                }
-
-
-                askButton.disabled =
-                    false;
-
-
-                askButton.textContent =
-                    "Ask AI";
-
             }
 
 
-            askButton.addEventListener(
-                "click",
-                askAI
+            const answer =
+                data?.reply ||
+                data?.message ||
+                data?.response ||
+                data?.answer ||
+                "I couldn't generate a response right now.";
+
+
+            responseBox.classList.remove(
+                "loading"
+            );
+
+            responseBox.textContent =
+                answer;
+
+
+        } catch (error) {
+
+            console.error(
+                "AI error:",
+                error
             );
 
 
-            questionInput.addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key === "Enter" &&
-                        !event.shiftKey
-                    ) {
-
-                        event.preventDefault();
-
-                        askAI();
-
-                    }
-
-                }
+            responseBox.classList.remove(
+                "loading"
             );
+
+            responseBox.textContent =
+                "Sorry, I couldn't connect to StudyMind AI right now. Please try again.";
 
         }
 
 
-        /* =========================================================
-           STUDY TIMER
-        ========================================================= */
-
-        let timerSeconds =
-            25 * 60;
-
-        let timerInterval =
-            null;
-
-        let timerRunning =
+        askButton.disabled =
             false;
 
+        askButton.textContent =
+            "Ask AI";
 
-        function formatTime(
-            seconds
+    }
+
+
+    askButton.addEventListener(
+        "click",
+        askAI
+    );
+
+
+    questionInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                askAI();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   STUDY TIMER
+   ========================================================= */
+
+let timerSeconds =
+    25 * 60;
+
+let timerInterval =
+    null;
+
+let timerRunning =
+    false;
+
+
+function formatTime(seconds) {
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const remainingSeconds =
+        seconds % 60;
+
+
+    return (
+        String(minutes)
+            .padStart(2, "0") +
+        ":" +
+        String(remainingSeconds)
+            .padStart(2, "0")
+    );
+
+}
+
+
+function updateTimerDisplay() {
+
+    const display =
+        document.getElementById(
+            "timerDisplay"
+        );
+
+
+    if (!display) {
+        return;
+    }
+
+
+    display.textContent =
+        formatTime(
+            timerSeconds
+        );
+
+}
+
+
+function setupTimer() {
+
+    const options =
+        document.querySelectorAll(
+            ".timer-option"
+        );
+
+
+    options.forEach(
+        option => {
+
+            option.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        timerRunning
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    options.forEach(
+                        item =>
+                            item.classList.remove(
+                                "active"
+                            )
+                    );
+
+
+                    option.classList.add(
+                        "active"
+                    );
+
+
+                    const minutes =
+                        Number(
+                            option.dataset.minutes
+                        );
+
+
+                    timerSeconds =
+                        minutes * 60;
+
+
+                    updateTimerDisplay();
+
+                }
+            );
+
+        }
+    );
+
+
+    document
+        .getElementById(
+            "timerStart"
+        )
+        ?.addEventListener(
+            "click",
+            startTimer
+        );
+
+
+    document
+        .getElementById(
+            "timerPause"
+        )
+        ?.addEventListener(
+            "click",
+            pauseTimer
+        );
+
+
+    document
+        .getElementById(
+            "timerReset"
+        )
+        ?.addEventListener(
+            "click",
+            resetTimer
+        );
+
+
+    updateTimerDisplay();
+
+}
+
+
+function startTimer() {
+
+    if (
+        timerRunning
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        timerSeconds <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    timerRunning =
+        true;
+
+
+    timerInterval =
+        setInterval(
+            () => {
+
+                timerSeconds--;
+
+                updateTimerDisplay();
+
+
+                if (
+                    timerSeconds <= 0
+                ) {
+
+                    pauseTimer();
+
+
+                    alert(
+                        "🎉 Study session complete! Great work."
+                    );
+
+                }
+
+            },
+            1000
+        );
+
+}
+
+
+function pauseTimer() {
+
+    timerRunning =
+        false;
+
+
+    if (
+        timerInterval
+    ) {
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval =
+            null;
+
+    }
+
+}
+
+
+function resetTimer() {
+
+    pauseTimer();
+
+
+    const activeOption =
+        document.querySelector(
+            ".timer-option.active"
+        );
+
+
+    const minutes =
+        activeOption
+            ? Number(
+                activeOption.dataset.minutes
+            )
+            : 25;
+
+
+    timerSeconds =
+        minutes * 60;
+
+
+    updateTimerDisplay();
+
+}
+
+
+/* =========================================================
+   STUDY STATISTICS
+   ========================================================= */
+
+function loadStudyStats() {
+
+    try {
+
+        const completedTopics =
+            JSON.parse(
+                localStorage.getItem(
+                    "studyMindCompletedTopics"
+                ) || "[]"
+            );
+
+
+        const completedTopicsValue =
+            document.getElementById(
+                "completedTopicsValue"
+            );
+
+
+        if (
+            completedTopicsValue
         ) {
 
-            const minutes =
-                Math.floor(
-                    seconds / 60
-                );
-
-
-            const remainingSeconds =
-                seconds % 60;
-
-
-            return (
-                String(minutes)
-                    .padStart(2, "0") +
-                ":" +
-                String(remainingSeconds)
-                    .padStart(2, "0")
-            );
+            completedTopicsValue.textContent =
+                Array.isArray(
+                    completedTopics
+                )
+                    ? completedTopics.length
+                    : 0;
 
         }
 
 
-        function updateTimerDisplay() {
-
-            const display =
-                document.getElementById(
-                    "timerDisplay"
-                );
-
-
-            if (!display) {
-                return;
-            }
-
-
-            display.textContent =
-                formatTime(
-                    timerSeconds
-                );
-
-        }
-
-
-        function setupTimer() {
-
-            const options =
-                document.querySelectorAll(
-                    ".timer-option"
-                );
-
-
-            options.forEach(
-                option => {
-
-                    option.addEventListener(
-                        "click",
-                        () => {
-
-                            if (
-                                timerRunning
-                            ) {
-                                return;
-                            }
-
-
-                            options.forEach(
-                                item =>
-                                    item.classList.remove(
-                                        "active"
-                                    )
-                            );
-
-
-                            option.classList.add(
-                                "active"
-                            );
-
-
-                            const minutes =
-                                Number(
-                                    option.dataset.minutes
-                                );
-
-
-                            timerSeconds =
-                                minutes * 60;
-
-
-                            updateTimerDisplay();
-
-                        }
-                    );
-
-                }
+        const studyPlan =
+            localStorage.getItem(
+                "studyMindPlan"
             );
 
 
-            document
-                .getElementById(
-                    "timerStart"
-                )
-                ?.addEventListener(
-                    "click",
-                    startTimer
-                );
+        const studyPlansValue =
+            document.getElementById(
+                "studyPlansValue"
+            );
 
 
-            document
-                .getElementById(
-                    "timerPause"
-                )
-                ?.addEventListener(
-                    "click",
-                    pauseTimer
-                );
+        if (
+            studyPlansValue
+        ) {
 
-
-            document
-                .getElementById(
-                    "timerReset"
-                )
-                ?.addEventListener(
-                    "click",
-                    resetTimer
-                );
-
-
-            updateTimerDisplay();
+            studyPlansValue.textContent =
+                studyPlan
+                    ? "1"
+                    : "0";
 
         }
 
 
-        function startTimer() {
-
-            if (
-                timerRunning
-            ) {
-                return;
-            }
+        const streak =
+            calculateStreak();
 
 
-            if (
-                timerSeconds <= 0
-            ) {
-                return;
-            }
+        const streakValue =
+            document.getElementById(
+                "streakValue"
+            );
 
 
-            timerRunning =
-                true;
+        if (
+            streakValue
+        ) {
 
-
-            timerInterval =
-                setInterval(
-                    () => {
-
-                        timerSeconds--;
-
-                        updateTimerDisplay();
-
-
-                        if (
-                            timerSeconds <= 0
-                        ) {
-
-                            pauseTimer();
-
-
-                            alert(
-                                "🎉 Study session complete! Great work."
-                            );
-
-                        }
-
-                    },
-                    1000
-                );
+            streakValue.textContent =
+                `${streak} ${
+                    streak === 1
+                        ? "day"
+                        : "days"
+                }`;
 
         }
 
 
-        function pauseTimer() {
+        const aiQuestionsValue =
+            document.getElementById(
+                "aiQuestionsValue"
+            );
 
-            timerRunning =
-                false;
 
+        if (
+            aiQuestionsValue
+        ) {
 
-            if (
-                timerInterval
-            ) {
-
-                clearInterval(
-                    timerInterval
-                );
-
-                timerInterval =
-                    null;
-
-            }
+            aiQuestionsValue.textContent =
+                "Unlimited";
 
         }
 
+    } catch (error) {
 
-        function resetTimer() {
+        console.error(
+            "Could not load study stats:",
+            error
+        );
 
-            pauseTimer();
+    }
 
-
-            const activeOption =
-                document.querySelector(
-                    ".timer-option.active"
-                );
-
-
-            const minutes =
-                activeOption
-                    ? Number(
-                        activeOption.dataset.minutes
-                    )
-                    : 25;
+}
 
 
-            timerSeconds =
-                minutes * 60;
+function calculateStreak() {
+
+    const lastStudyDate =
+        localStorage.getItem(
+            "lastStudyDate"
+        );
 
 
-            updateTimerDisplay();
+    if (
+        !lastStudyDate
+    ) {
 
-        }
+        return 0;
 
-
-        /* =========================================================
-           STUDY STATISTICS
-        ========================================================= */
-
-        function loadStudyStats() {
-
-            try {
-
-                const completedTopics =
-                    JSON.parse(
-                        localStorage.getItem(
-                            "studyMindCompletedTopics"
-                        ) || "[]"
-                    );
+    }
 
 
-                const completedTopicsValue =
-                    document.getElementById(
-                        "completedTopicsValue"
-                    );
+    const lastDate =
+        new Date(
+            lastStudyDate
+        );
 
 
-                if (
-                    completedTopicsValue
-                ) {
+    if (
+        Number.isNaN(
+            lastDate.getTime()
+        )
+    ) {
 
-                    completedTopicsValue.textContent =
-                        Array.isArray(
-                            completedTopics
-                        )
-                            ? completedTopics.length
-                            : 0;
+        return 0;
 
-                }
+    }
 
 
-                const studyPlan =
-                    localStorage.getItem(
-                        "studyMindPlan"
-                    );
+    const today =
+        new Date();
 
 
-                const studyPlansValue =
-                    document.getElementById(
-                        "studyPlansValue"
-                    );
+    const startToday =
+        new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+        );
 
 
-                if (
-                    studyPlansValue
-                ) {
-
-                    studyPlansValue.textContent =
-                        studyPlan
-                            ? "1"
-                            : "0";
-
-                }
+    const startLast =
+        new Date(
+            lastDate.getFullYear(),
+            lastDate.getMonth(),
+            lastDate.getDate()
+        );
 
 
-                const streak =
-                    calculateStreak();
+    const difference =
+        Math.floor(
+            (
+                startToday -
+                startLast
+            ) /
+            (1000 * 60 * 60 * 24)
+        );
 
 
-                const streakValue =
-                    document.getElementById(
-                        "streakValue"
-                    );
+    if (
+        difference === 0
+    ) {
+
+        return 1;
+
+    }
 
 
-                if (
-                    streakValue
-                ) {
+    if (
+        difference === 1
+    ) {
 
-                    streakValue.textContent =
-                        `${streak} ${
-                            streak === 1
-                                ? "day"
-                                : "days"
-                        }`;
-
-                }
-
-
-                const aiQuestionsValue =
-                    document.getElementById(
-                        "aiQuestionsValue"
-                    );
-
-
-                if (
-                    aiQuestionsValue
-                ) {
-
-                    aiQuestionsValue.textContent =
-                        "Unlimited";
-
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "Could not load study stats:",
-                    error
-                );
-
-            }
-
-        }
-
-
-        function calculateStreak() {
-
-            const lastStudyDate =
+        const storedStreak =
+            Number(
                 localStorage.getItem(
-                    "lastStudyDate"
-                );
+                    "studyMindStreak"
+                ) || "1"
+            );
 
 
-            if (
-                !lastStudyDate
-            ) {
+        return Math.max(
+            1,
+            storedStreak
+        );
 
-                return 0;
-
-            }
-
-
-            const lastDate =
-                new Date(
-                    lastStudyDate
-                );
+    }
 
 
-            if (
-                Number.isNaN(
-                    lastDate.getTime()
-                )
-            ) {
+    return 0;
 
-                return 0;
-
-            }
+}
 
 
-            const today =
-                new Date();
+/* =========================================================
+   START
+   ========================================================= */
 
+if (
+    document.readyState ===
+    "loading"
+) {
 
-            const startToday =
-                new Date(
-                    today.getFullYear(),
-                    today.getMonth(),
-                    today.getDate()
-                );
+    document.addEventListener(
+        "DOMContentLoaded",
+        verifyPremiumAppAccess
+    );
 
+} else {
 
-            const startLast =
-                new Date(
-                    lastDate.getFullYear(),
-                    lastDate.getMonth(),
-                    lastDate.getDate()
-                );
+    verifyPremiumAppAccess();
 
+}
 
-            const difference =
-                Math.floor(
-                    (
-                        startToday -
-                        startLast
-                    ) /
-                    (1000 * 60 * 60 * 24)
-                );
-
-
-            if (
-                difference === 0
-            ) {
-
-                return 1;
-
-            }
-
-
-            if (
-                difference === 1
-            ) {
-
-                const storedStreak =
-                    Number(
-                        localStorage.getItem(
-                            "studyMindStreak"
-                        ) || "1"
-                    );
-
-
-                return Math.max(
-                    1,
-                    storedStreak
-                );
-
-            }
-
-
-            return 0;
-
-        }
-
-
-        /* =========================================================
-           START
-        ========================================================= */
-
-        verifyPremiumAppAccess();
-
-    </script>
-
+</script>
 </body>
 </html>
