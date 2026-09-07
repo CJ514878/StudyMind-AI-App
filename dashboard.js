@@ -3308,74 +3308,7 @@ function openKnowledgeCheckPage(
 
     /*
        ---------------------------------------------------------
-       PREMIUM GATE
-       ---------------------------------------------------------
-       Verified Premium users can continue directly.
-       Free users are sent to the Premium page.
-    */
-
-    const isPremium =
-        typeof window.isStudyMindPremium === "function"
-            ? window.isStudyMindPremium()
-            : (
-                window.studyMindPremiumVerified === true ||
-                window.studyMindIsPremium === true ||
-                window.premiumUser === true
-            );
-
-
-    if (!isPremium) {
-
-        /*
-           Remember the topic so the user can return to
-           the Knowledge Check after upgrading.
-        */
-
-        writeJSON(
-            KNOWLEDGE_TOPIC_KEY,
-            {
-
-                id:
-                    topic.id || "",
-
-                key:
-                    topicKey(topic),
-
-                name:
-                    topicName(topic),
-
-                title:
-                    topic.title ||
-                    topicName(topic),
-
-                subject:
-                    topicSubject(topic),
-
-                description:
-                    topic.description ||
-                    "",
-
-                checkId:
-                    topicKey(topic)
-
-            }
-        );
-
-
-        /*
-           Send the free user to the Premium page.
-        */
-
-        window.location.href =
-            "premium.html";
-
-        return;
-    }
-
-
-    /*
-       ---------------------------------------------------------
-       PREMIUM USER — CONTINUE TO KNOWLEDGE CHECK
+       SAVE THE TOPIC FIRST
        ---------------------------------------------------------
     */
 
@@ -3411,63 +3344,142 @@ function openKnowledgeCheckPage(
 
 
     /*
-       Do not delete existing questions.
-
-       This allows knowledge-check.html to use
-       already-generated questions and failed-question
-       revision data.
+       ---------------------------------------------------------
+       PREMIUM ACCESS CHECK
+       ---------------------------------------------------------
     */
 
-    const existingQuestions =
-        readJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            null
-        );
+    async function continueToKnowledgeCheck() {
+
+        let isPremium = false;
 
 
-    if (
-        !existingQuestions
-    ) {
+        /*
+           If the Premium status checker exists,
+           use the secure server verification.
+        */
 
-        writeJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            {
-                topicKey:
-                    topicKey(topic),
+        if (
+            typeof window.checkStudyMindPremiumStatus ===
+            "function"
+        ) {
 
-                topicName:
-                    topicName(topic),
+            try {
 
-                subject:
-                    topicSubject(topic),
+                isPremium =
+                    await window.checkStudyMindPremiumStatus();
 
-                questions:
-                    [],
+            } catch (error) {
 
-                questionCount:
-                    5,
+                console.error(
+                    "Knowledge Check Premium verification failed:",
+                    error
+                );
 
-                revisionQuestions:
-                    []
+                isPremium = false;
 
             }
-        );
+
+        } else {
+
+            /*
+               Fallback for the Premium Dashboard,
+               where access has already been verified.
+            */
+
+            isPremium =
+                window.studyMindPremiumVerified === true ||
+                window.studyMindIsPremium === true ||
+                window.premiumUser === true;
+
+        }
+
+
+        /*
+           ------------------------------------------------------
+           FREE USER
+           ------------------------------------------------------
+        */
+
+        if (!isPremium) {
+
+            window.location.href =
+                "premium.html";
+
+            return;
+
+        }
+
+
+        /*
+           ------------------------------------------------------
+           PREMIUM USER
+           ------------------------------------------------------
+        */
+
+        const existingQuestions =
+            readJSON(
+                KNOWLEDGE_QUESTIONS_KEY,
+                null
+            );
+
+
+        /*
+           Do not delete existing questions.
+
+           This allows knowledge-check.html to use
+           already-generated questions and failed-question
+           revision data.
+        */
+
+        if (
+            !existingQuestions
+        ) {
+
+            writeJSON(
+                KNOWLEDGE_QUESTIONS_KEY,
+                {
+
+                    topicKey:
+                        topicKey(topic),
+
+                    topicName:
+                        topicName(topic),
+
+                    subject:
+                        topicSubject(topic),
+
+                    questions:
+                        [],
+
+                    questionCount:
+                        5,
+
+                    revisionQuestions:
+                        []
+
+                }
+            );
+
+        }
+
+
+        saveDashboardState();
+
+
+        /*
+           Knowledge checks remain five questions.
+        */
+
+        window.location.href =
+            "knowledge-check.html";
 
     }
 
 
-    saveDashboardState();
-
-
-    /*
-       Knowledge checks remain five questions.
-    */
-
-    window.location.href =
-        "knowledge-check.html";
+    continueToKnowledgeCheck();
 
 }
-
 /* =========================================================
    COMPLETION CELEBRATION
 ========================================================= */
