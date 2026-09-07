@@ -37,17 +37,11 @@ const PLAN_KEY =
 const COMPATIBILITY_PLAN_KEY =
     "studyData";
 
-
-/* ---------------------------------------------------------
-   MULTI-PLAN STORAGE
---------------------------------------------------------- */
-
 const PLANS_KEY =
     "studyMindPlans";
 
 const ACTIVE_PLAN_KEY =
     "studyMindActivePlanId";
-
 
 const COMPLETED_TOPICS_KEY =
     "studyMindCompletedTopics";
@@ -86,25 +80,6 @@ const TIMER_DURATION_KEY =
 /* =========================================================
    PREMIUM
 ========================================================= */
-
-/*
-   IMPORTANT:
-
-   This email is NOT being used to grant Premium.
-
-   Premium access is determined by the secure backend
-   endpoint:
-
-       /api/premium/status
-
-   The backend checks the user's authenticated account
-   against the Premium subscription table.
-
-   This Home page only applies the golden UI after the
-   backend confirms:
-
-       { premium: true }
-*/
 
 const PREMIUM_STATUS_ENDPOINT =
     "/api/premium/status";
@@ -255,10 +230,6 @@ function createPlanId() {
 }
 
 
-/* ---------------------------------------------------------
-   GET ALL SAVED PLANS
---------------------------------------------------------- */
-
 function getSavedPlans() {
 
     const plans =
@@ -276,10 +247,6 @@ function getSavedPlans() {
 }
 
 
-/* ---------------------------------------------------------
-   SAVE ALL SAVED PLANS
---------------------------------------------------------- */
-
 function saveSavedPlans(plans) {
 
     return writeJSON(
@@ -292,10 +259,6 @@ function saveSavedPlans(plans) {
 }
 
 
-/* ---------------------------------------------------------
-   GET ACTIVE PLAN ID
---------------------------------------------------------- */
-
 function getActivePlanId() {
 
     return localStorage.getItem(
@@ -304,10 +267,6 @@ function getActivePlanId() {
 
 }
 
-
-/* ---------------------------------------------------------
-   SET ACTIVE PLAN ID
---------------------------------------------------------- */
 
 function setActivePlanId(planId) {
 
@@ -341,15 +300,12 @@ function captureCurrentPlanState() {
             null
         );
 
-
     if (!currentPlan) {
         return null;
     }
 
-
     const activePlanId =
         getActivePlanId();
-
 
     const completedTopics =
         readJSON(
@@ -357,13 +313,11 @@ function captureCurrentPlanState() {
             []
         );
 
-
     const completedQuestions =
         readJSON(
             COMPLETED_QUESTIONS_KEY,
             []
         );
-
 
     const currentTopicIndex =
         Number(
@@ -372,13 +326,11 @@ function captureCurrentPlanState() {
             ) || 0
         );
 
-
     const knowledgeTopic =
         readJSON(
             KNOWLEDGE_TOPIC_KEY,
             null
         );
-
 
     const knowledgeQuestions =
         readJSON(
@@ -386,12 +338,10 @@ function captureCurrentPlanState() {
             null
         );
 
-
     const celebrationShown =
         localStorage.getItem(
             CELEBRATION_KEY
         ) === "true";
-
 
     const studySession =
         readJSON(
@@ -399,13 +349,11 @@ function captureCurrentPlanState() {
             null
         );
 
-
     const topicReadings =
         readJSON(
             STUDY_READINGS_KEY,
             {}
         );
-
 
     const timerSeconds =
         Number(
@@ -414,14 +362,12 @@ function captureCurrentPlanState() {
             ) || 0
         );
 
-
     const timerDuration =
         Number(
             localStorage.getItem(
                 TIMER_DURATION_KEY
             ) || 0
         );
-
 
     return {
 
@@ -494,14 +440,12 @@ function getPlanDisplayTitle(plan) {
         return "Study Plan";
     }
 
-
     const subjectNames =
         Array.isArray(
             plan.subjectNames
         )
             ? plan.subjectNames
             : [];
-
 
     if (
         subjectNames.length > 0
@@ -518,7 +462,6 @@ function getPlanDisplayTitle(plan) {
 
         }
 
-
         return (
             subjectNames
                 .slice(0, 2)
@@ -533,7 +476,6 @@ function getPlanDisplayTitle(plan) {
 
     }
 
-
     if (plan.curriculum) {
 
         return (
@@ -544,7 +486,6 @@ function getPlanDisplayTitle(plan) {
         );
 
     }
-
 
     return "Study Plan";
 
@@ -560,15 +501,12 @@ function archiveCurrentPlan() {
     const currentPlanState =
         captureCurrentPlanState();
 
-
     if (!currentPlanState) {
         return null;
     }
 
-
     const plans =
         getSavedPlans();
-
 
     const existingIndex =
         plans.findIndex(
@@ -577,7 +515,6 @@ function archiveCurrentPlan() {
                 savedPlan.id ===
                     currentPlanState.id
         );
-
 
     if (
         existingIndex >= 0
@@ -596,11 +533,9 @@ function archiveCurrentPlan() {
 
     }
 
-
     saveSavedPlans(
         plans
     );
-
 
     return currentPlanState;
 
@@ -617,7 +552,6 @@ function createNewPlanRecord(
 
     const newPlanId =
         createPlanId();
-
 
     const newRecord = {
 
@@ -671,7 +605,6 @@ function createNewPlanRecord(
 
     };
 
-
     return newRecord;
 
 }
@@ -688,27 +621,22 @@ function saveNewPlanRecord(
     const plans =
         getSavedPlans();
 
-
     plans.unshift(
         newRecord
     );
-
 
     const saved =
         saveSavedPlans(
             plans
         );
 
-
     if (!saved) {
         return false;
     }
 
-
     setActivePlanId(
         newRecord.id
     );
-
 
     return true;
 
@@ -776,21 +704,17 @@ function migrateLegacyPlanIfNeeded() {
             null
         );
 
-
     if (!existingPlan) {
         return;
     }
 
-
     const plans =
         getSavedPlans();
-
 
     if (plans.length > 0) {
 
         const activeId =
             getActivePlanId();
-
 
         if (
             activeId &&
@@ -805,18 +729,15 @@ function migrateLegacyPlanIfNeeded() {
 
         }
 
-
         const migrated =
             createNewPlanRecord(
                 existingPlan
             );
 
-
         const saved =
             saveNewPlanRecord(
                 migrated
             );
-
 
         if (saved) {
 
@@ -826,13 +747,11 @@ function migrateLegacyPlanIfNeeded() {
                     []
                 );
 
-
             const completedQuestions =
                 readJSON(
                     COMPLETED_QUESTIONS_KEY,
                     []
                 );
-
 
             const currentIndex =
                 Number(
@@ -841,14 +760,12 @@ function migrateLegacyPlanIfNeeded() {
                     ) || 0
                 );
 
-
             migrated.completedTopics =
                 Array.isArray(
                     completedTopics
                 )
                     ? completedTopics
                     : [];
-
 
             migrated.completedQuestionTopics =
                 Array.isArray(
@@ -857,7 +774,6 @@ function migrateLegacyPlanIfNeeded() {
                     ? completedQuestions
                     : [];
 
-
             migrated.currentTopicIndex =
                 Number.isFinite(
                     currentIndex
@@ -865,10 +781,8 @@ function migrateLegacyPlanIfNeeded() {
                     ? currentIndex
                     : 0;
 
-
             const allPlans =
                 getSavedPlans();
-
 
             const index =
                 allPlans.findIndex(
@@ -876,7 +790,6 @@ function migrateLegacyPlanIfNeeded() {
                         plan.id ===
                         migrated.id
                 );
-
 
             if (index >= 0) {
 
@@ -895,12 +808,10 @@ function migrateLegacyPlanIfNeeded() {
 
     }
 
-
     const migrated =
         createNewPlanRecord(
             existingPlan
         );
-
 
     migrated.completedTopics =
         readJSON(
@@ -908,13 +819,11 @@ function migrateLegacyPlanIfNeeded() {
             []
         );
 
-
     migrated.completedQuestionTopics =
         readJSON(
             COMPLETED_QUESTIONS_KEY,
             []
         );
-
 
     migrated.currentTopicIndex =
         Number(
@@ -923,13 +832,11 @@ function migrateLegacyPlanIfNeeded() {
             ) || 0
         );
 
-
     migrated.knowledgeTopic =
         readJSON(
             KNOWLEDGE_TOPIC_KEY,
             null
         );
-
 
     migrated.knowledgeQuestions =
         readJSON(
@@ -937,13 +844,11 @@ function migrateLegacyPlanIfNeeded() {
             null
         );
 
-
     migrated.studySession =
         readJSON(
             STUDY_SESSION_KEY,
             null
         );
-
 
     migrated.topicReadings =
         readJSON(
@@ -951,12 +856,10 @@ function migrateLegacyPlanIfNeeded() {
             {}
         );
 
-
     migrated.celebrationShown =
         localStorage.getItem(
             CELEBRATION_KEY
         ) === "true";
-
 
     migrated.timerSeconds =
         Number(
@@ -965,7 +868,6 @@ function migrateLegacyPlanIfNeeded() {
             ) || 0
         );
 
-
     migrated.timerDuration =
         Number(
             localStorage.getItem(
@@ -973,10 +875,8 @@ function migrateLegacyPlanIfNeeded() {
             ) || 0
         );
 
-
     migrated.updatedAt =
         new Date().toISOString();
-
 
     saveNewPlanRecord(
         migrated
@@ -997,7 +897,6 @@ function getSubjectNames() {
     if (!input) {
         return [];
     }
-
 
     return [
         ...new Set(
@@ -1022,11 +921,9 @@ function getExistingTopicValues() {
 
     const values = {};
 
-
     if (!container) {
         return values;
     }
-
 
     container
         .querySelectorAll(
@@ -1039,12 +936,10 @@ function getExistingTopicValues() {
                     card.dataset.subject
                 );
 
-
             const textarea =
                 card.querySelector(
                     ".subject-topic-input"
                 );
-
 
             if (
                 subject &&
@@ -1057,7 +952,6 @@ function getExistingTopicValues() {
             }
 
         });
-
 
     return values;
 
@@ -1073,19 +967,15 @@ function renderSubjectTopicFields() {
     const container =
         $("subjectTopicFields");
 
-
     if (!container) {
         return;
     }
 
-
     const subjects =
         getSubjectNames();
 
-
     const oldValues =
         getExistingTopicValues();
-
 
     if (subjects.length === 0) {
 
@@ -1100,13 +990,11 @@ function renderSubjectTopicFields() {
 
         `;
 
-
         syncLegacyTopicsField();
 
         return;
 
     }
-
 
     container.innerHTML =
 
@@ -1115,7 +1003,6 @@ function renderSubjectTopicFields() {
 
                 const existing =
                     oldValues[subject] || "";
-
 
                 return `
 
@@ -1160,7 +1047,6 @@ Topic 3"
             })
             .join("");
 
-
     syncLegacyTopicsField();
 
 }
@@ -1175,11 +1061,9 @@ function collectSubjectTopicData() {
     const container =
         $("subjectTopicFields");
 
-
     if (!container) {
         return [];
     }
-
 
     return [
         ...container.querySelectorAll(
@@ -1194,12 +1078,10 @@ function collectSubjectTopicData() {
                     card.dataset.subject
                 );
 
-
             const textarea =
                 card.querySelector(
                     ".subject-topic-input"
                 );
-
 
             const rawTopics =
                 textarea
@@ -1209,12 +1091,10 @@ function collectSubjectTopicData() {
                         .filter(Boolean)
                     : [];
 
-
             const uniqueTopics =
                 [
                     ...new Set(rawTopics)
                 ];
-
 
             return {
 
@@ -1262,15 +1142,12 @@ function syncLegacyTopicsField() {
     const hidden =
         $("topics");
 
-
     if (!hidden) {
         return;
     }
 
-
     const subjectData =
         collectSubjectTopicData();
-
 
     hidden.value =
 
@@ -1307,13 +1184,11 @@ function validateSubjectTopics(
 
     }
 
-
     const missingTopics =
         subjectData.filter(
             subject =>
                 subject.topics.length === 0
         );
-
 
     if (
         missingTopics.length > 0
@@ -1334,7 +1209,6 @@ function validateSubjectTopics(
 
     }
 
-
     return true;
 
 }
@@ -1351,11 +1225,9 @@ function renderDifficultyFields(
     const section =
         $("difficultySection");
 
-
     if (!section) {
         return;
     }
-
 
     section.innerHTML = `
 
@@ -1458,7 +1330,6 @@ function collectDifficultyData() {
     const topicDifficulty = {};
     const topicPriority = {};
 
-
     document
         .querySelectorAll(
             ".topic-level"
@@ -1470,17 +1341,14 @@ function collectDifficultyData() {
                     select.dataset.subject
                 );
 
-
             const topic =
                 cleanText(
                     select.dataset.topic
                 );
 
-
             const difficulty =
                 select.value ||
                 "okay";
-
 
             if (
                 !topicDifficulty[subject]
@@ -1491,7 +1359,6 @@ function collectDifficultyData() {
 
             }
 
-
             if (
                 !topicPriority[subject]
             ) {
@@ -1501,10 +1368,8 @@ function collectDifficultyData() {
 
             }
 
-
             topicDifficulty[subject][topic] =
                 difficulty;
-
 
             topicPriority[subject][topic] =
 
@@ -1515,7 +1380,6 @@ function collectDifficultyData() {
                         : 1;
 
         });
-
 
     return {
 
@@ -1540,7 +1404,6 @@ function generateTimetable(
 
     const timetableData = [];
 
-
     for (
         let hourIndex = 0;
         hourIndex < hoursPerDay;
@@ -1556,7 +1419,6 @@ function generateTimetable(
             )}`
 
         ];
-
 
         for (
             let dayIndex = 0;
@@ -1578,13 +1440,11 @@ function generateTimetable(
 
         }
 
-
         timetableData.push(
             row
         );
 
     }
-
 
     return timetableData;
 
@@ -1603,18 +1463,15 @@ function generateStudyPlan(
         event.preventDefault();
     }
 
-
     const curriculum =
         cleanText(
             $("curriculum")?.value
         ) ||
         "Nigerian Senior Secondary Curriculum";
 
-
     const examDate =
         $("examDate")?.value ||
         "";
-
 
     const hoursPerDay =
         Number(
@@ -1622,20 +1479,13 @@ function generateStudyPlan(
             0
         );
 
-
     const startTime =
         $("startTime")?.value ||
         "16:00";
 
-
     const difficulty =
         $("difficulty")?.value ||
         "balanced";
-
-
-    /* -----------------------------------------------------
-       BASIC VALIDATION
-    ----------------------------------------------------- */
 
     if (!examDate) {
 
@@ -1647,7 +1497,6 @@ function generateStudyPlan(
 
     }
 
-
     if (hoursPerDay <= 0) {
 
         alert(
@@ -1658,14 +1507,8 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       DATE VALIDATION
-    ----------------------------------------------------- */
-
     const today =
         new Date();
-
 
     today.setHours(
         0,
@@ -1674,12 +1517,10 @@ function generateStudyPlan(
         0
     );
 
-
     const exam =
         new Date(
             `${examDate}T00:00:00`
         );
-
 
     exam.setHours(
         0,
@@ -1687,7 +1528,6 @@ function generateStudyPlan(
         0,
         0
     );
-
 
     if (
         Number.isNaN(
@@ -1703,7 +1543,6 @@ function generateStudyPlan(
 
     }
 
-
     if (
         exam < today
     ) {
@@ -1715,7 +1554,6 @@ function generateStudyPlan(
         return;
 
     }
-
 
     const daysLeft =
         Math.max(
@@ -1729,17 +1567,10 @@ function generateStudyPlan(
             )
         );
 
-
-    /* -----------------------------------------------------
-       SUBJECT + TOPICS
-    ----------------------------------------------------- */
-
     syncLegacyTopicsField();
-
 
     const subjectData =
         collectSubjectTopicData();
-
 
     if (
         !validateSubjectTopics(
@@ -1751,15 +1582,9 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       DIFFICULTY
-    ----------------------------------------------------- */
-
     renderDifficultyFields(
         subjectData
     );
-
 
     const {
         topicDifficulty,
@@ -1767,28 +1592,17 @@ function generateStudyPlan(
     } =
         collectDifficultyData();
 
-
-    /* -----------------------------------------------------
-       TOPICS
-    ----------------------------------------------------- */
-
     const allTopics =
         subjectData.flatMap(
             subject =>
                 subject.topics
         );
 
-
     const subjectNames =
         subjectData.map(
             subject =>
                 subject.name
         );
-
-
-    /* -----------------------------------------------------
-       TODAY
-    ----------------------------------------------------- */
 
     const dayNames = [
 
@@ -1802,12 +1616,10 @@ function generateStudyPlan(
 
     ];
 
-
     const todayName =
         dayNames[
             new Date().getDay()
         ];
-
 
     const todaySubject =
         subjectNames[
@@ -1815,23 +1627,12 @@ function generateStudyPlan(
             subjectNames.length
         ];
 
-
-    /* -----------------------------------------------------
-       START TIME
-    ----------------------------------------------------- */
-
     const startHour =
         Number(
             startTime.split(":")[0]
         ) || 16;
 
-
-    /* -----------------------------------------------------
-       URGENCY
-    ----------------------------------------------------- */
-
     let urgency;
-
 
     if (
         daysLeft > 90
@@ -1861,11 +1662,6 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       TIMETABLE
-    ----------------------------------------------------- */
-
     const timetableData =
         generateTimetable(
             subjectNames,
@@ -1873,28 +1669,15 @@ function generateStudyPlan(
             startHour
         );
 
-
-    /* =====================================================
-       ARCHIVE OLD PLAN
-    ===================================================== */
-
     const oldPlan =
         readJSON(
             PLAN_KEY,
             null
         );
 
-
     if (oldPlan) {
-
         archiveCurrentPlan();
-
     }
-
-
-    /* -----------------------------------------------------
-       COMPLETE NEW PLAN OBJECT
-    ----------------------------------------------------- */
 
     const studyData = {
 
@@ -1965,22 +1748,15 @@ function generateStudyPlan(
 
     };
 
-
-    /* =====================================================
-       CREATE NEW PLAN RECORD
-    ===================================================== */
-
     const newPlanRecord =
         createNewPlanRecord(
             studyData
         );
 
-
     const savedNewPlan =
         saveNewPlanRecord(
             newPlanRecord
         );
-
 
     if (!savedNewPlan) {
 
@@ -1992,17 +1768,7 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       RESET PROGRESS
-    ----------------------------------------------------- */
-
     resetForNewPlan();
-
-
-    /* -----------------------------------------------------
-       SAVE ACTIVE PLAN TO LEGACY KEYS
-    ----------------------------------------------------- */
 
     const savedMainPlan =
         writeJSON(
@@ -2010,13 +1776,11 @@ function generateStudyPlan(
             studyData
         );
 
-
     const savedCompatibilityPlan =
         writeJSON(
             COMPATIBILITY_PLAN_KEY,
             studyData
         );
-
 
     if (
         !savedMainPlan ||
@@ -2031,30 +1795,18 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       KEEP NEW PLAN ACTIVE
-    ----------------------------------------------------- */
-
     setActivePlanId(
         newPlanRecord.id
     );
 
-
-    /* -----------------------------------------------------
-       SHOW PREVIEW
-    ----------------------------------------------------- */
-
     const preview =
         $("studyPlan");
-
 
     if (preview) {
 
         preview.classList.remove(
             "hidden"
         );
-
 
         preview.innerHTML = `
 
@@ -2114,11 +1866,6 @@ function generateStudyPlan(
 
     }
 
-
-    /* -----------------------------------------------------
-       GO TO DASHBOARD
-    ----------------------------------------------------- */
-
     window.location.href =
         "dashboard.html";
 
@@ -2136,22 +1883,18 @@ function applyStudyMindTheme() {
             THEME_KEY
         ) || "dark";
 
-
     const isLight =
         savedTheme === "light";
-
 
     document.documentElement.classList.toggle(
         "light-mode",
         isLight
     );
 
-
     document.documentElement.classList.toggle(
         "dark-mode",
         !isLight
     );
-
 
     if (document.body) {
 
@@ -2160,7 +1903,6 @@ function applyStudyMindTheme() {
             isLight
         );
 
-
         document.body.classList.toggle(
             "dark-mode",
             !isLight
@@ -2168,12 +1910,10 @@ function applyStudyMindTheme() {
 
     }
 
-
     document.documentElement.style.colorScheme =
         isLight
             ? "light"
             : "dark";
-
 
     updateStudyMindThemeButton();
 
@@ -2191,18 +1931,15 @@ function toggleStudyMindTheme() {
             THEME_KEY
         ) || "dark";
 
-
     const newTheme =
         currentTheme === "dark"
             ? "light"
             : "dark";
 
-
     localStorage.setItem(
         THEME_KEY,
         newTheme
     );
-
 
     applyStudyMindTheme();
 
@@ -2218,11 +1955,9 @@ function updateStudyMindThemeButton() {
     const button =
         $("themeButton");
 
-
     if (!button) {
         return;
     }
-
 
     const isLight =
         document.body
@@ -2231,12 +1966,10 @@ function updateStudyMindThemeButton() {
                 "light-mode"
             );
 
-
     button.textContent =
         isLight
             ? "🌙 Dark Mode"
             : "☀️ Light Mode";
-
 
     button.setAttribute(
         "aria-label",
@@ -2244,7 +1977,6 @@ function updateStudyMindThemeButton() {
             ? "Switch to Dark Mode"
             : "Switch to Light Mode"
     );
-
 
     button.setAttribute(
         "title",
@@ -2265,11 +1997,9 @@ function connectStartButton() {
     const button =
         $("startButton");
 
-
     if (!button) {
         return;
     }
-
 
     if (
         button.dataset.connected === "true"
@@ -2279,10 +2009,8 @@ function connectStartButton() {
 
     }
 
-
     button.dataset.connected =
         "true";
-
 
     button.addEventListener(
         "click",
@@ -2290,10 +2018,8 @@ function connectStartButton() {
 
             event.preventDefault();
 
-
             const generator =
                 $("generator");
-
 
             if (!generator) {
 
@@ -2304,7 +2030,6 @@ function connectStartButton() {
                 return;
 
             }
-
 
             generator.scrollIntoView({
 
@@ -2331,11 +2056,9 @@ function connectThemeButton() {
     const button =
         $("themeButton");
 
-
     if (!button) {
         return;
     }
-
 
     if (
         button.dataset.connected === "true"
@@ -2347,10 +2070,8 @@ function connectThemeButton() {
 
     }
 
-
     button.dataset.connected =
         "true";
-
 
     button.addEventListener(
         "click",
@@ -2362,7 +2083,6 @@ function connectThemeButton() {
 
         }
     );
-
 
     updateStudyMindThemeButton();
 
@@ -2378,11 +2098,9 @@ function connectSubjectInputs() {
     const subjects =
         $("subjects");
 
-
     if (!subjects) {
         return;
     }
-
 
     if (
         subjects.dataset.connected === "true"
@@ -2392,10 +2110,8 @@ function connectSubjectInputs() {
 
     }
 
-
     subjects.dataset.connected =
         "true";
-
 
     subjects.addEventListener(
         "input",
@@ -2405,7 +2121,6 @@ function connectSubjectInputs() {
 
         }
     );
-
 
     subjects.addEventListener(
         "change",
@@ -2428,11 +2143,9 @@ function connectTopicFields() {
     const container =
         $("subjectTopicFields");
 
-
     if (!container) {
         return;
     }
-
 
     if (
         container.dataset.connected === "true"
@@ -2442,10 +2155,8 @@ function connectTopicFields() {
 
     }
 
-
     container.dataset.connected =
         "true";
-
 
     container.addEventListener(
         "input",
@@ -2468,11 +2179,9 @@ function connectStudyForm() {
     const form =
         $("studyForm");
 
-
     if (!form) {
         return;
     }
-
 
     if (
         form.dataset.connected === "true"
@@ -2482,10 +2191,8 @@ function connectStudyForm() {
 
     }
 
-
     form.dataset.connected =
         "true";
-
 
     form.addEventListener(
         "submit",
@@ -2496,208 +2203,31 @@ function connectStudyForm() {
 
 
 /* =========================================================
-   PREMIUM CTA — HOME PAGE
+   PREMIUM — SET FREE STATE
 ========================================================= */
 
-function openHomePremiumOffer() {
-
-    /*
-       Always verify Premium status at the moment the
-       Premium button is clicked.
-
-       Premium user -> premium-dashboard.html
-       Free user    -> premium.html
-    */
+function setFreePremiumState() {
 
     const button =
         $("premiumButton");
 
+    const premiumEyebrow =
+        $("premiumEyebrow");
 
-    if (button) {
+    const premiumTitle =
+        $("premiumTitle");
 
-        button.style.pointerEvents =
-            "none";
+    const premiumDescription =
+        $("premiumDescription");
 
-        button.setAttribute(
-            "aria-busy",
-            "true"
+
+    if (document.body) {
+
+        document.body.classList.remove(
+            "premium-home"
         );
 
     }
-
-
-    checkPremiumStatus()
-        .then(function(isPremium) {
-
-            if (isPremium === true) {
-
-                window.location.href =
-                    "premium-dashboard.html";
-
-                return;
-
-            }
-
-
-            window.location.href =
-                "premium.html";
-
-        })
-        .catch(function(error) {
-
-            console.error(
-                "StudyMind AI: Premium button verification failed.",
-                error
-            );
-
-            window.location.href =
-                "premium.html";
-
-        });
-
-}
-
-
-/* =========================================================
-   PREMIUM BUTTON
-========================================================= */
-
-function connectPremiumButton() {
-
-    const button =
-        $("premiumButton");
-
-
-    if (!button) {
-        return;
-    }
-
-
-    if (
-        button.dataset.connected === "true"
-    ) {
-
-        return;
-
-    }
-
-
-    button.dataset.connected =
-        "true";
-
-
-    button.addEventListener(
-        "click",
-        function(event) {
-
-            event.preventDefault();
-
-            openHomePremiumOffer();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   PREMIUM HOME UI
-========================================================= */
-
-function enablePremiumHome() {
-
-    if (!document.body) {
-        return;
-    }
-
-
-    document.body.classList.add(
-        "premium-home"
-    );
-
-
-    const premiumButton =
-        $("premiumButton");
-
-
-    const premiumEyebrow =
-        $("premiumEyebrow");
-
-
-    const premiumTitle =
-        $("premiumTitle");
-
-
-    const premiumDescription =
-        $("premiumDescription");
-
-
-    if (premiumEyebrow) {
-
-        premiumEyebrow.textContent =
-            "STUDYMIND PREMIUM";
-
-    }
-
-
-    if (premiumTitle) {
-
-        premiumTitle.textContent =
-            "Welcome to your Premium experience.";
-
-    }
-
-
-    if (premiumDescription) {
-
-        premiumDescription.textContent =
-            "Enjoy the full StudyMind AI experience with powerful Premium features, deeper study support and an elevated golden workspace.";
-
-    }
-
-
-    if (premiumButton) {
-
-        premiumButton.href =
-            "premium-dashboard.html";
-
-        premiumButton.innerHTML =
-            '👑 Open Premium Dashboard <span aria-hidden="true">→</span>';
-
-    }
-
-}
-
-/* =========================================================
-   DISABLE PREMIUM HOME
-========================================================= */
-
-function disablePremiumHome() {
-
-    if (!document.body) {
-        return;
-    }
-
-
-    document.body.classList.remove(
-        "premium-home"
-    );
-
-
-    const premiumButton =
-        $("premiumButton");
-
-
-    const premiumEyebrow =
-        $("premiumEyebrow");
-
-
-    const premiumTitle =
-        $("premiumTitle");
-
-
-    const premiumDescription =
-        $("premiumDescription");
 
 
     if (premiumEyebrow) {
@@ -2724,13 +2254,26 @@ function disablePremiumHome() {
     }
 
 
-    if (premiumButton) {
+    if (button) {
 
-        premiumButton.href =
+        /*
+           IMPORTANT:
+
+           This is a REAL href.
+
+           The button remains usable even if the
+           Premium API is unavailable.
+        */
+
+        button.href =
             "premium.html";
 
-        premiumButton.innerHTML =
+        button.innerHTML =
             '💎 Explore Premium <span aria-hidden="true">→</span>';
+
+        button.removeAttribute(
+            "aria-busy"
+        );
 
     }
 
@@ -2738,14 +2281,119 @@ function disablePremiumHome() {
 
 
 /* =========================================================
-   CHECK PREMIUM STATUS
+   PREMIUM — SET VERIFIED PREMIUM STATE
+========================================================= */
+
+function setVerifiedPremiumState() {
+
+    const button =
+        $("premiumButton");
+
+    const premiumEyebrow =
+        $("premiumEyebrow");
+
+    const premiumTitle =
+        $("premiumTitle");
+
+    const premiumDescription =
+        $("premiumDescription");
+
+
+    if (document.body) {
+
+        document.body.classList.add(
+            "premium-home"
+        );
+
+    }
+
+
+    if (premiumEyebrow) {
+
+        premiumEyebrow.textContent =
+            "STUDYMIND PREMIUM";
+
+    }
+
+
+    if (premiumTitle) {
+
+        premiumTitle.textContent =
+            "Welcome to your Premium experience.";
+
+    }
+
+
+    if (premiumDescription) {
+
+        premiumDescription.textContent =
+            "Enjoy the full StudyMind AI experience with powerful Premium features, deeper study support and an elevated golden workspace.";
+
+    }
+
+
+    if (button) {
+
+        /*
+           IMPORTANT:
+
+           Premium users receive the Premium Dashboard
+           as the actual href.
+
+           No click interception is needed.
+        */
+
+        button.href =
+            "premium-dashboard.html";
+
+        button.innerHTML =
+            '👑 Open Premium Dashboard <span aria-hidden="true">→</span>';
+
+        button.removeAttribute(
+            "aria-busy"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM — BACKWARD COMPATIBILITY
+========================================================= */
+
+function enablePremiumHome() {
+
+    setVerifiedPremiumState();
+
+}
+
+
+function disablePremiumHome() {
+
+    setFreePremiumState();
+
+}
+
+
+/* =========================================================
+   PREMIUM STATUS CHECK
 ========================================================= */
 
 async function checkPremiumStatus() {
 
     /*
-       Supabase must be loaded by home.html before this
-       function runs.
+       Always begin with a safe Free-state button.
+
+       This means the button works immediately even if
+       Supabase or the Premium API takes time to respond.
+    */
+
+    setFreePremiumState();
+
+
+    /*
+       Check whether the Supabase library exists.
     */
 
     if (
@@ -2755,10 +2403,8 @@ async function checkPremiumStatus() {
     ) {
 
         console.warn(
-            "StudyMind AI: Supabase client library is not loaded. Premium UI will remain disabled."
+            "StudyMind AI: Supabase client library is not loaded."
         );
-
-        disablePremiumHome();
 
         return false;
 
@@ -2768,8 +2414,8 @@ async function checkPremiumStatus() {
     try {
 
         /*
-           Create the Supabase client locally if Home has
-           not already created one.
+           Create the client only if Home has not
+           already created one.
         */
 
         if (
@@ -2779,10 +2425,8 @@ async function checkPremiumStatus() {
             const SUPABASE_URL =
                 "https://bicnrbqqvucgpbwudmit.supabase.co";
 
-
             const SUPABASE_PUBLISHABLE_KEY =
                 "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
 
             window.supabaseClient =
                 window.supabase.createClient(
@@ -2809,12 +2453,29 @@ async function checkPremiumStatus() {
 
 
         if (
-            sessionError ||
+            sessionError
+        ) {
+
+            console.warn(
+                "StudyMind AI: Could not read authentication session.",
+                sessionError
+            );
+
+            return false;
+
+        }
+
+
+        if (
             !sessionData ||
             !sessionData.session
         ) {
 
-            disablePremiumHome();
+            /*
+               Not logged in.
+
+               Keep Free state.
+            */
 
             return false;
 
@@ -2826,10 +2487,7 @@ async function checkPremiumStatus() {
 
 
         /*
-           Ask the secure backend for Premium status.
-
-           The access token proves which authenticated
-           user is making the request.
+           Ask backend for authoritative Premium status.
         */
 
         const response =
@@ -2864,8 +2522,13 @@ async function checkPremiumStatus() {
                 response.status
             );
 
+            /*
+               IMPORTANT:
 
-            disablePremiumHome();
+               Do NOT break the button.
+
+               It stays linked to premium.html.
+            */
 
             return false;
 
@@ -2877,8 +2540,8 @@ async function checkPremiumStatus() {
 
 
         /*
-           ONLY the backend response can enable the
-           golden Premium Home.
+           ONLY the backend response can activate
+           the Premium Home.
         */
 
         if (
@@ -2886,14 +2549,14 @@ async function checkPremiumStatus() {
             result.premium === true
         ) {
 
-            enablePremiumHome();
+            setVerifiedPremiumState();
 
             return true;
 
         }
 
 
-        disablePremiumHome();
+        setFreePremiumState();
 
         return false;
 
@@ -2904,8 +2567,15 @@ async function checkPremiumStatus() {
             error
         );
 
+        /*
+           Do not disable navigation.
 
-        disablePremiumHome();
+           Free-state href remains:
+
+               premium.html
+        */
+
+        setFreePremiumState();
 
         return false;
 
@@ -2946,8 +2616,10 @@ function connectPremiumAuthListener() {
         function() {
 
             /*
-               Give Supabase a moment to update its session
-               before checking Premium again.
+               Re-check Premium when authentication
+               changes.
+
+               The button itself remains a normal link.
             */
 
             setTimeout(
@@ -2956,7 +2628,7 @@ function connectPremiumAuthListener() {
                     checkPremiumStatus();
 
                 },
-                0
+                100
             );
 
         }
@@ -2966,22 +2638,98 @@ function connectPremiumAuthListener() {
 
 
 /* =========================================================
-   INITIALIZE PREMIUM SYSTEM
+   PREMIUM BUTTON
+========================================================= */
+
+function connectPremiumButton() {
+
+    const button =
+        $("premiumButton");
+
+
+    if (!button) {
+
+        console.warn(
+            "StudyMind AI: #premiumButton was not found on Home."
+        );
+
+        return;
+
+    }
+
+
+    /*
+       IMPORTANT:
+
+       Do NOT use preventDefault here.
+
+       Do NOT wait for the API here.
+
+       The href is the navigation mechanism.
+    */
+
+    if (
+        !button.getAttribute("href")
+    ) {
+
+        button.href =
+            "premium.html";
+
+    }
+
+
+    /*
+       This marker prevents any older initialization
+       from attempting to attach another listener.
+    */
+
+    button.dataset.premiumNavigation =
+        "native";
+
+
+}
+
+
+/* =========================================================
+   INITIALIZE PREMIUM HOME SYSTEM
 ========================================================= */
 
 async function initializePremiumHomeSystem() {
 
     /*
-       Premium status is checked independently from the
-       study-plan system.
-
-       A failed Premium check NEVER prevents the normal
-       StudyMind Home from working.
+       Set a safe default immediately.
     */
 
-    await checkPremiumStatus();
+    setFreePremiumState();
+
+
+    /*
+       Connect the native Premium button.
+    */
+
+    connectPremiumButton();
+
+
+    /*
+       Verify Premium in the background.
+
+       This changes the href only after the backend
+       confirms Premium.
+    */
+
+    const isPremium =
+        await checkPremiumStatus();
+
+
+    /*
+       Make sure the listener is connected after
+       the Supabase client exists.
+    */
 
     connectPremiumAuthListener();
+
+
+    return isPremium;
 
 }
 
@@ -3039,8 +2787,8 @@ function initializeHome() {
 
 
     /*
-       Premium is checked separately so a Premium API
-       failure cannot break the Home page.
+       Premium is completely independent from
+       study-plan generation.
     */
 
     initializePremiumHomeSystem();
