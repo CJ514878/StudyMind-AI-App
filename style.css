@@ -3906,89 +3906,68 @@ PREMIUM BUTTON
 ========================================================= */
 
 .premium-button {
-border: none;
-
-```
-padding: 12px 20px;
-
-border-radius: 12px;
-
-background: #7c3aed;
-color: #ffffff;
-
-font-weight: 700;
-
-cursor: pointer;
-
-transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-```
-
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #7c3aed;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
 }
 
 .premium-button:hover {
-background: #6d28d9;
-transform: translateY(-2px);
+    background: #6d28d9;
+    transform: translateY(-2px);
 }
+
 
 /* =========================================================
 NAVIGATION SHORTCUTS
 ========================================================= */
 
 .ai-page-shortcuts {
-display: grid;
-
-```
-grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
-gap: 12px;
-
-margin-top: 30px;
-```
-
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 30px;
 }
 
 .ai-shortcut {
-min-height: 80px;
-
-```
-border: 1px solid #263244;
-border-radius: 14px;
-
-background: #111827;
-color: #cbd5e1;
-
-cursor: pointer;
-
-font-weight: 600;
-
-transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-```
-
+    min-height: 80px;
+    border: 1px solid #263244;
+    border-radius: 14px;
+    background: #111827;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-weight: 600;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .ai-shortcut:hover {
-background: #1e293b;
-color: #ffffff;
-transform: translateY(-2px);
+    background: #1e293b;
+    color: #ffffff;
+    transform: translateY(-2px);
 }
+
 
 /* =========================================================
 LIGHT MODE
 ========================================================= */
 
 body.light-mode {
-background: #f8fafc;
-color: #0f172a;
+    background: #f8fafc;
+    color: #0f172a;
 }
 
 body.light-mode .ai-support-page {
-background: #f8fafc;
+    background: #f8fafc;
 }
 
 body.light-mode .ai-navbar,
@@ -3996,8 +3975,8 @@ body.light-mode .ai-chat-card,
 body.light-mode .ai-action-button,
 body.light-mode .ai-shortcut,
 body.light-mode .ai-usage-card {
-background: #ffffff;
-border-color: #e2e8f0;
+    background: #ffffff;
+    border-color: #e2e8f0;
 }
 
 body.light-mode .ai-logo,
@@ -4006,7 +3985,7 @@ body.light-mode .ai-chat-title h2,
 body.light-mode .ai-response h2,
 body.light-mode .ai-response h3,
 body.light-mode .ai-response h4 {
-color: #0f172a;
+    color: #0f172a;
 }
 
 body.light-mode .ai-support-hero p,
@@ -4014,28 +3993,29 @@ body.light-mode .ai-action-button small,
 body.light-mode .ai-chat-title p,
 body.light-mode .ai-response,
 body.light-mode .ai-usage-card {
-color: #64748b;
+    color: #64748b;
 }
 
 body.light-mode .ai-nav-links button {
-color: #475569;
+    color: #475569;
 }
 
 body.light-mode .ai-nav-links button:hover {
-background: #f1f5f9;
-color: #0f172a;
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
 body.light-mode .ai-action-button:hover,
 body.light-mode .ai-shortcut:hover {
-background: #f8fafc;
+    background: #f8fafc;
 }
 
 body.light-mode #aiQuestion {
-background: #f8fafc;
-color: #0f172a;
-border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #cbd5e1;
 }
+
 
 /* =========================================================
 RESPONSIVE — TABLET
@@ -4043,34 +4023,30 @@ RESPONSIVE — TABLET
 
 @media (max-width: 900px) {
 
-```
-.ai-navbar {
-    padding: 15px 20px;
+    .ai-navbar {
+        padding: 15px 20px;
+        align-items: flex-start;
+        gap: 15px;
+        flex-direction: column;
+    }
 
-    align-items: flex-start;
-    gap: 15px;
+    .ai-nav-links {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
 
-    flex-direction: column;
+    .ai-quick-actions {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .ai-page-shortcuts {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
 }
 
-.ai-nav-links {
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-}
-
-.ai-quick-actions {
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-}
-
-.ai-page-shortcuts {
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-}
-```
-
-}
 
 /* =========================================================
 RESPONSIVE — MOBILE
@@ -4078,56 +4054,54 @@ RESPONSIVE — MOBILE
 
 @media (max-width: 600px) {
 
-```
-.ai-support-container {
-    width: min(100% - 24px, 1200px);
-    padding: 35px 0 60px;
+    .ai-support-container {
+        width: min(100% - 24px, 1200px);
+        padding: 35px 0 60px;
+    }
+
+    .ai-support-hero h1 {
+        font-size: 32px;
+    }
+
+    .ai-support-hero p {
+        font-size: 15px;
+    }
+
+    .ai-quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-page-shortcuts {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .ai-chat-header {
+        padding: 18px;
+    }
+
+    .ai-response {
+        padding: 20px;
+        min-height: 180px;
+    }
+
+    .ai-input-area {
+        padding: 16px;
+    }
+
+    .ai-input-wrapper {
+        flex-direction: column;
+    }
+
+    #askAIButton {
+        width: 100%;
+    }
+
+    .ai-action-button {
+        min-height: 105px;
+    }
 }
 
-.ai-support-hero h1 {
-    font-size: 32px;
-}
-
-.ai-support-hero p {
-    font-size: 15px;
-}
-
-.ai-quick-actions {
-    grid-template-columns: 1fr;
-}
-
-.ai-page-shortcuts {
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-}
-
-.ai-chat-header {
-    padding: 18px;
-}
-
-.ai-response {
-    padding: 20px;
-    min-height: 180px;
-}
-
-.ai-input-area {
-    padding: 16px;
-}
-
-.ai-input-wrapper {
-    flex-direction: column;
-}
-
-#askAIButton {
-    width: 100%;
-}
-
-.ai-action-button {
-    min-height: 105px;
-}
-```
-
-}
 
 /* =========================================================
 SMALL MOBILE
@@ -4135,19 +4109,18 @@ SMALL MOBILE
 
 @media (max-width: 380px) {
 
-```
-.ai-page-shortcuts {
-    grid-template-columns: 1fr;
+    .ai-page-shortcuts {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-support-hero h1 {
+        font-size: 28px;
+    }
 }
 
-.ai-support-hero h1 {
-    font-size: 28px;
-}
-```
 
-}
 /* =========================================================
-   STUDYMIND AI — SUMMARIZER USAGE CIRCLE
+STUDYMIND AI — SUMMARIZER USAGE CIRCLE
 ========================================================= */
 
 .progress-circle {
@@ -4179,11 +4152,7 @@ SMALL MOBILE
         transform 0.3s ease;
 }
 
-
-/* Inner circle */
-
 .progress-circle::before {
-
     content: "";
 
     position: absolute;
@@ -4195,34 +4164,20 @@ SMALL MOBILE
 
     background:
         var(--card-background, #111827);
-
 }
 
-
-/* Percentage text */
-
 .progress-circle span {
-
     position: relative;
-
     z-index: 2;
 
     font-size: 22px;
-
     font-weight: 800;
-
 }
-
-
-/* Small visual animation when usage changes */
 
 .progress-circle[data-progress] {
-
     animation:
         usageCircleUpdate 0.45s ease;
-
 }
-
 
 @keyframes usageCircleUpdate {
 
@@ -4237,10 +4192,11 @@ SMALL MOBILE
     100% {
         transform: scale(1);
     }
-
 }
+
+
 /* ============================================================
-   EXAM DAY — ORANGE MARKER
+EXAM DAY — ORANGE MARKER
 ============================================================ */
 
 .calendar-day.exam-day .calendar-dot,
@@ -4248,43 +4204,52 @@ SMALL MOBILE
     background: #f97316 !important;
     border-color: #f97316 !important;
 }
+
+
 /* =========================================================
-   CALENDAR DAY COLORS
+CALENDAR DAY COLORS
 ========================================================= */
 
-/* 🔵 STUDY DAYS */
+/* STUDY DAYS */
+
 .calendar-day.study-day {
     background: rgba(37, 99, 235, 0.15);
     border-color: rgba(37, 99, 235, 0.45);
     color: #3b82f6;
 }
 
-/* 🟣 REST DAYS — SATURDAY */
+
+/* REST DAYS */
+
 .calendar-day.rest-day {
     background: rgba(139, 92, 246, 0.18);
     border-color: rgba(139, 92, 246, 0.55);
     color: #a78bfa;
 }
 
-/* 🔴 EXAM DAY ALWAYS OVERRIDES REST DAY */
+
+/* EXAM DAY */
+
 .calendar-day.exam-day {
     background: rgba(239, 68, 68, 0.18);
     border-color: rgba(239, 68, 68, 0.55);
     color: #f87171;
 }
 
-/* 🟠 TEST DAY */
+
+/* TEST DAY */
+
 .calendar-day.test-day {
     background: rgba(245, 158, 11, 0.18);
     border-color: rgba(245, 158, 11, 0.55);
     color: #fbbf24;
 }
+
+
 /* =========================================================
-   STUDYMIND AI — GLOBAL LIGHT / DARK MODE
-   FINAL THEME OVERRIDE
+STUDYMIND AI — GLOBAL LIGHT / DARK MODE
 ========================================================= */
 
-/* Smooth theme transition */
 html,
 body,
 .navbar,
@@ -4317,7 +4282,7 @@ button {
 
 
 /* =========================================================
-   DARK MODE
+DARK MODE
 ========================================================= */
 
 html.dark-mode,
@@ -4377,7 +4342,7 @@ body.dark-mode .topic-card {
 
 
 /* =========================================================
-   LIGHT MODE
+LIGHT MODE
 ========================================================= */
 
 html.light-mode,
@@ -4452,7 +4417,7 @@ body.light-mode .topic-card {
 
 
 /* =========================================================
-   LIGHT MODE — NAVIGATION
+LIGHT MODE — NAVIGATION
 ========================================================= */
 
 body.light-mode .nav-links a {
@@ -4465,7 +4430,7 @@ body.light-mode .logo {
 
 
 /* =========================================================
-   LIGHT MODE — BUTTON
+LIGHT MODE — BUTTON
 ========================================================= */
 
 body.light-mode .theme-button {
@@ -4482,7 +4447,7 @@ body.dark-mode .theme-button {
 
 
 /* =========================================================
-   LIGHT MODE — FORM
+LIGHT MODE — FORM
 ========================================================= */
 
 body.light-mode .subject-topic-card h3,
@@ -4496,7 +4461,7 @@ body.light-mode .subject-topic-card small {
 
 
 /* =========================================================
-   LIGHT MODE — CALENDAR
+LIGHT MODE — CALENDAR
 ========================================================= */
 
 body.light-mode .calendar-day {
@@ -4515,7 +4480,7 @@ body.light-mode .calendar-day.today {
 
 
 /* =========================================================
-   DARK MODE — CALENDAR
+DARK MODE — CALENDAR
 ========================================================= */
 
 body.dark-mode .calendar-day {
@@ -4530,7 +4495,7 @@ body.dark-mode .calendar-day.empty {
 
 
 /* =========================================================
-   PREVENT WHITE FLASH
+PREVENT WHITE FLASH
 ========================================================= */
 
 html {
@@ -4540,11 +4505,12 @@ html {
 html.light-mode {
     background: #f7f9fc;
 }
+
+
 /* =========================================================
-   STUDYMIND AI — TODAY'S FOCUS AI THEME FIX
+TODAY'S FOCUS AI THEME FIX
 ========================================================= */
 
-/* LIGHT MODE */
 body.light-mode .today-focus,
 body.light-mode .focus-card,
 body.light-mode .today-focus-card,
@@ -4555,7 +4521,6 @@ body.light-mode .personalized-study-plan {
     box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06) !important;
 }
 
-/* LIGHT MODE TEXT */
 body.light-mode .today-focus h1,
 body.light-mode .today-focus h2,
 body.light-mode .today-focus h3,
@@ -4571,8 +4536,6 @@ body.light-mode .focus-card span {
     color: #172033 !important;
 }
 
-
-/* DARK MODE */
 body.dark-mode .today-focus,
 body.dark-mode .focus-card,
 body.dark-mode .today-focus-card,
@@ -4583,7 +4546,6 @@ body.dark-mode .personalized-study-plan {
     box-shadow: none !important;
 }
 
-/* DARK MODE TEXT */
 body.dark-mode .today-focus h1,
 body.dark-mode .today-focus h2,
 body.dark-mode .today-focus h3,
@@ -4601,7 +4563,7 @@ body.dark-mode .focus-card span {
 
 
 /* =========================================================
-   SUBJECT PROGRESS ROWS
+SUBJECT PROGRESS ROWS
 ========================================================= */
 
 body.light-mode .today-focus .subject,
@@ -4621,799 +4583,233 @@ body.dark-mode .focus-card .subject-row {
     color: #f8fafc !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
 }
+
+
 /* =========================================================
-   STUDYMIND PREMIUM — GOLD EXPERIENCE
+STUDYMIND PREMIUM — GOLD EXPERIENCE
 ========================================================= */
 
 :root {
     --premium-gold: #f5c451;
     --premium-gold-light: #ffe7a3;
+    --premium-gold-bright: #ffd76a;
     --premium-gold-dark: #b8860b;
-    --premium-gold-glow: rgba(245, 196, 81, 0.25);
-}
+    --premium-gold-deep: #8f6810;
 
-
-/* =========================================================
-   PREMIUM GLOBAL THEME
-========================================================= */
-
-html.study-mind-premium,
-body.study-mind-premium {
-
-    --primary-color: #d9a928;
-    --primary: #d9a928;
-    --accent: #f5c451;
-
-}
-
-
-body.study-mind-premium {
-
-    background:
-        radial-gradient(
-            circle at top right,
-            rgba(245, 196, 81, 0.08),
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at bottom left,
-            rgba(217, 169, 40, 0.06),
-            transparent 35%
-        );
-}
-
-
-/* =========================================================
-   PREMIUM NAVIGATION
-========================================================= */
-
-body.study-mind-premium nav,
-body.study-mind-premium .navbar,
-body.study-mind-premium .nav-bar {
-
-    border-bottom-color:
-        rgba(245, 196, 81, 0.35);
-
-}
-
-
-body.study-mind-premium nav a:hover,
-body.study-mind-premium .navbar a:hover {
-
-    color:
-        var(--premium-gold) !important;
-}
-
-
-/* =========================================================
-   PREMIUM BUTTONS
-========================================================= */
-
-body.study-mind-premium
-button.primary-button,
-body.study-mind-premium
-button.primary-button:hover {
-
-    background:
-        linear-gradient(
-            135deg,
-            #b8860b,
-            #f5c451,
-            #d9a928
-        );
-
-    color:
-        #17120a;
-
-    border-color:
-        rgba(255, 231, 163, 0.6);
-
-    box-shadow:
-        0 8px 28px
-        rgba(245, 196, 81, 0.22);
-}
-
-
-/* =========================================================
-   PREMIUM CARDS
-========================================================= */
-
-body.study-mind-premium
-.card,
-body.study-mind-premium
-.dashboard-card,
-body.study-mind-premium
-.feature-card {
-
-    border-color:
-        rgba(245, 196, 81, 0.22);
-
-}
-
-
-body.study-mind-premium
-.card:hover,
-body.study-mind-premium
-.dashboard-card:hover,
-body.study-mind-premium
-.feature-card:hover {
-
-    border-color:
-        rgba(245, 196, 81, 0.45);
-
-    box-shadow:
-        0 12px 35px
-        rgba(245, 196, 81, 0.10);
-}
-
-
-/* =========================================================
-   PREMIUM BADGE
-========================================================= */
-
-.study-mind-premium-badge {
-
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    gap:
-        6px;
-
-    padding:
-        6px 12px;
-
-    border-radius:
-        999px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #8f6810,
-            #f5c451
-        );
-
-    color:
-        #17120a;
-
-    font-size:
-        11px;
-
-    font-weight:
-        800;
-
-    letter-spacing:
-        0.08em;
-
-    box-shadow:
-        0 5px 18px
-        rgba(245, 196, 81, 0.22);
-}
-
-
-/* =========================================================
-   PREMIUM MODAL
-========================================================= */
-
-.sm-premium-overlay {
-
-    position:
-        fixed;
-
-    inset:
-        0;
-
-    z-index:
-        999999;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    padding:
-        20px;
-
-    background:
-        rgba(3, 7, 18, 0.78);
-
-    backdrop-filter:
-        blur(12px);
-}
-
-
-.sm-premium-modal {
-
-    position:
-        relative;
-
-    width:
-        min(680px, 100%);
-
-    max-height:
-        calc(100vh - 40px);
-
-    overflow-y:
-        auto;
-
-    padding:
-        34px;
-
-    border:
-        1px solid
-        rgba(245, 196, 81, 0.35);
-
-    border-radius:
-        26px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #101827,
-            #0b1220
-        );
-
-    color:
-        #ffffff;
-
-    box-shadow:
-        0 30px 100px
-        rgba(0, 0, 0, 0.55),
-        0 0 60px
-        rgba(245, 196, 81, 0.10);
-}
-
-
-.sm-premium-close {
-
-    position:
-        absolute;
-
-    top:
-        16px;
-
-    right:
-        18px;
-
-    width:
-        38px;
-
-    height:
-        38px;
-
-    border:
-        0;
-
-    border-radius:
-        50%;
-
-    background:
-        rgba(255,255,255,0.08);
-
-    color:
-        #ffffff;
-
-    font-size:
-        25px;
-
-    cursor:
-        pointer;
-}
-
-
-.sm-premium-crown {
-
-    width:
-        70px;
-
-    height:
-        70px;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    margin:
-        0 auto 14px;
-
-    border-radius:
-        20px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #8f6810,
-            #f5c451,
-            #ffe7a3
-        );
-
-    font-size:
-        34px;
-
-    box-shadow:
-        0 12px 35px
+    --premium-gold-glow:
         rgba(245, 196, 81, 0.25);
 }
 
 
-.sm-premium-eyebrow {
-
-    text-align:
-        center;
-
-    color:
-        var(--premium-gold);
-
-    font-size:
-        12px;
-
-    font-weight:
-        800;
-
-    letter-spacing:
-        0.16em;
-
-    margin-bottom:
-        8px;
-}
-
-
-.sm-premium-modal h2 {
-
-    margin:
-        0;
-
-    text-align:
-        center;
-
-    font-size:
-        clamp(28px, 5vw, 42px);
-}
-
-
-.sm-premium-subtitle {
-
-    max-width:
-        560px;
-
-    margin:
-        12px auto 25px;
-
-    text-align:
-        center;
-
-    color:
-        rgba(255,255,255,0.68);
-
-    line-height:
-        1.65;
-}
-
-
 /* =========================================================
-   PREMIUM FEATURES
-========================================================= */
-
-.sm-premium-features {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(2, 1fr);
-
-    gap:
-        12px;
-}
-
-
-.sm-premium-feature {
-
-    display:
-        flex;
-
-    gap:
-        12px;
-
-    padding:
-        15px;
-
-    border:
-        1px solid
-        rgba(245,196,81,0.12);
-
-    border-radius:
-        16px;
-
-    background:
-        rgba(255,255,255,0.035);
-}
-
-
-.sm-premium-feature > span {
-
-    font-size:
-        24px;
-}
-
-
-.sm-premium-feature strong {
-
-    display:
-        block;
-
-    margin-bottom:
-        4px;
-}
-
-
-.sm-premium-feature small {
-
-    display:
-        block;
-
-    color:
-        rgba(255,255,255,0.58);
-
-    line-height:
-        1.45;
-}
-
-
-/* =========================================================
-   PAYMENT
-========================================================= */
-
-.sm-premium-divider {
-
-    height:
-        1px;
-
-    margin:
-        25px 0;
-
-    background:
-        rgba(255,255,255,0.10);
-}
-
-
-.sm-premium-modal h3 {
-
-    margin:
-        0 0 14px;
-
-    text-align:
-        center;
-}
-
-
-.sm-payment-options {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
-    gap:
-        10px;
-}
-
-
-.sm-payment-button {
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    gap:
-        8px;
-
-    min-height:
-        70px;
-
-    padding:
-        12px;
-
-    border:
-        1px solid
-        rgba(245,196,81,0.18);
-
-    border-radius:
-        15px;
-
-    background:
-        rgba(255,255,255,0.045);
-
-    color:
-        #ffffff;
-
-    cursor:
-        pointer;
-
-    transition:
-        0.2s ease;
-}
-
-
-.sm-payment-button:hover {
-
-    transform:
-        translateY(-2px);
-
-    border-color:
-        rgba(245,196,81,0.55);
-
-    background:
-        rgba(245,196,81,0.08);
-
-}
-
-
-.sm-payment-button:disabled {
-
-    opacity:
-        0.55;
-
-    cursor:
-        wait;
-
-}
-
-
-.sm-payment-button > span:first-child {
-
-    font-size:
-        22px;
-}
-
-
-.sm-payment-button strong,
-.sm-payment-button small {
-
-    display:
-        block;
-}
-
-
-.sm-payment-button small {
-
-    margin-top:
-        3px;
-
-    color:
-        rgba(255,255,255,0.5);
-
-}
-
-
-.sm-premium-payment-status {
-
-    min-height:
-        22px;
-
-    margin-top:
-        14px;
-
-    text-align:
-        center;
-
-    font-size:
-        14px;
-}
-
-
-.sm-premium-payment-status.loading {
-
-    color:
-        var(--premium-gold);
-}
-
-
-.sm-premium-payment-status.error {
-
-    color:
-        #ff7b7b;
-}
-
-
-.sm-premium-secure {
-
-    margin:
-        15px 0 0;
-
-    text-align:
-        center;
-
-    color:
-        rgba(255,255,255,0.45);
-
-    font-size:
-        12px;
-}
-
-
-/* =========================================================
-   PREMIUM ACTIVE
-========================================================= */
-
-.sm-premium-active-list {
-
-    display:
-        grid;
-
-    gap:
-        9px;
-
-    margin:
-        25px 0;
-
-    padding:
-        18px;
-
-    border-radius:
-        16px;
-
-    background:
-        rgba(245,196,81,0.07);
-
-    color:
-        rgba(255,255,255,0.82);
-}
-
-
-.sm-premium-main-button {
-
-    width:
-        100%;
-
-    padding:
-        15px;
-
-    border:
-        0;
-
-    border-radius:
-        13px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #b8860b,
-            #f5c451
-        );
-
-    color:
-        #17120a;
-
-    font-weight:
-        800;
-
-    font-size:
-        15px;
-
-    cursor:
-        pointer;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 650px) {
-
-    .sm-premium-modal {
-        padding:
-            25px 18px;
-    }
-
-    .sm-premium-features {
-        grid-template-columns:
-            1fr;
-    }
-
-    .sm-payment-options {
-        grid-template-columns:
-            1fr;
-    }
-
-}
-/* =========================================================
-   STUDYMIND AI — PREMIUM HOME
-   GLOWING GOLD EXPERIENCE
-   Activated by: body.premium-home
+PREMIUM GLOBAL VARIABLES
 ========================================================= */
 
 body.premium-home {
-    --premium-gold: #f5c451;
-    --premium-gold-light: #ffe9a8;
-    --premium-gold-bright: #ffd76a;
-    --premium-gold-dark: #b8860b;
+
+    --primary-color:
+        #d9a928;
+
+    --primary:
+        #d9a928;
+
+    --accent:
+        #f5c451;
+}
+
+
+/* =========================================================
+PREMIUM HOME — DARK MODE
+========================================================= */
+
+body.premium-home.dark-mode {
 
     background:
         radial-gradient(
-            circle at 15% 10%,
-            rgba(245, 196, 81, 0.16),
+            circle at 15% 8%,
+            rgba(245, 196, 81, 0.17),
             transparent 30%
         ),
         radial-gradient(
-            circle at 85% 20%,
+            circle at 85% 18%,
             rgba(255, 215, 106, 0.13),
             transparent 28%
         ),
         radial-gradient(
             circle at 50% 90%,
-            rgba(184, 134, 11, 0.12),
+            rgba(184, 134, 11, 0.11),
             transparent 35%
         ),
         #07090d !important;
 
-    color: #fff !important;
-    position: relative;
+    color:
+        #ffffff !important;
+
+    position:
+        relative;
+
+    overflow-x:
+        hidden;
 }
 
 
 /* =========================================================
-   GOLDEN AMBIENT LIGHT
+PREMIUM HOME — DARK AMBIENT GLOW
 ========================================================= */
 
-body.premium-home::before {
-    content: "";
-    position: fixed;
-    inset: -30%;
-    pointer-events: none;
-    z-index: -1;
+body.premium-home.dark-mode::before {
+
+    content:
+        "";
+
+    position:
+        fixed;
+
+    inset:
+        -30%;
+
+    pointer-events:
+        none;
+
+    z-index:
+        -1;
 
     background:
         radial-gradient(
             circle at 30% 30%,
-            rgba(255, 215, 106, 0.07),
+            rgba(255, 215, 106, 0.08),
             transparent 25%
         ),
         radial-gradient(
             circle at 70% 65%,
-            rgba(245, 196, 81, 0.06),
+            rgba(245, 196, 81, 0.07),
             transparent 28%
         );
 
-    animation: premiumAmbientGlow 8s ease-in-out infinite alternate;
+    animation:
+        premiumAmbientGlow 8s ease-in-out infinite alternate;
 }
 
+
+/* =========================================================
+PREMIUM HOME — LIGHT MODE
+========================================================= */
+
+body.premium-home.light-mode {
+
+    background:
+        radial-gradient(
+            circle at 10% 5%,
+            rgba(245, 196, 81, 0.17),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 90% 15%,
+            rgba(255, 215, 106, 0.13),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 50% 95%,
+            rgba(184, 134, 11, 0.08),
+            transparent 35%
+        ),
+        #fffdf7 !important;
+
+    color:
+        #1c1b18 !important;
+
+    position:
+        relative;
+
+    overflow-x:
+        hidden;
+}
+
+
+/* =========================================================
+PREMIUM LIGHT AMBIENT GLOW
+========================================================= */
+
+body.premium-home.light-mode::before {
+
+    content:
+        "";
+
+    position:
+        fixed;
+
+    inset:
+        -30%;
+
+    pointer-events:
+        none;
+
+    z-index:
+        -1;
+
+    background:
+        radial-gradient(
+            circle at 25% 25%,
+            rgba(245, 196, 81, 0.09),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 75% 65%,
+            rgba(255, 215, 106, 0.07),
+            transparent 30%
+        );
+
+    animation:
+        premiumLightAmbientGlow 9s ease-in-out infinite alternate;
+}
+
+
 @keyframes premiumAmbientGlow {
+
     0% {
-        opacity: 0.65;
-        transform: scale(1);
+        opacity:
+            0.55;
+
+        transform:
+            scale(1);
     }
 
     100% {
-        opacity: 1;
-        transform: scale(1.08);
+        opacity:
+            1;
+
+        transform:
+            scale(1.08);
+    }
+}
+
+
+@keyframes premiumLightAmbientGlow {
+
+    0% {
+        opacity:
+            0.55;
+
+        transform:
+            scale(1);
+    }
+
+    100% {
+        opacity:
+            1;
+
+        transform:
+            scale(1.04);
     }
 }
 
 
 /* =========================================================
-   NAVBAR
+PREMIUM NAVBAR — DARK
 ========================================================= */
 
-body.premium-home .navbar {
+body.premium-home.dark-mode .navbar {
+
     background:
         rgba(7, 9, 13, 0.88) !important;
 
@@ -5424,31 +4820,72 @@ body.premium-home .navbar {
         0 1px 0 rgba(245, 196, 81, 0.08),
         0 8px 35px rgba(245, 196, 81, 0.06);
 
-    backdrop-filter: blur(14px);
+    backdrop-filter:
+        blur(14px);
 }
 
-body.premium-home .logo {
-    color: #fff !important;
+
+/* =========================================================
+PREMIUM NAVBAR — LIGHT
+========================================================= */
+
+body.premium-home.light-mode .navbar {
+
+    background:
+        rgba(255, 253, 247, 0.92) !important;
+
+    border-bottom:
+        1px solid rgba(184, 134, 11, 0.22) !important;
+
+    box-shadow:
+        0 4px 25px rgba(184, 134, 11, 0.08);
+
+    backdrop-filter:
+        blur(14px);
+}
+
+
+/* =========================================================
+PREMIUM LOGO
+========================================================= */
+
+body.premium-home.dark-mode .logo {
+
+    color:
+        #ffffff !important;
 
     text-shadow:
         0 0 18px rgba(245, 196, 81, 0.35);
 }
 
-body.premium-home .logo span,
-body.premium-home .premium-home-badge {
-    color: var(--premium-gold-light) !important;
+body.premium-home.light-mode .logo {
+
+    color:
+        #201d17 !important;
+
+    text-shadow:
+        0 0 18px rgba(245, 196, 81, 0.20);
 }
 
-body.premium-home .nav-links a {
-    color: #d9d9d9 !important;
+
+/* =========================================================
+PREMIUM NAV LINKS — DARK
+========================================================= */
+
+body.premium-home.dark-mode .nav-links a {
+
+    color:
+        #d9d9d9 !important;
 
     transition:
         color 0.2s ease,
         text-shadow 0.2s ease;
 }
 
-body.premium-home .nav-links a:hover {
-    color: var(--premium-gold-light) !important;
+body.premium-home.dark-mode .nav-links a:hover {
+
+    color:
+        var(--premium-gold-light) !important;
 
     text-shadow:
         0 0 14px rgba(245, 196, 81, 0.65);
@@ -5456,10 +4893,35 @@ body.premium-home .nav-links a:hover {
 
 
 /* =========================================================
-   THEME BUTTON
+PREMIUM NAV LINKS — LIGHT
 ========================================================= */
 
-body.premium-home .theme-button {
+body.premium-home.light-mode .nav-links a {
+
+    color:
+        #45413a !important;
+
+    transition:
+        color 0.2s ease,
+        text-shadow 0.2s ease;
+}
+
+body.premium-home.light-mode .nav-links a:hover {
+
+    color:
+        #9a6e05 !important;
+
+    text-shadow:
+        0 0 12px rgba(245, 196, 81, 0.35);
+}
+
+
+/* =========================================================
+PREMIUM THEME BUTTON — DARK
+========================================================= */
+
+body.premium-home.dark-mode .theme-button {
+
     background:
         rgba(245, 196, 81, 0.08) !important;
 
@@ -5471,59 +4933,82 @@ body.premium-home .theme-button {
 
     box-shadow:
         0 0 18px rgba(245, 196, 81, 0.06);
-
-    transition:
-        0.25s ease;
-}
-
-body.premium-home .theme-button:hover {
-    background:
-        rgba(245, 196, 81, 0.15) !important;
-
-    border-color:
-        rgba(245, 196, 81, 0.55) !important;
-
-    box-shadow:
-        0 0 22px rgba(245, 196, 81, 0.18);
-
-    transform:
-        translateY(-1px);
 }
 
 
 /* =========================================================
-   HERO
+PREMIUM THEME BUTTON — LIGHT
+========================================================= */
+
+body.premium-home.light-mode .theme-button {
+
+    background:
+        rgba(245, 196, 81, 0.10) !important;
+
+    color:
+        #8b6508 !important;
+
+    border:
+        1px solid rgba(184, 134, 11, 0.30) !important;
+
+    box-shadow:
+        0 3px 14px rgba(184, 134, 11, 0.08);
+}
+
+
+/* =========================================================
+PREMIUM HERO
 ========================================================= */
 
 body.premium-home .hero {
-    position: relative;
+    position:
+        relative;
 }
 
 body.premium-home .hero::before {
-    content: "";
 
-    position: absolute;
+    content:
+        "";
 
-    width: 420px;
-    height: 420px;
+    position:
+        absolute;
 
-    top: -120px;
-    left: 50%;
+    width:
+        420px;
 
-    transform: translateX(-50%);
+    height:
+        420px;
+
+    top:
+        -120px;
+
+    left:
+        50%;
+
+    transform:
+        translateX(-50%);
 
     background:
         radial-gradient(
             circle,
-            rgba(245, 196, 81, 0.13),
+            rgba(245, 196, 81, 0.14),
             transparent 68%
         );
 
-    pointer-events: none;
-    filter: blur(10px);
+    pointer-events:
+        none;
+
+    filter:
+        blur(10px);
 }
 
+
+/* =========================================================
+PREMIUM EYEBROW
+========================================================= */
+
 body.premium-home .eyebrow {
+
     color:
         var(--premium-gold-light) !important;
 
@@ -5531,14 +5016,22 @@ body.premium-home .eyebrow {
         0 0 18px rgba(245, 196, 81, 0.35);
 }
 
-body.premium-home h1 {
-    color: #ffffff !important;
+
+/* =========================================================
+PREMIUM HERO — DARK
+========================================================= */
+
+body.premium-home.dark-mode h1 {
+
+    color:
+        #ffffff !important;
 
     text-shadow:
         0 0 35px rgba(245, 196, 81, 0.12);
 }
 
-body.premium-home h1 span {
+body.premium-home.dark-mode h1 span {
+
     color:
         var(--premium-gold-bright) !important;
 
@@ -5548,16 +5041,40 @@ body.premium-home h1 span {
 
 
 /* =========================================================
-   HERO BUTTONS
+PREMIUM HERO — LIGHT
+========================================================= */
+
+body.premium-home.light-mode h1 {
+
+    color:
+        #1b1a17 !important;
+
+    text-shadow:
+        0 4px 20px rgba(184, 134, 11, 0.08);
+}
+
+body.premium-home.light-mode h1 span {
+
+    color:
+        #b8860b !important;
+
+    text-shadow:
+        0 0 20px rgba(245, 196, 81, 0.30);
+}
+
+
+/* =========================================================
+PREMIUM BUTTONS
 ========================================================= */
 
 body.premium-home .primary-button,
 body.premium-home .hero-button,
 body.premium-home button[type="submit"] {
+
     background:
         linear-gradient(
             135deg,
-            #a87508 0%,
+            #9b700b 0%,
             #f5c451 48%,
             #ffe29a 100%
         ) !important;
@@ -5566,7 +5083,7 @@ body.premium-home button[type="submit"] {
         #17120a !important;
 
     border:
-        1px solid rgba(255, 231, 163, 0.65) !important;
+        1px solid rgba(255, 231, 163, 0.70) !important;
 
     box-shadow:
         0 8px 30px rgba(245, 196, 81, 0.22),
@@ -5581,6 +5098,7 @@ body.premium-home button[type="submit"] {
 body.premium-home .primary-button:hover,
 body.premium-home .hero-button:hover,
 body.premium-home button[type="submit"]:hover {
+
     transform:
         translateY(-3px);
 
@@ -5594,17 +5112,18 @@ body.premium-home button[type="submit"]:hover {
 
 
 /* =========================================================
-   HERO / MAIN CARDS
+PREMIUM CARDS — DARK
 ========================================================= */
 
-body.premium-home .hero-card,
-body.premium-home .feature-card,
-body.premium-home .step-card,
-body.premium-home .study-form,
-body.premium-home .subject-topic-card,
-body.premium-home .topic-card,
-body.premium-home .schedule-card,
-body.premium-home .card {
+body.premium-home.dark-mode .hero-card,
+body.premium-home.dark-mode .feature-card,
+body.premium-home.dark-mode .step-card,
+body.premium-home.dark-mode .study-form,
+body.premium-home.dark-mode .subject-topic-card,
+body.premium-home.dark-mode .topic-card,
+body.premium-home.dark-mode .schedule-card,
+body.premium-home.dark-mode .card {
+
     background:
         linear-gradient(
             145deg,
@@ -5620,36 +5139,133 @@ body.premium-home .card {
 
     box-shadow:
         0 10px 35px rgba(0, 0, 0, 0.25);
-
-    transition:
-        transform 0.25s ease,
-        border-color 0.25s ease,
-        box-shadow 0.25s ease;
 }
+
+
+/* =========================================================
+PREMIUM CARDS — LIGHT
+========================================================= */
+
+body.premium-home.light-mode .hero-card,
+body.premium-home.light-mode .feature-card,
+body.premium-home.light-mode .step-card,
+body.premium-home.light-mode .study-form,
+body.premium-home.light-mode .subject-topic-card,
+body.premium-home.light-mode .topic-card,
+body.premium-home.light-mode .schedule-card,
+body.premium-home.light-mode .card {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.98),
+            rgba(255, 250, 240, 0.96)
+        ) !important;
+
+    color:
+        #1c1b18 !important;
+
+    border:
+        1px solid rgba(184, 134, 11, 0.18) !important;
+
+    box-shadow:
+        0 10px 35px rgba(184, 134, 11, 0.08);
+}
+
+
+/* =========================================================
+PREMIUM CARD HOVER
+========================================================= */
 
 body.premium-home .hero-card:hover,
 body.premium-home .feature-card:hover,
 body.premium-home .step-card:hover,
 body.premium-home .subject-topic-card:hover,
 body.premium-home .topic-card:hover {
+
     transform:
         translateY(-4px);
 
     border-color:
-        rgba(245, 196, 81, 0.42) !important;
+        rgba(245, 196, 81, 0.45) !important;
+}
+
+body.premium-home.dark-mode .hero-card:hover,
+body.premium-home.dark-mode .feature-card:hover,
+body.premium-home.dark-mode .step-card:hover,
+body.premium-home.dark-mode .subject-topic-card:hover,
+body.premium-home.dark-mode .topic-card:hover {
 
     box-shadow:
         0 15px 45px rgba(0, 0, 0, 0.35),
         0 0 30px rgba(245, 196, 81, 0.09);
 }
 
+body.premium-home.light-mode .hero-card:hover,
+body.premium-home.light-mode .feature-card:hover,
+body.premium-home.light-mode .step-card:hover,
+body.premium-home.light-mode .subject-topic-card:hover,
+body.premium-home.light-mode .topic-card:hover {
+
+    box-shadow:
+        0 15px 40px rgba(184, 134, 11, 0.12),
+        0 0 25px rgba(245, 196, 81, 0.10);
+}
+
 
 /* =========================================================
-   FEATURE ICONS
+PREMIUM CARD TEXT
+========================================================= */
+
+body.premium-home.dark-mode .feature-card h3,
+body.premium-home.dark-mode .feature-card h4,
+body.premium-home.dark-mode .step-card h3,
+body.premium-home.dark-mode .subject-topic-card h3,
+body.premium-home.dark-mode .topic-card h3 {
+
+    color:
+        #ffffff !important;
+}
+
+body.premium-home.light-mode .feature-card h3,
+body.premium-home.light-mode .feature-card h4,
+body.premium-home.light-mode .step-card h3,
+body.premium-home.light-mode .subject-topic-card h3,
+body.premium-home.light-mode .topic-card h3 {
+
+    color:
+        #24211c !important;
+}
+
+
+/* =========================================================
+PREMIUM CARD PARAGRAPHS
+========================================================= */
+
+body.premium-home.dark-mode .feature-card p,
+body.premium-home.dark-mode .step-card p,
+body.premium-home.dark-mode .topic-card p {
+
+    color:
+        #c9c9c9 !important;
+}
+
+body.premium-home.light-mode .feature-card p,
+body.premium-home.light-mode .step-card p,
+body.premium-home.light-mode .topic-card p {
+
+    color:
+        #68625a !important;
+}
+
+
+/* =========================================================
+PREMIUM ICONS
 ========================================================= */
 
 body.premium-home .feature-icon,
 body.premium-home .step-icon {
+
     filter:
         drop-shadow(
             0 0 12px rgba(245, 196, 81, 0.35)
@@ -5658,12 +5274,13 @@ body.premium-home .step-icon {
 
 
 /* =========================================================
-   FORM
+PREMIUM INPUTS — DARK
 ========================================================= */
 
-body.premium-home input,
-body.premium-home textarea,
-body.premium-home select {
+body.premium-home.dark-mode input,
+body.premium-home.dark-mode textarea,
+body.premium-home.dark-mode select {
+
     background:
         rgba(8, 10, 14, 0.85) !important;
 
@@ -5675,37 +5292,76 @@ body.premium-home select {
 
     box-shadow:
         inset 0 0 20px rgba(0, 0, 0, 0.15);
-
-    transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-body.premium-home input:focus,
-body.premium-home textarea:focus,
-body.premium-home select:focus {
-    outline: none;
-
-    border-color:
-        rgba(245, 196, 81, 0.65) !important;
-
-    box-shadow:
-        0 0 0 3px rgba(245, 196, 81, 0.08),
-        0 0 25px rgba(245, 196, 81, 0.10);
-}
-
-body.premium-home input::placeholder,
-body.premium-home textarea::placeholder {
-    color:
-        rgba(255,255,255,0.42) !important;
 }
 
 
 /* =========================================================
-   SECTION HEADINGS
+PREMIUM INPUTS — LIGHT
 ========================================================= */
 
-body.premium-home section h2 {
+body.premium-home.light-mode input,
+body.premium-home.light-mode textarea,
+body.premium-home.light-mode select {
+
+    background:
+        rgba(255, 255, 255, 0.95) !important;
+
+    color:
+        #24211c !important;
+
+    border:
+        1px solid rgba(184, 134, 11, 0.22) !important;
+
+    box-shadow:
+        inset 0 1px 3px rgba(184, 134, 11, 0.04);
+}
+
+
+/* =========================================================
+PREMIUM INPUT FOCUS
+========================================================= */
+
+body.premium-home input:focus,
+body.premium-home textarea:focus,
+body.premium-home select:focus {
+
+    outline:
+        none;
+
+    border-color:
+        rgba(245, 196, 81, 0.70) !important;
+
+    box-shadow:
+        0 0 0 3px rgba(245, 196, 81, 0.09),
+        0 0 25px rgba(245, 196, 81, 0.11);
+}
+
+
+/* =========================================================
+PREMIUM PLACEHOLDERS
+========================================================= */
+
+body.premium-home.dark-mode input::placeholder,
+body.premium-home.dark-mode textarea::placeholder {
+
+    color:
+        rgba(255,255,255,0.42) !important;
+}
+
+body.premium-home.light-mode input::placeholder,
+body.premium-home.light-mode textarea::placeholder {
+
+    color:
+        rgba(45, 40, 32, 0.45) !important;
+}
+
+
+/* =========================================================
+PREMIUM SECTION HEADINGS
+========================================================= */
+
+body.premium-home.dark-mode section h2 {
+
     color:
         #ffffff !important;
 
@@ -5713,20 +5369,48 @@ body.premium-home section h2 {
         0 0 22px rgba(245, 196, 81, 0.10);
 }
 
-body.premium-home section h2 span {
+body.premium-home.light-mode section h2 {
+
     color:
-        var(--premium-gold-light) !important;
+        #1e1c18 !important;
+
+    text-shadow:
+        0 0 22px rgba(184, 134, 11, 0.08);
+}
+
+body.premium-home section h2 span {
+
+    color:
+        var(--premium-gold-dark) !important;
 }
 
 
 /* =========================================================
-   GOLD DIVIDERS
+PREMIUM LABELS
+========================================================= */
+
+body.premium-home.dark-mode label {
+    color:
+        #e5e5e5 !important;
+}
+
+body.premium-home.light-mode label {
+    color:
+        #49443c !important;
+}
+
+
+/* =========================================================
+PREMIUM DIVIDERS
 ========================================================= */
 
 body.premium-home hr {
-    border: 0;
 
-    height: 1px;
+    border:
+        0;
+
+    height:
+        1px;
 
     background:
         linear-gradient(
@@ -5739,17 +5423,21 @@ body.premium-home hr {
 
 
 /* =========================================================
-   PREMIUM CTA — BIG GOLD GLOW
+PREMIUM CTA — DARK
 ========================================================= */
 
-body.premium-home .premium-cta-card {
-    position: relative;
-    overflow: hidden;
+body.premium-home.dark-mode .premium-cta-card {
+
+    position:
+        relative;
+
+    overflow:
+        hidden;
 
     background:
         radial-gradient(
             circle at 50% 0%,
-            rgba(245, 196, 81, 0.16),
+            rgba(245, 196, 81, 0.17),
             transparent 55%
         ),
         linear-gradient(
@@ -5762,56 +5450,114 @@ body.premium-home .premium-cta-card {
         1px solid rgba(245, 196, 81, 0.38) !important;
 
     box-shadow:
-        0 20px 70px rgba(0, 0, 0, 0.4),
+        0 20px 70px rgba(0, 0, 0, 0.40),
         0 0 55px rgba(245, 196, 81, 0.10);
 }
 
+
+/* =========================================================
+PREMIUM CTA — LIGHT
+========================================================= */
+
+body.premium-home.light-mode .premium-cta-card {
+
+    position:
+        relative;
+
+    overflow:
+        hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(245, 196, 81, 0.20),
+            transparent 55%
+        ),
+        linear-gradient(
+            145deg,
+            #fff9e9,
+            #ffffff
+        ) !important;
+
+    border:
+        1px solid rgba(184, 134, 11, 0.35) !important;
+
+    box-shadow:
+        0 20px 65px rgba(184, 134, 11, 0.12),
+        0 0 50px rgba(245, 196, 81, 0.10);
+}
+
+
+/* =========================================================
+PREMIUM CTA GLOW
+========================================================= */
+
 body.premium-home .premium-cta-card::before {
-    content: "";
 
-    position: absolute;
+    content:
+        "";
 
-    width: 280px;
-    height: 280px;
+    position:
+        absolute;
 
-    top: -150px;
-    left: 50%;
+    width:
+        280px;
 
-    transform: translateX(-50%);
+    height:
+        280px;
+
+    top:
+        -150px;
+
+    left:
+        50%;
+
+    transform:
+        translateX(-50%);
 
     background:
         radial-gradient(
             circle,
-            rgba(255, 215, 106, 0.20),
+            rgba(255, 215, 106, 0.22),
             transparent 70%
         );
 
-    pointer-events: none;
+    pointer-events:
+        none;
 
     animation:
         premiumCTAglow 4s ease-in-out infinite alternate;
 }
 
+
 @keyframes premiumCTAglow {
+
     from {
-        opacity: 0.55;
-        transform: translateX(-50%) scale(0.9);
+        opacity:
+            0.55;
+
+        transform:
+            translateX(-50%)
+            scale(0.9);
     }
 
     to {
-        opacity: 1;
-        transform: translateX(-50%) scale(1.1);
+        opacity:
+            1;
+
+        transform:
+            translateX(-50%)
+            scale(1.1);
     }
 }
 
-body.premium-home .premium-cta-icon {
-    filter:
-        drop-shadow(
-            0 0 18px rgba(245, 196, 81, 0.65)
-        );
-}
+
+/* =========================================================
+PREMIUM CTA BUTTON
+========================================================= */
 
 body.premium-home .premium-cta-button {
+
     background:
         linear-gradient(
             135deg,
@@ -5836,6 +5582,7 @@ body.premium-home .premium-cta-button {
 }
 
 body.premium-home .premium-cta-button:hover {
+
     transform:
         translateY(-3px);
 
@@ -5846,10 +5593,24 @@ body.premium-home .premium-cta-button:hover {
 
 
 /* =========================================================
-   PREMIUM BADGE
+PREMIUM CTA ICON
+========================================================= */
+
+body.premium-home .premium-cta-icon {
+
+    filter:
+        drop-shadow(
+            0 0 18px rgba(245, 196, 81, 0.65)
+        );
+}
+
+
+/* =========================================================
+PREMIUM BADGE
 ========================================================= */
 
 body.premium-home .premium-home-badge {
+
     display:
         inline-flex;
 
@@ -5894,19 +5655,44 @@ body.premium-home .premium-home-badge {
 
 
 /* =========================================================
-   GOLD SCROLLBAR
+PREMIUM FOOTER
 ========================================================= */
 
-body.premium-home::-webkit-scrollbar {
-    width: 9px;
+body.premium-home.dark-mode footer {
+
+    color:
+        #aaa !important;
+
+    border-top:
+        1px solid rgba(245, 196, 81, 0.12);
 }
 
-body.premium-home::-webkit-scrollbar-track {
+body.premium-home.light-mode footer {
+
+    color:
+        #777 !important;
+
+    border-top:
+        1px solid rgba(184, 134, 11, 0.14);
+}
+
+
+/* =========================================================
+PREMIUM SCROLLBAR — DARK
+========================================================= */
+
+body.premium-home.dark-mode::-webkit-scrollbar {
+    width:
+        9px;
+}
+
+body.premium-home.dark-mode::-webkit-scrollbar-track {
     background:
         #07090d;
 }
 
-body.premium-home::-webkit-scrollbar-thumb {
+body.premium-home.dark-mode::-webkit-scrollbar-thumb {
+
     background:
         linear-gradient(
             #8f6810,
@@ -5919,23 +5705,83 @@ body.premium-home::-webkit-scrollbar-thumb {
 
 
 /* =========================================================
-   MOBILE
+PREMIUM SCROLLBAR — LIGHT
+========================================================= */
+
+body.premium-home.light-mode::-webkit-scrollbar {
+    width:
+        9px;
+}
+
+body.premium-home.light-mode::-webkit-scrollbar-track {
+    background:
+        #fffdf7;
+}
+
+body.premium-home.light-mode::-webkit-scrollbar-thumb {
+
+    background:
+        linear-gradient(
+            #b8860b,
+            #f5c451
+        );
+
+    border-radius:
+        999px;
+}
+
+
+/* =========================================================
+PREMIUM HOME — MOBILE
 ========================================================= */
 
 @media (max-width: 600px) {
 
     body.premium-home::before {
-        animation: none;
+        animation:
+            none;
     }
 
     body.premium-home .hero::before {
-        width: 280px;
-        height: 280px;
+
+        width:
+            280px;
+
+        height:
+            280px;
     }
 
     body.premium-home .premium-home-badge {
-        margin-left: 4px;
-        padding: 4px 7px;
-        font-size: 8px;
+
+        margin-left:
+            4px;
+
+        padding:
+            4px 7px;
+
+        font-size:
+            8px;
+    }
+
+    body.premium-home .premium-cta-card {
+
+        box-shadow:
+            0 15px 45px rgba(0, 0, 0, 0.18),
+            0 0 35px rgba(245, 196, 81, 0.08);
+    }
+}
+
+
+/* =========================================================
+REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    body.premium-home::before,
+    body.premium-home .premium-cta-card::before {
+
+        animation:
+            none !important;
     }
 }
