@@ -2,10 +2,16 @@
    STUDYMIND AI — KNOWLEDGE CHECK
    COMPLETE REPLACEMENT
 
-   5 QUESTIONS
-   60% PASS MARK
-   TOPIC-AWARE
-   RETURNS TO NEXT TOPIC
+   FEATURES:
+   - Premium access verification
+   - 5 questions
+   - 60% pass mark
+   - Topic-aware
+   - Returns to dashboard
+   - Premium users have unlimited checks
+   - Free users are redirected to Premium
+   - Preserves stored questions
+   - Preserves topic completion
 ========================================================= */
 
 "use strict";
@@ -23,6 +29,9 @@ const PASS_PERCENTAGE =
 
 const KNOWLEDGE_CHECK_LIMIT =
     5;
+
+const PREMIUM_STATUS_ENDPOINT =
+    "/api/premium/status";
 
 
 const TOPIC_KEY =
@@ -52,6 +61,9 @@ let knowledgeQuestions =
     [];
 
 let knowledgeSubmitted =
+    false;
+
+let knowledgePremiumVerified =
     false;
 
 
@@ -198,6 +210,334 @@ function createTopicKey(
 
 
 /* =========================================================
+   SUPABASE CLIENT
+========================================================= */
+
+function getSupabaseClient() {
+
+    /*
+       First use the shared client created by
+       supabase.js.
+    */
+
+    if (
+        window.supabaseClient &&
+        window.supabaseClient.auth
+    ) {
+
+        return window.supabaseClient;
+
+    }
+
+
+    /*
+       Support a globally available
+       Supabase client if supabase.js
+       exposes it differently.
+    */
+
+    if (
+        typeof supabaseClient !==
+        "undefined" &&
+        supabaseClient &&
+        supabaseClient.auth
+    ) {
+
+        return supabaseClient;
+
+    }
+
+
+    /*
+       Last-resort client creation.
+
+       This keeps the Knowledge Check
+       page functional even if the shared
+       supabase.js file did not expose
+       window.supabaseClient.
+    */
+
+    if (
+        window.supabase &&
+        typeof window.supabase.createClient ===
+        "function"
+    ) {
+
+        const SUPABASE_URL =
+            "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+
+        try {
+
+            window.supabaseClient =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_PUBLISHABLE_KEY
+                );
+
+
+            return window.supabaseClient;
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Could not create Supabase client:",
+                error
+            );
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   PREMIUM ACCESS
+========================================================= */
+
+async function verifyKnowledgeCheckPremiumAccess() {
+
+    /*
+       If this page was opened from the
+       verified Premium Dashboard, the
+       dashboard controller may already have
+       verified the user.
+
+       We still perform the server check
+       below when possible so direct access
+       cannot rely only on JavaScript flags.
+    */
+
+    if (
+        window.studyMindPremiumVerified === true &&
+        window.studyMindIsPremium === true
+    ) {
+
+        knowledgePremiumVerified =
+            true;
+
+        return true;
+
+    }
+
+
+    const client =
+        getSupabaseClient();
+
+
+    if (!client) {
+
+        console.error(
+            "Knowledge Check: Supabase client unavailable."
+        );
+
+        redirectToPremium();
+
+        return false;
+
+    }
+
+
+    let session =
+        null;
+
+
+    try {
+
+        const result =
+            await client.auth.getSession();
+
+
+        session =
+            result?.data?.session ||
+            null;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Knowledge Check: Could not retrieve session:",
+            error
+        );
+
+        redirectToPremium();
+
+        return false;
+
+    }
+
+
+    /*
+       No logged-in user.
+    */
+
+    if (!session) {
+
+        console.warn(
+            "Knowledge Check: No authenticated session."
+        );
+
+        window.location.href =
+            "login.html";
+
+        return false;
+
+    }
+
+
+    /*
+       Ask the server for the real Premium
+       status.
+    */
+
+    try {
+
+        const response =
+            await fetch(
+                PREMIUM_STATUS_ENDPOINT,
+                {
+
+                    method:
+                        "GET",
+
+                    headers: {
+
+                        Authorization:
+                            `Bearer ${session.access_token}`,
+
+                        Accept:
+                            "application/json"
+
+                    },
+
+                    cache:
+                        "no-store"
+
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            console.error(
+                "Knowledge Check: Premium status request failed:",
+                response.status
+            );
+
+            redirectToPremium();
+
+            return false;
+
+        }
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "Knowledge Check Premium status:",
+            result
+        );
+
+
+        if (
+            result?.premium !== true
+        ) {
+
+            console.warn(
+                "Knowledge Check: User is not Premium."
+            );
+
+            redirectToPremium();
+
+            return false;
+
+        }
+
+
+        /*
+           Premium confirmed.
+        */
+
+        knowledgePremiumVerified =
+            true;
+
+
+        window.studyMindPremiumVerified =
+            true;
+
+
+        window.studyMindIsPremium =
+            true;
+
+
+        window.premiumUser =
+            true;
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Knowledge Check Premium verification failed:",
+            error
+        );
+
+        redirectToPremium();
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM REDIRECT
+========================================================= */
+
+function redirectToPremium() {
+
+    /*
+       Avoid repeatedly redirecting if the
+       page is already on premium.html.
+    */
+
+    if (
+        window.location.pathname.endsWith(
+            "premium.html"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    window.location.replace(
+        "premium.html"
+    );
+
+}
+
+
+/* =========================================================
    INITIALIZE
 ========================================================= */
 
@@ -212,26 +552,28 @@ document.addEventListener(
 
 async function initializeKnowledgeCheck() {
 
-    const usage =
-        Number(
-            localStorage.getItem(
-                USAGE_KEY
-            ) ||
-            0
-        );
+    /*
+       ------------------------------------------------------
+       FIRST: VERIFY PREMIUM
+       ------------------------------------------------------
+    */
+
+    const premium =
+        await verifyKnowledgeCheckPremiumAccess();
 
 
-    if (
-        usage >=
-        KNOWLEDGE_CHECK_LIMIT
-    ) {
-
-        showLimit();
+    if (!premium) {
 
         return;
 
     }
 
+
+    /*
+       ------------------------------------------------------
+       PREMIUM USERS BYPASS FREE LIMIT
+       ------------------------------------------------------
+    */
 
     knowledgeTopic =
         readJSON(
@@ -265,7 +607,9 @@ async function initializeKnowledgeCheck() {
     try {
 
         /*
-           Try stored questions first.
+           ---------------------------------------------------
+           TRY STORED QUESTIONS FIRST
+           ---------------------------------------------------
         */
 
         const stored =
@@ -311,8 +655,9 @@ async function initializeKnowledgeCheck() {
 
 
         /*
-           If there aren't valid saved questions,
-           ask the API.
+           ---------------------------------------------------
+           GENERATE NEW QUESTIONS IF NEEDED
+           ---------------------------------------------------
         */
 
         if (
@@ -337,59 +682,81 @@ async function initializeKnowledgeCheck() {
 
 
         /*
-           Count this Knowledge Check once.
+           ---------------------------------------------------
+           COUNT USAGE
+           ---------------------------------------------------
+
+           Premium users are unlimited and therefore
+           do NOT consume the free Knowledge Check
+           allowance.
+
+           The counter is only maintained for free-user
+           compatibility, although free users should
+           normally be redirected before reaching here.
         */
 
-        const checkId =
-
-            knowledgeTopic.checkId ||
-
-            `${key}-${Date.now()}`;
-
-
-        const previousSession =
-            sessionStorage.getItem(
-                "studyMindKnowledgeCheckSession"
-            );
-
-
         if (
-            previousSession !==
-            checkId
+            !knowledgePremiumVerified
         ) {
 
-            const newUsage =
+            const checkId =
 
-                Number(
-                    localStorage.getItem(
-                        USAGE_KEY
-                    ) ||
-                    0
-                ) +
-                1;
+                knowledgeTopic.checkId ||
+
+                `${key}-${Date.now()}`;
 
 
-            localStorage.setItem(
-
-                USAGE_KEY,
-
-                String(
-                    newUsage
-                )
-
-            );
+            const previousSession =
+                sessionStorage.getItem(
+                    "studyMindKnowledgeCheckSession"
+                );
 
 
-            sessionStorage.setItem(
-
-                "studyMindKnowledgeCheckSession",
-
+            if (
+                previousSession !==
                 checkId
+            ) {
 
-            );
+                const newUsage =
+
+                    Number(
+                        localStorage.getItem(
+                            USAGE_KEY
+                        ) ||
+                        0
+                    ) +
+                    1;
+
+
+                localStorage.setItem(
+
+                    USAGE_KEY,
+
+                    String(
+                        newUsage
+                    )
+
+                );
+
+
+                sessionStorage.setItem(
+
+                    "studyMindKnowledgeCheckSession",
+
+                    checkId
+
+                );
+
+            }
 
         }
 
+
+        /*
+           ---------------------------------------------------
+           SHOW QUESTIONS
+           ---------------------------------------------------
+        */
 
         if (
             $("knowledgeLoading")
@@ -513,7 +880,9 @@ async function requestQuestions() {
 
 
     /*
+       ------------------------------------------------------
        PRIMARY API
+       ------------------------------------------------------
     */
 
     try {
@@ -592,7 +961,9 @@ async function requestQuestions() {
 
 
     /*
-       FALLBACK
+       ------------------------------------------------------
+       FALLBACK API
+       ------------------------------------------------------
     */
 
     const fallbackResponse =
@@ -1105,7 +1476,8 @@ function normalizeQuestion(
 
 
     /*
-       Support both 0-based and 1-based AI answers.
+       Support both 0-based and 1-based
+       AI answers.
     */
 
     if (
@@ -1271,6 +1643,7 @@ function renderQuestions() {
                     </div>
 
                 `
+
             )
 
             .join("");
@@ -1479,7 +1852,7 @@ function submitKnowledgeCheck() {
 
 
     /*
-       Mark this topic's Knowledge Check
+       Mark topic Knowledge Check
        as completed.
     */
 
@@ -1717,7 +2090,9 @@ function showResult(
 
 
     /*
+       ------------------------------------------------------
        CORRECTIONS
+       ------------------------------------------------------
     */
 
     const corrections =
@@ -1826,6 +2201,7 @@ function showResult(
                         </div>
 
                     `
+
                 )
 
                 .join("");
@@ -1834,7 +2210,9 @@ function showResult(
 
 
     /*
+       ------------------------------------------------------
        CONTINUE BUTTON
+       ------------------------------------------------------
     */
 
     let button =
@@ -1880,7 +2258,9 @@ function showResult(
             () => {
 
                 window.location.href =
-                    "dashboard.html";
+                    knowledgePremiumVerified
+                        ? "premium-dashboard.html"
+                        : "dashboard.html";
 
             }
 
