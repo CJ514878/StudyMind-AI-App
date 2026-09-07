@@ -4025,16 +4025,33 @@ function getStudyDates() {
 
     const dates = [];
 
-    const start =
+    const planStart =
         getStudyStartDate();
+
+    const today =
+        todayDate();
 
     const exam =
         getExamDate();
 
 
-    if (!start) {
+    if (!planStart) {
         return dates;
     }
+
+
+    /*
+       IMPORTANT:
+       Never schedule new study days in the past.
+
+       If the original study plan started before today,
+       begin the active calendar schedule from today.
+    */
+
+    const start =
+        planStart < today
+            ? new Date(today)
+            : new Date(planStart);
 
 
     const end =
@@ -4043,6 +4060,18 @@ function getStudyDates() {
             start.getTime() +
             30 * 86400000
         );
+
+
+    /*
+       If the exam has already passed, there are
+       no future study dates to generate.
+    */
+
+    if (
+        end <= today
+    ) {
+        return dates;
+    }
 
 
     const cursor =
@@ -4061,7 +4090,12 @@ function getStudyDates() {
         cursor < end
     ) {
 
+        /*
+           Never add dates before today.
+        */
+
         if (
+            cursor >= today &&
             !isRestDate(cursor)
         ) {
 
@@ -4082,7 +4116,6 @@ function getStudyDates() {
     return dates;
 
 }
-
 
 function getTopicScheduleMap() {
 
