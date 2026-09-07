@@ -976,11 +976,123 @@ function planTitle(
 }
 
 
+```javascript
+/* =========================================================
+   ENSURE PLAN REGISTRY
+========================================================= */
+
 function ensurePlanRegistry() {
 
     let plans =
         getSavedPlans();
 
+
+    /*
+       -------------------------------------------------------
+       IMPORTANT:
+       If the multi-plan registry already contains plans,
+       DO NOT migrate studyMindPlan.
+
+       studyMindPlan is only a compatibility/legacy key.
+       It may contain an older plan such as:
+       Math → Geometry → September 12.
+
+       Migrating it again is what can cause the dashboard
+       to jump back to the old plan.
+       -------------------------------------------------------
+    */
+
+    if (
+        Array.isArray(plans) &&
+        plans.length > 0
+    ) {
+
+        /*
+           Make sure every saved record is usable.
+        */
+
+        plans =
+            plans.filter(
+                record =>
+                    record &&
+                    record.id &&
+                    record.plan
+            );
+
+
+        saveSavedPlans(
+            plans
+        );
+
+
+        /*
+           If an active ID exists and points to a real
+           saved plan, leave it completely untouched.
+        */
+
+        const activeId =
+            getActivePlanId();
+
+
+        if (
+            activeId &&
+            plans.some(
+                record =>
+                    String(record.id) ===
+                    String(activeId)
+            )
+        ) {
+
+            return plans;
+
+        }
+
+
+        /*
+           No valid active ID.
+
+           The Home page stores the newest plan at the
+           FRONT of the array using unshift().
+
+           Therefore plans[0] is the correct fallback.
+
+           Do NOT compare updatedAt here because dashboard
+           activity can update an older plan and accidentally
+           make it appear newer than the plan just created.
+        */
+
+        const newestPlan =
+            plans[0];
+
+
+        if (
+            newestPlan &&
+            newestPlan.id
+        ) {
+
+            setActivePlanId(
+                newestPlan.id
+            );
+
+        }
+
+
+        return plans;
+
+    }
+
+
+    /*
+       -------------------------------------------------------
+       LEGACY MIGRATION
+       -------------------------------------------------------
+
+       Only perform legacy migration when there are genuinely
+       NO saved multi-plan records.
+
+       This happens for users coming from an older version
+       of StudyMind.
+    */
 
     const currentPlan =
         readJSON(
@@ -989,60 +1101,38 @@ function ensurePlanRegistry() {
         );
 
 
-    let activeId =
-        getActivePlanId();
-
-
-    /*
-       If there is no current plan, there is nothing
-       to migrate.
-    */
-
     if (!currentPlan) {
 
-        if (
-            activeId &&
-            !plans.some(
-                plan =>
-                    plan.id === activeId
-            )
-        ) {
+        setActivePlanId(
+            null
+        );
 
-            setActivePlanId(
-                null
-            );
-
-        }
-
-        return plans;
+        return [];
 
     }
 
 
-    /*
-       If the active plan already exists, keep it.
-    */
+    const normalized =
+        normalizePlan(
+            currentPlan
+        );
 
-    if (
-        activeId &&
-        plans.some(
-            plan =>
-                plan.id === activeId
-        )
-    ) {
 
-        return plans;
+    if (!normalized) {
+
+        setActivePlanId(
+            null
+        );
+
+        return [];
 
     }
 
-
-    /*
-       Older StudyMind versions may have a plan but
-       no multi-plan record yet.
-    */
 
     const migratedId =
-        createId("plan");
+        createId(
+            "plan"
+        );
 
 
     const migrated = {
@@ -1051,9 +1141,7 @@ function ensurePlanRegistry() {
             migratedId,
 
         plan:
-            normalizePlan(
-                currentPlan
-            ),
+            normalized,
 
         completedTopics:
             readJSON(
@@ -1107,18 +1195,20 @@ function ensurePlanRegistry() {
             Number(
                 localStorage.getItem(
                     TIMER_SECONDS_KEY
-                ) || 0
+                ) ||
+                DEFAULT_TIMER_SECONDS
             ),
 
         timerDuration:
             Number(
                 localStorage.getItem(
                     TIMER_DURATION_KEY
-                ) || 0
+                ) ||
+                DEFAULT_TIMER_SECONDS
             ),
 
         createdAt:
-            currentPlan.createdAt ||
+            normalized.createdAt ||
             new Date().toISOString(),
 
         updatedAt:
@@ -1126,15 +1216,15 @@ function ensurePlanRegistry() {
 
         title:
             planTitle(
-                currentPlan
+                normalized
             )
 
     };
 
 
-    plans.unshift(
+    plans = [
         migrated
-    );
+    ];
 
 
     saveSavedPlans(
@@ -1153,377 +1243,40 @@ function ensurePlanRegistry() {
 
 
 /* =========================================================
-   CAPTURE ACTIVE PLAN STATE
-========================================================= */
-
-function captureActivePlanState() {
-
-    if (!studyPlan) {
-        return null;
-    }
-
-
-    return {
-
-        id:
-            activePlanId ||
-            createId("plan"),
-
-        plan:
-            normalizePlan(
-                studyPlan
-            ),
-
-        completedTopics:
-            Array.isArray(
-                completedTopics
-            )
-                ? [
-                    ...completedTopics
-                ]
-                : [],
-
-        completedQuestionTopics:
-            Array.isArray(
-                completedQuestionTopics
-            )
-                ? [
-                    ...completedQuestionTopics
-                ]
-                : [],
-
-        currentTopicIndex:
-            Number(
-                currentTopicIndex
-            ) || 0,
-
-        knowledgeTopic:
-            readJSON(
-                KNOWLEDGE_TOPIC_KEY,
-                null
-            ),
-
-        knowledgeQuestions:
-            readJSON(
-                KNOWLEDGE_QUESTIONS_KEY,
-                null
-            ),
-
-        celebrationShown:
-            localStorage.getItem(
-                CELEBRATION_KEY
-            ) === "true",
-
-        studySession:
-            currentStudySession
-                ? {
-                    ...currentStudySession
-                }
-                : null,
-
-        topicReadings:
-            topicReadings &&
-            typeof topicReadings === "object"
-                ? {
-                    ...topicReadings
-                }
-                : {},
-
-        timerSeconds:
-            Number(
-                timerSeconds
-            ) || 0,
-
-        timerDuration:
-            Number(
-                selectedTimerSeconds
-            ) || 0,
-
-        createdAt:
-            studyPlan.createdAt ||
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString(),
-
-        title:
-            planTitle(
-                studyPlan
-            )
-
-    };
-
-}
-
-
-function syncActivePlanRecord() {
-
-    if (
-        !studyPlan ||
-        !activePlanId
-    ) {
-        return;
-    }
-
-
-    const state =
-        captureActivePlanState();
-
-
-    if (!state) {
-        return;
-    }
-
-
-    const plans =
-        getSavedPlans();
-
-
-    const index =
-        plans.findIndex(
-            plan =>
-                plan &&
-                plan.id ===
-                activePlanId
-        );
-
-
-    if (index >= 0) {
-
-        plans[index] =
-            state;
-
-    } else {
-
-        plans.unshift(
-            state
-        );
-
-    }
-
-
-    saveSavedPlans(
-        plans
-    );
-
-}
-
-
-function saveLegacyState() {
-
-    if (studyPlan) {
-
-        writeJSON(
-            PLAN_KEY,
-            studyPlan
-        );
-
-        writeJSON(
-            LEGACY_PLAN_KEY,
-            studyPlan
-        );
-
-    }
-
-
-    writeJSON(
-        COMPLETED_KEY,
-        completedTopics
-    );
-
-    writeJSON(
-        COMPLETED_Q_KEY,
-        completedQuestionTopics
-    );
-
-
-    localStorage.setItem(
-        CURRENT_INDEX_KEY,
-        String(
-            currentTopicIndex
-        )
-    );
-
-
-    writeJSON(
-        STUDY_SESSION_KEY,
-        currentStudySession
-    );
-
-
-    writeJSON(
-        STUDY_READINGS_KEY,
-        topicReadings
-    );
-
-
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        String(
-            timerSeconds
-        )
-    );
-
-
-    localStorage.setItem(
-        TIMER_DURATION_KEY,
-        String(
-            selectedTimerSeconds
-        )
-    );
-
-}
-
-
-
-/* =========================================================
-   LOAD ACTIVE PLAN
+   LOAD ACTIVE PLAN — FIXED
 ========================================================= */
 
 function loadActivePlan() {
 
     /*
-       Load every saved plan.
+       Load the multi-plan registry.
     */
+
     let plans =
         ensurePlanRegistry();
 
 
-    /*
-       If there are no saved plans, try to recover the
-       legacy/current plan.
-    */
     if (
         !Array.isArray(plans) ||
         plans.length === 0
     ) {
 
-        const legacyPlan =
-            normalizePlan(
-                readJSON(
-                    PLAN_KEY,
-                    readJSON(
-                        LEGACY_PLAN_KEY,
-                        null
-                    )
-                )
-            );
-
-
-        if (!legacyPlan) {
-            return false;
-        }
-
-
-        const record = {
-
-            id:
-                createId("plan"),
-
-            plan:
-                legacyPlan,
-
-            completedTopics:
-                readJSON(
-                    COMPLETED_KEY,
-                    []
-                ),
-
-            completedQuestionTopics:
-                readJSON(
-                    COMPLETED_Q_KEY,
-                    []
-                ),
-
-            currentTopicIndex:
-                Number(
-                    localStorage.getItem(
-                        CURRENT_INDEX_KEY
-                    ) || 0
-                ),
-
-            knowledgeTopic:
-                readJSON(
-                    KNOWLEDGE_TOPIC_KEY,
-                    null
-                ),
-
-            knowledgeQuestions:
-                readJSON(
-                    KNOWLEDGE_QUESTIONS_KEY,
-                    null
-                ),
-
-            celebrationShown:
-                localStorage.getItem(
-                    CELEBRATION_KEY
-                ) === "true",
-
-            studySession:
-                readJSON(
-                    STUDY_SESSION_KEY,
-                    null
-                ),
-
-            topicReadings:
-                readJSON(
-                    STUDY_READINGS_KEY,
-                    {}
-                ),
-
-            timerSeconds:
-                Number(
-                    localStorage.getItem(
-                        TIMER_SECONDS_KEY
-                    ) ||
-                    DEFAULT_TIMER_SECONDS
-                ),
-
-            timerDuration:
-                Number(
-                    localStorage.getItem(
-                        TIMER_DURATION_KEY
-                    ) ||
-                    DEFAULT_TIMER_SECONDS
-                ),
-
-            createdAt:
-                legacyPlan.createdAt ||
-                new Date().toISOString(),
-
-            updatedAt:
-                new Date().toISOString(),
-
-            title:
-                planTitle(
-                    legacyPlan
-                )
-
-        };
-
-
-        plans = [
-            record
-        ];
-
-
-        saveSavedPlans(
-            plans
+        console.warn(
+            "StudyMind: No study plans found."
         );
 
-
-        setActivePlanId(
-            record.id
-        );
+        return false;
 
     }
 
 
     /*
-       IMPORTANT:
-       Always start with the explicitly selected
-       active plan ID.
+       -------------------------------------------------------
+       STEP 1
+       Read the explicit active plan ID.
+       -------------------------------------------------------
     */
+
     let id =
         getActivePlanId();
 
@@ -1533,14 +1286,19 @@ function loadActivePlan() {
 
 
     /*
-       Find the exact active plan.
+       -------------------------------------------------------
+       STEP 2
+       Find EXACTLY that plan.
+       -------------------------------------------------------
     */
+
     if (id) {
 
         record =
             plans.find(
                 item =>
                     item &&
+                    item.id &&
                     String(item.id) ===
                     String(id)
             ) || null;
@@ -1549,68 +1307,40 @@ function loadActivePlan() {
 
 
     /*
-       If the active ID is invalid or missing,
-       recover using the newest saved plan.
+       -------------------------------------------------------
+       STEP 3
+       If there is no valid active ID, use the FIRST
+       saved plan.
 
-       Do NOT blindly use an old hard-coded plan.
-       The newest record is the one most recently
-       created by the Home page.
+       Home creates new plans using unshift(), so the first
+       record is the newest plan.
+
+       We deliberately DO NOT use updatedAt here.
+       -------------------------------------------------------
     */
+
     if (!record) {
 
-        const validPlans =
-            plans.filter(
+        record =
+            plans.find(
                 item =>
                     item &&
                     item.id &&
                     item.plan
-            );
-
-
-        if (
-            validPlans.length === 0
-        ) {
-            return false;
-        }
-
-
-        record =
-            validPlans
-                .slice()
-                .sort(
-                    (a, b) => {
-
-                        const dateA =
-                            new Date(
-                                a.updatedAt ||
-                                a.createdAt ||
-                                0
-                            ).getTime();
-
-
-                        const dateB =
-                            new Date(
-                                b.updatedAt ||
-                                b.createdAt ||
-                                0
-                            ).getTime();
-
-
-                        return dateB - dateA;
-
-                    }
-                )[0];
+            ) || null;
 
 
         if (!record) {
+
+            console.error(
+                "StudyMind: Saved plans exist, but none are valid."
+            );
+
             return false;
+
         }
 
 
-        /*
-           Make the recovered plan the active plan
-           immediately.
-        */
         setActivePlanId(
             record.id
         );
@@ -1619,17 +1349,25 @@ function loadActivePlan() {
 
 
     /*
-       The dashboard now has one authoritative
-       active plan.
+       -------------------------------------------------------
+       STEP 4
+       Make this record authoritative.
+       -------------------------------------------------------
     */
+
     activePlanId =
-        record.id;
+        String(
+            record.id
+        );
 
 
     /*
-       Normalize the actual plan stored inside
-       the selected record.
+       -------------------------------------------------------
+       STEP 5
+       Load ONLY the plan inside the selected record.
+       -------------------------------------------------------
     */
+
     studyPlan =
         normalizePlan(
             record.plan
@@ -1637,13 +1375,23 @@ function loadActivePlan() {
 
 
     if (!studyPlan) {
+
+        console.error(
+            "StudyMind: Active plan could not be normalized."
+        );
+
         return false;
+
     }
 
 
     /*
-       Restore subjects.
+       -------------------------------------------------------
+       STEP 6
+       Restore subjects and topics.
+       -------------------------------------------------------
     */
+
     subjects =
         Array.isArray(
             studyPlan.subjects
@@ -1652,9 +1400,6 @@ function loadActivePlan() {
             : [];
 
 
-    /*
-       Restore topics.
-    */
     allTopics =
         Array.isArray(
             studyPlan.topics
@@ -1664,8 +1409,12 @@ function loadActivePlan() {
 
 
     /*
-       Restore completed topics.
+       -------------------------------------------------------
+       STEP 7
+       Restore completion state.
+       -------------------------------------------------------
     */
+
     completedTopics =
         Array.isArray(
             record.completedTopics
@@ -1676,9 +1425,6 @@ function loadActivePlan() {
             : [];
 
 
-    /*
-       Restore completed knowledge checks.
-    */
     completedQuestionTopics =
         Array.isArray(
             record.completedQuestionTopics
@@ -1690,17 +1436,39 @@ function loadActivePlan() {
 
 
     /*
-       Restore current topic position.
+       -------------------------------------------------------
+       STEP 8
+       Restore current topic.
+       -------------------------------------------------------
     */
+
     currentTopicIndex =
         Number(
             record.currentTopicIndex
-        ) || 0;
+        );
+
+
+    if (
+        !Number.isInteger(
+            currentTopicIndex
+        ) ||
+        currentTopicIndex < 0 ||
+        currentTopicIndex >= allTopics.length
+    ) {
+
+        currentTopicIndex =
+            0;
+
+    }
 
 
     /*
-       Restore topic reading progress.
+       -------------------------------------------------------
+       STEP 9
+       Restore reading state.
+       -------------------------------------------------------
     */
+
     topicReadings =
         record.topicReadings &&
         typeof record.topicReadings === "object"
@@ -1711,8 +1479,12 @@ function loadActivePlan() {
 
 
     /*
-       Restore current study session.
+       -------------------------------------------------------
+       STEP 10
+       Restore study session.
+       -------------------------------------------------------
     */
+
     currentStudySession =
         record.studySession &&
         typeof record.studySession === "object"
@@ -1723,8 +1495,12 @@ function loadActivePlan() {
 
 
     /*
+       -------------------------------------------------------
+       STEP 11
        Restore timer.
+       -------------------------------------------------------
     */
+
     timerSeconds =
         Number(
             record.timerSeconds
@@ -1744,9 +1520,6 @@ function loadActivePlan() {
     }
 
 
-    /*
-       Restore selected timer duration.
-    */
     selectedTimerSeconds =
         Number(
             record.timerDuration
@@ -1754,6 +1527,9 @@ function loadActivePlan() {
 
 
     if (
+        !Number.isFinite(
+            selectedTimerSeconds
+        ) ||
         !TIMER_OPTIONS.includes(
             selectedTimerSeconds / 60
         )
@@ -1766,11 +1542,14 @@ function loadActivePlan() {
 
 
     /*
-       Restore the active plan into the legacy keys.
+       -------------------------------------------------------
+       STEP 12
+       Restore the selected plan to the compatibility keys.
 
-       This keeps the rest of StudyMind compatible
-       with the multi-plan system.
+       These keys now represent the ACTIVE plan only.
+       -------------------------------------------------------
     */
+
     writeJSON(
         PLAN_KEY,
         studyPlan
@@ -1832,8 +1611,12 @@ function loadActivePlan() {
 
 
     /*
+       -------------------------------------------------------
+       STEP 13
        Restore Knowledge Check state.
+       -------------------------------------------------------
     */
+
     if (
         record.knowledgeTopic
     ) {
@@ -1871,8 +1654,12 @@ function loadActivePlan() {
 
 
     /*
-       Restore completion celebration state.
+       -------------------------------------------------------
+       STEP 14
+       Restore celebration state.
+       -------------------------------------------------------
     */
+
     localStorage.setItem(
         CELEBRATION_KEY,
         record.celebrationShown
@@ -1882,12 +1669,18 @@ function loadActivePlan() {
 
 
     /*
-       Final safety check:
-       make absolutely sure the active ID still
-       points to the record we just loaded.
+       -------------------------------------------------------
+       STEP 15
+       Final verification.
+       -------------------------------------------------------
     */
+
+    const finalActiveId =
+        getActivePlanId();
+
+
     if (
-        getActivePlanId() !==
+        String(finalActiveId) !==
         String(record.id)
     ) {
 
@@ -1898,11 +1691,88 @@ function loadActivePlan() {
     }
 
 
+    /*
+       Helpful debugging information.
+       This does not affect the app.
+    */
+
+    console.log(
+        "StudyMind: Active plan loaded:",
+        {
+            activePlanId:
+                activePlanId,
+
+            title:
+                planTitle(studyPlan),
+
+            examDate:
+                studyPlan.examDate,
+
+            subjects:
+                studyPlan.subjectNames,
+
+            topics:
+                studyPlan.topicNames,
+
+            savedPlanCount:
+                plans.length
+        }
+    );
+
+
     return true;
 
 }
+```
 
+### Why this version is different
 
+The important change is that **`studyMindPlan` can no longer hijack the multi-plan system**.
+
+For example, suppose you have:
+
+```text
+studyMindPlans
+   ↓
+[ NEW ENGLISH PLAN,
+  OLD MATH PLAN,
+  OLD MATH PLAN,
+  OLD MATH PLAN ]
+
+studyMindPlan
+   ↓
+OLD MATH → GEOMETRY
+```
+
+The old code could see `studyMindPlan` and migrate it again.
+
+The new code says:
+
+```text
+Do saved plans exist?
+        ↓
+      YES
+        ↓
+Use studyMindActivePlanId
+        ↓
+If valid → use that exact plan
+        ↓
+If missing → use plans[0]
+```
+
+So the old Geometry plan **cannot overwrite the new plan just because it is sitting in `studyMindPlan`.**
+
+### One important thing
+
+After replacing these functions, **create a completely new study plan from Home** rather than simply refreshing Dashboard.
+
+The expected flow should then be:
+
+**Home → enter date/subjects/topics → Create Study Plan → Dashboard**
+
+and the Dashboard should show the plan you just created.
+
+If it **still** shows September 12 / Math / Geometry after this exact replacement, then the problem is almost certainly in the **Home `saveNewPlanRecord()` / `resetForNewPlan()` / redirect code**, because at that point Dashboard will be obeying whatever `studyMindActivePlanId` Home gives it.
 
 
 /* =========================================================
