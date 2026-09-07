@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>StudyMind AI — Premium Dashboard</title>
+
+    <meta
+        name="description"
+        content="StudyMind AI Premium Dashboard — your complete AI-powered study workspace."
+    >
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <style>
+
+        /* =========================================================
+           STUDYMIND AI — PREMIUM DASHBOARD
+           GOLD / BLACK PREMIUM EXPERIENCE
+        ========================================================= */
+
+        :root {
+            --premium-gold: #f5c451;
+            --premium-gold-light: #ffe49a;
+            --premium-gold-dark: #b98518;
+            --premium-black: #07090d;
+            --premium-black-2: #0c1018;
+            --premium-panel: rgba(14, 17, 24, 0.96);
+            --premium-border: rgba(245, 196, 81, 0.32);
+            --premium-glow: rgba(245, 196, 81, 0.18);
+        }
+
+        body.premium-dashboard-page {
+            background:
+                radial-gradient(
+                    circle at 10% 0%,
+                    rgba(245,196,81,.10),
+                    transparent 32%
+                ),
+                radial-gradient(
+                    circle at 90% 10%,
+                    rgba(245,196,81,.07),
+                    transparent 30%
+                ),
+                #07090d;
+            color: #f7f7f7;
+        }
+
+        body.premium-dashboard-page::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(
+                    115deg,
+                    transparent 0%,
+                    rgba(245,196,81,.025) 45%,
+                    transparent 70%
+                );
+            z-index: -1;
+        }
+
+        /* =========================================================
+           PREMIUM ACCESS LOADING
+        ========================================================= */
+
+        #premiumAccessGate {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(245,196,81,.12),
+                    transparent 38%
+                ),
+                #07090d;
+            transition:
+                opacity .35s ease,
+                visibility .35s ease;
+        }
+
+        #premiumAccessGate.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .premium-loading-card {
+            width: min(440px, calc(100% - 40px));
+            padding: 42px 30px;
+            text-align: center;
+            border: 1px solid var(--premium-border);
+            border-radius: 26px;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(245,196,81,.09),
+                    rgba(10,13,18,.98)
+                );
+            box-shadow:
+                0 25px 80px rgba(0,0,0,.55),
+                0 0 55px var(--premium-glow);
+        }
+
+        .premium-loading-icon {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 22px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            font-size: 34px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffe49a,
+                    #d49b25
+                );
+            box-shadow:
+                0 0 35px rgba(245,196,81,.28);
+        }
+
+        .premium-loading-card h2 {
+            margin: 0 0 10px;
+            color: var(--premium-gold-light);
+        }
+
+        .premium-loading-card p {
+            margin: 0;
+            color: rgba(255,255,255,.68);
+        }
+
+        /* =========================================================
+           NAVBAR
+        ========================================================= */
+
+        body.premium-dashboard-page nav {
+            border-bottom-color: rgba(245,196,81,.24);
+            background:
+                rgba(5,7,10,.92);
+            box-shadow:
+                0 8px 35px rgba(0,0,0,.25);
+            backdrop-filter: blur(18px);
+        }
+
+        body.premium-dashboard-page nav a:hover {
+            color: var(--premium-gold-light);
+        }
+
+        .premium-nav-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 8px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(245,196,81,.42);
+            background: rgba(245,196,81,.09);
+            color: var(--premium-gold-light);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        /* =========================================================
+           PREMIUM HEADER
+        ========================================================= */
+
+        .premium-dashboard-header {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 28px;
+            padding: 34px;
+            border: 1px solid var(--premium-border);
+            border-radius: 26px;
+            background:
+                radial-gradient(
+                    circle at 85% 20%,
+                    rgba(245,196,81,.13),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(245,196,81,.08),
+                    rgba(11,14,20,.97)
+                );
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.30),
+                0 0 55px rgba(245,196,81,.07);
+        }
+
+        .premium-dashboard-header::after {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -90px;
+            top: -100px;
+            border-radius: 50%;
+            border: 1px solid rgba(245,196,81,.16);
+            box-shadow:
+                0 0 0 25px rgba(245,196,81,.025),
+                0 0 0 50px rgba(245,196,81,.018);
+        }
+
+        .premium-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .premium-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--premium-gold);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        .premium-dashboard-header h1 {
+            margin: 9px 0 8px;
+            color: #fff;
+            font-size: clamp(30px, 4vw, 46px);
+        }
+
+        .premium-dashboard-header h1 span {
+            color: var(--premium-gold);
+        }
+
+        .premium-dashboard-header p {
+            max-width: 760px;
+            margin: 0;
+            color: rgba(255,255,255,.68);
+            line-height: 1.7;
+        }
+
+        .premium-active-badge {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 16px;
+            border: 1px solid rgba(245,196,81,.45);
+            border-radius: 999px;
+            background: rgba(245,196,81,.10);
+            color: var(--premium-gold-light);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .06em;
+            white-space: nowrap;
+            box-shadow: 0 0 25px rgba(245,196,81,.08);
+        }
+
+        .premium-active-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--premium-gold);
+            box-shadow: 0 0 12px var(--premium-gold);
+        }
+
+        /* =========================================================
+           PREMIUM CARDS
+        ========================================================= */
+
+        body.premium-dashboard-page .stat-card,
+        body.premium-dashboard-page .dashboard-card,
+        body.premium-dashboard-page .panel,
+        body.premium-dashboard-page .card {
+            border-color: var(--premium-border);
+        }
+
+        body.premium-dashboard-page .stat-card:hover,
+        body.premium-dashboard-page .dashboard-card:hover,
+        body.premium-dashboard-page .panel:hover,
+        body.premium-dashboard-page .card:hover {
+            border-color: rgba(245,196,81,.52);
+            box-shadow:
+                0 15px 45px rgba(0,0,0,.28),
+                0 0 28px rgba(245,196,81,.07);
+        }
+
+        /* =========================================================
+           PREMIUM BUTTONS
+        ========================================================= */
+
+        .premium-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 46px;
+            padding: 0 18px;
+            border: 1px solid rgba(245,196,81,.45);
+            border-radius: 13px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffe49a,
+                    #d49b25
+                );
+            color: #17120a;
+            font-weight: 900;
+            text-decoration: none;
+            box-shadow:
+                0 10px 28px rgba(245,196,81,.13);
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        }
+
+        .premium-button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 14px 34px rgba(245,196,81,.23);
+        }
+
+        /* =========================================================
+           GOLD PROGRESS
+        ========================================================= */
+
+        body.premium-dashboard-page .progress-bar,
+        body.premium-dashboard-page #progressBar {
+            background:
+                linear-gradient(
+                    90deg,
+                    #b98518,
+                    #f5c451,
+                    #ffe49a
+                ) !important;
+            box-shadow:
+                0 0 15px rgba(245,196,81,.22);
+        }
+
+        /* =========================================================
+           TIMER
+        ========================================================= */
+
+        body.premium-dashboard-page #studyTimer {
+            color: var(--premium-gold-light);
+            text-shadow:
+                0 0 25px rgba(245,196,81,.18);
+        }
+
+        body.premium-dashboard-page select {
+            border-color: rgba(245,196,81,.28);
+        }
+
+        body.premium-dashboard-page select:focus,
+        body.premium-dashboard-page input:focus,
+        body.premium-dashboard-page textarea:focus {
+            border-color: rgba(245,196,81,.68);
+            box-shadow:
+                0 0 0 3px rgba(245,196,81,.08);
+        }
+
+        /* =========================================================
+           GOLD LINKS
+        ========================================================= */
+
+        body.premium-dashboard-page a {
+            transition: color .2s ease;
+        }
+
+        body.premium-dashboard-page .quick-access a:hover {
+            color: var(--premium-gold-light);
+        }
+
+        /* =========================================================
+           PREMIUM FOOTER
+        ========================================================= */
+
+        .premium-footer {
+            margin-top: 45px;
+            padding: 25px 0 10px;
+            text-align: center;
+            color: rgba(255,255,255,.42);
+            font-size: 13px;
+        }
+
+        .premium-footer strong {
+            color: var(--premium-gold);
+        }
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 760px) {
+
+            .premium-dashboard-header {
+                padding: 25px 20px;
+            }
+
+            .premium-header-top {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .premium-active-badge {
+                width: fit-content;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body class="premium-dashboard-page">
+
+    <!-- =========================================================
+         PREMIUM ACCESS GATE
+    ========================================================= -->
+
+    <div id="premiumAccessGate">
+
+        <div class="premium-loading-card">
+
+            <div class="premium-loading-icon">
+                👑
+            </div>
+
+            <h2>
+                Verifying Premium Access
+            </h2>
+
+            <p>
+                Securely checking your StudyMind Premium membership...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         NAVIGATION
+    ========================================================= -->
+
+    <nav>
+
+        <div class="nav-container">
+
+            <a
+                href="home.html"
+                class="logo"
+            >
+                StudyMind AI
+                <span class="premium-nav-badge">
+                    👑 PREMIUM
+                </span>
+            </a>
+
+            <ul class="nav-links">
+
+                <li>
+                    <a href="home.html">
+                        Home
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="premium-dashboard.html"
+                        aria-current="page"
+                    >
+                        👑 Premium Dashboard
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#calendar">
+                        Calendar
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#schedule">
+                        Schedule
+                    </a>
+                </li>
+
+                <li>
+                    <a href="ai-support.html">
+                        AI Support
+                    </a>
+                </li>
+
+                <li>
+                    <a href="summarizer.html">
+                        Summarizer
+                    </a>
+                </li>
+
+                <li>
+                    <a href="study-streak.html">
+                        Study Streak
+                    </a>
+                </li>
+
+                <li>
+                    <a href="study-score.html">
+                        Study Score
+                    </a>
+                </li>
+
+            </ul>
+
+            <button
+                id="themeButton"
+                class="theme-button"
+            >
+                🌙 Dark Mode
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================= -->
+
+    <main>
+
+        <!-- =====================================================
+             PREMIUM HERO
+        ===================================================== -->
+
+        <section class="premium-dashboard-header">
+
+            <div class="premium-header-top">
+
+                <div>
+
+                    <div class="premium-eyebrow">
+                        👑 STUDYMIND PREMIUM
+                    </div>
+
+                    <h1>
+                        Your Premium
+                        <span>Study Dashboard.</span>
+                    </h1>
+
+                    <p>
+                        Your complete StudyMind AI workspace,
+                        with Premium access unlocked. Track your
+                        topics, study sessions, progress, calendar,
+                        Knowledge Checks and more — all in one place.
+                    </p>
+
+                </div>
+
+                <div class="premium-active-badge">
+
+                    <span class="premium-active-dot"></span>
+
+                    PREMIUM ACTIVE
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             STATS
+        ===================================================== -->
+
+        <section
+            class="dashboard-stats"
+            id="dashboardStats"
+        >
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    WEEKLY HOURS
+                </span>
+
+                <strong id="weeklyHours">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    DAYS LEFT
+                </span>
+
+                <strong id="daysLeft">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    DAILY GOAL
+                </span>
+
+                <strong id="dailyGoal">
+                    0 hrs
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    STUDY SCORE
+                </span>
+
+                <strong id="studyScore">
+                    0
+                </strong>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MAIN DASHBOARD GRID
+        ===================================================== -->
+
+        <div class="dashboard-grid">
+
+
+            <!-- =================================================
+                 LEFT COLUMN
+            ================================================= -->
+
+            <div class="dashboard-main">
+
+
+                <!-- =============================================
+                     CURRENT TOPIC
+                ============================================= -->
+
+                <section
+                    class="dashboard-card current-topic-card"
+                    id="currentTopicSection"
+                >
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                CURRENT STUDY SESSION
+                            </span>
+
+                            <h2>
+                                📖 Topic Study
+                            </h2>
+
+                        </div>
+
+                        <span
+                            id="topicStatusBadge"
+                            class="status-badge"
+                        >
+                            IN PROGRESS
+                        </span>
+
+                    </div>
+
+
+                    <div class="topic-position">
+                        <span id="topicPosition">
+                            TOPIC 1 OF 1
+                        </span>
+                    </div>
+
+
+                    <h1 id="currentTopicName">
+                        Your current topic
+                    </h1>
+
+
+                    <p id="currentTopicDescription">
+                        Study this topic and complete the knowledge check.
+                    </p>
+
+
+                    <!-- =========================================
+                         TIMER
+                    ========================================== -->
+
+                    <div class="study-timer-card">
+
+                        <div class="timer-heading">
+
+                            <span>
+                                ⏱️ STUDY TIMER
+                            </span>
+
+                            <select id="timerDuration">
+
+                                <option value="25">
+                                    25 mins
+                                </option>
+
+                                <option value="45">
+                                    45 mins
+                                </option>
+
+                                <option value="60">
+                                    60 mins
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div
+                            id="studyTimer"
+                            class="study-timer"
+                        >
+                            25:00
+                        </div>
+
+
+                        <div class="timer-controls">
+
+                            <button
+                                id="startTimerButton"
+                                class="primary-button"
+                            >
+                                ▶ Start
+                            </button>
+
+                            <button
+                                id="pauseTimerButton"
+                                class="secondary-button"
+                            >
+                                ⏸ Pause
+                            </button>
+
+                            <button
+                                id="resetTimerButton"
+                                class="secondary-button"
+                            >
+                                ↻ Reset
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         COMPLETE TOPIC
+                    ========================================== -->
+
+                    <div
+                        id="topicCompletionArea"
+                        class="topic-completion-area"
+                    >
+
+                        <label>
+
+                            <input
+                                type="checkbox"
+                                id="topicCompleteCheckbox"
+                            >
+
+                            <span>
+                                I have finished studying this topic
+                            </span>
+
+                        </label>
+
+
+                        <p id="topicCompletionMessage"></p>
+
+                        <p id="nextTopicMessage"></p>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         KNOWLEDGE CHECK
+                    ========================================== -->
+
+                    <section
+                        id="topicQuestionsSection"
+                        class="topic-questions-section"
+                        hidden
+                    >
+
+                        <div class="section-heading">
+
+                            <span class="eyebrow">
+                                🧠 KNOWLEDGE CHECK
+                            </span>
+
+                            <h3>
+                                Test what you learned
+                            </h3>
+
+                            <p>
+                                Complete the Knowledge Check for this topic.
+                            </p>
+
+                        </div>
+
+
+                        <div id="topicQuestions"></div>
+
+
+                        <button
+                            id="submitTopicQuestions"
+                            class="primary-button"
+                        >
+                            Submit Knowledge Check
+                        </button>
+
+
+                        <div
+                            id="topicQuestionResult"
+                            class="topic-question-result"
+                        ></div>
+
+                    </section>
+
+                </section>
+
+
+                <!-- =============================================
+                     PROGRESS
+                ============================================== -->
+
+                <section class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                YOUR PROGRESS
+                            </span>
+
+                            <h2>
+                                📊 Study Progress
+                            </h2>
+
+                        </div>
+
+                        <strong id="progressPercent">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="progress-track">
+
+                        <div
+                            id="progressBar"
+                            class="progress-bar"
+                            style="width: 0%;"
+                        ></div>
+
+                    </div>
+
+
+                    <p id="progressCount">
+                        0 of 0 topics completed
+                    </p>
+
+                </section>
+
+
+                <!-- =============================================
+                     TOPICS
+                ============================================== -->
+
+                <section class="dashboard-card">
+
+                    <div class="section-heading">
+
+                        <span class="eyebrow">
+                            STUDY PLAN
+                        </span>
+
+                        <h2>
+                            📚 Topics
+                        </h2>
+
+                    </div>
+
+                    <div id="topicList"></div>
+
+                </section>
+
+
+                <!-- =============================================
+                     SUBJECTS
+                ============================================== -->
+
+                <section class="dashboard-card">
+
+                    <div class="section-heading">
+
+                        <span class="eyebrow">
+                            YOUR PLAN
+                        </span>
+
+                        <h2>
+                            📘 Subjects
+                        </h2>
+
+                    </div>
+
+                    <div id="subjectList"></div>
+
+                </section>
+
+
+                <!-- =============================================
+                     DAILY CHALLENGE
+                ============================================== -->
+
+                <section
+                    class="dashboard-card daily-challenge-card"
+                    id="dailyChallenge"
+                >
+
+                    <div class="daily-challenge-header">
+
+                        <div>
+
+                            <span
+                                id="dailyChallengeBadge"
+                                class="eyebrow"
+                            >
+                                DAILY CHALLENGE
+                            </span>
+
+                            <h2 id="dailyChallengeTitle">
+                                Today's Challenge
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <p id="dailyChallengeText"></p>
+
+
+                    <div id="dailyChallengeContent">
+
+                        <h3 id="dailyChallengeTitle"></h3>
+
+                        <p id="dailyChallengeDescription"></p>
+
+                    </div>
+
+
+                    <div class="daily-challenge-progress">
+
+                        <div
+                            id="dailyChallengeProgressBar"
+                            class="progress-bar"
+                            style="width: 0%;"
+                        ></div>
+
+                    </div>
+
+
+                    <p id="dailyChallengeProgress">
+                        0%
+                    </p>
+
+
+                    <button
+                        id="dailyChallengeButton"
+                        class="primary-button"
+                    >
+                        Start Challenge
+                    </button>
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT COLUMN
+            ================================================= -->
+
+            <aside class="dashboard-sidebar">
+
+
+                <!-- =============================================
+                     CALENDAR
+                ============================================== -->
+
+                <section
+                    class="dashboard-card"
+                    id="calendar"
+                >
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                STUDY CALENDAR
+                            </span>
+
+                            <h2>
+                                📅 Calendar
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calendar-controls">
+
+                        <button
+                            id="previousMonth"
+                            type="button"
+                        >
+                            ←
+                        </button>
+
+                        <strong id="calendarMonth">
+                            Month
+                        </strong>
+
+                        <button
+                            id="nextMonth"
+                            type="button"
+                        >
+                            →
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="calendarDays"
+                        class="calendar-days"
+                    ></div>
+
+
+                    <div class="next-booking">
+
+                        <span>
+                            NEXT SESSION
+                        </span>
+
+                        <strong id="nextBooking">
+                            No upcoming session
+                        </strong>
+
+                        <small id="nextBookingTime">
+                            —
+                        </small>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =============================================
+                     SCHEDULE
+                ============================================== -->
+
+                <section
+                    class="dashboard-card"
+                    id="schedule"
+                >
+
+                    <div class="section-heading">
+
+                        <span class="eyebrow">
+                            YOUR PLAN
+                        </span>
+
+                        <h2>
+                            🗓️ Schedule
+                        </h2>
+
+                    </div>
+
+
+                    <div id="scheduleList"></div>
+
+                </section>
+
+
+                <!-- =============================================
+                     QUICK ACCESS
+                ============================================== -->
+
+                <section class="dashboard-card">
+
+                    <div class="section-heading">
+
+                        <span class="eyebrow">
+                            PREMIUM TOOLS
+                        </span>
+
+                        <h2>
+                            ⚡ Quick Access
+                        </h2>
+
+                    </div>
+
+
+                    <div class="quick-access">
+
+                        <a href="ai-support.html">
+                            🧠 AI Support
+                        </a>
+
+                        <a href="summarizer.html">
+                            📄 AI Summarizer
+                        </a>
+
+                        <a href="study-streak.html">
+                            🔥 Study Streak
+                        </a>
+
+                        <a href="study-score.html">
+                            🏆 Study Score
+                        </a>
+
+                        <a href="game-mode.html">
+                            🎮 Game Mode
+                        </a>
+
+                    </div>
+
+                </section>
+
+
+            </aside>
+
+        </div>
+
+
+        <!-- =====================================================
+             FOOTER
+        ===================================================== -->
+
+        <div class="premium-footer">
+
+            <strong>👑 StudyMind AI Premium</strong>
+
+            <br>
+
+            Your Premium study workspace is active.
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         SCRIPTS
+    ========================================================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="supabase.js"></script>
+
+    <script src="premium-dashboard.js"></script>
+
+</body>
+
+</html>
