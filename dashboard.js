@@ -3786,7 +3786,23 @@ function injectCalendarCSS() {
                 none !important;
             opacity:.58;
         }
+        /* GREY — PAST DAYS */
 
+        #calendarDays .calendar-day.past-day {
+            background:
+                rgba(100,116,139,.10) !important;
+
+            border-color:
+                rgba(100,116,139,.20) !important;
+
+            color:
+                rgba(203,213,225,.38) !important;
+
+            box-shadow:
+                none !important;
+
+            opacity:.48;
+        }
         /* TODAY INDICATOR */
 
         #calendarDays .calendar-day.today::after {
