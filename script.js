@@ -2648,10 +2648,10 @@ function enablePremiumHome() {
     if (premiumButton) {
 
         premiumButton.href =
-            "premium-app.html";
+            "premium-dashboard.html";
 
         premiumButton.innerHTML =
-            '👑 Open Premium Experience <span aria-hidden="true">→</span>';
+            '👑 Open Premium Dashboard <span aria-hidden="true">→</span>';
 
     }
 
