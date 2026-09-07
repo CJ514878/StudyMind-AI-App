@@ -3308,7 +3308,7 @@ function openKnowledgeCheckPage(
 
     /*
        ---------------------------------------------------------
-       SAVE THE TOPIC FIRST
+       SAVE THE TOPIC
        ---------------------------------------------------------
     */
 
@@ -3345,139 +3345,93 @@ function openKnowledgeCheckPage(
 
     /*
        ---------------------------------------------------------
-       PREMIUM ACCESS CHECK
+       PREMIUM ACCESS
        ---------------------------------------------------------
     */
 
-    async function continueToKnowledgeCheck() {
-
-        let isPremium = false;
-
-
-        /*
-           If the Premium status checker exists,
-           use the secure server verification.
-        */
-
-        if (
-            typeof window.checkStudyMindPremiumStatus ===
-            "function"
-        ) {
-
-            try {
-
-                isPremium =
-                    await window.checkStudyMindPremiumStatus();
-
-            } catch (error) {
-
-                console.error(
-                    "Knowledge Check Premium verification failed:",
-                    error
-                );
-
-                isPremium = false;
-
-            }
-
-        } else {
-
-            /*
-               Fallback for the Premium Dashboard,
-               where access has already been verified.
-            */
-
-            isPremium =
-                window.studyMindPremiumVerified === true ||
-                window.studyMindIsPremium === true ||
-                window.premiumUser === true;
-
-        }
+    const isPremium =
+        window.studyMindPremiumVerified === true ||
+        window.studyMindIsPremium === true ||
+        window.premiumUser === true;
 
 
-        /*
-           ------------------------------------------------------
-           FREE USER
-           ------------------------------------------------------
-        */
+    /*
+       ---------------------------------------------------------
+       FREE USER
+       ---------------------------------------------------------
+    */
 
-        if (!isPremium) {
-
-            window.location.href =
-                "premium.html";
-
-            return;
-
-        }
-
-
-        /*
-           ------------------------------------------------------
-           PREMIUM USER
-           ------------------------------------------------------
-        */
-
-        const existingQuestions =
-            readJSON(
-                KNOWLEDGE_QUESTIONS_KEY,
-                null
-            );
-
-
-        /*
-           Do not delete existing questions.
-
-           This allows knowledge-check.html to use
-           already-generated questions and failed-question
-           revision data.
-        */
-
-        if (
-            !existingQuestions
-        ) {
-
-            writeJSON(
-                KNOWLEDGE_QUESTIONS_KEY,
-                {
-
-                    topicKey:
-                        topicKey(topic),
-
-                    topicName:
-                        topicName(topic),
-
-                    subject:
-                        topicSubject(topic),
-
-                    questions:
-                        [],
-
-                    questionCount:
-                        5,
-
-                    revisionQuestions:
-                        []
-
-                }
-            );
-
-        }
-
-
-        saveDashboardState();
-
-
-        /*
-           Knowledge checks remain five questions.
-        */
+    if (!isPremium) {
 
         window.location.href =
-            "knowledge-check.html";
+            "premium.html";
+
+        return;
+    }
+
+
+    /*
+       ---------------------------------------------------------
+       PREMIUM USER
+       ---------------------------------------------------------
+    */
+
+    const existingQuestions =
+        readJSON(
+            KNOWLEDGE_QUESTIONS_KEY,
+            null
+        );
+
+
+    /*
+       Do not delete existing questions.
+
+       This allows knowledge-check.html to use
+       already-generated questions and failed-question
+       revision data.
+    */
+
+    if (
+        !existingQuestions
+    ) {
+
+        writeJSON(
+            KNOWLEDGE_QUESTIONS_KEY,
+            {
+
+                topicKey:
+                    topicKey(topic),
+
+                topicName:
+                    topicName(topic),
+
+                subject:
+                    topicSubject(topic),
+
+                questions:
+                    [],
+
+                questionCount:
+                    5,
+
+                revisionQuestions:
+                    []
+
+            }
+        );
 
     }
 
 
-    continueToKnowledgeCheck();
+    saveDashboardState();
+
+
+    /*
+       Knowledge checks remain five questions.
+    */
+
+    window.location.href =
+        "knowledge-check.html";
 
 }
 /* =========================================================
