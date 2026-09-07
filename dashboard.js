@@ -1375,21 +1375,30 @@ function saveLegacyState() {
 }
 
 
+
 /* =========================================================
    LOAD ACTIVE PLAN
 ========================================================= */
 
 function loadActivePlan() {
 
+    /*
+       Load every saved plan.
+    */
     let plans =
         ensurePlanRegistry();
 
 
+    /*
+       If there are no saved plans, try to recover the
+       legacy/current plan.
+    */
     if (
+        !Array.isArray(plans) ||
         plans.length === 0
     ) {
 
-        studyPlan =
+        const legacyPlan =
             normalizePlan(
                 readJSON(
                     PLAN_KEY,
@@ -1400,7 +1409,8 @@ function loadActivePlan() {
                 )
             );
 
-        if (!studyPlan) {
+
+        if (!legacyPlan) {
             return false;
         }
 
@@ -1411,7 +1421,7 @@ function loadActivePlan() {
                 createId("plan"),
 
             plan:
-                studyPlan,
+                legacyPlan,
 
             completedTopics:
                 readJSON(
@@ -1465,18 +1475,20 @@ function loadActivePlan() {
                 Number(
                     localStorage.getItem(
                         TIMER_SECONDS_KEY
-                    ) || DEFAULT_TIMER_SECONDS
+                    ) ||
+                    DEFAULT_TIMER_SECONDS
                 ),
 
             timerDuration:
                 Number(
                     localStorage.getItem(
                         TIMER_DURATION_KEY
-                    ) || DEFAULT_TIMER_SECONDS
+                    ) ||
+                    DEFAULT_TIMER_SECONDS
                 ),
 
             createdAt:
-                studyPlan.createdAt ||
+                legacyPlan.createdAt ||
                 new Date().toISOString(),
 
             updatedAt:
@@ -1484,19 +1496,21 @@ function loadActivePlan() {
 
             title:
                 planTitle(
-                    studyPlan
+                    legacyPlan
                 )
 
         };
 
 
-        plans.unshift(
+        plans = [
             record
-        );
+        ];
+
 
         saveSavedPlans(
             plans
         );
+
 
         setActivePlanId(
             record.id
@@ -1505,43 +1519,117 @@ function loadActivePlan() {
     }
 
 
+    /*
+       IMPORTANT:
+       Always start with the explicitly selected
+       active plan ID.
+    */
     let id =
         getActivePlanId();
 
 
     let record =
-        plans.find(
-            item =>
-                item &&
-                item.id === id
-        );
+        null;
 
 
-    if (!record) {
+    /*
+       Find the exact active plan.
+    */
+    if (id) {
 
         record =
-            plans[0];
+            plans.find(
+                item =>
+                    item &&
+                    String(item.id) ===
+                    String(id)
+            ) || null;
 
-        if (record) {
+    }
 
-            setActivePlanId(
-                record.id
+
+    /*
+       If the active ID is invalid or missing,
+       recover using the newest saved plan.
+
+       Do NOT blindly use an old hard-coded plan.
+       The newest record is the one most recently
+       created by the Home page.
+    */
+    if (!record) {
+
+        const validPlans =
+            plans.filter(
+                item =>
+                    item &&
+                    item.id &&
+                    item.plan
             );
 
+
+        if (
+            validPlans.length === 0
+        ) {
+            return false;
         }
 
+
+        record =
+            validPlans
+                .slice()
+                .sort(
+                    (a, b) => {
+
+                        const dateA =
+                            new Date(
+                                a.updatedAt ||
+                                a.createdAt ||
+                                0
+                            ).getTime();
+
+
+                        const dateB =
+                            new Date(
+                                b.updatedAt ||
+                                b.createdAt ||
+                                0
+                            ).getTime();
+
+
+                        return dateB - dateA;
+
+                    }
+                )[0];
+
+
+        if (!record) {
+            return false;
+        }
+
+
+        /*
+           Make the recovered plan the active plan
+           immediately.
+        */
+        setActivePlanId(
+            record.id
+        );
+
     }
 
 
-    if (!record) {
-        return false;
-    }
-
-
+    /*
+       The dashboard now has one authoritative
+       active plan.
+    */
     activePlanId =
         record.id;
 
 
+    /*
+       Normalize the actual plan stored inside
+       the selected record.
+    */
     studyPlan =
         normalizePlan(
             record.plan
@@ -1553,6 +1641,9 @@ function loadActivePlan() {
     }
 
 
+    /*
+       Restore subjects.
+    */
     subjects =
         Array.isArray(
             studyPlan.subjects
@@ -1561,6 +1652,9 @@ function loadActivePlan() {
             : [];
 
 
+    /*
+       Restore topics.
+    */
     allTopics =
         Array.isArray(
             studyPlan.topics
@@ -1569,6 +1663,9 @@ function loadActivePlan() {
             : [];
 
 
+    /*
+       Restore completed topics.
+    */
     completedTopics =
         Array.isArray(
             record.completedTopics
@@ -1579,6 +1676,9 @@ function loadActivePlan() {
             : [];
 
 
+    /*
+       Restore completed knowledge checks.
+    */
     completedQuestionTopics =
         Array.isArray(
             record.completedQuestionTopics
@@ -1589,12 +1689,18 @@ function loadActivePlan() {
             : [];
 
 
+    /*
+       Restore current topic position.
+    */
     currentTopicIndex =
         Number(
             record.currentTopicIndex
         ) || 0;
 
 
+    /*
+       Restore topic reading progress.
+    */
     topicReadings =
         record.topicReadings &&
         typeof record.topicReadings === "object"
@@ -1604,6 +1710,9 @@ function loadActivePlan() {
             : {};
 
 
+    /*
+       Restore current study session.
+    */
     currentStudySession =
         record.studySession &&
         typeof record.studySession === "object"
@@ -1613,6 +1722,9 @@ function loadActivePlan() {
             : null;
 
 
+    /*
+       Restore timer.
+    */
     timerSeconds =
         Number(
             record.timerSeconds
@@ -1632,6 +1744,9 @@ function loadActivePlan() {
     }
 
 
+    /*
+       Restore selected timer duration.
+    */
     selectedTimerSeconds =
         Number(
             record.timerDuration
@@ -1651,24 +1766,28 @@ function loadActivePlan() {
 
 
     /*
-       Restore legacy keys so other StudyMind pages
-       continue working.
-    */
+       Restore the active plan into the legacy keys.
 
+       This keeps the rest of StudyMind compatible
+       with the multi-plan system.
+    */
     writeJSON(
         PLAN_KEY,
         studyPlan
     );
+
 
     writeJSON(
         LEGACY_PLAN_KEY,
         studyPlan
     );
 
+
     writeJSON(
         COMPLETED_KEY,
         completedTopics
     );
+
 
     writeJSON(
         COMPLETED_Q_KEY,
@@ -1712,6 +1831,9 @@ function loadActivePlan() {
     );
 
 
+    /*
+       Restore Knowledge Check state.
+    */
     if (
         record.knowledgeTopic
     ) {
@@ -1719,6 +1841,12 @@ function loadActivePlan() {
         writeJSON(
             KNOWLEDGE_TOPIC_KEY,
             record.knowledgeTopic
+        );
+
+    } else {
+
+        localStorage.removeItem(
+            KNOWLEDGE_TOPIC_KEY
         );
 
     }
@@ -1733,9 +1861,18 @@ function loadActivePlan() {
             record.knowledgeQuestions
         );
 
+    } else {
+
+        localStorage.removeItem(
+            KNOWLEDGE_QUESTIONS_KEY
+        );
+
     }
 
 
+    /*
+       Restore completion celebration state.
+    */
     localStorage.setItem(
         CELEBRATION_KEY,
         record.celebrationShown
@@ -1744,9 +1881,28 @@ function loadActivePlan() {
     );
 
 
+    /*
+       Final safety check:
+       make absolutely sure the active ID still
+       points to the record we just loaded.
+    */
+    if (
+        getActivePlanId() !==
+        String(record.id)
+    ) {
+
+        setActivePlanId(
+            record.id
+        );
+
+    }
+
+
     return true;
 
 }
+
+
 
 
 /* =========================================================
