@@ -4648,9 +4648,13 @@ function renderCalendar() {
             );
 
 
-        let stateLabel =
+             let stateLabel =
             "";
 
+
+        /*
+           EXAM DAY
+        */
 
         if (
             examDate &&
@@ -4663,6 +4667,11 @@ function renderCalendar() {
             stateLabel =
                 "Exam Day";
 
+
+        /*
+           AFTER EXAM
+        */
+
         } else if (
             examDate &&
             cellDate > examDate
@@ -4671,12 +4680,50 @@ function renderCalendar() {
             stateLabel =
                 "After Exam";
 
+
+        /*
+           PAST DAYS
+           Do this BEFORE the normal Study Day check.
+        */
+
+        } else if (
+            cellDate < today
+        ) {
+
+            /*
+               Keep weekends recognizable as rest days.
+            */
+
+            if (
+                isRestDate(cellDate)
+            ) {
+
+                stateLabel =
+                    "Rest Day";
+
+            } else {
+
+                stateLabel =
+                    "Past";
+
+            }
+
+
+        /*
+           TODAY'S REST DAY
+        */
+
         } else if (
             isRestDate(cellDate)
         ) {
 
             stateLabel =
                 "Rest Day";
+
+
+        /*
+           COMPLETED STUDY DAY
+        */
 
         } else if (
             isStudyDayCompleted(
@@ -4686,6 +4733,11 @@ function renderCalendar() {
 
             stateLabel =
                 "Completed";
+
+
+        /*
+           FUTURE / CURRENT STUDY DAY
+        */
 
         } else {
 
