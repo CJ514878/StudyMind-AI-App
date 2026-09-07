@@ -1913,7 +1913,93 @@ function getCurrentTopic() {
 
 }
 
+/* =========================================================
+   SYNC ACTIVE PLAN RECORD
+========================================================= */
 
+function syncActivePlanRecord() {
+
+    if (!activePlanId) {
+        return;
+    }
+
+    const plans = getSavedPlans();
+
+    if (!Array.isArray(plans) || plans.length === 0) {
+        return;
+    }
+
+    const index = plans.findIndex(
+        record =>
+            record &&
+            record.id &&
+            String(record.id) === String(activePlanId)
+    );
+
+    if (index === -1) {
+        console.warn(
+            "StudyMind: Active plan record not found:",
+            activePlanId
+        );
+        return;
+    }
+
+    const record = plans[index];
+
+    record.plan = studyPlan;
+
+    record.completedTopics =
+        Array.isArray(completedTopics)
+            ? [...completedTopics]
+            : [];
+
+    record.completedQuestionTopics =
+        Array.isArray(completedQuestionTopics)
+            ? [...completedQuestionTopics]
+            : [];
+
+    record.currentTopicIndex =
+        Number.isInteger(currentTopicIndex)
+            ? currentTopicIndex
+            : 0;
+
+    record.knowledgeTopic =
+        knowledgeTopic || null;
+
+    record.knowledgeQuestions =
+        knowledgeQuestions || null;
+
+    record.celebrationShown =
+        localStorage.getItem(CELEBRATION_KEY) === "true";
+
+    record.studySession =
+        currentStudySession
+            ? { ...currentStudySession }
+            : null;
+
+    record.topicReadings =
+        topicReadings &&
+        typeof topicReadings === "object"
+            ? { ...topicReadings }
+            : {};
+
+    record.timerSeconds =
+        Number.isFinite(timerSeconds)
+            ? timerSeconds
+            : DEFAULT_TIMER_SECONDS;
+
+    record.timerDuration =
+        Number.isFinite(selectedTimerSeconds)
+            ? selectedTimerSeconds
+            : DEFAULT_TIMER_SECONDS;
+
+    record.updatedAt =
+        new Date().toISOString();
+
+    plans[index] = record;
+
+    saveSavedPlans(plans);
+}
 function createStudySession(
     topic
 ) {
