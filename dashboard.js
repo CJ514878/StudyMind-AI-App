@@ -3307,8 +3307,76 @@ function openKnowledgeCheckPage(
 
 
     /*
-       Preserve the exact topic information expected
-       by knowledge-check.html.
+       ---------------------------------------------------------
+       PREMIUM GATE
+       ---------------------------------------------------------
+       Verified Premium users can continue directly.
+       Free users are sent to the Premium page.
+    */
+
+    const isPremium =
+        typeof window.isStudyMindPremium === "function"
+            ? window.isStudyMindPremium()
+            : (
+                window.studyMindPremiumVerified === true ||
+                window.studyMindIsPremium === true ||
+                window.premiumUser === true
+            );
+
+
+    if (!isPremium) {
+
+        /*
+           Remember the topic so the user can return to
+           the Knowledge Check after upgrading.
+        */
+
+        writeJSON(
+            KNOWLEDGE_TOPIC_KEY,
+            {
+
+                id:
+                    topic.id || "",
+
+                key:
+                    topicKey(topic),
+
+                name:
+                    topicName(topic),
+
+                title:
+                    topic.title ||
+                    topicName(topic),
+
+                subject:
+                    topicSubject(topic),
+
+                description:
+                    topic.description ||
+                    "",
+
+                checkId:
+                    topicKey(topic)
+
+            }
+        );
+
+
+        /*
+           Send the free user to the Premium page.
+        */
+
+        window.location.href =
+            "premium.html";
+
+        return;
+    }
+
+
+    /*
+       ---------------------------------------------------------
+       PREMIUM USER — CONTINUE TO KNOWLEDGE CHECK
+       ---------------------------------------------------------
     */
 
     writeJSON(
@@ -3345,7 +3413,7 @@ function openKnowledgeCheckPage(
     /*
        Do not delete existing questions.
 
-       This allows the knowledge-check page to use
+       This allows knowledge-check.html to use
        already-generated questions and failed-question
        revision data.
     */
@@ -3399,7 +3467,6 @@ function openKnowledgeCheckPage(
         "knowledge-check.html";
 
 }
-
 
 /* =========================================================
    COMPLETION CELEBRATION
