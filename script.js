@@ -2502,28 +2502,58 @@ function connectStudyForm() {
 function openHomePremiumOffer() {
 
     /*
-       Free users go to the Premium purchase page.
+       Always verify Premium status at the moment the
+       Premium button is clicked.
 
-       Verified Premium users are sent to their
-       Premium workspace instead.
+       Premium user -> premium-dashboard.html
+       Free user    -> premium.html
     */
 
-    if (
-        document.body.classList.contains(
-            "premium-home"
-        )
-    ) {
+    const button =
+        $("premiumButton");
 
-        window.location.href =
-            "premium-dashboard.html";
 
-        return;
+    if (button) {
+
+        button.style.pointerEvents =
+            "none";
+
+        button.setAttribute(
+            "aria-busy",
+            "true"
+        );
 
     }
 
 
-    window.location.href =
-        "premium.html";
+    checkPremiumStatus()
+        .then(function(isPremium) {
+
+            if (isPremium === true) {
+
+                window.location.href =
+                    "premium-dashboard.html";
+
+                return;
+
+            }
+
+
+            window.location.href =
+                "premium.html";
+
+        })
+        .catch(function(error) {
+
+            console.error(
+                "StudyMind AI: Premium button verification failed.",
+                error
+            );
+
+            window.location.href =
+                "premium.html";
+
+        });
 
 }
 
@@ -2581,29 +2611,10 @@ function enablePremiumHome() {
     }
 
 
-    /*
-       Prevent duplicate application.
-    */
-
-    if (
-        document.body.classList.contains(
-            "premium-home"
-        )
-    ) {
-
-        return;
-
-    }
-
-
     document.body.classList.add(
         "premium-home"
     );
 
-
-    /* -----------------------------------------------------
-       PREMIUM CTA
-    ----------------------------------------------------- */
 
     const premiumButton =
         $("premiumButton");
@@ -2655,23 +2666,7 @@ function enablePremiumHome() {
 
     }
 
-
-    /*
-       Reconnect the button logic after changing its
-       destination.
-    */
-
-    if (premiumButton) {
-
-        premiumButton.dataset.connected =
-            "false";
-
-        connectPremiumButton();
-
-    }
-
 }
-
 
 /* =========================================================
    DISABLE PREMIUM HOME
