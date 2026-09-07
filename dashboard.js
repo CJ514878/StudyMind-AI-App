@@ -4603,7 +4603,27 @@ function renderCalendar() {
             );
 
         }
+        /*
+           PAST DAY
+        */
 
+        if (
+            !otherMonth &&
+            cellDate < today &&
+            !(
+                examDate &&
+                sameDate(
+                    cellDate,
+                    examDate
+                )
+            )
+        ) {
+
+            element.classList.add(
+                "past-day"
+            );
+
+        }
 
         /*
            REST DAY
