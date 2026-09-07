@@ -5335,3 +5335,607 @@ body.study-mind-premium
     }
 
 }
+/* =========================================================
+   STUDYMIND AI — PREMIUM HOME
+   GLOWING GOLD EXPERIENCE
+   Activated by: body.premium-home
+========================================================= */
+
+body.premium-home {
+    --premium-gold: #f5c451;
+    --premium-gold-light: #ffe9a8;
+    --premium-gold-bright: #ffd76a;
+    --premium-gold-dark: #b8860b;
+
+    background:
+        radial-gradient(
+            circle at 15% 10%,
+            rgba(245, 196, 81, 0.16),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(255, 215, 106, 0.13),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 50% 90%,
+            rgba(184, 134, 11, 0.12),
+            transparent 35%
+        ),
+        #07090d !important;
+
+    color: #fff !important;
+    position: relative;
+}
+
+
+/* =========================================================
+   GOLDEN AMBIENT LIGHT
+========================================================= */
+
+body.premium-home::before {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    pointer-events: none;
+    z-index: -1;
+
+    background:
+        radial-gradient(
+            circle at 30% 30%,
+            rgba(255, 215, 106, 0.07),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 70% 65%,
+            rgba(245, 196, 81, 0.06),
+            transparent 28%
+        );
+
+    animation: premiumAmbientGlow 8s ease-in-out infinite alternate;
+}
+
+@keyframes premiumAmbientGlow {
+    0% {
+        opacity: 0.65;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+}
+
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+body.premium-home .navbar {
+    background:
+        rgba(7, 9, 13, 0.88) !important;
+
+    border-bottom:
+        1px solid rgba(245, 196, 81, 0.28) !important;
+
+    box-shadow:
+        0 1px 0 rgba(245, 196, 81, 0.08),
+        0 8px 35px rgba(245, 196, 81, 0.06);
+
+    backdrop-filter: blur(14px);
+}
+
+body.premium-home .logo {
+    color: #fff !important;
+
+    text-shadow:
+        0 0 18px rgba(245, 196, 81, 0.35);
+}
+
+body.premium-home .logo span,
+body.premium-home .premium-home-badge {
+    color: var(--premium-gold-light) !important;
+}
+
+body.premium-home .nav-links a {
+    color: #d9d9d9 !important;
+
+    transition:
+        color 0.2s ease,
+        text-shadow 0.2s ease;
+}
+
+body.premium-home .nav-links a:hover {
+    color: var(--premium-gold-light) !important;
+
+    text-shadow:
+        0 0 14px rgba(245, 196, 81, 0.65);
+}
+
+
+/* =========================================================
+   THEME BUTTON
+========================================================= */
+
+body.premium-home .theme-button {
+    background:
+        rgba(245, 196, 81, 0.08) !important;
+
+    color:
+        var(--premium-gold-light) !important;
+
+    border:
+        1px solid rgba(245, 196, 81, 0.28) !important;
+
+    box-shadow:
+        0 0 18px rgba(245, 196, 81, 0.06);
+
+    transition:
+        0.25s ease;
+}
+
+body.premium-home .theme-button:hover {
+    background:
+        rgba(245, 196, 81, 0.15) !important;
+
+    border-color:
+        rgba(245, 196, 81, 0.55) !important;
+
+    box-shadow:
+        0 0 22px rgba(245, 196, 81, 0.18);
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+body.premium-home .hero {
+    position: relative;
+}
+
+body.premium-home .hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    top: -120px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(245, 196, 81, 0.13),
+            transparent 68%
+        );
+
+    pointer-events: none;
+    filter: blur(10px);
+}
+
+body.premium-home .eyebrow {
+    color:
+        var(--premium-gold-light) !important;
+
+    text-shadow:
+        0 0 18px rgba(245, 196, 81, 0.35);
+}
+
+body.premium-home h1 {
+    color: #ffffff !important;
+
+    text-shadow:
+        0 0 35px rgba(245, 196, 81, 0.12);
+}
+
+body.premium-home h1 span {
+    color:
+        var(--premium-gold-bright) !important;
+
+    text-shadow:
+        0 0 25px rgba(245, 196, 81, 0.45);
+}
+
+
+/* =========================================================
+   HERO BUTTONS
+========================================================= */
+
+body.premium-home .primary-button,
+body.premium-home .hero-button,
+body.premium-home button[type="submit"] {
+    background:
+        linear-gradient(
+            135deg,
+            #a87508 0%,
+            #f5c451 48%,
+            #ffe29a 100%
+        ) !important;
+
+    color:
+        #17120a !important;
+
+    border:
+        1px solid rgba(255, 231, 163, 0.65) !important;
+
+    box-shadow:
+        0 8px 30px rgba(245, 196, 81, 0.22),
+        0 0 28px rgba(245, 196, 81, 0.10);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease;
+}
+
+body.premium-home .primary-button:hover,
+body.premium-home .hero-button:hover,
+body.premium-home button[type="submit"]:hover {
+    transform:
+        translateY(-3px);
+
+    filter:
+        brightness(1.08);
+
+    box-shadow:
+        0 12px 38px rgba(245, 196, 81, 0.32),
+        0 0 35px rgba(245, 196, 81, 0.20);
+}
+
+
+/* =========================================================
+   HERO / MAIN CARDS
+========================================================= */
+
+body.premium-home .hero-card,
+body.premium-home .feature-card,
+body.premium-home .step-card,
+body.premium-home .study-form,
+body.premium-home .subject-topic-card,
+body.premium-home .topic-card,
+body.premium-home .schedule-card,
+body.premium-home .card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20, 21, 20, 0.96),
+            rgba(10, 12, 15, 0.96)
+        ) !important;
+
+    color:
+        #ffffff !important;
+
+    border:
+        1px solid rgba(245, 196, 81, 0.17) !important;
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.25);
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+body.premium-home .hero-card:hover,
+body.premium-home .feature-card:hover,
+body.premium-home .step-card:hover,
+body.premium-home .subject-topic-card:hover,
+body.premium-home .topic-card:hover {
+    transform:
+        translateY(-4px);
+
+    border-color:
+        rgba(245, 196, 81, 0.42) !important;
+
+    box-shadow:
+        0 15px 45px rgba(0, 0, 0, 0.35),
+        0 0 30px rgba(245, 196, 81, 0.09);
+}
+
+
+/* =========================================================
+   FEATURE ICONS
+========================================================= */
+
+body.premium-home .feature-icon,
+body.premium-home .step-icon {
+    filter:
+        drop-shadow(
+            0 0 12px rgba(245, 196, 81, 0.35)
+        );
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+body.premium-home input,
+body.premium-home textarea,
+body.premium-home select {
+    background:
+        rgba(8, 10, 14, 0.85) !important;
+
+    color:
+        #ffffff !important;
+
+    border:
+        1px solid rgba(245, 196, 81, 0.18) !important;
+
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.15);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+body.premium-home input:focus,
+body.premium-home textarea:focus,
+body.premium-home select:focus {
+    outline: none;
+
+    border-color:
+        rgba(245, 196, 81, 0.65) !important;
+
+    box-shadow:
+        0 0 0 3px rgba(245, 196, 81, 0.08),
+        0 0 25px rgba(245, 196, 81, 0.10);
+}
+
+body.premium-home input::placeholder,
+body.premium-home textarea::placeholder {
+    color:
+        rgba(255,255,255,0.42) !important;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+body.premium-home section h2 {
+    color:
+        #ffffff !important;
+
+    text-shadow:
+        0 0 22px rgba(245, 196, 81, 0.10);
+}
+
+body.premium-home section h2 span {
+    color:
+        var(--premium-gold-light) !important;
+}
+
+
+/* =========================================================
+   GOLD DIVIDERS
+========================================================= */
+
+body.premium-home hr {
+    border: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(245, 196, 81, 0.45),
+            transparent
+        );
+}
+
+
+/* =========================================================
+   PREMIUM CTA — BIG GOLD GLOW
+========================================================= */
+
+body.premium-home .premium-cta-card {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(245, 196, 81, 0.16),
+            transparent 55%
+        ),
+        linear-gradient(
+            145deg,
+            #17130a,
+            #0a0c10
+        ) !important;
+
+    border:
+        1px solid rgba(245, 196, 81, 0.38) !important;
+
+    box-shadow:
+        0 20px 70px rgba(0, 0, 0, 0.4),
+        0 0 55px rgba(245, 196, 81, 0.10);
+}
+
+body.premium-home .premium-cta-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+    height: 280px;
+
+    top: -150px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 215, 106, 0.20),
+            transparent 70%
+        );
+
+    pointer-events: none;
+
+    animation:
+        premiumCTAglow 4s ease-in-out infinite alternate;
+}
+
+@keyframes premiumCTAglow {
+    from {
+        opacity: 0.55;
+        transform: translateX(-50%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+body.premium-home .premium-cta-icon {
+    filter:
+        drop-shadow(
+            0 0 18px rgba(245, 196, 81, 0.65)
+        );
+}
+
+body.premium-home .premium-cta-button {
+    background:
+        linear-gradient(
+            135deg,
+            #9b700b,
+            #f5c451,
+            #ffe8a0
+        ) !important;
+
+    color:
+        #17120a !important;
+
+    border:
+        1px solid rgba(255, 231, 163, 0.7) !important;
+
+    box-shadow:
+        0 8px 30px rgba(245, 196, 81, 0.25),
+        0 0 35px rgba(245, 196, 81, 0.14);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+body.premium-home .premium-cta-button:hover {
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 14px 40px rgba(245, 196, 81, 0.35),
+        0 0 45px rgba(245, 196, 81, 0.22);
+}
+
+
+/* =========================================================
+   PREMIUM BADGE
+========================================================= */
+
+body.premium-home .premium-home-badge {
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    gap:
+        5px;
+
+    padding:
+        5px 10px;
+
+    margin-left:
+        8px;
+
+    border-radius:
+        999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8f6810,
+            #f5c451,
+            #ffe7a3
+        );
+
+    color:
+        #17120a !important;
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        0.08em;
+
+    box-shadow:
+        0 0 20px rgba(245, 196, 81, 0.25);
+}
+
+
+/* =========================================================
+   GOLD SCROLLBAR
+========================================================= */
+
+body.premium-home::-webkit-scrollbar {
+    width: 9px;
+}
+
+body.premium-home::-webkit-scrollbar-track {
+    background:
+        #07090d;
+}
+
+body.premium-home::-webkit-scrollbar-thumb {
+    background:
+        linear-gradient(
+            #8f6810,
+            #f5c451
+        );
+
+    border-radius:
+        999px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    body.premium-home::before {
+        animation: none;
+    }
+
+    body.premium-home .hero::before {
+        width: 280px;
+        height: 280px;
+    }
+
+    body.premium-home .premium-home-badge {
+        margin-left: 4px;
+        padding: 4px 7px;
+        font-size: 8px;
+    }
+}
