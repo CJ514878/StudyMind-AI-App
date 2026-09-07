@@ -3644,16 +3644,13 @@ function injectCalendarCSS() {
         return;
     }
 
-
     const style =
         document.createElement(
             "style"
         );
 
-
     style.id =
         "studymindCalendarGlowCSS";
-
 
     style.textContent = `
 
@@ -3678,7 +3675,10 @@ function injectCalendarCSS() {
             transform:translateY(-2px);
         }
 
-        /* BLUE — STUDY DAY */
+
+        /* =================================================
+           BLUE — STUDY DAY
+        ================================================= */
 
         #calendarDays .calendar-day.study-day,
         #calendarDays .calendar-day.study-day.study {
@@ -3701,7 +3701,10 @@ function injectCalendarCSS() {
                 inset 0 0 15px rgba(59,130,246,.12) !important;
         }
 
-        /* GREEN — COMPLETED STUDY DAY */
+
+        /* =================================================
+           GREEN — COMPLETED STUDY DAY
+        ================================================= */
 
         #calendarDays .calendar-day.completed-study-day,
         #calendarDays .calendar-day.completed-day {
@@ -3725,7 +3728,10 @@ function injectCalendarCSS() {
                 inset 0 0 17px rgba(34,197,94,.14) !important;
         }
 
-        /* PURPLE — REST DAY */
+
+        /* =================================================
+           PURPLE — REST DAY
+        ================================================= */
 
         #calendarDays .calendar-day.rest-day {
             background:
@@ -3747,7 +3753,10 @@ function injectCalendarCSS() {
                 inset 0 0 15px rgba(168,85,247,.12) !important;
         }
 
-        /* RED — EXAM DAY */
+
+        /* =================================================
+           RED — EXAM DAY
+        ================================================= */
 
         #calendarDays .calendar-day.exam-day {
             background:
@@ -3770,7 +3779,10 @@ function injectCalendarCSS() {
                 inset 0 0 18px rgba(239,68,68,.14) !important;
         }
 
-        /* GREY — AFTER EXAM */
+
+        /* =================================================
+           GREY — AFTER EXAM
+        ================================================= */
 
         #calendarDays .calendar-day.after-exam {
             background:
@@ -3784,9 +3796,14 @@ function injectCalendarCSS() {
 
             box-shadow:
                 none !important;
+
             opacity:.58;
         }
-        /* GREY — PAST DAYS */
+
+
+        /* =================================================
+           GREY — PAST DAYS
+        ================================================= */
 
         #calendarDays .calendar-day.past-day {
             background:
@@ -3803,7 +3820,11 @@ function injectCalendarCSS() {
 
             opacity:.48;
         }
-        /* TODAY INDICATOR */
+
+
+        /* =================================================
+           TODAY INDICATOR
+        ================================================= */
 
         #calendarDays .calendar-day.today::after {
             content:"";
@@ -3811,9 +3832,11 @@ function injectCalendarCSS() {
             inset:-4px;
             border-radius:18px;
             border:2px solid rgba(255,255,255,.92);
+
             box-shadow:
                 0 0 8px rgba(255,255,255,.85),
                 0 0 18px rgba(255,255,255,.35);
+
             pointer-events:none;
         }
 
@@ -3821,14 +3844,20 @@ function injectCalendarCSS() {
             font-weight:900;
         }
 
-        /* OLD MONTH DAYS */
+
+        /* =================================================
+           OLD MONTH DAYS
+        ================================================= */
 
         #calendarDays .calendar-day.other-month {
             opacity:.25;
             box-shadow:none !important;
         }
 
-        /* CALENDAR LEGEND */
+
+        /* =================================================
+           CALENDAR LEGEND
+        ================================================= */
 
         .calendar-legend .legend-dot {
             display:inline-block;
@@ -3868,7 +3897,10 @@ function injectCalendarCSS() {
                 0 0 7px rgba(255,255,255,.9);
         }
 
-        /* PLAN TABS */
+
+        /* =================================================
+           PLAN TABS
+        ================================================= */
 
         #studyMindPlanTabs {
             margin:0 0 26px;
@@ -3929,9 +3961,12 @@ function injectCalendarCSS() {
 
         .studyMind-plan-tab.active {
             border-color:rgba(59,130,246,.85);
+
             box-shadow:
                 0 0 12px rgba(59,130,246,.35);
-            background:rgba(59,130,246,.12);
+
+            background:
+                rgba(59,130,246,.12);
         }
 
         .studyMind-plan-tab-title {
@@ -3969,103 +4004,166 @@ function injectCalendarCSS() {
             opacity:.72;
         }
 
+
+        /* =================================================
+           LIGHT MODE — CALENDAR TEXT CONTRAST
+           DARK CHAMPAGNE / GOLD TEXT
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day,
+        html.light-theme #calendarDays .calendar-day,
+        html.light #calendarDays .calendar-day,
+        html[data-theme="light"] #calendarDays .calendar-day,
+        body.light-mode #calendarDays .calendar-day,
+        body.light-theme #calendarDays .calendar-day,
+        body.light #calendarDays .calendar-day,
+        body[data-theme="light"] #calendarDays .calendar-day {
+            color:#3f3218 !important;
+        }
+
+
+        /* Calendar numbers */
+
+        html.light-mode #calendarDays .calendar-day-number,
+        html.light-theme #calendarDays .calendar-day-number,
+        html.light #calendarDays .calendar-day-number,
+        html[data-theme="light"] #calendarDays .calendar-day-number,
+        body.light-mode #calendarDays .calendar-day-number,
+        body.light-theme #calendarDays .calendar-day-number,
+        body.light #calendarDays .calendar-day-number,
+        body[data-theme="light"] #calendarDays .calendar-day-number {
+            color:#2f2410 !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — STUDY DAY
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.study-day,
+        html.light-theme #calendarDays .calendar-day.study-day,
+        html.light #calendarDays .calendar-day.study-day,
+        html[data-theme="light"] #calendarDays .calendar-day.study-day,
+        body.light-mode #calendarDays .calendar-day.study-day,
+        body.light-theme #calendarDays .calendar-day.study-day,
+        body.light #calendarDays .calendar-day.study-day,
+        body[data-theme="light"] #calendarDays .calendar-day.study-day {
+            color:#17345f !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — COMPLETED
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.completed-study-day,
+        html.light-mode #calendarDays .calendar-day.completed-day,
+        html.light-theme #calendarDays .calendar-day.completed-study-day,
+        html.light-theme #calendarDays .calendar-day.completed-day,
+        html.light #calendarDays .calendar-day.completed-study-day,
+        html.light #calendarDays .calendar-day.completed-day,
+        html[data-theme="light"] #calendarDays .calendar-day.completed-study-day,
+        html[data-theme="light"] #calendarDays .calendar-day.completed-day,
+        body.light-mode #calendarDays .calendar-day.completed-study-day,
+        body.light-mode #calendarDays .calendar-day.completed-day,
+        body.light-theme #calendarDays .calendar-day.completed-study-day,
+        body.light-theme #calendarDays .calendar-day.completed-day,
+        body.light #calendarDays .calendar-day.completed-study-day,
+        body.light #calendarDays .calendar-day.completed-day,
+        body[data-theme="light"] #calendarDays .calendar-day.completed-study-day,
+        body[data-theme="light"] #calendarDays .calendar-day.completed-day {
+            color:#14532d !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — REST DAY
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.rest-day,
+        html.light-theme #calendarDays .calendar-day.rest-day,
+        html.light #calendarDays .calendar-day.rest-day,
+        html[data-theme="light"] #calendarDays .calendar-day.rest-day,
+        body.light-mode #calendarDays .calendar-day.rest-day,
+        body.light-theme #calendarDays .calendar-day.rest-day,
+        body.light #calendarDays .calendar-day.rest-day,
+        body[data-theme="light"] #calendarDays .calendar-day.rest-day,
+        body[data-theme="light"] #calendarDays .calendar-day.rest-day {
+            color:#4c1d75 !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — EXAM DAY
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.exam-day,
+        html.light-theme #calendarDays .calendar-day.exam-day,
+        html.light #calendarDays .calendar-day.exam-day,
+        html[data-theme="light"] #calendarDays .calendar-day.exam-day,
+        body.light-mode #calendarDays .calendar-day.exam-day,
+        body.light-theme #calendarDays .calendar-day.exam-day,
+        body.light #calendarDays .calendar-day.exam-day,
+        body[data-theme="light"] #calendarDays .calendar-day.exam-day {
+            color:#7f1d1d !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — PAST DAY
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.past-day,
+        html.light-theme #calendarDays .calendar-day.past-day,
+        html.light #calendarDays .calendar-day.past-day,
+        html[data-theme="light"] #calendarDays .calendar-day.past-day,
+        body.light-mode #calendarDays .calendar-day.past-day,
+        body.light-theme #calendarDays .calendar-day.past-day,
+        body.light #calendarDays .calendar-day.past-day,
+        body[data-theme="light"] #calendarDays .calendar-day.past-day {
+            color:#5b513f !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — AFTER EXAM
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.after-exam,
+        html.light-theme #calendarDays .calendar-day.after-exam,
+        html.light #calendarDays .calendar-day.after-exam,
+        html[data-theme="light"] #calendarDays .calendar-day.after-exam,
+        body.light-mode #calendarDays .calendar-day.after-exam,
+        body.light-theme #calendarDays .calendar-day.after-exam,
+        body.light #calendarDays .calendar-day.after-exam,
+        body[data-theme="light"] #calendarDays .calendar-day.after-exam {
+            color:#6b6252 !important;
+        }
+
+
+        /* =================================================
+           LIGHT MODE — TODAY
+        ================================================= */
+
+        html.light-mode #calendarDays .calendar-day.today::after,
+        html.light-theme #calendarDays .calendar-day.today::after,
+        html.light #calendarDays .calendar-day.today::after,
+        html[data-theme="light"] #calendarDays .calendar-day.today::after,
+        body.light-mode #calendarDays .calendar-day.today::after,
+        body.light-theme #calendarDays .calendar-day.today::after,
+        body.light #calendarDays .calendar-day.today::after,
+        body[data-theme="light"] #calendarDays .calendar-day.today::after {
+            border-color:#6b541f !important;
+
+            box-shadow:
+                0 0 8px rgba(107,84,31,.45),
+                0 0 18px rgba(107,84,31,.18) !important;
+        }
+
     `;
 
-
-    document.head.appendChild(
-        style
-    );
-   /* =================================================
-   LIGHT MODE — CALENDAR TEXT CONTRAST
-================================================= */
-
-html.light-mode #calendarDays .calendar-day,
-html.light-theme #calendarDays .calendar-day,
-html.light #calendarDays .calendar-day,
-html[data-theme="light"] #calendarDays .calendar-day,
-body.light-mode #calendarDays .calendar-day,
-body.light-theme #calendarDays .calendar-day,
-body.light #calendarDays .calendar-day,
-body[data-theme="light"] #calendarDays .calendar-day {
-    color:#3f3218 !important;
+    document.head.appendChild(style);
 }
-
-html.light-mode #calendarDays .calendar-day-number,
-html.light-theme #calendarDays .calendar-day-number,
-html.light #calendarDays .calendar-day-number,
-html[data-theme="light"] #calendarDays .calendar-day-number,
-body.light-mode #calendarDays .calendar-day-number,
-body.light-theme #calendarDays .calendar-day-number,
-body.light #calendarDays .calendar-day-number,
-body[data-theme="light"] #calendarDays .calendar-day-number {
-    color:#2f2410 !important;
-}
-
-/* Study Day */
-html.light-mode #calendarDays .calendar-day.study-day,
-html.light-theme #calendarDays .calendar-day.study-day,
-html.light #calendarDays .calendar-day.study-day,
-body.light-mode #calendarDays .calendar-day.study-day,
-body.light-theme #calendarDays .calendar-day.study-day,
-body.light #calendarDays .calendar-day.study-day {
-    color:#17345f !important;
-}
-
-/* Completed */
-html.light-mode #calendarDays .calendar-day.completed-study-day,
-html.light-theme #calendarDays .calendar-day.completed-study-day,
-html.light #calendarDays .calendar-day.completed-study-day,
-body.light-mode #calendarDays .calendar-day.completed-study-day,
-body.light-theme #calendarDays .calendar-day.completed-study-day,
-body.light #calendarDays .calendar-day.completed-study-day {
-    color:#14532d !important;
-}
-
-/* Rest Day */
-html.light-mode #calendarDays .calendar-day.rest-day,
-html.light-theme #calendarDays .calendar-day.rest-day,
-html.light #calendarDays .calendar-day.rest-day,
-body.light-mode #calendarDays .calendar-day.rest-day,
-body.light-theme #calendarDays .calendar-day.rest-day,
-body.light #calendarDays .calendar-day.rest-day {
-    color:#4c1d75 !important;
-}
-
-/* Exam Day */
-html.light-mode #calendarDays .calendar-day.exam-day,
-html.light-theme #calendarDays .calendar-day.exam-day,
-html.light #calendarDays .calendar-day.exam-day,
-body.light-mode #calendarDays .calendar-day.exam-day,
-body.light-theme #calendarDays .calendar-day.exam-day,
-body.light #calendarDays .calendar-day.exam-day {
-    color:#7f1d1d !important;
-}
-
-/* Past Day */
-html.light-mode #calendarDays .calendar-day.past-day,
-html.light-theme #calendarDays .calendar-day.past-day,
-html.light #calendarDays .calendar-day.past-day,
-body.light-mode #calendarDays .calendar-day.past-day,
-body.light-theme #calendarDays .calendar-day.past-day,
-body.light #calendarDays .calendar-day.past-day {
-    color:#5b513f !important;
-}
-
-/* Today */
-html.light-mode #calendarDays .calendar-day.today::after,
-html.light-theme #calendarDays .calendar-day.today::after,
-html.light #calendarDays .calendar-day.today::after,
-body.light-mode #calendarDays .calendar-day.today::after,
-body.light-theme #calendarDays .calendar-day.today::after,
-body.light #calendarDays .calendar-day.today::after {
-    border-color:#6b541f !important;
-    box-shadow:
-        0 0 8px rgba(107,84,31,.45),
-        0 0 18px rgba(107,84,31,.18) !important;
-}
-
-}
-
 
 /* =========================================================
    CALENDAR TOPIC SCHEDULING
