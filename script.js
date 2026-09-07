@@ -2515,7 +2515,7 @@ function openHomePremiumOffer() {
     ) {
 
         window.location.href =
-            "premium-app.html";
+            "premium-dashboard.html";
 
         return;
 
