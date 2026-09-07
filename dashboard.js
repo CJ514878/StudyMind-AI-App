@@ -976,7 +976,7 @@ function planTitle(
 }
 
 
-```javascript
+
 /* =========================================================
    ENSURE PLAN REGISTRY
 ========================================================= */
@@ -1723,56 +1723,7 @@ function loadActivePlan() {
     return true;
 
 }
-```
 
-### Why this version is different
-
-The important change is that **`studyMindPlan` can no longer hijack the multi-plan system**.
-
-For example, suppose you have:
-
-```text
-studyMindPlans
-   ↓
-[ NEW ENGLISH PLAN,
-  OLD MATH PLAN,
-  OLD MATH PLAN,
-  OLD MATH PLAN ]
-
-studyMindPlan
-   ↓
-OLD MATH → GEOMETRY
-```
-
-The old code could see `studyMindPlan` and migrate it again.
-
-The new code says:
-
-```text
-Do saved plans exist?
-        ↓
-      YES
-        ↓
-Use studyMindActivePlanId
-        ↓
-If valid → use that exact plan
-        ↓
-If missing → use plans[0]
-```
-
-So the old Geometry plan **cannot overwrite the new plan just because it is sitting in `studyMindPlan`.**
-
-### One important thing
-
-After replacing these functions, **create a completely new study plan from Home** rather than simply refreshing Dashboard.
-
-The expected flow should then be:
-
-**Home → enter date/subjects/topics → Create Study Plan → Dashboard**
-
-and the Dashboard should show the plan you just created.
-
-If it **still** shows September 12 / Math / Geometry after this exact replacement, then the problem is almost certainly in the **Home `saveNewPlanRecord()` / `resetForNewPlan()` / redirect code**, because at that point Dashboard will be obeying whatever `studyMindActivePlanId` Home gives it.
 
 
 /* =========================================================
