@@ -9,8 +9,7 @@
    - Load the existing dashboard engine only after
      Premium access has been verified
    - Preserve existing study plan / topic / progress data
-   - Premium users get unlimited AI behavior through the
-     Premium-aware dashboard engine
+   - Re-apply Premium overrides AFTER dashboard.js loads
 ========================================================= */
 
 "use strict";
@@ -109,6 +108,7 @@ function getSupabaseClient() {
 
 
     return null;
+
 }
 
 
@@ -334,6 +334,11 @@ function loadDashboardEngine() {
                 DASHBOARD_ENGINE;
 
 
+            /*
+             * Prevent browser caching from serving
+             * an older dashboard engine during testing.
+             */
+
             script.dataset.studymindDashboardEngine =
                 "true";
 
@@ -376,25 +381,34 @@ function loadDashboardEngine() {
 
 
 /* =========================================================
-   PREMIUM OVERRIDES
+   APPLY PREMIUM OVERRIDES
+   IMPORTANT:
+   THIS MUST RUN AFTER dashboard.js HAS LOADED.
 ========================================================= */
 
 function applyPremiumOverrides() {
 
     /*
-     * The current dashboard engine already knows how to treat
-     * verified Premium users as unlimited.
-     *
-     * These compatibility functions make the Premium state
-     * available to any page code that checks the global state.
+     * Mark the current workspace as Premium.
      */
 
+    window.studyMindPremiumVerified =
+        true;
+
+
+    /*
+     * Premium status.
+     */
 
     window.isStudyMindPremium =
         function () {
             return true;
         };
 
+
+    /*
+     * Premium users have unlimited AI questions.
+     */
 
     window.hasFreeAIQuestionsLeft =
         function () {
@@ -415,32 +429,119 @@ function applyPremiumOverrides() {
 
 
     /*
-     * Premium users should never see the free upgrade message
-     * from this workspace.
+     * Premium users should never receive
+     * the free-user upgrade message.
      */
 
     window.showPremiumMessage =
         function () {
+
             console.log(
                 "Premium user — no upgrade required."
             );
+
         };
 
 
     /*
-     * Keep Premium navigation inside the Premium workspace
-     * whenever the dashboard engine calls openDashboard().
+     * Keep dashboard navigation inside
+     * the Premium Dashboard.
      */
 
     window.openDashboard =
         function () {
+
             window.location.href =
                 "premium-dashboard.html";
+
+        };
+
+
+    /*
+     * Additional compatibility aliases.
+     * These make the Premium state available to
+     * dashboard code that checks global variables.
+     */
+
+    window.studyMindIsPremium =
+        true;
+
+
+    window.premiumUser =
+        true;
+
+
+    console.log(
+        "StudyMind Premium overrides applied AFTER dashboard engine."
+    );
+
+}
+
+
+/* =========================================================
+   FORCE PREMIUM ROUTING
+========================================================= */
+
+function enforcePremiumRouting() {
+
+    /*
+     * Replace common dashboard links so that
+     * Premium users remain inside the Premium workspace.
+     */
+
+    const dashboardLinks =
+        document.querySelectorAll(
+            'a[href="dashboard.html"], a[href="./dashboard.html"]'
+        );
+
+
+    dashboardLinks.forEach(
+        link => {
+
+            link.href =
+                "premium-dashboard.html";
+
+        }
+    );
+
+
+    /*
+     * Also make the logo/dashboard navigation
+     * remain Premium.
+     */
+
+    const premiumLinks =
+        document.querySelectorAll(
+            '[data-dashboard-link]'
+        );
+
+
+    premiumLinks.forEach(
+        link => {
+
+            link.href =
+                "premium-dashboard.html";
+
+        }
+    );
+
+
+    /*
+     * If dashboard.js exposes openDashboard,
+     * make absolutely sure it points here.
+     */
+
+    window.openDashboard =
+        function () {
+
+            window.location.href =
+                "premium-dashboard.html";
+
         };
 
 
     console.log(
-        "StudyMind Premium overrides applied."
+        "Premium routing enforced."
     );
 
 }
@@ -496,9 +597,8 @@ function setupAuthListener() {
             ) {
 
                 /*
-                 * Do not reload the dashboard for every token
-                 * refresh. The original server verification
-                 * already happened.
+                 * Do not reload the dashboard for
+                 * every token refresh.
                  */
 
                 return;
@@ -519,6 +619,10 @@ async function initializePremiumDashboard() {
     showPremiumGate();
 
 
+    /* ---------------------------------------------------------
+       STEP 1 — VERIFY USER
+    --------------------------------------------------------- */
+
     const premium =
         await verifyPremiumAccess();
 
@@ -529,27 +633,11 @@ async function initializePremiumDashboard() {
 
 
     /*
-     * Apply Premium behavior before loading the dashboard
-     * engine.
-     */
-
-    applyPremiumOverrides();
-
-
-    /*
-     * Load the existing dashboard engine.
+     * IMPORTANT:
      *
-     * This preserves:
-     * - study plans
-     * - topics
-     * - progress
-     * - knowledge checks
-     * - timer
-     * - calendar
-     * - schedule
-     * - daily challenge
-     * - streak
-     * - dashboard calculations
+     * DO NOT apply the Premium overrides yet.
+     *
+     * dashboard.js needs to load first.
      */
 
     try {
@@ -567,13 +655,31 @@ async function initializePremiumDashboard() {
     }
 
 
+    /* ---------------------------------------------------------
+       STEP 2 — DASHBOARD ENGINE IS NOW LOADED
+       STEP 3 — RE-APPLY PREMIUM OVERRIDES
+    --------------------------------------------------------- */
+
+    applyPremiumOverrides();
+
+
+    /* ---------------------------------------------------------
+       STEP 4 — FORCE PREMIUM ROUTING
+    --------------------------------------------------------- */
+
+    enforcePremiumRouting();
+
+
+    /* ---------------------------------------------------------
+       STEP 5 — AUTH LISTENER
+    --------------------------------------------------------- */
+
     setupAuthListener();
 
 
-    /*
-     * Give the dashboard engine a moment to initialize.
-     * Then remove the access gate.
-     */
+    /* ---------------------------------------------------------
+       STEP 6 — REMOVE ACCESS GATE
+    --------------------------------------------------------- */
 
     window.setTimeout(
         () => {
@@ -582,6 +688,11 @@ async function initializePremiumDashboard() {
 
         },
         250
+    );
+
+
+    console.log(
+        "StudyMind Premium Dashboard initialized successfully."
     );
 
 }
