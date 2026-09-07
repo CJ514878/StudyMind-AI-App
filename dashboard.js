@@ -4240,9 +4240,28 @@ function isStudyDate(
     date
 ) {
 
+    const today =
+        todayDate();
+
+
     const exam =
         getExamDate();
 
+
+    /*
+       PAST DATES ARE NEVER STUDY DAYS.
+    */
+
+    if (
+        date < today
+    ) {
+        return false;
+    }
+
+
+    /*
+       Exam day is not a study day.
+    */
 
     if (
         exam &&
@@ -4255,6 +4274,10 @@ function isStudyDate(
     }
 
 
+    /*
+       Nothing after the exam is a study day.
+    */
+
     if (
         exam &&
         date > exam
@@ -4263,12 +4286,13 @@ function isStudyDate(
     }
 
 
-    return (
-        !isRestDate(date)
-    );
+    /*
+       Weekends remain rest days.
+    */
+
+    return !isRestDate(date);
 
 }
-
 
 /* =========================================================
    CALENDAR DAY COMPLETION
