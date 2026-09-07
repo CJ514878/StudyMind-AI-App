@@ -2661,34 +2661,79 @@ function connectPremiumButton() {
     /*
        IMPORTANT:
 
-       Do NOT use preventDefault here.
+       Premium navigation must NEVER depend on the
+       Premium API finishing.
 
-       Do NOT wait for the API here.
+       Free users:
+           premium.html
 
-       The href is the navigation mechanism.
+       Verified Premium users:
+           premium-dashboard.html
+    */
+
+
+    if (
+        button.dataset.premiumNavigationConnected === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    button.dataset.premiumNavigationConnected =
+        "true";
+
+
+    /*
+       Make sure the button always has a valid
+       fallback destination.
     */
 
     if (
         !button.getAttribute("href")
     ) {
 
-        button.href =
-            "premium.html";
+        button.setAttribute(
+            "href",
+            "premium.html"
+        );
 
     }
 
 
     /*
-       This marker prevents any older initialization
-       from attempting to attach another listener.
+       Use a direct navigation fallback.
+
+       This does NOT call preventDefault().
+       Therefore normal anchor navigation still works.
     */
 
-    button.dataset.premiumNavigation =
-        "native";
+    button.addEventListener(
+        "click",
+        function() {
 
+            const destination =
+                button.getAttribute("href") ||
+                "premium.html";
+
+
+            /*
+               Give the browser the destination
+               immediately.
+
+               This also works if another part of
+               the page interferes with normal anchor
+               navigation.
+            */
+
+            window.location.href =
+                destination;
+
+        }
+    );
 
 }
-
 
 /* =========================================================
    INITIALIZE PREMIUM HOME SYSTEM
