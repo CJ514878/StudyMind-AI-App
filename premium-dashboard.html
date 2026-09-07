@@ -1847,7 +1847,1102 @@ body.premium-dashboard main::after {
     }
 
 }
+/* =========================================================
+   PREMIUM LIGHT MODE — LIGHT GOLD / CHAMPAGNE
+========================================================= */
 
+/*
+   Supports the common theme classes used by the dashboard:
+   .light-mode
+   .light-theme
+   .light
+   [data-theme="light"]
+*/
+
+body.premium-dashboard.light-mode,
+body.premium-dashboard.light-theme,
+body.premium-dashboard.light,
+body.premium-dashboard[data-theme="light"] {
+
+    --premium-gold: #c99724;
+    --premium-gold-light: #e2b94f;
+    --premium-gold-bright: #f0cd72;
+    --premium-gold-dark: #a87912;
+
+    --premium-black: #fff8df;
+    --premium-black-soft: #fff4d0;
+
+    --premium-surface: rgba(255, 252, 241, .96);
+    --premium-surface-2: rgba(255, 246, 213, .98);
+
+    --premium-border:
+        rgba(201, 151, 36, .28);
+
+    --premium-border-strong:
+        rgba(201, 151, 36, .52);
+
+    --premium-text:
+        #4b370f;
+
+    --premium-muted:
+        rgba(75, 55, 15, .68);
+
+    background:
+
+        radial-gradient(
+            circle at 8% 0%,
+            rgba(245,196,81,.28),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 92% 8%,
+            rgba(255,224,138,.30),
+            transparent 28%
+        ),
+
+        radial-gradient(
+            circle at 50% 55%,
+            rgba(245,196,81,.12),
+            transparent 40%
+        ),
+
+        linear-gradient(
+            135deg,
+            #fffaf0 0%,
+            #fff4cf 48%,
+            #fff9e9 100%
+        ) !important;
+
+    color:
+        var(--premium-text) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD NAVIGATION
+========================================================= */
+
+body.premium-dashboard.light-mode .navbar,
+body.premium-dashboard.light-theme .navbar,
+body.premium-dashboard.light .navbar,
+body.premium-dashboard[data-theme="light"] .navbar {
+
+    background:
+        rgba(255,249,230,.94) !important;
+
+    border-bottom:
+        1px solid
+        rgba(201,151,36,.30) !important;
+
+    box-shadow:
+        0 10px 35px
+        rgba(157,115,24,.10),
+        0 0 30px
+        rgba(245,196,81,.10);
+
+}
+
+
+body.premium-dashboard.light-mode .logo,
+body.premium-dashboard.light-theme .logo,
+body.premium-dashboard.light .logo,
+body.premium-dashboard[data-theme="light"] .logo {
+
+    color:
+        #49350c !important;
+
+}
+
+
+body.premium-dashboard.light-mode .nav-links a,
+body.premium-dashboard.light-theme .nav-links a,
+body.premium-dashboard.light .nav-links a,
+body.premium-dashboard[data-theme="light"] .nav-links a {
+
+    color:
+        rgba(73,53,12,.72) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .nav-links a:hover,
+body.premium-dashboard.light-theme .nav-links a:hover,
+body.premium-dashboard.light .nav-links a:hover,
+body.premium-dashboard[data-theme="light"] .nav-links a:hover {
+
+    color:
+        #b27d13 !important;
+
+}
+
+
+body.premium-dashboard.light-mode .theme-button,
+body.premium-dashboard.light-theme .theme-button,
+body.premium-dashboard.light .theme-button,
+body.premium-dashboard[data-theme="light"] .theme-button {
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff1bc,
+            #ffe39a
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.38) !important;
+
+    color:
+        #65470b !important;
+
+    box-shadow:
+        0 6px 18px
+        rgba(201,151,36,.10);
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD HERO
+========================================================= */
+
+body.premium-dashboard.light-mode .dashboard-heading,
+body.premium-dashboard.light-theme .dashboard-heading,
+body.premium-dashboard.light .dashboard-heading,
+body.premium-dashboard[data-theme="light"] .dashboard-heading {
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(250,218,135,.72),
+            rgba(255,252,241,.98) 48%,
+            rgba(248,221,157,.55)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.34) !important;
+
+    box-shadow:
+
+        0 22px 60px
+        rgba(157,115,24,.12),
+
+        inset 0 1px 0
+        rgba(255,255,255,.85),
+
+        0 0 45px
+        rgba(245,196,81,.12);
+
+}
+
+
+body.premium-dashboard.light-mode .dashboard-heading::before,
+body.premium-dashboard.light-theme .dashboard-heading::before,
+body.premium-dashboard.light .dashboard-heading::before,
+body.premium-dashboard[data-theme="light"] .dashboard-heading::before {
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(224,178,65,.25),
+            transparent 68%
+        );
+
+}
+
+
+body.premium-dashboard.light-mode .dashboard-heading::after,
+body.premium-dashboard.light-theme .dashboard-heading::after,
+body.premium-dashboard.light .dashboard-heading::after,
+body.premium-dashboard[data-theme="light"] .dashboard-heading::after {
+
+    color:
+        rgba(181,132,23,.20);
+
+}
+
+
+body.premium-dashboard.light-mode .dashboard-heading h1,
+body.premium-dashboard.light-theme .dashboard-heading h1,
+body.premium-dashboard.light .dashboard-heading h1,
+body.premium-dashboard[data-theme="light"] .dashboard-heading h1 {
+
+    color:
+        #4a350b !important;
+
+}
+
+
+body.premium-dashboard.light-mode .dashboard-subtitle,
+body.premium-dashboard.light-theme .dashboard-subtitle,
+body.premium-dashboard.light .dashboard-subtitle,
+body.premium-dashboard[data-theme="light"] .dashboard-subtitle {
+
+    color:
+        rgba(74,53,11,.68) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD BANNER
+========================================================= */
+
+body.premium-dashboard.light-mode .studyMind-premium-banner,
+body.premium-dashboard.light-theme .studyMind-premium-banner,
+body.premium-dashboard.light .studyMind-premium-banner,
+body.premium-dashboard[data-theme="light"] .studyMind-premium-banner {
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(255,225,145,.72),
+            rgba(255,248,218,.92)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.38) !important;
+
+    box-shadow:
+        0 12px 35px
+        rgba(178,130,22,.10) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD STAT CARDS
+========================================================= */
+
+body.premium-dashboard.light-mode .stat-card,
+body.premium-dashboard.light-theme .stat-card,
+body.premium-dashboard.light .stat-card,
+body.premium-dashboard[data-theme="light"] .stat-card {
+
+    background:
+
+        linear-gradient(
+            145deg,
+            #fffdf6,
+            #fff3ca
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.28) !important;
+
+    box-shadow:
+
+        0 15px 40px
+        rgba(139,101,17,.10),
+
+        inset 0 1px 0
+        rgba(255,255,255,.95);
+
+}
+
+
+body.premium-dashboard.light-mode .stat-card::after,
+body.premium-dashboard.light-theme .stat-card::after,
+body.premium-dashboard.light .stat-card::after,
+body.premium-dashboard[data-theme="light"] .stat-card::after {
+
+    background:
+        rgba(224,178,65,.13);
+
+}
+
+
+body.premium-dashboard.light-mode .stat-card p,
+body.premium-dashboard.light-theme .stat-card p,
+body.premium-dashboard.light .stat-card p,
+body.premium-dashboard[data-theme="light"] .stat-card p {
+
+    color:
+        rgba(73,53,12,.62) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .stat-card h2,
+body.premium-dashboard.light-theme .stat-card h2,
+body.premium-dashboard.light .stat-card h2,
+body.premium-dashboard[data-theme="light"] .stat-card h2 {
+
+    color:
+        #b27c10 !important;
+
+}
+
+
+body.premium-dashboard.light-mode .stat-icon,
+body.premium-dashboard.light-theme .stat-icon,
+body.premium-dashboard.light .stat-icon,
+body.premium-dashboard[data-theme="light"] .stat-icon {
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff1bb,
+            #ffe5a0
+        );
+
+    border:
+        1px solid
+        rgba(201,151,36,.30);
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD PANELS
+========================================================= */
+
+body.premium-dashboard.light-mode .panel-card,
+body.premium-dashboard.light-mode .calendar-panel,
+body.premium-dashboard.light-theme .panel-card,
+body.premium-dashboard.light-theme .calendar-panel,
+body.premium-dashboard.light .panel-card,
+body.premium-dashboard.light .calendar-panel,
+body.premium-dashboard[data-theme="light"] .panel-card,
+body.premium-dashboard[data-theme="light"] .calendar-panel {
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(255,253,246,.98),
+            rgba(255,246,215,.97)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.27) !important;
+
+    box-shadow:
+
+        0 18px 50px
+        rgba(139,101,17,.09),
+
+        inset 0 1px 0
+        rgba(255,255,255,.90);
+
+}
+
+
+body.premium-dashboard.light-mode .card-heading h2,
+body.premium-dashboard.light-mode .calendar-title-row h2,
+body.premium-dashboard.light-theme .card-heading h2,
+body.premium-dashboard.light-theme .calendar-title-row h2,
+body.premium-dashboard.light .card-heading h2,
+body.premium-dashboard.light .calendar-title-row h2,
+body.premium-dashboard[data-theme="light"] .card-heading h2,
+body.premium-dashboard[data-theme="light"] .calendar-title-row h2 {
+
+    color:
+        #4a350b !important;
+
+}
+
+
+body.premium-dashboard.light-mode .card-badge,
+body.premium-dashboard.light-theme .card-badge,
+body.premium-dashboard.light .card-badge,
+body.premium-dashboard[data-theme="light"] .card-badge {
+
+    background:
+        rgba(245,196,81,.16) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.32) !important;
+
+    color:
+        #a8750e !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD CURRENT TOPIC
+========================================================= */
+
+body.premium-dashboard.light-mode .current-topic-card,
+body.premium-dashboard.light-theme .current-topic-card,
+body.premium-dashboard.light .current-topic-card,
+body.premium-dashboard[data-theme="light"] .current-topic-card {
+
+    background:
+
+        radial-gradient(
+            circle at 90% 5%,
+            rgba(245,196,81,.22),
+            transparent 28%
+        ),
+
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #fff0bd
+        ) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .current-topic-name,
+body.premium-dashboard.light-theme .current-topic-name,
+body.premium-dashboard.light .current-topic-name,
+body.premium-dashboard[data-theme="light"] .current-topic-name {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+body.premium-dashboard.light-mode .current-topic-card > p,
+body.premium-dashboard.light-theme .current-topic-card > p,
+body.premium-dashboard.light .current-topic-card > p,
+body.premium-dashboard[data-theme="light"] .current-topic-card > p {
+
+    color:
+        rgba(73,53,12,.67) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD TIMER
+========================================================= */
+
+body.premium-dashboard.light-mode .study-timer-box,
+body.premium-dashboard.light-theme .study-timer-box,
+body.premium-dashboard.light .study-timer-box,
+body.premium-dashboard[data-theme="light"] .study-timer-box {
+
+    background:
+
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(245,196,81,.25),
+            transparent 50%
+        ),
+
+        rgba(255,244,204,.72) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.28) !important;
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.80);
+
+}
+
+
+body.premium-dashboard.light-mode .study-timer,
+body.premium-dashboard.light-theme .study-timer,
+body.premium-dashboard.light .study-timer,
+body.premium-dashboard[data-theme="light"] .study-timer {
+
+    color:
+        #a8750e !important;
+
+    text-shadow:
+        0 0 25px
+        rgba(201,151,36,.16);
+
+}
+
+
+body.premium-dashboard.light-mode .timer-select,
+body.premium-dashboard.light-theme .timer-select,
+body.premium-dashboard.light .timer-select,
+body.premium-dashboard[data-theme="light"] .timer-select {
+
+    background:
+        rgba(255,249,226,.95) !important;
+
+    color:
+        #4a350b !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD COMPLETION
+========================================================= */
+
+body.premium-dashboard.light-mode .topic-completion-area,
+body.premium-dashboard.light-theme .topic-completion-area,
+body.premium-dashboard.light .topic-completion-area,
+body.premium-dashboard[data-theme="light"] .topic-completion-area {
+
+    background:
+        rgba(245,196,81,.10) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.23) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .topic-checkbox-text,
+body.premium-dashboard.light-theme .topic-checkbox-text,
+body.premium-dashboard.light .topic-checkbox-text,
+body.premium-dashboard[data-theme="light"] .topic-checkbox-text {
+
+    color:
+        #4a350b !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD KNOWLEDGE CHECK
+========================================================= */
+
+body.premium-dashboard.light-mode .topic-questions-section,
+body.premium-dashboard.light-theme .topic-questions-section,
+body.premium-dashboard.light .topic-questions-section,
+body.premium-dashboard[data-theme="light"] .topic-questions-section {
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(255,231,157,.62),
+            rgba(255,251,237,.96)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.30) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .questions-heading h2,
+body.premium-dashboard.light-theme .questions-heading h2,
+body.premium-dashboard.light .questions-heading h2,
+body.premium-dashboard[data-theme="light"] .questions-heading h2 {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD PROGRESS
+========================================================= */
+
+body.premium-dashboard.light-mode .progress-circle,
+body.premium-dashboard.light-theme .progress-circle,
+body.premium-dashboard.light .progress-circle,
+body.premium-dashboard[data-theme="light"] .progress-circle {
+
+    border-color:
+        rgba(201,151,36,.40) !important;
+
+    background:
+
+        radial-gradient(
+            circle,
+            rgba(245,196,81,.20),
+            rgba(245,196,81,.06) 65%,
+            transparent 66%
+        ) !important;
+
+    box-shadow:
+        0 0 30px
+        rgba(201,151,36,.10);
+
+}
+
+
+body.premium-dashboard.light-mode #progressPercent,
+body.premium-dashboard.light-theme #progressPercent,
+body.premium-dashboard.light #progressPercent,
+body.premium-dashboard[data-theme="light"] #progressPercent {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+body.premium-dashboard.light-mode .progress-bar-container,
+body.premium-dashboard.light-theme .progress-bar-container,
+body.premium-dashboard.light .progress-bar-container,
+body.premium-dashboard[data-theme="light"] .progress-bar-container {
+
+    background:
+        rgba(201,151,36,.10) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.16) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD DAILY CHALLENGE
+========================================================= */
+
+body.premium-dashboard.light-mode .daily-challenges-card,
+body.premium-dashboard.light-theme .daily-challenges-card,
+body.premium-dashboard.light .daily-challenges-card,
+body.premium-dashboard[data-theme="light"] .daily-challenges-card {
+
+    background:
+
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(245,196,81,.24),
+            transparent 32%
+        ),
+
+        linear-gradient(
+            145deg,
+            #fffdf4,
+            #ffefb9
+        ) !important;
+
+}
+
+
+body.premium-dashboard.light-mode #dailyChallengeTitle,
+body.premium-dashboard.light-theme #dailyChallengeTitle,
+body.premium-dashboard.light #dailyChallengeTitle,
+body.premium-dashboard[data-theme="light"] #dailyChallengeTitle {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD CALENDAR
+========================================================= */
+
+body.premium-dashboard.light-mode .calendar-panel,
+body.premium-dashboard.light-theme .calendar-panel,
+body.premium-dashboard.light .calendar-panel,
+body.premium-dashboard[data-theme="light"] .calendar-panel {
+
+    background:
+
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(245,196,81,.18),
+            transparent 38%
+        ),
+
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #fff1c4
+        ) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-header button,
+body.premium-dashboard.light-theme .calendar-header button,
+body.premium-dashboard.light .calendar-header button,
+body.premium-dashboard[data-theme="light"] .calendar-header button {
+
+    background:
+        rgba(245,196,81,.13) !important;
+
+    color:
+        #a8750e !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.28) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-header h2,
+body.premium-dashboard.light-theme .calendar-header h2,
+body.premium-dashboard.light .calendar-header h2,
+body.premium-dashboard[data-theme="light"] .calendar-header h2 {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-weekdays,
+body.premium-dashboard.light-theme .calendar-weekdays,
+body.premium-dashboard.light .calendar-weekdays,
+body.premium-dashboard[data-theme="light"] .calendar-weekdays {
+
+    color:
+        rgba(73,53,12,.55) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-day,
+body.premium-dashboard.light-theme .calendar-day,
+body.premium-dashboard.light .calendar-day,
+body.premium-dashboard[data-theme="light"] .calendar-day {
+
+    background:
+        rgba(255,253,244,.82) !important;
+
+    border-color:
+        rgba(201,151,36,.16) !important;
+
+    color:
+        #4a350b !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-day:hover,
+body.premium-dashboard.light-theme .calendar-day:hover,
+body.premium-dashboard.light .calendar-day:hover,
+body.premium-dashboard[data-theme="light"] .calendar-day:hover {
+
+    background:
+        rgba(245,196,81,.18) !important;
+
+    border-color:
+        rgba(201,151,36,.40) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-day.today,
+body.premium-dashboard.light-theme .calendar-day.today,
+body.premium-dashboard.light .calendar-day.today,
+body.premium-dashboard[data-theme="light"] .calendar-day.today {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe49a,
+            #f5c451
+        ) !important;
+
+    border-color:
+        #c99724 !important;
+
+    color:
+        #4a350b !important;
+
+    box-shadow:
+        0 0 22px
+        rgba(201,151,36,.22) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .calendar-day.study-day,
+body.premium-dashboard.light-theme .calendar-day.study-day,
+body.premium-dashboard.light .calendar-day.study-day,
+body.premium-dashboard[data-theme="light"] .calendar-day.study-day {
+
+    background:
+        rgba(245,196,81,.12) !important;
+
+    border-color:
+        rgba(201,151,36,.34) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD NEXT SESSION
+========================================================= */
+
+body.premium-dashboard.light-mode .next-session,
+body.premium-dashboard.light-theme .next-session,
+body.premium-dashboard.light .next-session,
+body.premium-dashboard[data-theme="light"] .next-session {
+
+    border-top-color:
+        rgba(201,151,36,.18) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .next-icon,
+body.premium-dashboard.light-theme .next-icon,
+body.premium-dashboard.light .next-icon,
+body.premium-dashboard[data-theme="light"] .next-icon {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e1b13d,
+            #ffe08a
+        ) !important;
+
+    color:
+        #49350b !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD SCHEDULE
+========================================================= */
+
+body.premium-dashboard.light-mode .schedule-card,
+body.premium-dashboard.light-theme .schedule-card,
+body.premium-dashboard.light .schedule-card,
+body.premium-dashboard[data-theme="light"] .schedule-card {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fffdf6,
+            #fff2c7
+        ) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .schedule-list > *,
+body.premium-dashboard.light-theme .schedule-list > *,
+body.premium-dashboard.light .schedule-list > *,
+body.premium-dashboard[data-theme="light"] .schedule-list > * {
+
+    border-color:
+        rgba(201,151,36,.18) !important;
+
+}
+
+
+body.premium-dashboard.light-mode .schedule-list strong,
+body.premium-dashboard.light-theme .schedule-list strong,
+body.premium-dashboard.light .schedule-list strong,
+body.premium-dashboard[data-theme="light"] .schedule-list strong {
+
+    color:
+        #4a350b !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD QUICK ACCESS
+========================================================= */
+
+body.premium-dashboard.light-mode .quick-access-item,
+body.premium-dashboard.light-theme .quick-access-item,
+body.premium-dashboard.light .quick-access-item,
+body.premium-dashboard[data-theme="light"] .quick-access-item {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,253,244,.92),
+            rgba(255,242,201,.75)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(201,151,36,.22) !important;
+
+    color:
+        #4a350b !important;
+
+}
+
+
+body.premium-dashboard.light-mode .quick-access-item:hover,
+body.premium-dashboard.light-theme .quick-access-item:hover,
+body.premium-dashboard.light .quick-access-item:hover,
+body.premium-dashboard[data-theme="light"] .quick-access-item:hover {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fff9df,
+            #ffe8a2
+        ) !important;
+
+    border-color:
+        rgba(201,151,36,.44) !important;
+
+    box-shadow:
+        0 15px 35px
+        rgba(139,101,17,.10);
+
+}
+
+
+body.premium-dashboard.light-mode .quick-access-item strong,
+body.premium-dashboard.light-theme .quick-access-item strong,
+body.premium-dashboard.light .quick-access-item strong,
+body.premium-dashboard[data-theme="light"] .quick-access-item strong {
+
+    color:
+        #a8750e !important;
+
+}
+
+
+body.premium-dashboard.light-mode .quick-access-item small,
+body.premium-dashboard.light-theme .quick-access-item small,
+body.premium-dashboard.light .quick-access-item small,
+body.premium-dashboard[data-theme="light"] .quick-access-item small {
+
+    color:
+        rgba(73,53,12,.62) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD BUTTONS
+========================================================= */
+
+body.premium-dashboard.light-mode .primary-button,
+body.premium-dashboard.light-mode button.primary-button,
+body.premium-dashboard.light-mode .full-button,
+body.premium-dashboard.light-theme .primary-button,
+body.premium-dashboard.light-theme button.primary-button,
+body.premium-dashboard.light-theme .full-button,
+body.premium-dashboard.light .primary-button,
+body.premium-dashboard.light button.primary-button,
+body.premium-dashboard.light .full-button,
+body.premium-dashboard[data-theme="light"] .primary-button,
+body.premium-dashboard[data-theme="light"] button.primary-button,
+body.premium-dashboard[data-theme="light"] .full-button {
+
+    background:
+        linear-gradient(
+            135deg,
+            #d5a32d,
+            #f2c85e 50%,
+            #ffe49a
+        ) !important;
+
+    color:
+        #3d2b06 !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.48) !important;
+
+    box-shadow:
+        0 9px 28px
+        rgba(181,132,23,.18);
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD FORM ELEMENTS
+========================================================= */
+
+body.premium-dashboard.light-mode input,
+body.premium-dashboard.light-mode select,
+body.premium-dashboard.light-mode textarea,
+body.premium-dashboard.light-theme input,
+body.premium-dashboard.light-theme select,
+body.premium-dashboard.light-theme textarea,
+body.premium-dashboard.light input,
+body.premium-dashboard.light select,
+body.premium-dashboard.light textarea,
+body.premium-dashboard[data-theme="light"] input,
+body.premium-dashboard[data-theme="light"] select,
+body.premium-dashboard[data-theme="light"] textarea {
+
+    background:
+        rgba(255,250,230,.96) !important;
+
+    color:
+        #4a350b !important;
+
+    border-color:
+        rgba(201,151,36,.28) !important;
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD GENERAL TEXT
+========================================================= */
+
+body.premium-dashboard.light-mode h1,
+body.premium-dashboard.light-mode h2,
+body.premium-dashboard.light-mode h3,
+body.premium-dashboard.light-mode h4,
+body.premium-dashboard.light-mode strong,
+body.premium-dashboard.light-theme h1,
+body.premium-dashboard.light-theme h2,
+body.premium-dashboard.light-theme h3,
+body.premium-dashboard.light-theme h4,
+body.premium-dashboard.light-theme strong,
+body.premium-dashboard.light h1,
+body.premium-dashboard.light h2,
+body.premium-dashboard.light h3,
+body.premium-dashboard.light h4,
+body.premium-dashboard.light strong,
+body.premium-dashboard[data-theme="light"] h1,
+body.premium-dashboard[data-theme="light"] h2,
+body.premium-dashboard[data-theme="light"] h3,
+body.premium-dashboard[data-theme="light"] h4,
+body.premium-dashboard[data-theme="light"] strong {
+
+    color:
+        #4a350b !important;
+
+}
+
+
+body.premium-dashboard.light-mode p,
+body.premium-dashboard.light-mode small,
+body.premium-dashboard.light-theme p,
+body.premium-dashboard.light-theme small,
+body.premium-dashboard.light p,
+body.premium-dashboard.light small,
+body.premium-dashboard[data-theme="light"] p,
+body.premium-dashboard[data-theme="light"] small {
+
+    color:
+        rgba(73,53,12,.67);
+
+}
+
+
+/* =========================================================
+   LIGHT GOLD BACKGROUND GLOW
+========================================================= */
+
+body.premium-dashboard.light-mode main::after,
+body.premium-dashboard.light-theme main::after,
+body.premium-dashboard.light main::after,
+body.premium-dashboard[data-theme="light"] main::after {
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(245,196,81,.16),
+            transparent 68%
+        );
+
+}
 </style>
 
 </head>
