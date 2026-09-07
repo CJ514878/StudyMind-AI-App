@@ -2943,6 +2943,674 @@ body.premium-dashboard[data-theme="light"] main::after {
         );
 
 }
+    /* =========================================================
+   FINAL PREMIUM LIGHT MODE OVERRIDE
+   Forces the ENTIRE dashboard into light champagne gold.
+========================================================= */
+
+/* ---------------------------------------------------------
+   Detect light mode whether the theme is placed on:
+   - body
+   - html
+   - data-theme
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard,
+html.light-theme body.premium-dashboard,
+html.light body.premium-dashboard,
+html[data-theme="light"] body.premium-dashboard,
+body.premium-dashboard.light-mode,
+body.premium-dashboard.light-theme,
+body.premium-dashboard.light,
+body.premium-dashboard[data-theme="light"] {
+
+    background:
+        radial-gradient(
+            circle at 8% 0%,
+            rgba(245,196,81,.28),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 92% 8%,
+            rgba(255,224,138,.30),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 50% 55%,
+            rgba(245,196,81,.12),
+            transparent 42%
+        ),
+        linear-gradient(
+            135deg,
+            #fffaf0 0%,
+            #fff1c7 48%,
+            #fff9e9 100%
+        ) !important;
+
+    color: #49350c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   PAGE WRAPPER
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .dashboard-page,
+html.light-theme body.premium-dashboard .dashboard-page,
+html.light body.premium-dashboard .dashboard-page,
+html[data-theme="light"] body.premium-dashboard .dashboard-page,
+body.premium-dashboard.light-mode .dashboard-page,
+body.premium-dashboard.light-theme .dashboard-page,
+body.premium-dashboard.light .dashboard-page,
+body.premium-dashboard[data-theme="light"] .dashboard-page {
+
+    color: #49350c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   NAVBAR
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .navbar,
+html.light-theme body.premium-dashboard .navbar,
+html.light body.premium-dashboard .navbar,
+html[data-theme="light"] body.premium-dashboard .navbar {
+
+    background:
+        rgba(255,247,220,.96) !important;
+
+    border-bottom:
+        1px solid
+        rgba(181,132,23,.30) !important;
+
+    box-shadow:
+        0 10px 35px
+        rgba(120,85,10,.12) !important;
+
+}
+
+html.light-mode body.premium-dashboard .logo,
+html.light-theme body.premium-dashboard .logo,
+html.light body.premium-dashboard .logo,
+html[data-theme="light"] body.premium-dashboard .logo {
+
+    color:
+        #3f2c08 !important;
+
+}
+
+html.light-mode body.premium-dashboard .nav-links a,
+html.light-theme body.premium-dashboard .nav-links a,
+html.light body.premium-dashboard .nav-links a,
+html[data-theme="light"] body.premium-dashboard .nav-links a {
+
+    color:
+        #604711 !important;
+
+}
+
+html.light-mode body.premium-dashboard .theme-button,
+html.light-theme body.premium-dashboard .theme-button,
+html.light body.premium-dashboard .theme-button,
+html[data-theme="light"] body.premium-dashboard .theme-button {
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff1bd,
+            #f7d879
+        ) !important;
+
+    color:
+        #513806 !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.40) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   HERO
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .dashboard-heading,
+html.light-theme body.premium-dashboard .dashboard-heading,
+html.light body.premium-dashboard .dashboard-heading,
+html[data-theme="light"] body.premium-dashboard .dashboard-heading {
+
+    background:
+        linear-gradient(
+            135deg,
+            #f7d982 0%,
+            #fff8df 48%,
+            #f8dfa0 100%
+        ) !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.35) !important;
+
+    box-shadow:
+        0 20px 60px
+        rgba(130,92,12,.13),
+        inset 0 1px 0
+        rgba(255,255,255,.90) !important;
+
+}
+
+html.light-mode body.premium-dashboard .dashboard-heading h1,
+html.light-theme body.premium-dashboard .dashboard-heading h1,
+html.light body.premium-dashboard .dashboard-heading h1,
+html[data-theme="light"] body.premium-dashboard .dashboard-heading h1 {
+
+    color:
+        #3f2c08 !important;
+
+}
+
+html.light-mode body.premium-dashboard .dashboard-subtitle,
+html.light-theme body.premium-dashboard .dashboard-subtitle,
+html.light body.premium-dashboard .dashboard-subtitle,
+html[data-theme="light"] body.premium-dashboard .dashboard-subtitle {
+
+    color:
+        #66501c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   PREMIUM BANNER
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .studyMind-premium-banner,
+html.light-theme body.premium-dashboard .studyMind-premium-banner,
+html.light body.premium-dashboard .studyMind-premium-banner,
+html[data-theme="light"] body.premium-dashboard .studyMind-premium-banner {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe8a5,
+            #fff6d7
+        ) !important;
+
+    color:
+        #513806 !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.35) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   ALL CARDS / PANELS
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .stat-card,
+html.light-mode body.premium-dashboard .panel-card,
+html.light-mode body.premium-dashboard .calendar-panel,
+html.light-theme body.premium-dashboard .stat-card,
+html.light-theme body.premium-dashboard .panel-card,
+html.light-theme body.premium-dashboard .calendar-panel,
+html.light body.premium-dashboard .stat-card,
+html.light body.premium-dashboard .panel-card,
+html.light body.premium-dashboard .calendar-panel,
+html[data-theme="light"] body.premium-dashboard .stat-card,
+html[data-theme="light"] body.premium-dashboard .panel-card,
+html[data-theme="light"] body.premium-dashboard .calendar-panel {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fffdf5 0%,
+            #fff4d0 100%
+        ) !important;
+
+    color:
+        #49350c !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.27) !important;
+
+    box-shadow:
+        0 15px 45px
+        rgba(120,85,10,.09),
+        inset 0 1px 0
+        rgba(255,255,255,.95) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   CURRENT TOPIC
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .current-topic-card,
+html.light-theme body.premium-dashboard .current-topic-card,
+html.light body.premium-dashboard .current-topic-card,
+html[data-theme="light"] body.premium-dashboard .current-topic-card {
+
+    background:
+        radial-gradient(
+            circle at 90% 5%,
+            rgba(245,196,81,.25),
+            transparent 28%
+        ),
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #ffefb7
+        ) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   TIMER
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .study-timer-box,
+html.light-theme body.premium-dashboard .study-timer-box,
+html.light body.premium-dashboard .study-timer-box,
+html[data-theme="light"] body.premium-dashboard .study-timer-box {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fff7d9,
+            #ffe9a3
+        ) !important;
+
+    border:
+        1px solid
+        rgba(181,132,23,.30) !important;
+
+}
+
+html.light-mode body.premium-dashboard .study-timer,
+html.light-theme body.premium-dashboard .study-timer,
+html.light body.premium-dashboard .study-timer,
+html[data-theme="light"] body.premium-dashboard .study-timer {
+
+    color:
+        #9a6909 !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   KNOWLEDGE CHECK
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .topic-questions-section,
+html.light-theme body.premium-dashboard .topic-questions-section,
+html.light body.premium-dashboard .topic-questions-section,
+html[data-theme="light"] body.premium-dashboard .topic-questions-section {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe9a8,
+            #fffaf0
+        ) !important;
+
+    color:
+        #49350c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETION AREA
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .topic-completion-area,
+html.light-theme body.premium-dashboard .topic-completion-area,
+html.light body.premium-dashboard .topic-completion-area,
+html[data-theme="light"] body.premium-dashboard .topic-completion-area {
+
+    background:
+        rgba(245,196,81,.13) !important;
+
+    color:
+        #49350c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   PROGRESS
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .progress-circle,
+html.light-theme body.premium-dashboard .progress-circle,
+html.light body.premium-dashboard .progress-circle,
+html[data-theme="light"] body.premium-dashboard .progress-circle {
+
+    background:
+        radial-gradient(
+            circle,
+            #fff1bd,
+            #ffe8a0 65%,
+            #fff8df 66%
+        ) !important;
+
+    border-color:
+        rgba(181,132,23,.40) !important;
+
+}
+
+html.light-mode body.premium-dashboard #progressPercent,
+html.light-theme body.premium-dashboard #progressPercent,
+html.light body.premium-dashboard #progressPercent,
+html[data-theme="light"] body.premium-dashboard #progressPercent {
+
+    color:
+        #9a6909 !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   DAILY CHALLENGE
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .daily-challenges-card,
+html.light-theme body.premium-dashboard .daily-challenges-card,
+html.light body.premium-dashboard .daily-challenges-card,
+html[data-theme="light"] body.premium-dashboard .daily-challenges-card {
+
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(245,196,81,.28),
+            transparent 32%
+        ),
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #ffedaf
+        ) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   CALENDAR
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .calendar-panel,
+html.light-theme body.premium-dashboard .calendar-panel,
+html.light body.premium-dashboard .calendar-panel,
+html[data-theme="light"] body.premium-dashboard .calendar-panel {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #ffefbd
+        ) !important;
+
+}
+
+html.light-mode body.premium-dashboard .calendar-day,
+html.light-theme body.premium-dashboard .calendar-day,
+html.light body.premium-dashboard .calendar-day,
+html[data-theme="light"] body.premium-dashboard .calendar-day {
+
+    background:
+        #fffaf0 !important;
+
+    color:
+        #49350c !important;
+
+    border-color:
+        rgba(181,132,23,.18) !important;
+
+}
+
+html.light-mode body.premium-dashboard .calendar-day.study-day,
+html.light-theme body.premium-dashboard .calendar-day.study-day,
+html.light body.premium-dashboard .calendar-day.study-day,
+html[data-theme="light"] body.premium-dashboard .calendar-day.study-day {
+
+    background:
+        #fff0bd !important;
+
+}
+
+html.light-mode body.premium-dashboard .calendar-day.today,
+html.light-theme body.premium-dashboard .calendar-day.today,
+html.light body.premium-dashboard .calendar-day.today,
+html[data-theme="light"] body.premium-dashboard .calendar-day.today {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe79b,
+            #f5c451
+        ) !important;
+
+    color:
+        #49350c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   SCHEDULE
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .schedule-card,
+html.light-theme body.premium-dashboard .schedule-card,
+html.light body.premium-dashboard .schedule-card,
+html[data-theme="light"] body.premium-dashboard .schedule-card {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fffdf6,
+            #fff0c2
+        ) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   QUICK ACCESS
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .quick-access-item,
+html.light-theme body.premium-dashboard .quick-access-item,
+html.light body.premium-dashboard .quick-access-item,
+html[data-theme="light"] body.premium-dashboard .quick-access-item {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fffdf5,
+            #ffefbd
+        ) !important;
+
+    color:
+        #49350c !important;
+
+    border-color:
+        rgba(181,132,23,.25) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   FORM ELEMENTS
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard input,
+html.light-mode body.premium-dashboard select,
+html.light-mode body.premium-dashboard textarea,
+html.light-theme body.premium-dashboard input,
+html.light-theme body.premium-dashboard select,
+html.light-theme body.premium-dashboard textarea,
+html.light body.premium-dashboard input,
+html.light body.premium-dashboard select,
+html.light body.premium-dashboard textarea,
+html[data-theme="light"] body.premium-dashboard input,
+html[data-theme="light"] body.premium-dashboard select,
+html[data-theme="light"] body.premium-dashboard textarea {
+
+    background:
+        #fff9e7 !important;
+
+    color:
+        #49350c !important;
+
+    border-color:
+        rgba(181,132,23,.30) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   ALL TEXT
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard h1,
+html.light-mode body.premium-dashboard h2,
+html.light-mode body.premium-dashboard h3,
+html.light-mode body.premium-dashboard h4,
+html.light-mode body.premium-dashboard strong,
+html.light-theme body.premium-dashboard h1,
+html.light-theme body.premium-dashboard h2,
+html.light-theme body.premium-dashboard h3,
+html.light-theme body.premium-dashboard h4,
+html.light-theme body.premium-dashboard strong,
+html.light body.premium-dashboard h1,
+html.light body.premium-dashboard h2,
+html.light body.premium-dashboard h3,
+html.light body.premium-dashboard h4,
+html.light body.premium-dashboard strong,
+html[data-theme="light"] body.premium-dashboard h1,
+html[data-theme="light"] body.premium-dashboard h2,
+html[data-theme="light"] body.premium-dashboard h3,
+html[data-theme="light"] body.premium-dashboard h4,
+html[data-theme="light"] body.premium-dashboard strong {
+
+    color:
+        #49350c !important;
+
+}
+
+html.light-mode body.premium-dashboard p,
+html.light-mode body.premium-dashboard small,
+html.light-theme body.premium-dashboard p,
+html.light-theme body.premium-dashboard small,
+html.light body.premium-dashboard p,
+html.light body.premium-dashboard small,
+html[data-theme="light"] body.premium-dashboard p,
+html[data-theme="light"] body.premium-dashboard small {
+
+    color:
+        #66501c !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   STATUS / BADGES
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .card-badge,
+html.light-theme body.premium-dashboard .card-badge,
+html.light body.premium-dashboard .card-badge,
+html[data-theme="light"] body.premium-dashboard .card-badge {
+
+    background:
+        rgba(245,196,81,.18) !important;
+
+    color:
+        #946408 !important;
+
+    border-color:
+        rgba(181,132,23,.32) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   BUTTONS
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard .primary-button,
+html.light-mode body.premium-dashboard .full-button,
+html.light-mode body.premium-dashboard .timer-start,
+html.light-theme body.premium-dashboard .primary-button,
+html.light-theme body.premium-dashboard .full-button,
+html.light-theme body.premium-dashboard .timer-start,
+html.light body.premium-dashboard .primary-button,
+html.light body.premium-dashboard .full-button,
+html.light body.premium-dashboard .timer-start,
+html[data-theme="light"] body.premium-dashboard .primary-button,
+html[data-theme="light"] body.premium-dashboard .full-button,
+html[data-theme="light"] body.premium-dashboard .timer-start {
+
+    background:
+        linear-gradient(
+            135deg,
+            #d6a52e,
+            #f4ca62,
+            #ffe69e
+        ) !important;
+
+    color:
+        #3d2b06 !important;
+
+    border-color:
+        rgba(164,117,12,.45) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   LIGHT MODE PAGE GLOW
+--------------------------------------------------------- */
+
+html.light-mode body.premium-dashboard main::after,
+html.light-theme body.premium-dashboard main::after,
+html.light body.premium-dashboard main::after,
+html[data-theme="light"] body.premium-dashboard main::after {
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(245,196,81,.20),
+            transparent 68%
+        ) !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   PREVENT EXTERNAL DARK BODY OVERLAY
+--------------------------------------------------------- */
+
+html.light-mode,
+html.light-theme,
+html.light,
+html[data-theme="light"] {
+
+    background:
+        #fff5d6 !important;
+
+}
 </style>
 
 </head>
