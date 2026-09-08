@@ -1,19 +1,20 @@
 /* =========================================================
-   STUDYMIND AI — DASHBOARD
-   COMPLETE REBUILT VERSION
+   STUDYMIND AI — DASHBOARD.JS
+   COMPLETE REPLACEMENT
    =========================================================
 
-   IMPORTANT PLAN RULE:
-
-   1. studyMindActivePlanId is the authoritative plan selector.
-   2. studyMindPlans contains saved plan records.
-   3. studyMindPlan is kept as legacy compatibility only.
-   4. Opening Dashboard NEVER creates a new plan.
-   5. Opening Dashboard NEVER promotes an old plan over the
-      active plan.
-   6. Home creates the new plan and sets the active ID.
-   7. Dashboard loads that exact active ID.
-========================================================= */
+   CORE RULES
+   ---------------------------------------------------------
+   1. studyMindActivePlanId identifies the active plan.
+   2. studyMindPlans stores all saved plans.
+   3. studyMindPlan is the compatibility/current-plan copy.
+   4. Dashboard NEVER creates a new plan merely by opening.
+   5. Dashboard NEVER blindly chooses plans[0].
+   6. Exact duplicate plans are cleaned automatically.
+   7. Progress belongs to the active plan.
+   8. Timer, Knowledge Check, calendar and schedule use the
+      active plan only.
+   ========================================================= */
 
 "use strict";
 
@@ -25,22 +26,22 @@
 const PLAN_KEY =
     "studyMindPlan";
 
-const LEGACY_PLAN_KEY =
-    "studyData";
-
 const PLANS_KEY =
     "studyMindPlans";
 
 const ACTIVE_PLAN_KEY =
     "studyMindActivePlanId";
 
-const COMPLETED_KEY =
+const COMPATIBILITY_PLAN_KEY =
+    "studyData";
+
+const COMPLETED_TOPICS_KEY =
     "studyMindCompletedTopics";
 
-const COMPLETED_Q_KEY =
+const COMPLETED_QUESTIONS_KEY =
     "studyMindCompletedQuestionTopics";
 
-const CURRENT_INDEX_KEY =
+const CURRENT_TOPIC_KEY =
     "studyMindCurrentTopicIndex";
 
 const KNOWLEDGE_TOPIC_KEY =
@@ -49,8 +50,11 @@ const KNOWLEDGE_TOPIC_KEY =
 const KNOWLEDGE_QUESTIONS_KEY =
     "studyMindTopicQuestions";
 
-const CELEBRATION_KEY =
-    "studyMindCompletionCelebrationShown";
+const STUDY_SESSION_KEY =
+    "studyMindCurrentStudySession";
+
+const STUDY_READINGS_KEY =
+    "studyMindTopicReadings";
 
 const TIMER_SECONDS_KEY =
     "studyMindTimerSeconds";
@@ -61,112 +65,75 @@ const TIMER_DURATION_KEY =
 const THEME_KEY =
     "studyMindTheme";
 
-const AI_COUNT_KEY =
+const CELEBRATION_KEY =
+    "studyMindCompletionCelebrationShown";
+
+const AI_QUESTION_COUNT_KEY =
     "aiQuestionCount";
-
-const AI_DATE_KEY =
-    "aiQuestionDate";
-
-const STREAK_KEY =
-    "studyMindStreak";
-
-const LAST_STUDY_KEY =
-    "lastStudyDate";
-
-const STUDY_SESSION_KEY =
-    "studyMindCurrentStudySession";
-
-const STUDY_READINGS_KEY =
-    "studyMindTopicReadings";
 
 
 /* =========================================================
-   CONSTANTS
+   CONFIG
 ========================================================= */
-
-const FREE_AI_LIMIT =
-    5;
-
-const TIMER_OPTIONS =
-    [25, 45, 60];
 
 const DEFAULT_TIMER_SECONDS =
     25 * 60;
 
-const PASS_MARK =
+const TIMER_OPTIONS = [
+    25,
+    45,
+    60
+];
+
+const KNOWLEDGE_CHECK_SIZE =
+    5;
+
+const KNOWLEDGE_PASS_PERCENT =
     60;
 
-const QUESTIONS_PER_CHECK =
+const FREE_QUESTION_LIMIT =
     5;
 
 
 /* =========================================================
-   GLOBAL STATE
+   STATE
 ========================================================= */
 
 let studyPlan = null;
 
-let subjects = [];
-
-let allTopics = [];
-
-let completedTopics = [];
-
-let completedQuestionTopics = [];
-
-let currentTopicIndex = 0;
+let activePlanRecord = null;
 
 let timerSeconds =
-    DEFAULT_TIMER_SECONDS;
-
-let selectedTimerSeconds =
     DEFAULT_TIMER_SECONDS;
 
 let timerInterval = null;
 
 let timerRunning = false;
 
-let calendarDate =
-    new Date();
-
 let currentUser = null;
 
-let currentStudySession = null;
-
-let topicReadings = {};
-
-let activePlanId = null;
-
-let readingObserver = null;
-
-let readingPersistenceInterval = null;
-
-let stateSaveInterval = null;
-
-let dashboardInitialized = false;
-
-let knowledgeTopic = null;
-
-let knowledgeQuestions = null;
-
-let knowledgeCheckLoading = false;
+let currentReadingInterval = null;
 
 
 /* =========================================================
-   BASIC HELPERS
+   BASIC DOM HELPER
+========================================================= */
+
+function $(id) {
+    return document.getElementById(id);
+}
+
+
+/* =========================================================
+   STORAGE HELPERS
 ========================================================= */
 
 function clean(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
+    if (value === undefined || value === null) {
         return "";
     }
 
     return String(value).trim();
-
 }
 
 
@@ -192,9 +159,7 @@ function readJSON(key, fallback = null) {
         );
 
         return fallback;
-
     }
-
 }
 
 
@@ -211,33 +176,20 @@ function writeJSON(key, value) {
 
     } catch (error) {
 
-        console.warn(
-            "StudyMind: Could not write",
+        console.error(
+            "StudyMind: Could not save",
             key,
             error
         );
 
         return false;
-
     }
-
 }
 
 
-function removeStorage(key) {
-
-    try {
-        localStorage.removeItem(key);
-    } catch (error) {
-        console.warn(
-            "StudyMind: Could not remove",
-            key,
-            error
-        );
-    }
-
-}
-
+/* =========================================================
+   HTML SAFETY
+========================================================= */
 
 function escapeHTML(value) {
 
@@ -247,18 +199,14 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
-function $(id) {
+/* =========================================================
+   IDs
+========================================================= */
 
-    return document.getElementById(id);
-
-}
-
-
-function createId(prefix = "id") {
+function createId(prefix = "item") {
 
     return (
         prefix +
@@ -269,9 +217,174 @@ function createId(prefix = "id") {
             .toString(36)
             .slice(2, 8)
     );
-
 }
 
+
+/* =========================================================
+   DATE HELPERS
+========================================================= */
+
+function toDate(value) {
+
+    if (!value) {
+        return null;
+    }
+
+    const date =
+        new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date;
+}
+
+
+function dateOnly(value) {
+
+    const date =
+        toDate(value);
+
+    if (!date) {
+        return null;
+    }
+
+    return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+    );
+}
+
+
+function formatDate(value) {
+
+    const date =
+        dateOnly(value);
+
+    if (!date) {
+        return "—";
+    }
+
+    return date.toLocaleDateString(
+        undefined,
+        {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+        }
+    );
+}
+
+
+function formatShortDate(value) {
+
+    const date =
+        dateOnly(value);
+
+    if (!date) {
+        return "—";
+    }
+
+    return date.toLocaleDateString(
+        undefined,
+        {
+            month: "short",
+            day: "numeric"
+        }
+    );
+}
+
+
+function daysBetween(start, end) {
+
+    const a =
+        dateOnly(start);
+
+    const b =
+        dateOnly(end);
+
+    if (!a || !b) {
+        return 0;
+    }
+
+    return Math.round(
+        (
+            b.getTime() -
+            a.getTime()
+        ) /
+        86400000
+    );
+}
+
+
+/* =========================================================
+   TIME HELPERS
+========================================================= */
+
+function formatTime(value) {
+
+    if (!value) {
+        return "4:00 PM";
+    }
+
+    const parts =
+        String(value).split(":");
+
+    let hour =
+        Number(parts[0]);
+
+    const minute =
+        parts[1] || "00";
+
+    if (!Number.isFinite(hour)) {
+        return value;
+    }
+
+    const suffix =
+        hour >= 12
+            ? "PM"
+            : "AM";
+
+    hour =
+        hour % 12 || 12;
+
+    return (
+        hour +
+        ":" +
+        minute +
+        " " +
+        suffix
+    );
+}
+
+
+function formatTimer(seconds) {
+
+    seconds =
+        Math.max(
+            0,
+            Number(seconds) || 0
+        );
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const remaining =
+        seconds % 60;
+
+    return (
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(remaining).padStart(2, "0")
+    );
+}
+
+
+/* =========================================================
+   NORMALIZATION
+========================================================= */
 
 function slug(value) {
 
@@ -279,116 +392,304 @@ function slug(value) {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
-
 }
 
 
-function sameDay(a, b) {
+function topicName(topic) {
 
-    if (!a || !b) {
-        return false;
+    if (typeof topic === "string") {
+        return clean(topic);
     }
 
-    const first =
-        new Date(a);
+    if (!topic || typeof topic !== "object") {
+        return "";
+    }
 
-    const second =
-        new Date(b);
+    return clean(
+        topic.name ||
+        topic.topic ||
+        topic.title ||
+        topic.label
+    );
+}
+
+
+function topicSubject(topic) {
+
+    if (!topic || typeof topic !== "object") {
+        return "";
+    }
+
+    return clean(
+        topic.subject ||
+        topic.subjectName
+    );
+}
+
+
+function topicKey(topic) {
+
+    if (!topic) {
+        return "";
+    }
+
+    if (typeof topic === "string") {
+        return slug(topic);
+    }
 
     return (
-        first.getFullYear() ===
-            second.getFullYear() &&
-        first.getMonth() ===
-            second.getMonth() &&
-        first.getDate() ===
-            second.getDate()
+        slug(topicSubject(topic)) +
+        "::" +
+        slug(topicName(topic))
     );
-
 }
 
 
-function dateKey(date) {
+function normalizeTopic(topic, subjectName = "") {
 
-    const d =
-        date instanceof Date
-            ? date
-            : new Date(date);
+    if (typeof topic === "string") {
 
-    if (
-        Number.isNaN(
-            d.getTime()
-        )
-    ) {
-        return "";
+        return {
+            id:
+                topicKey({
+                    subject: subjectName,
+                    name: topic
+                }),
+
+            name:
+                clean(topic),
+
+            topic:
+                clean(topic),
+
+            subject:
+                clean(subjectName),
+
+            description:
+                "Study " +
+                clean(topic) +
+                " and complete the knowledge check.",
+
+            completed:
+                false
+        };
     }
 
-    return [
-        d.getFullYear(),
-        String(
-            d.getMonth() + 1
-        ).padStart(2, "0"),
-        String(
-            d.getDate()
-        ).padStart(2, "0")
-    ].join("-");
+    const safe =
+        topic &&
+        typeof topic === "object"
+            ? topic
+            : {};
 
+    const name =
+        topicName(safe) ||
+        "Untitled Topic";
+
+    return {
+        ...safe,
+
+        id:
+            safe.id ||
+            topicKey({
+                subject:
+                    topicSubject(safe) ||
+                    subjectName,
+                name
+            }),
+
+        name,
+
+        topic:
+            safe.topic ||
+            name,
+
+        subject:
+            topicSubject(safe) ||
+            clean(subjectName),
+
+        description:
+            safe.description ||
+            safe.desc ||
+            (
+                "Study " +
+                name +
+                " and complete the knowledge check."
+            ),
+
+        completed:
+            Boolean(safe.completed)
+    };
 }
 
 
-function formatDate(value) {
+/* =========================================================
+   PLAN NORMALIZATION
+========================================================= */
 
-    if (!value) {
-        return "";
+function normalizePlan(rawPlan) {
+
+    if (!rawPlan || typeof rawPlan !== "object") {
+        return null;
     }
 
-    const date =
-        new Date(value);
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return clean(value);
-    }
-
-    return date.toLocaleDateString(
-        undefined,
+    const plan =
         {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
-        }
-    );
+            ...rawPlan
+        };
 
-}
+    plan.id =
+        clean(plan.id);
 
+    plan.title =
+        clean(
+            plan.title ||
+            plan.name ||
+            "Study Plan"
+        );
 
-function formatShortDate(value) {
+    plan.examDate =
+        clean(
+            plan.examDate ||
+            plan.testDate ||
+            plan.exam ||
+            ""
+        );
 
-    if (!value) {
-        return "";
+    plan.curriculum =
+        clean(
+            plan.curriculum ||
+            "Nigerian Senior Secondary Curriculum"
+        );
+
+    plan.hoursPerDay =
+        Number(
+            plan.hoursPerDay ||
+            plan.studyHours ||
+            0
+        );
+
+    plan.startTime =
+        clean(
+            plan.startTime ||
+            "16:00"
+        );
+
+    plan.difficulty =
+        clean(
+            plan.difficulty ||
+            "balanced"
+        );
+
+    if (!Array.isArray(plan.subjects)) {
+        plan.subjects = [];
     }
 
-    const date =
-        new Date(value);
+    plan.subjects =
+        plan.subjects
+            .map(subject => {
+
+                if (typeof subject === "string") {
+
+                    return {
+                        name: clean(subject),
+                        topics: []
+                    };
+                }
+
+                return {
+                    ...subject,
+                    name:
+                        clean(
+                            subject.name ||
+                            subject.subject ||
+                            subject.title
+                        ),
+
+                    topics:
+                        Array.isArray(subject.topics)
+                            ? subject.topics
+                            : []
+                };
+            })
+            .filter(subject => subject.name);
+
+
+    /*
+     * Some older versions stored topics at the top level.
+     * Keep them.
+     */
 
     if (
-        Number.isNaN(
-            date.getTime()
-        )
+        plan.subjects.length === 0 &&
+        Array.isArray(plan.topics)
     ) {
-        return "";
+
+        plan.subjects = [
+            {
+                name:
+                    clean(
+                        plan.subject ||
+                        "Subject"
+                    ),
+
+                topics:
+                    plan.topics
+            }
+        ];
     }
 
-    return date.toLocaleDateString(
-        undefined,
-        {
-            day: "numeric",
-            month: "short"
-        }
-    );
 
+    plan.subjects =
+        plan.subjects.map(subject => {
+
+            const subjectName =
+                clean(subject.name);
+
+            return {
+                ...subject,
+
+                name:
+                    subjectName,
+
+                topics:
+                    subject.topics
+                        .map(topic =>
+                            normalizeTopic(
+                                topic,
+                                subjectName
+                            )
+                        )
+                        .filter(topic =>
+                            topic.name
+                        )
+            };
+        });
+
+
+    plan.topics =
+        plan.subjects.flatMap(
+            subject =>
+                subject.topics
+                    .map(topic => ({
+                        ...topic,
+                        subject:
+                            topic.subject ||
+                            subject.name
+                    }))
+        );
+
+
+    if (!plan.createdAt) {
+        plan.createdAt =
+            new Date().toISOString();
+    }
+
+    if (!plan.updatedAt) {
+        plan.updatedAt =
+            plan.createdAt;
+    }
+
+    return plan;
 }
 
 
@@ -407,7 +708,6 @@ function getSavedPlans() {
     return Array.isArray(plans)
         ? plans
         : [];
-
 }
 
 
@@ -419,26 +719,17 @@ function saveSavedPlans(plans) {
             ? plans
             : []
     );
-
 }
 
 
 function getActivePlanId() {
 
-    try {
-
-        return clean(
-            localStorage.getItem(
-                ACTIVE_PLAN_KEY
-            )
-        ) || null;
-
-    } catch (error) {
-
-        return null;
-
-    }
-
+    return (
+        localStorage.getItem(
+            ACTIVE_PLAN_KEY
+        ) ||
+        null
+    );
 }
 
 
@@ -446,470 +737,918 @@ function setActivePlanId(id) {
 
     if (!id) {
 
-        removeStorage(
+        localStorage.removeItem(
             ACTIVE_PLAN_KEY
         );
 
-        activePlanId = null;
-
         return;
-
     }
 
-    try {
-
-        localStorage.setItem(
-            ACTIVE_PLAN_KEY,
-            String(id)
-        );
-
-        activePlanId =
-            String(id);
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind: Could not set active plan",
-            error
-        );
-
-    }
-
+    localStorage.setItem(
+        ACTIVE_PLAN_KEY,
+        id
+    );
 }
 
 
 /* =========================================================
-   TOPIC NORMALIZATION
+   PLAN SIGNATURE
+   Used only to identify EXACT duplicates.
 ========================================================= */
 
-function topicKey(topic) {
+function planSignature(plan) {
 
-    if (!topic) {
+    const p =
+        normalizePlan(plan);
+
+    if (!p) {
         return "";
     }
 
-    if (clean(topic.id)) {
-        return clean(topic.id);
-    }
+    const subjects =
+        p.subjects
+            .map(subject => {
 
-    if (clean(topic.key)) {
-        return clean(topic.key);
-    }
+                const topics =
+                    subject.topics
+                        .map(topic =>
+                            slug(topicName(topic))
+                        )
+                        .sort()
+                        .join(",");
 
-    const subject =
-        topicSubject(topic);
+                return (
+                    slug(subject.name) +
+                    "[" +
+                    topics +
+                    "]"
+                );
+            })
+            .sort()
+            .join("|");
 
-    const name =
-        topicName(topic);
-
-    return (
-        slug(subject) +
-        "::" +
-        slug(name)
-    );
-
-}
-
-
-function topicName(topic) {
-
-    if (!topic) {
-        return "Untitled Topic";
-    }
-
-    return (
-        clean(topic.name) ||
-        clean(topic.topic) ||
-        clean(topic.title) ||
-        "Untitled Topic"
-    );
-
-}
-
-
-function topicSubject(topic) {
-
-    if (!topic) {
-        return "";
-    }
-
-    return (
-        clean(topic.subject) ||
-        clean(topic.subjectName) ||
-        ""
-    );
-
-}
-
-
-function normalizeTopic(topic, subjectName = "") {
-
-    if (
-        typeof topic === "string"
-    ) {
-
-        return {
-
-            id:
-                slug(
-                    subjectName +
-                    "-" +
-                    topic
-                ),
-
-            name:
-                clean(topic),
-
-            subject:
-                clean(subjectName)
-
-        };
-
-    }
-
-    if (
-        !topic ||
-        typeof topic !== "object"
-    ) {
-
-        return null;
-
-    }
-
-    const name =
-        topicName(topic);
-
-    const subject =
-        topicSubject(topic) ||
-        clean(subjectName);
-
-    return {
-
-        ...topic,
-
-        id:
-            clean(topic.id) ||
-            slug(
-                subject +
-                "-" +
-                name
-            ),
-
-        name,
-
-        subject
-
-    };
-
+    return [
+        p.examDate,
+        p.curriculum,
+        p.hoursPerDay,
+        p.startTime,
+        p.difficulty,
+        subjects
+    ].join("::");
 }
 
 
 /* =========================================================
-   PLAN NORMALIZATION
+   CLEAN EXACT DUPLICATES
 ========================================================= */
 
-function normalizePlan(rawPlan) {
+function cleanDuplicatePlans(plans) {
 
-    if (
-        !rawPlan ||
-        typeof rawPlan !== "object"
-    ) {
-        return null;
+    if (!Array.isArray(plans)) {
+        return [];
     }
 
-    const plan = {
-        ...rawPlan
-    };
+    const activeId =
+        getActivePlanId();
 
-    plan.examDate =
-        clean(
-            plan.examDate ||
-            plan.testDate ||
-            plan.exam
+    const seen =
+        new Map();
+
+    const result = [];
+
+    /*
+     * Process newest records first.
+     */
+
+    const sorted =
+        [...plans].sort(
+            (a, b) => {
+
+                const aTime =
+                    new Date(
+                        a?.updatedAt ||
+                        a?.createdAt ||
+                        0
+                    ).getTime();
+
+                const bTime =
+                    new Date(
+                        b?.updatedAt ||
+                        b?.createdAt ||
+                        0
+                    ).getTime();
+
+                return bTime - aTime;
+            }
         );
 
-    plan.curriculum =
-        clean(
-            plan.curriculum
-        );
 
-    plan.hoursPerDay =
-        Number(
-            plan.hoursPerDay ||
-            plan.dailyHours ||
-            0
-        );
+    for (const record of sorted) {
 
-    plan.startTime =
-        clean(
-            plan.startTime
-        );
+        if (!record || !record.plan) {
+            continue;
+        }
 
-    plan.difficulty =
-        clean(
-            plan.difficulty
-        );
+        const normalized =
+            normalizePlan(record.plan);
 
-    let rawSubjects =
-        Array.isArray(plan.subjects)
-            ? plan.subjects
-            : [];
+        if (!normalized) {
+            continue;
+        }
 
-    let normalizedSubjects = [];
+        const signature =
+            planSignature(normalized);
 
-    rawSubjects.forEach(
-        (subject, index) => {
+        /*
+         * If there is an active plan with this exact
+         * signature, keep the active record.
+         */
+
+        if (seen.has(signature)) {
+
+            const existing =
+                seen.get(signature);
+
+            const existingIsActive =
+                existing.id === activeId;
+
+            const currentIsActive =
+                record.id === activeId;
 
             if (
-                typeof subject ===
-                "string"
+                currentIsActive &&
+                !existingIsActive
             ) {
 
-                normalizedSubjects.push({
+                const index =
+                    result.indexOf(existing);
 
-                    id:
-                        slug(subject) ||
-                        "subject-" +
+                if (index !== -1) {
+                    result.splice(
                         index,
+                        1
+                    );
+                }
 
-                    name:
-                        clean(subject),
-
-                    topics: []
-
-                });
-
-                return;
-            }
-
-            if (
-                !subject ||
-                typeof subject !==
-                "object"
-            ) {
-                return;
-            }
-
-            const subjectName =
-                clean(
-                    subject.name ||
-                    subject.subject ||
-                    subject.title
+                seen.set(
+                    signature,
+                    record
                 );
 
-            let rawTopics =
-                Array.isArray(
-                    subject.topics
-                )
-                    ? subject.topics
-                    : [];
+                result.push(record);
+            }
 
-            normalizedSubjects.push({
-
-                ...subject,
-
-                id:
-                    clean(subject.id) ||
-                    slug(subjectName) ||
-                    "subject-" +
-                    index,
-
-                name:
-                    subjectName ||
-                    "Untitled Subject",
-
-                topics:
-                    rawTopics
-                        .map(topic =>
-                            normalizeTopic(
-                                topic,
-                                subjectName
-                            )
-                        )
-                        .filter(Boolean)
-
-            });
-
+            continue;
         }
+
+        seen.set(
+            signature,
+            record
+        );
+
+        result.push(record);
+    }
+
+    return result;
+}
+
+
+/* =========================================================
+   CRITICAL ACTIVE-PLAN LOADER
+========================================================= */
+
+function loadActivePlan() {
+
+    let plans =
+        getSavedPlans();
+
+
+    /*
+     * Normalize registry.
+     */
+
+    plans =
+        plans
+            .filter(record =>
+                record &&
+                record.plan
+            )
+            .map(record => ({
+                ...record,
+                plan:
+                    normalizePlan(
+                        record.plan
+                    )
+            }))
+            .filter(record =>
+                record.plan
+            );
+
+
+    /*
+     * -------------------------------------------------------
+     * FIRST PRIORITY:
+     * A valid activePlanId.
+     * -------------------------------------------------------
+     */
+
+    let activeId =
+        getActivePlanId();
+
+    let record =
+        activeId
+            ? plans.find(
+                item =>
+                    item.id === activeId
+            )
+            : null;
+
+
+    /*
+     * -------------------------------------------------------
+     * SECOND PRIORITY:
+     * Compare studyMindPlan with the active registry plan.
+     *
+     * Home writes the newly generated plan to studyMindPlan
+     * immediately before redirecting to Dashboard.
+     *
+     * If that plan has a different signature, it is the new
+     * plan and must become active.
+     * -------------------------------------------------------
+     */
+
+    const compatibilityPlan =
+        normalizePlan(
+            readJSON(
+                PLAN_KEY,
+                null
+            )
+        );
+
+
+    if (compatibilityPlan) {
+
+        const compatibilitySignature =
+            planSignature(
+                compatibilityPlan
+            );
+
+        const activeSignature =
+            record
+                ? planSignature(record.plan)
+                : "";
+
+
+        if (
+            !record ||
+            (
+                compatibilitySignature &&
+                activeSignature !==
+                compatibilitySignature
+            )
+        ) {
+
+            /*
+             * Try to find an existing registry record
+             * containing the exact new plan.
+             */
+
+            let matchingRecord =
+                plans.find(
+                    item =>
+                        item &&
+                        item.plan &&
+                        planSignature(
+                            item.plan
+                        ) ===
+                        compatibilitySignature
+                );
+
+
+            /*
+             * If none exists, create ONE record.
+             *
+             * This is the only situation where Dashboard
+             * creates a registry record.
+             */
+
+            if (!matchingRecord) {
+
+                matchingRecord = {
+                    id:
+                        compatibilityPlan.id ||
+                        createId("plan"),
+
+                    title:
+                        compatibilityPlan.title,
+
+                    createdAt:
+                        compatibilityPlan.createdAt ||
+                        new Date().toISOString(),
+
+                    updatedAt:
+                        new Date().toISOString(),
+
+                    plan:
+                        compatibilityPlan
+                };
+
+                plans.unshift(
+                    matchingRecord
+                );
+
+            }
+
+            record =
+                matchingRecord;
+
+            activeId =
+                record.id;
+
+            setActivePlanId(
+                activeId
+            );
+        }
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * THIRD PRIORITY:
+     * If there is no active record but plans exist,
+     * choose the newest valid record.
+     *
+     * We do NOT use a hard-coded plan.
+     * -------------------------------------------------------
+     */
+
+    if (!record && plans.length) {
+
+        plans.sort(
+            (a, b) => {
+
+                const aTime =
+                    new Date(
+                        a.updatedAt ||
+                        a.createdAt ||
+                        0
+                    ).getTime();
+
+                const bTime =
+                    new Date(
+                        b.updatedAt ||
+                        b.createdAt ||
+                        0
+                    ).getTime();
+
+                return bTime - aTime;
+            }
+        );
+
+        record =
+            plans[0];
+
+        activeId =
+            record.id;
+
+        setActivePlanId(
+            activeId
+        );
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * LAST RESORT:
+     * Legacy studyMindPlan.
+     * -------------------------------------------------------
+     */
+
+    if (!record) {
+
+        if (compatibilityPlan) {
+
+            record = {
+                id:
+                    compatibilityPlan.id ||
+                    createId("plan"),
+
+                title:
+                    compatibilityPlan.title,
+
+                createdAt:
+                    compatibilityPlan.createdAt ||
+                    new Date().toISOString(),
+
+                updatedAt:
+                    new Date().toISOString(),
+
+                plan:
+                    compatibilityPlan
+            };
+
+            plans = [
+                record
+            ];
+
+            activeId =
+                record.id;
+
+            setActivePlanId(
+                activeId
+            );
+
+        } else {
+
+            console.error(
+                "StudyMind: No study plan found."
+            );
+
+            studyPlan = null;
+            activePlanRecord = null;
+
+            return false;
+        }
+    }
+
+
+    /*
+     * Clean exact duplicates.
+     *
+     * IMPORTANT:
+     * The active plan remains protected.
+     */
+
+    plans =
+        cleanDuplicatePlans(
+            plans
+        );
+
+
+    /*
+     * Make sure the active record still exists
+     * after duplicate cleanup.
+     */
+
+    let finalRecord =
+        plans.find(
+            item =>
+                item.id ===
+                activeId
+        );
+
+
+    if (!finalRecord) {
+
+        finalRecord =
+            plans.find(
+                item =>
+                    planSignature(
+                        item.plan
+                    ) ===
+                    planSignature(
+                        record.plan
+                    )
+            );
+    }
+
+
+    if (!finalRecord) {
+
+        finalRecord =
+            record;
+    }
+
+
+    activePlanRecord =
+        finalRecord;
+
+    studyPlan =
+        normalizePlan(
+            finalRecord.plan
+        );
+
+
+    /*
+     * Save repaired registry.
+     */
+
+    saveSavedPlans(
+        plans
     );
 
 
     /*
-       Some older StudyMind plans store topics
-       at the root level instead.
-    */
+     * Mirror ONLY the active plan to the compatibility keys.
+     *
+     * This prevents old Geometry data from being reused.
+     */
 
-    if (
-        normalizedSubjects.length === 0 &&
-        Array.isArray(plan.topics)
-    ) {
+    writeJSON(
+        PLAN_KEY,
+        studyPlan
+    );
 
-        const fallbackSubject =
-            clean(
-                plan.subject ||
-                plan.subjectName
-            ) ||
-            "General";
+    writeJSON(
+        COMPATIBILITY_PLAN_KEY,
+        studyPlan
+    );
 
-        normalizedSubjects = [{
+    setActivePlanId(
+        activePlanRecord.id
+    );
 
-            id:
-                slug(
-                    fallbackSubject
-                ),
 
-            name:
-                fallbackSubject,
+    /*
+     * Restore plan-specific state.
+     */
+
+    restorePlanState();
+
+
+    console.log(
+        "StudyMind: Active plan loaded:",
+        {
+            activePlanId:
+                activePlanRecord.id,
+
+            title:
+                studyPlan.title,
+
+            examDate:
+                studyPlan.examDate,
+
+            subjects:
+                studyPlan.subjects,
 
             topics:
-                plan.topics
-                    .map(topic =>
-                        normalizeTopic(
-                            topic,
-                            fallbackSubject
-                        )
-                    )
-                    .filter(Boolean)
+                studyPlan.topics
+        }
+    );
 
-        }];
-
-    }
-
-
-    plan.subjects =
-        normalizedSubjects;
-
-
-    plan.subjectNames =
-        normalizedSubjects
-            .map(
-                subject =>
-                    clean(subject.name)
-            )
-            .filter(Boolean);
-
-
-    plan.topicNames =
-        normalizedSubjects
-            .flatMap(
-                subject =>
-                    subject.topics.map(
-                        topic =>
-                            topicName(topic)
-                    )
-            );
-
-
-    return plan;
-
+    return true;
 }
 
 
 /* =========================================================
-   FLATTEN PLAN
+   PLAN-SPECIFIC STATE
 ========================================================= */
 
-function buildPlanCollections() {
-
-    subjects = [];
-
-    allTopics = [];
+function restorePlanState() {
 
     if (!studyPlan) {
         return;
     }
 
-
-    subjects =
-        Array.isArray(
-            studyPlan.subjects
-        )
-            ? studyPlan.subjects
-            : [];
+    const topics =
+        studyPlan.topics || [];
 
 
-    subjects.forEach(
-        subject => {
+    let currentIndex =
+        Number(
+            readJSON(
+                CURRENT_TOPIC_KEY,
+                0
+            )
+        );
 
-            const subjectName =
-                clean(
-                    subject.name
-                );
 
-            const subjectTopics =
-                Array.isArray(
-                    subject.topics
-                )
-                    ? subject.topics
-                    : [];
+    /*
+     * Current topic index is only valid for the active plan.
+     */
 
-            subjectTopics.forEach(
-                topic => {
+    if (
+        !Number.isInteger(currentIndex) ||
+        currentIndex < 0 ||
+        currentIndex >= topics.length
+    ) {
 
-                    const normalized =
-                        normalizeTopic(
-                            topic,
-                            subjectName
-                        );
+        currentIndex = 0;
+    }
 
-                    if (!normalized) {
-                        return;
-                    }
 
-                    allTopics.push(
-                        normalized
-                    );
-
-                }
-            );
-
-        }
+    localStorage.setItem(
+        CURRENT_TOPIC_KEY,
+        String(currentIndex)
     );
 
+
+    /*
+     * Timer
+     */
+
+    const savedDuration =
+        Number(
+            localStorage.getItem(
+                TIMER_DURATION_KEY
+            )
+        );
+
+    const savedSeconds =
+        Number(
+            localStorage.getItem(
+                TIMER_SECONDS_KEY
+            )
+        );
+
+
+    if (
+        TIMER_OPTIONS.includes(
+            savedDuration / 60
+        )
+    ) {
+
+        timerSeconds =
+            Number.isFinite(savedSeconds) &&
+            savedSeconds >= 0
+                ? savedSeconds
+                : savedDuration;
+
+    } else {
+
+        timerSeconds =
+            DEFAULT_TIMER_SECONDS;
+
+        localStorage.setItem(
+            TIMER_DURATION_KEY,
+            String(
+                DEFAULT_TIMER_SECONDS
+            )
+        );
+
+        localStorage.setItem(
+            TIMER_SECONDS_KEY,
+            String(
+                DEFAULT_TIMER_SECONDS
+            )
+        );
+    }
 }
 
 
 /* =========================================================
-   COMPLETION
+   GET CURRENT TOPIC
 ========================================================= */
+
+function getCurrentTopic() {
+
+    if (!studyPlan) {
+        return null;
+    }
+
+    const topics =
+        studyPlan.topics || [];
+
+    if (!topics.length) {
+        return null;
+    }
+
+
+    /*
+     * First attempt to preserve the current session's topic.
+     */
+
+    const session =
+        readJSON(
+            STUDY_SESSION_KEY,
+            null
+        );
+
+
+    if (
+        session &&
+        session.topicKey
+    ) {
+
+        const matching =
+            topics.find(
+                topic =>
+                    topicKey(topic) ===
+                    session.topicKey
+            );
+
+        if (matching) {
+            return matching;
+        }
+    }
+
+
+    let index =
+        Number(
+            localStorage.getItem(
+                CURRENT_TOPIC_KEY
+            )
+        );
+
+
+    if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= topics.length
+    ) {
+
+        index = 0;
+
+        localStorage.setItem(
+            CURRENT_TOPIC_KEY,
+            "0"
+        );
+    }
+
+    return topics[index];
+}
+
+
+/* =========================================================
+   CURRENT TOPIC INDEX
+========================================================= */
+
+function getCurrentTopicIndex() {
+
+    if (!studyPlan) {
+        return 0;
+    }
+
+    const topics =
+        studyPlan.topics || [];
+
+    const current =
+        getCurrentTopic();
+
+    if (!current) {
+        return 0;
+    }
+
+    const index =
+        topics.findIndex(
+            topic =>
+                topicKey(topic) ===
+                topicKey(current)
+        );
+
+    return index >= 0
+        ? index
+        : 0;
+}
+
+
+/* =========================================================
+   SAVE LEGACY / COMPATIBILITY STATE
+========================================================= */
+
+function saveLegacyState() {
+
+    if (!studyPlan) {
+        return;
+    }
+
+    writeJSON(
+        PLAN_KEY,
+        studyPlan
+    );
+
+    writeJSON(
+        COMPATIBILITY_PLAN_KEY,
+        studyPlan
+    );
+
+    localStorage.setItem(
+        CURRENT_TOPIC_KEY,
+        String(
+            getCurrentTopicIndex()
+        )
+    );
+}
+
+
+/* =========================================================
+   SYNC ACTIVE PLAN RECORD
+   MUST EXIST BEFORE createStudySession()
+========================================================= */
+
+function syncActivePlanRecord() {
+
+    if (
+        !studyPlan ||
+        !activePlanRecord
+    ) {
+        return false;
+    }
+
+
+    const plans =
+        getSavedPlans();
+
+    const index =
+        plans.findIndex(
+            record =>
+                record &&
+                record.id ===
+                activePlanRecord.id
+        );
+
+
+    if (index === -1) {
+
+        /*
+         * Do NOT create duplicates automatically.
+         */
+
+        return false;
+    }
+
+
+    const updatedRecord = {
+        ...plans[index],
+
+        title:
+            studyPlan.title,
+
+        updatedAt:
+            new Date().toISOString(),
+
+        plan:
+            studyPlan
+    };
+
+
+    plans[index] =
+        updatedRecord;
+
+    activePlanRecord =
+        updatedRecord;
+
+
+    saveSavedPlans(
+        plans
+    );
+
+    setActivePlanId(
+        activePlanRecord.id
+    );
+
+    writeJSON(
+        PLAN_KEY,
+        studyPlan
+    );
+
+    writeJSON(
+        COMPATIBILITY_PLAN_KEY,
+        studyPlan
+    );
+
+    return true;
+}
+
+
+/* =========================================================
+   SAVE EVERYTHING
+========================================================= */
+
+function saveDashboardState() {
+
+    saveLegacyState();
+
+    syncActivePlanRecord();
+}
+
+
+/* =========================================================
+   COMPLETED TOPICS
+========================================================= */
+
+function getCompletedTopics() {
+
+    const value =
+        readJSON(
+            COMPLETED_TOPICS_KEY,
+            []
+        );
+
+    return Array.isArray(value)
+        ? value
+        : [];
+}
+
+
+function saveCompletedTopics(topics) {
+
+    writeJSON(
+        COMPLETED_TOPICS_KEY,
+        Array.isArray(topics)
+            ? topics
+            : []
+    );
+}
+
 
 function isTopicCompleted(topic) {
 
     const key =
         topicKey(topic);
 
-    const id =
-        clean(topic?.id);
-
-    return (
-        completedTopics.includes(key) ||
-        (
-            id &&
-            completedTopics.includes(id)
-        )
-    );
-
-}
-
-
-function completedTopicCount() {
-
-    return allTopics.filter(
-        topic =>
-            isTopicCompleted(topic)
-    ).length;
-
-}
-
-
-function allTopicsCompleted() {
-
-    return (
-        allTopics.length > 0 &&
-        completedTopicCount() >=
-            allTopics.length
-    );
-
+    return getCompletedTopics()
+        .includes(key);
 }
 
 
@@ -922,873 +1661,126 @@ function markTopicCompleted(topic) {
     const key =
         topicKey(topic);
 
-    if (
-        key &&
-        !completedTopics.includes(key)
-    ) {
+    const completed =
+        getCompletedTopics();
 
-        completedTopics.push(key);
+    if (!completed.includes(key)) {
 
+        completed.push(key);
+
+        saveCompletedTopics(
+            completed
+        );
     }
-
-    const id =
-        clean(topic.id);
-
-    if (
-        id &&
-        !completedTopics.includes(id)
-    ) {
-
-        completedTopics.push(id);
-
-    }
-
-    writeJSON(
-        COMPLETED_KEY,
-        completedTopics
-    );
-
-    syncActivePlanRecord();
-
-}
-
-
-/* =========================================================
-   CURRENT TOPIC
-========================================================= */
-
-function getCurrentTopic() {
-
-    if (!allTopics.length) {
-        return null;
-    }
-
 
     /*
-       Only use the saved session if the topic
-       actually belongs to THIS active plan.
-    */
+     * Also update topic object.
+     */
 
-    if (
-        currentStudySession &&
-        currentStudySession.topicKey
-    ) {
+    if (studyPlan) {
 
-        const sessionTopic =
-            allTopics.find(
-                topic =>
-                    topicKey(topic) ===
-                    currentStudySession.topicKey
+        const matching =
+            studyPlan.topics.find(
+                item =>
+                    topicKey(item) ===
+                    key
             );
 
-        if (sessionTopic) {
-            return sessionTopic;
+        if (matching) {
+            matching.completed =
+                true;
         }
-
     }
 
-
-    if (
-        Number.isInteger(
-            currentTopicIndex
-        ) &&
-        allTopics[
-            currentTopicIndex
-        ]
-    ) {
-
-        return allTopics[
-            currentTopicIndex
-        ];
-
-    }
-
-
-    const incomplete =
-        allTopics.find(
-            topic =>
-                !isTopicCompleted(
-                    topic
-                )
-        );
-
-    return (
-        incomplete ||
-        allTopics[0]
-    );
-
+    saveDashboardState();
 }
 
 
-/* =========================================================
-   ACTIVE PLAN SYNC
-========================================================= */
+function completedTopicCount() {
 
-function syncActivePlanRecord() {
-
-    if (!activePlanId) {
-        return;
+    if (!studyPlan) {
+        return 0;
     }
 
-    const plans =
-        getSavedPlans();
+    const topics =
+        studyPlan.topics || [];
 
-    if (!plans.length) {
-        return;
-    }
-
-    const index =
-        plans.findIndex(
-            record =>
-                record &&
-                String(record.id) ===
-                String(activePlanId)
-        );
-
-    if (index < 0) {
-
-        console.warn(
-            "StudyMind: active record missing:",
-            activePlanId
-        );
-
-        return;
-
-    }
-
-
-    const record =
-        plans[index];
-
-
-    record.plan =
-        studyPlan;
-
-
-    record.completedTopics =
-        Array.isArray(
-            completedTopics
-        )
-            ? [...completedTopics]
-            : [];
-
-
-    record.completedQuestionTopics =
-        Array.isArray(
-            completedQuestionTopics
-        )
-            ? [...completedQuestionTopics]
-            : [];
-
-
-    record.currentTopicIndex =
-        Number.isInteger(
-            currentTopicIndex
-        )
-            ? currentTopicIndex
-            : 0;
-
-
-    record.knowledgeTopic =
-        knowledgeTopic || null;
-
-
-    record.knowledgeQuestions =
-        knowledgeQuestions || null;
-
-
-    record.celebrationShown =
-        localStorage.getItem(
-            CELEBRATION_KEY
-        ) === "true";
-
-
-    record.studySession =
-        currentStudySession
-            ? {
-                ...currentStudySession
-            }
-            : null;
-
-
-    record.topicReadings =
-        topicReadings &&
-        typeof topicReadings ===
-            "object"
-            ? {
-                ...topicReadings
-            }
-            : {};
-
-
-    record.timerSeconds =
-        Number.isFinite(
-            timerSeconds
-        )
-            ? timerSeconds
-            : DEFAULT_TIMER_SECONDS;
-
-
-    record.timerDuration =
-        Number.isFinite(
-            selectedTimerSeconds
-        )
-            ? selectedTimerSeconds
-            : DEFAULT_TIMER_SECONDS;
-
-
-    record.updatedAt =
-        new Date().toISOString();
-
-
-    plans[index] =
-        record;
-
-
-    saveSavedPlans(plans);
-
+    return topics.filter(
+        topic =>
+            isTopicCompleted(topic)
+    ).length;
 }
 
 
-/* =========================================================
-   PLAN STATE RESTORE
-========================================================= */
+function allTopicsCompleted() {
 
-function restorePlanState(record) {
-
-    completedTopics =
-        Array.isArray(
-            record?.completedTopics
-        )
-            ? [
-                ...record.completedTopics
-            ]
-            : [];
-
-
-    completedQuestionTopics =
-        Array.isArray(
-            record?.completedQuestionTopics
-        )
-            ? [
-                ...record.completedQuestionTopics
-            ]
-            : [];
-
-
-    currentTopicIndex =
-        Number.isInteger(
-            record?.currentTopicIndex
-        )
-            ? record.currentTopicIndex
-            : 0;
-
-
-    knowledgeTopic =
-        record?.knowledgeTopic ||
-        null;
-
-
-    knowledgeQuestions =
-        record?.knowledgeQuestions ||
-        null;
-
-
-    currentStudySession =
-        record?.studySession
-            ? {
-                ...record.studySession
-            }
-            : null;
-
-
-    topicReadings =
-        record?.topicReadings &&
-        typeof record.topicReadings ===
-            "object"
-            ? {
-                ...record.topicReadings
-            }
-            : {};
-
-
-    const storedTimer =
-        Number(
-            record?.timerSeconds
-        );
-
-    timerSeconds =
-        Number.isFinite(
-            storedTimer
-        )
-            ? storedTimer
-            : Number(
-                localStorage.getItem(
-                    TIMER_SECONDS_KEY
-                )
-            ) ||
-              DEFAULT_TIMER_SECONDS;
-
-
-    const storedDuration =
-        Number(
-            record?.timerDuration
-        );
-
-    selectedTimerSeconds =
-        Number.isFinite(
-            storedDuration
-        )
-            ? storedDuration
-            : Number(
-                localStorage.getItem(
-                    TIMER_DURATION_KEY
-                )
-            ) ||
-              DEFAULT_TIMER_SECONDS;
-
-
-    if (
-        !TIMER_OPTIONS.includes(
-            selectedTimerSeconds /
-            60
-        )
-    ) {
-
-        selectedTimerSeconds =
-            DEFAULT_TIMER_SECONDS;
-
-    }
-
-
-    if (
-        !Number.isFinite(
-            timerSeconds
-        ) ||
-        timerSeconds < 0
-    ) {
-
-        timerSeconds =
-            selectedTimerSeconds;
-
-    }
-
-
-    writeJSON(
-        COMPLETED_KEY,
-        completedTopics
-    );
-
-    writeJSON(
-        COMPLETED_Q_KEY,
-        completedQuestionTopics
-    );
-
-    writeJSON(
-        CURRENT_INDEX_KEY,
-        currentTopicIndex
-    );
-
-    writeJSON(
-        STUDY_SESSION_KEY,
-        currentStudySession
-    );
-
-    writeJSON(
-        STUDY_READINGS_KEY,
-        topicReadings
-    );
-
-    if (knowledgeTopic) {
-
-        writeJSON(
-            KNOWLEDGE_TOPIC_KEY,
-            knowledgeTopic
-        );
-
-    } else {
-
-        removeStorage(
-            KNOWLEDGE_TOPIC_KEY
-        );
-
-    }
-
-    if (knowledgeQuestions) {
-
-        writeJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            knowledgeQuestions
-        );
-
-    }
-
-
-    writeJSON(
-        TIMER_SECONDS_KEY,
-        timerSeconds
-    );
-
-    writeJSON(
-        TIMER_DURATION_KEY,
-        selectedTimerSeconds
-    );
-
-}
-
-
-/* =========================================================
-   LEGACY MIGRATION
-========================================================= */
-
-function recoverLegacyPlan() {
-
-    let legacy =
-        readJSON(
-            PLAN_KEY,
-            null
-        );
-
-    if (
-        !legacy ||
-        typeof legacy !== "object"
-    ) {
-
-        legacy =
-            readJSON(
-                LEGACY_PLAN_KEY,
-                null
-            );
-
-    }
-
-    if (
-        !legacy ||
-        typeof legacy !== "object"
-    ) {
-        return null;
-    }
-
-    return normalizePlan(
-        legacy
-    );
-
-}
-
-
-function createPlanRecord(plan) {
-
-    return {
-
-        id:
-            createId("plan"),
-
-        plan:
-            normalizePlan(plan),
-
-        completedTopics: [],
-
-        completedQuestionTopics: [],
-
-        currentTopicIndex: 0,
-
-        knowledgeTopic: null,
-
-        knowledgeQuestions: null,
-
-        celebrationShown: false,
-
-        studySession: null,
-
-        topicReadings: {},
-
-        timerSeconds:
-            DEFAULT_TIMER_SECONDS,
-
-        timerDuration:
-            DEFAULT_TIMER_SECONDS,
-
-        createdAt:
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString()
-
-    };
-
-}
-
-
-/* =========================================================
-   CRITICAL PLAN LOADING
-========================================================= */
-
-function loadActivePlan() {
-
-    let plans =
-        getSavedPlans();
-
-
-    /*
-       -------------------------------------------------------
-       CASE 1:
-       We already have saved plans.
-       NEVER migrate studyMindPlan just because it exists.
-       -------------------------------------------------------
-    */
-
-    if (plans.length > 0) {
-
-        const requestedId =
-            getActivePlanId();
-
-
-        /*
-           Exact active plan.
-        */
-
-        let record =
-            requestedId
-                ? plans.find(
-                    item =>
-                        item &&
-                        String(item.id) ===
-                        String(requestedId)
-                )
-                : null;
-
-
-        /*
-           If the stored active ID is invalid,
-           choose the newest registry record.
-
-           Home uses unshift() when creating plans,
-           so index 0 is the newest plan.
-        */
-
-        if (!record) {
-
-            record =
-                plans.find(
-                    item =>
-                        item &&
-                        item.plan
-                );
-
-            if (record) {
-
-                setActivePlanId(
-                    record.id
-                );
-
-            }
-
-        }
-
-
-        if (!record) {
-
-            console.error(
-                "StudyMind: No valid plan record."
-            );
-
-            return false;
-
-        }
-
-
-        activePlanId =
-            String(record.id);
-
-
-        studyPlan =
-            normalizePlan(
-                record.plan
-            );
-
-
-        if (!studyPlan) {
-
-            console.error(
-                "StudyMind: Active plan is invalid."
-            );
-
-            return false;
-
-        }
-
-
-        restorePlanState(
-            record
-        );
-
-        buildPlanCollections();
-
-
-        /*
-           Make the legacy key mirror the ACTIVE plan.
-           This prevents old Geometry data from being used
-           by older parts of the application.
-        */
-
-        writeJSON(
-            PLAN_KEY,
-            studyPlan
-        );
-
-        writeJSON(
-            LEGACY_PLAN_KEY,
-            studyPlan
-        );
-
-
-        console.log(
-            "StudyMind: Active plan loaded:",
-            {
-                activePlanId,
-                title:
-                    planTitle(studyPlan),
-                examDate:
-                    studyPlan.examDate,
-                subjects:
-                    studyPlan.subjectNames,
-                topics:
-                    studyPlan.topicNames,
-                savedPlanCount:
-                    plans.length
-            }
-        );
-
-
-        return true;
-
-    }
-
-
-    /*
-       -------------------------------------------------------
-       CASE 2:
-       There are NO saved plans.
-       Only now may we migrate the legacy plan.
-       -------------------------------------------------------
-    */
-
-    const legacy =
-        recoverLegacyPlan();
-
-    if (!legacy) {
-
-        console.warn(
-            "StudyMind: No study plan found."
-        );
-
+    if (!studyPlan) {
         return false;
-
     }
 
-
-    const record =
-        createPlanRecord(
-            legacy
-        );
-
-
-    record.completedTopics =
-        readJSON(
-            COMPLETED_KEY,
-            []
-        ) || [];
-
-
-    record.completedQuestionTopics =
-        readJSON(
-            COMPLETED_Q_KEY,
-            []
-        ) || [];
-
-
-    record.currentTopicIndex =
-        Number(
-            readJSON(
-                CURRENT_INDEX_KEY,
-                0
-            )
-        ) || 0;
-
-
-    record.knowledgeTopic =
-        readJSON(
-            KNOWLEDGE_TOPIC_KEY,
-            null
-        );
-
-
-    record.knowledgeQuestions =
-        readJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            null
-        );
-
-
-    record.studySession =
-        readJSON(
-            STUDY_SESSION_KEY,
-            null
-        );
-
-
-    record.topicReadings =
-        readJSON(
-            STUDY_READINGS_KEY,
-            {}
-        ) || {};
-
-
-    plans =
-        [record];
-
-
-    saveSavedPlans(
-        plans
-    );
-
-
-    setActivePlanId(
-        record.id
-    );
-
-
-    activePlanId =
-        record.id;
-
-
-    studyPlan =
-        legacy;
-
-
-    restorePlanState(
-        record
-    );
-
-
-    buildPlanCollections();
-
-
-    writeJSON(
-        PLAN_KEY,
-        studyPlan
-    );
-
-    writeJSON(
-        LEGACY_PLAN_KEY,
-        studyPlan
-    );
-
-
-    console.log(
-        "StudyMind: Legacy plan migrated:",
-        activePlanId
-    );
-
-
-    return true;
-
-}
-
-
-/* =========================================================
-   PLAN TITLE
-========================================================= */
-
-function planTitle(plan) {
-
-    if (!plan) {
-        return "Study Plan";
-    }
-
-    if (
-        clean(plan.title)
-    ) {
-        return clean(plan.title);
-    }
-
-    const subjectsText =
-        Array.isArray(
-            plan.subjectNames
-        )
-            ? plan.subjectNames.join(
-                " + "
-            )
-            : "Study";
+    const topics =
+        studyPlan.topics || [];
 
     return (
-        subjectsText +
-        " Study Plan"
+        topics.length > 0 &&
+        completedTopicCount() ===
+        topics.length
     );
-
 }
 
 
 /* =========================================================
-   SAVE EVERYTHING
+   KNOWLEDGE CHECK STATE
 ========================================================= */
 
-function saveLegacyState() {
+function getCompletedQuestionTopics() {
 
-    writeJSON(
-        PLAN_KEY,
-        studyPlan
-    );
+    const value =
+        readJSON(
+            COMPLETED_QUESTIONS_KEY,
+            []
+        );
 
-    writeJSON(
-        LEGACY_PLAN_KEY,
-        studyPlan
-    );
-
-    writeJSON(
-        COMPLETED_KEY,
-        completedTopics
-    );
-
-    writeJSON(
-        COMPLETED_Q_KEY,
-        completedQuestionTopics
-    );
-
-    writeJSON(
-        CURRENT_INDEX_KEY,
-        currentTopicIndex
-    );
-
-    writeJSON(
-        STUDY_SESSION_KEY,
-        currentStudySession
-    );
-
-    writeJSON(
-        STUDY_READINGS_KEY,
-        topicReadings
-    );
-
-    writeJSON(
-        TIMER_SECONDS_KEY,
-        timerSeconds
-    );
-
-    writeJSON(
-        TIMER_DURATION_KEY,
-        selectedTimerSeconds
-    );
-
+    return Array.isArray(value)
+        ? value
+        : [];
 }
 
 
-function saveDashboardState() {
+function isKnowledgeCheckCompleted(topic) {
 
-    saveLegacyState();
+    if (!topic) {
+        return false;
+    }
 
-    syncActivePlanRecord();
+    return getCompletedQuestionTopics()
+        .includes(
+            topicKey(topic)
+        );
+}
 
+
+function markKnowledgeCheckCompleted(topic) {
+
+    if (!topic) {
+        return;
+    }
+
+    const key =
+        topicKey(topic);
+
+    const completed =
+        getCompletedQuestionTopics();
+
+    if (!completed.includes(key)) {
+
+        completed.push(key);
+
+        writeJSON(
+            COMPLETED_QUESTIONS_KEY,
+            completed
+        );
+    }
 }
 
 
@@ -1802,22 +1794,14 @@ function createStudySession(topic) {
         return;
     }
 
+    const session = {
 
-    const index =
-        allTopics.findIndex(
-            item =>
-                topicKey(item) ===
-                topicKey(topic)
-        );
-
-
-    currentStudySession = {
+        planId:
+            activePlanRecord?.id ||
+            getActivePlanId(),
 
         topicKey:
             topicKey(topic),
-
-        topicId:
-            clean(topic.id),
 
         topicName:
             topicName(topic),
@@ -1825,36 +1809,21 @@ function createStudySession(topic) {
         subject:
             topicSubject(topic),
 
-        topicIndex:
-            index >= 0
-                ? index
-                : 0,
-
-        lastOpened:
+        startedAt:
             new Date().toISOString(),
 
-        readingStarted:
-            currentStudySession?.readingStarted ||
-            false,
-
-        readingCompleted:
-            currentStudySession?.readingCompleted ||
-            false,
-
-        updatedAt:
-            new Date().toISOString()
-
+        status:
+            "in-progress"
     };
 
 
     writeJSON(
         STUDY_SESSION_KEY,
-        currentStudySession
+        session
     );
 
 
     syncActivePlanRecord();
-
 }
 
 
@@ -1862,44 +1831,45 @@ function createStudySession(topic) {
    READING PERSISTENCE
 ========================================================= */
 
-const READING_SELECTORS = [
+function getReadingRecords() {
 
-    "#topicReading",
-    "#readingContent",
-    "#currentTopicReading",
-    "#studyReading",
-    "#readingSection",
-    "#topicContent",
-    "#studyContent",
+    const value =
+        readJSON(
+            STUDY_READINGS_KEY,
+            {}
+        );
 
-    ".topic-reading",
-    ".reading-content",
-    ".study-reading",
-    ".topic-content"
-
-];
+    return (
+        value &&
+        typeof value === "object"
+            ? value
+            : {}
+    );
+}
 
 
 function findReadingElement() {
 
-    for (
-        const selector of
-        READING_SELECTORS
-    ) {
+    const ids = [
+        "topicReading",
+        "currentTopicReading",
+        "readingArea",
+        "topicContent",
+        "studyReading",
+        "topicNotes"
+    ];
+
+    for (const id of ids) {
 
         const element =
-            document.querySelector(
-                selector
-            );
+            $(id);
 
         if (element) {
             return element;
         }
-
     }
 
     return null;
-
 }
 
 
@@ -1912,21 +1882,15 @@ function getCurrentReadingRecord() {
         return null;
     }
 
-    const key =
-        topicKey(topic);
+    const records =
+        getReadingRecords();
 
     return (
-        topicReadings[key] ||
-        {
-            topicKey: key,
-            started: false,
-            completed: false,
-            progress: 0,
-            updatedAt:
-                new Date().toISOString()
-        }
+        records[
+            topicKey(topic)
+        ] ||
+        null
     );
-
 }
 
 
@@ -1935,202 +1899,73 @@ function saveCurrentReading() {
     const topic =
         getCurrentTopic();
 
-    if (!topic) {
+    const element =
+        findReadingElement();
+
+    if (!topic || !element) {
         return;
     }
 
-    const key =
-        topicKey(topic);
+    const records =
+        getReadingRecords();
 
-    if (!key) {
-        return;
-    }
-
-
-    const existing =
-        topicReadings[key] ||
-        {};
-
-
-    topicReadings[key] = {
-
-        ...existing,
-
-        topicKey:
-            key,
-
-        topicName:
-            topicName(topic),
-
-        subject:
-            topicSubject(topic),
-
-        started:
-            existing.started === true,
-
-        completed:
-            existing.completed === true,
-
-        progress:
-            Number(
-                existing.progress
-            ) || 0,
+    records[
+        topicKey(topic)
+    ] = {
+        scrollTop:
+            element.scrollTop,
 
         updatedAt:
             new Date().toISOString()
-
     };
-
 
     writeJSON(
         STUDY_READINGS_KEY,
-        topicReadings
+        records
     );
-
-
-    syncActivePlanRecord();
-
 }
 
 
 function restoreCurrentReading() {
 
-    const topic =
-        getCurrentTopic();
-
-    if (!topic) {
-        return;
-    }
-
-    const key =
-        topicKey(topic);
+    const element =
+        findReadingElement();
 
     const record =
-        topicReadings[key];
+        getCurrentReadingRecord();
 
-    if (!record) {
+    if (!element || !record) {
         return;
     }
 
+    setTimeout(
+        () => {
 
-    if (
-        currentStudySession
-    ) {
+            element.scrollTop =
+                Number(
+                    record.scrollTop
+                ) || 0;
 
-        currentStudySession.readingStarted =
-            record.started === true;
-
-        currentStudySession.readingCompleted =
-            record.completed === true;
-
-    }
-
+        },
+        50
+    );
 }
 
 
 function startReadingPersistence() {
 
-    if (
-        readingPersistenceInterval
-    ) {
+    if (currentReadingInterval) {
 
         clearInterval(
-            readingPersistenceInterval
+            currentReadingInterval
         );
-
     }
 
-
-    readingPersistenceInterval =
+    currentReadingInterval =
         setInterval(
             saveCurrentReading,
-            15000
+            3000
         );
-
-
-    const element =
-        findReadingElement();
-
-    if (
-        element &&
-        "IntersectionObserver" in
-            window
-    ) {
-
-        if (readingObserver) {
-
-            try {
-                readingObserver.disconnect();
-            } catch (_) {}
-
-        }
-
-
-        readingObserver =
-            new IntersectionObserver(
-                entries => {
-
-                    entries.forEach(
-                        entry => {
-
-                            if (
-                                entry.isIntersecting
-                            ) {
-
-                                const topic =
-                                    getCurrentTopic();
-
-                                if (!topic) {
-                                    return;
-                                }
-
-                                const key =
-                                    topicKey(topic);
-
-                                topicReadings[key] =
-                                    {
-                                        ...(topicReadings[key] || {}),
-                                        topicKey: key,
-                                        started: true,
-                                        updatedAt:
-                                            new Date().toISOString()
-                                    };
-
-                                if (
-                                    currentStudySession
-                                ) {
-
-                                    currentStudySession
-                                        .readingStarted =
-                                        true;
-
-                                }
-
-                                writeJSON(
-                                    STUDY_READINGS_KEY,
-                                    topicReadings
-                                );
-
-                                syncActivePlanRecord();
-
-                            }
-
-                        }
-                    );
-
-                },
-                {
-                    threshold: 0.15
-                }
-            );
-
-
-        readingObserver.observe(
-            element
-        );
-
-    }
-
 }
 
 
@@ -2138,64 +1973,103 @@ function startReadingPersistence() {
    TIMER
 ========================================================= */
 
-function updateTimerDisplay() {
+function getTimerDisplayElement() {
 
-    const timer =
-        $("studyTimer");
+    const ids = [
+        "timerDisplay",
+        "studyTimerDisplay",
+        "timer"
+    ];
 
-    if (!timer) {
-        return;
+    for (const id of ids) {
+
+        const element =
+            $(id);
+
+        if (element) {
+            return element;
+        }
     }
 
-    const total =
-        Math.max(
-            0,
-            Math.floor(
-                timerSeconds
-            )
-        );
-
-    const minutes =
-        Math.floor(
-            total / 60
-        );
-
-    const seconds =
-        total % 60;
-
-
-    timer.textContent =
-        String(minutes)
-            .padStart(2, "0") +
-        ":" +
-        String(seconds)
-            .padStart(2, "0");
-
+    return null;
 }
 
 
-function updateTimerButtons() {
+function renderTimer() {
 
-    const start =
-        $("startTimerButton");
+    const display =
+        getTimerDisplayElement();
 
-    const pause =
-        $("pauseTimerButton");
+    if (display) {
 
-    if (start) {
-
-        start.disabled =
-            timerRunning;
-
+        display.textContent =
+            formatTimer(
+                timerSeconds
+            );
     }
 
-    if (pause) {
+    const minuteDisplay =
+        $("timerMinutes");
 
-        pause.disabled =
-            !timerRunning;
+    if (minuteDisplay) {
 
+        minuteDisplay.textContent =
+            Math.floor(
+                timerSeconds / 60
+            );
     }
 
+    const secondDisplay =
+        $("timerSeconds");
+
+    if (secondDisplay) {
+
+        secondDisplay.textContent =
+            String(
+                timerSeconds % 60
+            ).padStart(
+                2,
+                "0"
+            );
+    }
+}
+
+
+function saveTimer() {
+
+    localStorage.setItem(
+        TIMER_SECONDS_KEY,
+        String(timerSeconds)
+    );
+}
+
+
+function setTimerDuration(minutes) {
+
+    minutes =
+        Number(minutes);
+
+    if (
+        !TIMER_OPTIONS.includes(
+            minutes
+        )
+    ) {
+        minutes = 25;
+    }
+
+    stopTimer();
+
+    timerSeconds =
+        minutes * 60;
+
+    localStorage.setItem(
+        TIMER_DURATION_KEY,
+        String(timerSeconds)
+    );
+
+    saveTimer();
+
+    renderTimer();
 }
 
 
@@ -2205,21 +2079,22 @@ function startTimer() {
         return;
     }
 
+    if (timerSeconds <= 0) {
 
-    if (
-        timerSeconds <= 0
-    ) {
+        const duration =
+            Number(
+                localStorage.getItem(
+                    TIMER_DURATION_KEY
+                )
+            ) ||
+            DEFAULT_TIMER_SECONDS;
 
         timerSeconds =
-            selectedTimerSeconds;
-
+            duration;
     }
 
-
-    timerRunning = true;
-
-    updateTimerButtons();
-
+    timerRunning =
+        true;
 
     timerInterval =
         setInterval(
@@ -2227,82 +2102,30 @@ function startTimer() {
 
                 timerSeconds--;
 
-                updateTimerDisplay();
-
-                writeJSON(
-                    TIMER_SECONDS_KEY,
-                    timerSeconds
-                );
-
-
                 if (
                     timerSeconds <= 0
                 ) {
 
-                    pauseTimer();
+                    timerSeconds = 0;
 
-                    timerSeconds =
-                        selectedTimerSeconds;
+                    stopTimer();
 
-                    updateTimerDisplay();
-
-                    alert(
-                        "Study session complete! Great work."
-                    );
-
-                    updateStudyActivity();
+                    handleTimerFinished();
 
                 }
+
+                saveTimer();
+                renderTimer();
 
             },
             1000
         );
 
-
-    const topic =
-        getCurrentTopic();
-
-    if (topic) {
-
-        createStudySession(
-            topic
-        );
-
-        const key =
-            topicKey(topic);
-
-        topicReadings[key] = {
-
-            ...(topicReadings[key] || {}),
-
-            topicKey: key,
-
-            started: true,
-
-            updatedAt:
-                new Date().toISOString()
-
-        };
-
-        if (currentStudySession) {
-
-            currentStudySession
-                .readingStarted =
-                true;
-
-        }
-
-    }
-
-
-    saveDashboardState();
-
+    updateTimerButtons();
 }
 
 
-function pauseTimer() {
-
-    timerRunning = false;
+function stopTimer() {
 
     if (timerInterval) {
 
@@ -2311,181 +2134,136 @@ function pauseTimer() {
         );
 
         timerInterval = null;
-
     }
 
+    timerRunning =
+        false;
 
     updateTimerButtons();
-
-    writeJSON(
-        TIMER_SECONDS_KEY,
-        timerSeconds
-    );
-
-    saveDashboardState();
-
 }
 
 
 function resetTimer() {
 
-    pauseTimer();
+    stopTimer();
 
     timerSeconds =
-        selectedTimerSeconds;
+        Number(
+            localStorage.getItem(
+                TIMER_DURATION_KEY
+            )
+        ) ||
+        DEFAULT_TIMER_SECONDS;
 
-    updateTimerDisplay();
+    saveTimer();
 
-    writeJSON(
-        TIMER_SECONDS_KEY,
-        timerSeconds
-    );
-
-    saveDashboardState();
-
+    renderTimer();
 }
 
 
-function changeTimerDuration(minutes) {
+function handleTimerFinished() {
 
-    const duration =
-        Number(minutes);
+    const topic =
+        getCurrentTopic();
 
-    if (
-        !TIMER_OPTIONS.includes(
-            duration
-        )
-    ) {
-        return;
+    if (topic) {
+
+        const message =
+            $("timerMessage");
+
+        if (message) {
+
+            message.textContent =
+                "Study session complete. Great work!";
+        }
+    }
+}
+
+
+function updateTimerButtons() {
+
+    const start =
+        $("startTimer");
+
+    const stop =
+        $("stopTimer");
+
+    const reset =
+        $("resetTimer");
+
+    if (start) {
+
+        start.textContent =
+            timerRunning
+                ? "Running"
+                : "Start";
     }
 
+    if (stop) {
 
-    pauseTimer();
+        stop.disabled =
+            !timerRunning;
+    }
 
-    selectedTimerSeconds =
-        duration * 60;
-
-    timerSeconds =
-        selectedTimerSeconds;
-
-
-    writeJSON(
-        TIMER_DURATION_KEY,
-        selectedTimerSeconds
-    );
-
-    writeJSON(
-        TIMER_SECONDS_KEY,
-        timerSeconds
-    );
-
-
-    updateTimerDisplay();
-
-    saveDashboardState();
-
+    if (reset) {
+        reset.disabled =
+            false;
+    }
 }
 
 
 /* =========================================================
-   STUDY ACTIVITY / STREAK
+   STREAK
 ========================================================= */
 
-function updateStudyActivity() {
+function updateStudyStreak() {
 
     const today =
-        dateKey(
-            new Date()
-        );
+        new Date()
+            .toISOString()
+            .slice(0, 10);
 
     const last =
-        clean(
-            localStorage.getItem(
-                LAST_STUDY_KEY
-            )
+        localStorage.getItem(
+            "lastStudyDate"
         );
-
 
     if (last !== today) {
 
-        let streak =
-            Number(
-                localStorage.getItem(
-                    STREAK_KEY
-                )
-            ) || 0;
-
-
-        if (last) {
-
-            const previous =
-                new Date(
-                    last
-                );
-
-            const current =
-                new Date();
-
-            previous.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-            current.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-            const difference =
-                Math.round(
-                    (
-                        current -
-                        previous
-                    ) /
-                    86400000
-                );
-
-
-            if (
-                difference === 1
-            ) {
-
-                streak++;
-
-            } else if (
-                difference > 1
-            ) {
-
-                streak = 1;
-
-            }
-
-        } else {
-
-            streak = 1;
-
-        }
-
-
         localStorage.setItem(
-            STREAK_KEY,
-            String(streak)
-        );
-
-        localStorage.setItem(
-            LAST_STUDY_KEY,
+            "lastStudyDate",
             today
         );
+    }
+}
 
+
+/* =========================================================
+   SCORE
+========================================================= */
+
+function calculateStudyScore() {
+
+    if (!studyPlan) {
+        return 0;
     }
 
+    const total =
+        studyPlan.topics?.length || 0;
 
-    saveDashboardState();
+    if (!total) {
+        return 0;
+    }
 
+    const completed =
+        completedTopicCount();
+
+    return Math.round(
+        (
+            completed /
+            total
+        ) * 100
+    );
 }
 
 
@@ -2493,246 +2271,115 @@ function updateStudyActivity() {
    STATS
 ========================================================= */
 
-function calculateStudyScore() {
+function renderStats() {
 
-    if (!allTopics.length) {
-        return 0;
+    if (!studyPlan) {
+        return;
     }
+
+    const totalTopics =
+        studyPlan.topics?.length || 0;
 
     const completed =
         completedTopicCount();
-
-    const progress =
-        completed /
-        allTopics.length;
-
-    const questionProgress =
-        completedQuestionTopics.length /
-        allTopics.length;
-
-
-    const score =
-        Math.round(
-            (
-                progress * 70
-            ) +
-            (
-                Math.min(
-                    1,
-                    questionProgress
-                ) * 30
-            )
-        );
-
-
-    return Math.max(
-        0,
-        Math.min(
-            100,
-            score
-        )
-    );
-
-}
-
-
-function renderStats() {
-
-    const weeklyHours =
-        $("weeklyHours");
-
-    const daysLeft =
-        $("daysLeft");
-
-    const dailyGoal =
-        $("dailyGoal");
-
-    const studyScore =
-        $("studyScore");
-
-
-    const hours =
-        Number(
-            studyPlan?.hoursPerDay
-        ) || 0;
-
-
-    if (weeklyHours) {
-
-        weeklyHours.textContent =
-            (
-                hours * 7
-            ).toFixed(
-                hours % 1
-                    ? 1
-                    : 0
-            ) +
-            "h";
-
-    }
-
-
-    if (daysLeft) {
-
-        if (
-            studyPlan?.examDate
-        ) {
-
-            const exam =
-                new Date(
-                    studyPlan.examDate
-                );
-
-            const today =
-                new Date();
-
-            exam.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-            today.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-
-            const difference =
-                Math.ceil(
-                    (
-                        exam -
-                        today
-                    ) /
-                    86400000
-                );
-
-
-            daysLeft.textContent =
-                Math.max(
-                    0,
-                    difference
-                );
-
-        } else {
-
-            daysLeft.textContent =
-                "—";
-
-        }
-
-    }
-
-
-    if (dailyGoal) {
-
-        dailyGoal.textContent =
-            (
-                hours || 0
-            ) +
-            "h";
-
-    }
-
 
     const score =
         calculateStudyScore();
 
 
-    if (studyScore) {
+    const hours =
+        $("weeklyHours");
 
-        studyScore.textContent =
-            score;
+    if (hours) {
 
+        hours.textContent =
+            studyPlan.hoursPerDay
+                ? `${studyPlan.hoursPerDay} hrs/day`
+                : "—";
     }
 
 
-    const scoreCard =
-        $("studyScoreCard");
+    const daysLeft =
+        $("daysLeft");
 
-    if (scoreCard) {
+    if (daysLeft) {
 
-        scoreCard.setAttribute(
-            "aria-label",
-            "Study score " +
-            score +
-            " out of 100"
-        );
+        const today =
+            dateOnly(
+                new Date()
+            );
 
+        const exam =
+            dateOnly(
+                studyPlan.examDate
+            );
+
+        const difference =
+            exam
+                ? Math.max(
+                    0,
+                    daysBetween(
+                        today,
+                        exam
+                    )
+                )
+                : 0;
+
+        daysLeft.textContent =
+            String(difference);
     }
 
-}
+
+    const dailyGoal =
+        $("dailyGoal");
+
+    if (dailyGoal) {
+
+        dailyGoal.textContent =
+            studyPlan.hoursPerDay
+                ? `${studyPlan.hoursPerDay}h`
+                : "—";
+    }
 
 
-/* =========================================================
-   PROGRESS
-========================================================= */
+    const scoreElement =
+        $("studyScore");
 
-function renderProgress() {
+    if (scoreElement) {
 
-    const total =
-        allTopics.length;
-
-    const completed =
-        completedTopicCount();
-
-    const percent =
-        total
-            ? Math.round(
-                (
-                    completed /
-                    total
-                ) * 100
-            )
-            : 0;
+        scoreElement.textContent =
+            `${score}%`;
+    }
 
 
     const progressPercent =
         $("progressPercent");
 
-    const progressCount =
-        $("progressCount");
-
-    const progressBar =
-        $("progressBar");
-
-
     if (progressPercent) {
 
         progressPercent.textContent =
-            percent +
-            "%";
-
+            `${score}%`;
     }
 
+
+    const progressCount =
+        $("progressCount");
 
     if (progressCount) {
 
         progressCount.textContent =
-            completed +
-            " / " +
-            total +
-            " topics completed";
-
+            `${completed} / ${totalTopics} topics`;
     }
 
+
+    const progressBar =
+        $("progressBar");
 
     if (progressBar) {
 
         progressBar.style.width =
-            percent +
-            "%";
-
-        progressBar.setAttribute(
-            "aria-valuenow",
-            String(percent)
-        );
-
+            `${score}%`;
     }
-
 }
 
 
@@ -2745,93 +2392,73 @@ function renderSubjects() {
     const container =
         $("subjectList");
 
-    if (!container) {
+    if (!container || !studyPlan) {
         return;
     }
 
+    const subjects =
+        studyPlan.subjects || [];
 
     if (!subjects.length) {
 
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="empty-state">
-                No subjects in this study plan.
+                No subjects found.
             </div>
-            `;
+        `;
 
         return;
-
     }
 
 
     container.innerHTML =
-        subjects
-            .map(
-                subject => {
+        subjects.map(
+            subject => {
 
-                    const subjectTopics =
-                        Array.isArray(
-                            subject.topics
-                        )
-                            ? subject.topics
-                            : [];
+                const total =
+                    subject.topics?.length ||
+                    0;
 
-                    const total =
-                        subjectTopics.length;
-
-                    const completed =
-                        subjectTopics.filter(
+                const completed =
+                    (subject.topics || [])
+                        .filter(
                             topic =>
                                 isTopicCompleted(
                                     topic
                                 )
                         ).length;
 
-                    const percent =
-                        total
-                            ? Math.round(
-                                (
-                                    completed /
-                                    total
-                                ) * 100
-                            )
-                            : 0;
+                const percent =
+                    total
+                        ? Math.round(
+                            completed /
+                            total *
+                            100
+                        )
+                        : 0;
 
+                return `
+                    <div class="subject-card">
+                        <div class="subject-card-header">
+                            <strong>
+                                ${escapeHTML(subject.name)}
+                            </strong>
 
-                    return `
-                        <div class="subject-progress-card">
-
-                            <div class="subject-progress-header">
-
-                                <strong>
-                                    ${escapeHTML(
-                                        subject.name
-                                    )}
-                                </strong>
-
-                                <span>
-                                    ${completed}/${total}
-                                </span>
-
-                            </div>
-
-                            <div class="subject-progress-bar">
-                                <div
-                                    style="width:${percent}%"
-                                ></div>
-                            </div>
-
-                            <small>
-                                ${percent}% complete
-                            </small>
-
+                            <span>
+                                ${completed}/${total}
+                            </span>
                         </div>
-                    `;
 
-                }
-            )
-            .join("");
-
+                        <div class="subject-progress">
+                            <div
+                                class="subject-progress-bar"
+                                style="width:${percent}%"
+                            ></div>
+                        </div>
+                    </div>
+                `;
+            }
+        ).join("");
 }
 
 
@@ -2844,311 +2471,145 @@ function renderTopics() {
     const container =
         $("topicList");
 
-    if (!container) {
+    if (!container || !studyPlan) {
         return;
     }
 
+    const topics =
+        studyPlan.topics || [];
 
-    if (!allTopics.length) {
+    if (!topics.length) {
 
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="empty-state">
-                No topics in this study plan.
+                No topics found.
             </div>
-            `;
+        `;
 
         return;
-
     }
+
+
+    const current =
+        getCurrentTopic();
 
 
     container.innerHTML =
-        allTopics
-            .map(
-                (topic, index) => {
+        topics.map(
+            (topic, index) => {
 
-                    const completed =
-                        isTopicCompleted(
-                            topic
-                        );
+                const completed =
+                    isTopicCompleted(
+                        topic
+                    );
 
-                    const current =
-                        index ===
-                        currentTopicIndex;
+                const active =
+                    current &&
+                    topicKey(current) ===
+                    topicKey(topic);
 
+                return `
+                    <button
+                        type="button"
+                        class="topic-item
+                            ${active ? "active" : ""}
+                            ${completed ? "completed" : ""}"
+                        data-topic-index="${index}"
+                    >
+                        <span class="topic-item-number">
+                            ${completed ? "✓" : index + 1}
+                        </span>
 
-                    return `
-                        <div
-                            class="topic-progress-item ${
-                                current
-                                    ? "current"
-                                    : ""
-                            } ${
-                                completed
-                                    ? "completed"
-                                    : ""
-                            }"
-                            data-topic-index="${index}"
-                        >
+                        <span class="topic-item-content">
+                            <strong>
+                                ${escapeHTML(
+                                    topicName(topic)
+                                )}
+                            </strong>
 
-                            <div class="topic-progress-main">
-
-                                <span class="topic-number">
-                                    ${index + 1}
-                                </span>
-
-                                <div>
-
-                                    <strong>
-                                        ${escapeHTML(
-                                            topicName(
-                                                topic
-                                            )
-                                        )}
-                                    </strong>
-
-                                    <small>
-                                        ${escapeHTML(
-                                            topicSubject(
-                                                topic
-                                            )
-                                        )}
-                                    </small>
-
-                                </div>
-
-                            </div>
-
-                            <div class="topic-progress-status">
-
-                                ${
-                                    completed
-                                        ? "✓ Completed"
-                                        : current
-                                            ? "Current"
-                                            : "Not started"
-                                }
-
-                            </div>
-
-                        </div>
-                    `;
-
-                }
-            )
-            .join("");
+                            <small>
+                                ${escapeHTML(
+                                    topicSubject(topic)
+                                )}
+                            </small>
+                        </span>
+                    </button>
+                `;
+            }
+        ).join("");
 
 
     container
         .querySelectorAll(
             "[data-topic-index]"
         )
-        .forEach(
-            element => {
+        .forEach(button => {
 
-                element.addEventListener(
-                    "click",
-                    () => {
+            button.addEventListener(
+                "click",
+                () => {
 
-                        const index =
-                            Number(
-                                element.dataset
-                                    .topicIndex
-                            );
-
-                        if (
-                            !Number.isInteger(
-                                index
-                            ) ||
-                            !allTopics[index]
-                        ) {
-                            return;
-                        }
-
-
-                        currentTopicIndex =
-                            index;
-
-
-                        currentStudySession =
-                            null;
-
-
-                        writeJSON(
-                            CURRENT_INDEX_KEY,
-                            currentTopicIndex
+                    const index =
+                        Number(
+                            button.dataset.topicIndex
                         );
 
-                        removeStorage(
-                            STUDY_SESSION_KEY
-                        );
-
-
-                        renderAll();
-
-                    }
-                );
-
-            }
-        );
-
+                    switchTopic(
+                        index
+                    );
+                }
+            );
+        });
 }
 
 
 /* =========================================================
-   KNOWLEDGE CHECK UI
+   SWITCH TOPIC
 ========================================================= */
 
-function hideKnowledgeCheck() {
+function switchTopic(index) {
 
-    const section =
-        $("topicQuestionsSection");
-
-    if (section) {
-
-        section.style.display =
-            "none";
-
-    }
-
-}
-
-
-function showKnowledgeCheck() {
-
-    const section =
-        $("topicQuestionsSection");
-
-    if (section) {
-
-        section.style.display =
-            "block";
-
-    }
-
-}
-
-
-function hasCompletedKnowledgeCheck(
-    topic
-) {
-
-    const key =
-        topicKey(topic);
-
-    return (
-        completedQuestionTopics.includes(
-            key
-        ) ||
-        (
-            topic?.id &&
-            completedQuestionTopics.includes(
-                topic.id
-            )
-        )
-    );
-
-}
-
-
-/* =========================================================
-   KNOWLEDGE CHECK NAVIGATION
-========================================================= */
-
-function openKnowledgeCheckPage(
-    topic
-) {
-
-    if (!topic) {
+    if (!studyPlan) {
         return;
     }
 
+    const topics =
+        studyPlan.topics || [];
 
-    const premium =
-        window.studyMindPremiumVerified === true ||
-        window.studyMindIsPremium === true ||
-        window.premiumUser === true;
-
-
-    /*
-       Keep the free-user restriction.
-    */
-
-    if (!premium) {
-
-        window.location.href =
-            "premium.html";
-
+    if (
+        index < 0 ||
+        index >= topics.length
+    ) {
         return;
-
     }
 
+    saveCurrentReading();
 
-    knowledgeTopic = {
+    stopTimer();
 
-        topicKey:
-            topicKey(topic),
-
-        topicName:
-            topicName(topic),
-
-        subject:
-            topicSubject(topic),
-
-        checkId:
-            topicKey(topic)
-
-    };
-
-
-    writeJSON(
-        KNOWLEDGE_TOPIC_KEY,
-        knowledgeTopic
+    localStorage.setItem(
+        CURRENT_TOPIC_KEY,
+        String(index)
     );
 
+    localStorage.removeItem(
+        STUDY_SESSION_KEY
+    );
 
-    if (!knowledgeQuestions) {
+    localStorage.removeItem(
+        KNOWLEDGE_TOPIC_KEY
+    );
 
-        knowledgeQuestions = {
+    localStorage.removeItem(
+        KNOWLEDGE_QUESTIONS_KEY
+    );
 
-            topicKey:
-                topicKey(topic),
-
-            topicName:
-                topicName(topic),
-
-            subject:
-                topicSubject(topic),
-
-            questions: [],
-
-            questionCount:
-                QUESTIONS_PER_CHECK,
-
-            revisionQuestions: []
-
-        };
-
-        writeJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            knowledgeQuestions
-        );
-
-    }
-
-
-    saveDashboardState();
-
-
-    window.location.href =
-        "knowledge-check.html";
-
+    renderAll();
 }
 
 
 /* =========================================================
-   CURRENT TOPIC RENDER
+   CURRENT TOPIC
 ========================================================= */
 
 function renderCurrentTopic() {
@@ -3156,43 +2617,17 @@ function renderCurrentTopic() {
     const topic =
         getCurrentTopic();
 
-
     if (!topic) {
 
-        const section =
-            $("currentTopicSection");
+        const name =
+            $("currentTopicName");
 
-        if (section) {
-
-            section.innerHTML =
-                `
-                <div class="empty-state">
-                    Create a study plan to begin.
-                </div>
-                `;
-
+        if (name) {
+            name.textContent =
+                "No topic available";
         }
 
-        hideKnowledgeCheck();
-
         return;
-
-    }
-
-
-    const index =
-        allTopics.findIndex(
-            item =>
-                topicKey(item) ===
-                topicKey(topic)
-        );
-
-
-    if (index >= 0) {
-
-        currentTopicIndex =
-            index;
-
     }
 
 
@@ -3201,179 +2636,227 @@ function renderCurrentTopic() {
     );
 
 
+    const index =
+        getCurrentTopicIndex();
+
+    const total =
+        studyPlan.topics.length;
+
+
     const name =
         $("currentTopicName");
-
-    const description =
-        $("currentTopicDescription");
-
-    const position =
-        $("topicPosition");
-
-    const badge =
-        $("topicStatusBadge");
-
 
     if (name) {
 
         name.textContent =
             topicName(topic);
-
     }
 
+
+    const description =
+        $("currentTopicDescription");
 
     if (description) {
 
         description.textContent =
-            "Study " +
-            topicName(topic) +
-            " for " +
-            (
-                topicSubject(topic) ||
-                "this subject"
-            ) +
-            " and complete the knowledge check.";
-
+            topic.description ||
+            `Study ${topicName(topic)} and complete the knowledge check.`;
     }
 
+
+    const position =
+        $("topicPosition");
 
     if (position) {
 
         position.textContent =
-            "TOPIC " +
-            (
-                currentTopicIndex + 1
-            ) +
-            " OF " +
-            allTopics.length;
-
+            `TOPIC ${index + 1} OF ${total}`;
     }
 
 
-    const completed =
-        isTopicCompleted(
-            topic
-        );
-
+    const badge =
+        $("topicStatusBadge");
 
     if (badge) {
 
-        badge.textContent =
-            completed
-                ? "COMPLETED"
-                : "IN PROGRESS";
+        if (
+            isTopicCompleted(topic)
+        ) {
 
+            badge.textContent =
+                "COMPLETED";
+
+            badge.classList.add(
+                "completed"
+            );
+
+        } else {
+
+            badge.textContent =
+                "IN PROGRESS";
+
+            badge.classList.remove(
+                "completed"
+            );
+        }
     }
 
 
     const checkbox =
         $("topicCompleteCheckbox");
 
-    const completionMessage =
-        $("topicCompletionMessage");
-
-    const nextTopicMessage =
-        $("nextTopicMessage");
-
-
     if (checkbox) {
 
         checkbox.checked =
-            completed;
-
-        checkbox.disabled =
-            completed;
-
+            isTopicCompleted(topic);
     }
 
+
+    const completionMessage =
+        $("topicCompletionMessage");
 
     if (completionMessage) {
 
         completionMessage.textContent =
-            completed
-                ? "Topic completed. Your knowledge check is available below."
-                : "Mark this topic as finished after studying it.";
-
+            isTopicCompleted(topic)
+                ? "Topic completed."
+                : "Mark this topic as finished after studying.";
     }
 
 
-    if (nextTopicMessage) {
+    const nextMessage =
+        $("nextTopicMessage");
 
-        const next =
-            allTopics[
-                currentTopicIndex + 1
-            ];
+    if (nextMessage) {
 
-        nextTopicMessage.textContent =
-            next
-                ? "Next topic: " +
-                  topicName(next)
-                : allTopicsCompleted()
-                    ? "You have completed every topic in this plan."
-                    : "";
+        if (
+            index <
+            total - 1
+        ) {
 
+            const next =
+                studyPlan.topics[
+                    index + 1
+                ];
+
+            nextMessage.textContent =
+                `Next topic: ${topicName(next)}`;
+
+        } else {
+
+            nextMessage.textContent =
+                allTopicsCompleted()
+                    ? "You have completed every topic."
+                    : "This is your final topic.";
+        }
     }
 
 
-    const checkButton =
-        $("submitTopicQuestions");
-
-
-    /*
-       Existing HTML calls the button submitTopicQuestions.
-       We turn it into the Knowledge Check entry point.
-    */
-
-    if (checkButton) {
-
-        checkButton.textContent =
-            hasCompletedKnowledgeCheck(
-                topic
-            )
-                ? "Review Knowledge Check"
-                : "Start Knowledge Check";
-
-        checkButton.onclick =
-            () =>
-                openKnowledgeCheckPage(
-                    topic
-                );
-
-    }
-
-
-    /*
-       Knowledge check is intentionally hidden until
-       the topic has been marked complete.
-    */
-
-    if (
-        completed &&
-        !hasCompletedKnowledgeCheck(topic)
-    ) {
-
-        showKnowledgeCheck();
-
-    } else if (
-        completed &&
-        hasCompletedKnowledgeCheck(topic)
-    ) {
-
-        showKnowledgeCheck();
-
-    } else {
-
-        hideKnowledgeCheck();
-
-    }
-
-
-    updateTimerDisplay();
-
-    updateTimerButtons();
+    renderTopicQuestions(
+        topic
+    );
 
     restoreCurrentReading();
+}
 
+
+/* =========================================================
+   TOPIC QUESTIONS
+========================================================= */
+
+function renderTopicQuestions(topic) {
+
+    const section =
+        $("topicQuestionsSection");
+
+    const container =
+        $("topicQuestions");
+
+    if (!section || !container) {
+        return;
+    }
+
+
+    /*
+     * Knowledge Check is intentionally hidden until the
+     * user marks the topic as finished.
+     */
+
+    if (
+        !isTopicCompleted(topic)
+    ) {
+
+        section.classList.add(
+            "hidden"
+        );
+
+        return;
+    }
+
+
+    section.classList.remove(
+        "hidden"
+    );
+
+
+    const completed =
+        isKnowledgeCheckCompleted(
+            topic
+        );
+
+
+    if (completed) {
+
+        container.innerHTML = `
+            <div class="knowledge-check-complete">
+                <strong>Knowledge Check completed ✓</strong>
+                <p>
+                    You have already completed the knowledge check
+                    for this topic.
+                </p>
+            </div>
+        `;
+
+        const submit =
+            $("submitTopicQuestions");
+
+        if (submit) {
+            submit.style.display =
+                "none";
+        }
+
+        return;
+    }
+
+
+    const questions =
+        readJSON(
+            KNOWLEDGE_QUESTIONS_KEY,
+            []
+        );
+
+
+    /*
+     * We do not fabricate questions here.
+     * The existing Knowledge Check page remains responsible
+     * for generating/handling the actual questions.
+     */
+
+    if (
+        !Array.isArray(questions) ||
+        !questions.length
+    ) {
+
+        container.innerHTML = `
+            <div class="knowledge-check-ready">
+                <strong>Ready for your Knowledge Check</strong>
+                <p>
+                    Your topic is complete. Start the Knowledge Check
+                    to test what you learned.
+                </p>
+            </div>
+        `;
+    }
 }
 
 
@@ -3390,163 +2873,95 @@ function completeCurrentTopic() {
         return;
     }
 
-
     markTopicCompleted(
         topic
     );
 
 
-    if (
-        currentStudySession
-    ) {
-
-        currentStudySession
-            .readingCompleted =
-            true;
-
-        currentStudySession
-            .updatedAt =
-            new Date().toISOString();
-
-    }
-
-
-    const key =
-        topicKey(topic);
-
-
-    topicReadings[key] =
-        {
-
-            ...(topicReadings[key] || {}),
-
-            topicKey: key,
-
-            started: true,
-
-            completed: true,
-
-            progress: 100,
-
-            updatedAt:
-                new Date().toISOString()
-
-        };
-
-
-    writeJSON(
-        STUDY_READINGS_KEY,
-        topicReadings
-    );
-
-
-    updateStudyActivity();
-
-
     /*
-       Move to the next incomplete topic,
-       but don't force the user away from the
-       completed topic.
-    */
+     * Remove any old knowledge questions so the next
+     * knowledge check cannot accidentally belong to an
+     * older topic.
+     */
 
-    const nextIndex =
-        allTopics.findIndex(
-            (item, index) =>
-                index >
-                    currentTopicIndex &&
-                !isTopicCompleted(
-                    item
-                )
-        );
+    localStorage.removeItem(
+        KNOWLEDGE_TOPIC_KEY
+    );
 
-
-    if (nextIndex >= 0) {
-
-        currentTopicIndex =
-            nextIndex;
-
-    } else {
-
-        const firstIncomplete =
-            allTopics.findIndex(
-                item =>
-                    !isTopicCompleted(
-                        item
-                    )
-            );
-
-        if (
-            firstIncomplete >= 0
-        ) {
-
-            currentTopicIndex =
-                firstIncomplete;
-
-        }
-
-    }
-
-
-    writeJSON(
-        CURRENT_INDEX_KEY,
-        currentTopicIndex
+    localStorage.removeItem(
+        KNOWLEDGE_QUESTIONS_KEY
     );
 
 
-    saveDashboardState();
+    const message =
+        $("topicCompletionMessage");
+
+    if (message) {
+
+        message.textContent =
+            "Topic completed! Your Knowledge Check is now available.";
+    }
 
 
     renderAll();
-
-
-    if (
-        allTopicsCompleted()
-    ) {
-
-        showCompletionCelebration();
-
-    }
-
 }
 
 
 /* =========================================================
-   COMPLETION CELEBRATION
+   KNOWLEDGE CHECK NAVIGATION
 ========================================================= */
 
-function showCompletionCelebration() {
+function hideKnowledgeCheck() {
 
-    const shown =
-        localStorage.getItem(
-            CELEBRATION_KEY
-        ) === "true";
+    const section =
+        $("topicQuestionsSection");
+
+    if (section) {
+
+        section.classList.add(
+            "hidden"
+        );
+    }
+}
 
 
-    if (shown) {
+function openKnowledgeCheckPage() {
+
+    const topic =
+        getCurrentTopic();
+
+    if (!topic) {
         return;
     }
 
 
-    localStorage.setItem(
-        CELEBRATION_KEY,
-        "true"
+    /*
+     * The current topic is the ONLY topic passed to the
+     * Knowledge Check.
+     */
+
+    writeJSON(
+        KNOWLEDGE_TOPIC_KEY,
+        {
+            ...topic,
+
+            key:
+                topicKey(topic),
+
+            planId:
+                activePlanRecord?.id ||
+                getActivePlanId()
+        }
     );
 
 
-    syncActivePlanRecord();
-
-
-    setTimeout(
-        () => {
-
-            alert(
-                "🎉 Congratulations! You completed every topic in your study plan."
-            );
-
-        },
-        100
+    localStorage.removeItem(
+        KNOWLEDGE_QUESTIONS_KEY
     );
 
+
+    window.location.href =
+        "knowledge-check.html";
 }
 
 
@@ -3556,152 +2971,31 @@ function showCompletionCelebration() {
 
 function renderDailyChallenge() {
 
-    const badge =
-        $("dailyChallengeBadge");
-
-    const text =
-        $("dailyChallengeText");
-
-    const title =
-        $("dailyChallengeTitle");
-
-    const description =
-        $("dailyChallengeDescription");
-
-    const progress =
-        $("dailyChallengeProgress");
-
-    const progressBar =
-        $("dailyChallengeProgressBar");
-
-    const button =
-        $("dailyChallengeButton");
-
-
     const topic =
         getCurrentTopic();
 
+    const name =
+        $("dailyChallengeTopic");
 
-    if (!topic) {
+    if (name) {
 
-        if (title) {
-            title.textContent =
-                "No challenge yet";
-        }
-
-        if (description) {
-            description.textContent =
-                "Create a study plan to begin.";
-        }
-
-        return;
-
-    }
-
-
-    const complete =
-        isTopicCompleted(
+        name.textContent =
             topic
-        );
-
-
-    if (badge) {
-
-        badge.textContent =
-            "TODAY";
-
+                ? topicName(topic)
+                : "Your current topic";
     }
 
 
-    if (text) {
+    const subject =
+        $("dailyChallengeSubject");
 
-        text.textContent =
-            complete
-                ? "Challenge completed!"
-                : "Focus on one topic today.";
+    if (subject) {
 
+        subject.textContent =
+            topic
+                ? topicSubject(topic)
+                : "";
     }
-
-
-    if (title) {
-
-        title.textContent =
-            topicName(topic);
-
-    }
-
-
-    if (description) {
-
-        description.textContent =
-            "Study " +
-            topicName(topic) +
-            " for " +
-            (
-                topicSubject(topic) ||
-                "this subject"
-            ) +
-            " and complete the knowledge check.";
-
-    }
-
-
-    if (progress) {
-
-        progress.textContent =
-            complete
-                ? "1 / 1 complete"
-                : "0 / 1 complete";
-
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            complete
-                ? "100%"
-                : "0%";
-
-    }
-
-
-    if (button) {
-
-        button.textContent =
-            complete
-                ? "Completed"
-                : "Start Challenge";
-
-
-        button.onclick =
-            () => {
-
-                const index =
-                    allTopics.findIndex(
-                        item =>
-                            topicKey(item) ===
-                            topicKey(topic)
-                    );
-
-                if (index >= 0) {
-
-                    currentTopicIndex =
-                        index;
-
-                    writeJSON(
-                        CURRENT_INDEX_KEY,
-                        currentTopicIndex
-                    );
-
-                }
-
-                renderAll();
-
-            };
-
-    }
-
 }
 
 
@@ -3709,581 +3003,158 @@ function renderDailyChallenge() {
    CALENDAR
 ========================================================= */
 
-function getExamDateObject() {
-
-    if (
-        !studyPlan?.examDate
-    ) {
-        return null;
-    }
-
-    const date =
-        new Date(
-            studyPlan.examDate +
-            "T00:00:00"
-        );
-
-    return Number.isNaN(
-        date.getTime()
-    )
-        ? null
-        : date;
-
-}
-
-
-function getPlanStartDate() {
-
-    /*
-       Use explicit start date if present.
-    */
-
-    if (
-        studyPlan?.startDate
-    ) {
-
-        const explicit =
-            new Date(
-                studyPlan.startDate +
-                "T00:00:00"
-            );
-
-        if (
-            !Number.isNaN(
-                explicit.getTime()
-            )
-        ) {
-            return explicit;
-        }
-
-    }
-
-
-    /*
-       Otherwise derive a sensible start from
-       the exam date and number of topics.
-    */
-
-    const exam =
-        getExamDateObject();
-
-    if (!exam) {
-        return new Date();
-    }
-
-
-    const topics =
-        Math.max(
-            1,
-            allTopics.length
-        );
-
-
-    const start =
-        new Date(exam);
-
-
-    start.setDate(
-        start.getDate() -
-        Math.max(
-            0,
-            topics - 1
-        )
-    );
-
-
-    return start;
-
-}
-
-
-function isStudyDay(date) {
-
-    const exam =
-        getExamDateObject();
-
-    const start =
-        getPlanStartDate();
-
-
-    if (
-        exam &&
-        date > exam
-    ) {
-        return false;
-    }
-
-
-    if (
-        date < start
-    ) {
-        return false;
-    }
-
-
-    if (
-        exam &&
-        sameDay(
-            date,
-            exam
-        )
-    ) {
-        return false;
-    }
-
-
-    /*
-       If the plan already contains a schedule,
-       respect it.
-    */
-
-    const schedules =
-        Array.isArray(
-            studyPlan?.schedule
-        )
-            ? studyPlan.schedule
-            : [];
-
-
-    if (schedules.length) {
-
-        return schedules.some(
-            item => {
-
-                const itemDate =
-                    item?.date ||
-                    item?.day;
-
-                return (
-                    itemDate &&
-                    sameDay(
-                        itemDate,
-                        date
-                    )
-                );
-
-            }
-        );
-
-    }
-
-
-    /*
-       Default:
-       every day between start and exam is a study day.
-    */
-
-    return true;
-
-}
-
-
-function isRestDay(date) {
-
-    const exam =
-        getExamDateObject();
-
-    if (
-        exam &&
-        sameDay(
-            date,
-            exam
-        )
-    ) {
-        return false;
-    }
-
-
-    const start =
-        getPlanStartDate();
-
-
-    if (
-        date < start
-    ) {
-        return false;
-    }
-
-
-    return !isStudyDay(
-        date
-    );
-
-}
-
-
 function renderCalendar() {
 
-    const container =
+    const calendar =
         $("calendarDays");
 
-    const monthLabel =
-        $("calendarMonth");
-
-
-    if (!container) {
+    if (!calendar || !studyPlan) {
         return;
     }
 
 
-    const year =
-        calendarDate.getFullYear();
-
-    const month =
-        calendarDate.getMonth();
+    const monthElement =
+        $("calendarMonth");
 
 
-    if (monthLabel) {
+    const exam =
+        dateOnly(
+            studyPlan.examDate
+        );
 
-        monthLabel.textContent =
-            calendarDate.toLocaleDateString(
+    const today =
+        dateOnly(
+            new Date()
+        );
+
+
+    if (monthElement) {
+
+        const displayDate =
+            today || exam || new Date();
+
+        monthElement.textContent =
+            displayDate.toLocaleDateString(
                 undefined,
                 {
                     month: "long",
                     year: "numeric"
                 }
             );
-
     }
 
+
+    const base =
+        new Date(
+            today || new Date()
+        );
+
+    const year =
+        base.getFullYear();
+
+    const month =
+        base.getMonth();
 
     const firstDay =
         new Date(
             year,
             month,
             1
-        );
+        ).getDay();
 
-
-    const lastDay =
+    const daysInMonth =
         new Date(
             year,
             month + 1,
             0
-        );
+        ).getDate();
 
 
-    const startingDay =
-        firstDay.getDay();
-
-
-    const totalDays =
-        lastDay.getDate();
-
-
-    const cells = [];
+    let html = "";
 
 
     for (
         let i = 0;
-        i < startingDay;
+        i < firstDay;
         i++
     ) {
 
-        cells.push(
-            `<div class="calendar-day empty"></div>`
-        );
-
+        html += `
+            <div class="calendar-day empty"></div>
+        `;
     }
-
-
-    const exam =
-        getExamDateObject();
-
-
-    const today =
-        new Date();
 
 
     for (
         let day = 1;
-        day <= totalDays;
+        day <= daysInMonth;
         day++
     ) {
 
-        const date =
+        const current =
             new Date(
                 year,
                 month,
                 day
             );
 
+        const iso =
+            current
+                .toISOString()
+                .slice(0, 10);
 
-        const key =
-            dateKey(date);
 
+        const isToday =
+            today &&
+            current.getTime() ===
+            today.getTime();
 
-        const study =
-            isStudyDay(date);
-
-        const rest =
-            isRestDay(date);
 
         const isExam =
             exam &&
-            sameDay(
-                date,
-                exam
-            );
-
-        const afterExam =
-            exam &&
-            date > exam;
+            current.getTime() ===
+            exam.getTime();
 
 
-        const completedOnDay =
-            study &&
-            isDayCompleted(
-                date
-            );
+        let className =
+            "calendar-day";
 
+        if (isToday) {
+            className +=
+                " today";
+        }
 
-        const todayClass =
-            sameDay(
-                date,
-                today
-            )
-                ? "today"
-                : "";
-
-
-        let stateClass =
-            "";
-
-        if (afterExam) {
-
-            stateClass =
-                "after-exam";
-
-        } else if (isExam) {
-
-            stateClass =
-                "exam-day";
-
-        } else if (
-            completedOnDay
-        ) {
-
-            stateClass =
-                "completed-day";
-
-        } else if (study) {
-
-            stateClass =
-                "study-day";
-
-        } else if (rest) {
-
-            stateClass =
-                "rest-day";
-
+        if (isExam) {
+            className +=
+                " exam-day";
         }
 
 
-        cells.push(
-            `
+        html += `
             <div
-                class="calendar-day ${stateClass} ${todayClass}"
-                data-date="${key}"
-                title="${escapeHTML(
-                    calendarTitle(
-                        date,
-                        stateClass
-                    )
-                )}"
+                class="${className}"
+                data-date="${iso}"
             >
-                <span>
+                <span class="calendar-date">
                     ${day}
                 </span>
+
+                ${
+                    isExam
+                        ? `
+                            <span class="calendar-label">
+                                Exam
+                            </span>
+                        `
+                        : ""
+                }
             </div>
-            `
-        );
-
+        `;
     }
 
 
-    container.innerHTML =
-        cells.join("");
-
-
-    renderNextBooking();
-
-}
-
-
-function calendarTitle(
-    date,
-    state
-) {
-
-    if (
-        state.includes(
-            "exam"
-        )
-    ) {
-        return "Exam day";
-    }
-
-    if (
-        state.includes(
-            "completed"
-        )
-    ) {
-        return "Completed study day";
-    }
-
-    if (
-        state.includes(
-            "study"
-        )
-    ) {
-        return "Study day";
-    }
-
-    if (
-        state.includes(
-            "rest"
-        )
-    ) {
-        return "Rest day";
-    }
-
-    if (
-        state.includes(
-            "after"
-        )
-    ) {
-        return "After exam";
-    }
-
-    return "No scheduled activity";
-
-}
-
-
-function isDayCompleted(date) {
-
-    /*
-       If all topics belonging to a scheduled day
-       are complete, the day is considered complete.
-    */
-
-    if (
-        sameDay(
-            date,
-            new Date()
-        )
-    ) {
-
-        return allTopics.length > 0 &&
-            allTopicsCompleted();
-
-    }
-
-
-    return false;
-
-}
-
-
-function renderNextBooking() {
-
-    const nextBooking =
-        $("nextBooking");
-
-    const nextBookingTime =
-        $("nextBookingTime");
-
-
-    if (
-        !nextBooking ||
-        !nextBookingTime
-    ) {
-        return;
-    }
-
-
-    const today =
-        new Date();
-
-
-    today.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-
-    const exam =
-        getExamDateObject();
-
-
-    let nextDate =
-        null;
-
-
-    for (
-        let offset = 0;
-        offset <= 366;
-        offset++
-    ) {
-
-        const candidate =
-            new Date(today);
-
-
-        candidate.setDate(
-            today.getDate() +
-            offset
-        );
-
-
-        if (
-            exam &&
-            candidate > exam
-        ) {
-            break;
-        }
-
-
-        if (
-            isStudyDay(
-                candidate
-            )
-        ) {
-
-            nextDate =
-                candidate;
-
-            break;
-
-        }
-
-    }
-
-
-    if (!nextDate) {
-
-        nextBooking.textContent =
-            "No upcoming study sessions";
-
-        nextBookingTime.textContent =
-            "";
-
-        return;
-
-    }
-
-
-    nextBooking.textContent =
-        "Next Up";
-
-    nextBookingTime.textContent =
-        formatShortDate(
-            nextDate
-        );
-
+    calendar.innerHTML =
+        html;
 }
 
 
@@ -4296,7 +3167,7 @@ function renderSchedule() {
     const container =
         $("scheduleList");
 
-    if (!container) {
+    if (!container || !studyPlan) {
         return;
     }
 
@@ -4307,95 +3178,111 @@ function renderSchedule() {
 
     if (!topic) {
 
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="empty-schedule">
                 Your daily study sessions will appear here.
             </div>
-            `;
+        `;
 
         return;
-
     }
 
 
     const hours =
         Number(
-            studyPlan?.hoursPerDay
-        ) || 0;
+            studyPlan.hoursPerDay
+        ) || 1;
 
 
-    const today =
-        new Date();
+    const startTime =
+        formatTime(
+            studyPlan.startTime
+        );
 
 
-    const exam =
-        getExamDateObject();
-
-
-    let status =
-        "Study";
-
-
-    if (
-        exam &&
-        sameDay(
-            today,
-            exam
-        )
-    ) {
-
-        status =
-            "Exam";
-
-    } else if (
-        exam &&
-        today > exam
-    ) {
-
-        status =
-            "Completed";
-
-    }
-
-
-    container.innerHTML =
-        `
+    container.innerHTML = `
         <div class="schedule-item">
-
-            <div class="schedule-date">
-                ${escapeHTML(
-                    formatShortDate(
-                        today
-                    )
-                )}
+            <div class="schedule-time">
+                ${escapeHTML(startTime)}
             </div>
 
-            <div class="schedule-topic">
-
+            <div class="schedule-content">
                 <strong>
-                    📖 ${escapeHTML(
+                    ${escapeHTML(
                         topicName(topic)
                     )}
                 </strong>
 
                 <span>
-                    ${status}
+                    ${escapeHTML(
+                        topicSubject(topic)
+                    )}
+                    · ${hours} hour${hours === 1 ? "" : "s"}
                 </span>
-
             </div>
 
-            <div class="schedule-duration">
-                ${
-                    hours
-                        ? hours + "h"
-                        : ""
-                }
+            <div class="schedule-status">
+                ${isTopicCompleted(topic)
+                    ? "✓ Complete"
+                    : "Study"}
             </div>
-
         </div>
-        `;
+    `;
+}
 
+
+/* =========================================================
+   PLAN HEADER
+========================================================= */
+
+function renderPlanHeader() {
+
+    if (!studyPlan) {
+        return;
+    }
+
+
+    const titleIds = [
+        "planTitle",
+        "dashboardPlanTitle",
+        "currentPlanTitle"
+    ];
+
+
+    for (const id of titleIds) {
+
+        const element =
+            $(id);
+
+        if (element) {
+
+            element.textContent =
+                studyPlan.title ||
+                "Study Plan";
+        }
+    }
+
+
+    const examIds = [
+        "examDate",
+        "dashboardExamDate",
+        "planExamDate"
+    ];
+
+
+    for (const id of examIds) {
+
+        const element =
+            $(id);
+
+        if (element) {
+
+            element.textContent =
+                formatDate(
+                    studyPlan.examDate
+                );
+        }
+    }
 }
 
 
@@ -4403,89 +3290,23 @@ function renderSchedule() {
    PLAN SWITCHER
 ========================================================= */
 
-function calculatePlanCompletion(
-    record
-) {
-
-    const plan =
-        normalizePlan(
-            record?.plan
-        );
-
-    if (!plan) {
-        return 0;
-    }
-
-
-    const topics =
-        plan.subjects
-            .flatMap(
-                subject =>
-                    Array.isArray(
-                        subject.topics
-                    )
-                        ? subject.topics
-                        : []
-            );
-
-
-    if (!topics.length) {
-        return 0;
-    }
-
-
-    const completed =
-        Array.isArray(
-            record?.completedTopics
-        )
-            ? record.completedTopics
-            : [];
-
-
-    const count =
-        topics.filter(
-            topic =>
-                completed.includes(
-                    topicKey(topic)
-                ) ||
-                completed.includes(
-                    clean(topic.id)
-                )
-        ).length;
-
-
-    return Math.round(
-        (
-            count /
-            topics.length
-        ) * 100
-    );
-
-}
-
-
 function renderPlanSwitcher() {
 
-    const candidates = [
-        "#planList",
-        "#studyPlanList",
-        "#savedPlans",
-        "#plansList"
+    const ids = [
+        "planSwitcher",
+        "savedPlans",
+        "planList",
+        "studyPlanList"
     ];
 
 
     let container = null;
 
 
-    for (
-        const selector of
-        candidates
-    ) {
+    for (const id of ids) {
 
         const element =
-            document.querySelector(
-                selector
-            );
+            $(id);
 
         if (element) {
 
@@ -4493,9 +3314,7 @@ function renderPlanSwitcher() {
                 element;
 
             break;
-
         }
-
     }
 
 
@@ -4511,145 +3330,89 @@ function renderPlanSwitcher() {
     if (!plans.length) {
 
         container.innerHTML =
-            `
-            <div class="empty-state">
-                No saved study plans.
-            </div>
-            `;
+            "";
 
         return;
-
     }
 
 
+    const activeId =
+        getActivePlanId();
+
+
     container.innerHTML =
-        plans
-            .map(
-                record => {
+        plans.map(
+            record => {
 
-                    const plan =
-                        normalizePlan(
-                            record.plan
-                        );
+                const plan =
+                    normalizePlan(
+                        record.plan
+                    );
 
-                    const percent =
-                        calculatePlanCompletion(
-                            record
-                        );
-
-                    const active =
-                        String(
-                            record.id
-                        ) ===
-                        String(
-                            activePlanId
-                        );
-
-
-                    return `
-                    <div
-                        class="saved-plan-card ${
-                            active
-                                ? "active"
-                                : ""
-                        }"
-                        data-plan-id="${
-                            escapeHTML(
-                                record.id
-                            )
-                        }"
-                    >
-
-                        <div>
-                            <strong>
-                                ${escapeHTML(
-                                    planTitle(
-                                        plan
-                                    )
-                                )}
-                            </strong>
-
-                            <small>
-                                ${
-                                    plan?.topicNames
-                                        ?.length || 0
-                                } topic${
-                                    (
-                                        plan?.topicNames
-                                            ?.length || 0
-                                    ) === 1
-                                        ? ""
-                                        : "s"
-                                }
-                                •
-                                Exam
-                                ${
-                                    escapeHTML(
-                                        formatDate(
-                                            plan?.examDate
-                                        )
-                                    )
-                                }
-                            </small>
-                        </div>
-
-                        <div>
-                            ${
-                                active
-                                    ? "ACTIVE PLAN"
-                                    : "Open Plan"
-                            }
-                            •
-                            ${
-                                percent
-                            }%
-                            complete
-                            ${
-                                percent === 100
-                                    ? " ✓"
-                                    : ""
-                            }
-                        </div>
-
-                    </div>
-                    `;
-
+                if (!plan) {
+                    return "";
                 }
-            )
-            .join("");
+
+
+                const active =
+                    record.id ===
+                    activeId;
+
+
+                return `
+                    <button
+                        type="button"
+                        class="saved-plan-item
+                            ${active ? "active" : ""}"
+                        data-plan-id="${escapeHTML(record.id)}"
+                    >
+                        <strong>
+                            ${escapeHTML(
+                                plan.title
+                            )}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(
+                                plan.examDate
+                                    ? formatDate(
+                                        plan.examDate
+                                    )
+                                    : "No exam date"
+                            )}
+                        </small>
+                    </button>
+                `;
+            }
+        ).join("");
 
 
     container
         .querySelectorAll(
             "[data-plan-id]"
         )
-        .forEach(
-            element => {
+        .forEach(button => {
 
-                element.addEventListener(
-                    "click",
-                    () => {
+            button.addEventListener(
+                "click",
+                () => {
 
-                        const id =
-                            element.dataset
-                                .planId;
-
-                        switchActivePlan(
-                            id
-                        );
-
-                    }
-                );
-
-            }
-        );
-
+                    switchPlan(
+                        button.dataset.planId
+                    );
+                }
+            );
+        });
 }
 
 
-function switchActivePlan(id) {
+/* =========================================================
+   SWITCH SAVED PLAN
+========================================================= */
 
-    if (!id) {
+function switchPlan(planId) {
+
+    if (!planId) {
         return;
     }
 
@@ -4661,42 +3424,26 @@ function switchActivePlan(id) {
     const record =
         plans.find(
             item =>
-                item &&
-                String(item.id) ===
-                String(id)
+                item.id ===
+                planId
         );
 
 
-    if (!record) {
+    if (!record || !record.plan) {
         return;
     }
 
 
     /*
-       Stop timer before switching plans.
-    */
+     * Save current active plan before switching.
+     */
 
-    pauseTimer();
+    saveDashboardState();
 
-
-    /*
-       Persist the current plan first.
-    */
-
-    syncActivePlanRecord();
-
-
-    /*
-       Now switch.
-    */
 
     setActivePlanId(
         record.id
     );
-
-
-    activePlanId =
-        String(record.id);
 
 
     studyPlan =
@@ -4704,18 +3451,33 @@ function switchActivePlan(id) {
             record.plan
         );
 
+    activePlanRecord =
+        {
+            ...record,
+            plan:
+                studyPlan
+        };
 
-    if (!studyPlan) {
-        return;
-    }
 
+    /*
+     * Clear only state that should belong to the
+     * previous topic. Do NOT delete global progress.
+     */
 
-    restorePlanState(
-        record
+    localStorage.removeItem(
+        STUDY_SESSION_KEY
+    );
+
+    localStorage.removeItem(
+        KNOWLEDGE_TOPIC_KEY
+    );
+
+    localStorage.removeItem(
+        KNOWLEDGE_QUESTIONS_KEY
     );
 
 
-    buildPlanCollections();
+    restorePlanState();
 
 
     writeJSON(
@@ -4723,15 +3485,13 @@ function switchActivePlan(id) {
         studyPlan
     );
 
-
     writeJSON(
-        LEGACY_PLAN_KEY,
+        COMPATIBILITY_PLAN_KEY,
         studyPlan
     );
 
 
     renderAll();
-
 }
 
 
@@ -4748,14 +3508,7 @@ function applyTheme() {
         "dark";
 
 
-    document.documentElement
-        .setAttribute(
-            "data-theme",
-            theme
-        );
-
-
-    document.body?.classList.toggle(
+    document.body.classList.toggle(
         "light-mode",
         theme === "light"
     );
@@ -4770,9 +3523,7 @@ function applyTheme() {
             theme === "light"
                 ? "☀️ Light Mode"
                 : "🌙 Dark Mode";
-
     }
-
 }
 
 
@@ -4783,7 +3534,6 @@ function toggleTheme() {
             THEME_KEY
         ) ||
         "dark";
-
 
     const next =
         current === "dark"
@@ -4796,17 +3546,15 @@ function toggleTheme() {
         next
     );
 
-
     applyTheme();
-
 }
 
 
 /* =========================================================
-   AUTH
+   AUTHENTICATION
 ========================================================= */
 
-async function loadCurrentUser() {
+async function checkAuthentication() {
 
     try {
 
@@ -4814,44 +3562,112 @@ async function loadCurrentUser() {
             typeof supabase ===
             "undefined"
         ) {
+
+            /*
+             * Some versions expose the client through
+             * window.supabaseClient.
+             */
+
+            if (
+                window.supabaseClient
+            ) {
+
+                const {
+                    data
+                } =
+                    await window
+                        .supabaseClient
+                        .auth
+                        .getUser();
+
+                currentUser =
+                    data?.user ||
+                    null;
+
+                return currentUser;
+            }
+
             return null;
         }
 
 
-        let client =
+        const client =
+            window.supabaseClient ||
             supabase;
 
 
-        if (
-            supabase.auth &&
-            typeof supabase.auth
-                .getSession ===
-                "function"
-        ) {
-
-            const result =
-                await supabase.auth
-                    .getSession();
+        const {
+            data,
+            error
+        } =
+            await client.auth.getUser();
 
 
-            currentUser =
-                result?.data?.session
-                    ?.user || null;
+        if (error) {
 
+            console.warn(
+                "StudyMind: Auth check failed.",
+                error
+            );
+
+            return null;
+        }
+
+
+        currentUser =
+            data?.user ||
+            null;
+
+
+        return currentUser;
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind: Authentication unavailable.",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logoutStudyMind() {
+
+    try {
+
+        const client =
+            window.supabaseClient ||
+            (
+                typeof supabase !==
+                "undefined"
+                    ? supabase
+                    : null
+            );
+
+
+        if (client) {
+
+            await client.auth.signOut();
         }
 
     } catch (error) {
 
         console.warn(
-            "StudyMind: Could not load user",
+            "StudyMind: Logout error.",
             error
         );
 
+    } finally {
+
+        window.location.href =
+            "login.html";
     }
-
-
-    return currentUser;
-
 }
 
 
@@ -4859,83 +3675,345 @@ async function loadCurrentUser() {
    AI FREE LIMIT
 ========================================================= */
 
-function getTodayAIQuestionCount() {
+function getAIQuestionCount() {
 
-    const today =
-        dateKey(
-            new Date()
-        );
-
-    const savedDate =
+    return Number(
         localStorage.getItem(
-            AI_DATE_KEY
-        );
-
-
-    if (
-        savedDate !== today
-    ) {
-
-        localStorage.setItem(
-            AI_DATE_KEY,
-            today
-        );
-
-        localStorage.setItem(
-            AI_COUNT_KEY,
-            "0"
-        );
-
-        return 0;
-
-    }
-
-
-    return (
-        Number(
-            localStorage.getItem(
-                AI_COUNT_KEY
-            )
-        ) || 0
-    );
-
+            AI_QUESTION_COUNT_KEY
+        )
+    ) || 0;
 }
 
 
-function canAskAI() {
-
-    const premium =
-        window.studyMindPremiumVerified === true ||
-        window.studyMindIsPremium === true ||
-        window.premiumUser === true;
-
-
-    if (premium) {
-        return true;
-    }
-
+function canAskAIQuestion() {
 
     return (
-        getTodayAIQuestionCount() <
-        FREE_AI_LIMIT
+        getAIQuestionCount() <
+        FREE_QUESTION_LIMIT
     );
-
 }
 
 
 function incrementAIQuestionCount() {
 
-    const current =
-        getTodayAIQuestionCount();
-
+    const count =
+        getAIQuestionCount() + 1;
 
     localStorage.setItem(
-        AI_COUNT_KEY,
-        String(
-            current + 1
-        )
+        AI_QUESTION_COUNT_KEY,
+        String(count)
     );
 
+    return count;
+}
+
+
+/* =========================================================
+   PREMIUM LINK
+========================================================= */
+
+function openPremium() {
+
+    window.location.href =
+        "premium.html";
+}
+
+
+/* =========================================================
+   CURRENT USER GREETING
+========================================================= */
+
+function renderGreeting() {
+
+    const elements = [
+        "dashboardGreeting",
+        "welcomeMessage",
+        "greeting"
+    ];
+
+
+    let userName =
+        "Student";
+
+
+    if (currentUser) {
+
+        userName =
+            currentUser.user_metadata?.username ||
+            currentUser.user_metadata?.display_name ||
+            currentUser.email?.split("@")[0] ||
+            "Student";
+    }
+
+
+    const hour =
+        new Date().getHours();
+
+
+    let greeting =
+        "Good morning";
+
+
+    if (hour >= 12 && hour < 18) {
+
+        greeting =
+            "Good afternoon";
+
+    } else if (hour >= 18) {
+
+        greeting =
+            "Good evening";
+    }
+
+
+    for (const id of elements) {
+
+        const element =
+            $(id);
+
+        if (element) {
+
+            element.textContent =
+                `${greeting}, ${userName} 👋`;
+        }
+    }
+}
+
+
+/* =========================================================
+   TOPIC COMPLETE CHECKBOX
+========================================================= */
+
+function bindCompletionControls() {
+
+    const checkbox =
+        $("topicCompleteCheckbox");
+
+    if (checkbox) {
+
+        checkbox.addEventListener(
+            "change",
+            () => {
+
+                if (
+                    checkbox.checked
+                ) {
+
+                    completeCurrentTopic();
+
+                } else {
+
+                    const topic =
+                        getCurrentTopic();
+
+                    if (!topic) {
+                        return;
+                    }
+
+
+                    const key =
+                        topicKey(topic);
+
+                    const completed =
+                        getCompletedTopics()
+                            .filter(
+                                item =>
+                                    item !== key
+                            );
+
+                    saveCompletedTopics(
+                        completed
+                    );
+
+                    topic.completed =
+                        false;
+
+                    saveDashboardState();
+
+                    renderAll();
+                }
+            }
+        );
+    }
+
+
+    const completeButton =
+        $("completeTopicButton");
+
+
+    if (completeButton) {
+
+        completeButton.addEventListener(
+            "click",
+            completeCurrentTopic
+        );
+    }
+
+
+    const knowledgeButton =
+        $("startKnowledgeCheck");
+
+
+    if (knowledgeButton) {
+
+        knowledgeButton.addEventListener(
+            "click",
+            openKnowledgeCheckPage
+        );
+    }
+}
+
+
+/* =========================================================
+   TIMER CONTROLS
+========================================================= */
+
+function bindTimerControls() {
+
+    const start =
+        $("startTimer");
+
+    const stop =
+        $("stopTimer");
+
+    const reset =
+        $("resetTimer");
+
+
+    if (start) {
+
+        start.addEventListener(
+            "click",
+            startTimer
+        );
+    }
+
+
+    if (stop) {
+
+        stop.addEventListener(
+            "click",
+            stopTimer
+        );
+    }
+
+
+    if (reset) {
+
+        reset.addEventListener(
+            "click",
+            resetTimer
+        );
+    }
+
+
+    document
+        .querySelectorAll(
+            "[data-timer-minutes]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    setTimerDuration(
+                        Number(
+                            button.dataset
+                                .timerMinutes
+                        )
+                    );
+                }
+            );
+        });
+
+
+    const selector =
+        $("timerDuration");
+
+    if (selector) {
+
+        selector.addEventListener(
+            "change",
+            () => {
+
+                setTimerDuration(
+                    Number(
+                        selector.value
+                    )
+                );
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   THEME CONTROLS
+========================================================= */
+
+function bindThemeControls() {
+
+    const button =
+        $("themeButton");
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            toggleTheme
+        );
+    }
+}
+
+
+/* =========================================================
+   LOGOUT CONTROLS
+========================================================= */
+
+function bindLogoutControls() {
+
+    document
+        .querySelectorAll(
+            "[data-logout]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                logoutStudyMind
+            );
+        });
+
+
+    const logoutButton =
+        $("logoutButton");
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutStudyMind
+        );
+    }
+}
+
+
+/* =========================================================
+   SAVE BEFORE LEAVING
+========================================================= */
+
+function bindUnloadSave() {
+
+    window.addEventListener(
+        "beforeunload",
+        () => {
+
+            saveCurrentReading();
+            saveTimer();
+            saveDashboardState();
+        }
+    );
 }
 
 
@@ -4950,12 +4028,9 @@ function renderAll() {
     }
 
 
-    buildPlanCollections();
-
+    renderPlanHeader();
 
     renderStats();
-
-    renderProgress();
 
     renderSubjects();
 
@@ -4971,207 +4046,11 @@ function renderAll() {
 
     renderPlanSwitcher();
 
-    updateTimerDisplay();
+    renderTimer();
 
-    updateTimerButtons();
+    applyTheme();
 
-}
-
-
-/* =========================================================
-   EVENT BINDINGS
-========================================================= */
-
-function bindDashboardEvents() {
-
-    const start =
-        $("startTimerButton");
-
-    const pause =
-        $("pauseTimerButton");
-
-    const reset =
-        $("resetTimerButton");
-
-    const duration =
-        $("timerDuration");
-
-    const checkbox =
-        $("topicCompleteCheckbox");
-
-    const previous =
-        $("previousMonth");
-
-    const next =
-        $("nextMonth");
-
-    const theme =
-        $("themeButton");
-
-
-    if (start) {
-
-        start.onclick =
-            startTimer;
-
-    }
-
-
-    if (pause) {
-
-        pause.onclick =
-            pauseTimer;
-
-    }
-
-
-    if (reset) {
-
-        reset.onclick =
-            resetTimer;
-
-    }
-
-
-    if (duration) {
-
-        duration.addEventListener(
-            "change",
-            event =>
-                changeTimerDuration(
-                    event.target.value
-                )
-        );
-
-    }
-
-
-    if (checkbox) {
-
-        checkbox.addEventListener(
-            "change",
-            event => {
-
-                if (
-                    event.target.checked
-                ) {
-
-                    completeCurrentTopic();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    if (previous) {
-
-        previous.onclick =
-            () => {
-
-                calendarDate =
-                    new Date(
-                        calendarDate.getFullYear(),
-                        calendarDate.getMonth() - 1,
-                        1
-                    );
-
-                renderCalendar();
-
-            };
-
-    }
-
-
-    if (next) {
-
-        next.onclick =
-            () => {
-
-                calendarDate =
-                    new Date(
-                        calendarDate.getFullYear(),
-                        calendarDate.getMonth() + 1,
-                        1
-                    );
-
-                renderCalendar();
-
-            };
-
-    }
-
-
-    if (theme) {
-
-        theme.onclick =
-            toggleTheme;
-
-    }
-
-
-    document.addEventListener(
-        "visibilitychange",
-        () => {
-
-            if (
-                document.hidden
-            ) {
-
-                saveDashboardState();
-
-            }
-
-        }
-    );
-
-
-    window.addEventListener(
-        "beforeunload",
-        () => {
-
-            saveDashboardState();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   PERIODIC STATE SAVE
-========================================================= */
-
-function startStatePersistence() {
-
-    if (stateSaveInterval) {
-
-        clearInterval(
-            stateSaveInterval
-        );
-
-    }
-
-
-    stateSaveInterval =
-        setInterval(
-            () => {
-
-                if (
-                    studyPlan &&
-                    activePlanId
-                ) {
-
-                    saveDashboardState();
-
-                }
-
-            },
-            15000
-        );
-
+    renderGreeting();
 }
 
 
@@ -5181,22 +4060,16 @@ function startStatePersistence() {
 
 async function initializeDashboard() {
 
-    if (dashboardInitialized) {
-        return;
-    }
-
-
-    dashboardInitialized = true;
-
-
-    applyTheme();
+    console.log(
+        "StudyMind: Initializing dashboard..."
+    );
 
 
     /*
-       MOST IMPORTANT STEP:
-       Load the active plan BEFORE rendering
-       anything.
-    */
+     * Load the active plan FIRST.
+     *
+     * Nothing else renders before this.
+     */
 
     const loaded =
         loadActivePlan();
@@ -5205,141 +4078,99 @@ async function initializeDashboard() {
     if (!loaded) {
 
         console.warn(
-            "StudyMind: Dashboard has no study plan."
+            "StudyMind: No plan available."
         );
 
-
-        const section =
-            $("currentTopicSection");
-
-        if (section) {
-
-            section.innerHTML =
-                `
-                <div class="empty-state">
-
-                    <h3>
-                        No Study Plan Found
-                    </h3>
-
-                    <p>
-                        Create a study plan from the Home page to begin studying.
-                    </p>
-
-                    <a
-                        href="home.html#generator"
-                        class="btn"
-                    >
-                        Create Study Plan
-                    </a>
-
-                </div>
-                `;
-
-        }
-
         return;
-
     }
-
-
-    await loadCurrentUser();
-
-
-    bindDashboardEvents();
-
-    startReadingPersistence();
-
-    startStatePersistence();
 
 
     /*
-       Set timer selector to saved duration.
-    */
+     * Authentication does not determine which study plan
+     * is loaded. The active plan registry does.
+     */
 
-    const duration =
-        $("timerDuration");
-
-    if (duration) {
-
-        const minutes =
-            selectedTimerSeconds /
-            60;
+    await checkAuthentication();
 
 
-        if (
-            TIMER_OPTIONS.includes(
-                minutes
-            )
-        ) {
+    updateStudyStreak();
 
-            duration.value =
-                String(minutes);
+    bindCompletionControls();
 
-        }
+    bindTimerControls();
 
-    }
+    bindThemeControls();
 
+    bindLogoutControls();
+
+    bindUnloadSave();
+
+    startReadingPersistence();
 
     renderAll();
 
 
     console.log(
-        "StudyMind: Dashboard initialized successfully.",
+        "StudyMind: Dashboard ready.",
         {
-            activePlanId,
-            plan:
-                planTitle(studyPlan),
+            planId:
+                activePlanRecord?.id,
+
+            planTitle:
+                studyPlan?.title,
+
             examDate:
                 studyPlan?.examDate,
-            topics:
-                allTopics.map(
-                    topic =>
-                        topicName(topic)
-                )
+
+            topic:
+                getCurrentTopic()
+                    ?.name
         }
     );
-
 }
 
 
 /* =========================================================
-   GLOBAL COMPATIBILITY API
+   PUBLIC API
 ========================================================= */
 
 window.StudyMindDashboard = {
 
-    getActivePlanId,
-    setActivePlanId,
+    getStudyPlan:
+        () => studyPlan,
 
-    getSavedPlans,
-    saveSavedPlans,
-
-    loadActivePlan,
-
-    switchActivePlan,
+    getActivePlanRecord:
+        () => activePlanRecord,
 
     getCurrentTopic,
 
-    markTopicCompleted,
-    completeCurrentTopic,
-
-    startTimer,
-    pauseTimer,
-    resetTimer,
-
-    renderAll,
+    loadActivePlan,
 
     saveDashboardState,
 
     syncActivePlanRecord,
 
+    completeCurrentTopic,
+
     openKnowledgeCheckPage,
 
-    canAskAI,
-    getTodayAIQuestionCount,
-    incrementAIQuestionCount
+    startTimer,
 
+    stopTimer,
+
+    resetTimer,
+
+    setTimerDuration,
+
+    switchTopic,
+
+    switchPlan,
+
+    calculateStudyScore,
+
+    canAskAIQuestion,
+
+    incrementAIQuestionCount
 };
 
 
@@ -5354,14 +4185,10 @@ if (
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeDashboard,
-        {
-            once: true
-        }
+        initializeDashboard
     );
 
 } else {
 
     initializeDashboard();
-
 }
