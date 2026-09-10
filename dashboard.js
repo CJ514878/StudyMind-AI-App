@@ -2298,94 +2298,36 @@ function showCongratulations() {
 
 function finishTopic(topic) {
 
-    const key =
-        keyFor(topic);
-
+    const key = keyFor(topic);
 
     if (!key) {
         return;
     }
 
-
-    if (!done.includes(key)) {
-
-        done.push(key);
-
-    }
-
-
-    saveCompletion();
-
-
-    const topicIndex =
-        topics.findIndex(
-            item =>
-                keyFor(item) === key
-        );
-
-
-    if (topicIndex >= 0) {
-
-        index =
-            topicIndex + 1;
-
-
-        write(
-            K.INDEX,
-            index
-        );
-
-    }
-
-
-    renderStats();
-    renderCurrent();
-    renderSubjects();
-    renderSchedule();
-    renderCalendar();
-
-
     /*
-       DO NOT UPDATE THE STREAK HERE.
+       Do NOT mark the topic as completed yet.
 
-       A single completed topic is NOT a completed day.
-
-       The streak changes only when every subject
-       has been completed.
+       The user must first pass the Knowledge Check.
     */
 
-    const fullDayCompleted =
-        processFullDayCompletion();
+    currentKC = topic;
 
+    write(
+        K.KCTOPIC,
+        {
+            name: topicName(topic),
+            topic: currentKC,
+            createdAt: new Date().toISOString()
+        }
+    );
 
-    if (fullDayCompleted) {
-
-        currentKC =
-            topic;
-
-    }
-
-    else {
-
-        currentKC =
-            topic;
-
-    }
-
-
-    $("knowledgeModalText")
-        .textContent =
-        `You finished “${
-            topicName(topic)
-        }”. Take a 5-question Knowledge Check to confirm what you learned.`;
-
+    $("knowledgeModalText").textContent =
+        `You finished “${topicName(topic)}”. Take the 5-question Knowledge Check to complete this topic.`;
 
     $("knowledgeModal")
-        ?.classList
+        .classList
         .add("show");
-
 }
-
 
 /* =========================================================
    KNOWLEDGE CHECK
