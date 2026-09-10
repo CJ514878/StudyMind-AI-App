@@ -1705,25 +1705,10 @@ function markDayCompleted(dateKey) {
 
 function renderCalendar() {
 
-    const calendar =
-        $("calendar");
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
 
-
-    if (!calendar) {
-        return;
-    }
-
-
-    const year =
-        calDate.getFullYear();
-
-
-    const month =
-        calDate.getMonth();
-
-
-    $("calendarMonth")
-        .textContent =
+    $("calendarMonth").textContent =
         calDate.toLocaleDateString(
             undefined,
             {
@@ -1733,200 +1718,124 @@ function renderCalendar() {
         );
 
 
-    const first =
-        new Date(
-            year,
-            month,
-            1
-        ).getDay();
+    const firstDay =
+        new Date(year, month, 1).getDay();
 
 
-    const last =
-        new Date(
-            year,
-            month + 1,
-            0
-        ).getDate();
+    const lastDay =
+        new Date(year, month + 1, 0).getDate();
 
 
-    const today =
-        new Date();
+    const today = new Date();
 
 
-    const todayKey =
-        localDateKey(today);
+    const todayString =
+        `${today.getFullYear()}-${
+            String(today.getMonth() + 1).padStart(2, "0")
+        }-${
+            String(today.getDate()).padStart(2, "0")
+        }`;
 
 
-    const examDate =
-        clean(
-            plan?.examDate ||
-            ""
-        );
+    /*
+       The plan is ONLY fully completed when:
+       - There is at least one topic
+       - EVERY topic is in the completed list
+    */
+
+    const allTopicsCompleted =
+        topics.length > 0 &&
+        topics.every(topic => isDone(topic));
 
 
     const cells = [];
 
 
-    /* WEEKDAY HEADERS */
-
-    const headers = [
-        "Sun",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat"
-    ];
-
-
-    headers.forEach(day => {
-
-        cells.push(`
-            <div
-                style="
-                    text-align:center;
-                    font-size:11px;
-                    color:var(--sm-muted);
-                    font-weight:800;
-                    padding:4px 0;
-                "
-            >
-                ${day}
-            </div>
-        `);
-
-    });
-
-
     for (
         let i = 0;
-        i < first;
+        i < firstDay;
         i++
     ) {
 
-        cells.push(
-            "<div></div>"
-        );
+        cells.push("<div></div>");
 
     }
 
 
     for (
         let day = 1;
-        day <= last;
+        day <= lastDay;
         day++
     ) {
 
-        const date =
-            new Date(
-                year,
-                month,
-                day
-            );
+        const dateString =
+            `${year}-${
+                String(month + 1).padStart(2, "0")
+            }-${
+                String(day).padStart(2, "0")
+            }`;
 
 
-        const dateKey =
-            localDateKey(date);
+        const classes = ["sm-day"];
 
 
-        let classes =
-            "sm-day";
+        /*
+           EXAM DAY
+        */
 
+        if (
+            plan?.examDate &&
+            dateString === plan.examDate
+        ) {
 
-        let label =
-            "";
-
-
-        const completed =
-            hasCompletedDay(
-                dateKey
-            );
-
-
-        if (completed) {
-
-            classes +=
-                " done";
-
-            label =
-                "✓";
+            classes.push("exam");
 
         }
 
+
+        /*
+           CURRENT DAY
+
+           Always BLUE unless ALL topics are completed.
+        */
+
         else if (
-            dateKey === examDate
+            dateString === todayString
         ) {
 
-            classes +=
-                " exam";
+            if (allTopicsCompleted) {
 
-            label =
-                "EXAM";
+                classes.push("done");
+
+            } else {
+
+                classes.push("study");
+
+            }
 
         }
 
-        else if (
-            dateKey === todayKey
-        ) {
 
-            classes +=
-                " study";
+        /*
+           SATURDAY REST DAY
 
-            label =
-                "TODAY";
-
-        }
+           Only applies when it is not today.
+        */
 
         else if (
-            date.getDay() === 0 ||
-            date.getDay() === 6
+            new Date(year, month, day).getDay() === 6
         ) {
 
-            classes +=
-                " rest";
-
-            label =
-                "REST";
+            classes.push("rest");
 
         }
 
 
         cells.push(`
 
-            <div
-                class="${classes}"
-                title="${
-                    completed
-                        ? "Study day completed"
-                        : dateKey === examDate
-                            ? "Exam day"
-                            : ""
-                }"
-                style="
-                    position:relative;
-                    transition:.2s ease;
-                "
-            >
+            <div class="${classes.join(" ")}">
 
                 <b>${day}</b>
-
-                ${
-                    label
-                        ? `
-                        <div
-                            style="
-                                font-size:8px;
-                                margin-top:5px;
-                                font-weight:800;
-                                opacity:.8;
-                            "
-                        >
-                            ${label}
-                        </div>
-                        `
-                        : ""
-                }
 
             </div>
 
@@ -1935,11 +1844,9 @@ function renderCalendar() {
     }
 
 
-    calendar.innerHTML =
+    $("calendar").innerHTML =
         cells.join("");
-
 }
-
 
 /* =========================================================
    WHOLE-DAY COMPLETION
