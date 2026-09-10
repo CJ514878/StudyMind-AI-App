@@ -1,2536 +1,1249 @@
-/* =========================================================
-   STUDYMIND AI — HOME / STUDY PLAN GENERATOR
-   COMPLETE REPLACEMENT
-
-   FEATURES:
-   - Create My Study Plan button
-   - Subject → Topic fields
-   - Generate My Plan
-   - Topic difficulty
-   - Study plan localStorage
-   - MULTIPLE SAVED STUDY PLANS
-   - ACTIVE PLAN SYSTEM
-   - Previous plans are preserved
-   - Current reading/session is preserved when archiving
-   - Dashboard redirect
-   - Light / Dark mode
-   - Premium status verification
-   - Golden Premium Home for verified Premium users
-   - Free users keep normal Home
-   - Premium CTA changes automatically
-   - No duplicate theme systems
-   - No duplicate Premium button functions
-   - No undefined functions
-   - Preserves subject order
-========================================================= */
-
 "use strict";
 
-
 /* =========================================================
-   STORAGE
+   STUDYMIND AI — NEW CORE HOME SYSTEM
 ========================================================= */
 
-const PLAN_KEY =
-    "studyMindPlan";
-
-const COMPATIBILITY_PLAN_KEY =
-    "studyData";
-
-const PLANS_KEY =
-    "studyMindPlans";
-
-const ACTIVE_PLAN_KEY =
-    "studyMindActivePlanId";
-
-const COMPLETED_TOPICS_KEY =
-    "studyMindCompletedTopics";
-
-const COMPLETED_QUESTIONS_KEY =
-    "studyMindCompletedQuestionTopics";
-
-const CURRENT_TOPIC_KEY =
-    "studyMindCurrentTopicIndex";
-
-const KNOWLEDGE_TOPIC_KEY =
-    "studyMindKnowledgeCheckTopic";
-
-const KNOWLEDGE_QUESTIONS_KEY =
-    "studyMindTopicQuestions";
-
-const THEME_KEY =
-    "studyMindTheme";
-
-const CELEBRATION_KEY =
-    "studyMindCompletionCelebrationShown";
-
-const STUDY_SESSION_KEY =
-    "studyMindCurrentStudySession";
-
-const STUDY_READINGS_KEY =
-    "studyMindTopicReadings";
-
-const TIMER_SECONDS_KEY =
-    "studyMindTimerSeconds";
-
-const TIMER_DURATION_KEY =
-    "studyMindSelectedTimerSeconds";
-
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-const PREMIUM_STATUS_ENDPOINT =
-    "/api/premium/status";
-
-
-/* =========================================================
-   SHORTCUT
-========================================================= */
-
-function $(id) {
-
-    return document.getElementById(id);
-
-}
-
-
-/* =========================================================
-   BASIC HELPERS
-========================================================= */
-
-function cleanText(value) {
-
-    return String(value ?? "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-}
-
-
-function slugify(value) {
-
-    return cleanText(value)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 80);
-
-}
-
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-function readJSON(
-    key,
-    fallback = null
-) {
-
-    try {
-
-        const raw =
-            localStorage.getItem(key);
-
-        if (!raw) {
-            return fallback;
-        }
-
-        return JSON.parse(raw);
-
-    } catch (error) {
-
-        console.warn(
-            `Could not read localStorage key "${key}".`,
-            error
-        );
-
-        return fallback;
-
-    }
-
-}
-
-
-function writeJSON(
-    key,
-    value
-) {
-
-    try {
-
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            `Could not save localStorage key "${key}".`,
-            error
-        );
-
-        return false;
-
-    }
-
-}
-
-
-function formatTime(hour) {
-
-    hour =
-        Number(hour) % 24;
-
-    const period =
-        hour >= 12
-            ? "PM"
-            : "AM";
-
-    let displayHour =
-        hour % 12;
-
-    if (displayHour === 0) {
-        displayHour = 12;
-    }
-
-    return `${displayHour}:00 ${period}`;
-
-}
-
-
-/* =========================================================
-   MULTI-PLAN HELPERS
-========================================================= */
-
-function createPlanId() {
-
-    return (
-        "plan-" +
-        Date.now() +
-        "-" +
-        Math.random()
-            .toString(36)
-            .slice(2, 8)
-    );
-
-}
-
-
-function getSavedPlans() {
-
-    const plans =
-        readJSON(
-            PLANS_KEY,
-            []
-        );
-
-    if (!Array.isArray(plans)) {
-        return [];
-    }
-
-    return plans;
-
-}
-
-
-function saveSavedPlans(plans) {
-
-    return writeJSON(
-        PLANS_KEY,
-        Array.isArray(plans)
-            ? plans
-            : []
-    );
-
-}
-
-
-function getActivePlanId() {
-
-    return localStorage.getItem(
-        ACTIVE_PLAN_KEY
-    ) || null;
-
-}
-
-
-function setActivePlanId(planId) {
-
-    if (!planId) {
-
-        localStorage.removeItem(
-            ACTIVE_PLAN_KEY
-        );
-
-        return;
-
-    }
-
-    localStorage.setItem(
-        ACTIVE_PLAN_KEY,
-        planId
-    );
-
-}
-
-
-/* =========================================================
-   CAPTURE CURRENT PLAN STATE
-========================================================= */
-
-function captureCurrentPlanState() {
-
-    const currentPlan =
-        readJSON(
-            PLAN_KEY,
-            null
-        );
-
-    if (!currentPlan) {
-        return null;
-    }
-
-    const activePlanId =
-        getActivePlanId();
-
-    const completedTopics =
-        readJSON(
-            COMPLETED_TOPICS_KEY,
-            []
-        );
-
-    const completedQuestions =
-        readJSON(
-            COMPLETED_QUESTIONS_KEY,
-            []
-        );
-
-    const currentTopicIndex =
-        Number(
-            localStorage.getItem(
-                CURRENT_TOPIC_KEY
-            ) || 0
-        );
-
-    const knowledgeTopic =
-        readJSON(
-            KNOWLEDGE_TOPIC_KEY,
-            null
-        );
-
-    const knowledgeQuestions =
-        readJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            null
-        );
-
-    const celebrationShown =
-        localStorage.getItem(
-            CELEBRATION_KEY
-        ) === "true";
-
-    const studySession =
-        readJSON(
-            STUDY_SESSION_KEY,
-            null
-        );
-
-    const topicReadings =
-        readJSON(
-            STUDY_READINGS_KEY,
-            {}
-        );
-
-    const timerSeconds =
-        Number(
-            localStorage.getItem(
-                TIMER_SECONDS_KEY
-            ) || 0
-        );
-
-    const timerDuration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            ) || 0
-        );
-
-    return {
-
-        id:
-            activePlanId ||
-            createPlanId(),
-
-        plan:
-            currentPlan,
-
-        completedTopics:
-            Array.isArray(completedTopics)
-                ? completedTopics
-                : [],
-
-        completedQuestionTopics:
-            Array.isArray(completedQuestions)
-                ? completedQuestions
-                : [],
-
-        currentTopicIndex:
-            Number.isFinite(
-                currentTopicIndex
-            )
-                ? currentTopicIndex
-                : 0,
-
-        knowledgeTopic,
-
-        knowledgeQuestions,
-
-        celebrationShown,
-
-        studySession,
-
-        topicReadings:
-            topicReadings &&
-            typeof topicReadings === "object"
-                ? topicReadings
-                : {},
-
-        timerSeconds,
-
-        timerDuration,
-
-        createdAt:
-            currentPlan.createdAt ||
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString(),
-
-        title:
-            getPlanDisplayTitle(
-                currentPlan
-            )
-
-    };
-
-}
-
-
-/* =========================================================
-   PLAN DISPLAY TITLE
-========================================================= */
-
-function getPlanDisplayTitle(plan) {
-
-    if (!plan) {
-        return "Study Plan";
-    }
-
-    const subjectNames =
-        Array.isArray(
-            plan.subjectNames
+const SUPABASE_URL =
+    "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+const supabaseClient =
+    window.supabase?.createClient
+        ? window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
         )
-            ? plan.subjectNames
-            : [];
+        : null;
 
-    if (
-        subjectNames.length > 0
-    ) {
+window.supabaseClient = supabaseClient;
 
-        if (
-            subjectNames.length === 1
-        ) {
 
-            return (
-                subjectNames[0] +
-                " Study Plan"
-            );
+/* =========================================================
+   CURRICULUM DATABASE
+========================================================= */
+
+const CURRICULUMS = {
+
+    "Nigerian Junior Secondary Curriculum": {
+
+        subjects: {
+
+            "Mathematics": [
+                "Number and Numeration",
+                "Fractions",
+                "Decimals",
+                "Percentages",
+                "Ratio and Proportion",
+                "Algebraic Expressions",
+                "Simple Equations",
+                "Indices",
+                "Standard Form",
+                "Geometry",
+                "Angles",
+                "Triangles",
+                "Quadrilaterals",
+                "Circles",
+                "Mensuration",
+                "Area and Perimeter",
+                "Volume",
+                "Statistics",
+                "Probability",
+                "Graphs",
+                "Coordinates",
+                "Sets",
+                "Word Problems"
+            ],
+
+            "English Studies": [
+                "Parts of Speech",
+                "Nouns",
+                "Pronouns",
+                "Verbs",
+                "Adjectives",
+                "Adverbs",
+                "Prepositions",
+                "Conjunctions",
+                "Sentence Structure",
+                "Tenses",
+                "Active and Passive Voice",
+                "Direct and Reported Speech",
+                "Vocabulary Development",
+                "Comprehension",
+                "Summary Writing",
+                "Letter Writing",
+                "Essay Writing",
+                "Speech Work",
+                "Oral English",
+                "Literature"
+            ],
+
+            "Basic Science": [
+                "Living Things",
+                "Non-Living Things",
+                "Cells",
+                "Human Body",
+                "Nutrition",
+                "Health",
+                "Disease",
+                "Environment",
+                "Energy",
+                "Force",
+                "Motion",
+                "Heat",
+                "Light",
+                "Sound",
+                "Electricity",
+                "Magnetism",
+                "Matter",
+                "Atoms and Molecules",
+                "Water",
+                "Air",
+                "Simple Machines"
+            ],
+
+            "Basic Technology": [
+                "Technology and Society",
+                "Materials",
+                "Woodwork",
+                "Metalwork",
+                "Technical Drawing",
+                "Building Technology",
+                "Electrical Technology",
+                "Electronics",
+                "Machines",
+                "Energy",
+                "Safety"
+            ],
+
+            "Social Studies": [
+                "Family",
+                "Culture",
+                "Values",
+                "Citizenship",
+                "Human Rights",
+                "Democracy",
+                "Leadership",
+                "Population",
+                "Environment",
+                "Social Problems",
+                "National Unity",
+                "Conflict Resolution"
+            ],
+
+            "Computer Studies": [
+                "Computer Fundamentals",
+                "Computer Hardware",
+                "Computer Software",
+                "Input Devices",
+                "Output Devices",
+                "Storage Devices",
+                "Operating Systems",
+                "Word Processing",
+                "Spreadsheets",
+                "Presentations",
+                "Internet",
+                "Computer Networks",
+                "Cyber Safety",
+                "Programming Fundamentals",
+                "Algorithms",
+                "Flowcharts"
+            ],
+
+            "Business Studies": [
+                "Introduction to Business",
+                "Office Practice",
+                "Bookkeeping",
+                "Entrepreneurship",
+                "Trade",
+                "Commerce",
+                "Banking",
+                "Insurance",
+                "Consumer Education"
+            ],
+
+            "Agricultural Science": [
+                "Agriculture",
+                "Farm Tools",
+                "Soil",
+                "Soil Fertility",
+                "Crops",
+                "Crop Production",
+                "Livestock",
+                "Animal Production",
+                "Farm Management",
+                "Agricultural Economics"
+            ],
+
+            "Civic Education": [
+                "Citizenship",
+                "Rights and Duties",
+                "Democracy",
+                "Rule of Law",
+                "Constitution",
+                "National Values",
+                "Leadership",
+                "Human Rights",
+                "Political Participation"
+            ]
 
         }
 
-        return (
-            subjectNames
-                .slice(0, 2)
-                .join(" + ") +
-            (
-                subjectNames.length > 2
-                    ? " + More"
-                    : ""
-            ) +
-            " Study Plan"
-        );
+    },
 
+
+    "BECE": {
+
+        subjects: {
+
+            "Mathematics": [
+                "Number Bases",
+                "Fractions",
+                "Decimals",
+                "Percentages",
+                "Ratio",
+                "Proportion",
+                "Indices",
+                "Logarithms",
+                "Algebra",
+                "Linear Equations",
+                "Simultaneous Equations",
+                "Geometry",
+                "Mensuration",
+                "Statistics",
+                "Probability",
+                "Graphs",
+                "Sets",
+                "Vectors"
+            ],
+
+            "English Studies": [
+                "Grammar",
+                "Vocabulary",
+                "Comprehension",
+                "Summary",
+                "Essay Writing",
+                "Letter Writing",
+                "Speech Work",
+                "Oral English",
+                "Literature"
+            ],
+
+            "Basic Science": [
+                "Cells",
+                "Living Organisms",
+                "Nutrition",
+                "Human Reproduction",
+                "Health",
+                "Disease",
+                "Matter",
+                "Energy",
+                "Force",
+                "Motion",
+                "Heat",
+                "Light",
+                "Sound",
+                "Electricity",
+                "Magnetism",
+                "Environment",
+                "Technology"
+            ],
+
+            "Basic Technology": [
+                "Technical Drawing",
+                "Materials",
+                "Wood",
+                "Metal",
+                "Machines",
+                "Electrical Systems",
+                "Electronics",
+                "Building Technology",
+                "Safety"
+            ],
+
+            "Social Studies": [
+                "Family",
+                "Culture",
+                "Socialization",
+                "Citizenship",
+                "Population",
+                "Environment",
+                "Democracy",
+                "National Unity"
+            ],
+
+            "Civic Education": [
+                "Human Rights",
+                "Citizenship",
+                "Responsibilities",
+                "Democracy",
+                "Rule of Law",
+                "Constitution",
+                "National Values",
+                "Leadership"
+            ],
+
+            "Computer Studies": [
+                "Computer Fundamentals",
+                "Hardware",
+                "Software",
+                "Operating Systems",
+                "Word Processing",
+                "Spreadsheets",
+                "Internet",
+                "Networks",
+                "Algorithms",
+                "Programming"
+            ]
+
+        }
+
+    },
+
+
+    "Nigerian Senior Secondary Curriculum": {
+
+        subjects: {
+
+            "Mathematics": [
+                "Number and Numeration",
+                "Algebra",
+                "Quadratic Equations",
+                "Sequences and Series",
+                "Functions",
+                "Indices",
+                "Logarithms",
+                "Surds",
+                "Coordinate Geometry",
+                "Trigonometry",
+                "Vectors",
+                "Matrices",
+                "Calculus",
+                "Differentiation",
+                "Integration",
+                "Statistics",
+                "Probability",
+                "Geometry",
+                "Mensuration"
+            ],
+
+            "English Language": [
+                "Grammar",
+                "Comprehension",
+                "Summary",
+                "Lexis and Structure",
+                "Oral English",
+                "Essay Writing",
+                "Formal Letters",
+                "Informal Letters",
+                "Reports",
+                "Articles",
+                "Speech Writing",
+                "Literature"
+            ],
+
+            "Physics": [
+                "Measurement",
+                "Motion",
+                "Scalars and Vectors",
+                "Forces",
+                "Work Energy and Power",
+                "Momentum",
+                "Simple Machines",
+                "Heat",
+                "Waves",
+                "Sound",
+                "Light",
+                "Electricity",
+                "Current Electricity",
+                "Magnetism",
+                "Electromagnetism",
+                "Atomic Physics",
+                "Nuclear Physics"
+            ],
+
+            "Chemistry": [
+                "Matter",
+                "Atomic Structure",
+                "Periodic Table",
+                "Chemical Bonding",
+                "Stoichiometry",
+                "Gas Laws",
+                "Acids Bases and Salts",
+                "Organic Chemistry",
+                "Hydrocarbons",
+                "Chemical Equilibrium",
+                "Electrochemistry",
+                "Rates of Reaction",
+                "Redox Reactions"
+            ],
+
+            "Biology": [
+                "Cell Biology",
+                "Nutrition",
+                "Transport",
+                "Respiration",
+                "Excretion",
+                "Coordination",
+                "Reproduction",
+                "Genetics",
+                "Evolution",
+                "Ecology",
+                "Classification",
+                "Microorganisms"
+            ],
+
+            "Computer Studies": [
+                "Computer Architecture",
+                "Data Representation",
+                "Operating Systems",
+                "Networking",
+                "Databases",
+                "Algorithms",
+                "Programming",
+                "Web Development",
+                "Cybersecurity",
+                "Artificial Intelligence"
+            ]
+
+        }
+
+    },
+
+
+    "WAEC": {
+        subjects: {}
+    },
+
+    "NECO": {
+        subjects: {}
+    },
+
+    "JAMB": {
+        subjects: {}
+    },
+
+    "IGCSE": {
+        subjects: {}
+    },
+
+    "SAT": {
+        subjects: {}
+    },
+
+    "Other": {
+        subjects: {}
     }
 
-    if (plan.curriculum) {
-
-        return (
-            cleanText(
-                plan.curriculum
-            ) +
-            " Study Plan"
-        );
-
-    }
-
-    return "Study Plan";
-
-}
+};
 
 
 /* =========================================================
-   ARCHIVE CURRENT PLAN
+   STATE
 ========================================================= */
 
-function archiveCurrentPlan() {
+const state = {
 
-    const currentPlanState =
-        captureCurrentPlanState();
+    curriculum: "",
 
-    if (!currentPlanState) {
-        return null;
-    }
+    selectedSubject: "",
 
-    const plans =
-        getSavedPlans();
+    selections: [],
 
-    const existingIndex =
-        plans.findIndex(
-            savedPlan =>
-                savedPlan &&
-                savedPlan.id ===
-                    currentPlanState.id
-        );
+    exams: [],
 
-    if (
-        existingIndex >= 0
-    ) {
+    customTopics: []
 
-        plans[
-            existingIndex
-        ] =
-            currentPlanState;
+};
 
-    } else {
 
-        plans.unshift(
-            currentPlanState
-        );
+/* =========================================================
+   DOM
+========================================================= */
 
-    }
+const $ = id =>
+    document.getElementById(id);
 
-    saveSavedPlans(
-        plans
+
+/* =========================================================
+   CURRICULUM
+========================================================= */
+
+function initializeCurriculum() {
+
+    const curriculum =
+        $("curriculum");
+
+    if (!curriculum) return;
+
+    curriculum.addEventListener(
+        "change",
+        () => {
+
+            state.curriculum =
+                curriculum.value;
+
+            state.selectedSubject = "";
+
+            state.selections = [];
+
+            renderSubjects();
+
+            $("topicSelector")
+                ?.classList.add("hidden");
+
+            updateSelectedItems();
+
+        }
     );
 
-    return currentPlanState;
-
 }
 
 
 /* =========================================================
-   CREATE NEW PLAN RECORD
+   SUBJECTS
 ========================================================= */
 
-function createNewPlanRecord(
-    studyData
+function getSubjects() {
+
+    return Object.keys(
+        CURRICULUMS[
+            state.curriculum
+        ]?.subjects || {}
+    );
+
+}
+
+
+function renderSubjects(
+    search = ""
 ) {
-
-    const newPlanId =
-        createPlanId();
-
-    const newRecord = {
-
-        id:
-            newPlanId,
-
-        plan:
-            studyData,
-
-        completedTopics:
-            [],
-
-        completedQuestionTopics:
-            [],
-
-        currentTopicIndex:
-            0,
-
-        knowledgeTopic:
-            null,
-
-        knowledgeQuestions:
-            null,
-
-        celebrationShown:
-            false,
-
-        studySession:
-            null,
-
-        topicReadings:
-            {},
-
-        timerSeconds:
-            0,
-
-        timerDuration:
-            0,
-
-        createdAt:
-            studyData.createdAt ||
-            new Date().toISOString(),
-
-        updatedAt:
-            new Date().toISOString(),
-
-        title:
-            getPlanDisplayTitle(
-                studyData
-            )
-
-    };
-
-    return newRecord;
-
-}
-
-
-/* =========================================================
-   SAVE NEW PLAN RECORD
-========================================================= */
-
-function saveNewPlanRecord(
-    newRecord
-) {
-
-    const plans =
-        getSavedPlans();
-
-    plans.unshift(
-        newRecord
-    );
-
-    const saved =
-        saveSavedPlans(
-            plans
-        );
-
-    if (!saved) {
-        return false;
-    }
-
-    setActivePlanId(
-        newRecord.id
-    );
-
-    return true;
-
-}
-
-
-/* =========================================================
-   RESET ACTIVE / NEW PLAN STATE
-========================================================= */
-
-function resetForNewPlan() {
-
-    localStorage.removeItem(
-        COMPLETED_TOPICS_KEY
-    );
-
-    localStorage.removeItem(
-        COMPLETED_QUESTIONS_KEY
-    );
-
-    localStorage.removeItem(
-        CURRENT_TOPIC_KEY
-    );
-
-    localStorage.removeItem(
-        KNOWLEDGE_TOPIC_KEY
-    );
-
-    localStorage.removeItem(
-        KNOWLEDGE_QUESTIONS_KEY
-    );
-
-    localStorage.removeItem(
-        CELEBRATION_KEY
-    );
-
-    localStorage.removeItem(
-        STUDY_SESSION_KEY
-    );
-
-    localStorage.removeItem(
-        STUDY_READINGS_KEY
-    );
-
-    localStorage.removeItem(
-        TIMER_SECONDS_KEY
-    );
-
-    localStorage.removeItem(
-        TIMER_DURATION_KEY
-    );
-
-}
-
-
-/* =========================================================
-   MIGRATE LEGACY PLAN
-========================================================= */
-
-function migrateLegacyPlanIfNeeded() {
-
-    const existingPlan =
-        readJSON(
-            PLAN_KEY,
-            null
-        );
-
-    if (!existingPlan) {
-        return;
-    }
-
-    const plans =
-        getSavedPlans();
-
-    if (plans.length > 0) {
-
-        const activeId =
-            getActivePlanId();
-
-        if (
-            activeId &&
-            plans.some(
-                plan =>
-                    plan &&
-                    plan.id === activeId
-            )
-        ) {
-
-            return;
-
-        }
-
-        const migrated =
-            createNewPlanRecord(
-                existingPlan
-            );
-
-        const saved =
-            saveNewPlanRecord(
-                migrated
-            );
-
-        if (saved) {
-
-            const completedTopics =
-                readJSON(
-                    COMPLETED_TOPICS_KEY,
-                    []
-                );
-
-            const completedQuestions =
-                readJSON(
-                    COMPLETED_QUESTIONS_KEY,
-                    []
-                );
-
-            const currentIndex =
-                Number(
-                    localStorage.getItem(
-                        CURRENT_TOPIC_KEY
-                    ) || 0
-                );
-
-            migrated.completedTopics =
-                Array.isArray(
-                    completedTopics
-                )
-                    ? completedTopics
-                    : [];
-
-            migrated.completedQuestionTopics =
-                Array.isArray(
-                    completedQuestions
-                )
-                    ? completedQuestions
-                    : [];
-
-            migrated.currentTopicIndex =
-                Number.isFinite(
-                    currentIndex
-                )
-                    ? currentIndex
-                    : 0;
-
-            const allPlans =
-                getSavedPlans();
-
-            const index =
-                allPlans.findIndex(
-                    plan =>
-                        plan.id ===
-                        migrated.id
-                );
-
-            if (index >= 0) {
-
-                allPlans[index] =
-                    migrated;
-
-                saveSavedPlans(
-                    allPlans
-                );
-
-            }
-
-        }
-
-        return;
-
-    }
-
-    const migrated =
-        createNewPlanRecord(
-            existingPlan
-        );
-
-    migrated.completedTopics =
-        readJSON(
-            COMPLETED_TOPICS_KEY,
-            []
-        );
-
-    migrated.completedQuestionTopics =
-        readJSON(
-            COMPLETED_QUESTIONS_KEY,
-            []
-        );
-
-    migrated.currentTopicIndex =
-        Number(
-            localStorage.getItem(
-                CURRENT_TOPIC_KEY
-            ) || 0
-        );
-
-    migrated.knowledgeTopic =
-        readJSON(
-            KNOWLEDGE_TOPIC_KEY,
-            null
-        );
-
-    migrated.knowledgeQuestions =
-        readJSON(
-            KNOWLEDGE_QUESTIONS_KEY,
-            null
-        );
-
-    migrated.studySession =
-        readJSON(
-            STUDY_SESSION_KEY,
-            null
-        );
-
-    migrated.topicReadings =
-        readJSON(
-            STUDY_READINGS_KEY,
-            {}
-        );
-
-    migrated.celebrationShown =
-        localStorage.getItem(
-            CELEBRATION_KEY
-        ) === "true";
-
-    migrated.timerSeconds =
-        Number(
-            localStorage.getItem(
-                TIMER_SECONDS_KEY
-            ) || 0
-        );
-
-    migrated.timerDuration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            ) || 0
-        );
-
-    migrated.updatedAt =
-        new Date().toISOString();
-
-    saveNewPlanRecord(
-        migrated
-    );
-
-}
-
-
-/* =========================================================
-   SUBJECT NAMES
-========================================================= */
-
-function getSubjectNames() {
-
-    const input =
-        $("subjects");
-
-    if (!input) {
-        return [];
-    }
-
-    return [
-        ...new Set(
-            input.value
-                .split(/[,;\n]+/)
-                .map(cleanText)
-                .filter(Boolean)
-        )
-    ];
-
-}
-
-
-/* =========================================================
-   SAVE EXISTING TOPIC VALUES
-========================================================= */
-
-function getExistingTopicValues() {
 
     const container =
-        $("subjectTopicFields");
+        $("subjectOptions");
 
-    const values = {};
+    const wrapper =
+        $("subjectSelector");
 
-    if (!container) {
-        return values;
-    }
-
-    container
-        .querySelectorAll(
-            ".subject-topic-card"
-        )
-        .forEach(card => {
-
-            const subject =
-                cleanText(
-                    card.dataset.subject
-                );
-
-            const textarea =
-                card.querySelector(
-                    ".subject-topic-input"
-                );
-
-            if (
-                subject &&
-                textarea
-            ) {
-
-                values[subject] =
-                    textarea.value;
-
-            }
-
-        });
-
-    return values;
-
-}
-
-
-/* =========================================================
-   DYNAMIC SUBJECT → TOPIC FIELDS
-========================================================= */
-
-function renderSubjectTopicFields() {
-
-    const container =
-        $("subjectTopicFields");
-
-    if (!container) {
-        return;
-    }
+    if (!container || !wrapper) return;
 
     const subjects =
-        getSubjectNames();
+        getSubjects().filter(
+            subject =>
+                subject
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    )
+        );
 
-    const oldValues =
-        getExistingTopicValues();
+    wrapper.classList.toggle(
+        "hidden",
+        !state.curriculum
+    );
 
-    if (subjects.length === 0) {
+    if (!subjects.length) {
 
         container.innerHTML = `
-
-            <div class="subject-topic-empty">
-
-                Enter your subjects above and
-                separate topic spaces will appear here.
-
+            <div class="empty-selection">
+                No subjects found.
             </div>
-
         `;
 
-        syncLegacyTopicsField();
-
         return;
-
     }
 
     container.innerHTML =
-
-        subjects
-            .map(subject => {
-
-                const existing =
-                    oldValues[subject] || "";
-
-                return `
-
-                    <div
-                        class="subject-topic-card"
-                        data-subject="${escapeHTML(subject)}"
-                    >
-
-                        <h3>
-                            📚 ${escapeHTML(subject)}
-                        </h3>
-
-                        <p
-                            style="
-                                margin-top:0;
-                                opacity:.72;
-                            "
-                        >
-                            Enter the topics you want to
-                            study for ${escapeHTML(subject)}.
-                        </p>
-
-                        <textarea
-                            class="subject-topic-input"
-                            data-subject="${escapeHTML(subject)}"
-                            rows="6"
-                            placeholder="Topic 1
-Topic 2
-Topic 3"
-                            aria-label="Topics for ${escapeHTML(subject)}"
-                        >${escapeHTML(existing)}</textarea>
-
-                        <small>
-                            One topic per line,
-                            or separate topics with commas.
-                        </small>
-
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-    syncLegacyTopicsField();
-
-}
-
-
-/* =========================================================
-   COLLECT SUBJECT + TOPICS
-========================================================= */
-
-function collectSubjectTopicData() {
-
-    const container =
-        $("subjectTopicFields");
-
-    if (!container) {
-        return [];
-    }
-
-    return [
-        ...container.querySelectorAll(
-            ".subject-topic-card"
-        )
-    ]
-
-        .map((card, subjectIndex) => {
-
-            const subject =
-                cleanText(
-                    card.dataset.subject
-                );
-
-            const textarea =
-                card.querySelector(
-                    ".subject-topic-input"
-                );
-
-            const rawTopics =
-                textarea
-                    ? textarea.value
-                        .split(/[\n,;]+/)
-                        .map(cleanText)
-                        .filter(Boolean)
-                    : [];
-
-            const uniqueTopics =
-                [
-                    ...new Set(rawTopics)
-                ];
-
-            return {
-
-                id:
-                    `subject-${subjectIndex + 1}-${slugify(subject)}`,
-
-                name:
-                    subject,
-
-                topics:
-                    uniqueTopics.map(
-                        (name, topicIndex) => ({
-
-                            id:
-                                `topic-${subjectIndex + 1}-${topicIndex + 1}-${slugify(name)}`,
-
-                            name,
-
-                            subject,
-
-                            description:
-                                `Study ${name} for ${subject} and complete the knowledge check.`
-
-                        })
-                    )
-
-            };
-
-        })
-
-        .filter(
-            subject =>
-                subject.name
-        );
-
-}
-
-
-/* =========================================================
-   SYNC LEGACY TOPICS FIELD
-========================================================= */
-
-function syncLegacyTopicsField() {
-
-    const hidden =
-        $("topics");
-
-    if (!hidden) {
-        return;
-    }
-
-    const subjectData =
-        collectSubjectTopicData();
-
-    hidden.value =
-
-        subjectData
-            .map(subject => {
-
-                return `${subject.name}: ${subject.topics
-                    .map(topic => topic.name)
-                    .join(", ")}`;
-
-            })
-            .join("\n");
-
-}
-
-
-/* =========================================================
-   VALIDATE SUBJECTS + TOPICS
-========================================================= */
-
-function validateSubjectTopics(
-    subjectData
-) {
-
-    if (
-        subjectData.length === 0
-    ) {
-
-        alert(
-            "Please enter at least one subject."
-        );
-
-        return false;
-
-    }
-
-    const missingTopics =
-        subjectData.filter(
-            subject =>
-                subject.topics.length === 0
-        );
-
-    if (
-        missingTopics.length > 0
-    ) {
-
-        alert(
-            `Please enter at least one topic for: ${
-                missingTopics
-                    .map(
-                        subject =>
-                            subject.name
-                    )
-                    .join(", ")
-            }.`
-        );
-
-        return false;
-
-    }
-
-    return true;
-
-}
-
-
-/* =========================================================
-   RENDER TOPIC DIFFICULTY
-========================================================= */
-
-function renderDifficultyFields(
-    subjectData
-) {
-
-    const section =
-        $("difficultySection");
-
-    if (!section) {
-        return;
-    }
-
-    section.innerHTML = `
-
-        <div
-            style="
-                margin-top:18px;
-                padding:20px;
-                border-radius:18px;
-                border:1px solid rgba(127,127,127,.2);
-            "
-        >
-
-            <h3 style="margin-top:0;">
-                🎯 Topic Difficulty
-            </h3>
-
-            <p style="opacity:.72;">
-                Tell StudyMind AI which topics
-                need the most attention.
-            </p>
-
-            ${subjectData
-                .map(subject => `
-
-                    <div
-                        style="
-                            margin-top:18px;
-                        "
-                    >
-
-                        <h4>
-                            ${escapeHTML(
-                                subject.name
-                            )}
-                        </h4>
-
-                        ${subject.topics
-                            .map(topic => `
-
-                                <div
-                                    class="topic-difficulty-row"
-                                >
-
-                                    <span>
-                                        ${escapeHTML(
-                                            topic.name
-                                        )}
-                                    </span>
-
-                                    <select
-                                        class="topic-level"
-                                        data-subject="${escapeHTML(
-                                            subject.name
-                                        )}"
-                                        data-topic="${escapeHTML(
-                                            topic.name
-                                        )}"
-                                    >
-
-                                        <option value="strong">
-                                            Strong
-                                        </option>
-
-                                        <option
-                                            value="okay"
-                                            selected
-                                        >
-                                            Okay
-                                        </option>
-
-                                        <option value="weak">
-                                            Weak
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            `)
-                            .join("")}
-
-                    </div>
-
-                `)
-                .join("")}
-
-        </div>
-
-    `;
-
-}
-
-
-/* =========================================================
-   COLLECT DIFFICULTY
-========================================================= */
-
-function collectDifficultyData() {
-
-    const topicDifficulty = {};
-    const topicPriority = {};
-
-    document
+        subjects.map(
+            subject => `
+                <button
+                    type="button"
+                    class="selection-card ${
+                        state.selectedSubject === subject
+                            ? "selected"
+                            : ""
+                    }"
+                    data-subject="${escapeHTML(subject)}"
+                >
+                    <strong>
+                        ${escapeHTML(subject)}
+                    </strong>
+
+                    <span>
+                        ${
+                            CURRICULUMS[
+                                state.curriculum
+                            ].subjects[subject].length
+                        } topics
+                    </span>
+                </button>
+            `
+        ).join("");
+
+    container
         .querySelectorAll(
-            ".topic-level"
+            "[data-subject]"
         )
-        .forEach(select => {
+        .forEach(button => {
 
-            const subject =
-                cleanText(
-                    select.dataset.subject
-                );
+            button.addEventListener(
+                "click",
+                () => {
 
-            const topic =
-                cleanText(
-                    select.dataset.topic
-                );
+                    state.selectedSubject =
+                        button.dataset.subject;
 
-            const difficulty =
-                select.value ||
-                "okay";
+                    renderSubjects(
+                        $("subjectSearch")?.value || ""
+                    );
 
-            if (
-                !topicDifficulty[subject]
-            ) {
+                    renderTopics();
 
-                topicDifficulty[subject] =
-                    {};
-
-            }
-
-            if (
-                !topicPriority[subject]
-            ) {
-
-                topicPriority[subject] =
-                    {};
-
-            }
-
-            topicDifficulty[subject][topic] =
-                difficulty;
-
-            topicPriority[subject][topic] =
-
-                difficulty === "weak"
-                    ? 3
-                    : difficulty === "okay"
-                        ? 2
-                        : 1;
+                }
+            );
 
         });
 
-    return {
+}
 
-        topicDifficulty,
 
-        topicPriority
+/* =========================================================
+   TOPICS
+========================================================= */
 
-    };
+function renderTopics(search = "") {
+
+    const selector =
+        $("topicSelector");
+
+    const container =
+        $("topicOptions");
+
+    const label =
+        $("selectedSubjectLabel");
+
+    if (
+        !selector ||
+        !container ||
+        !state.selectedSubject
+    ) return;
+
+    selector.classList.remove("hidden");
+
+    label.textContent =
+        `${state.selectedSubject} • ${state.curriculum}`;
+
+    const topics =
+        CURRICULUMS[
+            state.curriculum
+        ]?.subjects[
+            state.selectedSubject
+        ] || [];
+
+    const filtered =
+        topics.filter(
+            topic =>
+                topic
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    )
+        );
+
+    if (!filtered.length) {
+
+        container.innerHTML = `
+            <div class="empty-selection">
+                No topics found.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        filtered.map(
+            topic => {
+
+                const selected =
+                    state.selections.some(
+                        item =>
+                            item.subject ===
+                                state.selectedSubject &&
+                            item.topic === topic
+                    );
+
+                return `
+                    <button
+                        type="button"
+                        class="selection-card topic-card ${
+                            selected
+                                ? "selected"
+                                : ""
+                        }"
+                        data-topic="${escapeHTML(topic)}"
+                    >
+
+                        <span class="topic-check">
+                            ${selected ? "✓" : ""}
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(topic)}
+                        </strong>
+
+                    </button>
+                `;
+
+            }
+        ).join("");
+
+
+    container
+        .querySelectorAll(
+            "[data-topic]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    toggleTopic(
+                        state.selectedSubject,
+                        button.dataset.topic
+                    );
+
+                }
+            );
+
+        });
 
 }
 
 
 /* =========================================================
-   GENERATE TIMETABLE
+   TOPIC TOGGLE
 ========================================================= */
 
-function generateTimetable(
-    subjectNames,
-    hoursPerDay,
-    startHour
+function toggleTopic(
+    subject,
+    topic
 ) {
 
-    const timetableData = [];
-
-    for (
-        let hourIndex = 0;
-        hourIndex < hoursPerDay;
-        hourIndex++
-    ) {
-
-        const row = [
-
-            `${formatTime(
-                startHour + hourIndex
-            )} - ${formatTime(
-                startHour + hourIndex + 1
-            )}`
-
-        ];
-
-        for (
-            let dayIndex = 0;
-            dayIndex < 7;
-            dayIndex++
-        ) {
-
-            row.push(
-
-                subjectNames[
-                    (
-                        dayIndex +
-                        hourIndex
-                    ) %
-                    subjectNames.length
-                ]
-
-            );
-
-        }
-
-        timetableData.push(
-            row
+    const index =
+        state.selections.findIndex(
+            item =>
+                item.subject === subject &&
+                item.topic === topic
         );
+
+    if (index >= 0) {
+
+        state.selections.splice(
+            index,
+            1
+        );
+
+    } else {
+
+        state.selections.push({
+            subject,
+            topic,
+            custom: false
+        });
 
     }
 
-    return timetableData;
+    renderTopics(
+        $("topicSearch")?.value || ""
+    );
+
+    updateSelectedItems();
 
 }
 
 
 /* =========================================================
-   GENERATE STUDY PLAN
+   CUSTOM TOPICS
 ========================================================= */
 
-function generateStudyPlan(
+function initializeCustomTopics() {
+
+    $("customTopicButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                $("customTopicBox")
+                    ?.classList.toggle(
+                        "hidden"
+                    );
+
+            }
+        );
+
+
+    $("addCustomTopic")
+        ?.addEventListener(
+            "click",
+            addCustomTopic
+        );
+
+}
+
+
+function addCustomTopic() {
+
+    const subject =
+        $("customSubject")?.value.trim();
+
+    const topic =
+        $("customTopic")?.value.trim();
+
+    if (!subject || !topic) {
+
+        alert(
+            "Please enter both the subject and topic."
+        );
+
+        return;
+
+    }
+
+    state.selections.push({
+        subject,
+        topic,
+        custom: true
+    });
+
+    $("customSubject").value = "";
+    $("customTopic").value = "";
+
+    updateSelectedItems();
+
+}
+
+
+/* =========================================================
+   SELECTED TOPICS
+========================================================= */
+
+function updateSelectedItems() {
+
+    const container =
+        $("selectedItems");
+
+    if (!container) return;
+
+    if (!state.selections.length) {
+
+        container.classList.add("hidden");
+        container.innerHTML = "";
+
+        return;
+    }
+
+    container.classList.remove("hidden");
+
+    container.innerHTML = `
+
+        <div class="selected-header">
+
+            <strong>
+                Selected Topics
+            </strong>
+
+            <span>
+                ${state.selections.length}
+            </span>
+
+        </div>
+
+        <div class="selected-tags">
+
+            ${state.selections.map(
+                (item, index) => `
+
+                    <button
+                        type="button"
+                        class="selected-tag"
+                        data-remove="${index}"
+                    >
+                        ${escapeHTML(
+                            item.subject
+                        )}
+                        —
+                        ${escapeHTML(
+                            item.topic
+                        )}
+
+                        <span>×</span>
+
+                    </button>
+
+                `
+            ).join("")}
+
+        </div>
+    `;
+
+
+    container
+        .querySelectorAll(
+            "[data-remove]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    state.selections.splice(
+                        Number(
+                            button.dataset.remove
+                        ),
+                        1
+                    );
+
+                    updateSelectedItems();
+
+                    renderTopics(
+                        $("topicSearch")?.value || ""
+                    );
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   EXAMS
+========================================================= */
+
+function initializeExams() {
+
+    renderExamList();
+
+    $("addExam")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                state.exams.push({
+                    name: "",
+                    date: ""
+                });
+
+                renderExamList();
+
+            }
+        );
+
+}
+
+
+function collectExams() {
+
+    const cards =
+        document.querySelectorAll(
+            ".exam-card"
+        );
+
+    return Array.from(cards)
+        .map(card => ({
+            name:
+                card
+                    .querySelector(".exam-name")
+                    ?.value.trim(),
+
+            date:
+                card
+                    .querySelector(".exam-date")
+                    ?.value
+        }))
+        .filter(
+            exam =>
+                exam.name &&
+                exam.date
+        );
+
+}
+
+
+function renderExamList() {
+
+    const list =
+        $("examList");
+
+    if (!list) return;
+
+    if (!state.exams.length) {
+
+        state.exams.push({
+            name: "",
+            date: ""
+        });
+
+    }
+
+    list.innerHTML =
+        state.exams.map(
+            (exam, index) => `
+
+                <div class="exam-card">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Exam / Test
+                            </label>
+
+                            <input
+                                class="exam-name"
+                                type="text"
+                                value="${escapeAttribute(
+                                    exam.name
+                                )}"
+                                placeholder="e.g. WAEC Mathematics"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label>
+                                Exam Date
+                            </label>
+
+                            <input
+                                class="exam-date"
+                                type="date"
+                                value="${escapeAttribute(
+                                    exam.date
+                                )}"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    ${
+                        index > 0
+                            ? `
+                                <button
+                                    type="button"
+                                    class="remove-exam"
+                                    data-remove-exam="${index}"
+                                >
+                                    ×
+                                </button>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            `
+        ).join("");
+
+
+    list
+        .querySelectorAll(
+            "[data-remove-exam]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    state.exams.splice(
+                        Number(
+                            button.dataset.removeExam
+                        ),
+                        1
+                    );
+
+                    renderExamList();
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   AI PLANNER
+========================================================= */
+
+async function generateStudyPlan(
     event
 ) {
 
-    if (event) {
-        event.preventDefault();
-    }
+    event.preventDefault();
+
+    const button =
+        $("generateButton");
 
     const curriculum =
-        cleanText(
-            $("curriculum")?.value
-        ) ||
-        "Nigerian Senior Secondary Curriculum";
+        $("curriculum")?.value;
 
-    const examDate =
-        $("examDate")?.value ||
-        "";
-
-    const hoursPerDay =
+    const studyHours =
         Number(
-            $("hoursPerDay")?.value ||
-            0
+            $("studyHours")?.value
         );
-
-    const startTime =
-        $("startTime")?.value ||
-        "16:00";
 
     const difficulty =
         $("difficulty")?.value ||
         "balanced";
 
-    if (!examDate) {
+    const goal =
+        $("studyGoal")?.value.trim() ||
+        "";
+
+    const notifications =
+        Boolean(
+            $("notifications")?.checked
+        );
+
+    const exams =
+        collectExams();
+
+
+    if (!curriculum) {
 
         alert(
-            "Please select your exam date."
+            "Please select a curriculum."
         );
 
         return;
 
     }
 
-    if (hoursPerDay <= 0) {
+
+    if (!state.selections.length) {
 
         alert(
-            "Please select your available study hours."
+            "Please select at least one topic."
         );
 
         return;
 
     }
 
-    const today =
-        new Date();
 
-    today.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-    const exam =
-        new Date(
-            `${examDate}T00:00:00`
-        );
-
-    exam.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-    if (
-        Number.isNaN(
-            exam.getTime()
-        )
-    ) {
+    if (!exams.length) {
 
         alert(
-            "Please enter a valid exam date."
+            "Please add at least one exam."
         );
 
         return;
 
     }
 
-    if (
-        exam < today
-    ) {
+
+    if (!studyHours) {
 
         alert(
-            "The exam date has already passed. Please choose a future date."
+            "Please select your available study time."
         );
 
         return;
 
     }
 
-    const daysLeft =
-        Math.max(
-            0,
-            Math.ceil(
-                (
-                    exam.getTime() -
-                    today.getTime()
-                ) /
-                86400000
-            )
-        );
 
-    syncLegacyTopicsField();
+    button.disabled = true;
 
-    const subjectData =
-        collectSubjectTopicData();
+    button.innerHTML =
+        "<span>🤖 StudyMind AI is building your plan...</span>";
 
-    if (
-        !validateSubjectTopics(
-            subjectData
-        )
-    ) {
 
-        return;
-
-    }
-
-    renderDifficultyFields(
-        subjectData
-    );
-
-    const {
-        topicDifficulty,
-        topicPriority
-    } =
-        collectDifficultyData();
-
-    const allTopics =
-        subjectData.flatMap(
-            subject =>
-                subject.topics
-        );
-
-    const subjectNames =
-        subjectData.map(
-            subject =>
-                subject.name
-        );
-
-    const dayNames = [
-
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-
-    ];
-
-    const todayName =
-        dayNames[
-            new Date().getDay()
-        ];
-
-    const todaySubject =
-        subjectNames[
-            new Date().getDay() %
-            subjectNames.length
-        ];
-
-    const startHour =
-        Number(
-            startTime.split(":")[0]
-        ) || 16;
-
-    let urgency;
-
-    if (
-        daysLeft > 90
-    ) {
-
-        urgency =
-            "🟢 You have plenty of time. Focus on learning new concepts.";
-
-    } else if (
-        daysLeft > 30
-    ) {
-
-        urgency =
-            "🟡 Your exam is getting closer. Start practicing regularly.";
-
-    } else if (
-        daysLeft > 7
-    ) {
-
-        urgency =
-            "🟠 Your exam is close. Increase revision and practice.";
-
-    } else {
-
-        urgency =
-            "🔴 Your exam is just around the corner! Focus on revision and practice.";
-
-    }
-
-    const timetableData =
-        generateTimetable(
-            subjectNames,
-            hoursPerDay,
-            startHour
-        );
-
-    const oldPlan =
-        readJSON(
-            PLAN_KEY,
-            null
-        );
-
-    if (oldPlan) {
-        archiveCurrentPlan();
-    }
-
-    const studyData = {
-
-        version:
-            2,
+    const payload = {
 
         curriculum,
 
-        examType:
-            curriculum,
+        selections:
+            state.selections,
 
-        examDate,
+        exams,
 
-        subjects:
-            subjectData,
-
-        subjectNames,
-
-        topics:
-            allTopics,
-
-        topicNames:
-            allTopics.map(
-                topic =>
-                    topic.name
-            ),
-
-        topicDifficulty,
-
-        topicPriority,
-
-        startTime,
-
-        todaySubject,
-
-        todayName,
-
-        advice:
-            "Follow your subjects and topics in order. Complete each topic before moving to the next one.",
-
-        daysLeft,
-
-        urgency,
-
-        hoursPerDay,
+        studyHours,
 
         difficulty,
 
-        studyStartDate:
-            today
-                .toISOString()
-                .split("T")[0],
+        goal,
 
-        timetableData,
+        notifications,
 
-        studyScore:
-            100,
+        preferences: {
 
-        streak:
-            Number(
-                localStorage.getItem(
-                    "studyMindStreak"
-                ) || 0
-            ),
+            minimumSessionMinutes: 25,
 
-        createdAt:
-            new Date().toISOString()
+            preferredSessionLengths: [
+                25,
+                45,
+                60
+            ],
+
+            intelligentBreaks: true,
+
+            intelligentRestDays: true,
+
+            adaptiveRevision: true,
+
+            examPrioritization: true
+
+        }
 
     };
-
-    const newPlanRecord =
-        createNewPlanRecord(
-            studyData
-        );
-
-    const savedNewPlan =
-        saveNewPlanRecord(
-            newPlanRecord
-        );
-
-    if (!savedNewPlan) {
-
-        alert(
-            "Your new study plan could not be saved. Please check your browser storage and try again."
-        );
-
-        return;
-
-    }
-
-    resetForNewPlan();
-
-    const savedMainPlan =
-        writeJSON(
-            PLAN_KEY,
-            studyData
-        );
-
-    const savedCompatibilityPlan =
-        writeJSON(
-            COMPATIBILITY_PLAN_KEY,
-            studyData
-        );
-
-    if (
-        !savedMainPlan ||
-        !savedCompatibilityPlan
-    ) {
-
-        alert(
-            "Your study plan could not be saved. Please check your browser storage and try again."
-        );
-
-        return;
-
-    }
-
-    setActivePlanId(
-        newPlanRecord.id
-    );
-
-    const preview =
-        $("studyPlan");
-
-    if (preview) {
-
-        preview.classList.remove(
-            "hidden"
-        );
-
-        preview.innerHTML = `
-
-            <div
-                style="
-                    padding:28px;
-                    border-radius:20px;
-                    border:1px solid rgba(127,127,127,.2);
-                "
-            >
-
-                <h2>
-                    ✅ Your Study Plan Is Ready
-                </h2>
-
-                <p>
-                    <strong>
-                        ${subjectNames.length}
-                    </strong>
-                    subject${subjectNames.length === 1 ? "" : "s"}
-                    and
-                    <strong>
-                        ${allTopics.length}
-                    </strong>
-                    topic${allTopics.length === 1 ? "" : "s"}
-                    have been organized.
-                </p>
-
-                <p>
-                    ${subjectNames
-                        .map(
-                            escapeHTML
-                        )
-                        .join(" • ")}
-                </p>
-
-                <p>
-                    <strong>
-                        Exam:
-                    </strong>
-                    ${escapeHTML(
-                        examDate
-                    )}
-                </p>
-
-                <p>
-                    <strong>
-                        Daily study time:
-                    </strong>
-                    ${hoursPerDay}
-                    hour${hoursPerDay === 1 ? "" : "s"}
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-    window.location.href =
-        "dashboard.html";
-
-}
-
-
-/* =========================================================
-   THEME SYSTEM
-========================================================= */
-
-function applyStudyMindTheme() {
-
-    const savedTheme =
-        localStorage.getItem(
-            THEME_KEY
-        ) || "dark";
-
-    const isLight =
-        savedTheme === "light";
-
-    document.documentElement.classList.toggle(
-        "light-mode",
-        isLight
-    );
-
-    document.documentElement.classList.toggle(
-        "dark-mode",
-        !isLight
-    );
-
-    if (document.body) {
-
-        document.body.classList.toggle(
-            "light-mode",
-            isLight
-        );
-
-        document.body.classList.toggle(
-            "dark-mode",
-            !isLight
-        );
-
-    }
-
-    document.documentElement.style.colorScheme =
-        isLight
-            ? "light"
-            : "dark";
-
-    updateStudyMindThemeButton();
-
-}
-
-
-/* =========================================================
-   TOGGLE THEME
-========================================================= */
-
-function toggleStudyMindTheme() {
-
-    const currentTheme =
-        localStorage.getItem(
-            THEME_KEY
-        ) || "dark";
-
-    const newTheme =
-        currentTheme === "dark"
-            ? "light"
-            : "dark";
-
-    localStorage.setItem(
-        THEME_KEY,
-        newTheme
-    );
-
-    applyStudyMindTheme();
-
-}
-
-
-/* =========================================================
-   UPDATE THEME BUTTON
-========================================================= */
-
-function updateStudyMindThemeButton() {
-
-    const button =
-        $("themeButton");
-
-    if (!button) {
-        return;
-    }
-
-    const isLight =
-        document.body
-            ?.classList
-            .contains(
-                "light-mode"
-            );
-
-    button.textContent =
-        isLight
-            ? "🌙 Dark Mode"
-            : "☀️ Light Mode";
-
-    button.setAttribute(
-        "aria-label",
-        isLight
-            ? "Switch to Dark Mode"
-            : "Switch to Light Mode"
-    );
-
-    button.setAttribute(
-        "title",
-        isLight
-            ? "Switch to Dark Mode"
-            : "Switch to Light Mode"
-    );
-
-}
-
-
-/* =========================================================
-   CREATE STUDY PLAN BUTTON
-========================================================= */
-
-function connectStartButton() {
-
-    const button =
-        $("startButton");
-
-    if (!button) {
-        return;
-    }
-
-    if (
-        button.dataset.connected === "true"
-    ) {
-
-        return;
-
-    }
-
-    button.dataset.connected =
-        "true";
-
-    button.addEventListener(
-        "click",
-        function(event) {
-
-            event.preventDefault();
-
-            const generator =
-                $("generator");
-
-            if (!generator) {
-
-                console.warn(
-                    "StudyMind AI: #generator section was not found."
-                );
-
-                return;
-
-            }
-
-            generator.scrollIntoView({
-
-                behavior:
-                    "smooth",
-
-                block:
-                    "start"
-
-            });
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   THEME BUTTON
-========================================================= */
-
-function connectThemeButton() {
-
-    const button =
-        $("themeButton");
-
-    if (!button) {
-        return;
-    }
-
-    if (
-        button.dataset.connected === "true"
-    ) {
-
-        updateStudyMindThemeButton();
-
-        return;
-
-    }
-
-    button.dataset.connected =
-        "true";
-
-    button.addEventListener(
-        "click",
-        function(event) {
-
-            event.preventDefault();
-
-            toggleStudyMindTheme();
-
-        }
-    );
-
-    updateStudyMindThemeButton();
-
-}
-
-
-/* =========================================================
-   SUBJECT INPUT
-========================================================= */
-
-function connectSubjectInputs() {
-
-    const subjects =
-        $("subjects");
-
-    if (!subjects) {
-        return;
-    }
-
-    if (
-        subjects.dataset.connected === "true"
-    ) {
-
-        return;
-
-    }
-
-    subjects.dataset.connected =
-        "true";
-
-    subjects.addEventListener(
-        "input",
-        function() {
-
-            renderSubjectTopicFields();
-
-        }
-    );
-
-    subjects.addEventListener(
-        "change",
-        function() {
-
-            renderSubjectTopicFields();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   TOPIC INPUT
-========================================================= */
-
-function connectTopicFields() {
-
-    const container =
-        $("subjectTopicFields");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        container.dataset.connected === "true"
-    ) {
-
-        return;
-
-    }
-
-    container.dataset.connected =
-        "true";
-
-    container.addEventListener(
-        "input",
-        function() {
-
-            syncLegacyTopicsField();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   STUDY FORM
-========================================================= */
-
-function connectStudyForm() {
-
-    const form =
-        $("studyForm");
-
-    if (!form) {
-        return;
-    }
-
-    if (
-        form.dataset.connected === "true"
-    ) {
-
-        return;
-
-    }
-
-    form.dataset.connected =
-        "true";
-
-    form.addEventListener(
-        "submit",
-        generateStudyPlan
-    );
-
-}
-
-
-/* =========================================================
-   PREMIUM — SET FREE STATE
-========================================================= */
-
-function setFreePremiumState() {
-
-    const button =
-        $("premiumButton");
-
-    const premiumEyebrow =
-        $("premiumEyebrow");
-
-    const premiumTitle =
-        $("premiumTitle");
-
-    const premiumDescription =
-        $("premiumDescription");
-
-
-    if (document.body) {
-
-        document.body.classList.remove(
-            "premium-home"
-        );
-
-    }
-
-
-    if (premiumEyebrow) {
-
-        premiumEyebrow.textContent =
-            "STUDYMIND PREMIUM";
-
-    }
-
-
-    if (premiumTitle) {
-
-        premiumTitle.textContent =
-            "Take your studying further.";
-
-    }
-
-
-    if (premiumDescription) {
-
-        premiumDescription.textContent =
-            "Unlock more powerful StudyMind AI features, deeper study support and more ways to stay on top of your preparation.";
-
-    }
-
-
-    if (button) {
-
-        /*
-           IMPORTANT:
-
-           This is a REAL href.
-
-           The button remains usable even if the
-           Premium API is unavailable.
-        */
-
-        button.href =
-            "premium.html";
-
-        button.innerHTML =
-            '💎 Explore Premium <span aria-hidden="true">→</span>';
-
-        button.removeAttribute(
-            "aria-busy"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   PREMIUM — SET VERIFIED PREMIUM STATE
-========================================================= */
-
-function setVerifiedPremiumState() {
-
-    const button =
-        $("premiumButton");
-
-    const premiumEyebrow =
-        $("premiumEyebrow");
-
-    const premiumTitle =
-        $("premiumTitle");
-
-    const premiumDescription =
-        $("premiumDescription");
-
-
-    if (document.body) {
-
-        document.body.classList.add(
-            "premium-home"
-        );
-
-    }
-
-
-    if (premiumEyebrow) {
-
-        premiumEyebrow.textContent =
-            "STUDYMIND PREMIUM";
-
-    }
-
-
-    if (premiumTitle) {
-
-        premiumTitle.textContent =
-            "Welcome to your Premium experience.";
-
-    }
-
-
-    if (premiumDescription) {
-
-        premiumDescription.textContent =
-            "Enjoy the full StudyMind AI experience with powerful Premium features, deeper study support and an elevated golden workspace.";
-
-    }
-
-
-    if (button) {
-
-        /*
-           IMPORTANT:
-
-           Premium users receive the Premium Dashboard
-           as the actual href.
-
-           No click interception is needed.
-        */
-
-        button.href =
-            "premium-dashboard.html";
-
-        button.innerHTML =
-            '👑 Open Premium Dashboard <span aria-hidden="true">→</span>';
-
-        button.removeAttribute(
-            "aria-busy"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   PREMIUM — BACKWARD COMPATIBILITY
-========================================================= */
-
-function enablePremiumHome() {
-
-    setVerifiedPremiumState();
-
-}
-
-
-function disablePremiumHome() {
-
-    setFreePremiumState();
-
-}
-
-
-/* =========================================================
-   PREMIUM STATUS CHECK
-========================================================= */
-
-async function checkPremiumStatus() {
-
-    /*
-       Always begin with a safe Free-state button.
-
-       This means the button works immediately even if
-       Supabase or the Premium API takes time to respond.
-    */
-
-    setFreePremiumState();
-
-
-    /*
-       Check whether the Supabase library exists.
-    */
-
-    if (
-        !window.supabase ||
-        typeof window.supabase.createClient !==
-            "function"
-    ) {
-
-        console.warn(
-            "StudyMind AI: Supabase client library is not loaded."
-        );
-
-        return false;
-
-    }
 
 
     try {
 
-        /*
-           Create the client only if Home has not
-           already created one.
-        */
-
-        if (
-            !window.supabaseClient
-        ) {
-
-            const SUPABASE_URL =
-                "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-            const SUPABASE_PUBLISHABLE_KEY =
-                "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
-            window.supabaseClient =
-                window.supabase.createClient(
-                    SUPABASE_URL,
-                    SUPABASE_PUBLISHABLE_KEY
-                );
-
-        }
-
-
-        const supabaseClient =
-            window.supabaseClient;
-
-
-        /*
-           Get the current authenticated session.
-        */
-
-        const {
-            data: sessionData,
-            error: sessionError
-        } =
-            await supabaseClient.auth.getSession();
-
-
-        if (
-            sessionError
-        ) {
-
-            console.warn(
-                "StudyMind AI: Could not read authentication session.",
-                sessionError
-            );
-
-            return false;
-
-        }
-
-
-        if (
-            !sessionData ||
-            !sessionData.session
-        ) {
-
-            /*
-               Not logged in.
-
-               Keep Free state.
-            */
-
-            return false;
-
-        }
-
-
-        const session =
-            sessionData.session;
-
-
-        /*
-           Ask backend for authoritative Premium status.
-        */
-
         const response =
             await fetch(
-                PREMIUM_STATUS_ENDPOINT,
+                "/api/generate-study-plan",
                 {
-
-                    method:
-                        "GET",
+                    method: "POST",
 
                     headers: {
-
-                        "Authorization":
-                            `Bearer ${session.access_token}`,
-
                         "Content-Type":
                             "application/json"
-
                     },
 
-                    cache:
-                        "no-store"
-
+                    body:
+                        JSON.stringify(
+                            payload
+                        )
                 }
             );
 
 
         if (!response.ok) {
 
-            console.warn(
-                "StudyMind AI: Premium status request failed.",
-                response.status
+            const error =
+                await safeJSON(
+                    response
+                );
+
+            throw new Error(
+                error?.error ||
+                "The AI planner could not generate your plan."
             );
-
-            /*
-               IMPORTANT:
-
-               Do NOT break the button.
-
-               It stays linked to premium.html.
-            */
-
-            return false;
 
         }
 
@@ -2539,45 +1252,63 @@ async function checkPremiumStatus() {
             await response.json();
 
 
-        /*
-           ONLY the backend response can activate
-           the Premium Home.
-        */
-
         if (
-            result &&
-            result.premium === true
+            !result ||
+            !result.plan
         ) {
 
-            setVerifiedPremiumState();
-
-            return true;
+            throw new Error(
+                "The AI returned an invalid study plan."
+            );
 
         }
 
 
-        setFreePremiumState();
+        const plan =
+            normalizePlan(
+                result.plan
+            );
 
-        return false;
+
+        savePlan(plan);
+
+
+        if (
+            notifications &&
+            "Notification" in window &&
+            Notification.permission ===
+                "default"
+        ) {
+
+            try {
+
+                await Notification.requestPermission();
+
+            } catch {}
+
+        }
+
+
+        window.location.href =
+            "dashboard.html";
+
 
     } catch (error) {
 
-        console.warn(
-            "StudyMind AI: Premium status check failed.",
+        console.error(
+            "StudyMind planner error:",
             error
         );
 
-        /*
-           Do not disable navigation.
+        alert(
+            error.message ||
+            "Something went wrong while generating your plan."
+        );
 
-           Free-state href remains:
+        button.disabled = false;
 
-               premium.html
-        */
-
-        setFreePremiumState();
-
-        return false;
+        button.innerHTML =
+            "<span>Generate My AI Study Plan</span>";
 
     }
 
@@ -2585,50 +1316,246 @@ async function checkPremiumStatus() {
 
 
 /* =========================================================
-   PREMIUM AUTH STATE LISTENER
+   PLAN NORMALIZATION
 ========================================================= */
 
-function connectPremiumAuthListener() {
+function normalizePlan(plan) {
 
-    if (
-        !window.supabaseClient
-    ) {
+    const topics =
+        Array.isArray(plan.topics)
+            ? plan.topics
+            : state.selections.map(
+                (item, index) => ({
+                    id:
+                        `topic-${index + 1}`,
+                    subject:
+                        item.subject,
+                    name:
+                        item.topic,
+                    custom:
+                        Boolean(item.custom),
+                    completed:
+                        false,
+                    priority:
+                        "normal",
+                    mastery:
+                        0
+                })
+            );
 
-        return;
+
+    return {
+
+        id:
+            plan.id ||
+            crypto.randomUUID(),
+
+        version:
+            2,
+
+        curriculum:
+            plan.curriculum ||
+            state.curriculum,
+
+        subjects:
+            plan.subjects ||
+            unique(
+                topics.map(
+                    topic =>
+                        topic.subject
+                )
+            ),
+
+        topics,
+
+        exams:
+            plan.exams ||
+            collectExams(),
+
+        studyHours:
+            Number(
+                plan.studyHours ||
+                $("studyHours")?.value ||
+                1
+            ),
+
+        difficulty:
+            plan.difficulty ||
+            $("difficulty")?.value ||
+            "balanced",
+
+        goal:
+            plan.goal ||
+            $("studyGoal")?.value ||
+            "",
+
+        notifications:
+            Boolean(
+                plan.notifications ??
+                $("notifications")?.checked
+            ),
+
+        schedule:
+            Array.isArray(
+                plan.schedule
+            )
+                ? plan.schedule
+                : [],
+
+        generatedBy:
+            "StudyMind AI",
+
+        createdAt:
+            plan.createdAt ||
+            new Date().toISOString(),
+
+        progress: {
+
+            completedTopics: 0,
+
+            totalTopics:
+                topics.length,
+
+            studyMinutes: 0,
+
+            sessions: 0
+
+        }
+
+    };
+
+}
+
+
+/* =========================================================
+   SAVE PLAN
+========================================================= */
+
+function savePlan(plan) {
+
+    localStorage.setItem(
+        "studyMindPlan",
+        JSON.stringify(plan)
+    );
+
+    localStorage.setItem(
+        "studyData",
+        JSON.stringify(plan)
+    );
+
+
+    const plans =
+        JSON.parse(
+            localStorage.getItem(
+                "studyMindPlans"
+            ) || "[]"
+        );
+
+
+    const existing =
+        plans.findIndex(
+            item =>
+                item.id === plan.id
+        );
+
+
+    if (existing >= 0) {
+
+        plans[existing] =
+            plan;
+
+    } else {
+
+        plans.push(plan);
 
     }
 
 
-    if (
-        window.studyMindPremiumAuthListenerConnected
-    ) {
+    localStorage.setItem(
+        "studyMindPlans",
+        JSON.stringify(plans)
+    );
 
-        return;
+    localStorage.setItem(
+        "studyMindActivePlanId",
+        plan.id
+    );
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function initializeSearch() {
+
+    $("subjectSearch")
+        ?.addEventListener(
+            "input",
+            event => {
+
+                renderSubjects(
+                    event.target.value
+                );
+
+            }
+        );
+
+
+    $("topicSearch")
+        ?.addEventListener(
+            "input",
+            event => {
+
+                renderTopics(
+                    event.target.value
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+function initializeTheme() {
+
+    const button =
+        $("themeButton");
+
+    const saved =
+        localStorage.getItem(
+            "studyMindTheme"
+        );
+
+    if (saved === "light") {
+
+        document.body.classList.add(
+            "light-mode"
+        );
 
     }
 
 
-    window.studyMindPremiumAuthListenerConnected =
-        true;
+    button?.addEventListener(
+        "click",
+        () => {
 
+            document.body.classList.toggle(
+                "light-mode"
+            );
 
-    window.supabaseClient.auth.onAuthStateChange(
-        function() {
-
-            /*
-               Re-check Premium when authentication
-               changes.
-
-               The button itself remains a normal link.
-            */
-
-            setTimeout(
-                function() {
-
-                    checkPremiumStatus();
-
-                },
-                100
+            localStorage.setItem(
+                "studyMindTheme",
+                document.body.classList.contains(
+                    "light-mode"
+                )
+                    ? "light"
+                    : "dark"
             );
 
         }
@@ -2638,261 +1565,108 @@ function connectPremiumAuthListener() {
 
 
 /* =========================================================
-   PREMIUM BUTTON
+   START BUTTON
 ========================================================= */
 
-function connectPremiumButton() {
+function initializeStartButton() {
 
-    const button =
-        $("premiumButton");
+    $("startButton")
+        ?.addEventListener(
+            "click",
+            () => {
 
+                document
+                    .getElementById(
+                        "generator"
+                    )
+                    ?.scrollIntoView({
+                        behavior: "smooth"
+                    });
 
-    if (!button) {
-
-        console.warn(
-            "StudyMind AI: #premiumButton was not found on Home."
+            }
         );
 
-        return;
-
-    }
+}
 
 
-    /*
-       IMPORTANT:
+/* =========================================================
+   HELPERS
+========================================================= */
 
-       Premium navigation must NEVER depend on the
-       Premium API finishing.
+function unique(array) {
 
-       Free users:
-           premium.html
+    return [
+        ...new Set(
+            array.filter(Boolean)
+        )
+    ];
 
-       Verified Premium users:
-           premium-dashboard.html
-    */
-
-
-    if (
-        button.dataset.premiumNavigationConnected === "true"
-    ) {
-
-        return;
-
-    }
+}
 
 
-    button.dataset.premiumNavigationConnected =
-        "true";
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
 
 
-    /*
-       Make sure the button always has a valid
-       fallback destination.
-    */
+function escapeAttribute(value) {
 
-    if (
-        !button.getAttribute("href")
-    ) {
-
-        button.setAttribute(
-            "href",
-            "premium.html"
-        );
-
-    }
-
-
-    /*
-       Use a direct navigation fallback.
-
-       This does NOT call preventDefault().
-       Therefore normal anchor navigation still works.
-    */
-
-    button.addEventListener(
-        "click",
-        function() {
-
-            const destination =
-                button.getAttribute("href") ||
-                "premium.html";
-
-
-            /*
-               Give the browser the destination
-               immediately.
-
-               This also works if another part of
-               the page interferes with normal anchor
-               navigation.
-            */
-
-            window.location.href =
-                destination;
-
-        }
+    return escapeHTML(
+        value || ""
     );
 
 }
 
-/* =========================================================
-   INITIALIZE PREMIUM HOME SYSTEM
-========================================================= */
 
-async function initializePremiumHomeSystem() {
+async function safeJSON(response) {
 
-    /*
-       Set a safe default immediately.
-    */
+    try {
 
-    setFreePremiumState();
+        return await response.json();
 
+    } catch {
 
-    /*
-       Connect the native Premium button.
-    */
+        return null;
 
-    connectPremiumButton();
-
-
-    /*
-       Verify Premium in the background.
-
-       This changes the href only after the backend
-       confirms Premium.
-    */
-
-    const isPremium =
-        await checkPremiumStatus();
-
-
-    /*
-       Make sure the listener is connected after
-       the Supabase client exists.
-    */
-
-    connectPremiumAuthListener();
-
-
-    return isPremium;
+    }
 
 }
 
 
 /* =========================================================
-   INITIALIZE HOME
+   INIT
 ========================================================= */
 
-function initializeHome() {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    /*
-       Make sure an older plan isn't lost when this
-       multi-plan version is first installed.
-    */
+        initializeTheme();
 
-    migrateLegacyPlanIfNeeded();
+        initializeStartButton();
 
+        initializeCurriculum();
 
-    /*
-       Apply saved theme first.
-    */
+        initializeSearch();
 
-    applyStudyMindTheme();
+        initializeCustomTopics();
 
+        initializeExams();
 
-    /*
-       Connect all Home controls.
-    */
+        const form =
+            $("studyForm");
 
-    connectThemeButton();
+        form?.addEventListener(
+            "submit",
+            generateStudyPlan
+        );
 
-    connectStartButton();
-
-    connectPremiumButton();
-
-    connectSubjectInputs();
-
-    connectTopicFields();
-
-    connectStudyForm();
-
-
-    /*
-       Render initial topic state.
-    */
-
-    renderSubjectTopicFields();
-
-
-    /*
-       Keep legacy field synchronized.
-    */
-
-    syncLegacyTopicsField();
-
-
-    /*
-       Premium is completely independent from
-       study-plan generation.
-    */
-
-    initializePremiumHomeSystem();
-
-}
-
-
-/* =========================================================
-   START APP
-========================================================= */
-
-if (
-    document.readyState === "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeHome,
-        {
-            once: true
-        }
-    );
-
-} else {
-
-    initializeHome();
-
-}
-
-
-/* =========================================================
-   GLOBAL MULTI-PLAN HELPERS
-========================================================= */
-
-window.getSavedStudyPlans =
-    getSavedPlans;
-
-window.getActiveStudyPlanId =
-    getActivePlanId;
-
-window.setActiveStudyPlanId =
-    setActivePlanId;
-
-window.archiveCurrentStudyPlan =
-    archiveCurrentPlan;
-
-window.migrateLegacyStudyPlan =
-    migrateLegacyPlanIfNeeded;
-
-
-/* =========================================================
-   GLOBAL PREMIUM HELPERS
-========================================================= */
-
-window.checkStudyMindPremiumStatus =
-    checkPremiumStatus;
-
-window.enableStudyMindPremiumHome =
-    enablePremiumHome;
-
-window.disableStudyMindPremiumHome =
-    disablePremiumHome;
+    }
+);
