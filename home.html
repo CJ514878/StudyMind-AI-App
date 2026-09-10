@@ -1,724 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>StudyMind AI</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 
-<style>
-
-/* =========================================================
-   SUBJECT / TOPIC FIELDS
-========================================================= */
-
-.subject-topic-fields{
-    display:grid;
-    gap:18px;
-    margin-top:10px;
-}
-
-.subject-topic-card{
-    padding:20px;
-    border:1px solid rgba(127,127,127,.22);
-    border-radius:18px;
-    background:rgba(127,127,127,.05);
-}
-
-.subject-topic-card h3{
-    margin:0 0 10px;
-}
-
-.subject-topic-card textarea{
-    width:100%;
-    min-height:140px;
-    resize:vertical;
-    box-sizing:border-box;
-}
-
-.subject-topic-empty{
-    padding:18px;
-    border:1px dashed rgba(127,127,127,.35);
-    border-radius:14px;
-    opacity:.75;
-    text-align:center;
-}
-
-.topic-difficulty-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:10px 0;
-}
-
-.topic-difficulty-row select{
-    min-width:130px;
-}
-
-
-/* =========================================================
-   NORMAL PREMIUM CTA
-========================================================= */
-
-.premium-cta-section {
-    padding: 90px 24px;
-}
-
-.premium-cta-card {
-    position: relative;
-    max-width: 1050px;
-    margin: 0 auto;
-    padding: 56px 48px;
-    border-radius: 30px;
-    overflow: hidden;
-    text-align: center;
-    background: linear-gradient(
-        135deg,
-        #111827 0%,
-        #172554 55%,
-        #1e1b4b 100%
-    );
-    border: 1px solid rgba(129, 140, 248, .32);
-    box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
-}
-
-.premium-cta-card::before,
-.premium-cta-card::after {
-    content: "";
-    position: absolute;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    background: rgba(129, 140, 248, .13);
-    filter: blur(8px);
-}
-
-.premium-cta-card::before {
-    top: -110px;
-    left: -80px;
-}
-
-.premium-cta-card::after {
-    right: -90px;
-    bottom: -120px;
-}
-
-.premium-cta-content {
-    position: relative;
-    z-index: 1;
-    max-width: 720px;
-    margin: 0 auto;
-}
-
-.premium-cta-icon {
-    width: 68px;
-    height: 68px;
-    margin: 0 auto 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, .10);
-    border: 1px solid rgba(255, 255, 255, .16);
-    font-size: 34px;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, .18);
-}
-
-.premium-cta-card .eyebrow {
-    color: #c7d2fe;
-}
-
-.premium-cta-card h2 {
-    margin: 12px 0 14px;
-    color: #ffffff;
-    font-size: clamp(2rem, 4vw, 3rem);
-}
-
-.premium-cta-card p {
-    margin: 0 auto 28px;
-    color: rgba(255, 255, 255, .78);
-    font-size: 1.05rem;
-    line-height: 1.75;
-}
-
-.premium-cta-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-width: 210px;
-    padding: 15px 26px;
-    border: 0;
-    border-radius: 14px;
-    background: #ffffff;
-    color: #111827;
-    font: inherit;
-    font-weight: 800;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform .2s ease, box-shadow .2s ease;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .20);
-}
-
-.premium-cta-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 18px 38px rgba(0, 0, 0, .28);
-}
-
-
-/* =========================================================
-   PREMIUM HOME EXPERIENCE
-   ONLY ENABLED AFTER VERIFIED PREMIUM ACCESS
-========================================================= */
-
-body.premium-home {
-    --premium-bg: #070b14;
-    --premium-bg-2: #0b1020;
-    --premium-card: rgba(16, 23, 39, .88);
-    --premium-gold: #f5c542;
-    --premium-gold-light: #ffe28a;
-    --premium-gold-dark: #b88900;
-    --premium-text: #f7f8fb;
-    --premium-muted: #9ba5b7;
-    --premium-border: rgba(245, 197, 66, .20);
-
-    background:
-        radial-gradient(
-            circle at 10% 0%,
-            rgba(245,197,66,.10),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 90% 10%,
-            rgba(245,197,66,.07),
-            transparent 28%
-        ),
-        linear-gradient(
-            180deg,
-            var(--premium-bg),
-            var(--premium-bg-2)
-        );
-
-    color: var(--premium-text);
-}
-
-
-/* =========================================================
-   PREMIUM NAVBAR
-========================================================= */
-
-body.premium-home .navbar {
-    background: rgba(7, 11, 20, .92);
-    border-bottom: 1px solid var(--premium-border);
-    box-shadow: 0 10px 35px rgba(0,0,0,.28);
-}
-
-body.premium-home .logo {
-    color: var(--premium-gold);
-}
-
-body.premium-home .nav-links a {
-    color: #dce2ed;
-    transition:
-        color .2s ease,
-        text-shadow .2s ease;
-}
-
-body.premium-home .nav-links a:hover {
-    color: var(--premium-gold-light);
-    text-shadow: 0 0 14px rgba(245,197,66,.25);
-}
-
-body.premium-home .theme-button {
-    background: rgba(245,197,66,.08);
-    border-color: var(--premium-border);
-    color: var(--premium-gold-light);
-}
-
-
-/* =========================================================
-   PREMIUM HERO
-========================================================= */
-
-body.premium-home .hero {
-    background:
-        radial-gradient(
-            circle at 50% 20%,
-            rgba(245,197,66,.12),
-            transparent 38%
-        );
-}
-
-body.premium-home .hero .eyebrow {
-    color: var(--premium-gold);
-}
-
-body.premium-home .hero h1 {
-    color: #ffffff;
-}
-
-body.premium-home .hero h1 span {
-    background: linear-gradient(
-        135deg,
-        #f5c542,
-        #ffe28a,
-        #c99516
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-body.premium-home .hero p {
-    color: var(--premium-muted);
-}
-
-body.premium-home .primary-button {
-    background: linear-gradient(
-        135deg,
-        var(--premium-gold),
-        var(--premium-gold-dark)
-    );
-    color: #171100;
-    border: 1px solid rgba(255,226,138,.55);
-    box-shadow:
-        0 12px 30px rgba(245,197,66,.18),
-        inset 0 1px 0 rgba(255,255,255,.35);
-}
-
-body.premium-home .primary-button:hover {
-    box-shadow:
-        0 18px 42px rgba(245,197,66,.28),
-        inset 0 1px 0 rgba(255,255,255,.4);
-}
-
-body.premium-home .secondary-button {
-    background: rgba(245,197,66,.06);
-    border-color: var(--premium-border);
-    color: var(--premium-gold-light);
-}
-
-
-/* =========================================================
-   PREMIUM SECTIONS
-========================================================= */
-
-body.premium-home .section-heading .eyebrow,
-body.premium-home .section-label {
-    color: var(--premium-gold);
-}
-
-body.premium-home .section-heading h2,
-body.premium-home .contact-header h2 {
-    color: #ffffff;
-}
-
-body.premium-home .section-heading p,
-body.premium-home .contact-header p {
-    color: var(--premium-muted);
-}
-
-
-/* =========================================================
-   PREMIUM FEATURE CARDS
-========================================================= */
-
-body.premium-home .feature-card,
-body.premium-home .step-card {
-    background: var(--premium-card);
-    border-color: var(--premium-border);
-    box-shadow:
-        0 18px 50px rgba(0,0,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.025);
-    transition:
-        transform .25s ease,
-        border-color .25s ease,
-        box-shadow .25s ease;
-}
-
-body.premium-home .feature-card:hover,
-body.premium-home .step-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(245,197,66,.45);
-    box-shadow:
-        0 24px 60px rgba(0,0,0,.30),
-        0 0 28px rgba(245,197,66,.07);
-}
-
-body.premium-home .feature-icon {
-    filter: drop-shadow(0 0 12px rgba(245,197,66,.18));
-}
-
-body.premium-home .feature-card h3,
-body.premium-home .step-card h3 {
-    color: #ffffff;
-}
-
-body.premium-home .feature-card p,
-body.premium-home .step-card p {
-    color: var(--premium-muted);
-}
-
-body.premium-home .step-number {
-    color: var(--premium-gold);
-}
-
-
-/* =========================================================
-   PREMIUM GENERATOR
-========================================================= */
-
-body.premium-home .generator-section {
-    background:
-        radial-gradient(
-            circle at 50% 50%,
-            rgba(245,197,66,.035),
-            transparent 45%
-        );
-}
-
-body.premium-home .study-form {
-    background: var(--premium-card);
-    border-color: var(--premium-border);
-    box-shadow: 0 25px 70px rgba(0,0,0,.28);
-}
-
-body.premium-home .form-group label {
-    color: #f3f5f9;
-}
-
-body.premium-home .form-group small {
-    color: var(--premium-muted);
-}
-
-body.premium-home .form-group input,
-body.premium-home .form-group select,
-body.premium-home .form-group textarea,
-body.premium-home .subject-topic-card textarea {
-    background: rgba(5, 9, 17, .72);
-    color: #ffffff;
-    border-color: rgba(245,197,66,.16);
-}
-
-body.premium-home .form-group input:focus,
-body.premium-home .form-group select:focus,
-body.premium-home .form-group textarea:focus,
-body.premium-home .subject-topic-card textarea:focus {
-    border-color: rgba(245,197,66,.60);
-    box-shadow: 0 0 0 3px rgba(245,197,66,.08);
-    outline: none;
-}
-
-body.premium-home .subject-topic-card {
-    background: rgba(245,197,66,.035);
-    border-color: var(--premium-border);
-}
-
-body.premium-home .subject-topic-card h3 {
-    color: var(--premium-gold-light);
-}
-
-body.premium-home .subject-topic-empty {
-    border-color: rgba(245,197,66,.25);
-    color: var(--premium-muted);
-}
-
-
-/* =========================================================
-   PREMIUM STUDY PLAN
-========================================================= */
-
-body.premium-home .study-plan {
-    background: var(--premium-card);
-    border-color: var(--premium-border);
-    color: #ffffff;
-}
-
-
-/* =========================================================
-   PREMIUM CTA
-========================================================= */
-
-body.premium-home .premium-cta-section {
-    padding-top: 70px;
-}
-
-body.premium-home .premium-cta-card {
-    background:
-        radial-gradient(
-            circle at 15% 20%,
-            rgba(245,197,66,.16),
-            transparent 32%
-        ),
-        radial-gradient(
-            circle at 85% 80%,
-            rgba(245,197,66,.10),
-            transparent 32%
-        ),
-        linear-gradient(
-            135deg,
-            #0b0f18,
-            #15120a 55%,
-            #0c0f18
-        );
-
-    border-color: rgba(245,197,66,.38);
-
-    box-shadow:
-        0 28px 80px rgba(0,0,0,.38),
-        0 0 50px rgba(245,197,66,.06);
-}
-
-body.premium-home .premium-cta-card::before,
-body.premium-home .premium-cta-card::after {
-    background: rgba(245,197,66,.10);
-}
-
-body.premium-home .premium-cta-icon {
-    background: rgba(245,197,66,.08);
-    border-color: rgba(245,197,66,.30);
-    box-shadow:
-        0 0 30px rgba(245,197,66,.10);
-}
-
-body.premium-home .premium-cta-card .eyebrow {
-    color: var(--premium-gold);
-}
-
-body.premium-home .premium-cta-card h2 {
-    color: #ffffff;
-}
-
-body.premium-home .premium-cta-card p {
-    color: var(--premium-muted);
-}
-
-body.premium-home .premium-cta-button {
-    background: linear-gradient(
-        135deg,
-        #f5c542,
-        #b88900
-    );
-    color: #171100;
-    box-shadow:
-        0 14px 35px rgba(245,197,66,.18);
-}
-
-body.premium-home .premium-cta-button:hover {
-    box-shadow:
-        0 20px 45px rgba(245,197,66,.28);
-}
-
-
-/* =========================================================
-   PREMIUM CONTACT
-========================================================= */
-
-body.premium-home .contact-section {
-    background: transparent;
-}
-
-body.premium-home .contact-card {
-    background: var(--premium-card);
-    border-color: var(--premium-border);
-    color: #ffffff;
-    transition:
-        transform .2s ease,
-        border-color .2s ease;
-}
-
-body.premium-home .contact-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(245,197,66,.42);
-}
-
-body.premium-home .contact-icon {
-    color: var(--premium-gold);
-}
-
-body.premium-home .contact-info span {
-    color: var(--premium-muted);
-}
-
-body.premium-home .contact-info strong {
-    color: #ffffff;
-}
-
-
-/* =========================================================
-   PREMIUM FOOTER
-========================================================= */
-
-body.premium-home .site-footer {
-    background: #050810;
-    border-top: 1px solid var(--premium-border);
-}
-
-body.premium-home .footer-brand h3 {
-    color: var(--premium-gold);
-}
-
-body.premium-home .footer-brand p {
-    color: var(--premium-muted);
-}
-
-body.premium-home .footer-links a {
-    color: #aeb7c7;
-}
-
-body.premium-home .footer-links a:hover {
-    color: var(--premium-gold-light);
-}
-
-body.premium-home .footer-bottom {
-    border-top-color: rgba(245,197,66,.10);
-    color: #727d90;
-}
-
-
-/* =========================================================
-   PREMIUM BADGE
-========================================================= */
-
-.premium-home-badge {
-    display: none;
-}
-
-body.premium-home .premium-home-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin-left: 10px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: rgba(245,197,66,.10);
-    border: 1px solid rgba(245,197,66,.28);
-    color: #ffe28a;
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    vertical-align: middle;
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 640px) {
-
-    .premium-cta-section {
-        padding: 64px 18px;
-    }
-
-    .premium-cta-card {
-        padding: 42px 24px;
-        border-radius: 24px;
-    }
-
-}
-
-</style>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
 
 <body>
 
-
-<!-- =========================
-     NAVIGATION
-========================= -->
-
 <nav class="navbar">
 
-    <h2 class="logo">
+    <a href="home.html" class="logo">
         StudyMind AI
-        <span class="premium-home-badge">
-            👑 PREMIUM
-        </span>
-    </h2>
-
+    </a>
 
     <ul class="nav-links">
-
-        <li>
-            <a href="#home">
-                Home
-            </a>
-        </li>
-
-        <li>
-            <a href="#features">
-                Features
-            </a>
-        </li>
-
-        <li>
-            <a href="#how-it-works">
-                How It Works
-            </a>
-        </li>
-
-        <li>
-            <a href="#contact">
-                Contact
-            </a>
-        </li>
-
-        <li>
-            <a href="dashboard.html">
-                Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="game-mode.html">
-                Game Mode
-            </a>
-        </li>
-
+        <li><a href="#home">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="ai-support.html">AI Support</a></li>
     </ul>
 
+    <div class="nav-actions">
+        <button id="themeButton" class="theme-button">
+            🌙
+        </button>
 
-    <button
-        id="themeButton"
-        class="theme-button"
-    >
-        🌙 Dark Mode
-    </button>
+        <a href="premium.html" class="premium-nav">
+            ✦ Premium
+        </a>
+    </div>
 
 </nav>
 
 
-
-<!-- =========================
-     MAIN
-========================= -->
-
 <main>
 
-
-<!-- =========================
-     HERO
-========================= -->
-
-<section
-    class="hero"
-    id="home"
->
+<section class="hero" id="home">
 
     <div class="hero-content">
 
@@ -726,22 +50,17 @@ body.premium-home .premium-home-badge {
             AI-POWERED STUDYING
         </span>
 
-
         <h1>
             Study smarter.<br>
-
-            <span>
-                Achieve more.
-            </span>
+            <span>Achieve more.</span>
         </h1>
 
-
         <p>
-            StudyMind AI turns your subjects, topics,
-            exam dates and available study time into
-            a personalized study plan built around you.
+            StudyMind AI understands what you're studying,
+            when your exams are coming and how much time
+            you have available — then builds your study
+            strategy around you.
         </p>
-
 
         <div class="hero-actions">
 
@@ -751,7 +70,6 @@ body.premium-home .premium-home-badge {
             >
                 Create My Study Plan
             </button>
-
 
             <a
                 href="#features"
@@ -764,150 +82,105 @@ body.premium-home .premium-home-badge {
 
     </div>
 
+
+    <div class="hero-visual">
+
+        <div class="hero-orb orb-one"></div>
+        <div class="hero-orb orb-two"></div>
+
+        <div class="hero-card">
+
+            <div class="mini-card-top">
+                <span>Today's Focus</span>
+                <span>AI</span>
+            </div>
+
+            <h3>
+                Personalized Study Plan
+            </h3>
+
+            <div class="mini-progress">
+                <span></span>
+            </div>
+
+            <div class="mini-row">
+                <span>Mathematics</span>
+                <strong>72%</strong>
+            </div>
+
+            <div class="mini-row">
+                <span>Physics</span>
+                <strong>48%</strong>
+            </div>
+
+            <div class="mini-row">
+                <span>Computer Studies</span>
+                <strong>86%</strong>
+            </div>
+
+        </div>
+
+    </div>
+
 </section>
 
 
-
-<!-- =========================
-     FEATURES
-========================= -->
-
-<section
-    class="features section"
-    id="features"
->
+<section class="features section" id="features">
 
     <div class="section-heading">
 
         <span class="eyebrow">
-            EVERYTHING YOU NEED
+            EVERYTHING CONNECTED
         </span>
 
         <h2>
-            Built for serious studying
+            More than an AI chatbot.
         </h2>
 
         <p>
-            From planning to practice,
-            StudyMind AI keeps your preparation organized.
+            StudyMind AI uses your actual study data
+            to help you learn more effectively.
         </p>
 
     </div>
-
 
 
     <div class="feature-grid">
 
         <article class="feature-card">
-
-            <div class="feature-icon">
-                🧠
-            </div>
-
-            <h3>
-                Personalized Study Plans
-            </h3>
-
+            <div class="feature-icon">🧠</div>
+            <h3>Adaptive AI</h3>
             <p>
-                Generate a study plan based on your
-                subjects, topics, available time and exam goals.
+                Your plan changes as your progress,
+                weaknesses and deadlines change.
             </p>
-
         </article>
 
-
-
         <article class="feature-card">
-
-            <div class="feature-icon">
-                📅
-            </div>
-
-            <h3>
-                Smart Calendar
-            </h3>
-
+            <div class="feature-icon">📚</div>
+            <h3>Smart Planning</h3>
             <p>
-                See study sessions, tests and important
-                dates in one organized calendar.
+                Subjects, topics, exams and available
+                time are combined into one strategy.
             </p>
-
         </article>
 
-
-
         <article class="feature-card">
-
-            <div class="feature-icon">
-                ⏱️
-            </div>
-
-            <h3>
-                Smart Timetable
-            </h3>
-
+            <div class="feature-icon">🔥</div>
+            <h3>Streaks & XP</h3>
             <p>
-                Turn your study goals into practical
-                daily sessions you can follow.
+                Build consistent study habits and
+                earn XP for meaningful progress.
             </p>
-
         </article>
 
-
-
         <article class="feature-card">
-
-            <div class="feature-icon">
-                🎯
-            </div>
-
-            <h3>
-                Exam Preparation
-            </h3>
-
+            <div class="feature-icon">🏆</div>
+            <h3>Competition</h3>
             <p>
-                Prepare for WAEC, NECO, school-based
-                tests and other assessments.
+                Compete globally or with friends
+                through XP, leagues and battles.
             </p>
-
-        </article>
-
-
-
-        <article class="feature-card">
-
-            <div class="feature-icon">
-                📄
-            </div>
-
-            <h3>
-                Notes & Summaries
-            </h3>
-
-            <p>
-                Organize important material and focus
-                on the information that matters most.
-            </p>
-
-        </article>
-
-
-
-        <article class="feature-card">
-
-            <div class="feature-icon">
-                🔥
-            </div>
-
-            <h3>
-                Progress Tracking
-            </h3>
-
-            <p>
-                Track your streak, score, completed
-                topics and study progress.
-            </p>
-
         </article>
 
     </div>
@@ -915,91 +188,47 @@ body.premium-home .premium-home-badge {
 </section>
 
 
-
-<!-- =========================
-     HOW IT WORKS
-========================= -->
-
-<section
-    class="how-it-works section"
-    id="how-it-works"
->
+<section class="how-it-works section" id="how-it-works">
 
     <div class="section-heading">
 
         <span class="eyebrow">
-            SIMPLE WORKFLOW
+            HOW IT WORKS
         </span>
 
         <h2>
-            How StudyMind AI works
+            Your studying becomes a system.
         </h2>
 
-        <p>
-            A clear path from your goals to your
-            daily study routine.
-        </p>
-
     </div>
-
-
 
     <div class="steps-grid">
 
         <article class="step-card">
-
-            <div class="step-number">
-                01
-            </div>
-
-            <h3>
-                Tell us about your studies
-            </h3>
-
+            <div class="step-number">01</div>
+            <h3>Tell StudyMind about you</h3>
             <p>
-                Select your curriculum, subjects,
-                topics, exam date and available study time.
+                Choose your curriculum, subjects,
+                topics, exams, goals and available time.
             </p>
-
         </article>
 
-
-
         <article class="step-card">
-
-            <div class="step-number">
-                02
-            </div>
-
-            <h3>
-                Let AI organize it
-            </h3>
-
+            <div class="step-number">02</div>
+            <h3>AI builds your strategy</h3>
             <p>
-                StudyMind AI turns your information
-                into priorities, sessions and a
-                structured timetable.
+                StudyMind prioritizes your workload,
+                schedules revision and creates breaks.
             </p>
-
         </article>
 
-
-
         <article class="step-card">
-
-            <div class="step-number">
-                03
-            </div>
-
-            <h3>
-                Study and track progress
-            </h3>
-
+            <div class="step-number">03</div>
+            <h3>Study and improve</h3>
             <p>
-                Study each topic, use the timer,
-                complete your topics and test yourself.
+                Complete sessions, earn XP, test yourself
+                and allow the AI to adapt your plan.
             </p>
-
         </article>
 
     </div>
@@ -1007,15 +236,7 @@ body.premium-home .premium-home-badge {
 </section>
 
 
-
-<!-- =========================
-     STUDY PLAN GENERATOR
-========================= -->
-
-<section
-    class="generator-section section"
-    id="generator"
->
+<section class="generator-section section" id="generator">
 
     <div class="section-heading left">
 
@@ -1024,151 +245,241 @@ body.premium-home .premium-home-badge {
         </span>
 
         <h2>
-            Create your study plan
+            Build your StudyMind profile.
         </h2>
 
         <p>
-            Enter your information below and
-            StudyMind AI will organize your plan.
+            Your study plan will be generated by AI
+            and displayed on your Dashboard.
         </p>
 
     </div>
 
 
-    <form
-        id="studyForm"
-        class="study-form"
-    >
+    <form id="studyForm" class="study-form">
 
+        <!-- CURRICULUM -->
 
-        <!-- CURRICULUM + EXAM -->
+        <div class="form-group">
 
-        <div class="form-grid">
+            <label for="curriculum">
+                Curriculum
+            </label>
 
-            <div class="form-group">
+            <select id="curriculum" required>
 
-                <label for="curriculum">
-                    Curriculum
-                </label>
+                <option value="">
+                    Select curriculum
+                </option>
 
-                <select
-                    id="curriculum"
-                    required
-                >
+                <option value="Nigerian Senior Secondary Curriculum">
+                    Nigerian Senior Secondary Curriculum
+                </option>
 
-                    <option value="">
-                        Select curriculum
-                    </option>
+                <option value="Nigerian Junior Secondary Curriculum">
+                    Nigerian Junior Secondary Curriculum
+                </option>
 
-                    <option value="Nigerian Senior Secondary Curriculum">
-                        Nigerian Senior Secondary Curriculum
-                    </option>
+                <option value="BECE">
+                    BECE
+                </option>
 
-                    <option value="WAEC">
-                        WAEC
-                    </option>
+                <option value="WAEC">
+                    WAEC
+                </option>
 
-                    <option value="NECO">
-                        NECO
-                    </option>
+                <option value="NECO">
+                    NECO
+                </option>
 
-                    <option value="JAMB">
-                        JAMB
-                    </option>
+                <option value="JAMB">
+                    JAMB
+                </option>
 
-                    <option value="Other">
-                        Other
-                    </option>
+                <option value="IGCSE">
+                    IGCSE
+                </option>
 
-                </select>
+                <option value="SAT">
+                    SAT
+                </option>
 
-            </div>
+                <option value="Other">
+                    Other
+                </option>
 
-
-
-            <div class="form-group">
-
-                <label for="examDate">
-                    Exam Date
-                </label>
-
-                <input
-                    type="date"
-                    id="examDate"
-                    required
-                >
-
-            </div>
+            </select>
 
         </div>
 
 
+        <!-- SUBJECT -->
 
-        <!-- SUBJECTS -->
+        <div
+            id="subjectSelector"
+            class="dynamic-section hidden"
+        >
 
-        <div class="form-group">
-
-            <label for="subjects">
-                Subjects
+            <label>
+                Select Subject
             </label>
 
             <input
-                type="text"
-                id="subjects"
-                placeholder="e.g. Mathematics, Physics, Chemistry"
-                required
+                type="search"
+                id="subjectSearch"
+                placeholder="Search subjects..."
             >
 
-            <small>
-                Enter your subjects separated by commas.
-                A separate topic space will automatically
-                appear for every subject.
-            </small>
+            <div
+                id="subjectOptions"
+                class="selection-grid"
+            ></div>
 
         </div>
 
 
+        <!-- TOPICS -->
 
-        <!-- DYNAMIC TOPICS -->
+        <div
+            id="topicSelector"
+            class="dynamic-section hidden"
+        >
 
-        <div class="form-group">
+            <div class="selector-header">
 
-            <label>
-                Topics for each subject
-            </label>
+                <div>
+                    <label>
+                        Select Topics
+                    </label>
 
-
-            <div
-                id="subjectTopicFields"
-                class="subject-topic-fields"
-            >
-
-                <div class="subject-topic-empty">
-
-                    Enter your subjects above and
-                    separate topic spaces will appear here.
-
+                    <p id="selectedSubjectLabel">
+                        Choose a subject.
+                    </p>
                 </div>
 
             </div>
 
+            <input
+                type="search"
+                id="topicSearch"
+                placeholder="Search topics..."
+            >
 
-            <small>
-                Enter each topic on a new line or
-                separate topics with commas.
-            </small>
+            <div
+                id="topicOptions"
+                class="selection-grid"
+            ></div>
+
+            <button
+                type="button"
+                id="customTopicButton"
+                class="outline-button"
+            >
+                + My topic isn't listed
+            </button>
+
+            <div
+                id="customTopicBox"
+                class="custom-topic-box hidden"
+            >
+
+                <input
+                    id="customSubject"
+                    type="text"
+                    placeholder="Subject"
+                >
+
+                <input
+                    id="customTopic"
+                    type="text"
+                    placeholder="Topic"
+                >
+
+                <button
+                    type="button"
+                    id="addCustomTopic"
+                    class="primary-button"
+                >
+                    Add Topic
+                </button>
+
+            </div>
 
         </div>
 
 
+        <!-- SELECTED ITEMS -->
 
-        <!-- OLD COMPATIBILITY FIELD -->
+        <div
+            id="selectedItems"
+            class="selected-items hidden"
+        ></div>
 
-        <textarea
-            id="topics"
-            hidden
-        ></textarea>
 
+        <!-- EXAM -->
+
+        <div class="form-divider">
+            <span>EXAM INFORMATION</span>
+        </div>
+
+
+        <div class="exam-list" id="examList">
+
+            <div class="exam-card">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>
+                            Exam / Test
+                        </label>
+
+                        <input
+                            class="exam-name"
+                            type="text"
+                            placeholder="e.g. WAEC Mathematics"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+                            Exam Date
+                        </label>
+
+                        <input
+                            class="exam-date"
+                            type="date"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="remove-exam"
+                    aria-label="Remove exam"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="addExam"
+            class="outline-button"
+        >
+            + Add another exam
+        </button>
 
 
         <!-- STUDY TIME -->
@@ -1177,101 +488,101 @@ body.premium-home .premium-home-badge {
 
             <div class="form-group">
 
-                <label for="hoursPerDay">
+                <label for="studyHours">
                     Available Study Hours Per Day
                 </label>
 
-                <select
-                    id="hoursPerDay"
-                    required
-                >
+                <select id="studyHours" required>
 
                     <option value="">
                         Select hours
                     </option>
 
-                    <option value="1">
-                        1 hour
-                    </option>
-
-                    <option value="2">
-                        2 hours
-                    </option>
-
-                    <option value="3">
-                        3 hours
-                    </option>
-
-                    <option value="4">
-                        4 hours
-                    </option>
-
-                    <option value="5">
-                        5 hours
-                    </option>
-
-                    <option value="6">
-                        6+ hours
-                    </option>
+                    <option value="1">1 hour</option>
+                    <option value="2">2 hours</option>
+                    <option value="3">3 hours</option>
+                    <option value="4">4 hours</option>
+                    <option value="5">5 hours</option>
+                    <option value="6">6+ hours</option>
 
                 </select>
 
             </div>
 
 
-
             <div class="form-group">
 
-                <label for="startTime">
-                    Preferred Study Start Time
+                <label for="difficulty">
+                    Study Intensity
                 </label>
 
-                <input
-                    type="time"
-                    id="startTime"
-                    value="16:00"
-                    required
-                >
+                <select id="difficulty">
+
+                    <option value="balanced">
+                        Balanced
+                    </option>
+
+                    <option value="light">
+                        Light
+                    </option>
+
+                    <option value="intensive">
+                        Intensive
+                    </option>
+
+                </select>
 
             </div>
 
         </div>
 
 
-
-        <!-- INTENSITY -->
+        <!-- GOAL -->
 
         <div class="form-group">
 
-            <label for="difficulty">
-                Study Intensity
+            <label for="studyGoal">
+                Main Study Goal
             </label>
 
-            <select id="difficulty">
-
-                <option value="balanced">
-                    Balanced
-                </option>
-
-                <option value="light">
-                    Light
-                </option>
-
-                <option value="intensive">
-                    Intensive
-                </option>
-
-            </select>
+            <input
+                id="studyGoal"
+                type="text"
+                placeholder="e.g. Score 100% in Mathematics"
+            >
 
         </div>
 
 
+        <!-- NOTIFICATIONS -->
 
-        <div
-            id="difficultySection"
-            class="difficulty-section"
-        ></div>
+        <div class="notification-consent">
 
+            <div>
+
+                <strong>
+                    Study reminders
+                </strong>
+
+                <p>
+                    Would you like StudyMind to remind you
+                    about study sessions, breaks and exams?
+                </p>
+
+            </div>
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    id="notifications"
+                >
+
+                <span></span>
+
+            </label>
+
+        </div>
 
 
         <button
@@ -1279,257 +590,50 @@ body.premium-home .premium-home-badge {
             id="generateButton"
             class="primary-button full-button"
         >
-            Generate My Plan
+            <span>Generate My AI Study Plan</span>
         </button>
 
     </form>
 
-
-
-    <div
-        id="studyPlan"
-        class="study-plan hidden"
-    ></div>
-
 </section>
-
 
 </main>
 
-
-
-<!-- =========================
-     PREMIUM CTA
-========================= -->
-
-<section
-    class="premium-cta-section"
-    id="premium"
->
-
-    <div class="premium-cta-card">
-
-        <div class="premium-cta-content">
-
-            <div class="premium-cta-icon">
-                💎
-            </div>
-
-
-            <span class="eyebrow">
-                <span id="premiumEyebrow">
-                    STUDYMIND PREMIUM
-                </span>
-            </span>
-
-
-            <h2 id="premiumTitle">
-                Take your studying further.
-            </h2>
-
-
-            <p id="premiumDescription">
-                Unlock more powerful StudyMind AI features,
-                deeper study support and more ways to stay
-                on top of your preparation.
-            </p>
-
-
-            <a
-                id="premiumButton"
-                class="premium-cta-button"
-                href="premium.html"
-            >
-                💎 Explore Premium
-                <span aria-hidden="true">→</span>
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================
-     CONTACT
-========================= -->
-
-<section
-    class="contact-section"
-    id="contact"
->
-
-    <div class="contact-container">
-
-        <div class="contact-header">
-
-            <span class="section-label">
-                CONTACT
-            </span>
-
-            <h2>
-                Get in Touch
-            </h2>
-
-            <p>
-                Have a question, suggestion, or need help
-                with StudyMind AI? We'd love to hear from you.
-            </p>
-
-        </div>
-
-
-
-        <div class="contact-cards">
-
-            <a
-                href="mailto:studymindaiofficial@gmail.com"
-                class="contact-card"
-            >
-
-                <div class="contact-icon">
-                    ✉️
-                </div>
-
-                <div class="contact-info">
-
-                    <span>
-                        Email
-                    </span>
-
-                    <strong>
-                        studymindaiofficial@gmail.com
-                    </strong>
-
-                </div>
-
-            </a>
-
-
-
-            <a
-                href="tel:08148165088"
-                class="contact-card"
-            >
-
-                <div class="contact-icon">
-                    📞
-                </div>
-
-                <div class="contact-info">
-
-                    <span>
-                        Phone
-                    </span>
-
-                    <strong>
-                        08148165088
-                    </strong>
-
-                </div>
-
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =========================
-     FOOTER
-========================= -->
 
 <footer class="site-footer">
 
     <div class="footer-content">
 
-        <div class="footer-brand">
-
-            <h3>
-                StudyMind AI
-            </h3>
+        <div>
+            <h3>StudyMind AI</h3>
 
             <p>
                 Plan smarter. Study consistently.
                 Progress with purpose.
             </p>
-
         </div>
-
-
 
         <div class="footer-links">
 
-            <a href="#home">
-                Home
-            </a>
-
-            <a href="#features">
-                Features
-            </a>
-
-            <a href="#how-it-works">
-                How It Works
-            </a>
-
-            <a href="#generator">
-                Create Plan
-            </a>
-
-            <a href="#contact">
-                Contact
-            </a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="ai-support.html">AI Support</a>
+            <a href="summarizer.html">Summarizer</a>
+            <a href="game-mode.html">Game Mode</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="premium.html">Premium</a>
 
         </div>
 
     </div>
 
-
-
     <div class="footer-bottom">
-
-        <p>
-            © 2026 StudyMind AI. All rights reserved.
-        </p>
-
+        © 2026 StudyMind AI. All rights reserved.
     </div>
 
 </footer>
 
 
-
-<!-- =========================================================
-     SUPABASE
-========================================================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-<!-- =========================================================
-     PREMIUM STATUS CHECK
-     
-     This does NOT grant Premium.
-     It only asks the secure backend whether the
-     currently authenticated account has an active Premium
-     subscription.
-========================================================= -->
-
-
-   
-
-
-<!-- =========================================================
-     EXISTING STUDYMIND JAVASCRIPT
-========================================================= -->
-
 <script src="script.js"></script>
 
-
 </body>
-
 </html>
