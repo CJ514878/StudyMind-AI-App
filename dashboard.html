@@ -1,581 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyMind AI — Dashboard</title>
 
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<style>
-:root{
-    --sm-bg:#0b1220;
-    --sm-card:#111b2e;
-    --sm-card2:#16233a;
-    --sm-text:#eef4ff;
-    --sm-muted:#9badc7;
-    --sm-blue:#4f8cff;
-    --sm-green:#35c98a;
-    --sm-purple:#8b6cff;
-    --sm-border:rgba(255,255,255,.08)
-}
+    <title>Dashboard — StudyMind AI</title>
 
-body{
-    background:var(--sm-bg);
-    color:var(--sm-text)
-}
+    <link
+        rel="stylesheet"
+        href="dashboard.css"
+    >
 
-.sm-wrap{
-    max-width:1250px;
-    margin:auto;
-    padding:28px 20px 60px
-}
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-.sm-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:18px;
-    margin-bottom:28px
-}
-
-.sm-brand{
-    font-size:25px;
-    font-weight:800
-}
-
-.sm-brand span{
-    color:var(--sm-blue)
-}
-
-.sm-actions{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap
-}
-
-.sm-btn{
-    border:0;
-    border-radius:12px;
-    padding:11px 16px;
-    background:var(--sm-card2);
-    color:var(--sm-text);
-    cursor:pointer;
-    font-weight:700
-}
-
-.sm-btn.primary{
-    background:var(--sm-blue)
-}
-
-.sm-btn.success{
-    background:var(--sm-green);
-    color:#071a13
-}
-
-.sm-btn:disabled{
-    opacity:.55;
-    cursor:not-allowed
-}
-
-.sm-hero{
-    background:linear-gradient(135deg,#111d33,#0f192b);
-    border:1px solid var(--sm-border);
-    border-radius:22px;
-    padding:26px;
-    margin-bottom:20px
-}
-
-.sm-hero h1{
-    margin:0 0 8px;
-    font-size:30px
-}
-
-.sm-muted{
-    color:var(--sm-muted)
-}
-
-.sm-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:15px;
-    margin-bottom:20px
-}
-
-.sm-stat,
-.sm-card{
-    background:var(--sm-card);
-    border:1px solid var(--sm-border);
-    border-radius:18px;
-    padding:20px
-}
-
-.sm-stat small{
-    display:block;
-    color:var(--sm-muted);
-    margin-bottom:8px
-}
-
-.sm-stat strong{
-    font-size:25px
-}
-
-.sm-main{
-    display:grid;
-    grid-template-columns:1.35fr .65fr;
-    gap:20px
-}
-
-.sm-card h2{
-    margin:0 0 15px
-}
-
-.sm-topic{
-    background:var(--sm-card2);
-    border-radius:15px;
-    padding:18px
-}
-
-.sm-topic-top{
-    display:flex;
-    justify-content:space-between;
-    gap:10px
-}
-
-.sm-topic h3{
-    margin:0 0 7px
-}
-
-.sm-badge{
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:12px;
-    font-weight:800;
-    background:rgba(79,140,255,.15);
-    color:#8db6ff;
-    white-space:nowrap
-}
-
-.sm-badge.done{
-    background:rgba(53,201,138,.15);
-    color:#62e3aa
-}
-
-.sm-timer{
-    text-align:center
-}
-
-.sm-clock{
-    font-size:58px;
-    font-weight:800;
-    letter-spacing:2px;
-    margin:10px 0 18px
-}
-
-.sm-select{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    background:#0d1728;
-    color:var(--sm-text);
-    border:1px solid var(--sm-border);
-    margin-bottom:12px
-}
-
-.sm-progress{
-    height:10px;
-    background:#0b1423;
-    border-radius:99px;
-    overflow:hidden
-}
-
-.sm-progress>div{
-    height:100%;
-    background:var(--sm-blue);
-    width:0
-}
-
-.sm-list{
-    display:grid;
-    gap:10px
-}
-
-.sm-item{
-    padding:13px 14px;
-    background:var(--sm-card2);
-    border-radius:12px;
-    display:flex;
-    justify-content:space-between;
-    gap:12px
-}
-
-.sm-check{
-    color:var(--sm-green);
-    font-weight:800
-}
-
-.sm-empty{
-    color:var(--sm-muted);
-    padding:10px 0
-}
-
-.sm-modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.7);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    z-index:99
-}
-
-.sm-modal.show{
-    display:flex
-}
-
-.sm-modal-box{
-    max-width:520px;
-    width:100%;
-    background:#101b2e;
-    border:1px solid var(--sm-border);
-    border-radius:22px;
-    padding:25px
-}
-
-.sm-calendar{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:6px
-}
-
-.sm-day{
-    min-height:55px;
-    background:var(--sm-card2);
-    border-radius:9px;
-    padding:7px;
-    font-size:12px
-}
-
-.sm-day.study{
-    outline:2px solid rgba(79,140,255,.45)
-}
-
-.sm-day.done{
-    outline:2px solid rgba(53,201,138,.55)
-}
-
-.sm-day.exam{
-    outline:2px solid rgba(255,170,60,.65)
-}
-
-.sm-day.rest{
-    outline:2px solid rgba(139,108,255,.55)
-}
-
-@media(max-width:900px){
-
-    .sm-grid{
-        grid-template-columns:repeat(2,1fr)
-    }
-
-    .sm-main{
-        grid-template-columns:1fr
-    }
-}
-
-@media(max-width:560px){
-
-    .sm-grid{
-        grid-template-columns:1fr
-    }
-
-    .sm-top{
-        align-items:flex-start;
-        flex-direction:column
-    }
-
-    .sm-clock{
-        font-size:46px
-    }
-}
-</style>
 </head>
+
 
 <body>
 
-<div class="sm-wrap">
 
-<header class="sm-top">
+<aside class="sidebar">
 
-    <div class="sm-brand">
+    <div class="brand">
         StudyMind <span>AI</span>
     </div>
 
-    <div class="sm-actions">
 
-        <button class="sm-btn" id="themeButton">
-            ◐ Theme
-        </button>
+    <nav>
 
-        <button class="sm-btn"
-                onclick="location.href='home.html'">
-            Home
-        </button>
+        <a
+            href="dashboard.html"
+            class="active"
+        >
+            <span>⌂</span>
+            Dashboard
+        </a>
 
-        <button class="sm-btn"
-                onclick="location.href='game-mode.html'">
+        <a href="schedule.html">
+            <span>◷</span>
+            Schedule
+        </a>
+
+        <a href="calendar.html">
+            <span>▦</span>
+            Calendar
+        </a>
+
+        <a href="ai-support.html">
+            <span>✦</span>
+            AI Support
+        </a>
+
+        <a href="ai-assistant.html">
+            <span>◉</span>
+            AI Assistant
+        </a>
+
+        <a href="summarizer.html">
+            <span>▤</span>
+            Summarizer
+        </a>
+
+        <a href="streak.html">
+            <span>🔥</span>
+            Study Streak
+        </a>
+
+        <a href="goals.html">
+            <span>◎</span>
+            Goals
+        </a>
+
+        <a href="rewards.html">
+            <span>🏆</span>
+            Rewards
+        </a>
+
+        <a href="leaderboard.html">
+            <span>♛</span>
+            Leaderboard
+        </a>
+
+        <a href="friends.html">
+            <span>♧</span>
+            Friends
+        </a>
+
+        <a href="game-mode.html">
+            <span>⚔</span>
             Game Mode
+        </a>
+
+        <a href="premium.html">
+            <span>✦</span>
+            Premium
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="feedback.html">
+            Feedback
+        </a>
+
+        <a href="settings.html">
+            Settings
+        </a>
+
+        <button id="logoutButton">
+            Log out
         </button>
 
     </div>
-
-</header>
-
-
-<section class="sm-hero">
-
-    <h1 id="greeting">
-        Good evening 👋
-    </h1>
-
-    <div class="sm-muted">
-        Stay consistent. One focused session at a time.
-    </div>
-
-</section>
-
-
-<section class="sm-grid">
-
-    <div class="sm-stat">
-        <small>Weekly Hours</small>
-        <strong id="weeklyHours">0h</strong>
-    </div>
-
-    <div class="sm-stat">
-        <small>Days Left</small>
-        <strong id="daysLeft">—</strong>
-    </div>
-
-    <div class="sm-stat">
-        <small>Daily Goal</small>
-        <strong id="dailyGoal">—</strong>
-    </div>
-
-    <div class="sm-stat">
-        <small>Study Score</small>
-        <strong id="studyScore">0</strong>
-    </div>
-
-</section>
-
-
-<div class="sm-main">
-
-<main>
-
-<section class="sm-card" id="currentTopicSection">
-
-    <h2>Current Topic</h2>
-
-    <div id="currentTopic">
-
-        <div class="sm-empty">
-            Create a study plan from the Home page to begin.
-        </div>
-
-    </div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Progress</h2>
-
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-
-        <span id="progressCount">
-            0 / 0 topics
-        </span>
-
-        <b id="progressPercent">
-            0%
-        </b>
-
-    </div>
-
-    <div class="sm-progress">
-
-        <div id="progressBar"></div>
-
-    </div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Subjects & Topics</h2>
-
-    <div id="subjectList" class="sm-list"></div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Schedule</h2>
-
-    <div id="scheduleList" class="sm-list"></div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Calendar</h2>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-
-        <button class="sm-btn" id="previousMonth">
-            ‹
-        </button>
-
-        <b id="calendarMonth"></b>
-
-        <button class="sm-btn" id="nextMonth">
-            ›
-        </button>
-
-    </div>
-
-    <div class="sm-calendar" id="calendar"></div>
-
-</section>
-
-</main>
-
-
-<aside>
-
-<section class="sm-card sm-timer">
-
-    <h2>Study Timer</h2>
-
-    <select id="timerDuration" class="sm-select">
-
-        <option value="1500">
-            25 minutes
-        </option>
-
-        <option value="2700">
-            45 minutes
-        </option>
-
-        <option value="3600">
-            60 minutes
-        </option>
-
-    </select>
-
-    <div class="sm-clock" id="studyTimer">
-        25:00
-    </div>
-
-    <div class="sm-actions" style="justify-content:center">
-
-        <button class="sm-btn primary"
-                id="startTimerButton">
-            Start
-        </button>
-
-        <button class="sm-btn"
-                id="pauseTimerButton">
-            Pause
-        </button>
-
-        <button class="sm-btn"
-                id="resetTimerButton">
-            Reset
-        </button>
-
-    </div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Study Streak</h2>
-
-    <div style="font-size:34px;font-weight:800"
-         id="streakValue">
-        0 🔥
-    </div>
-
-    <div class="sm-muted">
-        Keep studying regularly.
-    </div>
-
-</section>
-
-
-<section class="sm-card" style="margin-top:20px">
-
-    <h2>Daily Challenge</h2>
-
-    <div id="dailyChallengeText"
-         class="sm-muted">
-        Complete your current topic today.
-    </div>
-
-</section>
 
 </aside>
 
-</div>
 
-</div>
+<main class="dashboard">
 
+    <header class="dashboard-header">
 
-<!-- KNOWLEDGE CHECK POPUP -->
+        <div>
 
-<div class="sm-modal" id="knowledgeModal">
+            <p class="welcome-label">
+                YOUR STUDY COMMAND CENTER
+            </p>
 
-    <div class="sm-modal-box">
+            <h1>
+                Good morning,
+                <span id="username">
+                    Student
+                </span>
+                👋
+            </h1>
 
-        <h2>
-            🧠 Knowledge Check Ready
-        </h2>
-
-        <p id="knowledgeModalText"
-           class="sm-muted">
-            You marked this topic as finished.
-            Test what you learned with 5 questions.
-        </p>
-
-        <div class="sm-actions">
-
-            <button class="sm-btn"
-                    id="closeKnowledgeModal">
-                Not Yet
-            </button>
-
-            <button class="sm-btn primary"
-                    id="startKnowledgeCheck">
-                Start Knowledge Check
-            </button>
+            <p id="aiGreeting">
+                Your AI study strategy is ready.
+            </p>
 
         </div>
 
-    </div>
 
-</div>
+        <div class="header-right">
+
+            <div class="xp-pill">
+                <span>⚡</span>
+                <strong id="headerXP">
+                    0 XP
+                </strong>
+            </div>
+
+            <div class="streak-pill">
+                🔥
+                <strong id="headerStreak">
+                    0
+                </strong>
+            </div>
+
+            <div class="avatar" id="avatar">
+                S
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <section class="stats-grid">
+
+        <article class="stat-card">
+
+            <span>
+                Today's Goal
+            </span>
+
+            <strong id="todayGoal">
+                0 min
+            </strong>
+
+            <div class="progress">
+                <span id="todayGoalProgress"></span>
+            </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <span>
+                Study Progress
+            </span>
+
+            <strong id="studyProgress">
+                0%
+            </strong>
+
+            <div class="progress">
+                <span id="studyProgressBar"></span>
+            </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <span>
+                XP
+            </span>
+
+            <strong id="totalXP">
+                0
+            </strong>
+
+            <small>
+                Keep learning to level up
+            </small>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <span>
+                Streak
+            </span>
+
+            <strong id="streak">
+                0 days
+            </strong>
+
+            <small id="streakMessage">
+                Start your first session
+            </small>
+
+        </article>
+
+    </section>
+
+
+    <section class="dashboard-grid">
+
+
+        <!-- TODAY -->
+
+        <article class="panel today-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        TODAY
+                    </span>
+
+                    <h2>
+                        Your AI Study Plan
+                    </h2>
+
+                </div>
+
+                <button
+                    id="refreshPlan"
+                    class="small-button"
+                >
+                    Rebalance
+                </button>
+
+            </div>
+
+
+            <div id="todaySchedule">
+
+                <div class="loading">
+                    Loading your plan...
+                </div>
+
+            </div>
+
+        </article>
+
+
+        <!-- AI INSIGHT -->
+
+        <article class="panel ai-panel">
+
+            <div class="ai-icon">
+                ✦
+            </div>
+
+            <span class="panel-label">
+                STUDYMIND AI
+            </span>
+
+            <h2>
+                Your next best move
+            </h2>
+
+            <p id="aiRecommendation">
+                Analyzing your study data...
+            </p>
+
+            <button
+                class="panel-button"
+                onclick="location.href='ai-assistant.html'"
+            >
+                Ask AI
+            </button>
+
+        </article>
+
+
+        <!-- EXAMS -->
+
+        <article class="panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        UPCOMING
+                    </span>
+
+                    <h2>
+                        Exams
+                    </h2>
+
+                </div>
+
+                <a
+                    href="schedule.html"
+                    class="text-link"
+                >
+                    View all
+                </a>
+
+            </div>
+
+            <div id="examList">
+                Loading...
+            </div>
+
+        </article>
+
+
+        <!-- QUESTS -->
+
+        <article class="panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        DAILY
+                    </span>
+
+                    <h2>
+                        AI Quests
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <div id="dailyQuests">
+                Loading today's quests...
+            </div>
+
+        </article>
+
+
+        <!-- XP -->
+
+        <article class="panel xp-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        PROGRESSION
+                    </span>
+
+                    <h2>
+                        XP Journey
+                    </h2>
+
+                </div>
+
+                <a
+                    href="rewards.html"
+                    class="text-link"
+                >
+                    Rewards
+                </a>
+
+            </div>
+
+            <div class="level-number">
+                <span id="level">
+                    1
+                </span>
+            </div>
+
+            <div class="level-progress">
+                <span id="levelProgress"></span>
+            </div>
+
+            <p id="levelText">
+                0 / 100 XP to Level 2
+            </p>
+
+        </article>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <article class="panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        QUICK ACTIONS
+                    </span>
+
+                    <h2>
+                        Keep moving
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-actions">
+
+                <a href="ai-support.html">
+                    ✦
+                    <span>Ask AI</span>
+                </a>
+
+                <a href="summarizer.html">
+                    📄
+                    <span>Summarize</span>
+                </a>
+
+                <a href="game-mode.html">
+                    ⚔
+                    <span>Battle</span>
+                </a>
+
+                <a href="streak.html">
+                    🔥
+                    <span>Streak</span>
+                </a>
+
+            </div>
+
+        </article>
+
+    </section>
+
+</main>
 
 
 <script src="dashboard.js"></script>
