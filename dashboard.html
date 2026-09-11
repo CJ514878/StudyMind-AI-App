@@ -1,479 +1,591 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>Dashboard — StudyMind AI</title>
+<title>Dashboard — StudyMind AI</title>
 
-    <link
-        rel="stylesheet"
-        href="dashboard.css"
-    >
+<link
+    rel="stylesheet"
+    href="dashboard.css"
+>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+```
 
 </head>
 
-
 <body>
-
 
 <aside class="sidebar">
 
-    <div class="brand">
-        StudyMind <span>AI</span>
-    </div>
+```
+<div class="brand">
+    StudyMind <span>AI</span>
+</div>
 
 
-    <nav>
+<nav>
 
-        <a
-            href="dashboard.html"
-            class="active"
-        >
-            <span>⌂</span>
-            Dashboard
-        </a>
-
-        <a href="schedule.html">
-            <span>◷</span>
-            Schedule
-        </a>
-
-        <a href="calendar.html">
-            <span>▦</span>
-            Calendar
-        </a>
-
-        <a href="ai-support.html">
-            <span>✦</span>
-            AI Support
-        </a>
-
-        <a href="ai-assistant.html">
-            <span>◉</span>
-            AI Assistant
-        </a>
-
-        <a href="summarizer.html">
-            <span>▤</span>
-            Summarizer
-        </a>
-
-        <a href="streak.html">
-            <span>🔥</span>
-            Study Streak
-        </a>
-
-        <a href="goals.html">
-            <span>◎</span>
-            Goals
-        </a>
-
-        <a href="rewards.html">
-            <span>🏆</span>
-            Rewards
-        </a>
-
-        <a href="leaderboard.html">
-            <span>♛</span>
-            Leaderboard
-        </a>
-
-        <a href="friends.html">
-            <span>♧</span>
-            Friends
-        </a>
-
-        <a href="game-mode.html">
-            <span>⚔</span>
-            Game Mode
-        </a>
-
-        <a href="premium.html">
-            <span>✦</span>
-            Premium
-        </a>
-
-    </nav>
+    <a
+        href="dashboard.html"
+        class="active"
+    >
+        <span>⌂</span>
+        Dashboard
+    </a>
 
 
-    <div class="sidebar-bottom">
+    <!-- STUDY TIMER -->
 
-        <a href="feedback.html">
-            Feedback
-        </a>
+    <a href="study-timer.html">
+        <span>◷</span>
+        Study Timer
+    </a>
 
-        <a href="settings.html">
-            Settings
-        </a>
 
-        <button id="logoutButton">
-            Log out
-        </button>
+    <a href="schedule.html">
+        <span>◷</span>
+        Schedule
+    </a>
 
-    </div>
+    <a href="calendar.html">
+        <span>▦</span>
+        Calendar
+    </a>
+
+    <a href="ai-support.html">
+        <span>✦</span>
+        AI Support
+    </a>
+
+    <a href="ai-assistant.html">
+        <span>◉</span>
+        AI Assistant
+    </a>
+
+    <a href="summarizer.html">
+        <span>▤</span>
+        Summarizer
+    </a>
+
+    <a href="streak.html">
+        <span>🔥</span>
+        Study Streak
+    </a>
+
+    <a href="goals.html">
+        <span>◎</span>
+        Goals
+    </a>
+
+    <a href="rewards.html">
+        <span>🏆</span>
+        Rewards
+    </a>
+
+    <a href="leaderboard.html">
+        <span>♛</span>
+        Leaderboard
+    </a>
+
+    <a href="friends.html">
+        <span>♧</span>
+        Friends
+    </a>
+
+    <a href="game-mode.html">
+        <span>⚔</span>
+        Game Mode
+    </a>
+
+    <a href="premium.html">
+        <span>✦</span>
+        Premium
+    </a>
+
+</nav>
+
+
+<div class="sidebar-bottom">
+
+    <a href="feedback.html">
+        Feedback
+    </a>
+
+    <a href="settings.html">
+        Settings
+    </a>
+
+    <button id="logoutButton">
+        Log out
+    </button>
+
+</div>
+```
 
 </aside>
 
-
 <main class="dashboard">
 
-    <header class="dashboard-header">
+```
+<header class="dashboard-header">
 
-        <div>
+    <div>
 
-            <p class="welcome-label">
-                YOUR STUDY COMMAND CENTER
-            </p>
+        <p class="welcome-label">
+            YOUR STUDY COMMAND CENTER
+        </p>
 
-            <h1>
-                Good morning,
-                <span id="username">
-                    Student
-                </span>
-                👋
-            </h1>
+        <h1>
+            Good morning,
+            <span id="username">
+                Student
+            </span>
+            👋
+        </h1>
 
-            <p id="aiGreeting">
-                Your AI study strategy is ready.
-            </p>
+        <p id="aiGreeting">
+            Your AI study strategy is ready.
+        </p>
 
+    </div>
+
+
+    <div class="header-right">
+
+        <div class="xp-pill">
+            <span>⚡</span>
+            <strong id="headerXP">
+                0 XP
+            </strong>
         </div>
 
-
-        <div class="header-right">
-
-            <div class="xp-pill">
-                <span>⚡</span>
-                <strong id="headerXP">
-                    0 XP
-                </strong>
-            </div>
-
-            <div class="streak-pill">
-                🔥
-                <strong id="headerStreak">
-                    0
-                </strong>
-            </div>
-
-            <div class="avatar" id="avatar">
-                S
-            </div>
-
-        </div>
-
-    </header>
-
-
-    <section class="stats-grid">
-
-        <article class="stat-card">
-
-            <span>
-                Today's Goal
-            </span>
-
-            <strong id="todayGoal">
-                0 min
-            </strong>
-
-            <div class="progress">
-                <span id="todayGoalProgress"></span>
-            </div>
-
-        </article>
-
-
-        <article class="stat-card">
-
-            <span>
-                Study Progress
-            </span>
-
-            <strong id="studyProgress">
-                0%
-            </strong>
-
-            <div class="progress">
-                <span id="studyProgressBar"></span>
-            </div>
-
-        </article>
-
-
-        <article class="stat-card">
-
-            <span>
-                XP
-            </span>
-
-            <strong id="totalXP">
+        <div class="streak-pill">
+            🔥
+            <strong id="headerStreak">
                 0
             </strong>
+        </div>
 
-            <small>
-                Keep learning to level up
-            </small>
+        <div class="avatar" id="avatar">
+            S
+        </div>
 
-        </article>
+    </div>
 
-
-        <article class="stat-card">
-
-            <span>
-                Streak
-            </span>
-
-            <strong id="streak">
-                0 days
-            </strong>
-
-            <small id="streakMessage">
-                Start your first session
-            </small>
-
-        </article>
-
-    </section>
+</header>
 
 
-    <section class="dashboard-grid">
+<section class="stats-grid">
+
+    <article class="stat-card">
+
+        <span>
+            Today's Goal
+        </span>
+
+        <strong id="todayGoal">
+            0 min
+        </strong>
+
+        <div class="progress">
+            <span id="todayGoalProgress"></span>
+        </div>
+
+    </article>
 
 
-        <!-- TODAY -->
+    <article class="stat-card">
 
-        <article class="panel today-panel">
+        <span>
+            Study Progress
+        </span>
 
-            <div class="panel-heading">
+        <strong id="studyProgress">
+            0%
+        </strong>
 
-                <div>
+        <div class="progress">
+            <span id="studyProgressBar"></span>
+        </div>
 
-                    <span class="panel-label">
-                        TODAY
-                    </span>
+    </article>
 
-                    <h2>
-                        Your AI Study Plan
-                    </h2>
 
-                </div>
+    <article class="stat-card">
+
+        <span>
+            XP
+        </span>
+
+        <strong id="totalXP">
+            0
+        </strong>
+
+        <small>
+            Keep learning to level up
+        </small>
+
+    </article>
+
+
+    <article class="stat-card">
+
+        <span>
+            Streak
+        </span>
+
+        <strong id="streak">
+            0 days
+        </strong>
+
+        <small id="streakMessage">
+            Start your first session
+        </small>
+
+    </article>
+
+</section>
+
+
+<section class="dashboard-grid">
+
+
+    <!-- TODAY -->
+
+    <article class="panel today-panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    TODAY
+                </span>
+
+                <h2>
+                    Your AI Study Plan
+                </h2>
+
+            </div>
+
+            <button
+                id="refreshPlan"
+                class="small-button"
+            >
+                Rebalance
+            </button>
+
+        </div>
+
+
+        <div id="todaySchedule">
+
+            <div class="loading">
+                Loading your plan...
+            </div>
+
+        </div>
+
+    </article>
+
+
+    <!-- STUDY TIMER -->
+
+    <article class="panel timer-panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    STUDY TIMER
+                </span>
+
+                <h2>
+                    Focus Session
+                </h2>
+
+            </div>
+
+            <a
+                href="study-timer.html"
+                class="text-link"
+            >
+                Full Timer
+            </a>
+
+        </div>
+
+
+        <div class="dashboard-timer">
+
+            <div
+                id="dashboardTimerDisplay"
+                class="timer-display"
+            >
+                25:00
+            </div>
+
+
+            <div
+                id="dashboardTimerStatus"
+                class="timer-status"
+            >
+                Ready to study
+            </div>
+
+
+            <div class="timer-presets">
 
                 <button
-                    id="refreshPlan"
-                    class="small-button"
+                    type="button"
+                    class="timer-preset"
+                    data-duration="1500"
                 >
-                    Rebalance
+                    25 min
+                </button>
+
+                <button
+                    type="button"
+                    class="timer-preset"
+                    data-duration="2700"
+                >
+                    45 min
+                </button>
+
+                <button
+                    type="button"
+                    class="timer-preset"
+                    data-duration="3600"
+                >
+                    60 min
                 </button>
 
             </div>
 
 
-            <div id="todaySchedule">
+            <div class="timer-controls">
 
-                <div class="loading">
-                    Loading your plan...
-                </div>
-
-            </div>
-
-        </article>
-
-
-        <!-- AI INSIGHT -->
-
-        <article class="panel ai-panel">
-
-            <div class="ai-icon">
-                ✦
-            </div>
-
-            <span class="panel-label">
-                STUDYMIND AI
-            </span>
-
-            <h2>
-                Your next best move
-            </h2>
-
-            <p id="aiRecommendation">
-                Analyzing your study data...
-            </p>
-
-            <button
-                class="panel-button"
-                onclick="location.href='ai-assistant.html'"
-            >
-                Ask AI
-            </button>
-
-        </article>
-
-
-        <!-- EXAMS -->
-
-        <article class="panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        UPCOMING
-                    </span>
-
-                    <h2>
-                        Exams
-                    </h2>
-
-                </div>
-
-                <a
-                    href="schedule.html"
-                    class="text-link"
+                <button
+                    type="button"
+                    id="dashboardTimerStart"
+                    class="panel-button"
                 >
-                    View all
-                </a>
+                    Start
+                </button>
 
-            </div>
-
-            <div id="examList">
-                Loading...
-            </div>
-
-        </article>
-
-
-        <!-- QUESTS -->
-
-        <article class="panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        DAILY
-                    </span>
-
-                    <h2>
-                        AI Quests
-                    </h2>
-
-                </div>
-
-            </div>
-
-            <div id="dailyQuests">
-                Loading today's quests...
-            </div>
-
-        </article>
-
-
-        <!-- XP -->
-
-        <article class="panel xp-panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        PROGRESSION
-                    </span>
-
-                    <h2>
-                        XP Journey
-                    </h2>
-
-                </div>
-
-                <a
-                    href="rewards.html"
-                    class="text-link"
+                <button
+                    type="button"
+                    id="dashboardTimerReset"
+                    class="small-button"
                 >
-                    Rewards
-                </a>
+                    Reset
+                </button>
 
             </div>
 
-            <div class="level-number">
-                <span id="level">
-                    1
+        </div>
+
+    </article>
+
+
+    <!-- AI INSIGHT -->
+
+    <article class="panel ai-panel">
+
+        <div class="ai-icon">
+            ✦
+        </div>
+
+        <span class="panel-label">
+            STUDYMIND AI
+        </span>
+
+        <h2>
+            Your next best move
+        </h2>
+
+        <p id="aiRecommendation">
+            Analyzing your study data...
+        </p>
+
+        <button
+            class="panel-button"
+            onclick="location.href='ai-assistant.html'"
+        >
+            Ask AI
+        </button>
+
+    </article>
+
+
+    <!-- EXAMS -->
+
+    <article class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    UPCOMING
                 </span>
-            </div>
 
-            <div class="level-progress">
-                <span id="levelProgress"></span>
-            </div>
-
-            <p id="levelText">
-                0 / 100 XP to Level 2
-            </p>
-
-        </article>
-
-
-        <!-- QUICK ACTIONS -->
-
-        <article class="panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        QUICK ACTIONS
-                    </span>
-
-                    <h2>
-                        Keep moving
-                    </h2>
-
-                </div>
+                <h2>
+                    Exams
+                </h2>
 
             </div>
 
+            <a
+                href="schedule.html"
+                class="text-link"
+            >
+                View all
+            </a>
 
-            <div class="quick-actions">
+        </div>
 
-                <a href="ai-support.html">
-                    ✦
-                    <span>Ask AI</span>
-                </a>
+        <div id="examList">
+            Loading...
+        </div>
 
-                <a href="summarizer.html">
-                    📄
-                    <span>Summarize</span>
-                </a>
+    </article>
 
-                <a href="game-mode.html">
-                    ⚔
-                    <span>Battle</span>
-                </a>
 
-                <a href="streak.html">
-                    🔥
-                    <span>Streak</span>
-                </a>
+    <!-- QUESTS -->
+
+    <article class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    DAILY
+                </span>
+
+                <h2>
+                    AI Quests
+                </h2>
 
             </div>
 
-        </article>
+        </div>
 
-    </section>
+        <div id="dailyQuests">
+            Loading today's quests...
+        </div>
+
+    </article>
+
+
+    <!-- XP -->
+
+    <article class="panel xp-panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    PROGRESSION
+                </span>
+
+                <h2>
+                    XP Journey
+                </h2>
+
+            </div>
+
+            <a
+                href="rewards.html"
+                class="text-link"
+            >
+                Rewards
+            </a>
+
+        </div>
+
+        <div class="level-number">
+            <span id="level">
+                1
+            </span>
+        </div>
+
+        <div class="level-progress">
+            <span id="levelProgress"></span>
+        </div>
+
+        <p id="levelText">
+            0 / 100 XP to Level 2
+        </p>
+
+    </article>
+
+
+    <!-- QUICK ACTIONS -->
+
+    <article class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+
+                <span class="panel-label">
+                    QUICK ACTIONS
+                </span>
+
+                <h2>
+                    Keep moving
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="quick-actions">
+
+            <a href="ai-support.html">
+                ✦
+                <span>Ask AI</span>
+            </a>
+
+            <a href="summarizer.html">
+                📄
+                <span>Summarize</span>
+            </a>
+
+            <a href="game-mode.html">
+                ⚔
+                <span>Battle</span>
+            </a>
+
+            <a href="streak.html">
+                🔥
+                <span>Streak</span>
+            </a>
+
+        </div>
+
+    </article>
+
+</section>
+```
 
 </main>
-
 
 <script src="dashboard.js"></script>
 
