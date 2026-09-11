@@ -1760,13 +1760,8 @@ function displayLimitMessage() {
 ========================================================= */
 
 function openPremiumMessage() {
-
-    alert(
-        "Premium access will be available soon."
-    );
-
+    window.location.href = "premium.html";
 }
-
 
 /* =========================================================
    THEME
