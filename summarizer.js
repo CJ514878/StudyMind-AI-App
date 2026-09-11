@@ -339,13 +339,28 @@ function updateUsageUI() {
 /* =========================================================
    CHECK LIMIT
 ========================================================= */
+function isPremiumUser() {
+
+    const value =
+        localStorage.getItem("studyMindPremium");
+
+    return (
+        value === "true" ||
+        value === "1" ||
+        value === "premium"
+    );
+}
+
 
 function hasReachedSummaryLimit() {
+
+    if (isPremiumUser()) {
+        return false;
+    }
 
     return getSummaryCount() >= FREE_SUMMARY_LIMIT;
 
 }
-
 
 /* =========================================================
    RECORD SUMMARY
