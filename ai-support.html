@@ -1,551 +1,575 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
 
-```
-<meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <title>AI Support | StudyMind AI</title>
 
-<title>
-    StudyMind AI — AI Support
-</title>
+    <link
+        rel="stylesheet"
+        href="ai-support.css"
+    >
 
-<link
-    rel="stylesheet"
-    href="style.css"
->
-```
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 
-<div class="ai-support-page">
+<div class="app-shell">
 
-```
-<!-- =====================================================
-     NAVIGATION
-====================================================== -->
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
 
-<nav class="ai-navbar">
+    <aside class="sidebar">
 
-    <div class="ai-logo">
-        StudyMind AI
-    </div>
+        <div class="brand">
+            <div class="brand-icon">S</div>
 
-
-    <div class="ai-nav-links">
-
-        <button
-            type="button"
-            onclick="openHome()"
-        >
-            Home
-        </button>
-
-
-        <button
-            type="button"
-            class="new-plan-button"
-            onclick="openNewStudyPlan()"
-        >
-            + New Study Plan
-        </button>
-
-
-        <button
-            type="button"
-            onclick="openSummarizer()"
-        >
-            Summarizer
-        </button>
-
-
-        <button
-            type="button"
-            onclick="openStudyStreak()"
-        >
-            Study Streak
-        </button>
-
-
-        <button
-            type="button"
-            onclick="openStudyScore()"
-        >
-            Study Score
-        </button>
-
-
-        <div class="ai-nav-divider"></div>
-
-
-        <button
-            type="button"
-            id="themeButton"
-        >
-            🌙 Dark Mode
-        </button>
-
-
-        <button
-            type="button"
-            class="logout-button"
-            onclick="logoutStudyMind()"
-        >
-            Logout
-        </button>
-
-    </div>
-
-</nav>
-
-
-
-<!-- =====================================================
-     MAIN CONTENT
-====================================================== -->
-
-<main class="ai-support-container">
-
-
-    <!-- =================================================
-         HERO
-    ================================================== -->
-
-    <section class="ai-support-hero">
-
-        <div class="ai-icon">
-            🤖
-        </div>
-
-
-        <h1>
-            AI Study Support
-        </h1>
-
-
-        <p>
-            Get personalized help based on your study plan,
-            progress, subjects, topics and revision needs.
-        </p>
-
-    </section>
-
-
-
-    <!-- =================================================
-         AI USAGE
-    ================================================== -->
-
-    <div class="ai-usage-card">
-
-        <span>
-            🤖
-        </span>
-
-        <strong>
-            AI Questions
-        </strong>
-
-        <span id="aiCountBadge">
-            0/5 used
-        </span>
-
-    </div>
-
-
-
-    <!-- =================================================
-         QUICK AI ACTIONS
-    ================================================== -->
-
-    <section class="ai-quick-actions">
-
-
-        <!-- WHAT SHOULD I STUDY NEXT -->
-
-        <button
-            type="button"
-            class="ai-action-button"
-            onclick="useQuickQuestion('What should I study next based on my current study plan and progress?')"
-        >
-
-            <span class="ai-action-icon">
-                📚
-            </span>
-
-            <strong>
-                What should I study next?
-            </strong>
-
-            <small>
-                Find the best next topic based on your study plan.
-            </small>
-
-        </button>
-
-
-
-        <!-- WHICH TOPICS -->
-
-        <button
-            type="button"
-            class="ai-action-button"
-            onclick="useQuickQuestion('Which topics should I focus on most based on my progress and upcoming tests?')"
-        >
-
-            <span class="ai-action-icon">
-                🎯
-            </span>
-
-            <strong>
-                Which topics should I focus on?
-            </strong>
-
-            <small>
-                Identify the topics that need the most attention.
-            </small>
-
-        </button>
-
-
-
-        <!-- CURRENT TOPIC -->
-
-        <button
-            type="button"
-            class="ai-action-button"
-            onclick="useQuickQuestion('Help me revise my current topic. Give me a focused revision plan and key points I should remember.')"
-        >
-
-            <span class="ai-action-icon">
-                🧠
-            </span>
-
-            <strong>
-                Help me revise my current topic
-            </strong>
-
-            <small>
-                Get focused revision help for your current topic.
-            </small>
-
-        </button>
-
-
-
-        <!-- IMPROVEMENT -->
-
-        <button
-            type="button"
-            class="ai-action-button"
-            onclick="useQuickQuestion('How can I improve my study progress based on my current study plan and completed topics?')"
-        >
-
-            <span class="ai-action-icon">
-                📈
-            </span>
-
-            <strong>
-                How can I improve?
-            </strong>
-
-            <small>
-                Get practical advice for improving your progress.
-            </small>
-
-        </button>
-
-
-    </section>
-
-
-
-    <!-- =================================================
-         PROGRESS ANALYSIS
-    ================================================== -->
-
-    <section class="ai-chat-card">
-
-
-        <div class="ai-chat-header">
-
-            <div class="ai-chat-title">
-
-                <div class="ai-chat-title-icon">
-                    📊
-                </div>
-
-
-                <div>
-
-                    <h2>
-                        Progress Analysis
-                    </h2>
-
-                    <p>
-                        Understand how you're doing
-                    </p>
-
-                </div>
-
+            <div>
+                <h2>StudyMind</h2>
+                <span>AI Learning Platform</span>
             </div>
-
         </div>
 
+        <nav class="sidebar-nav">
 
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
 
-        <!-- RESPONSE -->
+            <a href="schedule.html">
+                <span>☷</span>
+                Schedule
+            </a>
 
-        <div
-            class="ai-response"
-            id="aiAdviceText"
-        >
+            <a href="calendar.html">
+                <span>▣</span>
+                Calendar
+            </a>
 
-            Click
-            <strong>
-                "Analyze My Progress"
-            </strong>
-            to get personalized study advice.
-
-        </div>
-
-
-
-        <!-- ACTION -->
-
-        <div class="ai-input-area">
-
-            <button
-                type="button"
-                class="premium-button"
-                id="analyzeProgressButton"
+            <a
+                href="ai-support.html"
+                class="active"
             >
-                🔍 Analyze My Progress
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="ai-assistant.html">
+                <span>◈</span>
+                AI Assistant
+            </a>
+
+            <a href="summarizer.html">
+                <span>▤</span>
+                Summarizer
+            </a>
+
+            <a href="study-streak.html">
+                <span>↗</span>
+                Study Streak
+            </a>
+
+            <a href="goals.html">
+                <span>◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span>◆</span>
+                Rewards
+            </a>
+
+            <a href="leaderboard.html">
+                <span>♛</span>
+                Leaderboard
+            </a>
+
+            <a href="friends.html">
+                <span>♧</span>
+                Friends
+            </a>
+
+            <a href="game-mode.html">
+                <span>⚔</span>
+                Game Mode
+            </a>
+
+            <a href="premium.html" class="premium-link">
+                <span>✦</span>
+                Premium
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <a href="#">
+                <span>?</span>
+                Feedback
+            </a>
+
+            <a href="#">
+                <span>⚙</span>
+                Settings
+            </a>
+
+            <button id="logoutButton">
+                <span>↪</span>
+                Log out
             </button>
 
         </div>
 
-
-    </section>
-
+    </aside>
 
 
-    <!-- =================================================
-         AI ASSISTANT
-    ================================================== -->
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
 
-    <section
-        class="ai-chat-card"
-        style="margin-top: 24px;"
-    >
+    <main class="main-content">
 
+        <!-- TOP BAR -->
 
-        <!-- CHAT HEADER -->
+        <header class="topbar">
 
-        <div class="ai-chat-header">
-
-            <div class="ai-chat-title">
-
-                <div class="ai-chat-title-icon">
-                    🤖
+            <div>
+                <div class="eyebrow">
+                    STUDYMIND AI SUPPORT
                 </div>
 
+                <h1>
+                    Your AI study partner.
+                </h1>
+
+                <p>
+                    Ask questions, understand difficult concepts,
+                    and get personalized guidance based on your study plan.
+                </p>
+            </div>
+
+            <div class="profile-area">
+
+                <div class="profile-text">
+                    <strong id="username">
+                        Student
+                    </strong>
+
+                    <span>
+                        AI Learning Workspace
+                    </span>
+                </div>
+
+                <div
+                    class="avatar"
+                    id="avatar"
+                >
+                    S
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             AI STATUS
+        ================================================== -->
+
+        <section class="ai-status">
+
+            <div class="ai-status-left">
+
+                <div class="ai-orb">
+                    <span>✦</span>
+                </div>
 
                 <div>
 
-                    <h2>
-                        Ask StudyMind AI
-                    </h2>
+                    <strong>
+                        StudyMind AI
+                    </strong>
 
-                    <p>
-                        Your personal study assistant
-                    </p>
+                    <span>
+                        Ready to help you learn
+                    </span>
 
                 </div>
 
             </div>
 
-        </div>
+
+            <div class="usage-area">
+
+                <div class="usage-label">
+
+                    <span>
+                        AI questions
+                    </span>
+
+                    <strong id="usageText">
+                        0 / 5
+                    </strong>
+
+                </div>
+
+                <div class="usage-bar">
+
+                    <div
+                        id="usageProgress"
+                        class="usage-progress"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
 
 
+        <!-- =================================================
+             WORKSPACE
+        ================================================== -->
 
-        <!-- RESPONSE AREA -->
+        <section class="workspace">
 
-        <div
-            class="ai-response"
-            id="aiResponse"
-        >
+            <!-- CHAT -->
 
-            Ask StudyMind AI something about your studies.
+            <div class="chat-card">
 
-        </div>
+                <div class="chat-header">
+
+                    <div>
+
+                        <span class="chat-label">
+                            AI CONVERSATION
+                        </span>
+
+                        <h2>
+                            How can I help you study?
+                        </h2>
+
+                    </div>
+
+                    <button
+                        id="clearChat"
+                        class="clear-button"
+                    >
+                        Clear
+                    </button>
+
+                </div>
 
 
-
-        <!-- INPUT AREA -->
-
-        <div class="ai-input-area">
-
-
-            <div class="ai-input-wrapper">
-
-
-                <textarea
-                    id="aiQuestion"
-                    rows="3"
-                    maxlength="2000"
-                    placeholder="Ask anything about your study plan, subjects, topics or revision..."
-                ></textarea>
-
-
-                <button
-                    type="button"
-                    id="askAIButton"
+                <div
+                    id="chatMessages"
+                    class="chat-messages"
                 >
-                    🤖 Ask AI
-                </button>
 
+                    <div class="welcome-message">
+
+                        <div class="welcome-icon">
+                            ✦
+                        </div>
+
+                        <h3>
+                            Welcome to AI Support
+                        </h3>
+
+                        <p>
+                            I'm here to help you understand your
+                            subjects, prepare for exams, and study
+                            more effectively.
+                        </p>
+
+                        <div class="welcome-tags">
+
+                            <span>
+                                Explain concepts
+                            </span>
+
+                            <span>
+                                Create quizzes
+                            </span>
+
+                            <span>
+                                Study strategies
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- INPUT -->
+
+                <div class="composer">
+
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        placeholder="Ask StudyMind anything about your studies..."
+                    ></textarea>
+
+                    <button
+                        id="sendButton"
+                        class="send-button"
+                        type="button"
+                    >
+                        <span>Send</span>
+                        <b>↗</b>
+                    </button>
+
+                </div>
+
+                <div class="composer-footer">
+
+                    <span>
+                        StudyMind AI can make mistakes.
+                        Always verify important information.
+                    </span>
+
+                    <span>
+                        Enter to send · Shift + Enter for new line
+                    </span>
+
+                </div>
 
             </div>
 
 
-        </div>
+            <!-- =================================================
+                 RIGHT PANEL
+            ================================================== -->
+
+            <aside class="support-panel">
+
+                <!-- CURRENT STUDY -->
+
+                <div class="context-card">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <span class="mini-label">
+                                YOUR STUDY PLAN
+                            </span>
+
+                            <h3>
+                                Current focus
+                            </h3>
+                        </div>
+
+                        <span class="context-icon">
+                            ◎
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="currentStudy"
+                        class="current-study"
+                    >
+
+                        <strong>
+                            No active topic
+                        </strong>
+
+                        <span>
+                            Create a study plan to personalize
+                            your AI support.
+                        </span>
+
+                    </div>
+
+                </div>
 
 
-    </section>
+                <!-- QUICK HELP -->
+
+                <div class="quick-card">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <span class="mini-label">
+                                QUICK HELP
+                            </span>
+
+                            <h3>
+                                Try asking
+                            </h3>
+                        </div>
+
+                    </div>
 
 
+                    <button
+                        class="prompt-button"
+                        data-prompt="Explain my current topic to me like I am learning it for the first time."
+                    >
+                        <span class="prompt-icon">◈</span>
 
-    <!-- =================================================
-         NAVIGATION SHORTCUTS
-    ================================================== -->
+                        <span>
+                            Explain my topic
+                            <small>
+                                Make difficult ideas easier
+                            </small>
+                        </span>
 
-    <section class="ai-page-shortcuts">
-
-
-        <button
-            type="button"
-            class="ai-shortcut"
-            onclick="openHome()"
-        >
-            🏠
-            <br>
-            Home
-        </button>
+                        <b>›</b>
+                    </button>
 
 
-        <button
-            type="button"
-            class="ai-shortcut"
-            onclick="openNewStudyPlan()"
-        >
-            ➕
-            <br>
-            New Study Plan
-        </button>
+                    <button
+                        class="prompt-button"
+                        data-prompt="Quiz me on my current topic with five questions. Do not show the answers until I respond."
+                    >
+                        <span class="prompt-icon">?</span>
+
+                        <span>
+                            Quiz me
+                            <small>
+                                Test your understanding
+                            </small>
+                        </span>
+
+                        <b>›</b>
+                    </button>
 
 
-        <button
-            type="button"
-            class="ai-shortcut"
-            onclick="openSummarizer()"
-        >
-            📄
-            <br>
-            Summarizer
-        </button>
+                    <button
+                        class="prompt-button"
+                        data-prompt="Give me a practical study strategy for my current topic and tell me what I should focus on first."
+                    >
+                        <span class="prompt-icon">↗</span>
+
+                        <span>
+                            Study strategy
+                            <small>
+                                Know what to focus on
+                            </small>
+                        </span>
+
+                        <b>›</b>
+                    </button>
 
 
-        <button
-            type="button"
-            class="ai-shortcut"
-            onclick="openStudyStreak()"
-        >
-            🔥
-            <br>
-            Study Streak
-        </button>
+                    <button
+                        class="prompt-button"
+                        data-prompt="Give me the most important things I should remember about my current topic for an exam."
+                    >
+                        <span class="prompt-icon">◆</span>
+
+                        <span>
+                            Exam essentials
+                            <small>
+                                Focus on key knowledge
+                            </small>
+                        </span>
+
+                        <b>›</b>
+                    </button>
+
+                </div>
 
 
-        <button
-            type="button"
-            class="ai-shortcut"
-            onclick="openStudyScore()"
-        >
-            🏆
-            <br>
-            Study Score
-        </button>
+                <!-- CAPABILITIES -->
 
+                <div class="capabilities-card">
 
-    </section>
+                    <span class="mini-label">
+                        STUDYMIND CAN
+                    </span>
 
+                    <div class="capability">
+                        <span>✓</span>
+                        Explain difficult concepts
+                    </div>
 
-</main>
-```
+                    <div class="capability">
+                        <span>✓</span>
+                        Adapt explanations to your level
+                    </div>
+
+                    <div class="capability">
+                        <span>✓</span>
+                        Help with exam preparation
+                    </div>
+
+                    <div class="capability">
+                        <span>✓</span>
+                        Generate practice questions
+                    </div>
+
+                    <div class="capability">
+                        <span>✓</span>
+                        Build better study strategies
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+    </main>
 
 </div>
 
-<!-- =====================================================
-     SUPABASE
-====================================================== -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- PREMIUM MODAL -->
 
-<script src="supabase.js"></script>
+<div
+    id="premiumModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card">
+
+        <button
+            id="closePremiumModal"
+            class="modal-close"
+        >
+            ×
+        </button>
+
+        <div class="premium-icon">
+            ✦
+        </div>
+
+        <h2>
+            You've reached your free AI limit
+        </h2>
+
+        <p>
+            Upgrade to StudyMind Premium for unlimited
+            AI support and advanced learning tools.
+        </p>
+
+        <button
+            id="premiumButton"
+            class="premium-button"
+        >
+            Explore Premium
+        </button>
+
+    </div>
+
+</div>
+
 
 <script src="ai-support.js"></script>
 
-<!-- =====================================================
-     QUICK QUESTION FUNCTION
-====================================================== -->
-
-<script>
-
-    function useQuickQuestion(question) {
-
-        const input =
-            document.getElementById("aiQuestion");
-
-        if (!input) {
-            return;
-        }
-
-
-        input.value = question;
-
-        input.focus();
-
-
-        /*
-         * Scroll the user down to the AI Assistant
-         * so they can immediately send the question.
-         */
-
-        const assistantCard =
-            document.getElementById("aiQuestion");
-
-        if (assistantCard) {
-
-            assistantCard.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
-
-        }
-
-    }
-
-</script>
-
 </body>
-
 </html>
