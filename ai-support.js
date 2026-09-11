@@ -16,6 +16,8 @@
    - Typing indicator
    - Chat history during session
    - Premium upgrade prompt
+   - MathJax equation rendering
+   - Safe text rendering
 ========================================================= */
 
 
@@ -758,9 +760,20 @@ async function sendMessage() {
         );
 
 
-        addMessage(
-            "ai",
-            response
+        const aiMessage =
+            addMessage(
+                "ai",
+                response
+            );
+
+
+        /*
+           Render equations after the
+           message has entered the DOM.
+        */
+
+        await renderMath(
+            aiMessage
         );
 
 
@@ -809,15 +822,6 @@ async function callAI(
         getCurrentTopic();
 
 
-    /*
-       Your existing ask-ai.js accepts message,
-       subject, topic, type, requestType, mode,
-       difficulty, etc.
-
-       We therefore send the information it
-       already understands.
-    */
-
     const body = {
 
         message:
@@ -843,11 +847,6 @@ async function callAI(
 
     };
 
-
-    /*
-       IMPORTANT:
-       This is the correct endpoint.
-    */
 
     const response =
         await fetch(
@@ -930,11 +929,6 @@ async function callAI(
     }
 
 
-    /*
-       Your ask-ai.js returns:
-       { success: true, reply: "..." }
-    */
-
     const reply =
         data?.reply;
 
@@ -972,7 +966,7 @@ function addMessage(
 
 
     if (!container) {
-        return;
+        return null;
     }
 
 
@@ -1033,6 +1027,16 @@ function addMessage(
         "message-bubble";
 
 
+    /*
+       textContent is deliberately kept here.
+
+       This prevents raw AI output from becoming
+       executable HTML.
+
+       MathJax reads the text afterward and
+       renders LaTeX safely.
+    */
+
     bubble.textContent =
         text;
 
@@ -1086,6 +1090,47 @@ function addMessage(
     container.scrollTop =
         container.scrollHeight;
 
+
+    return bubble;
+
+}
+
+
+/* =========================================================
+   MATHJAX RENDERING
+========================================================= */
+
+async function renderMath(
+    element
+) {
+
+    if (
+        !element ||
+        !window.MathJax ||
+        typeof window.MathJax.typesetPromise !==
+            "function"
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await window.MathJax.typesetPromise(
+            [element]
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "MathJax rendering error:",
+            error
+        );
+
+    }
+
 }
 
 
@@ -1099,6 +1144,11 @@ function addTypingMessage() {
         document.getElementById(
             "chatMessages"
         );
+
+
+    if (!container) {
+        return null;
+    }
 
 
     const wrapper =
