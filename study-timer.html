@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Study Timer | StudyMind AI</title>
+
+    <link rel="stylesheet" href="study-timer.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">S</div>
+
+            <div>
+                <strong>StudyMind</strong>
+                <span>AI</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="schedule.html">
+                <span>☷</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span>▦</span>
+                Calendar
+            </a>
+
+            <a href="study-timer.html" class="active">
+                <span>◷</span>
+                Study Timer
+            </a>
+
+            <a href="ai-support.html">
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="ai-assistant.html">
+                <span>◉</span>
+                AI Assistant
+            </a>
+
+            <a href="summarizer.html">
+                <span>▤</span>
+                Summarizer
+            </a>
+
+            <a href="study-streak.html">
+                <span>🔥</span>
+                Study Streak
+            </a>
+
+            <a href="goals.html">
+                <span>◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span>◇</span>
+                Rewards
+            </a>
+
+            <a href="friends.html">
+                <span>♧</span>
+                Friends
+            </a>
+
+            <a href="leaderboard.html">
+                <span>♜</span>
+                Leaderboard
+            </a>
+
+            <a href="game-mode.html">
+                <span>⚔</span>
+                Game Mode
+            </a>
+
+            <a href="premium.html" class="premium-link">
+                <span>✦</span>
+                Premium
+            </a>
+
+            <a href="settings.html">
+                <span>⚙</span>
+                Settings
+            </a>
+
+        </nav>
+
+        <a href="home.html" class="home-link">
+            ← Back to Home
+        </a>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">FOCUS SESSION</p>
+                <h1>Study Timer</h1>
+            </div>
+
+            <div class="top-user">
+                <div class="avatar" id="userAvatar">S</div>
+
+                <div>
+                    <strong id="userName">Student</strong>
+                    <small id="userStatus">Ready to study</small>
+                </div>
+            </div>
+
+        </header>
+
+
+        <!-- AI STATUS -->
+        <section class="ai-banner">
+
+            <div class="ai-banner-icon">✦</div>
+
+            <div>
+                <strong id="aiBannerTitle">
+                    AI Study Session
+                </strong>
+
+                <p id="aiBannerText">
+                    Your study session will be connected to your current plan.
+                </p>
+            </div>
+
+        </section>
+
+
+        <!-- TIMER AREA -->
+        <section class="timer-layout">
+
+            <!-- TIMER -->
+            <div class="timer-card">
+
+                <div class="session-header">
+
+                    <div>
+                        <span class="session-label">
+                            CURRENT SESSION
+                        </span>
+
+                        <h2 id="currentSubject">
+                            Ready to study
+                        </h2>
+
+                        <p id="currentTopic">
+                            Choose a session to begin
+                        </p>
+                    </div>
+
+                    <div class="session-status" id="sessionStatus">
+                        READY
+                    </div>
+
+                </div>
+
+
+                <div class="timer-circle">
+
+                    <div class="timer-inner">
+
+                        <span id="timerDisplay">
+                            25:00
+                        </span>
+
+                        <small id="timerLabel">
+                            Focus time
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PROGRESS -->
+                <div class="timer-progress">
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-fill"
+                            id="timerProgress"
+                            style="width:0%"
+                        ></div>
+                    </div>
+
+                    <div class="progress-meta">
+
+                        <span id="elapsedText">
+                            0 min studied
+                        </span>
+
+                        <span id="remainingText">
+                            25 min remaining
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CONTROLS -->
+                <div class="timer-controls">
+
+                    <button
+                        class="control-button secondary"
+                        id="resetTimer"
+                    >
+                        Reset
+                    </button>
+
+                    <button
+                        class="control-button primary"
+                        id="startPauseTimer"
+                    >
+                        ▶ Start Session
+                    </button>
+
+                </div>
+
+
+                <!-- DURATION -->
+                <div class="duration-section">
+
+                    <p>Session length</p>
+
+                    <div class="duration-options">
+
+                        <button
+                            class="duration-button active"
+                            data-minutes="25"
+                        >
+                            <strong>25</strong>
+                            <span>min</span>
+                        </button>
+
+                        <button
+                            class="duration-button"
+                            data-minutes="45"
+                        >
+                            <strong>45</strong>
+                            <span>min</span>
+                        </button>
+
+                        <button
+                            class="duration-button"
+                            data-minutes="60"
+                        >
+                            <strong>60</strong>
+                            <span>min</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT COLUMN -->
+            <div class="right-column">
+
+
+                <!-- CURRENT TASK -->
+                <div class="info-card current-task">
+
+                    <div class="card-heading">
+
+                        <div class="heading-icon">🎯</div>
+
+                        <div>
+                            <span>AI RECOMMENDATION</span>
+                            <h3>What should you study?</h3>
+                        </div>
+
+                    </div>
+
+
+                    <div class="recommended-topic">
+
+                        <div class="topic-icon">
+                            📚
+                        </div>
+
+                        <div>
+                            <strong id="recommendedSubject">
+                                No active topic
+                            </strong>
+
+                            <p id="recommendedTopic">
+                                Create a study plan to let AI choose your next topic.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        class="full-button"
+                        id="useRecommended"
+                    >
+                        Start Recommended Session
+                    </button>
+
+                </div>
+
+
+                <!-- TODAY -->
+                <div class="info-card">
+
+                    <div class="card-heading">
+
+                        <div class="heading-icon">📊</div>
+
+                        <div>
+                            <span>TODAY</span>
+                            <h3>Your Progress</h3>
+                        </div>
+
+                    </div>
+
+
+                    <div class="stats-grid">
+
+                        <div class="stat">
+                            <strong id="todayMinutes">0</strong>
+                            <span>Minutes</span>
+                        </div>
+
+                        <div class="stat">
+                            <strong id="todaySessions">0</strong>
+                            <span>Sessions</span>
+                        </div>
+
+                        <div class="stat">
+                            <strong id="todayXP">0</strong>
+                            <span>XP Earned</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AI COACH -->
+                <div class="coach-card">
+
+                    <div class="coach-top">
+
+                        <div class="coach-icon">
+                            ✦
+                        </div>
+
+                        <div>
+                            <span>AI STUDY COACH</span>
+                            <h3 id="coachTitle">
+                                Stay focused
+                            </h3>
+                        </div>
+
+                    </div>
+
+                    <p id="coachMessage">
+                        Your timer tracks genuine study time so your progress,
+                        streak and XP reflect the work you actually complete.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SESSION HISTORY -->
+        <section class="history-card">
+
+            <div class="section-heading">
+
+                <div>
+                    <span>RECENT ACTIVITY</span>
+                    <h2>Study Sessions</h2>
+                </div>
+
+                <span class="history-count" id="historyCount">
+                    0 sessions
+                </span>
+
+            </div>
+
+            <div id="sessionHistory" class="session-history">
+
+                <div class="empty-history">
+                    Your completed study sessions will appear here.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- COMPLETION MODAL -->
+<div class="modal-overlay" id="completionModal">
+
+    <div class="completion-modal">
+
+        <div class="completion-icon">
+            ✓
+        </div>
+
+        <span>SESSION COMPLETE</span>
+
+        <h2>Great work! 🎉</h2>
+
+        <p id="completionMessage">
+            You completed your study session.
+        </p>
+
+        <div class="reward-box">
+
+            <div>
+                <strong id="earnedMinutes">25</strong>
+                <span>Minutes</span>
+            </div>
+
+            <div>
+                <strong id="earnedXP">25</strong>
+                <span>XP</span>
+            </div>
+
+        </div>
+
+        <button
+            class="full-button"
+            id="closeCompletion"
+        >
+            Continue
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="study-timer.js"></script>
+
+</body>
+</html>
