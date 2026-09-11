@@ -2,24 +2,59 @@
 
 /* =========================================================
    STUDYMIND AI SUPPORT
-   SHARED AI WORKSPACE
+   COMPLETE REPLACEMENT
+
+   CONNECTS TO:
+   /api/ask-ai
+
+   FEATURES:
+   - Real OpenAI-powered responses
+   - Current study-plan context
+   - Free 5-question limit
+   - Premium unlimited access
+   - Quick prompts
+   - Typing indicator
+   - Chat history during session
+   - Premium upgrade prompt
+========================================================= */
+
+
+/* =========================================================
+   SETTINGS
 ========================================================= */
 
 const AI_LIMIT = 5;
 
 const STORAGE = {
-    AI_COUNT: "aiQuestionCount",
-    AI_DATE: "aiQuestionDate",
-    PREMIUM: "studyMindPremium",
-    PLAN: "studyMindPlan",
-    USERNAME: "studyMindUsername"
+
+    AI_COUNT:
+        "aiQuestionCount",
+
+    AI_DATE:
+        "aiQuestionDate",
+
+    PREMIUM:
+        "studyMindPremium",
+
+    PLAN:
+        "studyMindPlan",
+
+    USERNAME:
+        "studyMindUsername"
+
 };
+
+
+/* =========================================================
+   SUPABASE
+========================================================= */
 
 const SUPABASE_URL =
     "https://bicnrbqqvucgpbwudmit.supabase.co";
 
 const SUPABASE_KEY =
     "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
 
 const supabaseClient =
     window.supabase?.createClient
@@ -30,18 +65,21 @@ const supabaseClient =
         : null;
 
 
-let studyPlan = loadJSON(
-    STORAGE.PLAN,
-    null
-);
+/* =========================================================
+   STATE
+========================================================= */
 
-let messages = [];
+let studyPlan =
+    loadJSON(
+        STORAGE.PLAN,
+        null
+    );
 
 let isSending = false;
 
 
 /* =========================================================
-   INIT
+   INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
@@ -69,7 +107,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   USER
+   LOAD USER
 ========================================================= */
 
 async function loadUser() {
@@ -79,14 +117,19 @@ async function loadUser() {
             STORAGE.USERNAME
         ) || "Student";
 
+
     if (supabaseClient) {
 
         try {
 
-            const { data } =
+            const {
+                data
+            } =
                 await supabaseClient.auth.getUser();
 
-            const user = data?.user;
+            const user =
+                data?.user;
+
 
             if (user) {
 
@@ -98,31 +141,52 @@ async function loadUser() {
 
             }
 
-        } catch {}
+        } catch (error) {
+
+            console.warn(
+                "Unable to load Supabase user."
+            );
+
+        }
 
     }
 
-    const name =
-        document.getElementById("username");
 
-    const avatar =
-        document.getElementById("avatar");
+    const usernameElement =
+        document.getElementById(
+            "username"
+        );
 
-    if (name) {
-        name.textContent = username;
+
+    const avatarElement =
+        document.getElementById(
+            "avatar"
+        );
+
+
+    if (usernameElement) {
+
+        usernameElement.textContent =
+            username;
+
     }
 
-    if (avatar) {
-        avatar.textContent =
+
+    if (avatarElement) {
+
+        avatarElement.textContent =
             username
                 .charAt(0)
                 .toUpperCase();
+
     }
+
 
     localStorage.setItem(
         STORAGE.USERNAME,
         username
     );
+
 }
 
 
@@ -137,15 +201,21 @@ function renderStudyContext() {
             "currentStudy"
         );
 
-    if (!element) return;
+
+    if (!element) {
+        return;
+    }
+
 
     const topic =
         getCurrentTopic();
+
 
     if (!topic) {
 
         element.innerHTML = `
             <strong>No active topic</strong>
+
             <span>
                 Create a study plan to personalize
                 your AI support.
@@ -153,7 +223,9 @@ function renderStudyContext() {
         `;
 
         return;
+
     }
+
 
     element.innerHTML = `
         <strong>
@@ -164,8 +236,13 @@ function renderStudyContext() {
             ${escapeHTML(topic.name)}
         </span>
     `;
+
 }
 
+
+/* =========================================================
+   FIND CURRENT TOPIC
+========================================================= */
 
 function getCurrentTopic() {
 
@@ -173,9 +250,10 @@ function getCurrentTopic() {
         return null;
     }
 
-    /*
-       Supports the newer subject/topic structure.
-    */
+
+    /* -------------------------------------------------------
+       NEW SUBJECT STRUCTURE
+    ------------------------------------------------------- */
 
     if (
         Array.isArray(
@@ -189,30 +267,51 @@ function getCurrentTopic() {
         ) {
 
             const topics =
-                Array.isArray(subject.topics)
+                Array.isArray(
+                    subject.topics
+                )
                     ? subject.topics
                     : [];
 
+
             const unfinished =
                 topics.find(
-                    topic =>
-                        !topic.completed
+                    topic => {
+
+                        if (
+                            typeof topic ===
+                            "string"
+                        ) {
+
+                            return true;
+
+                        }
+
+                        return !topic.completed;
+
+                    }
                 );
+
 
             if (unfinished) {
 
                 return {
+
                     subject:
                         subject.name ||
                         subject.subject ||
                         "Subject",
 
                     name:
-                        typeof unfinished === "string"
+                        typeof unfinished ===
+                        "string"
+
                             ? unfinished
+
                             : unfinished.name ||
                               unfinished.topic ||
                               "Current topic"
+
                 };
 
             }
@@ -222,9 +321,9 @@ function getCurrentTopic() {
     }
 
 
-    /*
-       Legacy flat topics structure.
-    */
+    /* -------------------------------------------------------
+       FLAT TOPICS STRUCTURE
+    ------------------------------------------------------- */
 
     if (
         Array.isArray(
@@ -238,9 +337,11 @@ function getCurrentTopic() {
                     !item.completed
             );
 
+
         if (topic) {
 
             return {
+
                 subject:
                     topic.subject ||
                     "Subject",
@@ -249,6 +350,7 @@ function getCurrentTopic() {
                     topic.name ||
                     topic.topic ||
                     "Current topic"
+
             };
 
         }
@@ -257,6 +359,7 @@ function getCurrentTopic() {
 
 
     return null;
+
 }
 
 
@@ -271,6 +374,7 @@ function isPremium() {
             STORAGE.PREMIUM
         );
 
+
     return (
         value === "true" ||
         value === "1" ||
@@ -281,7 +385,7 @@ function isPremium() {
 
 
 /* =========================================================
-   QUESTION LIMIT
+   DATE
 ========================================================= */
 
 function getToday() {
@@ -293,17 +397,25 @@ function getToday() {
 }
 
 
+/* =========================================================
+   AI QUESTION COUNT
+========================================================= */
+
 function getQuestionCount() {
 
     const today =
         getToday();
 
-    const storedDate =
+
+    const savedDate =
         localStorage.getItem(
             STORAGE.AI_DATE
         );
 
-    if (storedDate !== today) {
+
+    if (
+        savedDate !== today
+    ) {
 
         localStorage.setItem(
             STORAGE.AI_DATE,
@@ -316,7 +428,9 @@ function getQuestionCount() {
         );
 
         return 0;
+
     }
+
 
     return Number(
         localStorage.getItem(
@@ -327,66 +441,92 @@ function getQuestionCount() {
 }
 
 
+/* =========================================================
+   INCREMENT COUNT
+========================================================= */
+
 function incrementQuestionCount() {
 
     const count =
         getQuestionCount() + 1;
+
 
     localStorage.setItem(
         STORAGE.AI_COUNT,
         String(count)
     );
 
+
     renderUsage();
 
 }
 
+
+/* =========================================================
+   USAGE DISPLAY
+========================================================= */
 
 function renderUsage() {
 
     const count =
         getQuestionCount();
 
+
     const premium =
         isPremium();
 
-    const text =
+
+    const usageText =
         document.getElementById(
             "usageText"
         );
 
-    const progress =
+
+    const usageProgress =
         document.getElementById(
             "usageProgress"
         );
 
+
     if (premium) {
 
-        if (text) {
-            text.textContent =
+        if (usageText) {
+
+            usageText.textContent =
                 "Unlimited";
+
         }
 
-        if (progress) {
-            progress.style.width =
+
+        if (usageProgress) {
+
+            usageProgress.style.width =
                 "100%";
+
         }
+
 
         return;
-    }
-
-    if (text) {
-
-        text.textContent =
-            `${Math.min(count, AI_LIMIT)} / ${AI_LIMIT}`;
 
     }
 
-    if (progress) {
 
-        progress.style.width =
+    if (usageText) {
+
+        usageText.textContent =
             `${Math.min(
-                count / AI_LIMIT * 100,
+                count,
+                AI_LIMIT
+            )} / ${AI_LIMIT}`;
+
+    }
+
+
+    if (usageProgress) {
+
+        usageProgress.style.width =
+            `${Math.min(
+                (count / AI_LIMIT) * 100,
                 100
             )}%`;
 
@@ -406,19 +546,23 @@ function setupComposer() {
             "messageInput"
         );
 
+
     const button =
         document.getElementById(
             "sendButton"
         );
 
+
     if (!input || !button) {
         return;
     }
+
 
     button.addEventListener(
         "click",
         sendMessage
     );
+
 
     input.addEventListener(
         "keydown",
@@ -438,12 +582,14 @@ function setupComposer() {
         }
     );
 
+
     input.addEventListener(
         "input",
         () => {
 
             input.style.height =
                 "auto";
+
 
             input.style.height =
                 `${Math.min(
@@ -467,64 +613,76 @@ function setupQuickPrompts() {
         .querySelectorAll(
             ".prompt-button"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const prompt =
-                        button.dataset.prompt;
+                        const prompt =
+                            button.dataset.prompt;
 
-                    const input =
-                        document.getElementById(
-                            "messageInput"
-                        );
 
-                    if (!input) {
-                        return;
+                        const input =
+                            document.getElementById(
+                                "messageInput"
+                            );
+
+
+                        if (!input) {
+                            return;
+                        }
+
+
+                        input.value =
+                            personalizePrompt(
+                                prompt
+                            );
+
+
+                        input.focus();
+
                     }
+                );
 
-                    input.value =
-                        personalizePrompt(
-                            prompt
-                        );
-
-                    input.focus();
-
-                }
-            );
-
-        });
+            }
+        );
 
 }
 
 
-function personalizePrompt(prompt) {
+/* =========================================================
+   PERSONALIZE PROMPT
+========================================================= */
+
+function personalizePrompt(
+    prompt
+) {
 
     const topic =
         getCurrentTopic();
+
 
     if (!topic) {
         return prompt;
     }
 
-    return `
-${prompt}
 
-My current subject is:
-${topic.subject}
+    return `${prompt}
 
-My current topic is:
-${topic.name}
+My current subject is ${topic.subject}.
 
-Please tailor your response specifically to this topic.
-`;
+My current topic is ${topic.name}.
+
+Please tailor your response specifically
+to this topic.`;
+
 }
 
 
 /* =========================================================
-   SEND
+   SEND MESSAGE
 ========================================================= */
 
 async function sendMessage() {
@@ -533,26 +691,30 @@ async function sendMessage() {
         return;
     }
 
+
     const input =
         document.getElementById(
             "messageInput"
         );
 
+
     if (!input) {
         return;
     }
 
+
     const text =
         input.value.trim();
+
 
     if (!text) {
         return;
     }
 
 
-    /*
-       Free limit
-    */
+    /* -------------------------------------------------------
+       FREE LIMIT
+    ------------------------------------------------------- */
 
     if (
         !isPremium() &&
@@ -562,40 +724,50 @@ async function sendMessage() {
         openPremiumModal();
 
         return;
+
     }
 
 
     isSending = true;
+
 
     input.value = "";
 
     input.style.height =
         "auto";
 
+
     addMessage(
         "user",
         text
     );
 
+
     const typing =
         addTypingMessage();
+
 
     try {
 
         const response =
             await callAI(text);
 
+
         removeTypingMessage(
             typing
         );
+
 
         addMessage(
             "ai",
             response
         );
 
+
         if (!isPremium()) {
+
             incrementQuestionCount();
+
         }
 
     } catch (error) {
@@ -605,13 +777,15 @@ async function sendMessage() {
             error
         );
 
+
         removeTypingMessage(
             typing
         );
 
+
         addMessage(
             "ai",
-            "I couldn't connect to the AI service right now. Please try again in a moment."
+            "I couldn't connect to StudyMind AI right now. Please try again in a moment."
         );
 
     } finally {
@@ -624,96 +798,72 @@ async function sendMessage() {
 
 
 /* =========================================================
-   AI REQUEST
+   CALL YOUR ACTUAL BACKEND
 ========================================================= */
 
-async function callAI(userMessage) {
+async function callAI(
+    userMessage
+) {
 
     const topic =
         getCurrentTopic();
 
-    const context = {
 
-        currentSubject:
-            topic?.subject || null,
+    /*
+       Your existing ask-ai.js accepts message,
+       subject, topic, type, requestType, mode,
+       difficulty, etc.
 
-        currentTopic:
-            topic?.name || null,
+       We therefore send the information it
+       already understands.
+    */
 
-        curriculum:
-            studyPlan?.curriculum ||
-            null,
+    const body = {
 
-        examType:
-            studyPlan?.examType ||
-            null
+        message:
+            userMessage,
+
+        subject:
+            topic?.subject || "",
+
+        topic:
+            topic?.name || "",
+
+        difficulty:
+            "mixed",
+
+        type:
+            "normal",
+
+        requestType:
+            "normal",
+
+        mode:
+            "normal"
 
     };
 
 
-    const systemPrompt = `
-You are StudyMind AI, an intelligent educational
-assistant for secondary-school students.
-
-Your job is to help students understand concepts,
-prepare for exams, practice active recall, and build
-effective study habits.
-
-Be accurate, encouraging, concise, and educational.
-
-Adapt explanations to the student's level.
-
-When explaining difficult concepts:
-1. Explain the core idea simply.
-2. Give an intuitive example.
-3. Show the important details.
-4. Give a short check-for-understanding question
-   when useful.
-
-Do not simply give answers when teaching would be
-more useful.
-
-The student's current study context is:
-
-Subject:
-${context.currentSubject || "Not specified"}
-
-Topic:
-${context.currentTopic || "Not specified"}
-
-Curriculum:
-${context.curriculum || "Not specified"}
-
-Exam:
-${context.examType || "Not specified"}
-`;
-
+    /*
+       IMPORTANT:
+       This is the correct endpoint.
+    */
 
     const response =
         await fetch(
-            "/api/chat",
+            "/api/ask-ai",
             {
-                method: "POST",
+
+                method:
+                    "POST",
 
                 headers: {
                     "Content-Type":
                         "application/json"
                 },
 
-                body: JSON.stringify({
-
-                    message:
-                        userMessage,
-
-                    prompt:
-                        userMessage,
-
-                    system:
-                        systemPrompt,
-
-                    context
-
-                })
+                body:
+                    JSON.stringify(body)
 
             }
         );
@@ -721,12 +871,44 @@ ${context.examType || "Not specified"}
 
     if (!response.ok) {
 
-        const errorText =
-            await response.text()
-                .catch(() => "");
+        let errorMessage =
+            `AI request failed: ${response.status}`;
+
+
+        try {
+
+            const errorData =
+                await response.json();
+
+
+            if (
+                errorData?.error
+            ) {
+
+                errorMessage +=
+                    ` ${errorData.error}`;
+
+            }
+
+        } catch {
+
+            const text =
+                await response.text()
+                    .catch(() => "");
+
+
+            if (text) {
+
+                errorMessage +=
+                    ` ${text}`;
+
+            }
+
+        }
+
 
         throw new Error(
-            `AI request failed: ${response.status} ${errorText}`
+            errorMessage
         );
 
     }
@@ -736,20 +918,46 @@ ${context.examType || "Not specified"}
         await response.json();
 
 
-    return (
-        data.reply ||
-        data.message ||
-        data.response ||
-        data.answer ||
-        data.content ||
-        "I wasn't able to generate a response."
-    );
+    if (
+        data?.success === false
+    ) {
+
+        throw new Error(
+            data.error ||
+            "StudyMind AI returned an error."
+        );
+
+    }
+
+
+    /*
+       Your ask-ai.js returns:
+       { success: true, reply: "..." }
+    */
+
+    const reply =
+        data?.reply;
+
+
+    if (
+        typeof reply !== "string" ||
+        !reply.trim()
+    ) {
+
+        throw new Error(
+            "StudyMind AI returned an empty response."
+        );
+
+    }
+
+
+    return reply.trim();
 
 }
 
 
 /* =========================================================
-   MESSAGE RENDERING
+   ADD MESSAGE
 ========================================================= */
 
 function addMessage(
@@ -762,6 +970,7 @@ function addMessage(
             "chatMessages"
         );
 
+
     if (!container) {
         return;
     }
@@ -771,6 +980,7 @@ function addMessage(
         container.querySelector(
             ".welcome-message"
         );
+
 
     if (welcome) {
         welcome.remove();
@@ -782,6 +992,7 @@ function addMessage(
             "div"
         );
 
+
     wrapper.className =
         `message ${role}`;
 
@@ -791,8 +1002,10 @@ function addMessage(
             "div"
         );
 
+
     avatar.className =
         "message-avatar";
+
 
     avatar.textContent =
         role === "ai"
@@ -805,6 +1018,7 @@ function addMessage(
             "div"
         );
 
+
     content.className =
         "message-content";
 
@@ -814,8 +1028,10 @@ function addMessage(
             "div"
         );
 
+
     bubble.className =
         "message-bubble";
+
 
     bubble.textContent =
         text;
@@ -826,8 +1042,10 @@ function addMessage(
             "div"
         );
 
+
     time.className =
         "message-time";
+
 
     time.textContent =
         new Date()
@@ -844,13 +1062,16 @@ function addMessage(
         bubble
     );
 
+
     content.appendChild(
         time
     );
 
+
     wrapper.appendChild(
         avatar
     );
+
 
     wrapper.appendChild(
         content
@@ -869,7 +1090,7 @@ function addMessage(
 
 
 /* =========================================================
-   TYPING
+   TYPING INDICATOR
 ========================================================= */
 
 function addTypingMessage() {
@@ -879,13 +1100,16 @@ function addTypingMessage() {
             "chatMessages"
         );
 
+
     const wrapper =
         document.createElement(
             "div"
         );
 
+
     wrapper.className =
         "message ai";
+
 
     wrapper.innerHTML = `
         <div class="message-avatar">
@@ -897,9 +1121,11 @@ function addTypingMessage() {
             <div class="message-bubble">
 
                 <div class="typing">
+
                     <span></span>
                     <span></span>
                     <span></span>
+
                 </div>
 
             </div>
@@ -907,17 +1133,24 @@ function addTypingMessage() {
         </div>
     `;
 
+
     container.appendChild(
         wrapper
     );
 
+
     container.scrollTop =
         container.scrollHeight;
+
 
     return wrapper;
 
 }
 
+
+/* =========================================================
+   REMOVE TYPING
+========================================================= */
 
 function removeTypingMessage(
     element
@@ -931,7 +1164,7 @@ function removeTypingMessage(
 
 
 /* =========================================================
-   CLEAR
+   CLEAR CHAT
 ========================================================= */
 
 function setupClearChat() {
@@ -944,18 +1177,19 @@ function setupClearChat() {
             "click",
             () => {
 
-                messages = [];
-
                 const container =
                     document.getElementById(
                         "chatMessages"
                     );
 
+
                 if (!container) {
                     return;
                 }
 
+
                 container.innerHTML = `
+
                     <div class="welcome-message">
 
                         <div class="welcome-icon">
@@ -989,6 +1223,7 @@ function setupClearChat() {
                         </div>
 
                     </div>
+
                 `;
 
             }
@@ -1012,6 +1247,7 @@ function setupPremiumModal() {
             closePremiumModal
         );
 
+
     document
         .getElementById(
             "premiumButton"
@@ -1029,6 +1265,10 @@ function setupPremiumModal() {
 }
 
 
+/* =========================================================
+   OPEN PREMIUM
+========================================================= */
+
 function openPremiumModal() {
 
     document
@@ -1041,6 +1281,10 @@ function openPremiumModal() {
 
 }
 
+
+/* =========================================================
+   CLOSE PREMIUM
+========================================================= */
 
 function closePremiumModal() {
 
@@ -1066,6 +1310,10 @@ function checkPremium() {
 }
 
 
+/* =========================================================
+   WATCH FOR CHANGES
+========================================================= */
+
 window.addEventListener(
     "storage",
     event => {
@@ -1079,6 +1327,7 @@ window.addEventListener(
 
         }
 
+
         if (
             event.key ===
             STORAGE.PLAN
@@ -1090,9 +1339,34 @@ window.addEventListener(
                     null
                 );
 
+
             renderStudyContext();
 
         }
+
+
+        if (
+            event.key ===
+            STORAGE.AI_COUNT
+        ) {
+
+            renderUsage();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   STUDYMIND PREMIUM EVENT
+========================================================= */
+
+window.addEventListener(
+    "studyMindPremiumChanged",
+    () => {
+
+        renderUsage();
 
     }
 );
@@ -1114,6 +1388,7 @@ function loadJSON(
                 key
             );
 
+
         return value
             ? JSON.parse(value)
             : fallback;
@@ -1127,7 +1402,9 @@ function loadJSON(
 }
 
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     return String(
         value ?? ""
