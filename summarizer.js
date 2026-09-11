@@ -1402,138 +1402,26 @@ function displaySummary(answer) {
 
 function formatAIResponse(text) {
 
-    let safe =
-        escapeHTML(
-            String(text || "")
+    const raw = String(text || "");
+
+    if (
+        window.marked &&
+        typeof marked.parse === "function" &&
+        window.DOMPurify
+    ) {
+
+        return DOMPurify.sanitize(
+            marked.parse(raw, {
+                breaks: true,
+                gfm: true
+            })
         );
 
+    }
 
-    /*
-       Restore LaTeX delimiters after HTML escaping.
-       Backslashes themselves remain untouched.
-    */
-
-
-    /* =====================================================
-       HEADINGS
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /^###\s+(.+)$/gm,
-            "<h4>$1</h4>"
-        );
-
-
-    safe =
-        safe.replace(
-            /^##\s+(.+)$/gm,
-            "<h3>$1</h3>"
-        );
-
-
-    safe =
-        safe.replace(
-            /^#\s+(.+)$/gm,
-            "<h2>$1</h2>"
-        );
-
-
-    /* =====================================================
-       BOLD
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /\*\*(.+?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-
-    /* =====================================================
-       BULLET LISTS
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /^[\-\*]\s+(.+)$/gm,
-            "<li>$1</li>"
-        );
-
-
-    safe =
-        safe.replace(
-            /((?:<li>.*<\/li>\s*)+)/g,
-            "<ul>$1</ul>"
-        );
-
-
-    /* =====================================================
-       NUMBERED LISTS
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /^\d+\.\s+(.+)$/gm,
-            "<li>$1</li>"
-        );
-
-
-    /* =====================================================
-       LINE BREAKS
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /\n{2,}/g,
-            "<br><br>"
-        );
-
-
-    safe =
-        safe.replace(
-            /\n/g,
-            "<br>"
-        );
-
-
-    /* =====================================================
-       CLEAN BREAKS AROUND HEADINGS/LISTS
-    ===================================================== */
-
-    safe =
-        safe.replace(
-            /<br>\s*(<h[234]>)/g,
-            "$1"
-        );
-
-
-    safe =
-        safe.replace(
-            /(<\/h[234]>)\s*<br>/g,
-            "$1"
-        );
-
-
-    safe =
-        safe.replace(
-            /<br>\s*(<ul>)/g,
-            "$1"
-        );
-
-
-    safe =
-        safe.replace(
-            /(<\/ul>)\s*<br>/g,
-            "$1"
-        );
-
-
-    return safe;
-
+    return escapeHTML(raw)
+        .replace(/\n/g, "<br>");
 }
-
-
 /* =========================================================
    ESCAPE HTML
 ========================================================= */
