@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Schedule | StudyMind AI</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="schedule.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i data-lucide="brain"></i>
+            </div>
+
+            <div>
+                <strong>StudyMind</strong>
+                <span>AI</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="schedule.html" class="active">
+                <i data-lucide="calendar-clock"></i>
+                <span>Schedule</span>
+            </a>
+
+            <a href="calendar.html">
+                <i data-lucide="calendar-days"></i>
+                <span>Calendar</span>
+            </a>
+
+            <a href="ai-support.html">
+                <i data-lucide="bot"></i>
+                <span>AI Support</span>
+            </a>
+
+            <a href="ai-assistant.html">
+                <i data-lucide="sparkles"></i>
+                <span>AI Assistant</span>
+            </a>
+
+            <a href="summarizer.html">
+                <i data-lucide="file-text"></i>
+                <span>Summarizer</span>
+            </a>
+
+            <a href="study-streak.html">
+                <i data-lucide="flame"></i>
+                <span>Study Streak</span>
+            </a>
+
+            <a href="goals.html">
+                <i data-lucide="target"></i>
+                <span>Goals</span>
+            </a>
+
+            <a href="rewards.html">
+                <i data-lucide="gift"></i>
+                <span>Rewards</span>
+            </a>
+
+            <a href="friends.html">
+                <i data-lucide="users"></i>
+                <span>Friends</span>
+            </a>
+
+            <a href="leaderboard.html">
+                <i data-lucide="trophy"></i>
+                <span>Leaderboard</span>
+            </a>
+
+            <a href="game-mode.html">
+                <i data-lucide="gamepad-2"></i>
+                <span>Game Mode</span>
+            </a>
+
+            <a href="premium.html">
+                <i data-lucide="crown"></i>
+                <span>Premium</span>
+            </a>
+
+            <a href="settings.html">
+                <i data-lucide="settings"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <a href="home.html" class="home-link">
+                <i data-lucide="home"></i>
+                <span>Home</span>
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">AI STUDY PLANNER</p>
+
+                <h1 id="pageGreeting">
+                    Your Study Schedule
+                </h1>
+
+                <p class="topbar-subtitle">
+                    Your schedule is organized around your goals,
+                    available time, exams and progress.
+                </p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="ai-status">
+                    <span class="status-dot"></span>
+
+                    <div>
+                        <strong>AI Planner</strong>
+                        <small>Active</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- AI BANNER -->
+        <section class="ai-banner">
+
+            <div class="ai-banner-icon">
+                <i data-lucide="sparkles"></i>
+            </div>
+
+            <div class="ai-banner-content">
+
+                <span>AI-OPTIMIZED SCHEDULE</span>
+
+                <h2 id="aiScheduleTitle">
+                    Your schedule adapts to you
+                </h2>
+
+                <p id="aiScheduleMessage">
+                    StudyMind uses your subjects, topics, difficulty,
+                    exams and available study time to organize your work.
+                </p>
+
+            </div>
+
+            <div class="ai-badge">
+                <i data-lucide="brain"></i>
+                AI Powered
+            </div>
+
+        </section>
+
+
+        <!-- OVERVIEW -->
+        <section class="schedule-overview">
+
+            <div class="overview-card">
+
+                <div class="overview-icon blue">
+                    <i data-lucide="book-open"></i>
+                </div>
+
+                <div>
+                    <span>Today's Sessions</span>
+                    <strong id="todaySessions">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="overview-card">
+
+                <div class="overview-icon green">
+                    <i data-lucide="clock-3"></i>
+                </div>
+
+                <div>
+                    <span>Study Time</span>
+                    <strong id="todayHours">0h</strong>
+                </div>
+
+            </div>
+
+
+            <div class="overview-card">
+
+                <div class="overview-icon purple">
+                    <i data-lucide="check-circle-2"></i>
+                </div>
+
+                <div>
+                    <span>Completed</span>
+                    <strong id="todayCompleted">0%</strong>
+                </div>
+
+            </div>
+
+
+            <div class="overview-card">
+
+                <div class="overview-icon orange">
+                    <i data-lucide="target"></i>
+                </div>
+
+                <div>
+                    <span>Topics Remaining</span>
+                    <strong id="remainingTopics">0</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TODAY -->
+        <section class="today-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">TODAY</span>
+
+                    <h2 id="todayDate">
+                        Today's Schedule
+                    </h2>
+                </div>
+
+                <div id="todayType" class="day-type">
+                    Study Day
+                </div>
+
+            </div>
+
+
+            <div id="todaySchedule" class="session-list">
+
+                <div class="loading-card">
+                    <div class="loading-spinner"></div>
+                    <p>Loading your AI schedule...</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- UPCOMING -->
+        <section class="upcoming-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">UPCOMING</span>
+
+                    <h2>
+                        Your Next Sessions
+                    </h2>
+                </div>
+
+                <div class="schedule-filter">
+
+                    <button
+                        class="filter-button active"
+                        data-filter="all"
+                    >
+                        All
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="study"
+                    >
+                        Study
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="test"
+                    >
+                        Tests
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="upcomingSchedule" class="upcoming-list">
+
+                <div class="loading-card">
+                    <div class="loading-spinner"></div>
+                    <p>Preparing upcoming sessions...</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- AI INSIGHT -->
+        <section class="schedule-insight">
+
+            <div class="insight-icon">
+                <i data-lucide="lightbulb"></i>
+            </div>
+
+            <div>
+
+                <span>AI STUDY INSIGHT</span>
+
+                <h3 id="aiInsightTitle">
+                    Your schedule is personalized
+                </h3>
+
+                <p id="aiInsight">
+                    StudyMind will adjust your schedule as your
+                    progress changes.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="schedule.js"></script>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>
