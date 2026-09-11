@@ -218,122 +218,74 @@ function setSummaryCount(count) {
 
 function updateUsageUI() {
 
+    const premium = isPremiumUser();
     const count = getSummaryCount();
+
+    if (premium) {
+
+        if (summaryCountBadge) {
+            summaryCountBadge.textContent = "Unlimited";
+        }
+
+        if (summaryUsagePercent) {
+            summaryUsagePercent.textContent = "∞";
+        }
+
+        if (summaryUsageText) {
+            summaryUsageText.textContent =
+                "Unlimited AI document summaries.";
+        }
+
+        if (summaryUsageProgressBar) {
+            summaryUsageProgressBar.style.width = "100%";
+        }
+
+        const ring =
+            document.querySelector(".usage-ring");
+
+        if (ring) {
+            ring.style.setProperty(
+                "--usage-progress",
+                "100%"
+            );
+        }
+
+        return;
+    }
 
     const percentage = Math.round(
         (count / FREE_SUMMARY_LIMIT) * 100
     );
 
-
-    /* =====================================================
-       BADGE
-    ===================================================== */
-
     if (summaryCountBadge) {
-
         summaryCountBadge.textContent =
             `${count}/${FREE_SUMMARY_LIMIT} used`;
-
     }
-
-
-    /* =====================================================
-       PERCENTAGE TEXT
-    ===================================================== */
 
     if (summaryUsagePercent) {
-
         summaryUsagePercent.textContent =
             `${percentage}%`;
-
     }
-
-
-    /* =====================================================
-       USAGE TEXT
-    ===================================================== */
 
     if (summaryUsageText) {
-
         summaryUsageText.textContent =
             `${count} of ${FREE_SUMMARY_LIMIT} free summaries used.`;
-
     }
-
-
-    /* =====================================================
-       HORIZONTAL PROGRESS BAR
-    ===================================================== */
 
     if (summaryUsageProgressBar) {
-
         summaryUsageProgressBar.style.width =
             `${percentage}%`;
-
     }
 
+    const ring =
+        document.querySelector(".usage-ring");
 
-    /* =====================================================
-       CIRCULAR PROGRESS
-    ===================================================== */
-
-    const circle =
-        document.querySelector(".progress-circle");
-
-    if (circle) {
-
-        /*
-         * Store the percentage directly on the element.
-         * CSS can then use this value to display the
-         * correct amount of circular progress.
-         */
-
-        circle.style.setProperty(
+    if (ring) {
+        ring.style.setProperty(
             "--usage-progress",
             `${percentage}%`
         );
-
-
-        circle.dataset.progress =
-            String(percentage);
-
-
-        /*
-         * Also provide useful state classes.
-         */
-
-        circle.classList.remove(
-            "usage-0",
-            "usage-20",
-            "usage-40",
-            "usage-60",
-            "usage-80",
-            "usage-100"
-        );
-
-
-        circle.classList.add(
-            `usage-${percentage}`
-        );
-
     }
-
-
-    /* =====================================================
-       LIMIT STATE
-    ===================================================== */
-
-    if (count >= FREE_SUMMARY_LIMIT) {
-
-        if (summaryCountBadge) {
-
-            summaryCountBadge.textContent =
-                "5/5 used";
-
-        }
-
-    }
-
 }
 
 /* =========================================================
