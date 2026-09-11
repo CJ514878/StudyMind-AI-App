@@ -16,6 +16,54 @@
     >
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <!-- =====================================================
+         MATHJAX
+         Renders AI-generated mathematics and formulas
+    ====================================================== -->
+
+    <script>
+        window.MathJax = {
+
+            tex: {
+
+                inlineMath: [
+                    ["\\(", "\\)"]
+                ],
+
+                displayMath: [
+                    ["\\[", "\\]"]
+                ],
+
+                processEscapes: true,
+
+                processEnvironments: true
+
+            },
+
+            options: {
+
+                skipHtmlTags: [
+                    "script",
+                    "noscript",
+                    "style",
+                    "textarea",
+                    "pre",
+                    "code"
+                ]
+
+            }
+
+        };
+    </script>
+
+
+    <script
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
 </head>
 
 <body>
@@ -29,13 +77,25 @@
     <aside class="sidebar">
 
         <div class="brand">
-            <div class="brand-icon">S</div>
+
+            <div class="brand-icon">
+                S
+            </div>
 
             <div>
-                <h2>StudyMind</h2>
-                <span>AI Learning Platform</span>
+
+                <h2>
+                    StudyMind
+                </h2>
+
+                <span>
+                    AI Learning Platform
+                </span>
+
             </div>
+
         </div>
+
 
         <nav class="sidebar-nav">
 
@@ -102,12 +162,16 @@
                 Game Mode
             </a>
 
-            <a href="premium.html" class="premium-link">
+            <a
+                href="premium.html"
+                class="premium-link"
+            >
                 <span>✦</span>
                 Premium
             </a>
 
         </nav>
+
 
         <div class="sidebar-bottom">
 
@@ -142,6 +206,7 @@
         <header class="topbar">
 
             <div>
+
                 <div class="eyebrow">
                     STUDYMIND AI SUPPORT
                 </div>
@@ -154,11 +219,14 @@
                     Ask questions, understand difficult concepts,
                     and get personalized guidance based on your study plan.
                 </p>
+
             </div>
+
 
             <div class="profile-area">
 
                 <div class="profile-text">
+
                     <strong id="username">
                         Student
                     </strong>
@@ -166,7 +234,9 @@
                     <span>
                         AI Learning Workspace
                     </span>
+
                 </div>
+
 
                 <div
                     class="avatar"
@@ -259,6 +329,7 @@
 
                     </div>
 
+
                     <button
                         id="clearChat"
                         class="clear-button"
@@ -321,16 +392,25 @@
                         placeholder="Ask StudyMind anything about your studies..."
                     ></textarea>
 
+
                     <button
                         id="sendButton"
                         class="send-button"
                         type="button"
                     >
-                        <span>Send</span>
-                        <b>↗</b>
+
+                        <span>
+                            Send
+                        </span>
+
+                        <b>
+                            ↗
+                        </b>
+
                     </button>
 
                 </div>
+
 
                 <div class="composer-footer">
 
@@ -361,6 +441,7 @@
                     <div class="section-heading">
 
                         <div>
+
                             <span class="mini-label">
                                 YOUR STUDY PLAN
                             </span>
@@ -368,6 +449,7 @@
                             <h3>
                                 Current focus
                             </h3>
+
                         </div>
 
                         <span class="context-icon">
@@ -375,6 +457,7 @@
                         </span>
 
                     </div>
+
 
                     <div
                         id="currentStudy"
@@ -402,6 +485,7 @@
                     <div class="section-heading">
 
                         <div>
+
                             <span class="mini-label">
                                 QUICK HELP
                             </span>
@@ -409,6 +493,7 @@
                             <h3>
                                 Try asking
                             </h3>
+
                         </div>
 
                     </div>
@@ -418,16 +503,24 @@
                         class="prompt-button"
                         data-prompt="Explain my current topic to me like I am learning it for the first time."
                     >
-                        <span class="prompt-icon">◈</span>
+
+                        <span class="prompt-icon">
+                            ◈
+                        </span>
 
                         <span>
                             Explain my topic
+
                             <small>
                                 Make difficult ideas easier
                             </small>
+
                         </span>
 
-                        <b>›</b>
+                        <b>
+                            ›
+                        </b>
+
                     </button>
 
 
@@ -435,16 +528,24 @@
                         class="prompt-button"
                         data-prompt="Quiz me on my current topic with five questions. Do not show the answers until I respond."
                     >
-                        <span class="prompt-icon">?</span>
+
+                        <span class="prompt-icon">
+                            ?
+                        </span>
 
                         <span>
                             Quiz me
+
                             <small>
                                 Test your understanding
                             </small>
+
                         </span>
 
-                        <b>›</b>
+                        <b>
+                            ›
+                        </b>
+
                     </button>
 
 
@@ -452,16 +553,24 @@
                         class="prompt-button"
                         data-prompt="Give me a practical study strategy for my current topic and tell me what I should focus on first."
                     >
-                        <span class="prompt-icon">↗</span>
+
+                        <span class="prompt-icon">
+                            ↗
+                        </span>
 
                         <span>
                             Study strategy
+
                             <small>
                                 Know what to focus on
                             </small>
+
                         </span>
 
-                        <b>›</b>
+                        <b>
+                            ›
+                        </b>
+
                     </button>
 
 
@@ -469,16 +578,24 @@
                         class="prompt-button"
                         data-prompt="Give me the most important things I should remember about my current topic for an exam."
                     >
-                        <span class="prompt-icon">◆</span>
+
+                        <span class="prompt-icon">
+                            ◆
+                        </span>
 
                         <span>
                             Exam essentials
+
                             <small>
                                 Focus on key knowledge
                             </small>
+
                         </span>
 
-                        <b>›</b>
+                        <b>
+                            ›
+                        </b>
+
                     </button>
 
                 </div>
@@ -492,25 +609,30 @@
                         STUDYMIND CAN
                     </span>
 
+
                     <div class="capability">
                         <span>✓</span>
                         Explain difficult concepts
                     </div>
+
 
                     <div class="capability">
                         <span>✓</span>
                         Adapt explanations to your level
                     </div>
 
+
                     <div class="capability">
                         <span>✓</span>
                         Help with exam preparation
                     </div>
 
+
                     <div class="capability">
                         <span>✓</span>
                         Generate practice questions
                     </div>
+
 
                     <div class="capability">
                         <span>✓</span>
@@ -528,7 +650,9 @@
 </div>
 
 
-<!-- PREMIUM MODAL -->
+<!-- =========================================================
+     PREMIUM MODAL
+========================================================= -->
 
 <div
     id="premiumModal"
@@ -544,18 +668,22 @@
             ×
         </button>
 
+
         <div class="premium-icon">
             ✦
         </div>
+
 
         <h2>
             You've reached your free AI limit
         </h2>
 
+
         <p>
             Upgrade to StudyMind Premium for unlimited
             AI support and advanced learning tools.
         </p>
+
 
         <button
             id="premiumButton"
@@ -568,6 +696,10 @@
 
 </div>
 
+
+<!-- =========================================================
+     STUDYMIND AI SUPPORT
+========================================================= -->
 
 <script src="ai-support.js"></script>
 
