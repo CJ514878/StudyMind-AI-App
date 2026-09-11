@@ -1,525 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
+    <title>StudyMind AI — Summarizer</title>
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <link rel="stylesheet" href="summarizer.css">
 
-<title>
-    StudyMind AI — Document Summarizer
-</title>
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [["\\(", "\\)"]],
+                displayMath: [["\\[", "\\]"]],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: [
+                    "script",
+                    "noscript",
+                    "style",
+                    "textarea",
+                    "pre",
+                    "code"
+                ]
+            }
+        };
+    </script>
 
-<link
-    rel="stylesheet"
-    href="style.css"
->
+    <script
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-<!-- =====================================================
-     MATHJAX CONFIGURATION
-====================================================== -->
-
-<script>
-    window.MathJax = {
-        tex: {
-            inlineMath: [
-                ["\\(", "\\)"]
-            ],
-
-            displayMath: [
-                ["\\[", "\\]"]
-            ]
-        },
-
-        options: {
-            skipHtmlTags: [
-                "script",
-                "noscript",
-                "style",
-                "textarea",
-                "pre",
-                "code"
-            ]
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
         }
-    };
-</script>
+    </script>
 
+    <!-- Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-<!-- =====================================================
-     MATHJAX
-====================================================== -->
-
-<script
-    async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-
-
-<!-- =====================================================
-     PDF.JS
-====================================================== -->
-
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
-</script>
-
-<script>
-
-    if (window.pdfjsLib) {
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-    }
-
-</script>
-
+    <!-- Sanitizer -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 </head>
-
 
 <body>
 
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
 
-<!-- =========================================================
-     NAVIGATION
-========================================================= -->
+<aside class="sidebar">
 
-<nav class="navbar">
-
-    <h2 class="logo">
-        StudyMind AI
-    </h2>
-
-
-    <ul class="nav-links">
-
-        <li>
-            <a href="home.html">
-                Home
-            </a>
-        </li>
-
-        <li>
-            <a href="dashboard.html">
-                Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="ai-assistant.html">
-                AI Assistant
-            </a>
-        </li>
-
-        <li>
-            <a
-                href="summarizer.html"
-                class="active"
-            >
-                Summarizer
-            </a>
-        </li>
-
-        <li>
-            <a href="streak.html">
-                Study Streak
-            </a>
-        </li>
-
-        <li>
-            <a href="score.html">
-                Study Score
-            </a>
-        </li>
-
-    </ul>
-
-
-    <button
-        id="themeButton"
-        class="theme-button"
-        type="button"
-    >
-        🌙 Dark Mode
-    </button>
-
-</nav>
-
-
-<!-- =========================================================
-     MAIN PAGE
-========================================================= -->
-
-<main class="dashboard-page">
-
-
-    <!-- =====================================================
-         PAGE HEADER
-    ====================================================== -->
-
-    <div class="dashboard-heading">
+    <div class="sidebar-brand">
+        <div class="brand-mark">S</div>
 
         <div>
+            <strong>StudyMind AI</strong>
+            <span>AI Study Coach</span>
+        </div>
+    </div>
 
-            <span class="eyebrow">
-                AI STUDY TOOL
-            </span>
+    <nav class="sidebar-nav">
 
-            <h1>
-                📄 Document Summarizer
-            </h1>
+        <div class="nav-section">
+            <span>WORKSPACE</span>
 
-            <p class="dashboard-subtitle">
-                Turn your study notes into concise,
-                exam-focused revision material.
-            </p>
+            <a href="dashboard.html">
+                <span class="nav-icon">⌂</span>
+                Dashboard
+            </a>
 
+            <a href="schedule.html">
+                <span class="nav-icon">◷</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span class="nav-icon">▣</span>
+                Calendar
+            </a>
         </div>
 
+        <div class="nav-section">
+            <span>AI TOOLS</span>
 
-        <a
-            href="dashboard.html"
-            class="dashboard-action"
-        >
-            ← Back to Dashboard
+            <a href="ai-support.html">
+                <span class="nav-icon">✦</span>
+                AI Support
+            </a>
+
+            <a href="ai-assistant.html">
+                <span class="nav-icon">◉</span>
+                AI Assistant
+            </a>
+
+            <a href="summarizer.html" class="active">
+                <span class="nav-icon">▤</span>
+                Summarizer
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <span>PROGRESS</span>
+
+            <a href="streak.html">
+                <span class="nav-icon">🔥</span>
+                Study Streak
+            </a>
+
+            <a href="score.html">
+                <span class="nav-icon">★</span>
+                Study Score
+            </a>
+
+            <a href="goals.html">
+                <span class="nav-icon">◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span class="nav-icon">◇</span>
+                Rewards
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <span>COMMUNITY</span>
+
+            <a href="leaderboard.html">
+                <span class="nav-icon">♛</span>
+                Leaderboard
+            </a>
+
+            <a href="friends.html">
+                <span class="nav-icon">♧</span>
+                Friends
+            </a>
+
+            <a href="game-mode.html">
+                <span class="nav-icon">⚔</span>
+                Game Mode
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <span>ACCOUNT</span>
+
+            <a href="premium.html" class="premium-link">
+                <span class="nav-icon">◆</span>
+                Premium
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <a href="feedback.html">
+            <span class="nav-icon">◌</span>
+            Feedback
         </a>
+
+        <a href="settings.html">
+            <span class="nav-icon">⚙</span>
+            Settings
+        </a>
+
+        <button id="logoutButton" class="logout-button">
+            <span class="nav-icon">↪</span>
+            Logout
+        </button>
 
     </div>
 
+</aside>
 
 
-    <!-- =====================================================
-         SUMMARIZER CONTENT
-    ====================================================== -->
+<!-- =====================================================
+     MAIN
+===================================================== -->
 
-    <section class="main-dashboard">
+<main class="app-main">
+
+    <!-- TOPBAR -->
+
+    <header class="topbar">
+
+        <div class="mobile-brand">
+            StudyMind AI
+        </div>
+
+        <div class="topbar-spacer"></div>
+
+        <div class="profile-area">
+
+            <div class="profile-avatar">
+                S
+            </div>
+
+            <div class="profile-text">
+                <strong id="usernameDisplay">Student</strong>
+                <span>Student</span>
+            </div>
+
+        </div>
+
+    </header>
 
 
-        <!-- =================================================
-             LEFT PANEL
-        ================================================== -->
+    <!-- PAGE -->
 
-        <div class="left-panel">
+    <div class="page-container">
+
+        <!-- HERO -->
+
+        <section class="summarizer-hero">
+
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    <span>✦</span>
+                    AI STUDY TOOL
+                </div>
+
+                <h1>
+                    Turn your notes into
+                    <span>powerful revision material.</span>
+                </h1>
+
+                <p>
+                    Upload a document or paste your study material.
+                    StudyMind AI will identify the concepts,
+                    definitions, formulas and exam-relevant ideas
+                    that matter most.
+                </p>
+
+                <div class="hero-features">
+
+                    <span>✓ Exam-focused</span>
+                    <span>✓ AI-powered</span>
+                    <span>✓ Math support</span>
+                    <span>✓ PDF ready</span>
+
+                </div>
+
+            </div>
+
+            <div class="hero-visual">
+
+                <div class="ai-orb">
+                    <div class="orb-core">✦</div>
+                </div>
+
+                <div class="floating-card card-one">
+                    <span>🎯</span>
+                    Key Concepts
+                </div>
+
+                <div class="floating-card card-two">
+                    <span>🧠</span>
+                    Smart Revision
+                </div>
+
+                <div class="floating-card card-three">
+                    <span>📐</span>
+                    Formulas
+                </div>
+
+            </div>
+
+        </section>
 
 
-            <!-- =============================================
-                 SUMMARIZER
-            ============================================== -->
+        <!-- MAIN GRID -->
 
-            <div class="panel-card summarizer-card">
+        <section class="summarizer-grid">
 
-                <div class="card-heading">
+            <!-- LEFT -->
 
-                    <div>
+            <div class="summarizer-main">
 
-                        <span class="card-kicker">
-                            STUDY MATERIAL
-                        </span>
+                <div class="workspace-card">
 
-                        <h2>
-                            ✨ Summarize Your Notes
-                        </h2>
+                    <div class="workspace-header">
+
+                        <div>
+                            <span class="section-label">
+                                STUDY MATERIAL
+                            </span>
+
+                            <h2>
+                                Summarize your material
+                            </h2>
+
+                            <p>
+                                Upload a document or paste your notes below.
+                            </p>
+                        </div>
+
+                        <div
+                            id="summaryCountBadge"
+                            class="usage-badge"
+                        >
+                            0/5 used
+                        </div>
 
                     </div>
 
 
-                    <span
-                        id="summaryCountBadge"
-                        class="card-badge"
-                    >
-                        0/5 used
-                    </span>
-
-                </div>
-
-
-                <p>
-                    Paste your class notes, textbook
-                    material, revision notes, or upload
-                    a TXT, Markdown, or PDF document.
-                </p>
-
-
-                <!-- =========================================
-                     FILE UPLOAD
-                ========================================== -->
-
-                <div
-                    style="
-                        margin: 18px 0;
-                        padding: 18px;
-                        border: 1px dashed rgba(128,128,128,0.35);
-                        border-radius: 14px;
-                    "
-                >
+                    <!-- UPLOAD -->
 
                     <label
                         for="documentFile"
-                        style="
-                            display:block;
-                            font-weight:700;
-                            margin-bottom:8px;
-                        "
+                        class="upload-zone"
+                        id="uploadZone"
                     >
-                        📎 Upload a document
+
+                        <div class="upload-icon">
+                            ↑
+                        </div>
+
+                        <div class="upload-content">
+
+                            <strong>
+                                Upload your study material
+                            </strong>
+
+                            <span>
+                                PDF, TXT, Markdown
+                            </span>
+
+                            <small id="fileStatus">
+                                Maximum file size: 10 MB
+                            </small>
+
+                        </div>
+
+                        <span class="upload-button">
+                            Browse
+                        </span>
+
+                        <input
+                            id="documentFile"
+                            type="file"
+                            accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf"
+                            hidden
+                        >
+
                     </label>
 
 
-                    <input
-                        id="documentFile"
-                        type="file"
-                        accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf"
+                    <div class="input-divider">
+                        <span>OR PASTE YOUR NOTES</span>
+                    </div>
+
+
+                    <!-- TEXT INPUT -->
+
+                    <div class="textarea-wrapper">
+
+                        <textarea
+                            id="summarizeInput"
+                            placeholder="Paste your class notes, textbook material, revision notes or any study content here..."
+                            rows="13"
+                        ></textarea>
+
+                        <div
+                            id="inputInfo"
+                            class="input-info"
+                        >
+                            0 characters • 0 words
+                        </div>
+
+                    </div>
+
+
+                    <!-- ACTION -->
+
+                    <button
+                        id="summarizeBtn"
+                        class="summarize-button"
+                        type="button"
                     >
+                        <span>✦</span>
+                        Summarize with AI
+                    </button>
 
 
-                    <small
-                        id="fileStatus"
-                        style="
-                            display:block;
-                            margin-top:8px;
-                            opacity:0.75;
-                        "
-                    >
-                        Supported: TXT, MD and PDF
-                    </small>
+                    <!-- OUTPUT -->
 
-                </div>
+                    <div class="output-section">
 
+                        <div class="output-header">
 
+                            <div>
+                                <span class="section-label">
+                                    AI OUTPUT
+                                </span>
 
-                <!-- =========================================
-                     TEXT INPUT
-                ========================================== -->
+                                <h3>
+                                    Your revision summary
+                                </h3>
+                            </div>
 
-                <textarea
-                    id="summarizeInput"
-                    placeholder="Paste your study material here..."
-                    rows="14"
-                ></textarea>
+                            <span class="ai-status">
+                                <i></i>
+                                AI Ready
+                            </span>
 
+                        </div>
 
+                        <div
+                            id="summaryOutput"
+                            class="summary-output"
+                        >
 
-                <!-- =========================================
-                     INPUT INFORMATION
-                ========================================== -->
+                            <div class="empty-output">
 
-                <div
-                    id="inputInfo"
-                    style="
-                        margin:10px 0 14px;
-                        font-size:13px;
-                        opacity:0.75;
-                    "
-                >
-                    0 characters
-                </div>
+                                <div class="empty-icon">
+                                    ✦
+                                </div>
 
+                                <h3>
+                                    Your summary will appear here
+                                </h3>
 
+                                <p>
+                                    Give StudyMind AI some study material
+                                    and it will transform it into clear,
+                                    exam-focused revision notes.
+                                </p>
 
-                <!-- =========================================
-                     SUMMARIZE BUTTON
-                ========================================== -->
-
-                <button
-                    id="summarizeBtn"
-                    class="primary-button full-button"
-                    type="button"
-                >
-                    ✨ Summarize Notes
-                </button>
-
-
-
-                <!-- =========================================
-                     OUTPUT
-                ========================================== -->
-
-                <div
-                    id="summaryOutput"
-                    class="ai-response"
-                >
-                    Your exam-focused summary
-                    will appear here.
-                </div>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 SUMMARY FEATURES
-            ============================================== -->
-
-            <div class="panel-card">
-
-                <div class="card-heading">
-
-                    <div>
-
-                        <span class="card-kicker">
-                            SUMMARY FEATURES
-                        </span>
-
-                        <h2>
-                            🧠 What StudyMind AI Looks For
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="dashboard-tool-links">
-
-
-                    <div class="dashboard-tool-link">
-
-                        <span>
-                            🎯
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Key Concepts
-                            </strong>
-
-                            <small>
-                                Important ideas are
-                                identified and simplified.
-                            </small>
+                            </div>
 
                         </div>
 
                     </div>
 
-
-
-                    <div class="dashboard-tool-link">
-
-                        <span>
-                            📌
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Important Definitions
-                            </strong>
-
-                            <small>
-                                Useful terms and definitions
-                                are highlighted for revision.
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="dashboard-tool-link">
-
-                        <span>
-                            🧮
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Formulas
-                            </strong>
-
-                            <small>
-                                Important formulas can be
-                                separated for easier revision.
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="dashboard-tool-link">
-
-                        <span>
-                            📝
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Exam-Relevant Points
-                            </strong>
-
-                            <small>
-                                The summary focuses on
-                                useful examination material.
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-        </div>
-
-
-
-        <!-- =================================================
-             RIGHT PANEL
-        ================================================== -->
-
-        <div class="right-panel">
-
-
-            <!-- =============================================
-                 USAGE
-            ============================================== -->
-
-            <div class="panel-card">
-
-                <span class="card-kicker">
-                    FREE PLAN
-                </span>
-
-
-                <h2>
-                    📄 Summary Usage
-                </h2>
-
-
-                <div class="progress-circle">
-
-                    <span id="summaryUsagePercent">
-                        0%
-                    </span>
-
                 </div>
 
 
-                <p
-                    id="summaryUsageText"
-                    style="text-align:center;"
-                >
-                    0 of 5 free summaries used.
-                </p>
+                <!-- FEATURES -->
+
+                <div class="features-card">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <span class="section-label">
+                                INTELLIGENT ANALYSIS
+                            </span>
+
+                            <h2>
+                                What StudyMind AI extracts
+                            </h2>
+                        </div>
+
+                        <span class="sparkle">✦</span>
+
+                    </div>
 
 
-                <div class="progress-bar-container">
+                    <div class="feature-grid">
 
-                    <div id="summaryUsageProgressBar">
+                        <div class="feature-item">
+                            <div class="feature-icon">🎯</div>
+                            <strong>Key Concepts</strong>
+                            <p>
+                                The core ideas your notes are trying
+                                to teach.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">📌</div>
+                            <strong>Definitions</strong>
+                            <p>
+                                Important terms explained clearly
+                                for revision.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">📐</div>
+                            <strong>Formulas</strong>
+                            <p>
+                                Mathematical relationships and
+                                formulas preserved accurately.
+                            </p>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">📝</div>
+                            <strong>Exam Focus</strong>
+                            <p>
+                                The information most worth remembering
+                                before an examination.
+                            </p>
+                        </div>
+
                     </div>
 
                 </div>
@@ -527,171 +515,189 @@
             </div>
 
 
+            <!-- RIGHT -->
 
-            <!-- =============================================
-                 STUDY CONTEXT
-            ============================================== -->
+            <aside class="summarizer-sidebar">
 
-            <div class="panel-card">
+                <!-- USAGE -->
 
-                <span class="card-kicker">
-                    YOUR STUDY PLAN
-                </span>
+                <div class="side-card usage-card">
 
+                    <div class="side-card-header">
 
-                <h2>
-                    📚 Exam-Tailored
-                </h2>
+                        <div>
+                            <span class="section-label">
+                                USAGE
+                            </span>
 
+                            <h3>
+                                Summary Credits
+                            </h3>
+                        </div>
 
-                <p>
-                    Your summary is automatically
-                    tailored using the exam type,
-                    subjects, and current topic from
-                    your StudyMind study plan.
-                </p>
+                        <span class="side-icon">
+                            ◉
+                        </span>
 
+                    </div>
 
-                <div
-                    id="summaryStudyContext"
-                    class="ai-response"
-                >
-                    Your current study-plan context
-                    will appear here.
-                </div>
+                    <div class="usage-ring">
 
-            </div>
+                        <div class="usage-ring-inner">
+                            <strong id="summaryUsagePercent">
+                                0%
+                            </strong>
+                            <span>used</span>
+                        </div>
 
+                    </div>
 
+                    <p id="summaryUsageText">
+                        0 of 5 free summaries used.
+                    </p>
 
-            <!-- =============================================
-                 QUICK ACCESS
-            ============================================== -->
-
-            <div class="panel-card">
-
-                <span class="card-kicker">
-                    STUDYMIND
-                </span>
-
-
-                <h2>
-                    ⚡ Quick Access
-                </h2>
-
-
-                <div class="dashboard-tool-links">
-
+                    <div class="usage-progress">
+                        <div id="summaryUsageProgressBar"></div>
+                    </div>
 
                     <a
-                        href="dashboard.html"
-                        class="dashboard-tool-link"
+                        href="premium.html"
+                        class="upgrade-link"
                     >
-
-                        <span>
-                            📊
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Dashboard
-                            </strong>
-
-                            <small>
-                                Return to your main
-                                study workspace.
-                            </small>
-
-                        </div>
-
+                        Unlock unlimited summaries →
                     </a>
-
-
-
-                    <a
-                        href="ai-assistant.html"
-                        class="dashboard-tool-link"
-                    >
-
-                        <span>
-                            🤖
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                AI Assistant
-                            </strong>
-
-                            <small>
-                                Ask questions about
-                                your study plan.
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-
-                    <a
-                        href="score.html"
-                        class="dashboard-tool-link"
-                    >
-
-                        <span>
-                            ⭐
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Study Score
-                            </strong>
-
-                            <small>
-                                View your study performance.
-                            </small>
-
-                        </div>
-
-                    </a>
-
 
                 </div>
 
-            </div>
+
+                <!-- STUDY CONTEXT -->
+
+                <div class="side-card">
+
+                    <div class="side-card-header">
+
+                        <div>
+                            <span class="section-label">
+                                STUDY PLAN
+                            </span>
+
+                            <h3>
+                                Exam Context
+                            </h3>
+                        </div>
+
+                        <span class="side-icon">
+                            📚
+                        </span>
+
+                    </div>
+
+                    <p class="context-description">
+                        StudyMind uses your plan to make summaries
+                        more relevant to your current preparation.
+                    </p>
+
+                    <div
+                        id="summaryStudyContext"
+                        class="study-context"
+                    >
+                        Loading your study context...
+                    </div>
+
+                </div>
 
 
-        </div>
+                <!-- QUICK ACTIONS -->
+
+                <div class="side-card">
+
+                    <div class="side-card-header">
+
+                        <div>
+                            <span class="section-label">
+                                QUICK ACTIONS
+                            </span>
+
+                            <h3>
+                                Keep Studying
+                            </h3>
+                        </div>
+
+                        <span class="side-icon">
+                            ⚡
+                        </span>
+
+                    </div>
+
+                    <div class="quick-actions">
+
+                        <a href="dashboard.html">
+                            <span>📊</span>
+                            <div>
+                                <strong>Dashboard</strong>
+                                <small>Your study workspace</small>
+                            </div>
+                            <b>→</b>
+                        </a>
+
+                        <a href="ai-assistant.html">
+                            <span>🤖</span>
+                            <div>
+                                <strong>AI Assistant</strong>
+                                <small>Ask StudyMind anything</small>
+                            </div>
+                            <b>→</b>
+                        </a>
+
+                        <a href="game-mode.html">
+                            <span>⚔</span>
+                            <div>
+                                <strong>Game Mode</strong>
+                                <small>Test your knowledge</small>
+                            </div>
+                            <b>→</b>
+                        </a>
+
+                    </div>
+
+                </div>
 
 
-    </section>
+                <!-- AI CAPABILITIES -->
 
+                <div class="capability-card">
+
+                    <div class="capability-icon">
+                        ✦
+                    </div>
+
+                    <h3>
+                        Built for students
+                    </h3>
+
+                    <p>
+                        StudyMind AI doesn't simply shorten your
+                        notes. It reorganizes them into material
+                        designed to help you understand and revise.
+                    </p>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+    </div>
 
 </main>
 
 
+<!-- SUPABASE -->
 
-<!-- =========================================================
-     SUPABASE
-========================================================= -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
-
-
-<!-- =========================================================
-     SUMMARIZER JAVASCRIPT
-========================================================= -->
 
 <script src="summarizer.js"></script>
 
-
 </body>
-
 </html>
