@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>StudyMind AI — Study Session</title>
+
+    <link rel="stylesheet" href="study-session.css">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [["\\(", "\\)"]],
+                displayMath: [["\\[", "\\]"]],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: [
+                    "script",
+                    "noscript",
+                    "style",
+                    "textarea",
+                    "pre",
+                    "code"
+                ]
+            }
+        };
+    </script>
+
+    <script
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+
+<body>
+
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+        <div class="brand-logo">S</div>
+
+        <div>
+            <strong>StudyMind AI</strong>
+            <span>AI Study Coach</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <div class="nav-group">
+            <small>WORKSPACE</small>
+
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="schedule.html">
+                <span>◷</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span>▣</span>
+                Calendar
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>AI TOOLS</small>
+
+            <a href="ai-support.html">
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="ai-assistant.html">
+                <span>◉</span>
+                AI Assistant
+            </a>
+
+            <a href="summarizer.html">
+                <span>▤</span>
+                Summarizer
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>PROGRESS</small>
+
+            <a href="streak.html">
+                <span>🔥</span>
+                Study Streak
+            </a>
+
+            <a href="score.html">
+                <span>★</span>
+                Study Score
+            </a>
+
+            <a href="goals.html">
+                <span>◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span>◇</span>
+                Rewards
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>COMMUNITY</small>
+
+            <a href="leaderboard.html">
+                <span>♛</span>
+                Leaderboard
+            </a>
+
+            <a href="friends.html">
+                <span>♧</span>
+                Friends
+            </a>
+
+            <a href="game-mode.html">
+                <span>⚔</span>
+                Game Mode
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>ACCOUNT</small>
+
+            <a href="premium.html" class="premium-link">
+                <span>◆</span>
+                Premium
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <a href="feedback.html">
+            <span>◌</span>
+            Feedback
+        </a>
+
+        <a href="settings.html">
+            <span>⚙</span>
+            Settings
+        </a>
+
+        <button id="logoutButton">
+            <span>↪</span>
+            Logout
+        </button>
+
+    </div>
+
+</aside>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main class="main">
+
+    <header class="topbar">
+
+        <a href="dashboard.html" class="back-button">
+            ← Dashboard
+        </a>
+
+        <div class="session-user">
+
+            <div class="avatar" id="userAvatar">
+                S
+            </div>
+
+            <div>
+                <strong id="usernameDisplay">
+                    Student
+                </strong>
+
+                <small>
+                    Study Session
+                </small>
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <div class="page">
+
+        <!-- =================================================
+             SESSION HEADER
+        ================================================== -->
+
+        <section class="session-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    FOCUSED STUDY
+                </span>
+
+                <h1 id="sessionTitle">
+                    Study Session
+                </h1>
+
+                <p id="sessionSubtitle">
+                    Stay focused and make meaningful progress.
+                </p>
+
+            </div>
+
+            <div class="session-status">
+                <span class="status-dot"></span>
+                <span id="sessionStatus">
+                    Ready to study
+                </span>
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SESSION GRID
+        ================================================== -->
+
+        <section class="session-grid">
+
+            <!-- =============================================
+                 MAIN STUDY AREA
+            ============================================== -->
+
+            <div class="study-column">
+
+                <!-- CURRENT TOPIC -->
+
+                <article class="topic-card">
+
+                    <div class="topic-top">
+
+                        <div>
+
+                            <span class="card-label">
+                                CURRENT TOPIC
+                            </span>
+
+                            <h2 id="topicName">
+                                Your current topic
+                            </h2>
+
+                            <p id="subjectName">
+                                Subject
+                            </p>
+
+                        </div>
+
+                        <div class="topic-number">
+                            <span id="topicNumber">
+                                1
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="topic-progress">
+
+                        <div class="progress-label">
+                            <span>Session progress</span>
+
+                            <strong id="progressPercent">
+                                0%
+                            </strong>
+                        </div>
+
+                        <div class="progress-track">
+                            <div
+                                id="topicProgress"
+                                class="progress-fill">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <!-- STUDY GUIDE -->
+
+                <article class="study-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                STUDY GUIDE
+                            </span>
+
+                            <h2>
+                                Focus on understanding
+                            </h2>
+                        </div>
+
+                        <div class="card-symbol">
+                            ✦
+                        </div>
+
+                    </div>
+
+                    <div class="study-guide">
+
+                        <div class="guide-item">
+
+                            <div class="guide-icon">
+                                01
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Understand the concept
+                                </strong>
+
+                                <p>
+                                    Read through the topic carefully
+                                    and make sure you understand the
+                                    main idea before memorizing details.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="guide-item">
+
+                            <div class="guide-icon">
+                                02
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Identify what matters
+                                </strong>
+
+                                <p>
+                                    Look for definitions, formulas,
+                                    processes, examples and important
+                                    relationships.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="guide-item">
+
+                            <div class="guide-icon">
+                                03
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Test yourself
+                                </strong>
+
+                                <p>
+                                    Try to explain what you learned
+                                    without looking at your notes.
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <!-- NOTES -->
+
+                <article class="notes-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                SESSION NOTES
+                            </span>
+
+                            <h2>
+                                Write down what you learn
+                            </h2>
+                        </div>
+
+                        <span class="save-indicator" id="notesStatus">
+                            Saved locally
+                        </span>
+
+                    </div>
+
+                    <textarea
+                        id="sessionNotes"
+                        placeholder="Write your key ideas, formulas, questions or things you want to remember..."
+                    ></textarea>
+
+                </article>
+
+
+                <!-- COMPLETION -->
+
+                <article class="completion-card">
+
+                    <div>
+
+                        <span class="card-label">
+                            WHEN YOU'RE READY
+                        </span>
+
+                        <h2>
+                            Check your understanding
+                        </h2>
+
+                        <p>
+                            Finish the session by taking a Knowledge
+                            Check. Passing it will mark this topic
+                            as completed.
+                        </p>
+
+                    </div>
+
+                    <div class="completion-actions">
+
+                        <button
+                            id="knowledgeCheckButton"
+                            class="primary-button"
+                            type="button"
+                        >
+                            🧠 Take Knowledge Check
+                        </button>
+
+                        <button
+                            id="completeSessionButton"
+                            class="secondary-button"
+                            type="button"
+                        >
+                            ✓ Mark Session Complete
+                        </button>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- =============================================
+                 RIGHT SIDEBAR
+            ============================================== -->
+
+            <aside class="session-sidebar">
+
+                <!-- TIMER -->
+
+                <article class="timer-card">
+
+                    <div class="timer-heading">
+
+                        <div>
+                            <span class="card-label">
+                                FOCUS TIMER
+                            </span>
+
+                            <h2>
+                                Stay focused
+                            </h2>
+                        </div>
+
+                        <span class="timer-live">
+                            <i></i>
+                            LIVE
+                        </span>
+
+                    </div>
+
+
+                    <div class="timer-display">
+
+                        <span id="timerDisplay">
+                            25:00
+                        </span>
+
+                    </div>
+
+
+                    <div class="timer-state" id="timerState">
+                        Ready to begin
+                    </div>
+
+
+                    <div class="timer-presets">
+
+                        <button
+                            class="timer-preset active"
+                            data-minutes="25"
+                        >
+                            25 min
+                        </button>
+
+                        <button
+                            class="timer-preset"
+                            data-minutes="45"
+                        >
+                            45 min
+                        </button>
+
+                        <button
+                            class="timer-preset"
+                            data-minutes="60"
+                        >
+                            60 min
+                        </button>
+
+                    </div>
+
+
+                    <div class="timer-actions">
+
+                        <button
+                            id="timerStart"
+                            class="timer-main-button"
+                            type="button"
+                        >
+                            ▶ Start
+                        </button>
+
+                        <button
+                            id="timerReset"
+                            class="timer-reset-button"
+                            type="button"
+                        >
+                            ↻
+                        </button>
+
+                    </div>
+
+
+                    <a
+                        href="study-timer.html"
+                        class="full-timer-link"
+                    >
+                        Open full Study Timer →
+                    </a>
+
+                </article>
+
+
+                <!-- SESSION CHECKLIST -->
+
+                <article class="checklist-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                SESSION PLAN
+                            </span>
+
+                            <h3>
+                                Your checklist
+                            </h3>
+                        </div>
+
+                    </div>
+
+                    <div class="checklist">
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="understandCheck"
+                            >
+                            <span></span>
+                            Understand the topic
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="notesCheck"
+                            >
+                            <span></span>
+                            Write key notes
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="recallCheck"
+                            >
+                            <span></span>
+                            Recall without notes
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="questionCheck"
+                            >
+                            <span></span>
+                            Complete Knowledge Check
+                        </label>
+
+                    </div>
+
+                </article>
+
+
+                <!-- AI HELP -->
+
+                <article class="ai-help-card">
+
+                    <div class="ai-help-icon">
+                        ✦
+                    </div>
+
+                    <span class="card-label">
+                        NEED HELP?
+                    </span>
+
+                    <h3>
+                        Ask StudyMind AI
+                    </h3>
+
+                    <p>
+                        Stuck on this topic? Let the AI Assistant
+                        explain it in a simpler way.
+                    </p>
+
+                    <a href="ai-assistant.html">
+                        Ask AI →
+                    </a>
+
+                </article>
+
+
+                <!-- SESSION INFO -->
+
+                <article class="info-card">
+
+                    <span class="card-label">
+                        SESSION INFO
+                    </span>
+
+                    <div class="info-row">
+                        <span>Subject</span>
+                        <strong id="infoSubject">—</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Topic</span>
+                        <strong id="infoTopic">—</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Exam</span>
+                        <strong id="infoExam">—</strong>
+                    </div>
+
+                </article>
+
+            </aside>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<!-- =====================================================
+     SUPABASE
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script src="study-session.js"></script>
+
+</body>
+</html>
