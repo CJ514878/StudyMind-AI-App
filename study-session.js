@@ -1486,7 +1486,6 @@ function getCurrentTopicIndex() {
 
 }
 
-
 /* =========================================================
    COMPLETE SESSION
 ========================================================= */
@@ -1497,10 +1496,8 @@ function completeSession() {
         return;
     }
 
-
     const key =
         currentTopic.name;
-
 
     let completed =
         safeJSON(
@@ -1508,18 +1505,17 @@ function completeSession() {
             []
         );
 
-
     if (!Array.isArray(completed)) {
         completed = [];
     }
 
+    /* -----------------------------------------------------
+       SAVE COMPLETED TOPIC
+    ----------------------------------------------------- */
 
     if (!completed.includes(key)) {
-
         completed.push(key);
-
     }
-
 
     saveJSON(
         SESSION_KEYS.DONE,
@@ -1527,9 +1523,12 @@ function completeSession() {
     );
 
 
+    /* -----------------------------------------------------
+       SAVE QUESTION-CHECK COMPLETION
+    ----------------------------------------------------- */
+
     const questionDone =
         $("questionCheck")?.checked;
-
 
     if (questionDone) {
 
@@ -1539,26 +1538,104 @@ function completeSession() {
                 []
             );
 
-
         if (!Array.isArray(qCompleted)) {
             qCompleted = [];
         }
 
-
         if (!qCompleted.includes(key)) {
-
             qCompleted.push(key);
-
         }
-
 
         saveJSON(
             SESSION_KEYS.QUESTION_DONE,
             qCompleted
         );
+    }
+
+
+    /* -----------------------------------------------------
+       ⭐ RECORD REAL STUDY ACTIVITY
+       
+       This is what changes the streak.
+       
+       Opening the dashboard/session does NOT do this.
+       Only clicking "Complete Session" does.
+    ----------------------------------------------------- */
+
+    if (
+        window.StudyMindStreak &&
+        typeof window.StudyMindStreak.recordStudyActivity ===
+            "function"
+    ) {
+
+        window.StudyMindStreak.recordStudyActivity();
+
+    } else {
+
+        /*
+         * Fallback in case the streak script is not loaded
+         * on this page.
+         *
+         * This writes today's activity directly.
+         */
+
+        try {
+
+            const activity =
+                safeJSON(
+                    "studyMindStreakActivity",
+                    {}
+                );
+
+            if (
+                activity &&
+                typeof activity === "object" &&
+                !Array.isArray(activity)
+            ) {
+
+                const now =
+                    new Date();
+
+                const year =
+                    now.getFullYear();
+
+                const month =
+                    String(
+                        now.getMonth() + 1
+                    ).padStart(2, "0");
+
+                const day =
+                    String(
+                        now.getDate()
+                    ).padStart(2, "0");
+
+                const today =
+                    `${year}-${month}-${day}`;
+
+                activity[today] = true;
+
+                saveJSON(
+                    "studyMindStreakActivity",
+                    activity
+                );
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Could not record study streak:",
+                error
+            );
+
+        }
 
     }
 
+
+    /* -----------------------------------------------------
+       COMPLETE
+    ----------------------------------------------------- */
 
     updateSessionStatus(
         "Session completed ✓"
@@ -1576,7 +1653,6 @@ function completeSession() {
     );
 
 }
-
 
 /* =========================================================
    STATUS
