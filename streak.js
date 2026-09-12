@@ -1,9 +1,38 @@
 /* =========================================================
-   STUDYMIND AI — STREAK ENGINE
+   STUDYMIND AI — STUDY STREAK ENGINE
+   COMPLETE REPLACEMENT
+
+   CORRECT FLOW:
+
+   Study Session
+        ↓
+   Complete Topic
+        ↓
+   studyMindCompletedTopics
+        +
+   studyMindStreakActivity
+        ↓
+   Study Streak
+        ↓
+   Current Streak
+   Best Streak
+   Weekly Activity
+   Calendar
+
+   IMPORTANT:
+   - A study plan does NOT create a streak.
+   - Opening a topic does NOT create a streak.
+   - Only completing a topic creates activity.
+   - Multiple topics on one day = ONE streak day.
+   - Initial streak = 0.
 ========================================================= */
 
 "use strict";
 
+
+/* =========================================================
+   STORAGE
+========================================================= */
 
 const STREAK_KEYS = {
 
@@ -29,7 +58,7 @@ const STREAK_KEYS = {
 
 
 /* =========================================================
-   START
+   INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
@@ -40,7 +69,14 @@ document.addEventListener(
 
 function initStreak() {
 
-    syncCompletionActivity();
+    /*
+       Do NOT create activity simply because a plan exists.
+
+       The activity key is only populated when a
+       topic completion actually occurs.
+    */
+
+    migrateActivityFormat();
 
     renderEverything();
 
@@ -50,8 +86,7 @@ function initStreak() {
 
 
     /*
-       Keep the page updated if another StudyMind
-       tab changes completion data.
+       Cross-tab updates.
     */
 
     window.addEventListener(
@@ -60,10 +95,11 @@ function initStreak() {
 
             if (
                 event.key === STREAK_KEYS.COMPLETED ||
-                event.key === STREAK_KEYS.ACTIVITY
+                event.key === STREAK_KEYS.ACTIVITY ||
+                event.key === STREAK_KEYS.BEST
             ) {
 
-                syncCompletionActivity();
+                migrateActivityFormat();
 
                 renderEverything();
 
@@ -74,26 +110,25 @@ function initStreak() {
 
 
     /*
-       Refresh periodically so the timer/session
-       can update progress without a reload.
+       Same-page / delayed updates.
     */
 
     setInterval(
         () => {
 
-            syncCompletionActivity();
+            migrateActivityFormat();
 
             renderEverything();
 
         },
-        3000
+        2000
     );
 
 }
 
 
 /* =========================================================
-   HELPERS
+   STORAGE HELPERS
 ========================================================= */
 
 function readJSON(key, fallback) {
@@ -109,7 +144,13 @@ function readJSON(key, fallback) {
 
         return JSON.parse(value);
 
-    } catch {
+    } catch (error) {
+
+        console.warn(
+            "StudyMind storage read failed:",
+            key,
+            error
+        );
 
         return fallback;
 
@@ -120,13 +161,29 @@ function readJSON(key, fallback) {
 
 function writeJSON(key, value) {
 
-    localStorage.setItem(
-        key,
-        JSON.stringify(value)
-    );
+    try {
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind storage write failed:",
+            key,
+            error
+        );
+
+    }
 
 }
 
+
+/* =========================================================
+   DATE HELPERS
+========================================================= */
 
 function todayKey(date = new Date()) {
 
@@ -151,6 +208,16 @@ function todayKey(date = new Date()) {
 
 function dateFromKey(key) {
 
+    if (
+        typeof key !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(key)
+    ) {
+
+        return null;
+
+    }
+
+
     const [
         year,
         month,
@@ -173,6 +240,13 @@ function addDays(date, amount) {
     const result =
         new Date(date);
 
+    result.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
     result.setDate(
         result.getDate() + amount
     );
@@ -183,10 +257,80 @@ function addDays(date, amount) {
 
 
 /* =========================================================
-   COMPLETION SYNC
+   TOPIC IDENTITY
 ========================================================= */
 
-function syncCompletionActivity() {
+/*
+   Converts any completed-topic format into a stable
+   identifier.
+
+   Supports:
+
+   "Algebra"
+
+   {
+       id: "abc123",
+       name: "Algebra"
+   }
+
+   {
+       topicId: "abc123",
+       topic: "Algebra"
+   }
+*/
+
+function getTopicIdentity(topic) {
+
+    if (
+        topic === null ||
+        topic === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    if (typeof topic === "string") {
+
+        return topic.trim();
+
+    }
+
+
+    if (typeof topic === "number") {
+
+        return String(topic);
+
+    }
+
+
+    if (typeof topic === "object") {
+
+        return String(
+            topic.id ??
+            topic.topicId ??
+            topic.topic_id ??
+            topic.name ??
+            topic.title ??
+            topic.topic ??
+            topic.text ??
+            ""
+        ).trim();
+
+    }
+
+
+    return String(topic).trim();
+
+}
+
+
+/* =========================================================
+   COMPLETED TOPICS
+========================================================= */
+
+function getCompletedTopics() {
 
     const completed =
         readJSON(
@@ -195,84 +339,304 @@ function syncCompletionActivity() {
         );
 
 
-    if (!Array.isArray(completed)) {
-        return;
+    if (Array.isArray(completed)) {
+
+        return completed;
+
     }
 
 
-    let activity =
+    /*
+       Compatibility if another version stored
+       an object.
+    */
+
+    if (
+        completed &&
+        typeof completed === "object"
+    ) {
+
+        return Object.values(
+            completed
+        ).flat();
+
+    }
+
+
+    return [];
+
+}
+
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
+
+function getActivity() {
+
+    const stored =
         readJSON(
             STREAK_KEYS.ACTIVITY,
             {}
         );
 
 
+    /*
+       Preferred format:
+
+       {
+           "2026-09-12": true
+       }
+    */
+
     if (
-        !activity ||
-        typeof activity !== "object" ||
-        Array.isArray(activity)
+        stored &&
+        typeof stored === "object" &&
+        !Array.isArray(stored)
     ) {
 
-        activity = {};
+        return stored;
 
     }
 
 
     /*
-       We maintain a permanent snapshot of which
-       completed topics have already been accounted for.
+       Compatibility with an array:
+
+       [
+       "2026-09-12",
+       "2026-09-13"
+       ]
     */
 
-    let known =
-        readJSON(
-            STREAK_KEYS.LAST_SYNC,
-            []
-        );
+    if (Array.isArray(stored)) {
+
+        const activity = {};
 
 
-    if (!Array.isArray(known)) {
-        known = [];
+        stored.forEach(item => {
+
+            if (typeof item === "string") {
+
+                const date =
+                    item.slice(0, 10);
+
+                if (
+                    /^\d{4}-\d{2}-\d{2}$/.test(
+                        date
+                    )
+                ) {
+
+                    activity[date] = true;
+
+                }
+
+                return;
+
+            }
+
+
+            if (
+                item &&
+                typeof item === "object"
+            ) {
+
+                const date =
+                    item.date ||
+                    item.day ||
+                    item.completedDate ||
+                    item.completedAt;
+
+
+                if (date) {
+
+                    const key =
+                        String(date).slice(
+                            0,
+                            10
+                        );
+
+
+                    if (
+                        /^\d{4}-\d{2}-\d{2}$/.test(
+                            key
+                        )
+                    ) {
+
+                        activity[key] = true;
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+        return activity;
+
     }
 
 
-    const newTopics =
-        completed.filter(
-            topic =>
-                !known.includes(
-                    String(topic)
-                )
-        );
+    return {};
+
+}
+
+
+/* =========================================================
+   SAVE TODAY'S ACTIVITY
+========================================================= */
+
+/*
+   THIS IS THE IMPORTANT FUNCTION.
+
+   Study Session should call:
+
+       recordStudyActivity();
+
+   immediately after the topic is successfully
+   completed.
+
+   Calling it multiple times on the same day is safe.
+   The date is stored only once.
+*/
+
+function recordStudyActivity() {
+
+    const activity =
+        getActivity();
+
+
+    const today =
+        todayKey();
 
 
     /*
-       Any newly completed topic is recorded as
-       study activity for today.
-
-       Multiple topics completed on the same day
-       still count as ONE study day.
+       One day can only count once.
     */
 
-    if (newTopics.length > 0) {
+    activity[today] = true;
 
-        const today =
-            todayKey();
 
-        activity[today] = true;
+    writeJSON(
+        STREAK_KEYS.ACTIVITY,
+        activity
+    );
 
-        writeJSON(
-            STREAK_KEYS.ACTIVITY,
+
+    /*
+       Update longest streak immediately.
+    */
+
+    const longest =
+        calculateLongestStreak(
             activity
         );
 
 
-        writeJSON(
-            STREAK_KEYS.LAST_SYNC,
-            completed.map(
-                String
+    const storedBest =
+        Number(
+            localStorage.getItem(
+                STREAK_KEYS.BEST
             )
+        ) || 0;
+
+
+    const best =
+        Math.max(
+            longest,
+            storedBest
         );
 
-    }
+
+    localStorage.setItem(
+        STREAK_KEYS.BEST,
+        String(best)
+    );
+
+
+    /*
+       Notify other StudyMind pages in the
+       same browser tab.
+
+       The native "storage" event does not fire
+       in the same document that changed localStorage.
+    */
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakUpdated",
+            {
+                detail: {
+                    date: today,
+                    currentStreak:
+                        calculateCurrentStreak(
+                            activity
+                        ),
+                    longestStreak: best
+                }
+            }
+        )
+    );
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   MIGRATION
+========================================================= */
+
+/*
+   This function ONLY normalizes the activity format.
+
+   It deliberately does NOT create activity from
+   the existence of completed topics.
+
+   This prevents old data from randomly giving
+   the user a streak.
+*/
+
+function migrateActivityFormat() {
+
+    const activity =
+        getActivity();
+
+
+    const clean = {};
+
+
+    Object.keys(activity)
+        .forEach(date => {
+
+            const key =
+                String(date).slice(
+                    0,
+                    10
+                );
+
+
+            if (
+                /^\d{4}-\d{2}-\d{2}$/.test(
+                    key
+                ) &&
+                activity[date] === true
+            ) {
+
+                clean[key] = true;
+
+            }
+
+        });
+
+
+    writeJSON(
+        STREAK_KEYS.ACTIVITY,
+        clean
+    );
 
 }
 
@@ -281,29 +645,20 @@ function syncCompletionActivity() {
    ACTIVITY DAYS
 ========================================================= */
 
-function getActivityDays() {
-
-    const activity =
-        readJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
-
-
-    if (
-        !activity ||
-        typeof activity !== "object"
-    ) {
-
-        return [];
-
-    }
-
+function getActivityDays(
+    activity = getActivity()
+) {
 
     return Object.keys(activity)
         .filter(
             date =>
                 activity[date] === true
+        )
+        .filter(
+            date =>
+                /^\d{4}-\d{2}-\d{2}$/.test(
+                    date
+                )
         )
         .sort();
 
@@ -314,14 +669,24 @@ function getActivityDays() {
    CURRENT STREAK
 ========================================================= */
 
-function calculateCurrentStreak() {
+function calculateCurrentStreak(
+    activity = getActivity()
+) {
 
     const days =
-        getActivityDays();
+        getActivityDays(activity);
 
+
+    /*
+       No activity = ZERO.
+
+       This is intentionally explicit.
+    */
 
     if (!days.length) {
+
         return 0;
+
     }
 
 
@@ -329,28 +694,25 @@ function calculateCurrentStreak() {
         new Set(days);
 
 
-    let current =
+    const today =
+        todayKey();
+
+
+    let currentDate =
         new Date();
 
 
     /*
-       If the user has not studied today,
-       start from yesterday.
-
-       This means a streak doesn't disappear
-       merely because the user hasn't studied
-       yet today.
+       If the student hasn't studied today,
+       yesterday can still keep the current
+       streak alive.
     */
-
-    const today =
-        todayKey(current);
-
 
     if (!daySet.has(today)) {
 
-        current =
+        currentDate =
             addDays(
-                current,
+                currentDate,
                 -1
             );
 
@@ -362,15 +724,16 @@ function calculateCurrentStreak() {
 
     while (
         daySet.has(
-            todayKey(current)
+            todayKey(currentDate)
         )
     ) {
 
         streak++;
 
-        current =
+
+        currentDate =
             addDays(
-                current,
+                currentDate,
                 -1
             );
 
@@ -386,18 +749,23 @@ function calculateCurrentStreak() {
    LONGEST STREAK
 ========================================================= */
 
-function calculateLongestStreak() {
+function calculateLongestStreak(
+    activity = getActivity()
+) {
 
     const days =
-        getActivityDays();
+        getActivityDays(activity);
 
 
     if (!days.length) {
+
         return 0;
+
     }
 
 
     let longest = 1;
+
     let current = 1;
 
 
@@ -412,10 +780,23 @@ function calculateLongestStreak() {
                 days[i - 1]
             );
 
+
         const currentDate =
             dateFromKey(
                 days[i]
             );
+
+
+        if (
+            !previous ||
+            !currentDate
+        ) {
+
+            current = 1;
+
+            continue;
+
+        }
 
 
         const difference =
@@ -448,49 +829,47 @@ function calculateLongestStreak() {
     }
 
 
-    const storedBest =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.BEST
-            )
-        ) || 0;
-
-
-    const best =
-        Math.max(
-            longest,
-            storedBest
-        );
-
-
-    localStorage.setItem(
-        STREAK_KEYS.BEST,
-        String(best)
-    );
-
-
-    return best;
+    return longest;
 
 }
 
 
 /* =========================================================
-   WEEKLY
+   WEEKLY ACTIVITY
 ========================================================= */
 
 function getWeeklyDays() {
 
     const activity =
-        readJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
+        getActivity();
+
+
+    const today =
+        new Date();
 
 
     let count = 0;
 
-    const today =
-        new Date();
+
+    /*
+       Monday → Sunday current week.
+    */
+
+    const day =
+        today.getDay();
+
+
+    const mondayOffset =
+        day === 0
+            ? -6
+            : 1 - day;
+
+
+    const monday =
+        addDays(
+            today,
+            mondayOffset
+        );
 
 
     for (
@@ -501,15 +880,15 @@ function getWeeklyDays() {
 
         const date =
             addDays(
-                today,
-                -i
+                monday,
+                i
             );
 
 
         if (
             activity[
                 todayKey(date)
-            ]
+            ] === true
         ) {
 
             count++;
@@ -530,14 +909,56 @@ function getWeeklyDays() {
 
 function renderEverything() {
 
+    const activity =
+        getActivity();
+
+
     const current =
-        calculateCurrentStreak();
+        calculateCurrentStreak(
+            activity
+        );
+
+
+    const calculatedBest =
+        calculateLongestStreak(
+            activity
+        );
+
+
+    const storedBest =
+        Number(
+            localStorage.getItem(
+                STREAK_KEYS.BEST
+            )
+        ) || 0;
+
 
     const best =
-        calculateLongestStreak();
+        Math.max(
+            calculatedBest,
+            storedBest
+        );
+
+
+    /*
+       Preserve the best streak.
+    */
+
+    if (best > storedBest) {
+
+        localStorage.setItem(
+            STREAK_KEYS.BEST,
+            String(best)
+        );
+
+    }
+
 
     const days =
-        getActivityDays();
+        getActivityDays(
+            activity
+        );
+
 
     const weekly =
         getWeeklyDays();
@@ -548,20 +969,24 @@ function renderEverything() {
         current
     );
 
+
     setText(
         "longestStreak",
         best
     );
+
 
     setText(
         "totalStudyDays",
         days.length
     );
 
+
     setText(
         "weeklyStudyDays",
         weekly
     );
+
 
     setText(
         "weekProgress",
@@ -569,11 +994,20 @@ function renderEverything() {
     );
 
 
-    renderMessages(current);
+    renderMessages(
+        current
+    );
 
-    renderWeek();
 
-    renderCalendar();
+    renderWeek(
+        activity
+    );
+
+
+    renderCalendar(
+        activity
+    );
+
 
     renderPlanStatus();
 
@@ -581,25 +1015,16 @@ function renderEverything() {
 
 
 /* =========================================================
-   TEXT
+   MESSAGES
 ========================================================= */
 
-function setText(id, value) {
-
-    const element =
-        document.getElementById(id);
-
-    if (element) {
-        element.textContent = value;
-    }
-
-}
-
-
-function renderMessages(streak) {
+function renderMessages(
+    streak
+) {
 
     let message =
-        "Complete your first study day to start.";
+        "Complete your first study topic to start your streak.";
+
 
     let hero =
         "Complete your study work consistently to build your streak.";
@@ -610,16 +1035,21 @@ function renderMessages(streak) {
         message =
             "Great start. Come back tomorrow and keep it going.";
 
+
         hero =
             "You've started your streak. Keep the momentum going.";
 
-    } else if (streak > 1) {
+    }
+
+
+    else if (streak > 1) {
 
         message =
             `${streak} consecutive study days. Keep going!`;
 
+
         hero =
-            `You're on a ${streak}-day streak. Don't break the chain.`;
+            `You're on a ${streak}-day streak. Keep the chain going.`;
 
     }
 
@@ -628,6 +1058,7 @@ function renderMessages(streak) {
         "streakMessage",
         message
     );
+
 
     setText(
         "heroMessage",
@@ -638,10 +1069,12 @@ function renderMessages(streak) {
 
 
 /* =========================================================
-   WEEK
+   WEEK VIEW
 ========================================================= */
 
-function renderWeek() {
+function renderWeek(
+    activity = getActivity()
+) {
 
     const container =
         document.getElementById(
@@ -650,34 +1083,46 @@ function renderWeek() {
 
 
     if (!container) {
+
         return;
+
     }
-
-
-    const activity =
-        readJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
 
 
     const today =
         new Date();
 
 
+    const currentDay =
+        today.getDay();
+
+
+    const mondayOffset =
+        currentDay === 0
+            ? -6
+            : 1 - currentDay;
+
+
+    const monday =
+        addDays(
+            today,
+            mondayOffset
+        );
+
+
     let html = "";
 
 
     for (
-        let i = 6;
-        i >= 0;
-        i--
+        let i = 0;
+        i < 7;
+        i++
     ) {
 
         const date =
             addDays(
-                today,
-                -i
+                monday,
+                i
             );
 
 
@@ -690,7 +1135,7 @@ function renderWeek() {
 
 
         const isToday =
-            i === 0;
+            key === todayKey();
 
 
         const dayName =
@@ -711,9 +1156,11 @@ function renderWeek() {
                 </div>
 
                 <div
-                    class="week-box
-                    ${studied ? "studied" : ""}
-                    ${isToday ? "today" : ""}"
+                    class="
+                        week-box
+                        ${studied ? "studied" : ""}
+                        ${isToday ? "today" : ""}
+                    "
                 >
                     ${studied ? "✓" : "•"}
                 </div>
@@ -739,7 +1186,9 @@ function renderWeek() {
    CALENDAR
 ========================================================= */
 
-function renderCalendar() {
+function renderCalendar(
+    activity = getActivity()
+) {
 
     const container =
         document.getElementById(
@@ -748,15 +1197,10 @@ function renderCalendar() {
 
 
     if (!container) {
+
         return;
+
     }
-
-
-    const activity =
-        readJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
 
 
     const now =
@@ -765,6 +1209,7 @@ function renderCalendar() {
 
     const year =
         now.getFullYear();
+
 
     const month =
         now.getMonth();
@@ -786,7 +1231,7 @@ function renderCalendar() {
         );
 
 
-    const start =
+    const startingDay =
         firstDay.getDay();
 
 
@@ -813,9 +1258,13 @@ function renderCalendar() {
     let html = "";
 
 
+    /*
+       Empty cells before first day.
+    */
+
     for (
         let i = 0;
-        i < start;
+        i < startingDay;
         i++
     ) {
 
@@ -847,16 +1296,18 @@ function renderCalendar() {
             activity[key] === true;
 
 
-        const today =
+        const isToday =
             key === todayKey();
 
 
         html += `
 
             <div
-                class="calendar-day
-                ${studied ? "studied" : ""}
-                ${today ? "today" : ""}"
+                class="
+                    calendar-day
+                    ${studied ? "studied" : ""}
+                    ${isToday ? "today" : ""}
+                "
             >
 
                 <div class="calendar-number">
@@ -892,10 +1343,7 @@ function renderPlanStatus() {
 
 
     const completed =
-        readJSON(
-            STREAK_KEYS.COMPLETED,
-            []
-        );
+        getCompletedTopics();
 
 
     let total = 0;
@@ -929,7 +1377,9 @@ function renderPlanStatus() {
 
     if (
         total === 0 &&
-        Array.isArray(plan?.topics)
+        Array.isArray(
+            plan?.topics
+        )
     ) {
 
         total =
@@ -939,15 +1389,14 @@ function renderPlanStatus() {
 
 
     const completedCount =
-        Array.isArray(completed)
-            ? completed.length
-            : 0;
+        completed.length;
 
 
     const title =
         document.getElementById(
             "completionTitle"
         );
+
 
     const text =
         document.getElementById(
@@ -961,9 +1410,12 @@ function renderPlanStatus() {
     ) {
 
         if (title) {
+
             title.textContent =
                 "Study plan completed! 🎉";
+
         }
+
 
         if (text) {
 
@@ -977,7 +1429,8 @@ function renderPlanStatus() {
         const remaining =
             Math.max(
                 0,
-                total - completedCount
+                total -
+                completedCount
             );
 
 
@@ -1026,7 +1479,10 @@ async function loadUser() {
             const {
                 data
             } =
-                await window.supabaseClient.auth.getUser();
+                await window
+                    .supabaseClient
+                    .auth
+                    .getUser();
 
 
             const user =
@@ -1050,7 +1506,7 @@ async function loadUser() {
     } catch (error) {
 
         console.warn(
-            "User loading failed:",
+            "StudyMind user loading failed:",
             error
         );
 
@@ -1113,6 +1569,7 @@ function setupLogout() {
                 } catch (error) {
 
                     console.warn(
+                        "Logout failed:",
                         error
                     );
 
@@ -1126,3 +1583,61 @@ function setupLogout() {
         );
 
 }
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+/* =========================================================
+   GLOBAL API
+========================================================= */
+
+/*
+   This makes the streak engine accessible from
+   study-session.js.
+
+   The Study Session should call:
+
+       window.StudyMindStreak.recordStudyActivity();
+
+   when the student clicks Complete Topic.
+*/
+
+window.StudyMindStreak = {
+
+    recordStudyActivity,
+
+    calculateCurrentStreak,
+
+    calculateLongestStreak,
+
+    getActivityDays,
+
+    getActivity,
+
+    refresh: renderEverything
+
+};
+
