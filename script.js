@@ -3426,7 +3426,4243 @@ const CURRICULUMS = {
         }
 
     },
+/* =========================================================
+   STUDYMIND AI — NIGERIAN UNIVERSITY COURSE DATABASE
+   =========================================================
+   
+   STRUCTURE:
 
+   University Courses
+      ↓
+   Faculty
+      ↓
+   Degree Programme
+      ↓
+   Level
+      ↓
+   Semester
+      ↓
+   Course
+      ↓
+   Topics
+
+   NOTE:
+   This is a GENERAL Nigerian university course database.
+   Individual universities can have different course codes,
+   course titles, electives and semester arrangements.
+
+========================================================= */
+
+"use strict";
+
+
+const NIGERIAN_UNIVERSITY_COURSES = {
+
+    /* =====================================================
+       COMPUTING & INFORMATION TECHNOLOGY
+    ===================================================== */
+
+    "Computing & Information Technology": {
+
+        "Computer Science": {
+
+            "100 Level": {
+
+                "First Semester": [
+
+                    {
+                        code: "CSC 101",
+                        title: "Introduction to Computer Science",
+                        topics: [
+                            "History of Computing",
+                            "Computer Science as a Discipline",
+                            "Computer Applications",
+                            "Computer Hardware",
+                            "Computer Software",
+                            "Operating Systems",
+                            "Data and Information",
+                            "Computer Professionals",
+                            "Ethics in Computing"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 102",
+                        title: "Introduction to Programming",
+                        topics: [
+                            "Programming Concepts",
+                            "Algorithms",
+                            "Flowcharts",
+                            "Pseudocode",
+                            "Variables",
+                            "Constants",
+                            "Data Types",
+                            "Operators",
+                            "Input and Output",
+                            "Conditional Statements",
+                            "Loops",
+                            "Functions",
+                            "Arrays",
+                            "Debugging"
+                        ]
+                    },
+
+                    {
+                        code: "MTH 101",
+                        title: "Elementary Mathematics I",
+                        topics: [
+                            "Sets",
+                            "Number Systems",
+                            "Indices",
+                            "Logarithms",
+                            "Surds",
+                            "Algebra",
+                            "Equations",
+                            "Inequalities",
+                            "Functions",
+                            "Sequences",
+                            "Coordinate Geometry",
+                            "Trigonometry"
+                        ]
+                    },
+
+                    {
+                        code: "PHY 101",
+                        title: "General Physics I",
+                        topics: [
+                            "Measurement",
+                            "Units",
+                            "Vectors",
+                            "Motion",
+                            "Force",
+                            "Work",
+                            "Energy",
+                            "Power",
+                            "Momentum",
+                            "Simple Machines",
+                            "Properties of Matter"
+                        ]
+                    },
+
+                    {
+                        code: "GST 101",
+                        title: "Use of English",
+                        topics: [
+                            "Communication",
+                            "Grammar",
+                            "Sentence Structure",
+                            "Vocabulary",
+                            "Comprehension",
+                            "Essay Writing",
+                            "Academic Writing",
+                            "Study Skills",
+                            "Referencing"
+                        ]
+                    }
+
+                ],
+
+                "Second Semester": [
+
+                    {
+                        code: "CSC 103",
+                        title: "Programming Fundamentals II",
+                        topics: [
+                            "Advanced Variables",
+                            "Functions",
+                            "Arrays",
+                            "Strings",
+                            "Structures",
+                            "File Handling",
+                            "Pointers",
+                            "Recursion",
+                            "Modular Programming",
+                            "Program Testing"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 104",
+                        title: "Computer Hardware Fundamentals",
+                        topics: [
+                            "CPU",
+                            "Memory",
+                            "Storage",
+                            "Motherboard",
+                            "Input Devices",
+                            "Output Devices",
+                            "Ports",
+                            "Computer Assembly",
+                            "Hardware Troubleshooting"
+                        ]
+                    },
+
+                    {
+                        code: "MTH 102",
+                        title: "Elementary Mathematics II",
+                        topics: [
+                            "Differentiation",
+                            "Integration",
+                            "Matrices",
+                            "Vectors",
+                            "Probability",
+                            "Statistics",
+                            "Permutations",
+                            "Combinations"
+                        ]
+                    },
+
+                    {
+                        code: "PHY 102",
+                        title: "General Physics II",
+                        topics: [
+                            "Electricity",
+                            "Current",
+                            "Voltage",
+                            "Resistance",
+                            "Capacitance",
+                            "Magnetism",
+                            "Electromagnetism",
+                            "Waves",
+                            "Sound",
+                            "Light"
+                        ]
+                    },
+
+                    {
+                        code: "GST 102",
+                        title: "Communication in English",
+                        topics: [
+                            "Oral Communication",
+                            "Written Communication",
+                            "Report Writing",
+                            "Technical Writing",
+                            "Presentation Skills",
+                            "Academic Communication"
+                        ]
+                    }
+
+                ]
+            },
+
+
+            "200 Level": {
+
+                "First Semester": [
+
+                    {
+                        code: "CSC 201",
+                        title: "Data Structures",
+                        topics: [
+                            "Arrays",
+                            "Linked Lists",
+                            "Stacks",
+                            "Queues",
+                            "Trees",
+                            "Graphs",
+                            "Hash Tables",
+                            "Searching",
+                            "Sorting",
+                            "Algorithm Analysis"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 202",
+                        title: "Object-Oriented Programming",
+                        topics: [
+                            "Objects",
+                            "Classes",
+                            "Encapsulation",
+                            "Inheritance",
+                            "Polymorphism",
+                            "Abstraction",
+                            "Constructors",
+                            "Interfaces",
+                            "Exception Handling"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 203",
+                        title: "Digital Logic",
+                        topics: [
+                            "Binary Numbers",
+                            "Boolean Algebra",
+                            "Logic Gates",
+                            "Truth Tables",
+                            "Combinational Circuits",
+                            "Sequential Circuits",
+                            "Flip-Flops",
+                            "Registers",
+                            "Counters"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 204",
+                        title: "Computer Architecture",
+                        topics: [
+                            "CPU Architecture",
+                            "Instruction Sets",
+                            "Registers",
+                            "Memory Architecture",
+                            "Cache Memory",
+                            "Input and Output",
+                            "Bus Systems",
+                            "Pipelining"
+                        ]
+                    }
+
+                ],
+
+                "Second Semester": [
+
+                    {
+                        code: "CSC 205",
+                        title: "Database Systems",
+                        topics: [
+                            "Database Concepts",
+                            "Database Models",
+                            "Relational Databases",
+                            "Tables",
+                            "Primary Keys",
+                            "Foreign Keys",
+                            "SQL",
+                            "Normalization",
+                            "Transactions",
+                            "Database Security"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 206",
+                        title: "Operating Systems",
+                        topics: [
+                            "Operating System Concepts",
+                            "Processes",
+                            "Threads",
+                            "CPU Scheduling",
+                            "Memory Management",
+                            "Virtual Memory",
+                            "File Systems",
+                            "Deadlocks",
+                            "Security"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 207",
+                        title: "Computer Networks",
+                        topics: [
+                            "Networking Concepts",
+                            "LAN",
+                            "WAN",
+                            "Network Topologies",
+                            "OSI Model",
+                            "TCP/IP",
+                            "IP Addressing",
+                            "Routing",
+                            "Switching",
+                            "Network Security"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 208",
+                        title: "Web Programming",
+                        topics: [
+                            "HTML",
+                            "CSS",
+                            "JavaScript",
+                            "DOM",
+                            "Forms",
+                            "Web APIs",
+                            "HTTP",
+                            "Client-Server Architecture",
+                            "Web Security"
+                        ]
+                    }
+
+                ]
+            },
+
+
+            "300 Level": {
+
+                "First Semester": [
+
+                    {
+                        code: "CSC 301",
+                        title: "Software Engineering",
+                        topics: [
+                            "Software Development Life Cycle",
+                            "Requirements Engineering",
+                            "System Analysis",
+                            "System Design",
+                            "Agile Development",
+                            "Waterfall Model",
+                            "Testing",
+                            "Version Control",
+                            "Software Maintenance"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 302",
+                        title: "Algorithms",
+                        topics: [
+                            "Algorithm Complexity",
+                            "Big O Notation",
+                            "Divide and Conquer",
+                            "Greedy Algorithms",
+                            "Dynamic Programming",
+                            "Graph Algorithms",
+                            "Shortest Path",
+                            "Minimum Spanning Trees",
+                            "Algorithm Optimization"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 303",
+                        title: "Artificial Intelligence",
+                        topics: [
+                            "Introduction to AI",
+                            "Intelligent Agents",
+                            "Problem Solving",
+                            "Search Algorithms",
+                            "Knowledge Representation",
+                            "Machine Learning",
+                            "Neural Networks",
+                            "Natural Language Processing",
+                            "Computer Vision",
+                            "AI Ethics"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 304",
+                        title: "Computer Security",
+                        topics: [
+                            "Information Security",
+                            "Threats",
+                            "Vulnerabilities",
+                            "Authentication",
+                            "Authorization",
+                            "Cryptography",
+                            "Network Security",
+                            "Malware",
+                            "Security Policies"
+                        ]
+                    }
+
+                ],
+
+                "Second Semester": [
+
+                    {
+                        code: "CSC 305",
+                        title: "Machine Learning",
+                        topics: [
+                            "Machine Learning Concepts",
+                            "Supervised Learning",
+                            "Unsupervised Learning",
+                            "Regression",
+                            "Classification",
+                            "Clustering",
+                            "Decision Trees",
+                            "Model Evaluation",
+                            "Feature Engineering",
+                            "Overfitting",
+                            "Underfitting"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 306",
+                        title: "Human Computer Interaction",
+                        topics: [
+                            "Human Computer Interaction",
+                            "User Experience",
+                            "User Interface Design",
+                            "Usability",
+                            "Accessibility",
+                            "User Research",
+                            "Prototyping",
+                            "Interaction Design"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 307",
+                        title: "Mobile Application Development",
+                        topics: [
+                            "Mobile Platforms",
+                            "Mobile UI",
+                            "Application Architecture",
+                            "Mobile Databases",
+                            "APIs",
+                            "Authentication",
+                            "Mobile Security",
+                            "Application Deployment"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 308",
+                        title: "Research Methods",
+                        topics: [
+                            "Research Concepts",
+                            "Research Questions",
+                            "Literature Review",
+                            "Research Design",
+                            "Data Collection",
+                            "Sampling",
+                            "Data Analysis",
+                            "Academic Referencing",
+                            "Research Ethics"
+                        ]
+                    }
+
+                ]
+            },
+
+
+            "400 Level": {
+
+                "First Semester": [
+
+                    {
+                        code: "CSC 401",
+                        title: "Advanced Artificial Intelligence",
+                        topics: [
+                            "Deep Learning",
+                            "Convolutional Neural Networks",
+                            "Recurrent Neural Networks",
+                            "Transformers",
+                            "Large Language Models",
+                            "Reinforcement Learning",
+                            "Generative AI",
+                            "AI Deployment",
+                            "AI Safety"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 402",
+                        title: "Advanced Database Systems",
+                        topics: [
+                            "Distributed Databases",
+                            "NoSQL",
+                            "Cloud Databases",
+                            "Database Optimization",
+                            "Transactions",
+                            "Replication",
+                            "Data Warehousing",
+                            "Big Data"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 403",
+                        title: "Distributed Systems",
+                        topics: [
+                            "Distributed Computing",
+                            "Client Server Systems",
+                            "Cloud Computing",
+                            "Distributed Databases",
+                            "Synchronization",
+                            "Fault Tolerance",
+                            "Distributed Security"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 499",
+                        title: "Final Year Project",
+                        topics: [
+                            "Project Selection",
+                            "Problem Definition",
+                            "Literature Review",
+                            "System Design",
+                            "Implementation",
+                            "Testing",
+                            "Documentation",
+                            "Presentation",
+                            "Project Defense"
+                        ]
+                    }
+
+                ],
+
+                "Second Semester": [
+
+                    {
+                        code: "CSC 404",
+                        title: "Information Systems",
+                        topics: [
+                            "Information Systems",
+                            "Systems Analysis",
+                            "Systems Design",
+                            "Enterprise Systems",
+                            "Decision Support Systems",
+                            "Information Management"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 405",
+                        title: "Cybersecurity",
+                        topics: [
+                            "Cyber Threats",
+                            "Ethical Hacking Concepts",
+                            "Network Defense",
+                            "Digital Forensics",
+                            "Security Architecture",
+                            "Incident Response",
+                            "Cyber Law",
+                            "Risk Management"
+                        ]
+                    },
+
+                    {
+                        code: "CSC 406",
+                        title: "Cloud Computing",
+                        topics: [
+                            "Cloud Concepts",
+                            "Virtualization",
+                            "Cloud Architecture",
+                            "Cloud Storage",
+                            "Cloud Networking",
+                            "Cloud Security",
+                            "Cloud Deployment",
+                            "Serverless Computing"
+                        ]
+                    }
+
+                ]
+            }
+        },
+
+
+        /* =================================================
+           SOFTWARE ENGINEERING
+        ================================================= */
+
+        "Software Engineering": {
+
+            "100 Level": {
+
+                "First Semester": [
+                    {
+                        code: "SEN 101",
+                        title: "Introduction to Software Engineering",
+                        topics: [
+                            "Software Engineering",
+                            "Software Development",
+                            "Software Life Cycle",
+                            "Programming Concepts",
+                            "Software Quality",
+                            "Professional Ethics"
+                        ]
+                    },
+                    {
+                        code: "SEN 102",
+                        title: "Programming Fundamentals",
+                        topics: [
+                            "Algorithms",
+                            "Variables",
+                            "Data Types",
+                            "Operators",
+                            "Conditions",
+                            "Loops",
+                            "Functions",
+                            "Arrays",
+                            "Debugging"
+                        ]
+                    }
+                ],
+
+                "Second Semester": [
+                    {
+                        code: "SEN 103",
+                        title: "Object-Oriented Programming",
+                        topics: [
+                            "Classes",
+                            "Objects",
+                            "Inheritance",
+                            "Polymorphism",
+                            "Encapsulation",
+                            "Abstraction"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+
+                "First Semester": [
+                    {
+                        code: "SEN 201",
+                        title: "Data Structures and Algorithms",
+                        topics: [
+                            "Arrays",
+                            "Linked Lists",
+                            "Stacks",
+                            "Queues",
+                            "Trees",
+                            "Graphs",
+                            "Sorting",
+                            "Searching",
+                            "Complexity"
+                        ]
+                    },
+                    {
+                        code: "SEN 202",
+                        title: "Software Requirements",
+                        topics: [
+                            "Requirements Engineering",
+                            "Functional Requirements",
+                            "Non Functional Requirements",
+                            "Use Cases",
+                            "User Stories",
+                            "Requirements Analysis"
+                        ]
+                    }
+                ],
+
+                "Second Semester": [
+                    {
+                        code: "SEN 203",
+                        title: "Database Systems",
+                        topics: [
+                            "Relational Databases",
+                            "SQL",
+                            "Normalization",
+                            "Database Design",
+                            "Transactions"
+                        ]
+                    },
+                    {
+                        code: "SEN 204",
+                        title: "Web Software Development",
+                        topics: [
+                            "HTML",
+                            "CSS",
+                            "JavaScript",
+                            "Frontend Development",
+                            "Backend Development",
+                            "APIs",
+                            "Authentication"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+
+                "First Semester": [
+                    {
+                        code: "SEN 301",
+                        title: "Software Architecture",
+                        topics: [
+                            "Software Architecture",
+                            "Architectural Patterns",
+                            "Microservices",
+                            "Layered Architecture",
+                            "Scalability",
+                            "Reliability"
+                        ]
+                    },
+                    {
+                        code: "SEN 302",
+                        title: "Software Testing",
+                        topics: [
+                            "Testing Principles",
+                            "Unit Testing",
+                            "Integration Testing",
+                            "System Testing",
+                            "Acceptance Testing",
+                            "Automation"
+                        ]
+                    }
+                ],
+
+                "Second Semester": [
+                    {
+                        code: "SEN 303",
+                        title: "DevOps",
+                        topics: [
+                            "Continuous Integration",
+                            "Continuous Deployment",
+                            "Version Control",
+                            "Build Pipelines",
+                            "Containers",
+                            "Cloud Deployment",
+                            "Monitoring"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+
+                "First Semester": [
+                    {
+                        code: "SEN 401",
+                        title: "Advanced Software Engineering",
+                        topics: [
+                            "Large Scale Systems",
+                            "Distributed Systems",
+                            "Cloud Software",
+                            "Software Security",
+                            "System Scalability"
+                        ]
+                    }
+                ],
+
+                "Second Semester": [
+                    {
+                        code: "SEN 499",
+                        title: "Software Engineering Project",
+                        topics: [
+                            "Project Planning",
+                            "Requirements",
+                            "Architecture",
+                            "Implementation",
+                            "Testing",
+                            "Deployment",
+                            "Documentation",
+                            "Project Defense"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        /* =================================================
+           INFORMATION TECHNOLOGY
+        ================================================= */
+
+        "Information Technology": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "IFT 101",
+                        title: "Introduction to Information Technology",
+                        topics: [
+                            "Information Technology",
+                            "Computer Systems",
+                            "Hardware",
+                            "Software",
+                            "Networks",
+                            "Information Systems"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "IFT 102",
+                        title: "Introduction to Programming",
+                        topics: [
+                            "Algorithms",
+                            "Variables",
+                            "Conditions",
+                            "Loops",
+                            "Functions",
+                            "Arrays"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "IFT 201",
+                        title: "Database Management",
+                        topics: [
+                            "Database Concepts",
+                            "SQL",
+                            "Database Design",
+                            "Normalization",
+                            "Security"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "IFT 202",
+                        title: "Networking",
+                        topics: [
+                            "LAN",
+                            "WAN",
+                            "TCP/IP",
+                            "IP Addressing",
+                            "Routing",
+                            "Network Security"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "IFT 301",
+                        title: "Systems Analysis and Design",
+                        topics: [
+                            "Systems Analysis",
+                            "Requirements",
+                            "System Modeling",
+                            "UML",
+                            "System Design"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "IFT 302",
+                        title: "Information Security",
+                        topics: [
+                            "Security Principles",
+                            "Threats",
+                            "Authentication",
+                            "Cryptography",
+                            "Network Security"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "IFT 401",
+                        title: "IT Project Management",
+                        topics: [
+                            "Project Planning",
+                            "Project Scheduling",
+                            "Risk Management",
+                            "Budgeting",
+                            "Team Management"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "IFT 499",
+                        title: "IT Project",
+                        topics: [
+                            "Research",
+                            "System Analysis",
+                            "Design",
+                            "Implementation",
+                            "Testing",
+                            "Documentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        /* =================================================
+           CYBERSECURITY
+        ================================================= */
+
+        "Cybersecurity": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "CYB 101",
+                        title: "Introduction to Cybersecurity",
+                        topics: [
+                            "Cybersecurity Concepts",
+                            "Cyber Threats",
+                            "Information Security",
+                            "Security Principles",
+                            "Cyber Ethics"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CYB 102",
+                        title: "Computer Fundamentals",
+                        topics: [
+                            "Computer Hardware",
+                            "Operating Systems",
+                            "Data Representation",
+                            "Computer Networks"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "CYB 201",
+                        title: "Network Security",
+                        topics: [
+                            "Network Threats",
+                            "Firewalls",
+                            "Intrusion Detection",
+                            "Network Authentication",
+                            "Secure Protocols"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CYB 202",
+                        title: "Cryptography",
+                        topics: [
+                            "Encryption",
+                            "Symmetric Cryptography",
+                            "Asymmetric Cryptography",
+                            "Hash Functions",
+                            "Digital Signatures"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "CYB 301",
+                        title: "Digital Forensics",
+                        topics: [
+                            "Digital Evidence",
+                            "Forensic Investigation",
+                            "File Systems",
+                            "Evidence Preservation",
+                            "Incident Response"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CYB 302",
+                        title: "Ethical Security Testing",
+                        topics: [
+                            "Security Assessment",
+                            "Vulnerability Assessment",
+                            "Penetration Testing Concepts",
+                            "Security Reporting",
+                            "Defensive Security"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "CYB 401",
+                        title: "Advanced Cybersecurity",
+                        topics: [
+                            "Security Architecture",
+                            "Cloud Security",
+                            "Application Security",
+                            "Threat Intelligence",
+                            "Risk Management"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CYB 499",
+                        title: "Cybersecurity Project",
+                        topics: [
+                            "Research",
+                            "Threat Analysis",
+                            "System Design",
+                            "Implementation",
+                            "Testing",
+                            "Documentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        /* =================================================
+           ARTIFICIAL INTELLIGENCE
+        ================================================= */
+
+        "Artificial Intelligence": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "AIT 101",
+                        title: "Introduction to Artificial Intelligence",
+                        topics: [
+                            "History of AI",
+                            "AI Concepts",
+                            "Intelligent Systems",
+                            "AI Applications",
+                            "AI Ethics"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AIT 102",
+                        title: "Programming for AI",
+                        topics: [
+                            "Programming Fundamentals",
+                            "Python",
+                            "Variables",
+                            "Functions",
+                            "Data Structures",
+                            "File Handling"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "AIT 201",
+                        title: "Mathematics for Artificial Intelligence",
+                        topics: [
+                            "Linear Algebra",
+                            "Matrices",
+                            "Vectors",
+                            "Probability",
+                            "Statistics",
+                            "Functions"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AIT 202",
+                        title: "Data Structures for AI",
+                        topics: [
+                            "Arrays",
+                            "Lists",
+                            "Trees",
+                            "Graphs",
+                            "Hash Tables",
+                            "Algorithm Complexity"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "AIT 301",
+                        title: "Machine Learning",
+                        topics: [
+                            "Supervised Learning",
+                            "Unsupervised Learning",
+                            "Regression",
+                            "Classification",
+                            "Clustering",
+                            "Model Evaluation"
+                        ]
+                    },
+                    {
+                        code: "AIT 302",
+                        title: "Natural Language Processing",
+                        topics: [
+                            "Text Processing",
+                            "Tokenization",
+                            "Embeddings",
+                            "Language Models",
+                            "Text Classification",
+                            "Machine Translation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AIT 303",
+                        title: "Computer Vision",
+                        topics: [
+                            "Digital Images",
+                            "Image Processing",
+                            "Feature Extraction",
+                            "Object Detection",
+                            "Image Classification",
+                            "Computer Vision Applications"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "AIT 401",
+                        title: "Deep Learning",
+                        topics: [
+                            "Neural Networks",
+                            "Backpropagation",
+                            "Convolutional Neural Networks",
+                            "Recurrent Neural Networks",
+                            "Transformers",
+                            "Generative AI"
+                        ]
+                    },
+                    {
+                        code: "AIT 402",
+                        title: "Reinforcement Learning",
+                        topics: [
+                            "Agents",
+                            "Environments",
+                            "Rewards",
+                            "Policies",
+                            "Value Functions",
+                            "Q Learning"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AIT 499",
+                        title: "Artificial Intelligence Project",
+                        topics: [
+                            "Problem Definition",
+                            "Research",
+                            "Dataset Preparation",
+                            "Model Development",
+                            "Evaluation",
+                            "Deployment",
+                            "Documentation",
+                            "Project Defense"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       ENGINEERING
+    ===================================================== */
+
+    "Engineering": {
+
+        "Electrical and Electronics Engineering": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "EEE 101",
+                        title: "Introduction to Electrical Engineering",
+                        topics: [
+                            "Electrical Engineering",
+                            "Electrical Quantities",
+                            "Voltage",
+                            "Current",
+                            "Resistance",
+                            "Power",
+                            "Electrical Safety"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EEE 102",
+                        title: "Basic Electrical Circuits",
+                        topics: [
+                            "Ohm's Law",
+                            "Kirchhoff's Laws",
+                            "Series Circuits",
+                            "Parallel Circuits",
+                            "Circuit Analysis",
+                            "DC Circuits"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "EEE 201",
+                        title: "Circuit Theory",
+                        topics: [
+                            "AC Circuits",
+                            "Impedance",
+                            "Reactance",
+                            "Phasors",
+                            "Resonance",
+                            "Network Theorems"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EEE 202",
+                        title: "Electronic Devices",
+                        topics: [
+                            "Semiconductors",
+                            "Diodes",
+                            "Transistors",
+                            "Amplifiers",
+                            "Rectifiers",
+                            "Power Supplies"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "EEE 301",
+                        title: "Digital Electronics",
+                        topics: [
+                            "Logic Gates",
+                            "Boolean Algebra",
+                            "Flip Flops",
+                            "Counters",
+                            "Registers",
+                            "Digital Circuits"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EEE 302",
+                        title: "Microprocessors",
+                        topics: [
+                            "Microprocessors",
+                            "Microcontrollers",
+                            "Assembly Concepts",
+                            "Memory",
+                            "Input and Output",
+                            "Embedded Systems"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "EEE 401",
+                        title: "Control Systems",
+                        topics: [
+                            "Control Systems",
+                            "Feedback",
+                            "Transfer Functions",
+                            "Stability",
+                            "Controllers",
+                            "System Response"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EEE 499",
+                        title: "Engineering Project",
+                        topics: [
+                            "Research",
+                            "Design",
+                            "Implementation",
+                            "Testing",
+                            "Technical Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Mechanical Engineering": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "MEE 101",
+                        title: "Introduction to Mechanical Engineering",
+                        topics: [
+                            "Engineering Profession",
+                            "Mechanical Systems",
+                            "Engineering Materials",
+                            "Engineering Safety",
+                            "Engineering Design"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MEE 102",
+                        title: "Engineering Drawing",
+                        topics: [
+                            "Technical Drawing",
+                            "Orthographic Projection",
+                            "Isometric Drawing",
+                            "Sections",
+                            "Dimensioning"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "MEE 201",
+                        title: "Engineering Mechanics",
+                        topics: [
+                            "Forces",
+                            "Moments",
+                            "Equilibrium",
+                            "Friction",
+                            "Centroids"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MEE 202",
+                        title: "Thermodynamics",
+                        topics: [
+                            "Temperature",
+                            "Heat",
+                            "Energy",
+                            "First Law",
+                            "Second Law",
+                            "Entropy"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "MEE 301",
+                        title: "Fluid Mechanics",
+                        topics: [
+                            "Fluid Properties",
+                            "Pressure",
+                            "Fluid Flow",
+                            "Bernoulli Equation",
+                            "Pipes",
+                            "Turbines"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MEE 302",
+                        title: "Machine Design",
+                        topics: [
+                            "Machine Components",
+                            "Stress",
+                            "Strain",
+                            "Shafts",
+                            "Gears",
+                            "Bearings"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "MEE 401",
+                        title: "Heat Transfer",
+                        topics: [
+                            "Conduction",
+                            "Convection",
+                            "Radiation",
+                            "Heat Exchangers"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MEE 499",
+                        title: "Mechanical Engineering Project",
+                        topics: [
+                            "Research",
+                            "Design",
+                            "Fabrication",
+                            "Testing",
+                            "Technical Documentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Civil Engineering": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "CVE 101",
+                        title: "Introduction to Civil Engineering",
+                        topics: [
+                            "Civil Engineering",
+                            "Construction",
+                            "Infrastructure",
+                            "Engineering Materials",
+                            "Engineering Safety"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CVE 102",
+                        title: "Engineering Drawing",
+                        topics: [
+                            "Technical Drawing",
+                            "Projection",
+                            "Plans",
+                            "Sections",
+                            "Dimensioning"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "CVE 201",
+                        title: "Engineering Mechanics",
+                        topics: [
+                            "Statics",
+                            "Dynamics",
+                            "Forces",
+                            "Moments",
+                            "Equilibrium"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CVE 202",
+                        title: "Strength of Materials",
+                        topics: [
+                            "Stress",
+                            "Strain",
+                            "Bending",
+                            "Shear",
+                            "Torsion",
+                            "Deflection"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "CVE 301",
+                        title: "Structural Analysis",
+                        topics: [
+                            "Beams",
+                            "Trusses",
+                            "Frames",
+                            "Structural Loads",
+                            "Structural Stability"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CVE 302",
+                        title: "Geotechnical Engineering",
+                        topics: [
+                            "Soil Properties",
+                            "Soil Classification",
+                            "Bearing Capacity",
+                            "Foundations",
+                            "Slope Stability"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "CVE 401",
+                        title: "Transportation Engineering",
+                        topics: [
+                            "Highways",
+                            "Traffic Engineering",
+                            "Road Design",
+                            "Pavement Design",
+                            "Transportation Planning"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "CVE 499",
+                        title: "Civil Engineering Project",
+                        topics: [
+                            "Research",
+                            "Design",
+                            "Construction Planning",
+                            "Testing",
+                            "Project Documentation"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       NATURAL SCIENCES
+    ===================================================== */
+
+    "Natural Sciences": {
+
+        "Biochemistry": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "BCH 101",
+                        title: "Introduction to Biochemistry",
+                        topics: [
+                            "Biochemistry",
+                            "Biomolecules",
+                            "Cells",
+                            "Water",
+                            "Chemical Bonds"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BCH 102",
+                        title: "General Chemistry",
+                        topics: [
+                            "Atomic Structure",
+                            "Periodic Table",
+                            "Chemical Bonding",
+                            "Stoichiometry",
+                            "Acids and Bases"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "BCH 201",
+                        title: "Carbohydrate Biochemistry",
+                        topics: [
+                            "Monosaccharides",
+                            "Disaccharides",
+                            "Polysaccharides",
+                            "Carbohydrate Metabolism"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BCH 202",
+                        title: "Protein Biochemistry",
+                        topics: [
+                            "Amino Acids",
+                            "Protein Structure",
+                            "Enzymes",
+                            "Protein Synthesis"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "BCH 301",
+                        title: "Enzymology",
+                        topics: [
+                            "Enzyme Structure",
+                            "Enzyme Kinetics",
+                            "Factors Affecting Enzyme Activity",
+                            "Enzyme Inhibition"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BCH 302",
+                        title: "Metabolism",
+                        topics: [
+                            "Glycolysis",
+                            "Krebs Cycle",
+                            "Electron Transport",
+                            "Fatty Acid Metabolism",
+                            "Amino Acid Metabolism"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "BCH 401",
+                        title: "Molecular Biology",
+                        topics: [
+                            "DNA",
+                            "RNA",
+                            "Replication",
+                            "Transcription",
+                            "Translation",
+                            "Gene Regulation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BCH 499",
+                        title: "Biochemistry Project",
+                        topics: [
+                            "Research Design",
+                            "Laboratory Methods",
+                            "Data Analysis",
+                            "Research Writing",
+                            "Project Defense"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Microbiology": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "MCB 101",
+                        title: "Introduction to Microbiology",
+                        topics: [
+                            "Microbiology",
+                            "Microorganisms",
+                            "History of Microbiology",
+                            "Microscopy",
+                            "Laboratory Safety"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MCB 102",
+                        title: "Cell Biology",
+                        topics: [
+                            "Cell Structure",
+                            "Cell Organelles",
+                            "Cell Division",
+                            "Cell Metabolism"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "MCB 201",
+                        title: "Bacteriology",
+                        topics: [
+                            "Bacteria",
+                            "Bacterial Structure",
+                            "Bacterial Growth",
+                            "Bacterial Classification"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MCB 202",
+                        title: "Virology",
+                        topics: [
+                            "Viruses",
+                            "Viral Structure",
+                            "Viral Replication",
+                            "Viral Diseases"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "MCB 301",
+                        title: "Medical Microbiology",
+                        topics: [
+                            "Pathogenic Microorganisms",
+                            "Infectious Diseases",
+                            "Diagnosis",
+                            "Antimicrobial Agents"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MCB 302",
+                        title: "Industrial Microbiology",
+                        topics: [
+                            "Fermentation",
+                            "Industrial Microorganisms",
+                            "Biotechnology",
+                            "Food Production"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "MCB 401",
+                        title: "Microbial Genetics",
+                        topics: [
+                            "Microbial DNA",
+                            "Mutation",
+                            "Gene Transfer",
+                            "Genetic Engineering"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MCB 499",
+                        title: "Microbiology Project",
+                        topics: [
+                            "Research",
+                            "Laboratory Investigation",
+                            "Data Analysis",
+                            "Scientific Writing"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Mathematics": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "MTH 101",
+                        title: "Elementary Mathematics I",
+                        topics: [
+                            "Sets",
+                            "Functions",
+                            "Algebra",
+                            "Sequences",
+                            "Trigonometry"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MTH 102",
+                        title: "Elementary Mathematics II",
+                        topics: [
+                            "Differentiation",
+                            "Integration",
+                            "Matrices",
+                            "Vectors",
+                            "Probability"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "MTH 201",
+                        title: "Calculus",
+                        topics: [
+                            "Limits",
+                            "Continuity",
+                            "Differentiation",
+                            "Integration",
+                            "Applications"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MTH 202",
+                        title: "Linear Algebra",
+                        topics: [
+                            "Matrices",
+                            "Determinants",
+                            "Vector Spaces",
+                            "Linear Transformations",
+                            "Eigenvalues"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "MTH 301",
+                        title: "Real Analysis",
+                        topics: [
+                            "Real Numbers",
+                            "Sequences",
+                            "Series",
+                            "Limits",
+                            "Continuity",
+                            "Differentiation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MTH 302",
+                        title: "Differential Equations",
+                        topics: [
+                            "First Order Equations",
+                            "Second Order Equations",
+                            "Linear Equations",
+                            "Applications"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "MTH 401",
+                        title: "Numerical Analysis",
+                        topics: [
+                            "Numerical Methods",
+                            "Error Analysis",
+                            "Interpolation",
+                            "Numerical Integration",
+                            "Differential Equations"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MTH 499",
+                        title: "Mathematics Project",
+                        topics: [
+                            "Research",
+                            "Literature Review",
+                            "Mathematical Analysis",
+                            "Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Physics": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "PHY 101",
+                        title: "General Physics I",
+                        topics: [
+                            "Measurement",
+                            "Vectors",
+                            "Motion",
+                            "Force",
+                            "Energy",
+                            "Momentum"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "PHY 102",
+                        title: "General Physics II",
+                        topics: [
+                            "Electricity",
+                            "Magnetism",
+                            "Waves",
+                            "Light",
+                            "Optics"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "PHY 201",
+                        title: "Mechanics",
+                        topics: [
+                            "Kinematics",
+                            "Dynamics",
+                            "Work",
+                            "Energy",
+                            "Momentum",
+                            "Rotational Motion"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "PHY 202",
+                        title: "Electromagnetism",
+                        topics: [
+                            "Electric Fields",
+                            "Magnetic Fields",
+                            "Electromagnetic Induction",
+                            "Maxwell Concepts"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "PHY 301",
+                        title: "Quantum Physics",
+                        topics: [
+                            "Quantum Concepts",
+                            "Wave Particle Duality",
+                            "Quantum States",
+                            "Atomic Models"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "PHY 302",
+                        title: "Thermal Physics",
+                        topics: [
+                            "Temperature",
+                            "Heat",
+                            "Thermodynamics",
+                            "Entropy",
+                            "Statistical Physics"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "PHY 401",
+                        title: "Nuclear Physics",
+                        topics: [
+                            "Atomic Nucleus",
+                            "Radioactivity",
+                            "Nuclear Reactions",
+                            "Nuclear Energy"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "PHY 499",
+                        title: "Physics Project",
+                        topics: [
+                            "Research",
+                            "Experimentation",
+                            "Data Analysis",
+                            "Scientific Writing"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       BUSINESS & MANAGEMENT
+    ===================================================== */
+
+    "Business & Management": {
+
+        "Accounting": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "ACC 101",
+                        title: "Introduction to Accounting",
+                        topics: [
+                            "Accounting Concepts",
+                            "Accounting Principles",
+                            "Accounting Equation",
+                            "Source Documents",
+                            "Double Entry"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ACC 102",
+                        title: "Financial Accounting",
+                        topics: [
+                            "Ledger",
+                            "Trial Balance",
+                            "Cash Book",
+                            "Bank Reconciliation",
+                            "Final Accounts"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "ACC 201",
+                        title: "Intermediate Accounting",
+                        topics: [
+                            "Depreciation",
+                            "Inventory",
+                            "Control Accounts",
+                            "Partnership Accounts"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ACC 202",
+                        title: "Cost Accounting",
+                        topics: [
+                            "Cost Concepts",
+                            "Cost Classification",
+                            "Job Costing",
+                            "Process Costing",
+                            "Budgeting"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "ACC 301",
+                        title: "Management Accounting",
+                        topics: [
+                            "Management Accounting",
+                            "Budgeting",
+                            "Decision Making",
+                            "Cost Analysis"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ACC 302",
+                        title: "Auditing",
+                        topics: [
+                            "Auditing",
+                            "Internal Control",
+                            "Audit Evidence",
+                            "Audit Procedures",
+                            "Audit Reports"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "ACC 401",
+                        title: "Advanced Accounting",
+                        topics: [
+                            "Company Accounts",
+                            "Consolidated Accounts",
+                            "Advanced Financial Reporting"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ACC 499",
+                        title: "Accounting Project",
+                        topics: [
+                            "Research",
+                            "Data Collection",
+                            "Data Analysis",
+                            "Report Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Business Administration": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "BUS 101",
+                        title: "Introduction to Business",
+                        topics: [
+                            "Business Concepts",
+                            "Business Environment",
+                            "Entrepreneurship",
+                            "Business Ownership"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BUS 102",
+                        title: "Principles of Management",
+                        topics: [
+                            "Planning",
+                            "Organizing",
+                            "Staffing",
+                            "Directing",
+                            "Controlling"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "BUS 201",
+                        title: "Marketing Management",
+                        topics: [
+                            "Marketing Concepts",
+                            "Market Research",
+                            "Consumer Behaviour",
+                            "Product",
+                            "Pricing",
+                            "Promotion"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BUS 202",
+                        title: "Human Resource Management",
+                        topics: [
+                            "Recruitment",
+                            "Selection",
+                            "Training",
+                            "Performance Management",
+                            "Employee Relations"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "BUS 301",
+                        title: "Operations Management",
+                        topics: [
+                            "Production",
+                            "Operations Planning",
+                            "Quality Management",
+                            "Inventory",
+                            "Supply Chain"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BUS 302",
+                        title: "Strategic Management",
+                        topics: [
+                            "Strategy",
+                            "Competitive Advantage",
+                            "SWOT Analysis",
+                            "Strategic Planning",
+                            "Implementation"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "BUS 401",
+                        title: "Entrepreneurship",
+                        topics: [
+                            "Business Ideas",
+                            "Opportunity Recognition",
+                            "Business Models",
+                            "Business Planning",
+                            "Financing"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "BUS 499",
+                        title: "Business Administration Project",
+                        topics: [
+                            "Research",
+                            "Data Collection",
+                            "Analysis",
+                            "Report Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Economics": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "ECO 101",
+                        title: "Principles of Economics I",
+                        topics: [
+                            "Scarcity",
+                            "Choice",
+                            "Opportunity Cost",
+                            "Demand",
+                            "Supply",
+                            "Market Equilibrium"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ECO 102",
+                        title: "Principles of Economics II",
+                        topics: [
+                            "National Income",
+                            "Inflation",
+                            "Unemployment",
+                            "Money",
+                            "Banking",
+                            "Economic Growth"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "ECO 201",
+                        title: "Microeconomics",
+                        topics: [
+                            "Consumer Behaviour",
+                            "Production",
+                            "Costs",
+                            "Market Structures",
+                            "Pricing"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ECO 202",
+                        title: "Macroeconomics",
+                        topics: [
+                            "National Income",
+                            "Aggregate Demand",
+                            "Aggregate Supply",
+                            "Fiscal Policy",
+                            "Monetary Policy"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "ECO 301",
+                        title: "Econometrics",
+                        topics: [
+                            "Economic Data",
+                            "Regression",
+                            "Correlation",
+                            "Statistical Inference",
+                            "Econometric Models"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ECO 302",
+                        title: "Development Economics",
+                        topics: [
+                            "Economic Development",
+                            "Poverty",
+                            "Inequality",
+                            "Human Capital",
+                            "Development Policies"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "ECO 401",
+                        title: "International Economics",
+                        topics: [
+                            "International Trade",
+                            "Exchange Rates",
+                            "Balance of Payments",
+                            "Trade Policies"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ECO 499",
+                        title: "Economics Project",
+                        topics: [
+                            "Research",
+                            "Economic Data",
+                            "Analysis",
+                            "Report Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       SOCIAL SCIENCES
+    ===================================================== */
+
+    "Social Sciences": {
+
+        "Political Science": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "POL 101",
+                        title: "Introduction to Political Science",
+                        topics: [
+                            "Politics",
+                            "Political Science",
+                            "State",
+                            "Power",
+                            "Authority",
+                            "Political Institutions"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "POL 102",
+                        title: "Nigerian Government",
+                        topics: [
+                            "Nigerian Political System",
+                            "Constitution",
+                            "Federalism",
+                            "Political Parties",
+                            "Elections"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "POL 201",
+                        title: "Political Theory",
+                        topics: [
+                            "Plato",
+                            "Aristotle",
+                            "Social Contract",
+                            "Democracy",
+                            "Justice",
+                            "Liberty"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "POL 202",
+                        title: "Comparative Politics",
+                        topics: [
+                            "Political Systems",
+                            "Democracy",
+                            "Authoritarianism",
+                            "Political Institutions"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "POL 301",
+                        title: "International Relations",
+                        topics: [
+                            "International Relations",
+                            "Foreign Policy",
+                            "International Organizations",
+                            "Conflict",
+                            "Diplomacy"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "POL 302",
+                        title: "Public Administration",
+                        topics: [
+                            "Public Administration",
+                            "Bureaucracy",
+                            "Public Policy",
+                            "Governance",
+                            "Civil Service"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "POL 401",
+                        title: "Political Analysis",
+                        topics: [
+                            "Political Research",
+                            "Data Collection",
+                            "Political Data",
+                            "Policy Analysis"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "POL 499",
+                        title: "Political Science Project",
+                        topics: [
+                            "Research",
+                            "Literature Review",
+                            "Data Collection",
+                            "Analysis",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Sociology": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "SOC 101",
+                        title: "Introduction to Sociology",
+                        topics: [
+                            "Society",
+                            "Culture",
+                            "Socialization",
+                            "Social Institutions",
+                            "Social Groups"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "SOC 102",
+                        title: "Social Problems",
+                        topics: [
+                            "Poverty",
+                            "Crime",
+                            "Unemployment",
+                            "Inequality",
+                            "Social Change"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "SOC 201",
+                        title: "Social Research Methods",
+                        topics: [
+                            "Research Design",
+                            "Sampling",
+                            "Questionnaires",
+                            "Interviews",
+                            "Data Analysis"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "SOC 202",
+                        title: "Social Psychology",
+                        topics: [
+                            "Social Behaviour",
+                            "Attitudes",
+                            "Groups",
+                            "Leadership",
+                            "Interpersonal Relations"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "SOC 301",
+                        title: "Development Sociology",
+                        topics: [
+                            "Development",
+                            "Modernization",
+                            "Poverty",
+                            "Inequality",
+                            "Social Policy"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "SOC 302",
+                        title: "Industrial Sociology",
+                        topics: [
+                            "Work",
+                            "Organizations",
+                            "Industrial Relations",
+                            "Labour",
+                            "Workplace Culture"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "SOC 401",
+                        title: "Advanced Sociological Theory",
+                        topics: [
+                            "Classical Theory",
+                            "Modern Theory",
+                            "Social Structure",
+                            "Social Change"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "SOC 499",
+                        title: "Sociology Project",
+                        topics: [
+                            "Research",
+                            "Field Work",
+                            "Data Analysis",
+                            "Academic Writing"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       ARTS & HUMANITIES
+    ===================================================== */
+
+    "Arts & Humanities": {
+
+        "English and Literary Studies": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "ELS 101",
+                        title: "Introduction to Literature",
+                        topics: [
+                            "Poetry",
+                            "Prose",
+                            "Drama",
+                            "Literary Genres",
+                            "Literary Devices"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ELS 102",
+                        title: "Introduction to Language",
+                        topics: [
+                            "Language",
+                            "Grammar",
+                            "Phonetics",
+                            "Phonology",
+                            "Morphology",
+                            "Syntax"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "ELS 201",
+                        title: "African Literature",
+                        topics: [
+                            "African Poetry",
+                            "African Prose",
+                            "African Drama",
+                            "Postcolonial Literature"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ELS 202",
+                        title: "Literary Criticism",
+                        topics: [
+                            "Literary Theory",
+                            "Formalism",
+                            "Structuralism",
+                            "Postcolonial Criticism",
+                            "Feminist Criticism"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "ELS 301",
+                        title: "Advanced Literary Studies",
+                        topics: [
+                            "Narrative",
+                            "Characterization",
+                            "Theme",
+                            "Symbolism",
+                            "Narrative Technique"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ELS 302",
+                        title: "Creative Writing",
+                        topics: [
+                            "Storytelling",
+                            "Character Development",
+                            "Dialogue",
+                            "Plot",
+                            "Creative Style"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "ELS 401",
+                        title: "Advanced Literary Criticism",
+                        topics: [
+                            "Literary Theory",
+                            "Critical Analysis",
+                            "Comparative Literature"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ELS 499",
+                        title: "English Project",
+                        topics: [
+                            "Research",
+                            "Literature Review",
+                            "Critical Analysis",
+                            "Academic Writing",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       AGRICULTURE
+    ===================================================== */
+
+    "Agriculture": {
+
+        "Agricultural Science": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "AGR 101",
+                        title: "Introduction to Agriculture",
+                        topics: [
+                            "Agriculture",
+                            "Agricultural Systems",
+                            "Farm Management",
+                            "Agricultural Resources"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AGR 102",
+                        title: "Basic Crop Science",
+                        topics: [
+                            "Crop Production",
+                            "Plant Growth",
+                            "Seeds",
+                            "Crop Management"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "AGR 201",
+                        title: "Soil Science",
+                        topics: [
+                            "Soil Formation",
+                            "Soil Properties",
+                            "Soil Fertility",
+                            "Soil Conservation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AGR 202",
+                        title: "Animal Science",
+                        topics: [
+                            "Livestock",
+                            "Animal Nutrition",
+                            "Animal Reproduction",
+                            "Animal Health"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "AGR 301",
+                        title: "Crop Production",
+                        topics: [
+                            "Crop Improvement",
+                            "Crop Pests",
+                            "Crop Diseases",
+                            "Crop Management"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AGR 302",
+                        title: "Agricultural Economics",
+                        topics: [
+                            "Farm Economics",
+                            "Agricultural Markets",
+                            "Farm Budgeting",
+                            "Agricultural Policy"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "AGR 401",
+                        title: "Agricultural Extension",
+                        topics: [
+                            "Extension Education",
+                            "Rural Development",
+                            "Communication",
+                            "Agricultural Innovation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "AGR 499",
+                        title: "Agriculture Project",
+                        topics: [
+                            "Research",
+                            "Field Work",
+                            "Data Collection",
+                            "Analysis",
+                            "Project Writing"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       EDUCATION
+    ===================================================== */
+
+    "Education": {
+
+        "Educational Management": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "EDM 101",
+                        title: "Introduction to Education",
+                        topics: [
+                            "Meaning of Education",
+                            "Aims of Education",
+                            "Education and Society",
+                            "Nigerian Education System"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EDM 102",
+                        title: "Introduction to Educational Management",
+                        topics: [
+                            "Educational Administration",
+                            "Leadership",
+                            "School Management",
+                            "Decision Making"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "EDM 201",
+                        title: "Educational Psychology",
+                        topics: [
+                            "Learning",
+                            "Motivation",
+                            "Memory",
+                            "Intelligence",
+                            "Development"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EDM 202",
+                        title: "Curriculum Studies",
+                        topics: [
+                            "Curriculum",
+                            "Curriculum Design",
+                            "Curriculum Development",
+                            "Curriculum Evaluation"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "EDM 301",
+                        title: "School Administration",
+                        topics: [
+                            "School Leadership",
+                            "Planning",
+                            "Staff Management",
+                            "Student Management"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EDM 302",
+                        title: "Educational Planning",
+                        topics: [
+                            "Education Planning",
+                            "Policy",
+                            "Resource Allocation",
+                            "Educational Development"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "EDM 401",
+                        title: "Educational Policy",
+                        topics: [
+                            "Education Policy",
+                            "Policy Analysis",
+                            "Education Reform",
+                            "Education Governance"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "EDM 499",
+                        title: "Education Project",
+                        topics: [
+                            "Research",
+                            "Data Collection",
+                            "Analysis",
+                            "Academic Writing"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       MEDICAL & HEALTH SCIENCES
+    ===================================================== */
+
+    "Medical & Health Sciences": {
+
+        "Medicine and Surgery": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 101",
+                        title: "Basic Medical Sciences",
+                        topics: [
+                            "Introduction to Medicine",
+                            "Cell Biology",
+                            "Basic Anatomy",
+                            "Basic Physiology",
+                            "Medical Terminology"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 102",
+                        title: "Basic Biological Sciences",
+                        topics: [
+                            "Biochemistry",
+                            "Genetics",
+                            "Cell Biology",
+                            "Human Biology"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 201",
+                        title: "Human Anatomy",
+                        topics: [
+                            "Upper Limb",
+                            "Lower Limb",
+                            "Thorax",
+                            "Abdomen",
+                            "Head and Neck"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 202",
+                        title: "Human Physiology",
+                        topics: [
+                            "Nervous System",
+                            "Cardiovascular System",
+                            "Respiratory System",
+                            "Digestive System",
+                            "Renal System"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 301",
+                        title: "Pathology",
+                        topics: [
+                            "Disease Processes",
+                            "Inflammation",
+                            "Cell Injury",
+                            "Neoplasia",
+                            "Pathological Diagnosis"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 302",
+                        title: "Pharmacology",
+                        topics: [
+                            "Drugs",
+                            "Pharmacokinetics",
+                            "Pharmacodynamics",
+                            "Drug Classes",
+                            "Drug Safety"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 401",
+                        title: "Clinical Medicine",
+                        topics: [
+                            "Clinical Examination",
+                            "Diagnosis",
+                            "Patient History",
+                            "Clinical Reasoning",
+                            "Treatment Principles"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 402",
+                        title: "Clinical Surgery",
+                        topics: [
+                            "Surgical Principles",
+                            "Patient Assessment",
+                            "Surgical Conditions",
+                            "Perioperative Care"
+                        ]
+                    }
+                ]
+            },
+
+            "500 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 501",
+                        title: "Internal Medicine",
+                        topics: [
+                            "Cardiology",
+                            "Respiratory Medicine",
+                            "Gastroenterology",
+                            "Neurology",
+                            "Endocrinology"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 502",
+                        title: "Paediatrics and Obstetrics",
+                        topics: [
+                            "Child Health",
+                            "Neonatal Care",
+                            "Pregnancy",
+                            "Labour",
+                            "Maternal Health"
+                        ]
+                    }
+                ]
+            },
+
+            "600 Level": {
+                "First Semester": [
+                    {
+                        code: "MBBS 601",
+                        title: "Clinical Practice",
+                        topics: [
+                            "Clinical Rotations",
+                            "Patient Care",
+                            "Diagnosis",
+                            "Treatment",
+                            "Professional Practice"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "MBBS 602",
+                        title: "Medical Internship Preparation",
+                        topics: [
+                            "Clinical Practice",
+                            "Professional Ethics",
+                            "Patient Safety",
+                            "Medical Documentation"
+                        ]
+                    }
+                ]
+            }
+        },
+
+
+        "Nursing Science": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "NUR 101",
+                        title: "Introduction to Nursing",
+                        topics: [
+                            "Nursing Profession",
+                            "History of Nursing",
+                            "Nursing Ethics",
+                            "Patient Care"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "NUR 102",
+                        title: "Human Anatomy and Physiology",
+                        topics: [
+                            "Cells",
+                            "Tissues",
+                            "Organs",
+                            "Body Systems"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "NUR 201",
+                        title: "Fundamentals of Nursing",
+                        topics: [
+                            "Patient Assessment",
+                            "Vital Signs",
+                            "Patient Hygiene",
+                            "Basic Nursing Procedures"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "NUR 202",
+                        title: "Medical Surgical Nursing",
+                        topics: [
+                            "Patient Care",
+                            "Common Diseases",
+                            "Nursing Assessment",
+                            "Nursing Interventions"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "NUR 301",
+                        title: "Community Health Nursing",
+                        topics: [
+                            "Public Health",
+                            "Disease Prevention",
+                            "Health Promotion",
+                            "Community Assessment"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "NUR 302",
+                        title: "Maternal and Child Health",
+                        topics: [
+                            "Pregnancy",
+                            "Antenatal Care",
+                            "Childbirth",
+                            "Postnatal Care",
+                            "Child Health"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "NUR 401",
+                        title: "Advanced Nursing Practice",
+                        topics: [
+                            "Advanced Patient Assessment",
+                            "Clinical Decision Making",
+                            "Nursing Leadership"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "NUR 499",
+                        title: "Nursing Research Project",
+                        topics: [
+                            "Research Methods",
+                            "Data Collection",
+                            "Data Analysis",
+                            "Academic Writing"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       LAW
+    ===================================================== */
+
+    "Law": {
+
+        "Law": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "LAW 101",
+                        title: "Introduction to Law",
+                        topics: [
+                            "Meaning of Law",
+                            "Sources of Nigerian Law",
+                            "Legal Systems",
+                            "Courts",
+                            "Legal Profession"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "LAW 102",
+                        title: "Constitutional Law",
+                        topics: [
+                            "Constitution",
+                            "Fundamental Rights",
+                            "Separation of Powers",
+                            "Federalism",
+                            "Rule of Law"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "LAW 201",
+                        title: "Criminal Law",
+                        topics: [
+                            "Crime",
+                            "Elements of Crime",
+                            "Defences",
+                            "Criminal Responsibility",
+                            "Punishment"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "LAW 202",
+                        title: "Law of Contract",
+                        topics: [
+                            "Contract",
+                            "Offer",
+                            "Acceptance",
+                            "Consideration",
+                            "Capacity",
+                            "Breach",
+                            "Remedies"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "LAW 301",
+                        title: "Law of Torts",
+                        topics: [
+                            "Negligence",
+                            "Trespass",
+                            "Nuisance",
+                            "Defamation",
+                            "Remedies"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "LAW 302",
+                        title: "Commercial Law",
+                        topics: [
+                            "Sale of Goods",
+                            "Agency",
+                            "Partnership",
+                            "Commercial Transactions"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "LAW 401",
+                        title: "Company Law",
+                        topics: [
+                            "Companies",
+                            "Incorporation",
+                            "Directors",
+                            "Shareholders",
+                            "Corporate Governance"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "LAW 499",
+                        title: "Law Research Project",
+                        topics: [
+                            "Legal Research",
+                            "Case Analysis",
+                            "Statutory Interpretation",
+                            "Legal Writing"
+                        ]
+                    }
+                ]
+            },
+
+            "500 Level": {
+                "First Semester": [
+                    {
+                        code: "LAW 501",
+                        title: "Jurisprudence",
+                        topics: [
+                            "Nature of Law",
+                            "Legal Philosophy",
+                            "Justice",
+                            "Rights",
+                            "Legal Interpretation"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "LAW 502",
+                        title: "Nigerian Legal Practice",
+                        topics: [
+                            "Legal Practice",
+                            "Professional Ethics",
+                            "Court Procedure",
+                            "Legal Drafting"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    },
+
+
+    /* =====================================================
+       ARCHITECTURE & BUILT ENVIRONMENT
+    ===================================================== */
+
+    "Architecture & Built Environment": {
+
+        "Architecture": {
+
+            "100 Level": {
+                "First Semester": [
+                    {
+                        code: "ARC 101",
+                        title: "Introduction to Architecture",
+                        topics: [
+                            "Architecture",
+                            "Architectural History",
+                            "Design Principles",
+                            "Space",
+                            "Form",
+                            "Function"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ARC 102",
+                        title: "Architectural Graphics",
+                        topics: [
+                            "Technical Drawing",
+                            "Perspective",
+                            "Orthographic Projection",
+                            "Architectural Sketching"
+                        ]
+                    }
+                ]
+            },
+
+            "200 Level": {
+                "First Semester": [
+                    {
+                        code: "ARC 201",
+                        title: "Architectural Design I",
+                        topics: [
+                            "Design Process",
+                            "Site Analysis",
+                            "Space Planning",
+                            "Building Form"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ARC 202",
+                        title: "Building Construction",
+                        topics: [
+                            "Building Materials",
+                            "Foundations",
+                            "Walls",
+                            "Floors",
+                            "Roofs"
+                        ]
+                    }
+                ]
+            },
+
+            "300 Level": {
+                "First Semester": [
+                    {
+                        code: "ARC 301",
+                        title: "Architectural Design II",
+                        topics: [
+                            "Advanced Design",
+                            "Site Planning",
+                            "Environmental Design",
+                            "Building Systems"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ARC 302",
+                        title: "Environmental Technology",
+                        topics: [
+                            "Climate",
+                            "Natural Ventilation",
+                            "Lighting",
+                            "Thermal Comfort",
+                            "Sustainable Design"
+                        ]
+                    }
+                ]
+            },
+
+            "400 Level": {
+                "First Semester": [
+                    {
+                        code: "ARC 401",
+                        title: "Advanced Architectural Design",
+                        topics: [
+                            "Complex Buildings",
+                            "Urban Context",
+                            "Sustainable Architecture",
+                            "Building Technology"
+                        ]
+                    }
+                ],
+                "Second Semester": [
+                    {
+                        code: "ARC 499",
+                        title: "Architectural Design Project",
+                        topics: [
+                            "Research",
+                            "Site Analysis",
+                            "Concept Development",
+                            "Design",
+                            "Drawings",
+                            "Presentation"
+                        ]
+                    }
+                ]
+            }
+        }
+
+    }
+
+};
+
+
+/* =========================================================
+   STUDYMIND UNIVERSITY HELPERS
+========================================================= */
+
+
+/**
+ * Get all university faculties.
+ */
+function getUniversityFaculties() {
+
+    return Object.keys(NIGERIAN_UNIVERSITY_COURSES);
+
+}
+
+
+/**
+ * Get degree programmes inside a faculty.
+ */
+function getUniversityDegrees(faculty) {
+
+    if (!faculty) return [];
+
+    return Object.keys(
+        NIGERIAN_UNIVERSITY_COURSES[faculty] || {}
+    );
+
+}
+
+
+/**
+ * Get academic levels for a degree.
+ */
+function getUniversityLevels(faculty, degree) {
+
+    if (
+        !faculty ||
+        !degree ||
+        !NIGERIAN_UNIVERSITY_COURSES[faculty] ||
+        !NIGERIAN_UNIVERSITY_COURSES[faculty][degree]
+    ) {
+        return [];
+    }
+
+    return Object.keys(
+        NIGERIAN_UNIVERSITY_COURSES[faculty][degree]
+    );
+
+}
+
+
+/**
+ * Get semesters for a level.
+ */
+function getUniversitySemesters(
+    faculty,
+    degree,
+    level
+) {
+
+    const data =
+        NIGERIAN_UNIVERSITY_COURSES?.[faculty]?.[degree]?.[level];
+
+    if (!data) return [];
+
+    return Object.keys(data);
+
+}
+
+
+/**
+ * Get courses for a semester.
+ */
+function getUniversityCourses(
+    faculty,
+    degree,
+    level,
+    semester
+) {
+
+    const data =
+        NIGERIAN_UNIVERSITY_COURSES
+            ?.[faculty]
+            ?.[degree]
+            ?.[level]
+            ?.[semester];
+
+    return Array.isArray(data) ? data : [];
+
+}
+
+
+/**
+ * Find a specific course.
+ */
+function findUniversityCourse(
+    faculty,
+    degree,
+    level,
+    semester,
+    courseCode
+) {
+
+    const courses = getUniversityCourses(
+        faculty,
+        degree,
+        level,
+        semester
+    );
+
+    return courses.find(
+        course =>
+            course.code.toLowerCase() ===
+            String(courseCode).toLowerCase()
+    ) || null;
+
+}
+
+
+/**
+ * Get topics for a course.
+ */
+function getUniversityCourseTopics(
+    faculty,
+    degree,
+    level,
+    semester,
+    courseCode
+) {
+
+    const course = findUniversityCourse(
+        faculty,
+        degree,
+        level,
+        semester,
+        courseCode
+    );
+
+    return course?.topics || [];
+
+}
+
+
+/**
+ * Search university courses.
+ */
+function searchUniversityCourses(searchTerm) {
+
+    if (!searchTerm) return [];
+
+    const query =
+        String(searchTerm)
+            .toLowerCase()
+            .trim();
+
+    const results = [];
+
+    for (
+        const faculty of Object.keys(
+            NIGERIAN_UNIVERSITY_COURSES
+        )
+    ) {
+
+        for (
+            const degree of Object.keys(
+                NIGERIAN_UNIVERSITY_COURSES[faculty]
+            )
+        ) {
+
+            const degreeData =
+                NIGERIAN_UNIVERSITY_COURSES
+                    [faculty]
+                    [degree];
+
+            for (
+                const level of Object.keys(degreeData)
+            ) {
+
+                for (
+                    const semester of Object.keys(
+                        degreeData[level]
+                    )
+                ) {
+
+                    const courses =
+                        degreeData[level][semester];
+
+                    courses.forEach(course => {
+
+                        const searchableText = [
+                            faculty,
+                            degree,
+                            level,
+                            semester,
+                            course.code,
+                            course.title,
+                            ...course.topics
+                        ]
+                            .join(" ")
+                            .toLowerCase();
+
+                        if (
+                            searchableText.includes(query)
+                        ) {
+
+                            results.push({
+                                faculty,
+                                degree,
+                                level,
+                                semester,
+                                ...course
+                            });
+
+                        }
+
+                    });
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return results;
+
+}
+
+
+/* =========================================================
+   UNIVERSITY PLAN CONVERTER
+
+   Converts a university course into the same general
+   topic structure used by StudyMind's study planner.
+========================================================= */
+
+function universityCourseToStudyTopics(course) {
+
+    if (!course) return [];
+
+    return (course.topics || []).map(
+        (topic, index) => ({
+
+            id:
+                `${course.code}-${index + 1}`,
+
+            title: topic,
+
+            courseCode:
+                course.code,
+
+            courseTitle:
+                course.title,
+
+            completed: false,
+
+            difficulty:
+                "medium",
+
+            priority:
+                "normal"
+
+        })
+    );
+
+}
+
+
+/* =========================================================
+   UNIVERSITY STUDY PLAN BUILDER
+========================================================= */
+
+function buildUniversityStudyPlan({
+
+    faculty,
+    degree,
+    level,
+    semester,
+    courseCode
+
+}) {
+
+    const course =
+        findUniversityCourse(
+            faculty,
+            degree,
+            level,
+            semester,
+            courseCode
+        );
+
+    if (!course) {
+
+        return null;
+
+    }
+
+    return {
+
+        type:
+            "university",
+
+        educationLevel:
+            "University",
+
+        curriculum:
+            "Nigerian University",
+
+        faculty,
+
+        degree,
+
+        level,
+
+        semester,
+
+        courseCode:
+            course.code,
+
+        courseTitle:
+            course.title,
+
+        topics:
+            universityCourseToStudyTopics(course),
+
+        createdAt:
+            new Date().toISOString()
+
+    };
+
+}
+
+
+/* =========================================================
+   OPTIONAL FLAT SUBJECT LIST
+
+   Useful for your initial University selector.
+========================================================= */
+
+const NIGERIAN_UNIVERSITY_PROGRAMMES = {
+
+    "Computing & Technology": [
+
+        "Computer Science",
+        "Software Engineering",
+        "Information Technology",
+        "Cybersecurity",
+        "Artificial Intelligence",
+        "Computer Engineering",
+        "Information Systems",
+        "Data Science",
+        "Information and Communication Technology"
+
+    ],
+
+    "Engineering": [
+
+        "Electrical and Electronics Engineering",
+        "Mechanical Engineering",
+        "Civil Engineering",
+        "Chemical Engineering",
+        "Petroleum Engineering",
+        "Mechatronics Engineering",
+        "Biomedical Engineering",
+        "Agricultural Engineering",
+        "Environmental Engineering",
+        "Industrial Engineering",
+        "Materials Engineering",
+        "Telecommunications Engineering"
+
+    ],
+
+    "Natural Sciences": [
+
+        "Biochemistry",
+        "Microbiology",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Statistics",
+        "Geology",
+        "Botany",
+        "Zoology",
+        "Environmental Science"
+
+    ],
+
+    "Medical & Health Sciences": [
+
+        "Medicine and Surgery",
+        "Nursing Science",
+        "Pharmacy",
+        "Medical Laboratory Science",
+        "Physiotherapy",
+        "Radiography",
+        "Dentistry",
+        "Public Health",
+        "Anatomy",
+        "Physiology",
+        "Nutrition and Dietetics"
+
+    ],
+
+    "Business & Management": [
+
+        "Accounting",
+        "Business Administration",
+        "Banking and Finance",
+        "Marketing",
+        "Insurance",
+        "Entrepreneurship",
+        "Management",
+        "Actuarial Science",
+        "Human Resource Management"
+
+    ],
+
+    "Social Sciences": [
+
+        "Economics",
+        "Political Science",
+        "Sociology",
+        "Psychology",
+        "Mass Communication",
+        "International Relations",
+        "Geography",
+        "Social Work",
+        "Criminology",
+        "Demography"
+
+    ],
+
+    "Arts & Humanities": [
+
+        "English and Literary Studies",
+        "History",
+        "Philosophy",
+        "Linguistics",
+        "Theatre Arts",
+        "Music",
+        "Religious Studies",
+        "Fine Arts",
+        "Archaeology",
+        "Foreign Languages"
+
+    ],
+
+    "Education": [
+
+        "Educational Management",
+        "Guidance and Counselling",
+        "Educational Psychology",
+        "Curriculum Studies",
+        "Science Education",
+        "Mathematics Education",
+        "English Education",
+        "Biology Education",
+        "Chemistry Education",
+        "Physics Education",
+        "Computer Education"
+
+    ],
+
+    "Agriculture": [
+
+        "Agricultural Science",
+        "Agricultural Economics",
+        "Animal Science",
+        "Crop Science",
+        "Soil Science",
+        "Fisheries",
+        "Forestry",
+        "Agricultural Extension",
+        "Food Science and Technology"
+
+    ],
+
+    "Law": [
+
+        "Law"
+
+    ],
+
+    "Architecture & Built Environment": [
+
+        "Architecture",
+        "Quantity Surveying",
+        "Building Technology",
+        "Estate Management",
+        "Urban and Regional Planning",
+        "Surveying and Geoinformatics"
+    ]
+
+};
+
+
+/* =========================================================
+   UNIVERSITY SEARCH
+========================================================= */
+
+function searchUniversityProgrammes(searchTerm) {
+
+    if (!searchTerm) return [];
+
+    const query =
+        String(searchTerm)
+            .toLowerCase()
+            .trim();
+
+    const results = [];
+
+    Object.entries(
+        NIGERIAN_UNIVERSITY_PROGRAMMES
+    ).forEach(([category, programmes]) => {
+
+        programmes.forEach(programme => {
+
+            if (
+                programme
+                    .toLowerCase()
+                    .includes(query)
+                ||
+                category
+                    .toLowerCase()
+                    .includes(query)
+            ) {
+
+                results.push({
+
+                    category,
+
+                    programme
+
+                });
+
+            }
+
+        });
+
+    });
+
+    return results;
+
+}
+
+
+/* =========================================================
+   EXPORT / GLOBAL ACCESS
+
+   This makes the database available to other StudyMind
+   scripts even if this file is loaded separately.
+========================================================= */
+
+if (typeof window !== "undefined") {
+
+    window.NIGERIAN_UNIVERSITY_COURSES =
+        NIGERIAN_UNIVERSITY_COURSES;
+
+    window.NIGERIAN_UNIVERSITY_PROGRAMMES =
+        NIGERIAN_UNIVERSITY_PROGRAMMES;
+
+    window.getUniversityFaculties =
+        getUniversityFaculties;
+
+    window.getUniversityDegrees =
+        getUniversityDegrees;
+
+    window.getUniversityLevels =
+        getUniversityLevels;
+
+    window.getUniversitySemesters =
+        getUniversitySemesters;
+
+    window.getUniversityCourses =
+        getUniversityCourses;
+
+    window.findUniversityCourse =
+        findUniversityCourse;
+
+    window.getUniversityCourseTopics =
+        getUniversityCourseTopics;
+
+    window.searchUniversityCourses =
+        searchUniversityCourses;
+
+    window.searchUniversityProgrammes =
+        searchUniversityProgrammes;
+
+    window.buildUniversityStudyPlan =
+        buildUniversityStudyPlan;
+
+    window.universityCourseToStudyTopics =
+        universityCourseToStudyTopics;
+
+}
 
     /* =====================================================
        OTHER
