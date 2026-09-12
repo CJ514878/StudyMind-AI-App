@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Feedback | StudyMind AI</title>
+
+    <link rel="stylesheet" href="feedback.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">S</div>
+
+            <div>
+                <strong>StudyMind</strong>
+                <span>AI</span>
+            </div>
+        </div>
+
+        <nav>
+
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="schedule.html">
+                <span>◫</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span>▣</span>
+                Calendar
+            </a>
+
+            <a href="study-timer.html">
+                <span>◷</span>
+                Study Timer
+            </a>
+
+            <a href="ai-support.html">
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="summarizer.html">
+                <span>▤</span>
+                Summarizer
+            </a>
+
+            <a href="game-mode.html">
+                <span>♟</span>
+                Game Mode
+            </a>
+
+            <a href="study-streak.html">
+                <span>🔥</span>
+                Study Streak
+            </a>
+
+            <a href="goals.html">
+                <span>◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span>🏆</span>
+                Rewards
+            </a>
+
+            <a href="feedback.html" class="active">
+                <span>💬</span>
+                Feedback
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <button id="themeButton">
+                ◐ <span>Theme</span>
+            </button>
+
+            <button id="logoutButton">
+                ⇥ <span>Logout</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">HELP US IMPROVE</p>
+
+                <h1>
+                    Feedback 💬
+                </h1>
+
+                <p class="subtitle">
+                    Your feedback helps make StudyMind AI better for every student.
+                </p>
+            </div>
+
+            <div class="profile">
+
+                <div class="profile-text">
+                    <strong id="usernameDisplay">
+                        Student
+                    </strong>
+
+                    <span>
+                        StudyMind AI
+                    </span>
+                </div>
+
+                <div
+                    class="avatar"
+                    id="userAvatar"
+                >
+                    S
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- FEEDBACK CARD -->
+
+        <section class="feedback-layout">
+
+            <div class="feedback-info">
+
+                <div class="info-icon">
+                    💡
+                </div>
+
+                <h2>
+                    Tell us what you think
+                </h2>
+
+                <p>
+                    Whether you found something useful,
+                    something confusing, or have an idea
+                    for a new feature, we'd love to hear it.
+                </p>
+
+                <div class="info-points">
+
+                    <div>
+                        <span>✓</span>
+                        <p>Report something that isn't working</p>
+                    </div>
+
+                    <div>
+                        <span>✓</span>
+                        <p>Suggest a new feature</p>
+                    </div>
+
+                    <div>
+                        <span>✓</span>
+                        <p>Tell us what you enjoy</p>
+                    </div>
+
+                    <div>
+                        <span>✓</span>
+                        <p>Help us improve your study experience</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="feedback-card">
+
+                <form id="feedbackForm">
+
+                    <!-- RATING -->
+
+                    <div class="form-group">
+
+                        <label>
+                            How would you rate StudyMind AI?
+                        </label>
+
+                        <div
+                            class="rating"
+                            id="rating"
+                        >
+
+                            <button
+                                type="button"
+                                data-rating="1"
+                            >
+                                ★
+                            </button>
+
+                            <button
+                                type="button"
+                                data-rating="2"
+                            >
+                                ★
+                            </button>
+
+                            <button
+                                type="button"
+                                data-rating="3"
+                            >
+                                ★
+                            </button>
+
+                            <button
+                                type="button"
+                                data-rating="4"
+                            >
+                                ★
+                            </button>
+
+                            <button
+                                type="button"
+                                data-rating="5"
+                            >
+                                ★
+                            </button>
+
+                        </div>
+
+                        <small id="ratingText">
+                            Select a rating
+                        </small>
+
+                    </div>
+
+
+                    <!-- CATEGORY -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Feedback type
+                        </label>
+
+                        <select id="category">
+
+                            <option value="">
+                                Select a category
+                            </option>
+
+                            <option value="General Feedback">
+                                General Feedback
+                            </option>
+
+                            <option value="Bug Report">
+                                Bug Report
+                            </option>
+
+                            <option value="Feature Request">
+                                Feature Request
+                            </option>
+
+                            <option value="Study Plan">
+                                Study Plan
+                            </option>
+
+                            <option value="AI Tools">
+                                AI Tools
+                            </option>
+
+                            <option value="Game Mode">
+                                Game Mode
+                            </option>
+
+                            <option value="Dashboard">
+                                Dashboard
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- LIKED -->
+
+                    <div class="form-group">
+
+                        <label for="liked">
+                            What do you like about StudyMind?
+                        </label>
+
+                        <textarea
+                            id="liked"
+                            rows="4"
+                            placeholder="Tell us what you enjoy..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- IMPROVE -->
+
+                    <div class="form-group">
+
+                        <label for="improve">
+                            What could we improve?
+                        </label>
+
+                        <textarea
+                            id="improve"
+                            rows="4"
+                            placeholder="Tell us what could be better..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- ADDITIONAL -->
+
+                    <div class="form-group">
+
+                        <label for="additional">
+                            Additional comments
+                            <span>(optional)</span>
+                        </label>
+
+                        <textarea
+                            id="additional"
+                            rows="4"
+                            placeholder="Anything else you'd like us to know?"
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- EMAIL -->
+
+                    <div class="email-notice">
+
+                        <span>✉️</span>
+
+                        <div>
+                            <strong>
+                                Feedback will be sent to
+                            </strong>
+
+                            <p>
+                                studymindaiofficial@gmail.com
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <!-- SEND -->
+
+                    <button
+                        type="submit"
+                        class="send-button"
+                    >
+                        <span>Send Feedback</span>
+                        <strong>→</strong>
+                    </button>
+
+                    <p
+                        id="formStatus"
+                        class="form-status"
+                    ></p>
+
+                </form>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER -->
+
+        <footer>
+            <p>
+                Thank you for helping improve StudyMind AI. 💙
+            </p>
+        </footer>
+
+    </main>
+
+</div>
+
+
+<script src="feedback.js"></script>
+
+</body>
+</html>
