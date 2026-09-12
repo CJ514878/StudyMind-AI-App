@@ -1,348 +1,615 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
-<meta charset="UTF-8">
+    <title>Study Streak — StudyMind AI</title>
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>
-    StudyMind AI — Study Streak
-</title>
-
-<link
-    rel="stylesheet"
-    href="style.css"
->
-```
-
+    <link rel="stylesheet" href="study-streak.css">
 </head>
 
 <body>
 
-<!-- =========================================================
-     NAVIGATION
-========================================================= -->
+<div class="app-shell">
 
-<nav class="navbar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
 
-```
-<h2 class="logo">
-    StudyMind AI
-</h2>
+        <div class="brand">
+            <div class="brand-icon">🧠</div>
 
-<ul class="nav-links">
+            <div>
+                <strong>StudyMind</strong>
+                <span>AI Study Coach</span>
+            </div>
+        </div>
 
-    <li>
-        <a href="home.html">
-            Home
-        </a>
-    </li>
 
-    <li>
-        <a href="dashboard.html">
-            Dashboard
-        </a>
-    </li>
+        <nav class="navigation">
 
-    <li>
-        <a href="dashboard.html#calendar">
-            Calendar
-        </a>
-    </li>
+            <a href="dashboard.html">
+                <span>🏠</span>
+                Dashboard
+            </a>
 
-    <li>
-        <a href="dashboard.html#schedule">
-            Schedule
-        </a>
-    </li>
+            <a href="schedule.html">
+                <span>📅</span>
+                Schedule
+            </a>
 
-    <li>
-        <a href="ai-support.html">
-            🤖 AI Support
-        </a>
-    </li>
+            <a href="calendar.html">
+                <span>🗓️</span>
+                Calendar
+            </a>
 
-    <li>
-        <a href="summarizer.html">
-            📄 Summarizer
-        </a>
-    </li>
+            <a href="study-timer.html">
+                <span>⏱️</span>
+                Study Timer
+            </a>
 
-    <li>
-        <a href="study-streak.html">
-            🔥 Study Streak
-        </a>
-    </li>
 
-    <li>
-        <a href="study-score.html">
-            ⭐ Study Score
-        </a>
-    </li>
+            <div class="nav-title">
+                AI TOOLS
+            </div>
 
-</ul>
+            <a href="ai-support.html">
+                <span>🤖</span>
+                AI Support
+            </a>
 
-<button
-    id="themeButton"
-    class="theme-button"
->
-    🌙 Dark Mode
-</button>
-```
+            <a href="summarizer.html">
+                <span>📄</span>
+                Summarizer
+            </a>
 
-</nav>
 
-<!-- =========================================================
-     MAIN
-========================================================= -->
+            <div class="nav-title">
+                PROGRESS
+            </div>
 
-<main class="dashboard-page">
+            <a href="game-mode.html">
+                <span>🎮</span>
+                Game Mode
+            </a>
 
-```
-<div class="dashboard-heading">
+            <a href="study-streak.html" class="active">
+                <span>🔥</span>
+                Study Streak
+            </a>
 
-    <div>
+            <a href="goals.html">
+                <span>🎯</span>
+                Goals
+            </a>
 
-        <span class="eyebrow">
-            YOUR CONSISTENCY
-        </span>
+            <a href="rewards.html">
+                <span>🏆</span>
+                Rewards
+            </a>
 
-        <h1>
-            🔥 Study Streak
-        </h1>
 
-        <p class="dashboard-subtitle">
-            Keep studying consistently and build your streak.
-        </p>
+            <div class="nav-title">
+                ACCOUNT
+            </div>
 
-    </div>
+            <a href="feedback.html">
+                <span>💬</span>
+                Feedback
+            </a>
 
-    <a
-        href="dashboard.html"
-        class="dashboard-action"
-    >
-        ← Back to Dashboard
-    </a>
+            <a href="settings.html">
+                <span>⚙️</span>
+                Settings
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <button id="themeToggle" class="theme-button">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark mode</span>
+            </button>
+
+            <button id="logoutButton" class="logout-button">
+                🚪
+                <span>Log out</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <button id="mobileMenu" class="mobile-menu">
+                ☰
+            </button>
+
+            <div>
+                <p class="eyebrow">YOUR PROGRESS</p>
+
+                <h1>
+                    Study Streak
+                </h1>
+
+                <p class="subtitle">
+                    Build consistency, one study day at a time.
+                </p>
+            </div>
+
+
+            <div class="user-area">
+
+                <div class="user-info">
+                    <strong id="usernameDisplay">
+                        Student
+                    </strong>
+
+                    <span>
+                        Keep going 🔥
+                    </span>
+                </div>
+
+                <div class="avatar" id="userAvatar">
+                    S
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- HERO -->
+        <section class="streak-hero">
+
+            <div class="hero-content">
+
+                <div class="fire-circle">
+                    🔥
+                </div>
+
+                <div>
+
+                    <p class="hero-label">
+                        CURRENT STREAK
+                    </p>
+
+                    <div class="streak-number">
+                        <span id="currentStreak">
+                            0
+                        </span>
+
+                        <span class="days-word">
+                            days
+                        </span>
+                    </div>
+
+                    <p id="streakMessage" class="hero-message">
+                        Complete a study topic to start your streak.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-side">
+
+                <div class="hero-stat">
+                    <span>Best streak</span>
+                    <strong id="bestStreak">0 days</strong>
+                </div>
+
+                <div class="hero-stat">
+                    <span>Study days</span>
+                    <strong id="totalStudyDays">0</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- STATS -->
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-icon blue">
+                    📚
+                </div>
+
+                <div>
+                    <span>Topics completed</span>
+                    <strong id="topicsCompleted">
+                        0
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon purple">
+                    📆
+                </div>
+
+                <div>
+                    <span>This week</span>
+                    <strong id="weeklyDays">
+                        0 / 7
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon green">
+                    ⚡
+                </div>
+
+                <div>
+                    <span>Weekly consistency</span>
+                    <strong id="weeklyConsistency">
+                        0%
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon orange">
+                    🏆
+                </div>
+
+                <div>
+                    <span>Best week</span>
+                    <strong id="bestWeek">
+                        0 days
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MAIN GRID -->
+        <section class="content-grid">
+
+
+            <!-- CALENDAR -->
+            <div class="panel calendar-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <p class="panel-eyebrow">
+                            ACTIVITY
+                        </p>
+
+                        <h2>
+                            Your study activity
+                        </h2>
+                    </div>
+
+                    <div class="calendar-controls">
+
+                        <button id="previousMonth">
+                            ‹
+                        </button>
+
+                        <strong id="calendarMonth">
+                            Month
+                        </strong>
+
+                        <button id="nextMonth">
+                            ›
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="calendar-weekdays">
+
+                    <span>MON</span>
+                    <span>TUE</span>
+                    <span>WED</span>
+                    <span>THU</span>
+                    <span>FRI</span>
+                    <span>SAT</span>
+                    <span>SUN</span>
+
+                </div>
+
+
+                <div
+                    class="calendar-grid"
+                    id="calendarGrid">
+                </div>
+
+
+                <div class="calendar-legend">
+
+                    <div>
+                        <span class="legend-dot active-day"></span>
+                        Studied
+                    </div>
+
+                    <div>
+                        <span class="legend-dot today-dot"></span>
+                        Today
+                    </div>
+
+                    <div>
+                        <span class="legend-dot empty-day"></span>
+                        No activity
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT COLUMN -->
+            <div class="right-column">
+
+
+                <!-- TODAY -->
+                <div class="panel today-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                TODAY
+                            </p>
+
+                            <h2>
+                                Today's progress
+                            </h2>
+                        </div>
+
+                        <div id="todayIcon"
+                             class="today-icon">
+                            ○
+                        </div>
+
+                    </div>
+
+
+                    <div class="today-status"
+                         id="todayStatus">
+
+                        <strong>
+                            No study activity yet
+                        </strong>
+
+                        <span>
+                            Complete a topic to protect your streak.
+                        </span>
+
+                    </div>
+
+
+                    <div class="progress-track">
+
+                        <div
+                            id="todayProgress"
+                            class="progress-fill">
+                        </div>
+
+                    </div>
+
+
+                    <p class="progress-caption"
+                       id="todayCaption">
+                        0 study activity today
+                    </p>
+
+                </div>
+
+
+                <!-- MOTIVATION -->
+                <div class="motivation-card">
+
+                    <div class="motivation-icon">
+                        💪
+                    </div>
+
+                    <div>
+
+                        <h3 id="motivationTitle">
+                            Start your streak
+                        </h3>
+
+                        <p id="motivationText">
+                            Your first completed topic will
+                            create your first study day.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HOW IT WORKS -->
+                <div class="panel rules-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <p class="panel-eyebrow">
+                                STREAK RULES
+                            </p>
+
+                            <h2>
+                                How it works
+                            </h2>
+                        </div>
+
+                    </div>
+
+
+                    <div class="rule">
+
+                        <span>1</span>
+
+                        <p>
+                            Complete at least one study topic.
+                        </p>
+
+                    </div>
+
+
+                    <div class="rule">
+
+                        <span>2</span>
+
+                        <p>
+                            That day is recorded as a study day.
+                        </p>
+
+                    </div>
+
+
+                    <div class="rule">
+
+                        <span>3</span>
+
+                        <p>
+                            Study again the next day to continue
+                            your streak.
+                        </p>
+
+                    </div>
+
+
+                    <div class="rule">
+
+                        <span>4</span>
+
+                        <p>
+                            Multiple topics on the same day
+                            still count as one study day.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- WEEKLY ACTIVITY -->
+        <section class="panel weekly-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <p class="panel-eyebrow">
+                        THIS WEEK
+                    </p>
+
+                    <h2>
+                        Weekly consistency
+                    </h2>
+                </div>
+
+                <span id="weekRange"
+                      class="week-range">
+                </span>
+
+            </div>
+
+
+            <div class="weekly-bars"
+                 id="weeklyBars">
+            </div>
+
+        </section>
+
+
+        <!-- CTA -->
+        <section class="streak-cta">
+
+            <div>
+
+                <span class="cta-icon">
+                    📖
+                </span>
+
+                <div>
+
+                    <h2>
+                        Ready for today's study session?
+                    </h2>
+
+                    <p>
+                        Complete a topic and keep your streak alive.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <a href="dashboard.html">
+                Start studying →
+            </a>
+
+        </section>
+
+    </main>
 
 </div>
 
 
-<!-- =====================================================
-     STREAK HERO
-====================================================== -->
+<!-- STREAK CELEBRATION -->
+<div class="celebration-overlay"
+     id="celebrationOverlay">
 
-<section class="top-stats">
+    <div class="celebration-card">
 
-    <div class="stat-card">
-
-        <span class="stat-icon">
+        <div class="celebration-fire">
             🔥
-        </span>
-
-        <div>
-
-            <p>
-                Current Streak
-            </p>
-
-            <h2 id="streakNumber">
-                0 Days
-            </h2>
-
         </div>
+
+        <h2>
+            Streak updated!
+        </h2>
+
+        <p id="celebrationText">
+            Great work. Keep the momentum going.
+        </p>
+
+        <button id="closeCelebration">
+            Keep going
+        </button>
 
     </div>
 
+</div>
 
-    <div class="stat-card">
 
-        <span class="stat-icon">
-            📚
-        </span>
-
-        <div>
-
-            <p>
-                Study Activity
-            </p>
-
-            <h2 id="studyStreak">
-                0 Days
-            </h2>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     STREAK CONTENT
-====================================================== -->
-
-<section class="main-dashboard">
-
-    <div class="left-panel">
-
-        <div class="panel-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="card-kicker">
-                        CONSISTENCY
-                    </span>
-
-                    <h2>
-                        🔥 Your Study Streak
-                    </h2>
-
-                </div>
-
-                <span class="card-badge">
-                    LIVE
-                </span>
-
-            </div>
-
-
-            <div
-                class="progress-circle"
-                style="margin: 40px auto;"
-            >
-
-                <span id="streak">
-                    0 Days
-                </span>
-
-            </div>
-
-
-            <p
-                id="streakProgress"
-                style="text-align:center;"
-            >
-                0 day streak
-            </p>
-
-
-            <div class="progress-bar-container">
-
-                <div
-                    id="streakProgressBar"
-                    style="width:0%;"
-                >
-                </div>
-
-            </div>
-
-
-            <p style="text-align:center; margin-top:20px;">
-                Complete study sessions regularly to keep your streak growing.
-            </p>
-
-        </div>
-
-
-        <div class="panel-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="card-kicker">
-                        HOW IT WORKS
-                    </span>
-
-                    <h2>
-                        Build Your Streak
-                    </h2>
-
-                </div>
-
-            </div>
-
-            <p>
-                Your streak increases when you complete a study session.
-                Studying on consecutive days keeps the streak going.
-            </p>
-
-            <p>
-                If you miss a day, your next study session starts a new streak.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <div class="right-panel">
-
-        <div class="panel-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="card-kicker">
-                        KEEP GOING
-                    </span>
-
-                    <h2>
-                        🎯 Study Consistently
-                    </h2>
-
-                </div>
-
-            </div>
-
-            <p>
-                Every study session counts. Stay consistent and keep
-                building your progress.
-            </p>
-
-            <a
-                href="dashboard.html"
-                class="primary-button full-button"
-                style="display:block; text-align:center; text-decoration:none;"
-            >
-                📖 Start Studying
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-```
-
-</main>
-
-<!-- =========================================================
-     SUPABASE
-========================================================= -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
-<script src="supabase.js"></script>
-
-<!-- =========================================================
-     DASHBOARD JAVASCRIPT
-========================================================= -->
-
-<script src="dashboard.js"></script>
+<script src="study-streak.js"></script>
 
 </body>
-
 </html>
+
