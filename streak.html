@@ -6,490 +6,421 @@
 
     <title>StudyMind AI — Study Streak</title>
 
-    <link rel="stylesheet" href="style.css">
-
-    <style>
-        .streak-page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 20px 60px;
-        }
-
-        .streak-hero {
-            margin-bottom: 28px;
-        }
-
-        .streak-hero h1 {
-            margin-bottom: 8px;
-        }
-
-        .streak-hero p {
-            opacity: .75;
-            margin: 0;
-        }
-
-        .streak-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-bottom: 24px;
-        }
-
-        .streak-card {
-            border-radius: 22px;
-            padding: 25px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.09);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 15px 40px rgba(0,0,0,.12);
-        }
-
-        .streak-card-icon {
-            font-size: 28px;
-            margin-bottom: 12px;
-        }
-
-        .streak-card-label {
-            font-size: 14px;
-            opacity: .7;
-            margin-bottom: 7px;
-        }
-
-        .streak-card-value {
-            font-size: 34px;
-            font-weight: 800;
-        }
-
-        .streak-card-value small {
-            font-size: 16px;
-            opacity: .7;
-            font-weight: 500;
-        }
-
-        .current-streak-card {
-            grid-column: span 2;
-            min-height: 230px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 25px;
-        }
-
-        .streak-main-number {
-            font-size: 72px;
-            line-height: 1;
-            font-weight: 900;
-            margin: 8px 0;
-        }
-
-        .streak-fire {
-            font-size: 70px;
-            filter: drop-shadow(0 8px 20px rgba(255,130,30,.3));
-        }
-
-        .streak-message {
-            opacity: .75;
-            max-width: 500px;
-            line-height: 1.6;
-        }
-
-        .section-card {
-            border-radius: 22px;
-            padding: 25px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.09);
-            margin-bottom: 22px;
-        }
-
-        .section-card h2 {
-            margin-top: 0;
-            margin-bottom: 8px;
-        }
-
-        .section-description {
-            opacity: .65;
-            margin-bottom: 22px;
-        }
-
-        .week-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 12px;
-        }
-
-        .week-day {
-            text-align: center;
-        }
-
-        .week-day-name {
-            font-size: 12px;
-            opacity: .6;
-            margin-bottom: 8px;
-        }
-
-        .week-day-box {
-            width: 100%;
-            aspect-ratio: 1;
-            max-width: 65px;
-            margin: auto;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.08);
-            font-size: 20px;
-        }
-
-        .week-day-box.active {
-            background: linear-gradient(135deg, rgba(255,166,0,.9), rgba(255,92,0,.8));
-            border-color: transparent;
-            box-shadow: 0 8px 25px rgba(255,120,0,.2);
-        }
-
-        .week-day-box.today {
-            outline: 2px solid rgba(255,255,255,.35);
-            outline-offset: 3px;
-        }
-
-        .calendar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .calendar-title {
-            font-size: 20px;
-            font-weight: 750;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-        }
-
-        .calendar-weekday {
-            text-align: center;
-            font-size: 12px;
-            opacity: .55;
-            padding-bottom: 5px;
-        }
-
-        .calendar-day {
-            min-height: 55px;
-            border-radius: 12px;
-            background: rgba(255,255,255,.035);
-            border: 1px solid rgba(255,255,255,.05);
-            padding: 8px;
-            font-size: 13px;
-        }
-
-        .calendar-day.empty {
-            background: transparent;
-            border-color: transparent;
-        }
-
-        .calendar-day.studied {
-            background: rgba(255,145,0,.18);
-            border-color: rgba(255,145,0,.3);
-        }
-
-        .calendar-day.today {
-            outline: 2px solid rgba(255,255,255,.3);
-        }
-
-        .calendar-day-number {
-            font-weight: 700;
-        }
-
-        .calendar-day-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: currentColor;
-            margin-top: 9px;
-            opacity: .85;
-        }
-
-        .streak-tip {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 18px;
-            border-radius: 16px;
-            background: rgba(255,255,255,.045);
-        }
-
-        .streak-tip-icon {
-            font-size: 28px;
-        }
-
-        .streak-tip strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .streak-tip span {
-            opacity: .65;
-            font-size: 14px;
-        }
-
-        .empty-history {
-            text-align: center;
-            padding: 35px 20px;
-            opacity: .65;
-        }
-
-        @media (max-width: 800px) {
-            .streak-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .current-streak-card {
-                grid-column: span 2;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .streak-page {
-                padding: 20px 14px 45px;
-            }
-
-            .streak-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .current-streak-card {
-                grid-column: span 1;
-                min-height: auto;
-            }
-
-            .streak-main-number {
-                font-size: 54px;
-            }
-
-            .streak-fire {
-                font-size: 55px;
-            }
-
-            .week-grid {
-                gap: 5px;
-            }
-
-            .week-day-box {
-                border-radius: 11px;
-                font-size: 16px;
-            }
-
-            .calendar-day {
-                min-height: 42px;
-                padding: 6px;
-            }
-        }
-
-        body.light-mode .streak-card,
-        body.light-mode .section-card {
-            background: rgba(255,255,255,.9);
-            border-color: rgba(0,0,0,.08);
-        }
-
-        body.light-mode .week-day-box {
-            background: rgba(0,0,0,.035);
-            border-color: rgba(0,0,0,.06);
-        }
-
-        body.light-mode .calendar-day {
-            background: rgba(0,0,0,.025);
-            border-color: rgba(0,0,0,.06);
-        }
-    </style>
+    <link rel="stylesheet" href="streak.css">
 </head>
 
 <body>
 
-    <header class="navbar">
-        <div class="logo">StudyMind AI</div>
+<aside class="sidebar">
 
-        <nav>
-            <a href="home.html">Home</a>
-            <a href="index.html">New Study Plan</a>
-            <a href="summarizer.html">Summarizer</a>
-            <a href="ai-support.html">AI Support</a>
-            <a href="streak.html" class="active">Study Streak</a>
-            <a href="score.html">Study Score</a>
+    <div class="brand">
+        <div class="brand-logo">S</div>
 
-            <button
-                id="themeButton"
-                type="button"
-                onclick="toggleTheme()"
-                aria-label="Toggle theme"
-            >
-                🌙
-            </button>
+        <div>
+            <strong>StudyMind AI</strong>
+            <span>AI Study Coach</span>
+        </div>
+    </div>
 
-            <button
-                type="button"
-                onclick="logoutStudyMind()"
-            >
-                Logout
-            </button>
-        </nav>
+    <nav class="sidebar-nav">
+
+        <div class="nav-group">
+            <small>WORKSPACE</small>
+
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="schedule.html">
+                <span>◷</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span>▣</span>
+                Calendar
+            </a>
+
+            <a href="study-session.html">
+                <span>▶</span>
+                Study Session
+            </a>
+
+            <a href="study-timer.html">
+                <span>◴</span>
+                Study Timer
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>AI TOOLS</small>
+
+            <a href="ai-support.html">
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="ai-assistant.html">
+                <span>◉</span>
+                AI Assistant
+            </a>
+
+            <a href="summarizer.html">
+                <span>▤</span>
+                Summarizer
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>PROGRESS</small>
+
+            <a href="streak.html" class="active">
+                <span>🔥</span>
+                Study Streak
+            </a>
+
+            <a href="score.html">
+                <span>★</span>
+                Study Score
+            </a>
+
+            <a href="goals.html">
+                <span>◎</span>
+                Goals
+            </a>
+
+            <a href="rewards.html">
+                <span>◇</span>
+                Rewards
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <small>COMMUNITY</small>
+
+            <a href="leaderboard.html">
+                <span>♛</span>
+                Leaderboard
+            </a>
+
+            <a href="friends.html">
+                <span>♧</span>
+                Friends
+            </a>
+
+            <a href="game-mode.html">
+                <span>⚔</span>
+                Game Mode
+            </a>
+
+            <a href="premium.html" class="premium-link">
+                <span>◆</span>
+                Premium
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <a href="feedback.html">
+            <span>◌</span>
+            Feedback
+        </a>
+
+        <a href="settings.html">
+            <span>⚙</span>
+            Settings
+        </a>
+
+        <button id="logoutButton">
+            <span>↪</span>
+            Logout
+        </button>
+
+    </div>
+
+</aside>
+
+
+<main class="main">
+
+    <header class="topbar">
+
+        <div>
+            <span class="topbar-label">YOUR PROGRESS</span>
+            <h1>Study Streak</h1>
+        </div>
+
+        <div class="profile">
+
+            <div class="avatar" id="userAvatar">
+                S
+            </div>
+
+            <div>
+                <strong id="usernameDisplay">
+                    Student
+                </strong>
+
+                <small>
+                    Keep learning
+                </small>
+            </div>
+
+        </div>
+
     </header>
 
-    <main class="streak-page">
 
-        <section class="streak-hero">
-            <h1>🔥 Study Streak</h1>
-            <p>Build consistency, stay focused, and keep your learning streak alive.</p>
+    <div class="page">
+
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <span class="eyebrow">
+                    CONSISTENCY BUILDER
+                </span>
+
+                <h2>
+                    Keep your learning streak alive.
+                </h2>
+
+                <p id="heroMessage">
+                    Complete your study work consistently to build your streak.
+                </p>
+
+            </div>
+
+            <div class="hero-fire">
+                🔥
+            </div>
+
         </section>
 
-        <section class="streak-grid">
 
-            <div class="streak-card current-streak-card">
+        <!-- STATS -->
 
-                <div>
-                    <div class="streak-card-label">
-                        CURRENT STREAK
-                    </div>
+        <section class="stats-grid">
 
-                    <div
-                        class="streak-main-number"
-                        id="currentStreak"
-                    >
-                        0
-                    </div>
+            <article class="stat-card featured">
 
-                    <div class="streak-card-value">
-                        <small>consecutive days</small>
-                    </div>
-
-                    <p
-                        class="streak-message"
-                        id="streakMessage"
-                    >
-                        Start studying to begin your streak.
-                    </p>
-                </div>
-
-                <div class="streak-fire">
+                <div class="stat-icon">
                     🔥
                 </div>
 
-            </div>
-
-            <div class="streak-card">
-                <div class="streak-card-icon">🏆</div>
-
-                <div class="streak-card-label">
-                    LONGEST STREAK
+                <div class="stat-label">
+                    CURRENT STREAK
                 </div>
 
-                <div class="streak-card-value">
+                <div class="stat-value">
+                    <span id="currentStreak">0</span>
+                    <small>days</small>
+                </div>
+
+                <p id="streakMessage">
+                    Complete your first study day to start.
+                </p>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    🏆
+                </div>
+
+                <div class="stat-label">
+                    BEST STREAK
+                </div>
+
+                <div class="stat-value">
                     <span id="longestStreak">0</span>
                     <small>days</small>
                 </div>
-            </div>
 
-            <div class="streak-card">
-                <div class="streak-card-icon">📚</div>
+            </article>
 
-                <div class="streak-card-label">
-                    TOTAL STUDY DAYS
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    📚
                 </div>
 
-                <div class="streak-card-value">
+                <div class="stat-label">
+                    STUDY DAYS
+                </div>
+
+                <div class="stat-value">
                     <span id="totalStudyDays">0</span>
                 </div>
-            </div>
 
-            <div class="streak-card">
-                <div class="streak-card-icon">📈</div>
+            </article>
 
-                <div class="streak-card-label">
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    📈
+                </div>
+
+                <div class="stat-label">
                     THIS WEEK
                 </div>
 
-                <div class="streak-card-value">
+                <div class="stat-value">
                     <span id="weeklyStudyDays">0</span>
-                    <small>/ 7 days</small>
+                    <small>/ 7</small>
                 </div>
-            </div>
+
+            </article>
 
         </section>
 
-        <section class="section-card">
 
-            <h2>This Week</h2>
+        <!-- WEEK -->
 
-            <p class="section-description">
-                Your study activity over the last seven days.
-            </p>
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <span class="panel-label">
+                        ACTIVITY
+                    </span>
+
+                    <h3>
+                        This Week
+                    </h3>
+
+                    <p>
+                        Your completed study days.
+                    </p>
+                </div>
+
+                <div class="week-badge" id="weekProgress">
+                    0 / 7
+                </div>
+
+            </div>
 
             <div
                 class="week-grid"
-                id="weekGrid"
-            ></div>
+                id="weekGrid">
+            </div>
 
         </section>
 
-        <section class="section-card">
 
-            <div class="calendar-header">
+        <!-- CALENDAR -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
                 <div>
-                    <div class="calendar-title" id="calendarTitle">
+                    <span class="panel-label">
+                        HISTORY
+                    </span>
+
+                    <h3 id="calendarTitle">
                         Study Activity
-                    </div>
+                    </h3>
+
+                    <p>
+                        Your study consistency over time.
+                    </p>
                 </div>
+
             </div>
 
-            <div class="calendar-grid">
+            <div class="calendar-weekdays">
 
-                <div class="calendar-weekday">Sun</div>
-                <div class="calendar-weekday">Mon</div>
-                <div class="calendar-weekday">Tue</div>
-                <div class="calendar-weekday">Wed</div>
-                <div class="calendar-weekday">Thu</div>
-                <div class="calendar-weekday">Fri</div>
-                <div class="calendar-weekday">Sat</div>
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
 
             </div>
 
             <div
                 class="calendar-grid"
-                id="calendarGrid"
-            ></div>
+                id="calendarGrid">
+            </div>
 
         </section>
 
-        <section class="section-card">
 
-            <div class="streak-tip">
+        <!-- COMPLETION -->
 
-                <div class="streak-tip-icon">
-                    🎯
-                </div>
+        <section
+            class="completion-panel"
+            id="completionPanel"
+        >
 
-                <div>
-                    <strong id="streakTipTitle">
-                        Keep going!
-                    </strong>
+            <div class="completion-icon">
+                🎉
+            </div>
 
-                    <span id="streakTipText">
-                        Consistency is the key to building a strong study habit.
-                    </span>
-                </div>
+            <div>
+
+                <span class="panel-label">
+                    STUDY PLAN
+                </span>
+
+                <h3 id="completionTitle">
+                    Keep pushing forward
+                </h3>
+
+                <p id="completionText">
+                    Complete your study topics to make progress.
+                </p>
 
             </div>
 
         </section>
 
-    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
-    <script src="streak.js"></script>
+        <!-- TIP -->
+
+        <section class="tip-panel">
+
+            <div class="tip-icon">
+                🎯
+            </div>
+
+            <div>
+
+                <strong id="tipTitle">
+                    Consistency beats intensity.
+                </strong>
+
+                <p id="tipText">
+                    A little focused studying every day can create
+                    powerful long-term progress.
+                </p>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="streak.js"></script>
 
 </body>
 </html>
