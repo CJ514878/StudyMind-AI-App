@@ -1496,8 +1496,14 @@ function completeSession() {
         return;
     }
 
-    const key =
-        currentTopic.name;
+
+    const topicKey =
+        `${currentTopic.subject}::${currentTopic.name}`;
+
+
+    /* -----------------------------------------------------
+       LOAD COMPLETED TOPICS
+    ----------------------------------------------------- */
 
     let completed =
         safeJSON(
@@ -1505,17 +1511,24 @@ function completeSession() {
             []
         );
 
+
     if (!Array.isArray(completed)) {
         completed = [];
     }
 
-    /* -----------------------------------------------------
-       SAVE COMPLETED TOPIC
-    ----------------------------------------------------- */
 
-    if (!completed.includes(key)) {
-        completed.push(key);
+    /*
+     * Use subject + topic rather than topic name alone.
+     * This prevents two subjects containing topics with the
+     * same name from being treated as the same topic.
+     */
+
+    if (!completed.includes(topicKey)) {
+
+        completed.push(topicKey);
+
     }
+
 
     saveJSON(
         SESSION_KEYS.DONE,
@@ -1524,11 +1537,12 @@ function completeSession() {
 
 
     /* -----------------------------------------------------
-       SAVE QUESTION-CHECK COMPLETION
+       QUESTION-CHECK COMPLETION
     ----------------------------------------------------- */
 
     const questionDone =
         $("questionCheck")?.checked;
+
 
     if (questionDone) {
 
@@ -1538,109 +1552,103 @@ function completeSession() {
                 []
             );
 
+
         if (!Array.isArray(qCompleted)) {
             qCompleted = [];
         }
 
-        if (!qCompleted.includes(key)) {
-            qCompleted.push(key);
+
+        if (!qCompleted.includes(topicKey)) {
+
+            qCompleted.push(topicKey);
+
         }
+
 
         saveJSON(
             SESSION_KEYS.QUESTION_DONE,
             qCompleted
         );
+
     }
 
 
     /* -----------------------------------------------------
-       ⭐ RECORD REAL STUDY ACTIVITY
-       
-       This is what changes the streak.
-       
-       Opening the dashboard/session does NOT do this.
-       Only clicking "Complete Session" does.
+       CHECK WHETHER THE ENTIRE STUDY PLAN IS COMPLETE
+    ----------------------------------------------------- */
+
+    const allTopics =
+        getAllTopics();
+
+
+    const completedSet =
+        new Set(completed);
+
+
+    const completedCount =
+        allTopics.filter(topic => {
+
+            const key =
+                `${topic.subject}::${topic.name}`;
+
+            return completedSet.has(key);
+
+        }).length;
+
+
+    const totalTopics =
+        allTopics.length;
+
+
+    const progress =
+        totalTopics
+            ? Math.round(
+                completedCount /
+                totalTopics *
+                100
+            )
+            : 0;
+
+
+    console.log(
+        "StudyMind completion:",
+        {
+            completedCount,
+            totalTopics,
+            progress
+        }
+    );
+
+
+    /* -----------------------------------------------------
+       FULL PLAN / STUDY DAY COMPLETE
     ----------------------------------------------------- */
 
     if (
-        window.StudyMindStreak &&
-        typeof window.StudyMindStreak.recordStudyActivity ===
-            "function"
+        totalTopics > 0 &&
+        completedCount >= totalTopics
     ) {
 
-        window.StudyMindStreak.recordStudyActivity();
-
-    } else {
-
-        /*
-         * Fallback in case the streak script is not loaded
-         * on this page.
-         *
-         * This writes today's activity directly.
-         */
-
-        try {
-
-            const activity =
-                safeJSON(
-                    "studyMindStreakActivity",
-                    {}
-                );
-
-            if (
-                activity &&
-                typeof activity === "object" &&
-                !Array.isArray(activity)
-            ) {
-
-                const now =
-                    new Date();
-
-                const year =
-                    now.getFullYear();
-
-                const month =
-                    String(
-                        now.getMonth() + 1
-                    ).padStart(2, "0");
-
-                const day =
-                    String(
-                        now.getDate()
-                    ).padStart(2, "0");
-
-                const today =
-                    `${year}-${month}-${day}`;
-
-                activity[today] = true;
-
-                saveJSON(
-                    "studyMindStreakActivity",
-                    activity
-                );
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Could not record study streak:",
-                error
-            );
-
-        }
+        completeStudyDay();
 
     }
 
 
     /* -----------------------------------------------------
-       COMPLETE
+       SESSION COMPLETE
     ----------------------------------------------------- */
 
     updateSessionStatus(
-        "Session completed ✓"
+        progress >= 100
+            ? "All study topics completed! 🎉"
+            : `Topic completed ✓ ${progress}% overall progress`
     );
 
+
+    /*
+     * Give localStorage a moment to update before returning
+     * to the dashboard.
+     */
 
     setTimeout(
         () => {
@@ -1651,6 +1659,113 @@ function completeSession() {
         },
         800
     );
+
+}
+/* =========================================================
+   COMPLETE STUDY DAY
+========================================================= */
+
+function completeStudyDay() {
+
+    const today =
+        getLocalDateKey();
+
+
+    let activity =
+        safeJSON(
+            "studyMindStreakActivity",
+            {}
+        );
+
+
+    if (
+        !activity ||
+        typeof activity !== "object" ||
+        Array.isArray(activity)
+    ) {
+
+        activity = {};
+
+    }
+
+
+    /*
+     * Important:
+     * Writing the same date again does NOT increase the
+     * streak. It simply confirms that today's study day
+     * has been completed.
+     */
+
+    activity[today] = true;
+
+
+    saveJSON(
+        "studyMindStreakActivity",
+        activity
+    );
+
+
+    /*
+     * Tell the dashboard/streak system that today's complete
+     * study day has been achieved.
+     */
+
+    if (
+        window.StudyMindStreak &&
+        typeof window.StudyMindStreak.recordStudyActivity ===
+            "function"
+    ) {
+
+        window.StudyMindStreak.recordStudyActivity();
+
+    }
+
+
+    /*
+     * Congratulations popup flag.
+     */
+
+    localStorage.setItem(
+        "studyMindCompletionCelebrationShown",
+        today
+    );
+
+
+    console.log(
+        "🎉 Study day completed:",
+        today
+    );
+
+}
+
+
+/* =========================================================
+   LOCAL DATE KEY
+========================================================= */
+
+function getLocalDateKey() {
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+
+    return `${year}-${month}-${day}`;
 
 }
 
