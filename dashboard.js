@@ -1219,41 +1219,450 @@ timerInterval =
 }
 
 /* =========================================================
-TIMER FINISHED
+   TIMER FINISHED — RECORD COMPLETED STUDY SESSION
 ========================================================= */
 
 function finishSharedTimer() {
 
+    const duration =
+        Number(
+            localStorage.getItem(
+                TIMER_DURATION_KEY
+            )
+        ) || 25 * 60;
 
-localStorage.setItem(
-    TIMER_SECONDS_KEY,
-    "0"
-);
+    const completedMinutes =
+        Math.max(
+            1,
+            Math.round(duration / 60)
+        );
+
+    /* -----------------------------------------
+       STOP TIMER
+    ----------------------------------------- */
+
+    localStorage.setItem(
+        TIMER_SECONDS_KEY,
+        "0"
+    );
+
+    localStorage.removeItem(
+        TIMER_END_KEY
+    );
+
+    localStorage.setItem(
+        TIMER_RUNNING_KEY,
+        "false"
+    );
 
 
-localStorage.removeItem(
-    TIMER_END_KEY
-);
+    /* -----------------------------------------
+       RECORD STUDY SESSION
+    ----------------------------------------- */
+
+    const sessions =
+        loadJSON(
+            SESSION_KEY,
+            []
+        );
+
+    const today =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+    const currentSession =
+        loadJSON(
+            "studyMindCurrentStudySession",
+            null
+        );
+
+    sessions.push({
+
+        id:
+            `session_${Date.now()}`,
+
+        date:
+            today,
+
+        duration:
+            completedMinutes,
+
+        seconds:
+            duration,
+
+        subject:
+            currentSession?.subject ||
+            "General Study",
+
+        topic:
+            currentSession?.topic ||
+            "",
+
+        completed:
+            true,
+
+        completedAt:
+            new Date().toISOString()
+
+    });
 
 
-localStorage.setItem(
-    TIMER_RUNNING_KEY,
-    "false"
-);
+    localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify(sessions)
+    );
 
 
-dispatchTimerChanged();
+    /* -----------------------------------------
+       XP
+    ----------------------------------------- */
+
+    awardXP(
+        Math.max(
+            10,
+            completedMinutes
+        ),
+        `${completedMinutes}-minute study session`
+    );
 
 
-/*
-   Keep the selected duration so the user
-   can start another session without losing
-   their 25/45/60 minute preference.
-*/
+    /* -----------------------------------------
+       DAILY STUDY TIME
+    ----------------------------------------- */
 
+    updateDailyStudyTime(
+        completedMinutes
+    );
+
+
+    /* -----------------------------------------
+       CHECK COMPLETION / STREAK
+    ----------------------------------------- */
+
+    checkStudyCompletion();
+
+
+    /* -----------------------------------------
+       NOTIFY OTHER PAGES
+    ----------------------------------------- */
+
+    dispatchTimerChanged();
+
+
+    /* -----------------------------------------
+       REFRESH DASHBOARD
+    ----------------------------------------- */
+
+    renderStats();
+    renderQuests();
+    renderRecommendation();
+
+}
+/* =========================================================
+   DAILY STUDY TIME
+========================================================= */
+
+function updateDailyStudyTime(minutes) {
+
+    const key =
+        "studyMindDailyStudyTime";
+
+    const data =
+        loadJSON(
+            key,
+            {}
+        );
+
+    const today =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+    data[today] =
+        Number(data[today] || 0) +
+        Number(minutes || 0);
+
+    localStorage.setItem(
+        key,
+        JSON.stringify(data)
+    );
+}
+
+
+/* =========================================================
+   GET ALL PLAN TOPICS
+   Supports BOTH:
+
+   studyPlan.topics
+
+   AND
+
+   studyPlan.subjects[].topics
+========================================================= */
+
+function getAllStudyTopics() {
+
+    if (!studyPlan) {
+        return [];
+    }
+
+
+    /* -----------------------------------------
+       FLAT TOPICS
+    ----------------------------------------- */
+
+    if (
+        Array.isArray(
+            studyPlan.topics
+        )
+    ) {
+
+        return studyPlan.topics;
+
+    }
+
+
+    /* -----------------------------------------
+       SUBJECT → TOPICS
+    ----------------------------------------- */
+
+    if (
+        Array.isArray(
+            studyPlan.subjects
+        )
+    ) {
+
+        return studyPlan.subjects.flatMap(
+            subject => {
+
+                if (
+                    !Array.isArray(
+                        subject.topics
+                    )
+                ) {
+                    return [];
+                }
+
+                return subject.topics.map(
+                    topic => {
+
+                        if (
+                            typeof topic ===
+                            "string"
+                        ) {
+
+                            return {
+
+                                name:
+                                    topic,
+
+                                subject:
+                                    subject.name ||
+                                    subject.subject ||
+                                    ""
+
+                            };
+
+                        }
+
+                        return {
+
+                            ...topic,
+
+                            subject:
+                                topic.subject ||
+                                subject.name ||
+                                subject.subject ||
+                                ""
+
+                        };
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    return [];
 
 }
 
+
+/* =========================================================
+   CALCULATE REAL TOPIC PROGRESS
+========================================================= */
+
+function getStudyProgress() {
+
+    const topics =
+        getAllStudyTopics();
+
+    if (!topics.length) {
+        return 0;
+    }
+
+    const completed =
+        topics.filter(
+            topic =>
+                topic.completed === true
+        ).length;
+
+    return Math.round(
+        completed /
+        topics.length *
+        100
+    );
+
+}
+
+
+/* =========================================================
+   STREAK / FULL COMPLETION
+========================================================= */
+
+function checkStudyCompletion() {
+
+    const topics =
+        getAllStudyTopics();
+
+    if (!topics.length) {
+        return;
+    }
+
+
+    const allCompleted =
+        topics.every(
+            topic =>
+                topic.completed === true
+        );
+
+
+    if (!allCompleted) {
+        return;
+    }
+
+
+    const today =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+    const completionKey =
+        "studyMindLastCompletedPlanDate";
+
+    const lastCompleted =
+        localStorage.getItem(
+            completionKey
+        );
+
+
+    /*
+       Prevent the same completed plan
+       from increasing the streak repeatedly.
+    */
+
+    if (
+        lastCompleted === today
+    ) {
+        return;
+    }
+
+
+    streak += 1;
+
+    localStorage.setItem(
+        STREAK_KEY,
+        String(streak)
+    );
+
+    localStorage.setItem(
+        completionKey,
+        today
+    );
+
+
+    renderStats();
+
+
+    showCompletionCelebration();
+
+}
+
+
+/* =========================================================
+   COMPLETION POPUP
+========================================================= */
+
+function showCompletionCelebration() {
+
+    if (
+        document.getElementById(
+            "studyMindCompletionPopup"
+        )
+    ) {
+        return;
+    }
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+    popup.id =
+        "studyMindCompletionPopup";
+
+    popup.innerHTML = `
+
+        <div class="completion-popup-inner">
+
+            <div class="completion-icon">
+                🎉
+            </div>
+
+            <h2>
+                Congratulations!
+            </h2>
+
+            <p>
+                You completed your study plan.
+                Your study streak has increased by 1 day.
+            </p>
+
+            <button
+                id="closeCompletionPopup"
+            >
+                Continue Studying
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        popup
+    );
+
+
+    document
+        .getElementById(
+            "closeCompletionPopup"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                popup.remove();
+
+            }
+        );
+
+}
 /* =========================================================
 TIMER FORMAT
 ========================================================= */
