@@ -1481,23 +1481,91 @@ function getStudyProgress() {
     const topics =
         getAllStudyTopics();
 
+
     if (!topics.length) {
         return 0;
     }
 
+
+    const completedStored =
+        loadJSON(
+            "studyMindCompletedTopics",
+            []
+        );
+
+
     const completed =
+        Array.isArray(completedStored)
+            ? completedStored
+            : [];
+
+
+    const completedSet =
+        new Set(completed);
+
+
+    const completedCount =
         topics.filter(
-            topic =>
-                topic.completed === true
+            topic => {
+
+                const subject =
+                    String(
+                        topic.subject ||
+                        ""
+                    ).trim();
+
+
+                const name =
+                    String(
+                        topic.name ||
+                        topic.title ||
+                        topic.topic ||
+                        ""
+                    ).trim();
+
+
+                if (!name) {
+                    return false;
+                }
+
+
+                /*
+                 * New format:
+                 *
+                 * Subject::Topic
+                 */
+
+                const newKey =
+                    `${subject}::${name}`;
+
+
+                /*
+                 * Older format:
+                 *
+                 * Topic
+                 */
+
+                const oldKey =
+                    name;
+
+
+                return (
+                    completedSet.has(newKey) ||
+                    completedSet.has(oldKey)
+                );
+
+            }
         ).length;
 
+
     return Math.round(
-        completed /
+        completedCount /
         topics.length *
         100
     );
 
 }
+
 
 
 /* =========================================================
