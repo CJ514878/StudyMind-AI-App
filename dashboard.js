@@ -209,80 +209,78 @@ if (avatar) {
 }
 
 /* =========================================================
-STATS
+   STATS
 ========================================================= */
 
 function renderStats() {
 
-
-const total =
-    studyPlan?.topics?.length ||
-    0;
+    const topics =
+        getAllStudyTopics();
 
 
-const completed =
-    studyPlan?.topics
-        ?.filter(
+    const total =
+        topics.length;
+
+
+    const completed =
+        topics.filter(
             topic =>
-                topic.completed
-        )
-        .length ||
-    0;
+                topic.completed === true
+        ).length;
 
 
-const percent =
-    total
-        ? Math.round(
-            completed /
-            total *
-            100
-        )
-        : 0;
+    const percent =
+        total
+            ? Math.round(
+                completed /
+                total *
+                100
+            )
+            : 0;
 
 
-setText(
-    "totalXP",
-    xp
-);
+    setText(
+        "totalXP",
+        xp
+    );
 
 
-setText(
-    "headerXP",
-    `${xp} XP`
-);
+    setText(
+        "headerXP",
+        `${xp} XP`
+    );
 
 
-setText(
-    "streak",
-    `${streak} days`
-);
+    setText(
+        "streak",
+        `${streak} days`
+    );
 
 
-setText(
-    "headerStreak",
-    streak
-);
+    setText(
+        "headerStreak",
+        streak
+    );
 
 
-setText(
-    "studyProgress",
-    `${percent}%`
-);
+    setText(
+        "studyProgress",
+        `${percent}%`
+    );
 
 
-setWidth(
-    "studyProgressBar",
-    percent
-);
+    setWidth(
+        "studyProgressBar",
+        percent
+    );
 
 
-setText(
-    "streakMessage",
-    streak
-        ? "Keep your learning momentum."
-        : "Start your first valid session."
-);
-
+    setText(
+        "streakMessage",
+        streak
+            ? "Keep your learning momentum."
+            : "Complete your first study day to start your streak."
+    );
 
 }
 
