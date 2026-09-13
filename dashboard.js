@@ -208,35 +208,15 @@ if (avatar) {
 
 }
 
+
 /* =========================================================
    STATS
 ========================================================= */
 
 function renderStats() {
 
-    const topics =
-        getAllStudyTopics();
-
-
-    const total =
-        topics.length;
-
-
-    const completed =
-        topics.filter(
-            topic =>
-                topic.completed === true
-        ).length;
-
-
-    const percent =
-        total
-            ? Math.round(
-                completed /
-                total *
-                100
-            )
-            : 0;
+    const progress =
+        getStudyProgress();
 
 
     setText(
@@ -265,24 +245,26 @@ function renderStats() {
 
     setText(
         "studyProgress",
-        `${percent}%`
+        `${progress}%`
     );
 
 
     setWidth(
         "studyProgressBar",
-        percent
+        progress
     );
 
 
     setText(
         "streakMessage",
-        streak
+        streak > 0
             ? "Keep your learning momentum."
-            : "Complete your first study day to start your streak."
+            : "Complete all topics for your study day to start your streak."
     );
 
 }
+
+
 
 /* =========================================================
 TODAY
