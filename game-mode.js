@@ -73,7 +73,7 @@ const STORAGE = {
 
 const gameSupabase =
     window.studyMindSupabase ||
-    window.supabaseClient ||
+    window.gameSupabase ||
     null;
 
 
