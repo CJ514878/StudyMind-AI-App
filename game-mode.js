@@ -3013,7 +3013,7 @@ async function saveBattleResult() {
        GLOBAL SUPABASE LEADERBOARD
     ===================================================== */
 
-    if (!supabaseClient) {
+    if (!gameSupabase) {
 
         console.error(
             "StudyMind: Supabase client is unavailable."
