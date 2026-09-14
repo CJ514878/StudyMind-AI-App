@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Leaderboard | StudyMind AI</title>
+
+    <link rel="stylesheet" href="leaderboard.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">🧠</div>
+
+            <div>
+                <strong>StudyMind</strong>
+                <span>AI</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a href="dashboard.html">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="schedule.html">
+                <span>◫</span>
+                Schedule
+            </a>
+
+            <a href="calendar.html">
+                <span>▣</span>
+                Calendar
+            </a>
+
+            <a href="study-timer.html">
+                <span>◷</span>
+                Study Timer
+            </a>
+
+            <a href="game-mode.html">
+                <span>🎮</span>
+                Game Mode
+            </a>
+
+            <a href="leaderboard.html" class="active">
+                <span>🏆</span>
+                Leaderboard
+            </a>
+
+            <a href="ai-support.html">
+                <span>✦</span>
+                AI Support
+            </a>
+
+            <a href="summarizer.html">
+                <span>📄</span>
+                Summarizer
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button id="themeButton" class="theme-button">
+                ◐
+                <span>Toggle theme</span>
+            </button>
+
+            <button id="logoutButton" class="logout-button">
+                ⇥
+                <span>Log out</span>
+            </button>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">StudyMind AI</p>
+                <h1>Leaderboard</h1>
+            </div>
+
+            <div class="user-area">
+                <div class="user-avatar" id="userAvatar">S</div>
+
+                <div>
+                    <strong id="currentUsername">Student</strong>
+                    <span>Student</span>
+                </div>
+            </div>
+
+        </header>
+
+
+        <!-- HERO -->
+        <section class="leaderboard-hero">
+
+            <div class="hero-text">
+                <span class="hero-label">🏆 GLOBAL RANKINGS</span>
+
+                <h2>Study. Compete. Rise.</h2>
+
+                <p>
+                    See how you rank against other StudyMind students.
+                    Earn points through Game Mode and climb the leaderboard.
+                </p>
+            </div>
+
+            <div class="hero-trophy">
+                🏆
+            </div>
+
+        </section>
+
+
+        <!-- TOP THREE -->
+        <section class="podium-section">
+
+            <div class="podium-card second" id="secondPlace">
+                <div class="podium-medal">🥈</div>
+                <div class="podium-avatar" id="secondAvatar">?</div>
+                <h3 id="secondName">—</h3>
+                <strong id="secondPoints">0</strong>
+                <span>points</span>
+                <div class="podium-base">2</div>
+            </div>
+
+
+            <div class="podium-card first" id="firstPlace">
+                <div class="crown">👑</div>
+                <div class="podium-medal">🥇</div>
+                <div class="podium-avatar" id="firstAvatar">?</div>
+                <h3 id="firstName">—</h3>
+                <strong id="firstPoints">0</strong>
+                <span>points</span>
+                <div class="podium-base">1</div>
+            </div>
+
+
+            <div class="podium-card third" id="thirdPlace">
+                <div class="podium-medal">🥉</div>
+                <div class="podium-avatar" id="thirdAvatar">?</div>
+                <h3 id="thirdName">—</h3>
+                <strong id="thirdPoints">0</strong>
+                <span>points</span>
+                <div class="podium-base">3</div>
+            </div>
+
+        </section>
+
+
+        <!-- CONTROLS -->
+        <section class="leaderboard-controls">
+
+            <div class="search-box">
+                <span>⌕</span>
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search students..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <button id="refreshButton" class="refresh-button">
+                ↻
+                Refresh
+            </button>
+
+        </section>
+
+
+        <!-- CURRENT USER -->
+        <section class="your-ranking" id="yourRanking">
+
+            <div class="your-ranking-icon">⭐</div>
+
+            <div class="your-ranking-text">
+                <span>Your ranking</span>
+                <strong id="yourRank">—</strong>
+            </div>
+
+            <div class="your-ranking-stat">
+                <span>Points</span>
+                <strong id="yourPoints">0</strong>
+            </div>
+
+            <div class="your-ranking-stat">
+                <span>Wins</span>
+                <strong id="yourWins">0</strong>
+            </div>
+
+        </section>
+
+
+        <!-- LEADERBOARD -->
+        <section class="leaderboard-container">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">GLOBAL</span>
+                    <h2>All Students</h2>
+                </div>
+
+                <span id="studentCount" class="student-count">
+                    0 students
+                </span>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>Points</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Draws</th>
+                            <th>Battles</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="leaderboardBody">
+
+                        <tr>
+                            <td colspan="7" class="loading">
+                                Loading leaderboard...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div id="emptyState" class="empty-state hidden">
+                <div>🔎</div>
+                <h3>No students found</h3>
+                <p>Try another username.</p>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<div id="toast" class="toast"></div>
+
+
+<script src="leaderboard.js"></script>
+
+</body>
+</html>
+
