@@ -2,6 +2,7 @@
 
 /* =========================================================
    STUDYMIND AI — LEADERBOARD
+   CONNECTED TO GAME_LEADERBOARD
 ========================================================= */
 
 
@@ -12,8 +13,15 @@
 const SUPABASE_URL =
     "https://bicnrbqqvucgpbwudmit.supabase.co";
 
+/*
+   IMPORTANT:
+   This must be your CURRENT Supabase publishable/anon key.
+
+   Do NOT use the service_role key in browser JavaScript.
+*/
 const SUPABASE_KEY =
     "sb_publishable_70y0MPr3j-FimUSQK_HuA_Ng1a1qcB";
+
 
 const supabaseClient =
     window.supabase?.createClient
@@ -70,30 +78,75 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function loadCurrentUser() {
 
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+
+        console.error(
+            "Supabase client could not be initialized."
+        );
+
+        return;
+    }
+
 
     try {
 
         const {
-            data: {
-                user
-            }
+            data,
+            error
         } = await supabaseClient.auth.getUser();
 
-        if (!user) return;
 
-        currentUserId = user.id;
+        if (error) {
+            throw error;
+        }
+
+
+        const user =
+            data?.user;
+
+
+        if (!user) {
+
+            console.warn(
+                "No authenticated StudyMind user found."
+            );
+
+            return;
+        }
+
+
+        currentUserId =
+            user.id;
+
+
+        const metadata =
+            user.user_metadata || {};
+
 
         const username =
-            user.user_metadata?.username ||
-            user.user_metadata?.name ||
+            metadata.username ||
+            metadata.full_name ||
+            metadata.name ||
+            metadata.display_name ||
             user.email?.split("@")[0] ||
             "Student";
 
-        $("currentUsername").textContent = username;
 
-        $("userAvatar").textContent =
-            getInitials(username);
+        if ($("currentUsername")) {
+
+            $("currentUsername").textContent =
+                username;
+
+        }
+
+
+        if ($("userAvatar")) {
+
+            $("userAvatar").textContent =
+                getInitials(username);
+
+        }
+
 
     } catch (error) {
 
@@ -103,6 +156,7 @@ async function loadCurrentUser() {
         );
 
     }
+
 }
 
 
@@ -112,15 +166,22 @@ async function loadCurrentUser() {
 
 async function loadLeaderboard() {
 
-    const body = $("leaderboardBody");
+    const body =
+        $("leaderboardBody");
 
-    body.innerHTML = `
-        <tr>
-            <td colspan="7" class="loading">
-                Loading leaderboard...
-            </td>
-        </tr>
-    `;
+
+    if (body) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="7" class="loading">
+                    Loading leaderboard...
+                </td>
+            </tr>
+        `;
+
+    }
+
 
     if (!supabaseClient) {
 
@@ -134,19 +195,25 @@ async function loadLeaderboard() {
 
     try {
 
+        /*
+         * IMPORTANT:
+         * The leaderboard is stored in game_leaderboard.
+         *
+         * We deliberately do NOT query profiles here.
+         */
+
         const {
             data,
             error
         } = await supabaseClient
-            .from("profiles")
+            .from("game_leaderboard")
             .select(`
-                id,
-                username,
+                user_id,
+                display_name,
                 battle_points,
                 wins,
                 losses,
-                draws,
-                battles_played
+                draws
             `)
             .order("battle_points", {
                 ascending: false
@@ -154,7 +221,7 @@ async function loadLeaderboard() {
             .order("wins", {
                 ascending: false
             })
-            .order("username", {
+            .order("display_name", {
                 ascending: true
             });
 
@@ -164,16 +231,73 @@ async function loadLeaderboard() {
         }
 
 
-        allStudents = Array.isArray(data)
-            ? data
-            : [];
+        /*
+         * Convert the database structure into the structure
+         * already expected by the leaderboard UI.
+         */
+
+        allStudents =
+            Array.isArray(data)
+                ? data.map(student => ({
+                    id: student.user_id,
+
+                    username:
+                        student.display_name ||
+                        "Student",
+
+                    battle_points:
+                        Number(
+                            student.battle_points || 0
+                        ),
+
+                    wins:
+                        Number(
+                            student.wins || 0
+                        ),
+
+                    losses:
+                        Number(
+                            student.losses || 0
+                        ),
+
+                    draws:
+                        Number(
+                            student.draws || 0
+                        ),
+
+                    battles_played:
+                        Number(
+                            student.wins || 0
+                        ) +
+                        Number(
+                            student.losses || 0
+                        ) +
+                        Number(
+                            student.draws || 0
+                        )
+                }))
+                : [];
 
 
-        updateTopThree(allStudents);
+        updateTopThree(
+            allStudents
+        );
 
-        updateYourRanking(allStudents);
 
-        renderLeaderboard(allStudents);
+        updateYourRanking(
+            allStudents
+        );
+
+
+        renderLeaderboard(
+            allStudents
+        );
+
+
+        console.log(
+            "StudyMind leaderboard loaded:",
+            allStudents
+        );
 
 
     } catch (error) {
@@ -183,18 +307,26 @@ async function loadLeaderboard() {
             error
         );
 
-        body.innerHTML = `
-            <tr>
-                <td colspan="7" class="loading">
-                    Unable to load the leaderboard.
-                </td>
-            </tr>
-        `;
+
+        if (body) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="7" class="loading">
+                        Unable to load the leaderboard.
+                    </td>
+                </tr>
+            `;
+
+        }
+
 
         showToast(
             "Could not load leaderboard."
         );
+
     }
+
 }
 
 
@@ -211,6 +343,7 @@ function updateTopThree(students) {
         "firstAvatar"
     );
 
+
     setPodium(
         students[1],
         "secondName",
@@ -218,14 +351,20 @@ function updateTopThree(students) {
         "secondAvatar"
     );
 
+
     setPodium(
         students[2],
         "thirdName",
         "thirdPoints",
         "thirdAvatar"
     );
+
 }
 
+
+/* =========================================================
+   PODIUM
+========================================================= */
 
 function setPodium(
     student,
@@ -236,27 +375,52 @@ function setPodium(
 
     if (!student) {
 
-        $(nameId).textContent = "—";
+        if ($(nameId)) {
+            $(nameId).textContent = "—";
+        }
 
-        $(pointsId).textContent = "0";
+        if ($(pointsId)) {
+            $(pointsId).textContent = "0";
+        }
 
-        $(avatarId).textContent = "?";
+        if ($(avatarId)) {
+            $(avatarId).textContent = "?";
+        }
 
         return;
     }
+
 
     const username =
         student.username ||
         "Student";
 
-    $(nameId).textContent =
-        username;
 
-    $(pointsId).textContent =
-        formatNumber(student.battle_points);
+    if ($(nameId)) {
 
-    $(avatarId).textContent =
-        getInitials(username);
+        $(nameId).textContent =
+            username;
+
+    }
+
+
+    if ($(pointsId)) {
+
+        $(pointsId).textContent =
+            formatNumber(
+                student.battle_points
+            );
+
+    }
+
+
+    if ($(avatarId)) {
+
+        $(avatarId).textContent =
+            getInitials(username);
+
+    }
+
 }
 
 
@@ -266,85 +430,123 @@ function setPodium(
 
 function renderLeaderboard(students) {
 
-    const body = $("leaderboardBody");
+    const body =
+        $("leaderboardBody");
+
+
+    if (!body) return;
+
 
     const query =
-        $("searchInput").value
-            .trim()
-            .toLowerCase();
+        $("searchInput")
+            ?.value
+            ?.trim()
+            ?.toLowerCase() ||
+        "";
 
 
-    const filtered = students.filter(student => {
+    const filtered =
+        students.filter(student => {
 
-        const username =
-            String(
-                student.username || ""
-            ).toLowerCase();
-
-        return username.includes(query);
-
-    });
+            const username =
+                String(
+                    student.username || ""
+                ).toLowerCase();
 
 
-    $("studentCount").textContent =
-        `${filtered.length} ${
-            filtered.length === 1
-                ? "student"
-                : "students"
-        }`;
+            return username.includes(
+                query
+            );
+
+        });
+
+
+    if ($("studentCount")) {
+
+        $("studentCount").textContent =
+            `${filtered.length} ${
+                filtered.length === 1
+                    ? "student"
+                    : "students"
+            }`;
+
+    }
 
 
     if (!filtered.length) {
 
         body.innerHTML = "";
 
-        $("emptyState").classList.remove(
-            "hidden"
-        );
+        $("emptyState")
+            ?.classList
+            .remove("hidden");
 
         return;
     }
 
 
-    $("emptyState").classList.add(
-        "hidden"
-    );
+    $("emptyState")
+        ?.classList
+        .add("hidden");
 
 
     body.innerHTML =
         filtered
-            .map((student) => {
+            .map(student => {
+
+                /*
+                 * Rank is based on the FULL leaderboard,
+                 * not the filtered search results.
+                 */
 
                 const actualRank =
                     students.indexOf(student) + 1;
 
+
                 const username =
                     student.username ||
                     "Student";
+
 
                 const current =
                     student.id === currentUserId
                         ? "current-user"
                         : "";
 
+
                 let rankDisplay =
                     `<span class="rank-number">
                         #${actualRank}
                     </span>`;
 
+
                 if (actualRank === 1) {
+
                     rankDisplay =
-                        `<span class="rank-medal">🥇</span>`;
+                        `<span class="rank-medal">
+                            🥇
+                        </span>`;
+
                 }
+
 
                 if (actualRank === 2) {
+
                     rankDisplay =
-                        `<span class="rank-medal">🥈</span>`;
+                        `<span class="rank-medal">
+                            🥈
+                        </span>`;
+
                 }
 
+
                 if (actualRank === 3) {
+
                     rankDisplay =
-                        `<span class="rank-medal">🥉</span>`;
+                        `<span class="rank-medal">
+                            🥉
+                        </span>`;
+
                 }
 
 
@@ -355,21 +557,27 @@ function renderLeaderboard(students) {
                             ${rankDisplay}
                         </td>
 
+
                         <td>
                             <div class="student-cell">
 
                                 <div class="student-small-avatar">
                                     ${escapeHTML(
-                                        getInitials(username)
+                                        getInitials(
+                                            username
+                                        )
                                     )}
                                 </div>
 
                                 <span class="student-name">
-                                    ${escapeHTML(username)}
+                                    ${escapeHTML(
+                                        username
+                                    )}
                                 </span>
 
                             </div>
                         </td>
+
 
                         <td class="points-cell">
                             ${formatNumber(
@@ -377,11 +585,13 @@ function renderLeaderboard(students) {
                             )}
                         </td>
 
+
                         <td>
                             ${formatNumber(
                                 student.wins
                             )}
                         </td>
+
 
                         <td>
                             ${formatNumber(
@@ -389,11 +599,13 @@ function renderLeaderboard(students) {
                             )}
                         </td>
 
+
                         <td>
                             ${formatNumber(
                                 student.draws
                             )}
                         </td>
+
 
                         <td>
                             ${formatNumber(
@@ -406,6 +618,7 @@ function renderLeaderboard(students) {
 
             })
             .join("");
+
 }
 
 
@@ -415,7 +628,16 @@ function renderLeaderboard(students) {
 
 function updateYourRanking(students) {
 
-    if (!currentUserId) return;
+    if (!currentUserId) {
+
+        if ($("yourRank")) {
+            $("yourRank").textContent =
+                "Unranked";
+        }
+
+        return;
+    }
+
 
     const index =
         students.findIndex(
@@ -426,14 +648,20 @@ function updateYourRanking(students) {
 
     if (index === -1) {
 
-        $("yourRank").textContent =
-            "Unranked";
+        if ($("yourRank")) {
+            $("yourRank").textContent =
+                "Unranked";
+        }
 
-        $("yourPoints").textContent =
-            "0";
+        if ($("yourPoints")) {
+            $("yourPoints").textContent =
+                "0";
+        }
 
-        $("yourWins").textContent =
-            "0";
+        if ($("yourWins")) {
+            $("yourWins").textContent =
+                "0";
+        }
 
         return;
     }
@@ -443,18 +671,33 @@ function updateYourRanking(students) {
         students[index];
 
 
-    $("yourRank").textContent =
-        `#${index + 1}`;
+    if ($("yourRank")) {
 
-    $("yourPoints").textContent =
-        formatNumber(
-            student.battle_points
-        );
+        $("yourRank").textContent =
+            `#${index + 1}`;
 
-    $("yourWins").textContent =
-        formatNumber(
-            student.wins
-        );
+    }
+
+
+    if ($("yourPoints")) {
+
+        $("yourPoints").textContent =
+            formatNumber(
+                student.battle_points
+            );
+
+    }
+
+
+    if ($("yourWins")) {
+
+        $("yourWins").textContent =
+            formatNumber(
+                student.wins
+            );
+
+    }
+
 }
 
 
@@ -464,15 +707,24 @@ function updateYourRanking(students) {
 
 function setupSearch() {
 
-    $("searchInput")
-        .addEventListener(
-            "input",
-            () => {
-                renderLeaderboard(
-                    allStudents
-                );
-            }
-        );
+    const searchInput =
+        $("searchInput");
+
+
+    if (!searchInput) return;
+
+
+    searchInput.addEventListener(
+        "input",
+        () => {
+
+            renderLeaderboard(
+                allStudents
+            );
+
+        }
+    );
+
 }
 
 
@@ -482,27 +734,40 @@ function setupSearch() {
 
 function setupRefresh() {
 
-    $("refreshButton")
-        .addEventListener(
-            "click",
-            async () => {
+    const button =
+        $("refreshButton");
 
-                const button =
-                    $("refreshButton");
 
-                button.disabled = true;
+    if (!button) return;
 
-                button.textContent =
-                    "↻ Loading...";
 
-                await loadLeaderboard();
+    button.addEventListener(
+        "click",
+        async () => {
 
-                button.disabled = false;
+            button.disabled =
+                true;
 
-                button.textContent =
-                    "↻ Refresh";
-            }
-        );
+
+            button.textContent =
+                "↻ Loading...";
+
+
+            await loadCurrentUser();
+
+            await loadLeaderboard();
+
+
+            button.disabled =
+                false;
+
+
+            button.textContent =
+                "↻ Refresh";
+
+        }
+    );
+
 }
 
 
@@ -517,35 +782,48 @@ function loadTheme() {
             "studyMindTheme"
         );
 
+
     if (saved === "dark") {
+
         document.body.classList.add(
             "dark"
         );
+
     }
+
 }
 
 
 function setupTheme() {
 
-    $("themeButton")
-        .addEventListener(
-            "click",
-            () => {
+    const button =
+        $("themeButton");
 
-                document.body.classList.toggle(
+
+    if (!button) return;
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            document.body.classList.toggle(
+                "dark"
+            );
+
+
+            localStorage.setItem(
+                "studyMindTheme",
+                document.body.classList.contains(
                     "dark"
-                );
+                )
+                    ? "dark"
+                    : "light"
+            );
 
-                localStorage.setItem(
-                    "studyMindTheme",
-                    document.body.classList.contains(
-                        "dark"
-                    )
-                        ? "dark"
-                        : "light"
-                );
-            }
-        );
+        }
+    );
+
 }
 
 
@@ -555,19 +833,41 @@ function setupTheme() {
 
 function setupLogout() {
 
-    $("logoutButton")
-        .addEventListener(
-            "click",
-            async () => {
+    const button =
+        $("logoutButton");
+
+
+    if (!button) return;
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            try {
 
                 if (supabaseClient) {
+
                     await supabaseClient.auth.signOut();
+
                 }
 
-                window.location.href =
-                    "index.html";
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
             }
-        );
+
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
+
 }
 
 
@@ -580,7 +880,9 @@ function formatNumber(value) {
     const number =
         Number(value || 0);
 
+
     return number.toLocaleString();
+
 }
 
 
@@ -592,31 +894,53 @@ function getInitials(name) {
             .split(/\s+/)
             .filter(Boolean);
 
+
     if (!words.length) {
         return "S";
     }
 
+
     if (words.length === 1) {
+
         return words[0]
             .substring(0, 2)
             .toUpperCase();
+
     }
+
 
     return (
         words[0][0] +
         words[words.length - 1][0]
     ).toUpperCase();
+
 }
 
 
 function escapeHTML(value) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
@@ -625,12 +949,18 @@ function showToast(message) {
     const toast =
         $("toast");
 
+
+    if (!toast) return;
+
+
     toast.textContent =
         message;
+
 
     toast.classList.add(
         "show"
     );
+
 
     setTimeout(() => {
 
@@ -639,17 +969,26 @@ function showToast(message) {
         );
 
     }, 2500);
+
 }
 
 
 function showError(message) {
 
-    $("leaderboardBody").innerHTML = `
+    const body =
+        $("leaderboardBody");
+
+
+    if (!body) return;
+
+
+    body.innerHTML = `
         <tr>
             <td colspan="7" class="loading">
                 ${escapeHTML(message)}
             </td>
         </tr>
     `;
+
 }
 
