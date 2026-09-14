@@ -1,7 +1,5 @@
 "use strict";
-console.log(
-    "STUDYMIND LEADERBOARD VERSION: 2026-09-14-FIX-1"
-);
+
 
 
 /* =========================================================
