@@ -2997,101 +2997,142 @@ async function saveBattleResult() {
     );
 
 
-    /* =====================================================
-       GLOBAL SUPABASE LEADERBOARD
-    ===================================================== */
+  /* =====================================================
+   GLOBAL SUPABASE LEADERBOARD
+===================================================== */
 
-    if (!gameSupabase) {
+if (!gameSupabase) {
 
-        console.error(
-            "StudyMind: Supabase client is unavailable."
-        );
+    console.error(
+        "StudyMind: Shared Supabase client is unavailable."
+    );
 
-    }
+}
 
-    else {
+else {
 
-        try {
+    try {
 
-            const {
-                data: {
-                    user
-                },
-                error: userError
-            } =
-                await gameSupabase.auth.getUser();
+        /* -------------------------------------------------
+           GET CURRENT AUTHENTICATED USER
+        ------------------------------------------------- */
 
-
-            if (userError) {
-                throw userError;
-            }
-
-
-            if (!user) {
-
-                console.warn(
-                    "StudyMind: No authenticated user. Global leaderboard was not updated."
-                );
-
-            }
-
-            else {
-
-                const {
-                    error
-                } =
-                    await gameSupabase.rpc(
-                        "record_game_result",
-                        {
-                            p_points:
-                                Number(result.xp || 0),
-
-                            p_result:
-                                result.result
-                        }
-                    );
+        const {
+            data: {
+                user
+            },
+            error: userError
+        } =
+            await gameSupabase.auth.getUser();
 
 
-                if (error) {
-                    throw error;
-                }
+        if (userError) {
+            throw userError;
+        }
 
 
-                console.log(
-                    "StudyMind global leaderboard updated.",
-                    {
-                        userId:
-                            user.id,
+        if (!user) {
 
-                        result:
-                            result.result,
-
-                        points:
-                            result.xp
-                    }
-                );
-
-            }
+            console.warn(
+                "StudyMind: No authenticated user. Global leaderboard was not updated."
+            );
 
         }
 
-        catch (error) {
+        else {
 
-            /*
-               The local result is already saved, so the battle
-               still works even if Supabase temporarily fails.
-            */
+            /* -------------------------------------------------
+               GET DISPLAY NAME
+            ------------------------------------------------- */
 
-            console.error(
-                "StudyMind global leaderboard update failed:",
+            const metadata =
+                user.user_metadata || {};
+
+
+            const displayName =
+                metadata.username ||
+                metadata.full_name ||
+                metadata.name ||
+                metadata.display_name ||
+                (
+                    user.email
+                        ? user.email.split("@")[0]
+                        : "StudyMind Student"
+                );
+
+
+            /* -------------------------------------------------
+               RECORD RESULT IN SUPABASE
+            ------------------------------------------------- */
+
+            const {
                 error
+            } =
+                await gameSupabase.rpc(
+                    "record_game_result",
+                    {
+
+                        p_display_name:
+                            String(displayName),
+
+                        p_points:
+                            Number(
+                                result.xp || 0
+                            ),
+
+                        p_result:
+                            String(
+                                result.result
+                            )
+
+                    }
+                );
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            console.log(
+                "StudyMind global leaderboard updated.",
+                {
+
+                    userId:
+                        user.id,
+
+                    username:
+                        displayName,
+
+                    result:
+                        result.result,
+
+                    points:
+                        result.xp
+
+                }
             );
 
         }
 
     }
 
+    catch (error) {
 
+        /*
+           Local result has already been saved.
+           Therefore the battle itself does not fail if
+           the global leaderboard temporarily fails.
+        */
+
+        console.error(
+            "StudyMind global leaderboard update failed:",
+            error
+        );
+
+    }
+
+}
     /* =====================================================
        NOTIFY STUDYMIND
     ===================================================== */
