@@ -2476,7 +2476,7 @@ function updateBattleUI() {
    FINISH BATTLE
 ========================================================= */
 
-function finishBattle() {
+async function finishBattle() {
 
     clearInterval(
         battleState.timer
@@ -2495,19 +2495,22 @@ function finishBattle() {
 
     if (player > ai) {
 
-        result = "win";
+        result =
+            "win";
 
     }
 
     else if (player < ai) {
 
-        result = "loss";
+        result =
+            "loss";
 
     }
 
     else {
 
-        result = "draw";
+        result =
+            "draw";
 
     }
 
@@ -2537,9 +2540,11 @@ function finishBattle() {
 
         xp,
 
-        playerScore: player,
+        playerScore:
+            player,
 
-        aiScore: ai,
+        aiScore:
+            ai,
 
         correct:
             battleState.correct,
@@ -2556,7 +2561,14 @@ function finishBattle() {
     };
 
 
-    saveBattleResult();
+    /*
+       IMPORTANT:
+       Wait for the local + Supabase save before
+       showing the final result.
+    */
+
+    await saveBattleResult();
+
 
     renderResults();
 
