@@ -3,15 +3,7 @@ console.log(
     "STUDYMIND LEADERBOARD VERSION: 2026-09-14-FIX-1"
 );
 
-console.log(
-    "SUPABASE URL:",
-    SUPABASE_URL
-);
 
-console.log(
-    "SUPABASE KEY PREFIX:",
-    SUPABASE_KEY.substring(0, 25)
-);
 /* =========================================================
    STUDYMIND AI — LEADERBOARD
    CONNECTED TO GAME_LEADERBOARD
