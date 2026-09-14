@@ -67,6 +67,25 @@ const STORAGE = {
 
 };
 
+/* =========================================================
+   SUPABASE — GLOBAL LEADERBOARD
+========================================================= */
+
+const SUPABASE_URL =
+    "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+const SUPABASE_KEY =
+    "YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY";
+
+const supabaseClient =
+    window.supabase?.createClient
+        ? window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        )
+        : null;
+
+
 
 /* =========================================================
    STATE
