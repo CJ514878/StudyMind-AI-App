@@ -2094,40 +2094,28 @@ function answerQuestion(
         );
 
 
-    buttons.forEach(
-        (button, index) => {
+  buttons.forEach(
+    (button, index) => {
 
-            button.disabled =
-                true;
+        button.disabled = true;
 
-
-            if (
-                index ===
-                question.correctAnswer
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-
-            }
-
-
-            if (
-                index ===
-                selectedIndex &&
-                !correct
-            ) {
-
-                button.classList.add(
-                    "incorrect"
-                );
-
-            }
-
+        /* Always highlight the correct answer */
+        if (
+            index === question.correctAnswer
+        ) {
+            button.classList.add("correct");
         }
-    );
 
+        /* Highlight the player's wrong answer */
+        if (
+            index === selectedIndex &&
+            !correct
+        ) {
+            button.classList.add("incorrect");
+        }
+
+    }
+);
 
     if (correct) {
 
