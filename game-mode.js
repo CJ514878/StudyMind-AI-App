@@ -2841,13 +2841,22 @@ function renderResults() {
 
 /* =========================================================
    SAVE RESULT
+   LOCAL + GLOBAL LEADERBOARD
 ========================================================= */
 
-function saveBattleResult() {
+async function saveBattleResult() {
 
     const result =
         battleState.results;
 
+    if (!result) {
+        return;
+    }
+
+
+    /* =====================================================
+       LOCAL XP
+    ===================================================== */
 
     let xp =
         Number(
@@ -2856,15 +2865,17 @@ function saveBattleResult() {
             ) || 0
         );
 
-
     xp += result.xp;
-
 
     localStorage.setItem(
         STORAGE.XP,
         String(xp)
     );
 
+
+    /* =====================================================
+       LOCAL BATTLE POINTS
+    ===================================================== */
 
     let points =
         Number(
@@ -2873,15 +2884,17 @@ function saveBattleResult() {
             ) || 0
         );
 
-
     points += result.xp;
-
 
     localStorage.setItem(
         STORAGE.BATTLE_POINTS,
         String(points)
     );
 
+
+    /* =====================================================
+       LOCAL WINS / LOSSES / DRAWS
+    ===================================================== */
 
     const wins =
         Number(
@@ -2890,14 +2903,12 @@ function saveBattleResult() {
             ) || 0
         );
 
-
     const losses =
         Number(
             localStorage.getItem(
                 STORAGE.LOSSES
             ) || 0
         );
-
 
     const draws =
         Number(
@@ -2907,7 +2918,9 @@ function saveBattleResult() {
         );
 
 
-    if (result.result === "win") {
+    if (
+        result.result === "win"
+    ) {
 
         localStorage.setItem(
             STORAGE.WINS,
@@ -2937,9 +2950,12 @@ function saveBattleResult() {
     }
 
 
+    /* =====================================================
+       LOCAL HISTORY
+    ===================================================== */
+
     const history =
         getHistory();
-
 
     history.unshift({
 
@@ -2990,9 +3006,104 @@ function saveBattleResult() {
     );
 
 
-    /*
-       Notify the rest of StudyMind.
-    */
+    /* =====================================================
+       GLOBAL SUPABASE LEADERBOARD
+    ===================================================== */
+
+    if (!supabaseClient) {
+
+        console.error(
+            "StudyMind: Supabase client is unavailable."
+        );
+
+    }
+
+    else {
+
+        try {
+
+            const {
+                data: {
+                    user
+                },
+                error: userError
+            } =
+                await supabaseClient.auth.getUser();
+
+
+            if (userError) {
+                throw userError;
+            }
+
+
+            if (!user) {
+
+                console.warn(
+                    "StudyMind: No authenticated user. Global leaderboard was not updated."
+                );
+
+            }
+
+            else {
+
+                const {
+                    error
+                } =
+                    await supabaseClient.rpc(
+                        "record_game_result",
+                        {
+                            p_points:
+                                Number(result.xp || 0),
+
+                            p_result:
+                                result.result
+                        }
+                    );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                console.log(
+                    "StudyMind global leaderboard updated.",
+                    {
+                        userId:
+                            user.id,
+
+                        result:
+                            result.result,
+
+                        points:
+                            result.xp
+                    }
+                );
+
+            }
+
+        }
+
+        catch (error) {
+
+            /*
+               The local result is already saved, so the battle
+               still works even if Supabase temporarily fails.
+            */
+
+            console.error(
+                "StudyMind global leaderboard update failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       NOTIFY STUDYMIND
+    ===================================================== */
 
     window.dispatchEvent(
         new CustomEvent(
@@ -3007,6 +3118,7 @@ function saveBattleResult() {
     );
 
 }
+
 
 
 /* =========================================================
