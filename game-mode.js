@@ -3031,7 +3031,7 @@ async function saveBattleResult() {
                 },
                 error: userError
             } =
-                await supabaseClient.auth.getUser();
+                await gameSupabase.auth.getUser();
 
 
             if (userError) {
