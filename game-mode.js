@@ -3399,17 +3399,22 @@ async function logoutStudyMind() {
     try {
 
         if (
-            window.supabase &&
-            window.supabase.auth &&
-            typeof window.supabase.auth.signOut ===
-                "function"
+            gameSupabase &&
+            gameSupabase.auth
         ) {
 
-            await window.supabase.auth.signOut();
+            await gameSupabase.auth.signOut();
 
         }
 
-    } catch (_) {}
+    } catch (error) {
+
+        console.error(
+            "StudyMind logout failed:",
+            error
+        );
+
+    }
 
 
     localStorage.removeItem(
