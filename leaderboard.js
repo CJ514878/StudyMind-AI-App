@@ -1,7 +1,5 @@
 "use strict";
 
-
-
 /* =========================================================
    STUDYMIND AI — LEADERBOARD
    CONNECTED TO GAME_LEADERBOARD
@@ -15,14 +13,32 @@
 const SUPABASE_URL =
     "https://bicnrbqqvucgpbwudmit.supabase.co";
 
-/*
-   IMPORTANT:
-   This must be your CURRENT Supabase publishable/anon key.
-
-   Do NOT use the service_role key in browser JavaScript.
-*/
 const SUPABASE_KEY =
     "sb_publishable_70y0MPr30-FimUSQK_HuA_Ng1a1qcB";
+
+
+/* =========================================================
+   TEMPORARY DEBUG
+========================================================= */
+
+console.log(
+    "STUDYMIND LEADERBOARD VERSION: 2026-09-14-FIX-1"
+);
+
+console.log(
+    "SUPABASE URL:",
+    SUPABASE_URL
+);
+
+console.log(
+    "SUPABASE KEY PREFIX:",
+    SUPABASE_KEY.substring(0, 25)
+);
+
+
+/* =========================================================
+   SUPABASE CLIENT
+========================================================= */
 
 const supabaseClient =
     window.supabase?.createClient
@@ -31,6 +47,8 @@ const supabaseClient =
             SUPABASE_KEY
         )
         : null;
+
+
 
 
 /* =========================================================
