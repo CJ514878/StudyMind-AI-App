@@ -3052,7 +3052,7 @@ async function saveBattleResult() {
                 const {
                     error
                 } =
-                    await supabaseClient.rpc(
+                    await gameSupabase.rpc(
                         "record_game_result",
                         {
                             p_points:
