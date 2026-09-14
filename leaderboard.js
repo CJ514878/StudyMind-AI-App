@@ -14,7 +14,7 @@ const SUPABASE_URL =
     "https://bicnrbqqvucgpbwudmit.supabase.co";
 
 const SUPABASE_KEY =
-    "sb_publishable_70y0MPr30-FimUSQK_HuA_Ng1a1qcB";
+    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
 
 
 /* =========================================================
