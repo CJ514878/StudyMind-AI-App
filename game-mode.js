@@ -68,22 +68,13 @@ const STORAGE = {
 };
 
 /* =========================================================
-   SUPABASE — GLOBAL LEADERBOARD
+   SUPABASE — SHARED STUDYMIND CLIENT
 ========================================================= */
 
-const SUPABASE_URL =
-    "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-const SUPABASE_KEY =
-    "YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY";
-
-const supabaseClient =
-    window.supabase?.createClient
-        ? window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        )
-        : null;
+const gameSupabase =
+    window.studyMindSupabase ||
+    window.supabaseClient ||
+    null;
 
 
 
