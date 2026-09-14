@@ -20,8 +20,7 @@ const SUPABASE_URL =
    Do NOT use the service_role key in browser JavaScript.
 */
 const SUPABASE_KEY =
-    "sb_publishable_70y0MPr3j-FimUSQK_HuA_Ng1a1qcB";
-
+    "sb_publishable_70y0MPr30-FimUSQK_HuA_Ng1a1qcB";
 
 const supabaseClient =
     window.supabase?.createClient
