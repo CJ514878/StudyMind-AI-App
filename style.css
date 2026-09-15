@@ -1177,3 +1177,137 @@ body.light-mode .primary-button {
     }
 
 }
+/* =========================================================
+   STUDYMIND — ENERGY BUTTONS
+========================================================= */
+
+.study-action,
+.primary-action,
+.start-study-button,
+.start-game-button,
+.ask-ai-button,
+.dashboard-action {
+    position: relative;
+
+    overflow: hidden;
+
+    isolation: isolate;
+
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease;
+}
+
+
+.study-action::before,
+.primary-action::before,
+.start-study-button::before,
+.start-game-button::before,
+.ask-ai-button::before,
+.dashboard-action::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: -100%;
+
+    left: -30%;
+
+    width: 40%;
+
+    height: 300%;
+
+    transform:
+        rotate(25deg);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.75),
+            transparent
+        );
+
+    opacity: 0;
+
+    transition:
+        left .5s ease,
+        opacity .2s ease;
+
+    z-index: -1;
+}
+
+
+.study-action:hover,
+.primary-action:hover,
+.start-study-button:hover,
+.start-game-button:hover,
+.ask-ai-button:hover,
+.dashboard-action:hover {
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 12px 30px rgba(91,95,240,.30);
+}
+
+
+.study-action:hover::before,
+.primary-action:hover::before,
+.start-study-button:hover::before,
+.start-game-button:hover::before,
+.ask-ai-button:hover::before,
+.dashboard-action:hover::before {
+
+    left: 120%;
+
+    opacity: 1;
+
+}
+
+
+/* Lightning pulse */
+
+.study-action::after,
+.primary-action::after,
+.start-study-button::after,
+.start-game-button::after,
+.ask-ai-button::after,
+.dashboard-action::after {
+
+    content: "ϟ";
+
+    position: absolute;
+
+    right: 12px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%)
+        scale(0);
+
+    color:
+        rgba(255,255,255,.9);
+
+    font-size: 18px;
+
+    transition:
+        transform .2s ease;
+}
+
+
+.study-action:hover::after,
+.primary-action:hover::after,
+.start-study-button:hover::after,
+.start-game-button:hover::after,
+.ask-ai-button:hover::after,
+.dashboard-action:hover::after {
+
+    transform:
+        translateY(-50%)
+        scale(1);
+
+}
