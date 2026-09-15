@@ -78,53 +78,77 @@ let timerInterval =
 null;
 
 /* =========================================================
-AUTH
+AUTH — SHARED SUPABASE CLIENT
 ========================================================= */
 
-const SUPABASE_URL =
-"https://bicnrbqqvucgpbwudmit.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
 const supabaseClient =
-window.supabase?.createClient
-? window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-)
-: null;
+    window.supabaseClient ||
+    null;
 
 /* =========================================================
 INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
-"DOMContentLoaded",
-async () => {
+    "DOMContentLoaded",
+    async () => {
 
+        await loadUser();
 
-    await loadUser();
+        /*
+         * Check completion BEFORE rendering the stats.
+         * This is what allows the streak to update when
+         * the dashboard is opened after completing topics.
+         */
+        checkStudyCompletion();
 
-    renderStats();
+        renderStats();
 
-    renderToday();
+        renderToday();
 
-    renderExams();
+        renderExams();
 
-    renderQuests();
+        renderQuests();
 
-    renderLevel();
+        renderLevel();
 
-    renderRecommendation();
+        renderRecommendation();
 
-    setupLogout();
+        setupLogout();
 
-    setupSharedDashboardTimer();
+        setupSharedDashboardTimer();
 
-}
+        /*
+         * Watch for topic completion changes made by
+         * other StudyMind pages.
+         */
+        window.addEventListener(
+            "storage",
+            event => {
 
+                if (
+                    event.key ===
+                    "studyMindCompletedTopics"
+                ) {
 
+                    studyPlan =
+                        loadJSON(
+                            PLAN_KEY,
+                            null
+                        );
+
+                    checkStudyCompletion();
+
+                    renderStats();
+
+                    renderRecommendation();
+
+                }
+
+            }
+        );
+
+    }
 );
 
 /* =========================================================
