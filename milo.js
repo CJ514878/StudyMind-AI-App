@@ -1157,6 +1157,12 @@ function playSound(
 
 let miloFlyingTimer = null;
 let miloFlyTimeout = null;
+let miloIsFlying = false;
+
+
+/* =========================================================
+   FLY MILO TO A RANDOM LOCATION
+========================================================= */
 
 function flyMiloAround() {
 
@@ -1165,24 +1171,39 @@ function flyMiloAround() {
 
     if (!container) return;
 
-    /*
-       Keep Milo away from the extreme edges so
-       he doesn't disappear off-screen.
-    */
+    if (miloIsFlying) return;
 
-    const margin = 30;
+    miloIsFlying = true;
+
+
+    /* -----------------------------------------------------
+       Screen boundaries
+    ----------------------------------------------------- */
+
+    const margin = 35;
+
+    const characterSize = 90;
 
     const maxX =
         Math.max(
             margin,
-            window.innerWidth - 120
+            window.innerWidth -
+            characterSize -
+            margin
         );
 
     const maxY =
         Math.max(
             margin,
-            window.innerHeight - 150
+            window.innerHeight -
+            180 -
+            margin
         );
+
+
+    /* -----------------------------------------------------
+       Random destination
+    ----------------------------------------------------- */
 
     const x =
         Math.floor(
@@ -1198,143 +1219,318 @@ function flyMiloAround() {
             (maxY - margin)
         );
 
-    /*
-       Temporarily switch from bottom/right positioning
-       to absolute screen positioning.
-    */
 
-    container.style.position = "fixed";
+    /* -----------------------------------------------------
+       Tell Milo that he is flying
+    ----------------------------------------------------- */
 
-    container.style.left = `${x}px`;
-    container.style.top = `${y}px`;
+    container.classList.add(
+        "milo-flying"
+    );
 
-    container.style.right = "auto";
-    container.style.bottom = "auto";
 
-    container.classList.add("milo-flying");
+    /* -----------------------------------------------------
+       Move Milo
+    ----------------------------------------------------- */
 
-    /*
-       Stay in this area for a little while,
-       then choose another destination.
-    */
+    container.style.position =
+        "fixed";
 
-    clearTimeout(miloFlyTimeout);
+    container.style.left =
+        `${x}px`;
 
-    miloFlyTimeout = setTimeout(() => {
+    container.style.top =
+        `${y}px`;
 
-        container.classList.remove("milo-flying");
+    container.style.right =
+        "auto";
 
-        /*
-           Sometimes return home.
-        */
+    container.style.bottom =
+        "auto";
 
-        if (Math.random() < 0.35) {
 
-            container.style.left = "auto";
-            container.style.top = "auto";
-            container.style.right = "28px";
-            container.style.bottom = "28px";
+    /* -----------------------------------------------------
+       Stay there for a while
+    ----------------------------------------------------- */
 
-        } else {
+    clearTimeout(
+        miloFlyTimeout
+    );
 
-            flyMiloAround();
 
-        }
+    miloFlyTimeout =
+        setTimeout(
+            () => {
 
-    }, 3500 + Math.random() * 3000);
+                container.classList.remove(
+                    "milo-flying"
+                );
+
+                miloIsFlying =
+                    false;
+
+
+                /*
+                   Sometimes Milo flies again.
+                */
+
+                if (
+                    Math.random() < 0.55
+                ) {
+
+                    setTimeout(
+                        () => {
+
+                            flyMiloAround();
+
+                        },
+                        800
+                    );
+
+                }
+
+                /*
+                   Otherwise he returns home.
+                */
+
+                else {
+
+                    setTimeout(
+                        () => {
+
+                            returnMiloHome();
+
+                        },
+                        500
+                    );
+
+                }
+
+            },
+            3000 +
+            Math.random() * 2500
+        );
+
 }
 
 
 /* =========================================================
-   START FLYING
+   START MILO'S AUTONOMOUS MOVEMENT
 ========================================================= */
 
 function startMiloFlying() {
 
-    clearInterval(miloFlyingTimer);
+    clearInterval(
+        miloFlyingTimer
+    );
+
 
     /*
-       Wait before Milo starts flying so the user
-       gets a chance to see his normal greeting.
+       Milo waits before becoming active.
     */
 
-    miloFlyingTimer = setInterval(() => {
+    miloFlyingTimer =
+        setInterval(
+            () => {
 
-        const container =
-            document.getElementById("miloCompanion");
+                const container =
+                    document.getElementById(
+                        "miloCompanion"
+                    );
 
-        if (!container) return;
 
-        /*
-           Don't move Milo while a major overlay is open.
-        */
+                if (!container) {
+                    return;
+                }
 
-        if (
-            document.getElementById("miloStreakOverlay")
-        ) {
-            return;
-        }
 
-        /*
-           Don't interrupt important Milo messages.
-        */
+                /*
+                   Don't fly while the streak
+                   celebration is open.
+                */
 
-        const bubble =
-            document.getElementById("miloBubble");
+                if (
+                    document.getElementById(
+                        "miloStreakOverlay"
+                    )
+                ) {
 
-        if (
-            bubble &&
-            bubble.style.display !== "none"
-        ) {
+                    return;
 
-            /*
-               Give his message some time.
-            */
+                }
 
-            if (Math.random() < 0.45) {
-                return;
-            }
-        }
 
-        flyMiloAround();
+                /*
+                   Don't interrupt Milo while
+                   he is already flying.
+                */
 
-    }, 12000);
+                if (
+                    miloIsFlying
+                ) {
+
+                    return;
+
+                }
+
+
+                /*
+                   Don't randomly move Milo while
+                   he is actively displaying an
+                   important message.
+                */
+
+                const bubble =
+                    document.getElementById(
+                        "miloBubble"
+                    );
+
+
+                if (
+                    bubble &&
+                    bubble.style.display !==
+                    "none"
+                ) {
+
+                    /*
+                       Usually wait until the
+                       message disappears.
+                    */
+
+                    if (
+                        Math.random() < 0.75
+                    ) {
+
+                        return;
+
+                    }
+
+                }
+
+
+                /*
+                   Take off.
+                */
+
+                flyMiloAround();
+
+            },
+
+            14000
+        );
+
 }
 
 
 /* =========================================================
-   BEGIN AFTER PAGE LOAD
+   START FLYING AFTER PAGE LOAD
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    setTimeout(() => {
-        startMiloFlying();
-    }, 8000);
+        /*
+           Give Milo time to introduce himself
+           before he starts flying.
+        */
 
-});
+        setTimeout(
+            () => {
+
+                startMiloFlying();
+
+            },
+            9000
+        );
+
+    }
+);
 
 
 /* =========================================================
-   RETURN MILO HOME
+   RETURN MILO TO HIS HOME POSITION
 ========================================================= */
 
 function returnMiloHome() {
 
     const container =
-        document.getElementById("miloCompanion");
+        document.getElementById(
+            "miloCompanion"
+        );
 
-    if (!container) return;
 
-    clearTimeout(miloFlyTimeout);
+    if (!container) {
+        return;
+    }
 
-    container.classList.remove("milo-flying");
 
-    container.style.left = "auto";
-    container.style.top = "auto";
-    container.style.right = "28px";
-    container.style.bottom = "28px";
+    clearTimeout(
+        miloFlyTimeout
+    );
+
+
+    miloIsFlying =
+        false;
+
+
+    container.classList.remove(
+        "milo-flying"
+    );
+
+
+    /*
+       Returning to the bottom-right
+       corner.
+    */
+
+    container.style.left =
+        "auto";
+
+    container.style.top =
+        "auto";
+
+    container.style.right =
+        "28px";
+
+    container.style.bottom =
+        "28px";
+
+    container.style.position =
+        "fixed";
+
 }
+
+
+/* =========================================================
+   MANUAL FLY COMMAND
+========================================================= */
+
+function makeMiloFly() {
+
+    const bubble =
+        document.getElementById(
+            "miloBubble"
+        );
+
+
+    /*
+       Hide the bubble while Milo travels
+       so it doesn't cover the page.
+    */
+
+    if (bubble) {
+
+        bubble.style.display =
+            "none";
+
+    }
+
+
+    flyMiloAround();
+
+}
+
 
 
 /* =========================================================
