@@ -2,19 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Knowledge Check — StudyMind AI</title>
 
     <link rel="stylesheet" href="style.css">
 
+    <!-- =====================================================
+         SUPABASE
+    ====================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
+    <!-- =====================================================
+         MATHJAX
+    ====================================================== -->
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']]
+                inlineMath: [
+                    ['$', '$'],
+                    ['\\(', '\\)']
+                ],
+                displayMath: [
+                    ['$$', '$$'],
+                    ['\\[', '\\]']
+                ]
             },
             svg: {
                 fontCache: 'global'
@@ -28,6 +44,7 @@
     </script>
 
     <style>
+
         /* =====================================================
            KNOWLEDGE CHECK PAGE
         ===================================================== */
@@ -41,6 +58,10 @@
             width: min(900px, 100%);
             margin: 0 auto;
         }
+
+        /* =====================================================
+           TOP BAR
+        ===================================================== */
 
         .knowledge-topbar {
             display: flex;
@@ -62,6 +83,10 @@
             font-weight: 900;
             font-size: 20px;
         }
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
 
         .knowledge-header {
             text-align: center;
@@ -94,6 +119,180 @@
             line-height: 1.6;
         }
 
+        /* =====================================================
+           MILO
+        ===================================================== */
+
+        .knowledge-milo {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            padding: 17px 19px;
+            margin-bottom: 25px;
+            border-radius: 18px;
+            border: 1px solid rgba(59, 130, 246, .18);
+            background: rgba(59, 130, 246, .055);
+        }
+
+        .knowledge-milo.visible {
+            display: flex;
+        }
+
+        .milo-avatar {
+            width: 58px;
+            height: 58px;
+            flex: 0 0 58px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: rgba(59, 130, 246, .14);
+            border: 1px solid rgba(59, 130, 246, .22);
+        }
+
+        .milo-content {
+            min-width: 0;
+        }
+
+        .milo-name {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            opacity: .55;
+            margin-bottom: 4px;
+        }
+
+        .milo-message {
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        /* =====================================================
+           USAGE / PREMIUM CONTROL CARD
+        ===================================================== */
+
+        .knowledge-controls {
+            display: none;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.035);
+        }
+
+        .knowledge-controls.visible {
+            display: block;
+        }
+
+        .knowledge-control-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 17px;
+        }
+
+        .knowledge-control-title {
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .knowledge-control-description {
+            font-size: 13px;
+            opacity: .6;
+            line-height: 1.5;
+        }
+
+        .knowledge-premium-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, .12);
+            border: 1px solid rgba(245, 158, 11, .25);
+            color: #fbbf24;
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        /* =====================================================
+           FREE USAGE GAUGE
+        ===================================================== */
+
+        .knowledge-usage {
+            margin-top: 12px;
+        }
+
+        .knowledge-usage-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .knowledge-usage-track {
+            height: 7px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+        }
+
+        .knowledge-usage-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: #3b82f6;
+            transition: width .3s ease;
+        }
+
+        /* =====================================================
+           QUESTION COUNT SELECTOR
+        ===================================================== */
+
+        .knowledge-count-selector {
+            display: none;
+            margin-top: 17px;
+        }
+
+        .knowledge-count-selector.visible {
+            display: block;
+        }
+
+        .knowledge-count-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .knowledge-count-selector select {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.04);
+            color: inherit;
+            font: inherit;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .knowledge-count-selector select:focus {
+            border-color: rgba(59,130,246,.6);
+        }
+
+        /* =====================================================
+           TOPIC CARD
+        ===================================================== */
+
         .knowledge-topic-card {
             padding: 24px;
             border-radius: 18px;
@@ -115,6 +314,10 @@
             font-size: 24px;
             font-weight: 900;
         }
+
+        /* =====================================================
+           PROGRESS
+        ===================================================== */
 
         .knowledge-progress-wrap {
             margin-bottom: 25px;
@@ -143,6 +346,10 @@
             background: #3b82f6;
             transition: width .3s ease;
         }
+
+        /* =====================================================
+           QUESTIONS
+        ===================================================== */
 
         .knowledge-question-card {
             padding: 28px;
@@ -205,6 +412,10 @@
             box-shadow: 0 0 0 1px rgba(59,130,246,.2);
         }
 
+        /* =====================================================
+           SUBMIT
+        ===================================================== */
+
         .knowledge-submit-wrap {
             text-align: center;
             margin-top: 30px;
@@ -233,6 +444,10 @@
             transform: none;
         }
 
+        /* =====================================================
+           LOADING
+        ===================================================== */
+
         .knowledge-loading {
             text-align: center;
             padding: 70px 20px;
@@ -254,6 +469,10 @@
             }
         }
 
+        /* =====================================================
+           RESULT
+        ===================================================== */
+
         .knowledge-result {
             display: none;
             text-align: center;
@@ -261,6 +480,10 @@
             border-radius: 22px;
             border: 1px solid rgba(255,255,255,.08);
             background: rgba(255,255,255,.035);
+        }
+
+        .knowledge-result.visible {
+            display: block;
         }
 
         .knowledge-result-icon {
@@ -292,7 +515,8 @@
             margin-top: 25px;
         }
 
-        .knowledge-result-actions a {
+        .knowledge-result-actions a,
+        .knowledge-result-actions button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -302,7 +526,45 @@
             font-weight: 800;
             background: #2563eb;
             color: white;
+            border: 0;
+            cursor: pointer;
+            font: inherit;
         }
+
+        .knowledge-review {
+            margin-top: 28px;
+            text-align: left;
+        }
+
+        .knowledge-review-title {
+            font-size: 15px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .knowledge-review-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 13px;
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.025);
+        }
+
+        .knowledge-review-question {
+            font-weight: 800;
+            line-height: 1.5;
+            margin-bottom: 7px;
+        }
+
+        .knowledge-review-answer {
+            font-size: 13px;
+            opacity: .7;
+            line-height: 1.5;
+        }
+
+        /* =====================================================
+           LIMIT
+        ===================================================== */
 
         .knowledge-limit {
             display: none;
@@ -311,6 +573,10 @@
             border-radius: 22px;
             border: 1px solid rgba(249,115,22,.25);
             background: rgba(249,115,22,.06);
+        }
+
+        .knowledge-limit.visible {
+            display: block;
         }
 
         .knowledge-limit-icon {
@@ -340,6 +606,10 @@
             color: white;
         }
 
+        /* =====================================================
+           ERROR
+        ===================================================== */
+
         .knowledge-error {
             display: none;
             text-align: center;
@@ -347,6 +617,10 @@
             border-radius: 22px;
             background: rgba(239,68,68,.06);
             border: 1px solid rgba(239,68,68,.2);
+        }
+
+        .knowledge-error.visible {
+            display: block;
         }
 
         .knowledge-error h2 {
@@ -367,7 +641,12 @@
             font-weight: 800;
         }
 
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
         @media (max-width: 600px) {
+
             .knowledge-page {
                 padding: 20px 14px 45px;
             }
@@ -383,7 +662,37 @@
             .knowledge-topic-card {
                 padding: 20px;
             }
+
+            .knowledge-control-top {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .knowledge-progress-info {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .knowledge-milo {
+                align-items: flex-start;
+            }
+
+            .milo-avatar {
+                width: 50px;
+                height: 50px;
+                flex-basis: 50px;
+                font-size: 25px;
+            }
+
+            .knowledge-question {
+                font-size: 17px;
+            }
+
+            .knowledge-score {
+                font-size: 40px;
+            }
         }
+
     </style>
 </head>
 
@@ -393,80 +702,281 @@
 
     <div class="knowledge-container">
 
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
+
         <div class="knowledge-topbar">
-            <a href="dashboard.html" class="knowledge-back">
+
+            <a
+                href="dashboard.html"
+                class="knowledge-back">
                 ← Dashboard
             </a>
 
             <div class="knowledge-brand">
                 StudyMind AI
             </div>
+
         </div>
 
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
         <div class="knowledge-header">
+
             <div class="knowledge-badge">
                 Knowledge Check
             </div>
 
-            <h1>Test Your Knowledge</h1>
+            <h1>
+                Test Your Knowledge
+            </h1>
 
             <p>
-                Answer all five questions to check how well you understand
-                the topic you have been studying.
+                Check how well you understand the topic you have
+                been studying and prove that you are ready to move on.
             </p>
+
         </div>
 
-        <div id="knowledgeLoading" class="knowledge-loading">
+        <!-- =================================================
+             MILO
+        ================================================== -->
+
+        <div
+            id="knowledgeMilo"
+            class="knowledge-milo">
+
+            <div class="milo-avatar">
+                🤖
+            </div>
+
+            <div class="milo-content">
+
+                <div class="milo-name">
+                    Milo · Study Assistant
+                </div>
+
+                <div
+                    id="miloMessage"
+                    class="milo-message">
+                    You've got this! Take your time and think carefully.
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =================================================
+             LOADING
+        ================================================== -->
+
+        <div
+            id="knowledgeLoading"
+            class="knowledge-loading">
+
             <div class="knowledge-spinner"></div>
-            <h3>Preparing your knowledge check...</h3>
-            <p>Please wait while StudyMind AI creates your questions.</p>
+
+            <h3>
+                Preparing your knowledge check...
+            </h3>
+
+            <p>
+                StudyMind AI is creating questions based on
+                your subject and topic.
+            </p>
+
         </div>
 
-        <div id="knowledgeLimit" class="knowledge-limit">
+        <!-- =================================================
+             USAGE / PREMIUM CONTROLS
+        ================================================== -->
 
-            <div class="knowledge-limit-icon">🔒</div>
+        <section
+            id="knowledgeControls"
+            class="knowledge-controls">
 
-            <h2>Free Knowledge Checks Used</h2>
+            <div class="knowledge-control-top">
+
+                <div>
+
+                    <div class="knowledge-control-title">
+                        Knowledge Check Settings
+                    </div>
+
+                    <div class="knowledge-control-description">
+                        Choose how many questions you want to answer.
+                    </div>
+
+                </div>
+
+                <div
+                    id="knowledgePremiumBadge"
+                    class="knowledge-premium-badge"
+                    style="display:none;">
+                    ✦ Premium
+                </div>
+
+            </div>
+
+            <!-- FREE USAGE -->
+
+            <div
+                id="knowledgeUsage"
+                class="knowledge-usage">
+
+                <div class="knowledge-usage-row">
+
+                    <span>
+                        Free Knowledge Checks
+                    </span>
+
+                    <span id="knowledgeUsageText">
+                        0 of 5 used
+                    </span>
+
+                </div>
+
+                <div class="knowledge-usage-track">
+
+                    <div
+                        id="knowledgeUsageBar"
+                        class="knowledge-usage-bar">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- PREMIUM QUESTION COUNT -->
+
+            <div
+                id="knowledgeCountSelector"
+                class="knowledge-count-selector">
+
+                <label for="knowledgeQuestionCount">
+                    Number of Questions
+                </label>
+
+                <select id="knowledgeQuestionCount">
+
+                    <option value="5">
+                        5 Questions
+                    </option>
+
+                    <option value="10">
+                        10 Questions
+                    </option>
+
+                    <option value="20">
+                        20 Questions
+                    </option>
+
+                    <option value="30">
+                        30 Questions
+                    </option>
+
+                    <option value="40">
+                        40 Questions
+                    </option>
+
+                    <option value="50">
+                        50 Questions
+                    </option>
+
+                    <option value="60">
+                        60 Questions
+                    </option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+        <!-- =================================================
+             FREE LIMIT
+        ================================================== -->
+
+        <div
+            id="knowledgeLimit"
+            class="knowledge-limit">
+
+            <div class="knowledge-limit-icon">
+                🔒
+            </div>
+
+            <h2>
+                Free Knowledge Checks Used
+            </h2>
 
             <p>
                 You have used all 5 of your free Knowledge Checks.
-                Upgrade to Premium to continue testing yourself without
-                the free usage limit.
+                Upgrade to Premium to continue testing yourself
+                without the free usage limit.
             </p>
 
-            <a href="dashboard.html" class="knowledge-limit-button">
-                Back to Dashboard
+            <a
+                href="premium.html"
+                class="knowledge-limit-button">
+                Explore Premium
             </a>
 
         </div>
 
-        <div id="knowledgeError" class="knowledge-error">
+        <!-- =================================================
+             ERROR
+        ================================================== -->
 
-            <h2>Unable to create your Knowledge Check</h2>
+        <div
+            id="knowledgeError"
+            class="knowledge-error">
+
+            <h2>
+                Unable to create your Knowledge Check
+            </h2>
 
             <p id="knowledgeErrorText">
                 Something went wrong while preparing your questions.
             </p>
 
-            <button onclick="location.href='dashboard.html'">
+            <button
+                type="button"
+                onclick="location.href='dashboard.html'">
                 Back to Dashboard
             </button>
 
         </div>
 
-        <main id="knowledgeContent" style="display:none;">
+        <!-- =================================================
+             KNOWLEDGE CONTENT
+        ================================================== -->
+
+        <main
+            id="knowledgeContent"
+            style="display:none;">
+
+            <!-- TOPIC -->
 
             <div class="knowledge-topic-card">
 
-                <div class="knowledge-subject" id="knowledgeSubject">
+                <div
+                    class="knowledge-subject"
+                    id="knowledgeSubject">
                     Subject
                 </div>
 
-                <div class="knowledge-topic" id="knowledgeTopic">
+                <div
+                    class="knowledge-topic"
+                    id="knowledgeTopic">
                     Topic
                 </div>
 
             </div>
+
+            <!-- PROGRESS -->
 
             <div class="knowledge-progress-wrap">
 
@@ -476,26 +986,33 @@
                         0 of 5 answered
                     </span>
 
-                    <span>
+                    <span id="knowledgeQuestionCountText">
                         5 Questions
                     </span>
 
                 </div>
 
                 <div class="knowledge-progress">
+
                     <div
                         id="knowledgeProgressBar"
                         class="knowledge-progress-bar">
                     </div>
+
                 </div>
 
             </div>
 
+            <!-- QUESTIONS -->
+
             <div id="knowledgeQuestions"></div>
+
+            <!-- SUBMIT -->
 
             <div class="knowledge-submit-wrap">
 
                 <button
+                    type="button"
                     id="knowledgeSubmit"
                     class="knowledge-submit">
 
@@ -507,9 +1024,17 @@
 
         </main>
 
-        <section id="knowledgeResult" class="knowledge-result">
+        <!-- =================================================
+             RESULT
+        ================================================== -->
 
-            <div id="knowledgeResultIcon" class="knowledge-result-icon">
+        <section
+            id="knowledgeResult"
+            class="knowledge-result">
+
+            <div
+                id="knowledgeResultIcon"
+                class="knowledge-result-icon">
                 🎯
             </div>
 
@@ -517,11 +1042,30 @@
                 Knowledge Check Complete
             </h2>
 
-            <div id="knowledgeScore" class="knowledge-score">
+            <div
+                id="knowledgeScore"
+                class="knowledge-score">
                 0/5
             </div>
 
             <p id="knowledgeResultText"></p>
+
+            <!-- REVIEW AREA -->
+
+            <div
+                id="knowledgeReview"
+                class="knowledge-review"
+                style="display:none;">
+
+                <div class="knowledge-review-title">
+                    Let's review your mistakes
+                </div>
+
+                <div id="knowledgeReviewItems"></div>
+
+            </div>
+
+            <!-- RESULT ACTIONS -->
 
             <div class="knowledge-result-actions">
 
@@ -537,7 +1081,12 @@
 
 </div>
 
+<!-- =========================================================
+     KNOWLEDGE CHECK ENGINE
+========================================================= -->
+
 <script src="knowledge-check.js"></script>
 
 </body>
 </html>
+
