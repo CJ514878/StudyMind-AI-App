@@ -1605,8 +1605,16 @@ function checkStudyCompletion() {
     const topics =
         getAllStudyTopics();
 
+    /*
+     * No study plan/topics means there is nothing
+     * that can be completed.
+     */
+    if (!Array.isArray(topics) || !topics.length) {
 
-    if (!topics.length) {
+        console.log(
+            "StudyMind completion check: No topics found."
+        );
+
         return false;
     }
 
@@ -1625,49 +1633,67 @@ function checkStudyCompletion() {
 
 
     const completedSet =
-        new Set(completed);
+        new Set(
+            completed.map(
+                item =>
+                    String(item)
+            )
+        );
 
 
-    const completedCount =
-        topics.filter(
-            topic => {
-
-                const subject =
-                    String(
-                        topic.subject ||
-                        ""
-                    ).trim();
+    let completedCount = 0;
 
 
-                const name =
-                    String(
-                        topic.name ||
-                        topic.title ||
-                        topic.topic ||
-                        ""
-                    ).trim();
+    topics.forEach(topic => {
+
+        const subject =
+            String(
+                topic?.subject ||
+                ""
+            ).trim();
 
 
-                if (!name) {
-                    return false;
-                }
+        const name =
+            String(
+                topic?.name ||
+                topic?.title ||
+                topic?.topic ||
+                ""
+            ).trim();
 
 
-                const newKey =
-                    `${subject}::${name}`;
+        if (!name) {
+            return;
+        }
 
 
-                const oldKey =
-                    name;
+        /*
+         * Current completion format:
+         *
+         * Subject::Topic
+         */
+        const newKey =
+            `${subject}::${name}`;
 
 
-                return (
-                    completedSet.has(newKey) ||
-                    completedSet.has(oldKey)
-                );
+        /*
+         * Backwards compatibility with
+         * older StudyMind versions.
+         */
+        const oldKey =
+            name;
 
-            }
-        ).length;
+
+        if (
+            completedSet.has(newKey) ||
+            completedSet.has(oldKey)
+        ) {
+
+            completedCount++;
+
+        }
+
+    });
 
 
     const total =
@@ -1676,9 +1702,10 @@ function checkStudyCompletion() {
 
     const progress =
         Math.round(
-            completedCount /
-            total *
-            100
+            (
+                completedCount /
+                total
+            ) * 100
         );
 
 
@@ -1687,16 +1714,17 @@ function checkStudyCompletion() {
         {
             completedCount,
             total,
-            progress
+            progress,
+            completedTopics:
+                completed
         }
     );
 
 
     /*
-     * Do NOT increase the streak until every topic
-     * has actually been completed.
+     * The streak cannot increase until every
+     * required topic has been completed.
      */
-
     if (
         completedCount < total
     ) {
@@ -1707,7 +1735,7 @@ function checkStudyCompletion() {
 
 
     /*
-     * Full study plan is now complete.
+     * EVERYTHING IS COMPLETE.
      */
 
     const today =
@@ -1727,12 +1755,16 @@ function checkStudyCompletion() {
 
 
     /*
-     * Prevent multiple increases on the same day.
+     * Prevent multiple increases on the
+     * same calendar day.
      */
-
     if (
         lastCompleted === today
     ) {
+
+        console.log(
+            "StudyMind: Today's completion already counted."
+        );
 
         return true;
 
@@ -1740,11 +1772,14 @@ function checkStudyCompletion() {
 
 
     /*
-     * Increase streak exactly once.
+     * Increase exactly ONE day.
      */
-
     streak =
-        Number(streak || 0) + 1;
+        Number(
+            localStorage.getItem(
+                STREAK_KEY
+            ) || 0
+        ) + 1;
 
 
     localStorage.setItem(
@@ -1760,34 +1795,52 @@ function checkStudyCompletion() {
 
 
     /*
-     * Tell the rest of StudyMind that the study day
-     * has been completed.
+     * Record today's completed activity.
      */
-
     localStorage.setItem(
         "studyMindStreakActivity",
         JSON.stringify({
 
-            date: today,
+            date:
+                today,
 
-            completed: true,
+            completed:
+                true,
 
-            timestamp: Date.now()
+            timestamp:
+                Date.now(),
+
+            completedCount:
+                completedCount,
+
+            totalTopics:
+                total
 
         })
     );
 
 
+    console.log(
+        "🎉 StudyMind streak increased:",
+        streak
+    );
+
+
+    /*
+     * Update UI immediately.
+     */
     renderStats();
 
 
+    /*
+     * Show celebration once.
+     */
     showCompletionCelebration();
 
 
     return true;
 
 }
-
 
 
 /* =========================================================
