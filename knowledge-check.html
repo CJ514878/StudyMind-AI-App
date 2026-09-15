@@ -120,57 +120,7 @@
         }
 
         /* =====================================================
-           MILO
-        ===================================================== */
-
-        .knowledge-milo {
-            display: none;
-            align-items: center;
-            gap: 16px;
-            padding: 17px 19px;
-            margin-bottom: 25px;
-            border-radius: 18px;
-            border: 1px solid rgba(59, 130, 246, .18);
-            background: rgba(59, 130, 246, .055);
-        }
-
-        .knowledge-milo.visible {
-            display: flex;
-        }
-
-        .milo-avatar {
-            width: 58px;
-            height: 58px;
-            flex: 0 0 58px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            background: rgba(59, 130, 246, .14);
-            border: 1px solid rgba(59, 130, 246, .22);
-        }
-
-        .milo-content {
-            min-width: 0;
-        }
-
-        .milo-name {
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .7px;
-            opacity: .55;
-            margin-bottom: 4px;
-        }
-
-        .milo-message {
-            font-weight: 700;
-            line-height: 1.5;
-        }
-
-        /* =====================================================
-           USAGE / PREMIUM CONTROL CARD
+           KNOWLEDGE CONTROLS
         ===================================================== */
 
         .knowledge-controls {
@@ -221,7 +171,7 @@
         }
 
         /* =====================================================
-           FREE USAGE GAUGE
+           FREE USAGE
         ===================================================== */
 
         .knowledge-usage {
@@ -253,7 +203,7 @@
         }
 
         /* =====================================================
-           QUESTION COUNT SELECTOR
+           QUESTION COUNT
         ===================================================== */
 
         .knowledge-count-selector {
@@ -515,8 +465,7 @@
             margin-top: 25px;
         }
 
-        .knowledge-result-actions a,
-        .knowledge-result-actions button {
+        .knowledge-result-actions a {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -526,14 +475,20 @@
             font-weight: 800;
             background: #2563eb;
             color: white;
-            border: 0;
-            cursor: pointer;
-            font: inherit;
         }
 
+        /* =====================================================
+           REVIEW
+        ===================================================== */
+
         .knowledge-review {
+            display: none;
             margin-top: 28px;
             text-align: left;
+        }
+
+        .knowledge-review.visible {
+            display: block;
         }
 
         .knowledge-review-title {
@@ -542,9 +497,13 @@
             margin-bottom: 12px;
         }
 
+        .knowledge-review-items {
+            display: grid;
+            gap: 10px;
+        }
+
         .knowledge-review-item {
             padding: 15px;
-            margin-bottom: 10px;
             border-radius: 13px;
             border: 1px solid rgba(255,255,255,.08);
             background: rgba(255,255,255,.025);
@@ -563,7 +522,7 @@
         }
 
         /* =====================================================
-           LIMIT
+           FREE LIMIT
         ===================================================== */
 
         .knowledge-limit {
@@ -673,17 +632,6 @@
                 gap: 5px;
             }
 
-            .knowledge-milo {
-                align-items: flex-start;
-            }
-
-            .milo-avatar {
-                width: 50px;
-                height: 50px;
-                flex-basis: 50px;
-                font-size: 25px;
-            }
-
             .knowledge-question {
                 font-size: 17px;
             }
@@ -720,6 +668,7 @@
 
         </div>
 
+
         <!-- =================================================
              HEADER
         ================================================== -->
@@ -741,33 +690,6 @@
 
         </div>
 
-        <!-- =================================================
-             MILO
-        ================================================== -->
-
-        <div
-            id="knowledgeMilo"
-            class="knowledge-milo">
-
-            <div class="milo-avatar">
-                🤖
-            </div>
-
-            <div class="milo-content">
-
-                <div class="milo-name">
-                    Milo · Study Assistant
-                </div>
-
-                <div
-                    id="miloMessage"
-                    class="milo-message">
-                    You've got this! Take your time and think carefully.
-                </div>
-
-            </div>
-
-        </div>
 
         <!-- =================================================
              LOADING
@@ -790,8 +712,9 @@
 
         </div>
 
+
         <!-- =================================================
-             USAGE / PREMIUM CONTROLS
+             KNOWLEDGE CHECK CONTROLS
         ================================================== -->
 
         <section
@@ -821,6 +744,7 @@
 
             </div>
 
+
             <!-- FREE USAGE -->
 
             <div
@@ -849,6 +773,7 @@
                 </div>
 
             </div>
+
 
             <!-- PREMIUM QUESTION COUNT -->
 
@@ -896,6 +821,7 @@
 
         </section>
 
+
         <!-- =================================================
              FREE LIMIT
         ================================================== -->
@@ -926,6 +852,7 @@
 
         </div>
 
+
         <!-- =================================================
              ERROR
         ================================================== -->
@@ -949,6 +876,7 @@
             </button>
 
         </div>
+
 
         <!-- =================================================
              KNOWLEDGE CONTENT
@@ -975,6 +903,7 @@
                 </div>
 
             </div>
+
 
             <!-- PROGRESS -->
 
@@ -1003,9 +932,11 @@
 
             </div>
 
+
             <!-- QUESTIONS -->
 
             <div id="knowledgeQuestions"></div>
+
 
             <!-- SUBMIT -->
 
@@ -1023,6 +954,7 @@
             </div>
 
         </main>
+
 
         <!-- =================================================
              RESULT
@@ -1050,22 +982,26 @@
 
             <p id="knowledgeResultText"></p>
 
-            <!-- REVIEW AREA -->
+
+            <!-- REVIEW -->
 
             <div
                 id="knowledgeReview"
-                class="knowledge-review"
-                style="display:none;">
+                class="knowledge-review">
 
                 <div class="knowledge-review-title">
                     Let's review your mistakes
                 </div>
 
-                <div id="knowledgeReviewItems"></div>
+                <div
+                    id="knowledgeReviewItems"
+                    class="knowledge-review-items">
+                </div>
 
             </div>
 
-            <!-- RESULT ACTIONS -->
+
+            <!-- ACTIONS -->
 
             <div class="knowledge-result-actions">
 
@@ -1080,6 +1016,17 @@
     </div>
 
 </div>
+
+
+<!-- =========================================================
+     MILO
+     
+     IMPORTANT:
+     Milo creates his own UI automatically through milo.js.
+     No duplicate Milo HTML is needed here.
+========================================================= -->
+
+<script src="milo.js"></script>
 
 <!-- =========================================================
      KNOWLEDGE CHECK ENGINE
