@@ -1,0 +1,181 @@
+/* =========================================================
+   MILO — STREAK CELEBRATION
+========================================================= */
+
+#miloStreakOverlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        rgba(20, 20, 50, .72);
+
+    backdrop-filter:
+        blur(8px);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        opacity .3s ease;
+}
+
+#miloStreakOverlay.show {
+    opacity: 1;
+
+    pointer-events: auto;
+}
+
+
+.milo-streak-card {
+    width: min(
+        430px,
+        calc(100vw - 30px)
+    );
+
+    padding: 42px 30px;
+
+    text-align: center;
+
+    border-radius: 32px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #f5f5ff
+        );
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.3);
+
+    transform:
+        scale(.75)
+        translateY(30px);
+
+    animation:
+        streakCardIn
+        .65s
+        cubic-bezier(.2,1.4,.4,1)
+        forwards;
+}
+
+
+@keyframes streakCardIn {
+
+    to {
+        transform:
+            scale(1)
+            translateY(0);
+    }
+
+}
+
+
+.milo-fire {
+    font-size: 90px;
+
+    line-height: 1;
+
+    animation:
+        fireRise
+        1s
+        ease-out
+        infinite alternate;
+}
+
+
+@keyframes fireRise {
+
+    from {
+        transform:
+            scale(.9)
+            translateY(8px);
+    }
+
+    to {
+        transform:
+            scale(1.08)
+            translateY(-5px);
+    }
+
+}
+
+
+.milo-streak-number {
+    margin-top: 5px;
+
+    font-size: 72px;
+
+    line-height: 1;
+
+    font-weight: 950;
+
+    color: #ff7a30;
+}
+
+
+.milo-streak-title {
+    margin-top: 8px;
+
+    font-size: 25px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+    color: #25233b;
+}
+
+
+.milo-streak-text {
+    margin-top: 14px;
+
+    color: #67677c;
+
+    font-size: 15px;
+}
+
+
+#miloStreakContinue {
+    margin-top: 25px;
+
+    padding: 13px 25px;
+
+    border: none;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #5b5ff0,
+            #7b4dff
+        );
+
+    color: white;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 25px rgba(91,95,240,.35);
+
+    transition:
+        transform .2s ease;
+}
+
+#miloStreakContinue:hover {
+    transform:
+        translateY(-3px);
+}
