@@ -1,0 +1,575 @@
+/* =========================================================
+   STUDYMIND AI — MILO COMPANION
+   Interactive Companion UI
+========================================================= */
+
+:root {
+    --milo-primary: #5b5ff0;
+    --milo-secondary: #7c5cff;
+    --milo-glow: rgba(91, 95, 240, .35);
+    --milo-success: #35c98b;
+    --milo-danger: #ff6678;
+    --milo-gold: #ffc857;
+}
+
+
+/* =========================================================
+   MILO CONTAINER
+========================================================= */
+
+.milo-container {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+
+    width: 330px;
+
+    z-index: 99990;
+
+    pointer-events: none;
+
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+/* =========================================================
+   MILO CHARACTER
+========================================================= */
+
+.milo-character {
+    width: 105px;
+    height: 105px;
+
+    margin-left: auto;
+
+    position: relative;
+
+    pointer-events: auto;
+
+    cursor: pointer;
+
+    animation:
+        miloFloat 3.5s ease-in-out infinite;
+
+    filter:
+        drop-shadow(
+            0 15px 25px rgba(0,0,0,.18)
+        );
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.milo-body {
+    width: 82px;
+    height: 82px;
+
+    border-radius: 38% 38% 45% 45%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #7378ff,
+            #4d51dc
+        );
+
+    position: absolute;
+
+    left: 12px;
+    top: 18px;
+
+    box-shadow:
+        inset 0 -8px 0 rgba(0,0,0,.08),
+        0 10px 25px rgba(75,80,220,.35);
+}
+
+
+/* =========================================================
+   EYES
+========================================================= */
+
+.milo-eye {
+    position: absolute;
+
+    width: 15px;
+    height: 19px;
+
+    background: white;
+
+    border-radius: 50%;
+
+    top: 36px;
+}
+
+.milo-eye::after {
+    content: "";
+
+    position: absolute;
+
+    width: 6px;
+    height: 8px;
+
+    background: #25284d;
+
+    border-radius: 50%;
+
+    left: 4px;
+    top: 5px;
+}
+
+.milo-eye.left {
+    left: 30px;
+}
+
+.milo-eye.right {
+    right: 30px;
+}
+
+
+/* =========================================================
+   MOUTH
+========================================================= */
+
+.milo-mouth {
+    position: absolute;
+
+    width: 25px;
+    height: 11px;
+
+    left: 29px;
+    top: 59px;
+
+    border-bottom:
+        4px solid white;
+
+    border-radius: 0 0 20px 20px;
+}
+
+
+/* =========================================================
+   ANTENNA
+========================================================= */
+
+.milo-antenna {
+    position: absolute;
+
+    width: 4px;
+    height: 20px;
+
+    background: #565ae8;
+
+    left: 50%;
+
+    top: 0;
+
+    transform:
+        translateX(-50%)
+        rotate(-7deg);
+}
+
+.milo-antenna::after {
+    content: "";
+
+    position: absolute;
+
+    width: 13px;
+    height: 13px;
+
+    border-radius: 50%;
+
+    background: var(--milo-gold);
+
+    left: -4px;
+    top: -8px;
+
+    box-shadow:
+        0 0 15px rgba(255,200,87,.8);
+}
+
+
+/* =========================================================
+   SPEECH BUBBLE
+========================================================= */
+
+.milo-bubble {
+    background: rgba(255,255,255,.97);
+
+    color: #20233a;
+
+    border-radius: 20px;
+
+    padding: 17px 18px;
+
+    margin-bottom: 8px;
+
+    box-shadow:
+        0 15px 40px rgba(20,25,60,.18);
+
+    border:
+        1px solid rgba(0,0,0,.06);
+
+    transform-origin:
+        bottom right;
+
+    animation:
+        miloBubbleIn .35s ease;
+
+    pointer-events: auto;
+}
+
+.dark .milo-bubble,
+body.dark .milo-bubble {
+    background: #20233a;
+    color: white;
+}
+
+.milo-name {
+    font-size: 13px;
+
+    font-weight: 800;
+
+    color: var(--milo-primary);
+
+    margin-bottom: 5px;
+}
+
+.milo-message {
+    font-size: 14px;
+
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   SPEECH BUTTONS
+========================================================= */
+
+.milo-actions {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 12px;
+
+    flex-wrap: wrap;
+}
+
+.milo-action {
+    border: none;
+
+    border-radius: 999px;
+
+    padding: 8px 13px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    background:
+        rgba(91,95,240,.1);
+
+    color:
+        var(--milo-primary);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.milo-action:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 5px 15px var(--milo-glow);
+}
+
+
+/* =========================================================
+   IDLE
+========================================================= */
+
+@keyframes miloFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0)
+            rotate(-1deg);
+    }
+
+    50% {
+        transform:
+            translateY(-9px)
+            rotate(1deg);
+    }
+
+}
+
+
+/* =========================================================
+   BUBBLE
+========================================================= */
+
+@keyframes miloBubbleIn {
+
+    from {
+        opacity: 0;
+        transform:
+            scale(.85)
+            translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            scale(1)
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   THINKING
+========================================================= */
+
+.milo-thinking .milo-body {
+    animation:
+        miloThink 1s ease-in-out infinite;
+}
+
+@keyframes miloThink {
+
+    0%,
+    100% {
+        transform:
+            rotate(-3deg);
+    }
+
+    50% {
+        transform:
+            rotate(3deg);
+    }
+
+}
+
+
+/* =========================================================
+   HAPPY
+========================================================= */
+
+.milo-happy .milo-body {
+    animation:
+        miloHappy .65s ease-in-out 2;
+}
+
+@keyframes miloHappy {
+
+    0% {
+        transform:
+            translateY(0)
+            rotate(0);
+    }
+
+    30% {
+        transform:
+            translateY(-20px)
+            rotate(-8deg);
+    }
+
+    60% {
+        transform:
+            translateY(0)
+            rotate(8deg);
+    }
+
+    100% {
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   EXCITED
+========================================================= */
+
+.milo-excited .milo-body {
+    animation:
+        miloExcited .5s ease-in-out 3;
+}
+
+@keyframes miloExcited {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform:
+            scale(1.13)
+            rotate(-6deg);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   SAD / WRONG
+========================================================= */
+
+.milo-wrong .milo-body {
+    animation:
+        miloWrong .45s ease-in-out 2;
+}
+
+@keyframes miloWrong {
+
+    0% {
+        transform:
+            translateX(0);
+    }
+
+    25% {
+        transform:
+            translateX(-9px)
+            rotate(-5deg);
+    }
+
+    50% {
+        transform:
+            translateX(9px)
+            rotate(5deg);
+    }
+
+    75% {
+        transform:
+            translateX(-6px);
+    }
+
+    100% {
+        transform:
+            translateX(0);
+    }
+
+}
+
+
+/* =========================================================
+   PUNCHED
+========================================================= */
+
+.milo-punched .milo-body {
+    animation:
+        miloPunched .7s ease-in-out;
+}
+
+@keyframes miloPunched {
+
+    0% {
+        transform:
+            translateX(0)
+            rotate(0);
+    }
+
+    20% {
+        transform:
+            translateX(-28px)
+            rotate(-20deg);
+    }
+
+    45% {
+        transform:
+            translateX(20px)
+            rotate(17deg);
+    }
+
+    70% {
+        transform:
+            translateX(-10px)
+            rotate(-8deg);
+    }
+
+    100% {
+        transform:
+            translateX(0)
+            rotate(0);
+    }
+
+}
+
+
+/* =========================================================
+   CELEBRATION
+========================================================= */
+
+.milo-celebrate .milo-body {
+    animation:
+        miloCelebrate .8s ease-in-out 3;
+}
+
+@keyframes miloCelebrate {
+
+    0% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+    30% {
+        transform:
+            translateY(-25px)
+            scale(1.1)
+            rotate(-8deg);
+    }
+
+    60% {
+        transform:
+            translateY(-5px)
+            scale(1.05)
+            rotate(8deg);
+    }
+
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .milo-container {
+        right: 12px;
+        bottom: 12px;
+        width: 285px;
+    }
+
+    .milo-character {
+        width: 85px;
+        height: 85px;
+    }
+
+}
