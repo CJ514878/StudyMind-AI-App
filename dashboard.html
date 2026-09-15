@@ -4,6 +4,7 @@
 
 <head>
 
+
 <meta charset="UTF-8">
 
 <meta
@@ -18,7 +19,9 @@
     href="dashboard.css"
 >
 
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
 </head>
 
@@ -26,10 +29,10 @@
 
 <aside class="sidebar">
 
+
 <div class="brand">
     StudyMind <span>AI</span>
 </div>
-
 
 <nav>
 
@@ -41,14 +44,10 @@
         Dashboard
     </a>
 
-
-    <!-- STUDY TIMER -->
-
     <a href="study-timer.html">
         <span>◷</span>
         Study Timer
     </a>
-
 
     <a href="schedule.html">
         <span>◷</span>
@@ -112,7 +111,6 @@
 
 </nav>
 
-
 <div class="sidebar-bottom">
 
     <a href="feedback.html">
@@ -129,9 +127,11 @@
 
 </div>
 
+
 </aside>
 
 <main class="dashboard">
+
 
 <header class="dashboard-header">
 
@@ -160,19 +160,28 @@
 
         <div class="xp-pill">
             <span>⚡</span>
+
             <strong id="headerXP">
                 0 XP
             </strong>
         </div>
 
+
         <div class="streak-pill">
+
             🔥
+
             <strong id="headerStreak">
                 0
             </strong>
+
         </div>
 
-        <div class="avatar" id="avatar">
+
+        <div
+            class="avatar"
+            id="avatar"
+        >
             S
         </div>
 
@@ -180,6 +189,10 @@
 
 </header>
 
+
+<!-- =====================================================
+     STATS
+====================================================== -->
 
 <section class="stats-grid">
 
@@ -253,10 +266,16 @@
 </section>
 
 
+<!-- =====================================================
+     MAIN DASHBOARD GRID
+====================================================== -->
+
 <section class="dashboard-grid">
 
 
-    <!-- TODAY -->
+    <!-- =================================================
+         TODAY'S STUDY PLAN
+    ================================================== -->
 
     <article class="panel today-panel">
 
@@ -274,9 +293,11 @@
 
             </div>
 
+
             <button
                 id="refreshPlan"
                 class="small-button"
+                type="button"
             >
                 Rebalance
             </button>
@@ -295,7 +316,9 @@
     </article>
 
 
-    <!-- STUDY TIMER -->
+    <!-- =================================================
+         SHARED STUDY TIMER
+    ================================================== -->
 
     <article class="panel timer-panel">
 
@@ -312,6 +335,7 @@
                 </h2>
 
             </div>
+
 
             <a
                 href="study-timer.html"
@@ -395,7 +419,9 @@
     </article>
 
 
-    <!-- AI INSIGHT -->
+    <!-- =================================================
+         AI RECOMMENDATION
+    ================================================== -->
 
     <article class="panel ai-panel">
 
@@ -416,6 +442,7 @@
         </p>
 
         <button
+            type="button"
             class="panel-button"
             onclick="location.href='ai-assistant.html'"
         >
@@ -425,7 +452,9 @@
     </article>
 
 
-    <!-- EXAMS -->
+    <!-- =================================================
+         UPCOMING EXAMS
+    ================================================== -->
 
     <article class="panel">
 
@@ -443,6 +472,7 @@
 
             </div>
 
+
             <a
                 href="schedule.html"
                 class="text-link"
@@ -452,6 +482,7 @@
 
         </div>
 
+
         <div id="examList">
             Loading...
         </div>
@@ -459,7 +490,9 @@
     </article>
 
 
-    <!-- QUESTS -->
+    <!-- =================================================
+         DAILY QUESTS
+    ================================================== -->
 
     <article class="panel">
 
@@ -479,6 +512,7 @@
 
         </div>
 
+
         <div id="dailyQuests">
             Loading today's quests...
         </div>
@@ -486,7 +520,9 @@
     </article>
 
 
-    <!-- XP -->
+    <!-- =================================================
+         XP JOURNEY
+    ================================================== -->
 
     <article class="panel xp-panel">
 
@@ -504,6 +540,7 @@
 
             </div>
 
+
             <a
                 href="rewards.html"
                 class="text-link"
@@ -513,15 +550,22 @@
 
         </div>
 
+
         <div class="level-number">
+
             <span id="level">
                 1
             </span>
+
         </div>
 
+
         <div class="level-progress">
+
             <span id="levelProgress"></span>
+
         </div>
+
 
         <p id="levelText">
             0 / 100 XP to Level 2
@@ -530,7 +574,9 @@
     </article>
 
 
-    <!-- QUICK ACTIONS -->
+    <!-- =================================================
+         QUICK ACTIONS
+    ================================================== -->
 
     <article class="panel">
 
@@ -555,22 +601,33 @@
 
             <a href="ai-support.html">
                 ✦
-                <span>Ask AI</span>
+                <span>
+                    Ask AI
+                </span>
             </a>
+
 
             <a href="summarizer.html">
                 📄
-                <span>Summarize</span>
+                <span>
+                    Summarize
+                </span>
             </a>
+
 
             <a href="game-mode.html">
                 ⚔
-                <span>Battle</span>
+                <span>
+                    Battle
+                </span>
             </a>
+
 
             <a href="streak.html">
                 🔥
-                <span>Streak</span>
+                <span>
+                    Streak
+                </span>
             </a>
 
         </div>
@@ -579,9 +636,29 @@
 
 </section>
 
+
 </main>
+
+<!-- =========================================================
+     STUDYMIND SHARED SERVICES
+========================================================= -->
+
+<!-- Shared Supabase client -->
+
+<script src="supabase.js"></script>
+
+<!-- Streak engine -->
+
+<script src="streak.js"></script>
+
+<!-- Optional Milo assistant -->
+
+<script src="milo.js"></script>
+
+<!-- Dashboard controller -->
 
 <script src="dashboard.js"></script>
 
 </body>
+
 </html>
