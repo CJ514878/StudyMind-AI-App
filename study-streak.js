@@ -1,7 +1,7 @@
 /* =========================================================
    STUDYMIND AI — STUDY STREAK ENGINE
    COMPLETE REPLACEMENT
-========================================================= */
+   ========================================================= */
 
 "use strict";
 
@@ -22,7 +22,13 @@ const STREAK_KEYS = {
         "studyMindLongestStreak",
 
     CURRENT:
-        "studyMindCurrentStreak",
+        "studyMindStreak",
+
+    LAST_COMPLETED:
+        "studyMindLastCompletedPlanDate",
+
+    PLAN:
+        "studyMindPlan",
 
     USERNAME:
         "studyMindUsername",
@@ -49,17 +55,15 @@ let previousCurrentStreak = 0;
 ========================================================= */
 
 function $(id) {
-
     return document.getElementById(id);
-
 }
 
 
 function todayKey() {
 
-    const date = new Date();
-
-    return formatDate(date);
+    return formatDate(
+        new Date()
+    );
 
 }
 
@@ -126,10 +130,7 @@ function loadJSON(key, fallback) {
             return fallback;
         }
 
-        const parsed =
-            JSON.parse(value);
-
-        return parsed;
+        return JSON.parse(value);
 
     } catch {
 
@@ -152,7 +153,7 @@ function saveJSON(key, value) {
     } catch (error) {
 
         console.warn(
-            "Could not save streak data:",
+            "StudyMind: Could not save streak data:",
             error
         );
 
@@ -162,45 +163,701 @@ function saveJSON(key, value) {
 
 
 /* =========================================================
-   NORMALIZE ACTIVITY
+   PLAN
 ========================================================= */
 
-function loadActivity() {
+function getStudyPlan() {
+
+    return loadJSON(
+        STREAK_KEYS.PLAN,
+        null
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZE COMPLETED TOPICS
+========================================================= */
+
+function getCompletedTopicKeys() {
 
     const stored =
         loadJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
+            STREAK_KEYS.COMPLETED,
+            []
         );
 
 
-    if (
-        stored &&
-        typeof stored === "object" &&
-        !Array.isArray(stored)
-    ) {
+    if (!Array.isArray(stored)) {
+        return new Set();
+    }
 
-        activity = {};
 
-        Object.keys(stored).forEach(key => {
+    const completed =
+        new Set();
+
+
+    stored.forEach(item => {
+
+        if (
+            typeof item === "string"
+        ) {
+
+            const value =
+                item.trim();
+
+            if (!value) return;
+
+            completed.add(value);
+
+
+            /*
+               Support:
+               Subject::Topic
+            */
 
             if (
-                /^\d{4}-\d{2}-\d{2}$/.test(key) &&
-                stored[key]
+                value.includes("::")
             ) {
 
-                activity[key] = true;
+                const parts =
+                    value.split("::");
+
+                const topic =
+                    parts
+                        .slice(1)
+                        .join("::")
+                        .trim();
+
+                if (topic) {
+                    completed.add(topic);
+                }
 
             }
 
-        });
+            return;
 
-        return;
+        }
+
+
+        if (
+            item &&
+            typeof item === "object"
+        ) {
+
+            const subject =
+                String(
+                    item.subject ||
+                    item.subjectName ||
+                    ""
+                ).trim();
+
+            const topic =
+                String(
+                    item.topic ||
+                    item.name ||
+                    item.title ||
+                    ""
+                ).trim();
+
+
+            if (topic) {
+                completed.add(topic);
+            }
+
+
+            if (
+                subject &&
+                topic
+            ) {
+
+                completed.add(
+                    `${subject}::${topic}`
+                );
+
+            }
+
+        }
+
+    });
+
+
+    return completed;
+
+}
+
+
+/* =========================================================
+   GET ALL PLAN TOPICS
+========================================================= */
+
+function getAllStudyTopics() {
+
+    const plan =
+        getStudyPlan();
+
+
+    if (!plan) {
+        return [];
+    }
+
+
+    const topics = [];
+
+
+    /*
+       Flat topics
+    */
+
+    if (
+        Array.isArray(
+            plan.topics
+        )
+    ) {
+
+        plan.topics.forEach(
+            (topic, index) => {
+
+                if (
+                    typeof topic === "string"
+                ) {
+
+                    topics.push({
+                        id:
+                            String(index + 1),
+
+                        subject:
+                            "",
+
+                        name:
+                            topic
+                    });
+
+                } else if (
+                    topic &&
+                    typeof topic === "object"
+                ) {
+
+                    topics.push({
+                        id:
+                            String(
+                                topic.id ||
+                                index + 1
+                            ),
+
+                        subject:
+                            String(
+                                topic.subject ||
+                                topic.subjectName ||
+                                ""
+                            ).trim(),
+
+                        name:
+                            String(
+                                topic.name ||
+                                topic.topic ||
+                                topic.title ||
+                                ""
+                            ).trim()
+                    });
+
+                }
+
+            }
+        );
 
     }
 
 
-    activity = {};
+    /*
+       Subject-based plan
+    */
+
+    if (
+        Array.isArray(
+            plan.subjects
+        )
+    ) {
+
+        plan.subjects.forEach(
+            subject => {
+
+                if (!subject) return;
+
+
+                const subjectName =
+                    String(
+                        subject.name ||
+                        subject.subject ||
+                        subject.subjectName ||
+                        ""
+                    ).trim();
+
+
+                if (
+                    !Array.isArray(
+                        subject.topics
+                    )
+                ) {
+                    return;
+                }
+
+
+                subject.topics.forEach(
+                    (topic, index) => {
+
+                        if (
+                            typeof topic === "string"
+                        ) {
+
+                            topics.push({
+
+                                id:
+                                    `${subjectName}-${index + 1}`,
+
+                                subject:
+                                    subjectName,
+
+                                name:
+                                    topic.trim()
+
+                            });
+
+                        } else if (
+                            topic &&
+                            typeof topic === "object"
+                        ) {
+
+                            topics.push({
+
+                                id:
+                                    String(
+                                        topic.id ||
+                                        `${subjectName}-${index + 1}`
+                                    ),
+
+                                subject:
+                                    String(
+                                        topic.subject ||
+                                        subjectName
+                                    ).trim(),
+
+                                name:
+                                    String(
+                                        topic.name ||
+                                        topic.topic ||
+                                        topic.title ||
+                                        ""
+                                    ).trim()
+
+                            });
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+       Remove duplicates
+    */
+
+    const unique = [];
+
+    const seen = new Set();
+
+
+    topics.forEach(topic => {
+
+        if (!topic.name) return;
+
+
+        const key =
+            topic.subject
+                ? `${topic.subject}::${topic.name}`
+                : topic.name;
+
+
+        if (
+            seen.has(key)
+        ) {
+            return;
+        }
+
+
+        seen.add(key);
+
+        unique.push({
+            ...topic,
+            key
+        });
+
+    });
+
+
+    return unique;
+
+}
+
+
+/* =========================================================
+   GET TODAY'S SCHEDULE
+========================================================= */
+
+function getTodaySchedule() {
+
+    const plan =
+        getStudyPlan();
+
+
+    if (!plan) {
+        return [];
+    }
+
+
+    const today =
+        todayKey();
+
+
+    /*
+       Current StudyMind schedule format:
+       plan.schedule = [
+           {
+               date,
+               dayType,
+               sessions: [...]
+           }
+       ]
+    */
+
+    if (
+        Array.isArray(
+            plan.schedule
+        )
+    ) {
+
+        const day =
+            plan.schedule.find(
+                item =>
+                    String(
+                        item?.date || ""
+                    ).slice(0, 10) === today
+            );
+
+
+        if (
+            !day ||
+            !Array.isArray(
+                day.sessions
+            )
+        ) {
+
+            return [];
+
+        }
+
+
+        return day.sessions.filter(
+            session => {
+
+                if (!session) {
+                    return false;
+                }
+
+
+                const type =
+                    String(
+                        session.type ||
+                        ""
+                    ).toLowerCase();
+
+
+                /*
+                   Breaks and rest sessions
+                   are not required study topics.
+                */
+
+                if (
+                    type === "break" ||
+                    type === "rest" ||
+                    type === "breakday" ||
+                    type === "restday"
+                ) {
+
+                    return false;
+
+                }
+
+
+                return Boolean(
+                    session.topic ||
+                    session.name
+                );
+
+            }
+        );
+
+    }
+
+
+    return [];
+
+}
+
+
+/* =========================================================
+   GET TODAY'S REQUIRED TOPICS
+========================================================= */
+
+function getTodaysRequiredTopics() {
+
+    const sessions =
+        getTodaySchedule();
+
+
+    const topics = [];
+
+
+    sessions.forEach(
+        session => {
+
+            const subject =
+                String(
+                    session.subject ||
+                    session.subjectName ||
+                    ""
+                ).trim();
+
+
+            const topic =
+                String(
+                    session.topic ||
+                    session.name ||
+                    session.title ||
+                    ""
+                ).trim();
+
+
+            if (!topic) {
+                return;
+            }
+
+
+            topics.push({
+
+                subject,
+
+                name:
+                    topic,
+
+                key:
+                    subject
+                        ? `${subject}::${topic}`
+                        : topic
+
+            });
+
+        }
+    );
+
+
+    /*
+       Remove duplicates
+    */
+
+    const unique = [];
+
+    const seen = new Set();
+
+
+    topics.forEach(topic => {
+
+        if (
+            seen.has(topic.key)
+        ) {
+            return;
+        }
+
+
+        seen.add(topic.key);
+
+        unique.push(topic);
+
+    });
+
+
+    return unique;
+
+}
+
+
+/* =========================================================
+   CHECK TODAY'S COMPLETION
+========================================================= */
+
+function checkTodayCompletion() {
+
+    const required =
+        getTodaysRequiredTopics();
+
+
+    /*
+       If the schedule exists but today has
+       no study topics, do not automatically
+       award a streak day.
+    */
+
+    if (!required.length) {
+
+        console.log(
+            "StudyMind streak: no required study topics scheduled today."
+        );
+
+        return false;
+
+    }
+
+
+    const completed =
+        getCompletedTopicKeys();
+
+
+    let completedCount = 0;
+
+
+    required.forEach(topic => {
+
+        const matches =
+            completed.has(topic.key) ||
+            completed.has(topic.name);
+
+
+        if (matches) {
+            completedCount++;
+        }
+
+    });
+
+
+    const total =
+        required.length;
+
+
+    const progress =
+        Math.round(
+            (completedCount / total) * 100
+        );
+
+
+    console.log(
+        "StudyMind daily completion:",
+        {
+            completedCount,
+            total,
+            progress,
+            requiredTopics: required,
+            completedTopics: [...completed]
+        }
+    );
+
+
+    if (
+        completedCount < total
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+       Today is fully completed.
+    */
+
+    recordCompletedStudyDay();
+
+    return true;
+
+}
+
+
+/* =========================================================
+   RECORD COMPLETED STUDY DAY
+========================================================= */
+
+function recordCompletedStudyDay() {
+
+    loadActivity();
+
+
+    const key =
+        todayKey();
+
+
+    /*
+       Prevent duplicate recording.
+    */
+
+    if (
+        activity[key] === true
+    ) {
+
+        recalculateStreaks();
+
+        return false;
+
+    }
+
+
+    activity[key] = true;
+
+
+    saveJSON(
+        STREAK_KEYS.ACTIVITY,
+        activity
+    );
+
+
+    localStorage.setItem(
+        STREAK_KEYS.LAST_COMPLETED,
+        key
+    );
+
+
+    const result =
+        recalculateStreaks();
+
+
+    console.log(
+        "StudyMind: study day completed.",
+        result
+    );
+
+
+    /*
+       Refresh UI.
+    */
+
+    refreshPageData();
+
+
+    /*
+       Celebration only happens when
+       the streak actually increases.
+    */
+
+    showDailyCompletionCelebration(
+        result.current
+    );
+
+
+    return true;
 
 }
 
@@ -210,39 +867,25 @@ function loadActivity() {
 ========================================================= */
 
 /*
-   This function is intentionally exposed globally.
+   Kept for compatibility with the Study Session page.
 
-   Study Session should call:
+   IMPORTANT:
+   It no longer immediately marks a day
+   as complete.
 
-   window.StudyMindStreak.recordStudyActivity();
-
-   It records the day ONLY when a real study
-   session/topic has been completed.
+   Instead it checks whether ALL topics
+   scheduled for today are complete.
 */
 
 function recordStudyActivity() {
 
-    loadActivity();
-
-    const key =
-        todayKey();
-
-    activity[key] = true;
-
-    saveJSON(
-        STREAK_KEYS.ACTIVITY,
-        activity
-    );
-
-    recalculateStreaks();
-
-    return true;
+    return checkTodayCompletion();
 
 }
 
 
 /* =========================================================
-   RECALCULATE STREAK
+   RECALCULATE CURRENT STREAK
 ========================================================= */
 
 function calculateCurrentStreak() {
@@ -261,18 +904,13 @@ function calculateCurrentStreak() {
 
 
     /*
-       If the student has not studied today,
-       the current active streak is allowed to
-       continue from yesterday.
-
-       This means the streak does NOT instantly
-       become zero at midnight.
-
-       It becomes broken once there is a missed
-       study day.
+       If today is not complete,
+       continue checking from yesterday.
     */
 
-    if (!hasActivity(cursor)) {
+    if (
+        !hasActivity(cursor)
+    ) {
 
         cursor.setDate(
             cursor.getDate() - 1
@@ -281,9 +919,12 @@ function calculateCurrentStreak() {
     }
 
 
-    while (hasActivity(cursor)) {
+    while (
+        hasActivity(cursor)
+    ) {
 
         count++;
+
 
         cursor.setDate(
             cursor.getDate() - 1
@@ -307,7 +948,7 @@ function hasActivity(date) {
 
 
 /* =========================================================
-   BEST STREAK
+   LONGEST STREAK
 ========================================================= */
 
 function calculateLongestStreak() {
@@ -315,7 +956,8 @@ function calculateLongestStreak() {
     const dates =
         Object.keys(activity)
             .filter(
-                key => activity[key] === true
+                key =>
+                    activity[key] === true
             )
             .sort();
 
@@ -341,6 +983,7 @@ function calculateLongestStreak() {
                 dates[i - 1]
             );
 
+
         const currentDate =
             parseDate(
                 dates[i]
@@ -359,7 +1002,9 @@ function calculateLongestStreak() {
             );
 
 
-        if (difference === 1) {
+        if (
+            difference === 1
+        ) {
 
             current++;
 
@@ -384,10 +1029,15 @@ function calculateLongestStreak() {
 }
 
 
+/* =========================================================
+   RECALCULATE STREAKS
+========================================================= */
+
 function recalculateStreaks() {
 
     const current =
         calculateCurrentStreak();
+
 
     const longest =
         calculateLongestStreak();
@@ -426,8 +1076,12 @@ function getCompletedTopicCount() {
         );
 
 
-    if (!Array.isArray(completed)) {
+    if (
+        !Array.isArray(completed)
+    ) {
+
         return 0;
+
     }
 
 
@@ -461,17 +1115,21 @@ function getMonday(date) {
     const result =
         startOfDay(date);
 
+
     const day =
         result.getDay();
+
 
     const difference =
         day === 0
             ? -6
             : 1 - day;
 
+
     result.setDate(
         result.getDate() + difference
     );
+
 
     return result;
 
@@ -498,9 +1156,11 @@ function getCurrentWeek() {
         const date =
             new Date(monday);
 
+
         date.setDate(
             monday.getDate() + i
         );
+
 
         days.push(date);
 
@@ -529,7 +1189,8 @@ function getBestWeek() {
     const dates =
         Object.keys(activity)
             .filter(
-                key => activity[key]
+                key =>
+                    activity[key]
             )
             .sort();
 
@@ -547,11 +1208,14 @@ function getBestWeek() {
         const date =
             parseDate(key);
 
+
         const monday =
             getMonday(date);
 
+
         const weekKey =
             formatDate(monday);
+
 
         weeks[weekKey] =
             (weeks[weekKey] || 0) + 1;
@@ -580,15 +1244,20 @@ function loadUser() {
         || "Student";
 
 
-    if ($("usernameDisplay")) {
+    if (
+        $("usernameDisplay")
+    ) {
 
         $("usernameDisplay")
-            .textContent = name;
+            .textContent =
+            name;
 
     }
 
 
-    if ($("userAvatar")) {
+    if (
+        $("userAvatar")
+    ) {
 
         $("userAvatar")
             .textContent =
@@ -610,14 +1279,18 @@ function renderHero() {
     const result =
         recalculateStreaks();
 
+
     const current =
         result.current;
+
 
     const longest =
         result.longest;
 
 
-    if ($("currentStreak")) {
+    if (
+        $("currentStreak")
+    ) {
 
         $("currentStreak")
             .textContent =
@@ -626,7 +1299,9 @@ function renderHero() {
     }
 
 
-    if ($("bestStreak")) {
+    if (
+        $("bestStreak")
+    ) {
 
         $("bestStreak")
             .textContent =
@@ -635,7 +1310,9 @@ function renderHero() {
     }
 
 
-    if ($("totalStudyDays")) {
+    if (
+        $("totalStudyDays")
+    ) {
 
         $("totalStudyDays")
             .textContent =
@@ -647,22 +1324,30 @@ function renderHero() {
     let message;
 
 
-    if (current === 0) {
+    if (
+        current === 0
+    ) {
 
         message =
-            "Complete a study topic to start your streak.";
+            "Complete all of today's assigned topics to start your streak.";
 
-    } else if (current === 1) {
+    } else if (
+        current === 1
+    ) {
 
         message =
-            "Great start. Come back tomorrow to make it 2 days!";
+            "Great start. Complete tomorrow's topics to make it 2 days!";
 
-    } else if (current < 7) {
+    } else if (
+        current < 7
+    ) {
 
         message =
             `You're on a ${current}-day streak. Keep the momentum going!`;
 
-    } else if (current < 30) {
+    } else if (
+        current < 30
+    ) {
 
         message =
             `${current} days strong. You're building a serious habit!`;
@@ -675,7 +1360,9 @@ function renderHero() {
     }
 
 
-    if ($("streakMessage")) {
+    if (
+        $("streakMessage")
+    ) {
 
         $("streakMessage")
             .textContent =
@@ -695,19 +1382,24 @@ function renderStats() {
     const topics =
         getCompletedTopicCount();
 
+
     const weekly =
         getWeeklyStudyDays();
+
 
     const consistency =
         Math.round(
             (weekly / 7) * 100
         );
 
+
     const bestWeek =
         getBestWeek();
 
 
-    if ($("topicsCompleted")) {
+    if (
+        $("topicsCompleted")
+    ) {
 
         $("topicsCompleted")
             .textContent =
@@ -716,7 +1408,9 @@ function renderStats() {
     }
 
 
-    if ($("weeklyDays")) {
+    if (
+        $("weeklyDays")
+    ) {
 
         $("weeklyDays")
             .textContent =
@@ -725,7 +1419,9 @@ function renderStats() {
     }
 
 
-    if ($("weeklyConsistency")) {
+    if (
+        $("weeklyConsistency")
+    ) {
 
         $("weeklyConsistency")
             .textContent =
@@ -734,7 +1430,9 @@ function renderStats() {
     }
 
 
-    if ($("bestWeek")) {
+    if (
+        $("bestWeek")
+    ) {
 
         $("bestWeek")
             .textContent =
@@ -754,15 +1452,20 @@ function renderToday() {
     const today =
         todayKey();
 
+
     const studied =
         activity[today] === true;
 
 
     const progress =
-        studied ? 100 : 0;
+        studied
+            ? 100
+            : calculateTodayProgress();
 
 
-    if ($("todayProgress")) {
+    if (
+        $("todayProgress")
+    ) {
 
         $("todayProgress")
             .style.width =
@@ -771,13 +1474,16 @@ function renderToday() {
     }
 
 
-    if ($("todayIcon")) {
+    if (
+        $("todayIcon")
+    ) {
 
         $("todayIcon")
             .textContent =
             studied
                 ? "✓"
                 : "○";
+
 
         $("todayIcon")
             .classList.toggle(
@@ -788,40 +1494,149 @@ function renderToday() {
     }
 
 
-    if ($("todayStatus")) {
-
+    if (
         $("todayStatus")
-            .innerHTML =
-            studied
-                ? `
+    ) {
+
+        if (studied) {
+
+            $("todayStatus")
+                .innerHTML =
+                `
                     <strong>Study day complete ✓</strong>
                     <span>
-                        You've done enough to count today.
+                        You've completed all of today's assigned topics.
                         Your streak is protected.
                     </span>
-                  `
-                : `
-                    <strong>No study activity yet</strong>
-                    <span>
-                        Complete a topic to protect your streak.
-                    </span>
-                  `;
+                `;
+
+        } else {
+
+            const progressData =
+                getTodayProgressData();
+
+
+            if (
+                progressData.total === 0
+            ) {
+
+                $("todayStatus")
+                    .innerHTML =
+                    `
+                        <strong>No study schedule today</strong>
+                        <span>
+                            There are no required study topics scheduled for today.
+                        </span>
+                    `;
+
+            } else {
+
+                $("todayStatus")
+                    .innerHTML =
+                    `
+                        <strong>
+                            ${progressData.completed}
+                            / 
+                            ${progressData.total}
+                            topics completed
+                        </strong>
+                        <span>
+                            Complete every assigned topic to protect your streak.
+                        </span>
+                    `;
+
+            }
+
+        }
 
     }
 
 
-    if ($("todayCaption")) {
+    if (
+        $("todayCaption")
+    ) {
 
         $("todayCaption")
             .textContent =
             studied
-                ? "1 study day recorded today"
-                : "0 study activity today";
+                ? "Today's study requirements are complete ✓"
+                : `${calculateTodayProgress()}% of today's study requirements completed`;
 
     }
 
 
-    renderMotivation(studied);
+    renderMotivation(
+        studied
+    );
+
+}
+
+
+/* =========================================================
+   TODAY PROGRESS
+========================================================= */
+
+function getTodayProgressData() {
+
+    const required =
+        getTodaysRequiredTopics();
+
+
+    const completed =
+        getCompletedTopicKeys();
+
+
+    let completedCount = 0;
+
+
+    required.forEach(topic => {
+
+        if (
+            completed.has(topic.key) ||
+            completed.has(topic.name)
+        ) {
+
+            completedCount++;
+
+        }
+
+    });
+
+
+    return {
+
+        completed:
+            completedCount,
+
+        total:
+            required.length
+
+    };
+
+}
+
+
+function calculateTodayProgress() {
+
+    const data =
+        getTodayProgressData();
+
+
+    if (
+        data.total === 0
+    ) {
+
+        return 0;
+
+    }
+
+
+    return Math.round(
+        (
+            data.completed /
+            data.total
+        ) * 100
+    );
 
 }
 
@@ -841,6 +1656,7 @@ function renderMotivation(studied) {
 
 
     let title;
+
     let text;
 
 
@@ -849,29 +1665,36 @@ function renderMotivation(studied) {
         title =
             "Streak protected 🔥";
 
-        text =
-            "Excellent work. You have already completed today's study activity.";
 
-    } else if (current === 0) {
+        text =
+            "Excellent work. You've completed every topic assigned for today.";
+
+    } else if (
+        current === 0
+    ) {
 
         title =
             "Start your streak";
 
+
         text =
-            "Your first completed topic will create your first study day.";
+            "Complete all of today's assigned topics to create your first study day.";
 
     } else {
 
         title =
             "Don't break the chain";
 
+
         text =
-            `Your ${current}-day streak is waiting for today's study session.`;
+            `Your ${current}-day streak is waiting for today's study requirements.`;
 
     }
 
 
-    if ($("motivationTitle")) {
+    if (
+        $("motivationTitle")
+    ) {
 
         $("motivationTitle")
             .textContent =
@@ -880,7 +1703,9 @@ function renderMotivation(studied) {
     }
 
 
-    if ($("motivationText")) {
+    if (
+        $("motivationText")
+    ) {
 
         $("motivationText")
             .textContent =
@@ -900,6 +1725,7 @@ function renderCalendar() {
     const year =
         calendarDate.getFullYear();
 
+
     const month =
         calendarDate.getMonth();
 
@@ -914,7 +1740,9 @@ function renderCalendar() {
         );
 
 
-    if ($("calendarMonth")) {
+    if (
+        $("calendarMonth")
+    ) {
 
         $("calendarMonth")
             .textContent =
@@ -926,7 +1754,10 @@ function renderCalendar() {
     const grid =
         $("calendarGrid");
 
-    if (!grid) return;
+
+    if (!grid) {
+        return;
+    }
 
 
     grid.innerHTML = "";
@@ -939,11 +1770,6 @@ function renderCalendar() {
             1
         );
 
-
-    /*
-       Convert Sunday-based JS day
-       into Monday-based calendar index.
-    */
 
     const start =
         firstDay.getDay() === 0
@@ -966,12 +1792,18 @@ function renderCalendar() {
     ) {
 
         const empty =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         empty.className =
             "calendar-day empty";
 
-        grid.appendChild(empty);
+
+        grid.appendChild(
+            empty
+        );
 
     }
 
@@ -999,14 +1831,18 @@ function renderCalendar() {
 
 
         const cell =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         cell.className =
             "calendar-day";
 
 
-        if (key === today) {
+        if (
+            key === today
+        ) {
 
             cell.classList.add(
                 "today"
@@ -1015,11 +1851,14 @@ function renderCalendar() {
         }
 
 
-        if (activity[key]) {
+        if (
+            activity[key]
+        ) {
 
             cell.classList.add(
                 "studied"
             );
+
 
             cell.innerHTML =
                 `
@@ -1035,7 +1874,9 @@ function renderCalendar() {
         }
 
 
-        grid.appendChild(cell);
+        grid.appendChild(
+            cell
+        );
 
     }
 
@@ -1057,6 +1898,7 @@ function setupCalendarControls() {
                     calendarDate.getMonth() - 1
                 );
 
+
                 renderCalendar();
 
             }
@@ -1071,6 +1913,7 @@ function setupCalendarControls() {
                 calendarDate.setMonth(
                     calendarDate.getMonth() + 1
                 );
+
 
                 renderCalendar();
 
@@ -1089,7 +1932,10 @@ function renderWeeklyBars() {
     const container =
         $("weeklyBars");
 
-    if (!container) return;
+
+    if (!container) {
+        return;
+    }
 
 
     container.innerHTML = "";
@@ -1100,15 +1946,22 @@ function renderWeeklyBars() {
 
 
     const names =
-        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        ];
 
 
     const today =
         todayKey();
 
 
-    let total =
-        0;
+    let total = 0;
 
 
     week.forEach(
@@ -1116,6 +1969,7 @@ function renderWeeklyBars() {
 
             const key =
                 formatDate(date);
+
 
             const studied =
                 activity[key] === true;
@@ -1131,6 +1985,7 @@ function renderWeeklyBars() {
                     "div"
                 );
 
+
             day.className =
                 "week-day";
 
@@ -1139,6 +1994,7 @@ function renderWeeklyBars() {
                 document.createElement(
                     "div"
                 );
+
 
             wrapper.className =
                 "week-bar-wrapper";
@@ -1149,6 +2005,7 @@ function renderWeeklyBars() {
                     "div"
                 );
 
+
             bar.className =
                 "week-bar";
 
@@ -1158,6 +2015,7 @@ function renderWeeklyBars() {
                 bar.classList.add(
                     "active"
                 );
+
 
                 bar.style.height =
                     "100%";
@@ -1170,7 +2028,9 @@ function renderWeeklyBars() {
             }
 
 
-            if (key === today) {
+            if (
+                key === today
+            ) {
 
                 bar.classList.add(
                     "today"
@@ -1179,7 +2039,9 @@ function renderWeeklyBars() {
             }
 
 
-            wrapper.appendChild(bar);
+            wrapper.appendChild(
+                bar
+            );
 
 
             const label =
@@ -1187,8 +2049,10 @@ function renderWeeklyBars() {
                     "span"
                 );
 
+
             label.className =
                 "week-label";
+
 
             label.textContent =
                 names[index];
@@ -1199,20 +2063,26 @@ function renderWeeklyBars() {
                     "span"
                 );
 
+
             number.className =
                 "week-number";
 
+
             number.textContent =
-                studied ? "✓" : "—";
+                studied
+                    ? "✓"
+                    : "—";
 
 
             day.appendChild(
                 wrapper
             );
 
+
             day.appendChild(
                 label
             );
+
 
             day.appendChild(
                 number
@@ -1230,11 +2100,14 @@ function renderWeeklyBars() {
     const first =
         week[0];
 
+
     const last =
         week[6];
 
 
-    if ($("weekRange")) {
+    if (
+        $("weekRange")
+    ) {
 
         $("weekRange")
             .textContent =
@@ -1266,6 +2139,7 @@ function checkForStreakUpdate() {
     const result =
         recalculateStreaks();
 
+
     const current =
         result.current;
 
@@ -1288,16 +2162,19 @@ function checkForStreakUpdate() {
 }
 
 
-function showCelebration(streak) {
+function showDailyCompletionCelebration(streak) {
 
     const overlay =
         $("celebrationOverlay");
+
 
     const text =
         $("celebrationText");
 
 
-    if (!overlay) return;
+    if (!overlay) {
+        return;
+    }
 
 
     if (text) {
@@ -1310,6 +2187,15 @@ function showCelebration(streak) {
 
     overlay.classList.add(
         "show"
+    );
+
+}
+
+
+function showCelebration(streak) {
+
+    showDailyCompletionCelebration(
+        streak
     );
 
 }
@@ -1333,11 +2219,15 @@ function applyTheme(theme) {
     let dark = false;
 
 
-    if (theme === "dark") {
+    if (
+        theme === "dark"
+    ) {
 
         dark = true;
 
-    } else if (theme === "system") {
+    } else if (
+        theme === "system"
+    ) {
 
         dark =
             window.matchMedia?.(
@@ -1353,16 +2243,22 @@ function applyTheme(theme) {
     );
 
 
-    if ($("themeIcon")) {
+    if (
+        $("themeIcon")
+    ) {
 
         $("themeIcon")
             .textContent =
-            dark ? "☀️" : "🌙";
+            dark
+                ? "☀️"
+                : "🌙";
 
     }
 
 
-    if ($("themeText")) {
+    if (
+        $("themeText")
+    ) {
 
         $("themeText")
             .textContent =
@@ -1429,6 +2325,7 @@ function setupTheme() {
                         STREAK_KEYS.THEME
                     );
 
+
                 if (
                     saved === "system"
                 ) {
@@ -1458,7 +2355,9 @@ function setupMobileMenu() {
 
                 $("sidebar")
                     ?.classList
-                    .toggle("open");
+                    .toggle(
+                        "open"
+                    );
 
             }
         );
@@ -1498,7 +2397,7 @@ function setupLogout() {
                 } catch (error) {
 
                     console.warn(
-                        "Logout error:",
+                        "StudyMind logout error:",
                         error
                     );
 
@@ -1522,13 +2421,18 @@ function refreshPageData() {
 
     loadActivity();
 
+
     renderHero();
+
 
     renderStats();
 
+
     renderToday();
 
+
     renderCalendar();
+
 
     renderWeeklyBars();
 
@@ -1545,6 +2449,9 @@ window.addEventListener(
             ||
             event.key ===
             STREAK_KEYS.COMPLETED
+            ||
+            event.key ===
+            STREAK_KEYS.PLAN
         ) {
 
             refreshPageData();
@@ -1563,11 +2470,17 @@ window.StudyMindStreak = {
 
     recordStudyActivity,
 
+    checkTodayCompletion,
+
+    recordCompletedStudyDay,
+
     calculateCurrentStreak,
 
     calculateLongestStreak,
 
     getStudyDayCount,
+
+    getTodayProgressData,
 
     refresh:
         refreshPageData
@@ -1585,28 +2498,37 @@ document.addEventListener(
 
         loadActivity();
 
+
         previousCurrentStreak =
             calculateCurrentStreak();
 
 
         loadUser();
 
+
         setupTheme();
+
 
         setupMobileMenu();
 
+
         setupLogout();
+
 
         setupCalendarControls();
 
 
         renderHero();
 
+
         renderStats();
+
 
         renderToday();
 
+
         renderCalendar();
+
 
         renderWeeklyBars();
 
