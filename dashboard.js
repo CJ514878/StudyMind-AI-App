@@ -1351,10 +1351,21 @@ function finishSharedTimer() {
        REFRESH DASHBOARD
     ----------------------------------------- */
 
-    renderStats();
-    renderQuests();
-    renderRecommendation();
+  /*
+ * A completed timer is recorded as a study session,
+ * but the timer itself does NOT automatically complete
+ * the study plan.
+ *
+ * We check whether all required topics have already
+ * been completed.
+ */
+checkStudyCompletion();
 
+renderStats();
+
+renderQuests();
+
+renderRecommendation();
 }
 /* =========================================================
    DAILY STUDY TIME
