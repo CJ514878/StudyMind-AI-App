@@ -1151,6 +1151,196 @@ function playSound(
 
 }
 
+/* =========================================================
+   MILO — FLY AROUND THE SCREEN
+========================================================= */
+
+let miloFlyingTimer = null;
+let miloFlyTimeout = null;
+
+function flyMiloAround() {
+
+    const container =
+        document.getElementById("miloCompanion");
+
+    if (!container) return;
+
+    /*
+       Keep Milo away from the extreme edges so
+       he doesn't disappear off-screen.
+    */
+
+    const margin = 30;
+
+    const maxX =
+        Math.max(
+            margin,
+            window.innerWidth - 120
+        );
+
+    const maxY =
+        Math.max(
+            margin,
+            window.innerHeight - 150
+        );
+
+    const x =
+        Math.floor(
+            margin +
+            Math.random() *
+            (maxX - margin)
+        );
+
+    const y =
+        Math.floor(
+            margin +
+            Math.random() *
+            (maxY - margin)
+        );
+
+    /*
+       Temporarily switch from bottom/right positioning
+       to absolute screen positioning.
+    */
+
+    container.style.position = "fixed";
+
+    container.style.left = `${x}px`;
+    container.style.top = `${y}px`;
+
+    container.style.right = "auto";
+    container.style.bottom = "auto";
+
+    container.classList.add("milo-flying");
+
+    /*
+       Stay in this area for a little while,
+       then choose another destination.
+    */
+
+    clearTimeout(miloFlyTimeout);
+
+    miloFlyTimeout = setTimeout(() => {
+
+        container.classList.remove("milo-flying");
+
+        /*
+           Sometimes return home.
+        */
+
+        if (Math.random() < 0.35) {
+
+            container.style.left = "auto";
+            container.style.top = "auto";
+            container.style.right = "28px";
+            container.style.bottom = "28px";
+
+        } else {
+
+            flyMiloAround();
+
+        }
+
+    }, 3500 + Math.random() * 3000);
+}
+
+
+/* =========================================================
+   START FLYING
+========================================================= */
+
+function startMiloFlying() {
+
+    clearInterval(miloFlyingTimer);
+
+    /*
+       Wait before Milo starts flying so the user
+       gets a chance to see his normal greeting.
+    */
+
+    miloFlyingTimer = setInterval(() => {
+
+        const container =
+            document.getElementById("miloCompanion");
+
+        if (!container) return;
+
+        /*
+           Don't move Milo while a major overlay is open.
+        */
+
+        if (
+            document.getElementById("miloStreakOverlay")
+        ) {
+            return;
+        }
+
+        /*
+           Don't interrupt important Milo messages.
+        */
+
+        const bubble =
+            document.getElementById("miloBubble");
+
+        if (
+            bubble &&
+            bubble.style.display !== "none"
+        ) {
+
+            /*
+               Give his message some time.
+            */
+
+            if (Math.random() < 0.45) {
+                return;
+            }
+        }
+
+        flyMiloAround();
+
+    }, 12000);
+}
+
+
+/* =========================================================
+   BEGIN AFTER PAGE LOAD
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    setTimeout(() => {
+        startMiloFlying();
+    }, 8000);
+
+});
+
+
+/* =========================================================
+   RETURN MILO HOME
+========================================================= */
+
+function returnMiloHome() {
+
+    const container =
+        document.getElementById("miloCompanion");
+
+    if (!container) return;
+
+    clearTimeout(miloFlyTimeout);
+
+    container.classList.remove("milo-flying");
+
+    container.style.left = "auto";
+    container.style.top = "auto";
+    container.style.right = "28px";
+    container.style.bottom = "28px";
+}
+
+
+/* =========================================================
+   ADD TO PUBLIC MILO API
+========================================================= */
+
 
 /* =========================================================
    PUBLIC API
@@ -1188,6 +1378,9 @@ window.Milo = {
 
     miloOfferHelp,
 
-    playSound
+    playSound,
+   
+   fly: flyMiloAround,
+returnHome: returnMiloHome
 
 };
