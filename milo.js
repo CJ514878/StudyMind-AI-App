@@ -811,41 +811,140 @@ function showStreakOverlay(
 
 
 /* =========================================================
-   KNOWLEDGE CHECK
+   KNOWLEDGE CHECK — CORRECT ANSWER
 ========================================================= */
 
 function miloCorrectAnswer() {
 
+    const character =
+        document.getElementById(
+            "miloCharacter"
+        );
+
+    /*
+     * Make Milo react IMMEDIATELY.
+     */
+    if (character) {
+
+        character.classList.remove(
+            "milo-celebrate",
+            "milo-wrong",
+            "milo-excited",
+            "milo-correct-reaction",
+            "milo-wrong-reaction"
+        );
+
+        /*
+         * Force browser to restart animation.
+         */
+        void character.offsetWidth;
+
+        character.classList.add(
+            "milo-celebrate",
+            "milo-correct-reaction"
+        );
+    }
+
+
+    /*
+     * Show the message immediately.
+     */
     showMilo(
         "YES! 🎉 That's correct!",
         "celebrate"
     );
 
 
+    /*
+     * Sound happens immediately.
+     */
     playSound(
         "correct"
     );
 
 
-    addXP(
-        5,
-        "correct knowledge check answer"
+    /*
+     * XP happens AFTER the reaction.
+     * Do not let addXP control the Milo reaction.
+     */
+    const amount = 5;
+
+    const total =
+        getXP() + amount;
+
+    localStorage.setItem(
+        MILO_KEYS.XP,
+        String(total)
+    );
+
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindXPUpdated",
+            {
+                detail: {
+                    amount,
+                    total,
+                    reason:
+                        "correct knowledge check answer"
+                }
+            }
+        )
     );
 
 }
 
 
+/* =========================================================
+   KNOWLEDGE CHECK — WRONG ANSWER
+========================================================= */
+
 function miloWrongAnswer(
     explanation
 ) {
 
+    const character =
+        document.getElementById(
+            "miloCharacter"
+        );
+
+
+    /*
+     * Make Milo react IMMEDIATELY.
+     */
+    if (character) {
+
+        character.classList.remove(
+            "milo-celebrate",
+            "milo-wrong",
+            "milo-excited",
+            "milo-correct-reaction",
+            "milo-wrong-reaction"
+        );
+
+        /*
+         * Force the animation to restart.
+         */
+        void character.offsetWidth;
+
+        character.classList.add(
+            "milo-wrong",
+            "milo-wrong-reaction"
+        );
+    }
+
+
+    /*
+     * Show Milo's reaction immediately.
+     */
     showMilo(
         explanation ||
-        "Not quite — and that's completely okay. Let's work through it together.",
+        "Not quite — that's okay! Let's learn from this one.",
         "wrong",
         [
             {
                 label: "I understand",
+
                 onClick:
                     () => {
 
@@ -859,12 +958,14 @@ function miloWrongAnswer(
     );
 
 
+    /*
+     * Wrong-answer sound happens NOW.
+     */
     playSound(
         "wrong"
     );
 
 }
-
 
 /* =========================================================
    GAME MODE
