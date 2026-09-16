@@ -1,37 +1,6 @@
 /* =========================================================
    STUDYMIND AI — KNOWLEDGE CHECK ENGINE
-   COMPLETE REPLACEMENT
-
-   FREE
-   - 5 questions
-   - 5 checks per day
-   - 60% pass mark
-
-   PREMIUM
-   - 5 / 10 / 20 / 30 / 40 / 50 / 60 questions
-   - Unlimited checks
-   - 60% pass mark
-
-   FEATURES
-   - Supabase authentication
-   - Server-side Premium verification
-   - Curriculum-aware
-   - Subject-aware
-   - Topic-aware
-   - Stored-question reuse
-   - AI question generation
-   - /api/generate-questions primary
-   - /api/ask-ai fallback
-   - Robust AI JSON parsing
-   - 0-based and 1-based answer support
-   - Topic completion integration
-   - Streak integration
-   - Daily free usage tracking
-   - Premium question-count support
-   - Milo integration
-   - Correct/incorrect reactions
-   - Answer explanations
-   - Result screen
+   DUOLINGO-STYLE ONE QUESTION AT A TIME
 ========================================================= */
 
 "use strict";
@@ -104,16 +73,50 @@ let knowledgeTopic = null;
 
 let knowledgeQuestions = [];
 
-let knowledgeSubmitted = false;
-
 let knowledgePremiumVerified = false;
 
 let knowledgeQuestionCount =
     FREE_KNOWLEDGE_CHECK_COUNT;
 
+
+/*
+   Current question.
+   0 = first question.
+*/
+
+let currentQuestionIndex = 0;
+
+
+/*
+   Score is updated immediately after
+   each question is checked.
+*/
+
 let knowledgeScore = 0;
 
+
+/*
+   Stores the student's selected answer
+   for every question.
+*/
+
 let knowledgeAnswers = [];
+
+
+/*
+   Prevents the current question from
+   being checked twice.
+*/
+
+let currentQuestionChecked = false;
+
+
+/*
+   Prevents the entire check from being
+   accidentally completed twice.
+*/
+
+let knowledgeSubmitted = false;
 
 
 /* =========================================================
@@ -139,7 +142,9 @@ function readJSON(
             localStorage.getItem(key);
 
         if (!raw) {
+
             return fallback;
+
         }
 
         return JSON.parse(raw);
@@ -282,14 +287,6 @@ function createTopicKey(topic) {
             .toLowerCase();
 
 
-    /*
-       Prefer curriculum + subject + topic
-       when available.
-
-       This prevents identical topic names
-       from different curricula from colliding.
-    */
-
     if (curriculum) {
 
         return `${curriculum}::${subject}::${name}`;
@@ -410,12 +407,6 @@ function getSupabaseClient() {
 ========================================================= */
 
 async function verifyPremiumStatus() {
-
-    /*
-       Local flags can speed up navigation,
-       but server verification remains the
-       authoritative Premium check.
-    */
 
     const client =
         getSupabaseClient();
@@ -721,9 +712,7 @@ async function initializeKnowledgeCheck() {
 
 
     /*
-       -----------------------------------------------
        AUTH
-       -----------------------------------------------
     */
 
     const session =
@@ -741,9 +730,7 @@ async function initializeKnowledgeCheck() {
 
 
     /*
-       -----------------------------------------------
        PREMIUM
-       -----------------------------------------------
     */
 
     knowledgePremiumVerified =
@@ -751,9 +738,7 @@ async function initializeKnowledgeCheck() {
 
 
     /*
-       -----------------------------------------------
        FREE LIMIT
-       -----------------------------------------------
     */
 
     if (
@@ -771,9 +756,7 @@ async function initializeKnowledgeCheck() {
 
 
     /*
-       -----------------------------------------------
        TOPIC
-       -----------------------------------------------
     */
 
     knowledgeTopic =
@@ -798,28 +781,18 @@ async function initializeKnowledgeCheck() {
 
 
     /*
-       -----------------------------------------------
        QUESTION COUNT
-       -----------------------------------------------
     */
 
     knowledgeQuestionCount =
         getRequestedQuestionCount();
 
 
-    /*
-       -----------------------------------------------
-       TOPIC UI
-       -----------------------------------------------
-    */
-
     renderTopic();
 
 
     /*
-       -----------------------------------------------
-       LOAD / GENERATE QUESTIONS
-       -----------------------------------------------
+       LOAD / GENERATE
     */
 
     try {
@@ -840,18 +813,18 @@ async function initializeKnowledgeCheck() {
         }
 
 
-        /*
-           --------------------------------------------
-           COUNT CHECK ONLY ONCE PER SESSION
-           --------------------------------------------
-        */
-
         registerCheckUsage();
 
 
         hideLoading();
 
-        renderQuestions();
+
+        /*
+           Start the one-question experience.
+        */
+
+        startKnowledgeCheck();
+
 
         initializeMilo();
 
@@ -892,11 +865,6 @@ async function loadQuestions() {
         );
 
 
-    /*
-       Stored questions can be reused only
-       if enough questions exist.
-    */
-
     const saved =
         stored[key];
 
@@ -931,10 +899,6 @@ async function loadQuestions() {
     }
 
 
-    /*
-       Generate new questions.
-    */
-
     const generated =
         await requestQuestions();
 
@@ -950,10 +914,6 @@ async function loadQuestions() {
 
     }
 
-
-    /*
-       Preserve generated questions.
-    */
 
     stored[key] =
         generated;
@@ -1015,9 +975,7 @@ async function requestQuestions() {
 
 
     /*
-       -----------------------------------------------
        PRIMARY API
-       -----------------------------------------------
     */
 
     try {
@@ -1100,9 +1058,7 @@ async function requestQuestions() {
 
 
     /*
-       -----------------------------------------------
        FALLBACK API
-       -----------------------------------------------
     */
 
     const fallbackResponse =
@@ -1479,25 +1435,27 @@ function normalizeQuestion(raw) {
 
     options =
         options
-            .map(option => {
+            .map(
+                option => {
 
-                if (
-                    typeof option ===
-                    "string"
-                ) {
+                    if (
+                        typeof option ===
+                        "string"
+                    ) {
 
-                    return clean(option);
+                        return clean(option);
+
+                    }
+
+
+                    return clean(
+                        option?.text ||
+                        option?.label ||
+                        option?.value
+                    );
 
                 }
-
-
-                return clean(
-                    option?.text ||
-                    option?.label ||
-                    option?.value
-                );
-
-            })
+            )
             .filter(Boolean);
 
 
@@ -1518,14 +1476,6 @@ function normalizeQuestion(raw) {
         raw.correctIndex;
 
 
-    /*
-       Answer can be:
-       - A/B/C/D
-       - "Option A"
-       - exact option text
-       - numeric index
-    */
-
     if (
         typeof answer ===
         "string"
@@ -1534,10 +1484,6 @@ function normalizeQuestion(raw) {
         const cleanedAnswer =
             clean(answer);
 
-
-        /*
-           Letter format.
-        */
 
         const letterMatch =
             cleanedAnswer.match(
@@ -1555,10 +1501,6 @@ function normalizeQuestion(raw) {
                     .charCodeAt(0) - 65;
 
         } else {
-
-            /*
-               Exact option text.
-            */
 
             const exactIndex =
                 options.findIndex(
@@ -1578,10 +1520,6 @@ function normalizeQuestion(raw) {
                     exactIndex;
 
             } else {
-
-                /*
-                   Numeric string.
-                */
 
                 const numeric =
                     Number(
@@ -1616,22 +1554,16 @@ function normalizeQuestion(raw) {
 
 
     /*
-       IMPORTANT:
-       The preferred API format is 0-based.
+       Preferred API format is 0-based.
 
-       We only convert 1-based values when
-       the AI clearly supplies a value equal
-       to the option count.
-
-       Example:
-       4 options + answer 4 => D.
-
-       Answer 1 is treated as index 1,
-       not automatically converted to index 0.
+       If AI gives the option count itself
+       (for example 4 with four options),
+       interpret that as the final option.
     */
 
     if (
-        answer === options.length
+        answer ===
+        options.length
     ) {
 
         answer =
@@ -1725,10 +1657,78 @@ function renderTopic() {
 
 
 /* =========================================================
-   RENDER QUESTIONS
+   START KNOWLEDGE CHECK
 ========================================================= */
 
-function renderQuestions() {
+function startKnowledgeCheck() {
+
+    currentQuestionIndex = 0;
+
+    knowledgeScore = 0;
+
+    knowledgeAnswers =
+        new Array(
+            knowledgeQuestionCount
+        ).fill(null);
+
+    currentQuestionChecked =
+        false;
+
+    knowledgeSubmitted =
+        false;
+
+
+    /*
+       Hide result if necessary.
+    */
+
+    if (
+        $("knowledgeResult")
+    ) {
+
+        $("knowledgeResult")
+            .style.display =
+                "none";
+
+    }
+
+
+    if (
+        $("knowledgeContent")
+    ) {
+
+        $("knowledgeContent")
+            .style.display =
+                "block";
+
+    }
+
+
+    /*
+       Hide the old submit button.
+    */
+
+    if (
+        $("knowledgeSubmit")
+    ) {
+
+        $("knowledgeSubmit")
+            .style.display =
+                "none";
+
+    }
+
+
+    renderCurrentQuestion();
+
+}
+
+
+/* =========================================================
+   RENDER CURRENT QUESTION
+========================================================= */
+
+function renderCurrentQuestion() {
 
     const container =
         $("knowledgeQuestions");
@@ -1745,194 +1745,601 @@ function renderQuestions() {
     }
 
 
-    container.innerHTML =
-
-        knowledgeQuestions
-            .map(
-                (
-                    question,
-                    index
-                ) => `
-
-                    <div
-                        class="knowledge-question-card"
-                        data-question-index="${index}"
-                    >
-
-                        <div
-                            class="knowledge-question-number"
-                        >
-                            Question
-                            ${index + 1}
-                            of
-                            ${knowledgeQuestionCount}
-                        </div>
+    const question =
+        knowledgeQuestions[
+            currentQuestionIndex
+        ];
 
 
-                        <div
-                            class="knowledge-question"
-                        >
-                            ${escapeHTML(
-                                question.question
-                            )}
-                        </div>
+    if (!question) {
 
+        finishKnowledgeCheck();
 
-                        <div
-                            class="knowledge-options"
-                        >
-
-                            ${question.options
-                                .map(
-                                    (
-                                        option,
-                                        optionIndex
-                                    ) => `
-
-                                        <div
-                                            class="knowledge-option"
-                                            data-option-index="${optionIndex}"
-                                        >
-
-                                            <input
-                                                type="radio"
-                                                id="knowledge-${index}-${optionIndex}"
-                                                name="knowledge-question-${index}"
-                                                value="${optionIndex}"
-                                            >
-
-                                            <label
-                                                for="knowledge-${index}-${optionIndex}"
-                                            >
-
-                                                <span>
-                                                    ${String.fromCharCode(
-                                                        65 +
-                                                        optionIndex
-                                                    )}.
-                                                </span>
-
-                                                ${escapeHTML(
-                                                    option
-                                                )}
-
-                                            </label>
-
-                                        </div>
-
-                                    `
-                                )
-                                .join("")}
-
-                        </div>
-
-                    </div>
-
-                `
-            )
-            .join("");
-
-
-    container
-        .querySelectorAll("input")
-        .forEach(input => {
-
-            input.addEventListener(
-                "change",
-                handleAnswerSelection
-            );
-
-        });
-
-
-    const submit =
-        $("knowledgeSubmit");
-
-
-    if (submit) {
-
-        submit.onclick =
-            submitKnowledgeCheck;
+        return;
 
     }
 
 
-    updateProgress();
+    currentQuestionChecked =
+        false;
+
+
+    container.innerHTML = `
+
+        <div
+            class="knowledge-question-card active-question"
+            data-question-index="${currentQuestionIndex}"
+        >
+
+            <div class="knowledge-question-number">
+
+                Question
+                ${currentQuestionIndex + 1}
+                of
+                ${knowledgeQuestionCount}
+
+            </div>
+
+
+            <div class="knowledge-question">
+
+                ${escapeHTML(
+                    question.question
+                )}
+
+            </div>
+
+
+            <div class="knowledge-options">
+
+                ${question.options
+                    .map(
+                        (
+                            option,
+                            optionIndex
+                        ) => `
+
+                            <button
+                                type="button"
+                                class="knowledge-option"
+                                data-option-index="${optionIndex}"
+                                aria-label="Option ${String.fromCharCode(
+                                    65 + optionIndex
+                                )}"
+                            >
+
+                                <span class="knowledge-option-letter">
+
+                                    ${String.fromCharCode(
+                                        65 + optionIndex
+                                    )}
+
+                                </span>
+
+                                <span class="knowledge-option-text">
+
+                                    ${escapeHTML(
+                                        option
+                                    )}
+
+                                </span>
+
+                            </button>
+
+                        `
+                    )
+                    .join("")}
+
+            </div>
+
+
+            <div
+                id="knowledgeFeedback"
+                class="knowledge-feedback"
+                style="display:none;"
+            ></div>
+
+
+            <button
+                type="button"
+                id="knowledgeCheckButton"
+                class="knowledge-check-button"
+                disabled
+            >
+                Check
+            </button>
+
+
+            <button
+                type="button"
+                id="knowledgeNextButton"
+                class="knowledge-next-button"
+                style="display:none;"
+            >
+                Continue
+            </button>
+
+        </div>
+
+    `;
+
+
+    /*
+       Add option listeners.
+    */
+
+    container
+        .querySelectorAll(
+            ".knowledge-option"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        selectAnswer(
+                            Number(
+                                button.dataset.optionIndex
+                            )
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    /*
+       Check button.
+    */
+
+    $("knowledgeCheckButton")
+        ?.addEventListener(
+            "click",
+            checkCurrentQuestion
+        );
+
+
+    /*
+       Continue button.
+    */
+
+    $("knowledgeNextButton")
+        ?.addEventListener(
+            "click",
+            nextQuestion
+        );
+
+
+    updateQuestionProgress();
+
+
+    /*
+       Re-render MathJax if available.
+    */
+
+    typesetMath();
 
 }
 
 
 /* =========================================================
-   ANSWER SELECTION
+   SELECT ANSWER
 ========================================================= */
 
-function handleAnswerSelection(event) {
+function selectAnswer(
+    optionIndex
+) {
 
-    const input =
-        event.target;
+    if (
+        currentQuestionChecked
+    ) {
 
-
-    const questionCard =
-        input.closest(
-            ".knowledge-question-card"
-        );
-
-
-    if (questionCard) {
-
-        questionCard
-            .classList
-            .add(
-                "answered"
-            );
+        return;
 
     }
 
 
-    updateProgress();
-
-
-    const questionIndex =
-        Number(
-            input
-                .name
-                .replace(
-                    "knowledge-question-",
-                    ""
-                )
+    const options =
+        document.querySelectorAll(
+            ".knowledge-option"
         );
 
 
-    const question =
-        knowledgeQuestions[
-            questionIndex
+    options.forEach(
+        option => {
+
+            option.classList.remove(
+                "selected"
+            );
+
+        }
+    );
+
+
+    const selected =
+        document.querySelector(
+            `.knowledge-option[data-option-index="${optionIndex}"]`
+        );
+
+
+    if (
+        selected
+    ) {
+
+        selected.classList.add(
+            "selected"
+        );
+
+    }
+
+
+    const checkButton =
+        $("knowledgeCheckButton");
+
+
+    if (
+        checkButton
+    ) {
+
+        checkButton.disabled =
+            false;
+
+    }
+
+
+    knowledgeAnswers[
+        currentQuestionIndex
+    ] =
+        optionIndex;
+
+}
+
+
+/* =========================================================
+   CHECK CURRENT QUESTION
+========================================================= */
+
+function checkCurrentQuestion() {
+
+    if (
+        currentQuestionChecked
+    ) {
+
+        return;
+
+    }
+
+
+    const selectedIndex =
+        knowledgeAnswers[
+            currentQuestionIndex
         ];
 
 
     if (
-        question
+        selectedIndex === null ||
+        selectedIndex === undefined
     ) {
 
-        if (
-            Number(input.value) ===
-            question.answer
-        ) {
-
-            notifyMiloCorrect(
-                question,
-                questionIndex
-            );
-
-        } else {
-
-            notifyMiloIncorrect(
-                question,
-                questionIndex
-            );
-
-        }
+        return;
 
     }
+
+
+    const question =
+        knowledgeQuestions[
+            currentQuestionIndex
+        ];
+
+
+    if (!question) {
+
+        return;
+
+    }
+
+
+    currentQuestionChecked =
+        true;
+
+
+    const correct =
+        selectedIndex ===
+        question.answer;
+
+
+    const options =
+        document.querySelectorAll(
+            ".knowledge-option"
+        );
+
+
+    /*
+       Disable further selection.
+    */
+
+    options.forEach(
+        option => {
+
+            option.disabled =
+                true;
+
+        }
+    );
+
+
+    /*
+       Mark the correct answer green.
+    */
+
+    const correctOption =
+        document.querySelector(
+            `.knowledge-option[data-option-index="${question.answer}"]`
+        );
+
+
+    correctOption?.classList.add(
+        "correct"
+    );
+
+
+    /*
+       Mark student's wrong answer red.
+    */
+
+    if (!correct) {
+
+        const wrongOption =
+            document.querySelector(
+                `.knowledge-option[data-option-index="${selectedIndex}"]`
+            );
+
+
+        wrongOption?.classList.add(
+            "incorrect"
+        );
+
+    }
+
+
+    /*
+       Score.
+    */
+
+    if (correct) {
+
+        knowledgeScore++;
+
+    }
+
+
+    /*
+       Feedback.
+    */
+
+    showQuestionFeedback(
+        correct,
+        question
+    );
+
+
+    /*
+       Milo.
+    */
+
+    if (correct) {
+
+        notifyMiloCorrect(
+            question,
+            currentQuestionIndex
+        );
+
+    } else {
+
+        notifyMiloIncorrect(
+            question,
+            currentQuestionIndex
+        );
+
+    }
+
+
+    /*
+       Sound.
+
+       Milo already provides sounds, but this
+       fallback makes the Knowledge Check itself
+       robust if Milo isn't loaded.
+    */
+
+    playKnowledgeSound(
+        correct
+            ? "correct"
+            : "wrong"
+    );
+
+
+    /*
+       Disable Check.
+    */
+
+    const checkButton =
+        $("knowledgeCheckButton");
+
+
+    if (
+        checkButton
+    ) {
+
+        checkButton.disabled =
+            true;
+
+        checkButton.style.display =
+            "none";
+
+    }
+
+
+    /*
+       Show Continue.
+    */
+
+    const nextButton =
+        $("knowledgeNextButton");
+
+
+    if (
+        nextButton
+    ) {
+
+        nextButton.style.display =
+            "block";
+
+        nextButton.textContent =
+            currentQuestionIndex >=
+            knowledgeQuestionCount - 1
+                ? "See Results"
+                : "Continue";
+
+    }
+
+
+    updateQuestionProgress();
+
+
+    typesetMath();
+
+}
+
+
+/* =========================================================
+   QUESTION FEEDBACK
+========================================================= */
+
+function showQuestionFeedback(
+    correct,
+    question
+) {
+
+    const feedback =
+        $("knowledgeFeedback");
+
+
+    if (!feedback) {
+
+        return;
+
+    }
+
+
+    feedback.style.display =
+        "block";
+
+
+    if (correct) {
+
+        feedback.className =
+            "knowledge-feedback correct-feedback";
+
+
+        feedback.innerHTML = `
+
+            <div class="feedback-title">
+                ✓ Correct!
+            </div>
+
+            <div class="feedback-message">
+                Great job! Keep going.
+            </div>
+
+        `;
+
+    } else {
+
+        feedback.className =
+            "knowledge-feedback incorrect-feedback";
+
+
+        const correctAnswer =
+            question.options[
+                question.answer
+            ];
+
+
+        feedback.innerHTML = `
+
+            <div class="feedback-title">
+                ✗ Not quite
+            </div>
+
+            <div class="feedback-answer">
+                Correct answer:
+                <strong>
+                    ${escapeHTML(
+                        correctAnswer
+                    )}
+                </strong>
+            </div>
+
+            ${
+                question.explanation
+                    ? `
+                        <div class="feedback-explanation">
+
+                            ${escapeHTML(
+                                question.explanation
+                            )}
+
+                        </div>
+                    `
+                    : ""
+            }
+
+        `;
+
+    }
+
+
+    typesetMath();
+
+}
+
+
+/* =========================================================
+   NEXT QUESTION
+========================================================= */
+
+function nextQuestion() {
+
+    if (
+        !currentQuestionChecked
+    ) {
+
+        return;
+
+    }
+
+
+    currentQuestionIndex++;
+
+
+    if (
+        currentQuestionIndex >=
+        knowledgeQuestionCount
+    ) {
+
+        finishKnowledgeCheck();
+
+        return;
+
+    }
+
+
+    renderCurrentQuestion();
 
 }
 
@@ -1941,28 +2348,16 @@ function handleAnswerSelection(event) {
    PROGRESS
 ========================================================= */
 
-function updateProgress() {
+function updateQuestionProgress() {
 
-    let answered = 0;
-
-
-    for (
-        let i = 0;
-        i < knowledgeQuestionCount;
-        i++
-    ) {
-
-        if (
-            document.querySelector(
-                `input[name="knowledge-question-${i}"]:checked`
+    const answered =
+        knowledgeAnswers
+            .filter(
+                answer =>
+                    answer !== null &&
+                    answer !== undefined
             )
-        ) {
-
-            answered++;
-
-        }
-
-    }
+            .length;
 
 
     const percentage =
@@ -2000,10 +2395,10 @@ function updateProgress() {
 
 
 /* =========================================================
-   SUBMIT
+   FINISH KNOWLEDGE CHECK
 ========================================================= */
 
-function submitKnowledgeCheck() {
+function finishKnowledgeCheck() {
 
     if (
         knowledgeSubmitted
@@ -2014,103 +2409,35 @@ function submitKnowledgeCheck() {
     }
 
 
-    knowledgeAnswers = [];
-
-
-    for (
-        let i = 0;
-        i < knowledgeQuestionCount;
-        i++
-    ) {
-
-        const selected =
-            document.querySelector(
-                `input[name="knowledge-question-${i}"]:checked`
-            );
-
-
-        if (!selected) {
-
-            alert(
-                `Please answer question ${i + 1} before submitting.`
-            );
-
-            return;
-
-        }
-
-
-        knowledgeAnswers.push(
-            Number(
-                selected.value
-            )
-        );
-
-    }
-
-
     knowledgeSubmitted =
         true;
 
 
-    knowledgeScore = 0;
-
-
-    knowledgeQuestions.forEach(
-        (
-            question,
-            index
-        ) => {
-
-            if (
-                knowledgeAnswers[index] ===
-                question.answer
-            ) {
-
-                knowledgeScore++;
-
-            }
-
-        }
-    );
-
-
-    /*
-       Knowledge Check completion is recorded
-       regardless of whether the student passes.
-
-       The result screen then tells the student
-       whether they passed.
-    */
-
-    markTopicCompleted();
-
-
-    /*
-       Disable all inputs.
-    */
-
-    document
-        .querySelectorAll(
-            "#knowledgeQuestions input"
-        )
-        .forEach(
-            input => {
-
-                input.disabled =
-                    true;
-
-            }
+    const percentage =
+        Math.round(
+            (
+                knowledgeScore /
+                knowledgeQuestionCount
+            ) *
+            100
         );
 
 
-    if (
-        $("knowledgeSubmit")
-    ) {
+    const passed =
+        percentage >=
+        PASS_PERCENTAGE;
 
-        $("knowledgeSubmit")
-            .disabled =
-                true;
+
+    /*
+       IMPORTANT:
+
+       Only a passed Knowledge Check marks
+       the topic as completed.
+    */
+
+    if (passed) {
+
+        markTopicCompleted();
 
     }
 
@@ -2128,18 +2455,15 @@ function submitKnowledgeCheck() {
 
 
     /*
-       Let the streak engine see the newly
-       completed topic.
-
-       It is intentionally not directly
-       incremented here.
+       Let the streak engine evaluate today's
+       completion.
     */
 
     if (
         window.StudyMindStreak &&
         typeof window.StudyMindStreak
             .checkTodayCompletion ===
-            "function"
+        "function"
     ) {
 
         try {
@@ -2183,9 +2507,7 @@ function markTopicCompleted() {
 
 
     /*
-       -----------------------------------------------
-       KNOWLEDGE CHECK COMPLETIONS
-       -----------------------------------------------
+       Knowledge Check completions.
     */
 
     let knowledgeCompleted =
@@ -2207,7 +2529,9 @@ function markTopicCompleted() {
 
 
     if (
-        !knowledgeCompleted.includes(key)
+        !knowledgeCompleted.includes(
+            key
+        )
     ) {
 
         knowledgeCompleted.push(
@@ -2224,12 +2548,7 @@ function markTopicCompleted() {
 
 
     /*
-       -----------------------------------------------
-       MAIN STUDY COMPLETIONS
-       -----------------------------------------------
-
-       This is the important integration with the
-       new streak engine.
+       Main study completion.
     */
 
     let studyCompleted =
@@ -2240,7 +2559,9 @@ function markTopicCompleted() {
 
 
     if (
-        !Array.isArray(studyCompleted)
+        !Array.isArray(
+            studyCompleted
+        )
     ) {
 
         studyCompleted = [];
@@ -2248,23 +2569,21 @@ function markTopicCompleted() {
     }
 
 
-    /*
-       Store the canonical key.
-    */
-
     if (
-        !studyCompleted.includes(key)
+        !studyCompleted.includes(
+            key
+        )
     ) {
 
-        studyCompleted.push(key);
+        studyCompleted.push(
+            key
+        );
 
     }
 
 
     /*
-       Maintain compatibility with the older
-       Subject::Topic format when curriculum
-       information exists.
+       Legacy Subject::Topic key.
     */
 
     const subject =
@@ -2297,16 +2616,19 @@ function markTopicCompleted() {
 
 
     /*
-       Older dashboard versions sometimes used
-       topic-only storage.
+       Older topic-only storage.
     */
 
     if (
         topic &&
-        !studyCompleted.includes(topic)
+        !studyCompleted.includes(
+            topic
+        )
     ) {
 
-        studyCompleted.push(topic);
+        studyCompleted.push(
+            topic
+        );
 
     }
 
@@ -2318,7 +2640,7 @@ function markTopicCompleted() {
 
 
     /*
-       Notify other pages immediately.
+       Notify dashboard/pages.
     */
 
     try {
@@ -2327,6 +2649,7 @@ function markTopicCompleted() {
             new StorageEvent(
                 "storage",
                 {
+
                     key:
                         STUDY_COMPLETED_KEY,
 
@@ -2334,6 +2657,7 @@ function markTopicCompleted() {
                         JSON.stringify(
                             studyCompleted
                         )
+
                 }
             )
         );
@@ -2345,6 +2669,7 @@ function markTopicCompleted() {
         new CustomEvent(
             "studyMindTopicCompleted",
             {
+
                 detail: {
 
                     key,
@@ -2357,6 +2682,7 @@ function markTopicCompleted() {
                         getCurriculumName()
 
                 }
+
             }
         )
     );
@@ -2453,7 +2779,7 @@ function showResult(
             .textContent =
                 passed
                     ? "Knowledge Check Passed!"
-                    : "Knowledge Check Complete";
+                    : "Keep Learning!";
 
     }
 
@@ -2469,7 +2795,7 @@ function showResult(
 
                     ? `Excellent! You scored ${percentage}%. Milo is proud of your progress.`
 
-                    : `You scored ${percentage}%. Review the corrections with Milo and keep learning.`;
+                    : `You scored ${percentage}%. Review the corrections and try again when you're ready.`;
 
     }
 
@@ -2620,7 +2946,7 @@ function renderCorrections(
 
 
 /* =========================================================
-   CONTINUE
+   CONTINUE BUTTON
 ========================================================= */
 
 function setupContinueButton() {
@@ -2695,7 +3021,7 @@ function setupContinueButton() {
 function registerCheckUsage() {
 
     /*
-       Premium users are unlimited.
+       Premium = unlimited.
     */
 
     if (
@@ -2706,12 +3032,6 @@ function registerCheckUsage() {
 
     }
 
-
-    /*
-       Prevent duplicate counting when the
-       same check is refreshed in the same
-       browser session.
-    */
 
     const key =
         createTopicKey(
@@ -2983,7 +3303,9 @@ function showLimit() {
 }
 
 
-function showError(message) {
+function showError(
+    message
+) {
 
     if (
         $("knowledgeLoading")
@@ -3054,7 +3376,7 @@ function showError(message) {
 
 
 /* =========================================================
-   MILO INTEGRATION
+   MILO
 ========================================================= */
 
 function getMilo() {
@@ -3097,31 +3419,20 @@ function initializeMilo() {
 
     try {
 
+        /*
+           Your current Milo API doesn't have
+           knowledgeCheckStarted(), so use the
+           existing show() method.
+        */
+
         if (
-            typeof milo.knowledgeCheckStarted ===
+            typeof milo.show ===
             "function"
         ) {
 
-            milo.knowledgeCheckStarted({
-
-                subject:
-                    getSubjectName(),
-
-                topic:
-                    getTopicName(),
-
-                questionCount:
-                    knowledgeQuestionCount
-
-            });
-
-        } else if (
-            typeof milo.say ===
-            "function"
-        ) {
-
-            milo.say(
-                `Let's test what you know about ${getTopicName()}!`
+            milo.show(
+                `Let's see what you know about ${getTopicName()}! 🧠`,
+                "excited"
             );
 
         }
@@ -3137,6 +3448,10 @@ function initializeMilo() {
 
 }
 
+
+/* =========================================================
+   MILO — CORRECT
+========================================================= */
 
 function notifyMiloCorrect(
     question,
@@ -3156,6 +3471,22 @@ function notifyMiloCorrect(
 
     try {
 
+        /*
+           This matches your actual milo.js.
+        */
+
+        if (
+            typeof milo.miloCorrectAnswer ===
+            "function"
+        ) {
+
+            milo.miloCorrectAnswer();
+
+            return;
+
+        }
+
+
         if (
             typeof milo.correctAnswer ===
             "function"
@@ -3171,7 +3502,12 @@ function notifyMiloCorrect(
 
             });
 
-        } else if (
+            return;
+
+        }
+
+
+        if (
             typeof milo.react ===
             "function"
         ) {
@@ -3194,6 +3530,10 @@ function notifyMiloCorrect(
 }
 
 
+/* =========================================================
+   MILO — INCORRECT
+========================================================= */
+
 function notifyMiloIncorrect(
     question,
     index
@@ -3211,6 +3551,24 @@ function notifyMiloIncorrect(
 
 
     try {
+
+        /*
+           This matches your actual milo.js.
+        */
+
+        if (
+            typeof milo.miloWrongAnswer ===
+            "function"
+        ) {
+
+            milo.miloWrongAnswer(
+                question.explanation
+            );
+
+            return;
+
+        }
+
 
         if (
             typeof milo.incorrectAnswer ===
@@ -3230,7 +3588,12 @@ function notifyMiloIncorrect(
 
             });
 
-        } else if (
+            return;
+
+        }
+
+
+        if (
             typeof milo.react ===
             "function"
         ) {
@@ -3252,6 +3615,10 @@ function notifyMiloIncorrect(
 
 }
 
+
+/* =========================================================
+   MILO — FINAL RESULT
+========================================================= */
 
 function notifyMiloResult(
     score,
@@ -3288,58 +3655,25 @@ function notifyMiloResult(
 
         if (
             passed &&
-            typeof milo.knowledgeCheckPassed ===
+            typeof milo.show ===
             "function"
         ) {
 
-            milo.knowledgeCheckPassed({
-
-                score,
-
-                total,
-
-                percentage,
-
-                topic:
-                    getTopicName()
-
-            });
+            milo.show(
+                `YOU DID IT! 🎉 ${percentage}%! I'm proud of you!`,
+                "celebrate"
+            );
 
         } else if (
             !passed &&
-            typeof milo.knowledgeCheckNeedsReview ===
+            typeof milo.show ===
             "function"
         ) {
 
-            milo.knowledgeCheckNeedsReview({
-
-                score,
-
-                total,
-
-                percentage,
-
-                topic:
-                    getTopicName()
-
-            });
-
-        } else if (
-            typeof milo.knowledgeCheckFinished ===
-            "function"
-        ) {
-
-            milo.knowledgeCheckFinished({
-
-                score,
-
-                total,
-
-                percentage,
-
-                passed
-
-            });
+            milo.show(
+                `Nice effort! 📚 Let's review this topic and come back stronger.`,
+                "thinking"
+            );
 
         }
 
@@ -3356,29 +3690,193 @@ function notifyMiloResult(
 
 
 /* =========================================================
+   KNOWLEDGE CHECK SOUND EFFECTS
+========================================================= */
+
+function playKnowledgeSound(
+    type
+) {
+
+    /*
+       If Milo exists, its sound engine
+       is already responsible for the sound.
+    */
+
+    const milo =
+        getMilo();
+
+
+    if (
+        milo &&
+        typeof milo.playSound ===
+        "function"
+    ) {
+
+        try {
+
+            milo.playSound(
+                type
+            );
+
+            return;
+
+        } catch {}
+
+    }
+
+
+    /*
+       Fallback sound engine.
+    */
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+        if (!AudioContext) {
+
+            return;
+
+        }
+
+
+        const context =
+            new AudioContext();
+
+
+        const oscillator =
+            context.createOscillator();
+
+        const gain =
+            context.createGain();
+
+
+        oscillator.connect(
+            gain
+        );
+
+        gain.connect(
+            context.destination
+        );
+
+
+        const correct =
+            type === "correct";
+
+
+        oscillator.frequency.value =
+            correct
+                ? 700
+                : 250;
+
+
+        oscillator.type =
+            correct
+                ? "sine"
+                : "sawtooth";
+
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            context.currentTime
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.12,
+            context.currentTime + 0.02
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            context.currentTime + 0.18
+        );
+
+
+        oscillator.start();
+
+        oscillator.stop(
+            context.currentTime + 0.18
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Knowledge Check sound unavailable:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MATHJAX
+========================================================= */
+
+function typesetMath() {
+
+    if (
+        window.MathJax &&
+        typeof window.MathJax.typesetPromise ===
+        "function"
+    ) {
+
+        window.MathJax
+            .typesetPromise()
+            .catch(
+                error => {
+
+                    console.warn(
+                        "MathJax rendering failed:",
+                        error
+                    );
+
+                }
+            );
+
+    }
+
+}
+
+
+/* =========================================================
    PUBLIC API
 ========================================================= */
 
 window.StudyMindKnowledgeCheck = {
 
-    getTopic: () =>
-        knowledgeTopic,
+    getTopic:
+        () =>
+            knowledgeTopic,
 
-    getQuestions: () =>
-        knowledgeQuestions,
+    getQuestions:
+        () =>
+            knowledgeQuestions,
 
-    getScore: () =>
-        knowledgeScore,
+    getScore:
+        () =>
+            knowledgeScore,
 
-    getQuestionCount: () =>
-        knowledgeQuestionCount,
+    getQuestionCount:
+        () =>
+            knowledgeQuestionCount,
+
+    getCurrentQuestion:
+        () =>
+            currentQuestionIndex,
 
     isPremium:
         () =>
             knowledgePremiumVerified,
 
     submit:
-        submitKnowledgeCheck,
+        finishKnowledgeCheck,
 
     getDailyUsage:
         getDailyUsage
