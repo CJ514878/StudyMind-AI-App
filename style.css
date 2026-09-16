@@ -1983,4 +1983,363 @@ body.light-mode .primary-button {
             scale(1);
     }
 }
+/* =========================================================
+   STUDYMIND — DUOLINGO STYLE KNOWLEDGE CHECK
+========================================================= */
 
+.knowledge-question-card {
+    animation: knowledgeQuestionIn 0.35s ease;
+}
+
+@keyframes knowledgeQuestionIn {
+    from {
+        opacity: 0;
+        transform: translateX(25px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+/* =========================================================
+   QUESTION NUMBER
+========================================================= */
+
+.knowledge-question-number {
+    font-size: 0.85rem;
+    font-weight: 800;
+    opacity: 0.65;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+
+/* =========================================================
+   QUESTION
+========================================================= */
+
+.knowledge-question {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1.45;
+    margin-bottom: 28px;
+}
+
+
+/* =========================================================
+   OPTIONS
+========================================================= */
+
+.knowledge-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.knowledge-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 17px 18px;
+
+    border: 2px solid rgba(128, 128, 128, 0.22);
+    border-radius: 16px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    cursor: pointer;
+
+    text-align: left;
+
+    font: inherit;
+
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+
+.knowledge-option:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(100, 100, 255, 0.5);
+}
+
+
+.knowledge-option.selected {
+    border-color: #6c63ff;
+    background: rgba(108, 99, 255, 0.10);
+    box-shadow: 0 4px 15px rgba(108, 99, 255, 0.12);
+}
+
+
+/* =========================================================
+   OPTION LETTER
+========================================================= */
+
+.knowledge-option-letter {
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid currentColor;
+    border-radius: 50%;
+
+    font-weight: 900;
+}
+
+
+.knowledge-option-text {
+    flex: 1;
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   CORRECT
+========================================================= */
+
+.knowledge-option.correct {
+    border-color: #20b26b !important;
+    background: rgba(32, 178, 107, 0.14) !important;
+    color: #168653;
+
+    animation: correctAnswer 0.35s ease;
+}
+
+
+.knowledge-option.correct
+.knowledge-option-letter {
+    border-color: #20b26b;
+}
+
+
+@keyframes correctAnswer {
+
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.025);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   INCORRECT
+========================================================= */
+
+.knowledge-option.incorrect {
+    border-color: #e5484d !important;
+    background: rgba(229, 72, 77, 0.13) !important;
+    color: #c52f35;
+
+    animation: incorrectAnswer 0.45s ease;
+}
+
+
+.knowledge-option.incorrect
+.knowledge-option-letter {
+    border-color: #e5484d;
+}
+
+
+@keyframes incorrectAnswer {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-7px);
+    }
+
+    40% {
+        transform: translateX(7px);
+    }
+
+    60% {
+        transform: translateX(-5px);
+    }
+
+    80% {
+        transform: translateX(5px);
+    }
+
+}
+
+
+/* =========================================================
+   CHECK BUTTON
+========================================================= */
+
+.knowledge-check-button,
+.knowledge-next-button {
+    width: 100%;
+
+    margin-top: 22px;
+
+    padding: 16px 20px;
+
+    border: none;
+    border-radius: 15px;
+
+    font-size: 1rem;
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+
+.knowledge-check-button {
+    background: #6c63ff;
+    color: white;
+}
+
+
+.knowledge-check-button:hover:not(:disabled),
+.knowledge-next-button:hover {
+    transform: translateY(-2px);
+}
+
+
+.knowledge-check-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+
+.knowledge-next-button {
+    background: #20b26b;
+    color: white;
+}
+
+
+/* =========================================================
+   FEEDBACK
+========================================================= */
+
+.knowledge-feedback {
+    margin-top: 18px;
+
+    padding: 17px 18px;
+
+    border-radius: 15px;
+
+    line-height: 1.55;
+
+    animation: feedbackIn 0.25s ease;
+}
+
+
+@keyframes feedbackIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+.correct-feedback {
+    border: 2px solid #20b26b;
+    background: rgba(32, 178, 107, 0.12);
+}
+
+
+.incorrect-feedback {
+    border: 2px solid #e5484d;
+    background: rgba(229, 72, 77, 0.10);
+}
+
+
+.feedback-title {
+    font-size: 1.15rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+}
+
+
+.feedback-message {
+    opacity: 0.85;
+}
+
+
+.feedback-answer {
+    margin-bottom: 8px;
+}
+
+
+.feedback-explanation {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+
+/* =========================================================
+   DISABLED ANSWERS
+========================================================= */
+
+.knowledge-option:disabled {
+    cursor: default;
+}
+
+
+.knowledge-option:disabled:not(.correct):not(.incorrect) {
+    opacity: 0.65;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .knowledge-question {
+        font-size: 1.2rem;
+    }
+
+    .knowledge-option {
+        padding: 14px;
+    }
+
+    .knowledge-option-letter {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+    }
+
+}
