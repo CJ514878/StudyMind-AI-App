@@ -135,7 +135,7 @@
 
 
 /* =========================================================
-   MOUTH
+   MOUTH — BASE
 ========================================================= */
 
 .milo-mouth {
@@ -144,13 +144,28 @@
     width: 25px;
     height: 11px;
 
-    left: 29px;
+    left: 50%;
     top: 59px;
 
-    border-bottom:
-        4px solid white;
+    transform: translateX(-50%);
+
+    border: 0;
+
+    border-bottom: 4px solid #ffffff;
 
     border-radius: 0 0 20px 20px;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    background: transparent;
+
+    z-index: 10;
+
+    pointer-events: none;
+
+    box-sizing: border-box;
 }
 
 
@@ -574,6 +589,7 @@ body.dark .milo-bubble {
 
 }
 
+
 /* =========================================================
    KNOWLEDGE CHECK MILO REACTIONS
 ========================================================= */
@@ -585,7 +601,6 @@ body.dark .milo-bubble {
         ease-out
         both;
 }
-
 
 #miloCharacter.milo-wrong-reaction {
     animation:
@@ -729,62 +744,173 @@ body.dark .milo-bubble {
     }
 
 }
+
+
 /* =========================================================
-   MILO — WRONG ANSWER / FROWN
+   WRONG ANSWER — FROWN
 ========================================================= */
+
+/*
+   IMPORTANT:
+   Use a fixed white border rather than currentColor.
+   This guarantees the mouth remains visible regardless
+   of the character's inherited text color.
+*/
 
 .milo-character.milo-frown .milo-mouth,
+.milo-character.milo-wrong .milo-mouth,
 .milo-character.milo-wrong-reaction .milo-mouth,
-.milo-character.milo-answer-wrong .milo-mouth {
-    width: 22px !important;
-    height: 11px !important;
-    border-radius: 50% 50% 0 0 !important;
-    border-top: 3px solid currentColor !important;
-    border-bottom: 0 !important;
+.milo-character.milo-answer-wrong .milo-mouth,
+.milo-character.milo-shake .milo-mouth {
+
+    width: 23px !important;
+    height: 12px !important;
+
+    left: 50% !important;
+    top: 62px !important;
+
+    border: 0 !important;
+
+    border-top:
+        4px solid #ffffff !important;
+
+    border-radius:
+        20px 20px 0 0 !important;
+
     background: transparent !important;
-    transform: translateX(-50%) rotate(180deg) !important;
-    top: 63% !important;
+
+    transform:
+        translateX(-50%) !important;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    z-index: 10 !important;
 }
 
+
 /* =========================================================
-   MILO — NORMAL / HAPPY MOUTH
+   CORRECT / CELEBRATING MOUTH
 ========================================================= */
 
-.milo-character:not(.milo-frown):not(.milo-wrong-reaction):not(.milo-answer-wrong) .milo-mouth {
-    transform: translateX(-50%) !important;
+.milo-character.milo-celebrate .milo-mouth,
+.milo-character.milo-correct-reaction .milo-mouth,
+.milo-character.milo-answer-correct .milo-mouth {
+
+    width: 28px !important;
+    height: 14px !important;
+
+    left: 50% !important;
+    top: 57px !important;
+
+    border: 0 !important;
+
+    border-bottom:
+        4px solid #ffffff !important;
+
+    border-radius:
+        0 0 24px 24px !important;
+
+    background: transparent !important;
+
+    transform:
+        translateX(-50%) !important;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    z-index: 10 !important;
 }
 
+
 /* =========================================================
-   MILO — WRONG ANSWER SHAKE
+   NORMAL MOUTH
+========================================================= */
+
+.milo-character .milo-mouth {
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    border-color: #ffffff;
+
+}
+
+
+/* =========================================================
+   WRONG ANSWER SHAKE
 ========================================================= */
 
 .milo-character.milo-shake {
-    animation: studyMindMiloShake 0.45s ease-in-out;
+    animation:
+        studyMindMiloShake
+        0.45s
+        ease-in-out;
 }
 
 @keyframes studyMindMiloShake {
 
     0% {
-        transform: translateX(0) rotate(0deg);
+        transform:
+            translateX(0)
+            rotate(0deg);
     }
 
     20% {
-        transform: translateX(-7px) rotate(-4deg);
+        transform:
+            translateX(-7px)
+            rotate(-4deg);
     }
 
     40% {
-        transform: translateX(7px) rotate(4deg);
+        transform:
+            translateX(7px)
+            rotate(4deg);
     }
 
     60% {
-        transform: translateX(-5px) rotate(-3deg);
+        transform:
+            translateX(-5px)
+            rotate(-3deg);
     }
 
     80% {
-        transform: translateX(5px) rotate(3deg);
+        transform:
+            translateX(5px)
+            rotate(3deg);
     }
 
     100% {
-        transform: translateX(0) rotate(0deg);
+        transform:
+            translateX(0)
+            rotate(0deg);
     }
+
+}
+
+
+/* =========================================================
+   FINAL MOUTH SAFETY OVERRIDE
+========================================================= */
+
+/*
+   This is deliberately at the end of the stylesheet.
+   Nothing in the reaction system should be able to
+   accidentally hide Milo's mouth.
+*/
+
+#miloCharacter .milo-mouth {
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: absolute !important;
+
+    z-index: 50 !important;
+
+    pointer-events: none !important;
 }
