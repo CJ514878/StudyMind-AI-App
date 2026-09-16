@@ -2863,14 +2863,7 @@ function animateMiloElement(
     reaction
 ) {
 
-    if (!milo) {
-        return;
-    }
-
-
-    /*
-     * Remove previous state.
-     */
+    if (!milo) return;
 
     milo.classList.remove(
         "milo-answer-correct",
@@ -2882,18 +2875,13 @@ function animateMiloElement(
         "milo-shake"
     );
 
-
     /*
-     * Force browser to restart animation.
+     * Force browser reflow so the animation
+     * can restart on every answer.
      */
-
     void milo.offsetWidth;
 
-
-    if (
-        reaction ===
-        "correct"
-    ) {
+    if (reaction === "correct") {
 
         milo.classList.add(
             "milo-answer-correct",
@@ -2909,31 +2897,24 @@ function animateMiloElement(
             "milo-frown",
             "milo-shake"
         );
+
     }
 
+    setTimeout(() => {
 
-    /*
-     * Remove reaction state after animation.
-     */
+        milo.classList.remove(
+            "milo-answer-correct",
+            "milo-answer-wrong",
+            "milo-correct-reaction",
+            "milo-wrong-reaction",
+            "milo-celebrate",
+            "milo-frown",
+            "milo-shake"
+        );
 
-    setTimeout(
-        () => {
+    }, 800);
 
-            milo.classList.remove(
-                "milo-answer-correct",
-                "milo-answer-wrong",
-                "milo-correct-reaction",
-                "milo-wrong-reaction",
-                "milo-celebrate",
-                "milo-frown",
-                "milo-shake"
-            );
-
-        },
-        800
-    );
 }
-
 
 /* =========================================================
    MILO CSS FALLBACK
