@@ -2735,16 +2735,14 @@ function triggerMiloCorrect() {
             window.Milo.miloCorrectAnswer();
 
             /*
-             * Run the Knowledge Check-specific
-             * visual reaction after Milo's own
-             * showMilo() function has finished.
+             * Wait until Milo finishes showing the message,
+             * because showMilo() resets the character classes.
              */
-            setTimeout(
-                () => {
-                    animateMilo("correct");
-                },
-                0
-            );
+            setTimeout(() => {
+
+                animateMilo("correct");
+
+            }, 0);
 
             return;
         }
@@ -2762,7 +2760,7 @@ function triggerMiloCorrect() {
 
 
 /* =========================================================
-   MILO WRONG
+   MILO WRONG — FROWN + SHAKE
 ========================================================= */
 
 function triggerMiloWrong(
@@ -2782,16 +2780,14 @@ function triggerMiloWrong(
             );
 
             /*
-             * Run after showMilo() so its
-             * class reset does not erase
-             * our reaction class.
+             * Apply the visual reaction AFTER showMilo()
+             * resets Milo's character classes.
              */
-            setTimeout(
-                () => {
-                    animateMilo("wrong");
-                },
-                0
-            );
+            setTimeout(() => {
+
+                animateMilo("wrong");
+
+            }, 0);
 
             return;
         }
