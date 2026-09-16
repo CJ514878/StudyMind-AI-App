@@ -2807,45 +2807,24 @@ function triggerMiloWrong(
    MILO DOM ANIMATION
 ========================================================= */
 
-function animateMilo(
-    reaction
-) {
+function animateMilo(reaction) {
 
+    /*
+     * Always target Milo's actual character.
+     */
     const milo =
-        getMiloElement();
-
+        document.getElementById("miloCharacter");
 
     if (!milo) {
 
-        /*
-         * Milo may be rendered by another script
-         * after this function runs.
-         *
-         * Try again very shortly.
-         */
+        setTimeout(() => {
 
-        setTimeout(
-            () => {
+            animateMilo(reaction);
 
-                const retry =
-                    getMiloElement();
-
-
-                if (retry) {
-
-                    animateMiloElement(
-                        retry,
-                        reaction
-                    );
-                }
-
-            },
-            20
-        );
+        }, 50);
 
         return;
     }
-
 
     animateMiloElement(
         milo,
