@@ -2858,13 +2858,13 @@ function animateMilo(
    MILO ELEMENT ANIMATION
 ========================================================= */
 
-function animateMiloElement(
-    milo,
-    reaction
-) {
+function animateMiloElement(milo, reaction) {
 
     if (!milo) return;
 
+    /*
+     * Remove previous reaction states.
+     */
     milo.classList.remove(
         "milo-answer-correct",
         "milo-answer-wrong",
@@ -2876,8 +2876,7 @@ function animateMiloElement(
     );
 
     /*
-     * Force browser reflow so the animation
-     * can restart on every answer.
+     * Force reflow so the animation can restart.
      */
     void milo.offsetWidth;
 
@@ -2891,6 +2890,10 @@ function animateMiloElement(
 
     } else {
 
+        /*
+         * WRONG ANSWER:
+         * Milo must physically frown AND shake.
+         */
         milo.classList.add(
             "milo-answer-wrong",
             "milo-wrong-reaction",
@@ -2900,6 +2903,9 @@ function animateMiloElement(
 
     }
 
+    /*
+     * Keep the reaction visible briefly.
+     */
     setTimeout(() => {
 
         milo.classList.remove(
@@ -2912,8 +2918,7 @@ function animateMiloElement(
             "milo-shake"
         );
 
-    }, 800);
-
+    }, 1000);
 }
 
 /* =========================================================
