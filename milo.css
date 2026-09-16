@@ -1,25 +1,32 @@
 /* =========================================================
    STUDYMIND AI — MILO COMPANION
-   Interactive Companion UI
+   COMPLETE REBUILT STYLES
 ========================================================= */
 
 :root {
+
     --milo-primary: #5b5ff0;
     --milo-secondary: #7c5cff;
-    --milo-glow: rgba(91, 95, 240, .35);
+    --milo-body-one: #7378ff;
+    --milo-body-two: #4d51dc;
+    --milo-gold: #ffc857;
+    --milo-dark-eye: #25284d;
     --milo-success: #35c98b;
     --milo-danger: #ff6678;
-    --milo-gold: #ffc857;
+
 }
 
 
 /* =========================================================
-   MILO CONTAINER
+   CONTAINER
 ========================================================= */
 
 .milo-container {
+
     position: fixed;
+
     right: 24px;
+
     bottom: 24px;
 
     width: 330px;
@@ -35,15 +42,18 @@
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+
 }
 
 
 /* =========================================================
-   MILO CHARACTER
+   CHARACTER
 ========================================================= */
 
 .milo-character {
+
     width: 105px;
+
     height: 105px;
 
     margin-left: auto;
@@ -54,13 +64,42 @@
 
     cursor: pointer;
 
+    outline: none;
+
     animation:
-        miloFloat 3.5s ease-in-out infinite;
+        miloFloat
+        3.5s
+        ease-in-out
+        infinite;
 
     filter:
         drop-shadow(
-            0 15px 25px rgba(0,0,0,.18)
+            0 15px 25px
+            rgba(
+                0,
+                0,
+                0,
+                .18
+            )
         );
+
+}
+
+
+.milo-character:focus-visible {
+
+    box-shadow:
+        0 0 0 4px
+        rgba(
+            91,
+            95,
+            240,
+            .25
+        );
+
+    border-radius:
+        50%;
+
 }
 
 
@@ -69,26 +108,48 @@
 ========================================================= */
 
 .milo-body {
+
     width: 82px;
+
     height: 82px;
 
-    border-radius: 38% 38% 45% 45%;
+    border-radius:
+        38%
+        38%
+        45%
+        45%;
 
     background:
         linear-gradient(
             145deg,
-            #7378ff,
-            #4d51dc
+            var(--milo-body-one),
+            var(--milo-body-two)
         );
 
     position: absolute;
 
     left: 12px;
+
     top: 18px;
 
     box-shadow:
-        inset 0 -8px 0 rgba(0,0,0,.08),
-        0 10px 25px rgba(75,80,220,.35);
+        inset
+        0 -8px 0
+        rgba(
+            0,
+            0,
+            0,
+            .08
+        ),
+
+        0 10px 25px
+        rgba(
+            75,
+            80,
+            220,
+            .35
+        );
+
 }
 
 
@@ -97,75 +158,110 @@
 ========================================================= */
 
 .milo-eye {
+
     position: absolute;
 
     width: 15px;
+
     height: 19px;
 
-    background: white;
+    background:
+        #ffffff;
 
-    border-radius: 50%;
+    border-radius:
+        50%;
 
     top: 36px;
+
+    transition:
+        transform
+        .15s
+        ease,
+        height
+        .15s
+        ease;
+
 }
 
+
 .milo-eye::after {
+
     content: "";
 
     position: absolute;
 
     width: 6px;
+
     height: 8px;
 
-    background: #25284d;
+    background:
+        var(--milo-dark-eye);
 
-    border-radius: 50%;
+    border-radius:
+        50%;
 
     left: 4px;
+
     top: 5px;
+
 }
+
 
 .milo-eye.left {
+
     left: 30px;
+
 }
 
+
 .milo-eye.right {
+
     right: 30px;
+
 }
 
 
 /* =========================================================
-   MOUTH — BASE
+   MOUTH — DEFAULT SMILE
 ========================================================= */
 
 .milo-mouth {
+
     position: absolute;
 
-    width: 25px;
-    height: 11px;
+    width: 26px;
+
+    height: 12px;
 
     left: 50%;
+
     top: 59px;
 
-    transform: translateX(-50%);
+    transform:
+        translateX(-50%);
 
-    border: 0;
+    background:
+        transparent;
 
-    border-bottom: 4px solid #ffffff;
+    border:
+        0;
 
-    border-radius: 0 0 20px 20px;
+    border-bottom:
+        4px solid #ffffff;
 
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    border-radius:
+        0 0 20px 20px;
 
-    background: transparent;
+    display: block;
 
-    z-index: 10;
+    opacity: 1;
+
+    visibility: visible;
+
+    z-index: 20;
 
     pointer-events: none;
 
-    box-sizing: border-box;
 }
 
 
@@ -174,12 +270,15 @@
 ========================================================= */
 
 .milo-antenna {
+
     position: absolute;
 
     width: 4px;
+
     height: 20px;
 
-    background: #565ae8;
+    background:
+        #565ae8;
 
     left: 50%;
 
@@ -188,145 +287,63 @@
     transform:
         translateX(-50%)
         rotate(-7deg);
+
 }
 
+
 .milo-antenna::after {
+
     content: "";
 
     position: absolute;
 
     width: 13px;
+
     height: 13px;
 
-    border-radius: 50%;
+    border-radius:
+        50%;
 
-    background: var(--milo-gold);
+    background:
+        var(--milo-gold);
 
     left: -4px;
+
     top: -8px;
 
     box-shadow:
-        0 0 15px rgba(255,200,87,.8);
+        0 0 15px
+        rgba(
+            255,
+            200,
+            87,
+            .8
+        );
+
 }
 
 
 /* =========================================================
-   SPEECH BUBBLE
-========================================================= */
-
-.milo-bubble {
-    background: rgba(255,255,255,.97);
-
-    color: #20233a;
-
-    border-radius: 20px;
-
-    padding: 17px 18px;
-
-    margin-bottom: 8px;
-
-    box-shadow:
-        0 15px 40px rgba(20,25,60,.18);
-
-    border:
-        1px solid rgba(0,0,0,.06);
-
-    transform-origin:
-        bottom right;
-
-    animation:
-        miloBubbleIn .35s ease;
-
-    pointer-events: auto;
-}
-
-.dark .milo-bubble,
-body.dark .milo-bubble {
-    background: #20233a;
-    color: white;
-}
-
-.milo-name {
-    font-size: 13px;
-
-    font-weight: 800;
-
-    color: var(--milo-primary);
-
-    margin-bottom: 5px;
-}
-
-.milo-message {
-    font-size: 14px;
-
-    line-height: 1.55;
-}
-
-
-/* =========================================================
-   SPEECH BUTTONS
-========================================================= */
-
-.milo-actions {
-    display: flex;
-
-    gap: 8px;
-
-    margin-top: 12px;
-
-    flex-wrap: wrap;
-}
-
-.milo-action {
-    border: none;
-
-    border-radius: 999px;
-
-    padding: 8px 13px;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-
-    background:
-        rgba(91,95,240,.1);
-
-    color:
-        var(--milo-primary);
-
-    transition:
-        transform .2s ease,
-        box-shadow .2s ease;
-}
-
-.milo-action:hover {
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 5px 15px var(--milo-glow);
-}
-
-
-/* =========================================================
-   IDLE
+   FLOAT
 ========================================================= */
 
 @keyframes miloFloat {
 
     0%,
     100% {
+
         transform:
             translateY(0)
             rotate(-1deg);
+
     }
 
     50% {
+
         transform:
             translateY(-9px)
             rotate(1deg);
+
     }
 
 }
@@ -336,20 +353,198 @@ body.dark .milo-bubble {
    BUBBLE
 ========================================================= */
 
+.milo-bubble {
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .97
+        );
+
+    color:
+        #20233a;
+
+    border-radius:
+        20px;
+
+    padding:
+        17px 18px;
+
+    margin-bottom:
+        8px;
+
+    box-shadow:
+        0 15px 40px
+        rgba(
+            20,
+            25,
+            60,
+            .18
+        );
+
+    border:
+        1px solid
+        rgba(
+            0,
+            0,
+            0,
+            .06
+        );
+
+    transform-origin:
+        bottom right;
+
+    animation:
+        miloBubbleIn
+        .35s
+        ease;
+
+    pointer-events:
+        auto;
+
+}
+
+
+.dark .milo-bubble,
+body.dark .milo-bubble {
+
+    background:
+        #20233a;
+
+    color:
+        #ffffff;
+
+}
+
+
+.milo-name {
+
+    font-size:
+        13px;
+
+    font-weight:
+        800;
+
+    color:
+        var(--milo-primary);
+
+    margin-bottom:
+        5px;
+
+}
+
+
+.milo-message {
+
+    font-size:
+        14px;
+
+    line-height:
+        1.55;
+
+}
+
+
+.milo-actions {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    margin-top:
+        12px;
+
+    flex-wrap:
+        wrap;
+
+}
+
+
+.milo-action {
+
+    border:
+        none;
+
+    border-radius:
+        999px;
+
+    padding:
+        8px 13px;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    cursor:
+        pointer;
+
+    background:
+        rgba(
+            91,
+            95,
+            240,
+            .1
+        );
+
+    color:
+        var(--milo-primary);
+
+    transition:
+        transform
+        .2s
+        ease,
+        box-shadow
+        .2s
+        ease;
+
+}
+
+
+.milo-action:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 5px 15px
+        rgba(
+            91,
+            95,
+            240,
+            .25
+        );
+
+}
+
+
 @keyframes miloBubbleIn {
 
     from {
-        opacity: 0;
+
+        opacity:
+            0;
+
         transform:
             scale(.85)
             translateY(10px);
+
     }
 
     to {
-        opacity: 1;
+
+        opacity:
+            1;
+
         transform:
             scale(1)
             translateY(0);
+
     }
 
 }
@@ -359,22 +554,33 @@ body.dark .milo-bubble {
    THINKING
 ========================================================= */
 
-.milo-thinking .milo-body {
+.milo-character.milo-thinking
+.milo-body {
+
     animation:
-        miloThink 1s ease-in-out infinite;
+        miloThink
+        1s
+        ease-in-out
+        infinite;
+
 }
+
 
 @keyframes miloThink {
 
     0%,
     100% {
+
         transform:
             rotate(-3deg);
+
     }
 
     50% {
+
         transform:
             rotate(3deg);
+
     }
 
 }
@@ -384,34 +590,49 @@ body.dark .milo-bubble {
    HAPPY
 ========================================================= */
 
-.milo-happy .milo-body {
+.milo-character.milo-happy
+.milo-body {
+
     animation:
-        miloHappy .65s ease-in-out 2;
+        miloHappy
+        .65s
+        ease-in-out
+        2;
+
 }
+
 
 @keyframes miloHappy {
 
     0% {
+
         transform:
             translateY(0)
             rotate(0);
+
     }
 
     30% {
+
         transform:
-            translateY(-20px)
-            rotate(-8deg);
+            translateY(-16px)
+            rotate(-6deg);
+
     }
 
     60% {
+
         transform:
             translateY(0)
-            rotate(8deg);
+            rotate(6deg);
+
     }
 
     100% {
+
         transform:
             translateY(0);
+
     }
 
 }
@@ -421,66 +642,153 @@ body.dark .milo-bubble {
    EXCITED
 ========================================================= */
 
-.milo-excited .milo-body {
+.milo-character.milo-excited
+.milo-body {
+
     animation:
-        miloExcited .5s ease-in-out 3;
+        miloExcited
+        .5s
+        ease-in-out
+        3;
+
 }
+
 
 @keyframes miloExcited {
 
     0% {
-        transform: scale(1);
+
+        transform:
+            scale(1);
+
     }
 
     50% {
+
         transform:
-            scale(1.13)
-            rotate(-6deg);
+            scale(1.1)
+            rotate(-5deg);
+
     }
 
     100% {
-        transform: scale(1);
+
+        transform:
+            scale(1);
+
     }
 
 }
 
 
 /* =========================================================
-   SAD / WRONG
+   CELEBRATE
 ========================================================= */
 
-.milo-wrong .milo-body {
+.milo-character.milo-celebrate
+.milo-body {
+
     animation:
-        miloWrong .45s ease-in-out 2;
+        miloCelebrateBody
+        .75s
+        ease-in-out
+        2;
+
 }
 
-@keyframes miloWrong {
+
+@keyframes miloCelebrateBody {
 
     0% {
+
         transform:
-            translateX(0);
+            translateY(0)
+            scale(1);
+
     }
 
-    25% {
+    30% {
+
         transform:
-            translateX(-9px)
-            rotate(-5deg);
+            translateY(-15px)
+            scale(1.08)
+            rotate(-7deg);
+
     }
 
-    50% {
-        transform:
-            translateX(9px)
-            rotate(5deg);
-    }
+    60% {
 
-    75% {
         transform:
-            translateX(-6px);
+            translateY(-4px)
+            scale(1.05)
+            rotate(7deg);
+
     }
 
     100% {
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* =========================================================
+   WRONG
+========================================================= */
+
+.milo-character.milo-wrong
+.milo-body {
+
+    animation:
+        miloWrongBody
+        .45s
+        ease-in-out
+        2;
+
+}
+
+
+@keyframes miloWrongBody {
+
+    0% {
+
         transform:
             translateX(0);
+
+    }
+
+    25% {
+
+        transform:
+            translateX(-8px)
+            rotate(-4deg);
+
+    }
+
+    50% {
+
+        transform:
+            translateX(8px)
+            rotate(4deg);
+
+    }
+
+    75% {
+
+        transform:
+            translateX(-5px);
+
+    }
+
+    100% {
+
+        transform:
+            translateX(0);
+
     }
 
 }
@@ -490,82 +798,86 @@ body.dark .milo-bubble {
    PUNCHED
 ========================================================= */
 
-.milo-punched .milo-body {
+.milo-character.milo-punched
+.milo-body {
+
     animation:
-        miloPunched .7s ease-in-out;
+        miloPunched
+        .7s
+        ease-in-out;
+
 }
+
 
 @keyframes miloPunched {
 
     0% {
+
         transform:
             translateX(0)
             rotate(0);
+
     }
 
     20% {
+
         transform:
-            translateX(-28px)
-            rotate(-20deg);
+            translateX(-25px)
+            rotate(-18deg);
+
     }
 
     45% {
+
         transform:
             translateX(20px)
-            rotate(17deg);
+            rotate(15deg);
+
     }
 
     70% {
+
         transform:
-            translateX(-10px)
-            rotate(-8deg);
+            translateX(-9px)
+            rotate(-7deg);
+
     }
 
     100% {
+
         transform:
             translateX(0)
             rotate(0);
+
     }
 
 }
 
 
 /* =========================================================
-   CELEBRATION
+   DARK MODE
 ========================================================= */
 
-.milo-celebrate .milo-body {
-    animation:
-        miloCelebrate .8s ease-in-out 3;
-}
+body.dark .milo-body,
+.dark .milo-body {
 
-@keyframes miloCelebrate {
+    box-shadow:
+        inset
+        0 -8px 0
+        rgba(
+            0,
+            0,
+            0,
+            .14
+        ),
 
-    0% {
-        transform:
-            translateY(0)
-            scale(1);
-    }
-
-    30% {
-        transform:
-            translateY(-25px)
-            scale(1.1)
-            rotate(-8deg);
-    }
-
-    60% {
-        transform:
-            translateY(-5px)
-            scale(1.05)
-            rotate(8deg);
-    }
-
-    100% {
-        transform:
-            translateY(0)
-            scale(1);
-    }
+        0 10px 25px
+        rgba(
+            0,
+            0,
+            0,
+            .4
+        );
 
 }
 
@@ -574,343 +886,32 @@ body.dark .milo-bubble {
    MOBILE
 ========================================================= */
 
-@media (max-width: 700px) {
+@media (
+    max-width: 700px
+) {
 
     .milo-container {
-        right: 12px;
-        bottom: 12px;
-        width: 285px;
+
+        right:
+            12px;
+
+        bottom:
+            12px;
+
+        width:
+            285px;
+
     }
+
 
     .milo-character {
-        width: 85px;
-        height: 85px;
+
+        width:
+            85px;
+
+        height:
+            85px;
+
     }
 
-}
-
-
-/* =========================================================
-   KNOWLEDGE CHECK MILO REACTIONS
-========================================================= */
-
-#miloCharacter.milo-correct-reaction {
-    animation:
-        miloCorrectReaction
-        0.65s
-        ease-out
-        both;
-}
-
-#miloCharacter.milo-wrong-reaction {
-    animation:
-        miloWrongReaction
-        0.55s
-        ease-in-out
-        both;
-}
-
-
-/* =========================================================
-   CORRECT — MILO CELEBRATES
-========================================================= */
-
-@keyframes miloCorrectReaction {
-
-    0% {
-        transform: scale(1) rotate(0deg);
-    }
-
-    20% {
-        transform: scale(1.15) rotate(-6deg);
-    }
-
-    40% {
-        transform: scale(1.22) rotate(6deg);
-    }
-
-    60% {
-        transform: scale(1.16) rotate(-4deg);
-    }
-
-    80% {
-        transform: scale(1.10) rotate(3deg);
-    }
-
-    100% {
-        transform: scale(1) rotate(0deg);
-    }
-
-}
-
-
-/* =========================================================
-   WRONG — MILO SHAKES / FROWNS
-========================================================= */
-
-@keyframes miloWrongReaction {
-
-    0% {
-        transform:
-            translateX(0)
-            rotate(0deg);
-    }
-
-    15% {
-        transform:
-            translateX(-9px)
-            rotate(-7deg);
-    }
-
-    30% {
-        transform:
-            translateX(9px)
-            rotate(7deg);
-    }
-
-    45% {
-        transform:
-            translateX(-7px)
-            rotate(-5deg);
-    }
-
-    60% {
-        transform:
-            translateX(7px)
-            rotate(5deg);
-    }
-
-    75% {
-        transform:
-            translateX(-3px)
-            rotate(-2deg);
-    }
-
-    100% {
-        transform:
-            translateX(0)
-            rotate(0deg);
-    }
-
-}
-
-
-/* =========================================================
-   EXTRA CELEBRATION EFFECT
-========================================================= */
-
-#miloCharacter.milo-correct-reaction::after {
-
-    content: "✨";
-
-    position: absolute;
-
-    top: -25px;
-    right: -20px;
-
-    font-size: 24px;
-
-    animation:
-        miloSparkle
-        0.65s
-        ease-out
-        both;
-
-    pointer-events: none;
-}
-
-
-@keyframes miloSparkle {
-
-    0% {
-        opacity: 0;
-        transform:
-            scale(0.4)
-            translateY(10px);
-    }
-
-    35% {
-        opacity: 1;
-        transform:
-            scale(1.2)
-            translateY(-4px);
-    }
-
-    100% {
-        opacity: 0;
-        transform:
-            scale(0.8)
-            translateY(-20px);
-    }
-
-}
-
-
-/* =========================================================
-   WRONG ANSWER — FROWN
-========================================================= */
-
-/*
-   IMPORTANT:
-   Use a fixed white border rather than currentColor.
-   This guarantees the mouth remains visible regardless
-   of the character's inherited text color.
-*/
-
-.milo-character.milo-frown .milo-mouth,
-.milo-character.milo-wrong .milo-mouth,
-.milo-character.milo-wrong-reaction .milo-mouth,
-.milo-character.milo-answer-wrong .milo-mouth,
-.milo-character.milo-shake .milo-mouth {
-
-    width: 23px !important;
-    height: 12px !important;
-
-    left: 50% !important;
-    top: 62px !important;
-
-    border: 0 !important;
-
-    border-top:
-        4px solid #ffffff !important;
-
-    border-radius:
-        20px 20px 0 0 !important;
-
-    background: transparent !important;
-
-    transform:
-        translateX(-50%) !important;
-
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    z-index: 10 !important;
-}
-
-
-/* =========================================================
-   CORRECT / CELEBRATING MOUTH
-========================================================= */
-
-.milo-character.milo-celebrate .milo-mouth,
-.milo-character.milo-correct-reaction .milo-mouth,
-.milo-character.milo-answer-correct .milo-mouth {
-
-    width: 28px !important;
-    height: 14px !important;
-
-    left: 50% !important;
-    top: 57px !important;
-
-    border: 0 !important;
-
-    border-bottom:
-        4px solid #ffffff !important;
-
-    border-radius:
-        0 0 24px 24px !important;
-
-    background: transparent !important;
-
-    transform:
-        translateX(-50%) !important;
-
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    z-index: 10 !important;
-}
-
-
-/* =========================================================
-   NORMAL MOUTH
-========================================================= */
-
-.milo-character .milo-mouth {
-
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    border-color: #ffffff;
-
-}
-
-
-/* =========================================================
-   WRONG ANSWER SHAKE
-========================================================= */
-
-.milo-character.milo-shake {
-    animation:
-        studyMindMiloShake
-        0.45s
-        ease-in-out;
-}
-
-@keyframes studyMindMiloShake {
-
-    0% {
-        transform:
-            translateX(0)
-            rotate(0deg);
-    }
-
-    20% {
-        transform:
-            translateX(-7px)
-            rotate(-4deg);
-    }
-
-    40% {
-        transform:
-            translateX(7px)
-            rotate(4deg);
-    }
-
-    60% {
-        transform:
-            translateX(-5px)
-            rotate(-3deg);
-    }
-
-    80% {
-        transform:
-            translateX(5px)
-            rotate(3deg);
-    }
-
-    100% {
-        transform:
-            translateX(0)
-            rotate(0deg);
-    }
-
-}
-
-
-/* =========================================================
-   FINAL MOUTH SAFETY OVERRIDE
-========================================================= */
-
-/*
-   This is deliberately at the end of the stylesheet.
-   Nothing in the reaction system should be able to
-   accidentally hide Milo's mouth.
-*/
-
-#miloCharacter .milo-mouth {
-
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    position: absolute !important;
-
-    z-index: 50 !important;
-
-    pointer-events: none !important;
 }
