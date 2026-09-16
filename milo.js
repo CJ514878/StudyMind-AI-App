@@ -1,5 +1,6 @@
 /* =========================================================
    STUDYMIND AI — MILO COMPANION ENGINE
+   COMPLETE REACTION + FROWN VERSION
 ========================================================= */
 
 "use strict";
@@ -34,6 +35,8 @@ document.addEventListener(
     () => {
 
         createMilo();
+
+        installMiloReactionStyles();
 
         setTimeout(
             startMiloExperience,
@@ -244,13 +247,14 @@ function showMilo(
     );
 
 
+    /*
+     * Reset character state.
+     */
     character.className =
         "milo-character";
 
 
-    if (
-        state
-    ) {
+    if (state) {
 
         character.classList.add(
             `milo-${state}`
@@ -811,43 +815,14 @@ function showStreakOverlay(
 
 
 /* =========================================================
-   KNOWLEDGE CHECK — CORRECT ANSWER
+   KNOWLEDGE CHECK — CORRECT
 ========================================================= */
 
 function miloCorrectAnswer() {
 
-    const character =
-        document.getElementById(
-            "miloCharacter"
-        );
-
     /*
-     * Make Milo react IMMEDIATELY.
-     */
-    if (character) {
-
-        character.classList.remove(
-            "milo-celebrate",
-            "milo-wrong",
-            "milo-excited",
-            "milo-correct-reaction",
-            "milo-wrong-reaction"
-        );
-
-        /*
-         * Force browser to restart animation.
-         */
-        void character.offsetWidth;
-
-        character.classList.add(
-            "milo-celebrate",
-            "milo-correct-reaction"
-        );
-    }
-
-
-    /*
-     * Show the message immediately.
+     * Show the message first.
+     * showMilo() resets the character classes.
      */
     showMilo(
         "YES! 🎉 That's correct!",
@@ -856,21 +831,54 @@ function miloCorrectAnswer() {
 
 
     /*
-     * Sound happens immediately.
+     * Apply the visual reaction AFTER showMilo().
      */
+    setTimeout(
+        () => {
+
+            const character =
+                document.getElementById(
+                    "miloCharacter"
+                );
+
+
+            if (!character) return;
+
+
+            character.classList.remove(
+                "milo-wrong",
+                "milo-wrong-reaction",
+                "milo-frown",
+                "milo-shake"
+            );
+
+
+            character.classList.add(
+                "milo-celebrate",
+                "milo-correct-reaction"
+            );
+
+        },
+        0
+    );
+
+
     playSound(
         "correct"
     );
 
 
     /*
-     * XP happens AFTER the reaction.
-     * Do not let addXP control the Milo reaction.
+     * Award XP silently.
+     * We deliberately DO NOT call addXP(),
+     * because addXP() calls showMilo() again.
      */
     const amount = 5;
 
+
     const total =
         getXP() + amount;
+
 
     localStorage.setItem(
         MILO_KEYS.XP,
@@ -896,46 +904,16 @@ function miloCorrectAnswer() {
 
 
 /* =========================================================
-   KNOWLEDGE CHECK — WRONG ANSWER
+   KNOWLEDGE CHECK — WRONG
 ========================================================= */
 
 function miloWrongAnswer(
     explanation
 ) {
 
-    const character =
-        document.getElementById(
-            "miloCharacter"
-        );
-
-
     /*
-     * Make Milo react IMMEDIATELY.
-     */
-    if (character) {
-
-        character.classList.remove(
-            "milo-celebrate",
-            "milo-wrong",
-            "milo-excited",
-            "milo-correct-reaction",
-            "milo-wrong-reaction"
-        );
-
-        /*
-         * Force the animation to restart.
-         */
-        void character.offsetWidth;
-
-        character.classList.add(
-            "milo-wrong",
-            "milo-wrong-reaction"
-        );
-    }
-
-
-    /*
-     * Show Milo's reaction immediately.
+     * Show the explanation first.
+     * This resets Milo to the "wrong" state.
      */
     showMilo(
         explanation ||
@@ -959,13 +937,170 @@ function miloWrongAnswer(
 
 
     /*
-     * Wrong-answer sound happens NOW.
+     * IMPORTANT:
+     * Apply the actual frown AFTER showMilo().
+     */
+    setTimeout(
+        () => {
+
+            const character =
+                document.getElementById(
+                    "miloCharacter"
+                );
+
+
+            if (!character) return;
+
+
+            /*
+             * Clear previous reactions.
+             */
+            character.classList.remove(
+                "milo-celebrate",
+                "milo-correct-reaction",
+                "milo-excited"
+            );
+
+
+            /*
+             * Add wrong-answer states.
+             */
+            character.classList.add(
+                "milo-wrong",
+                "milo-wrong-reaction",
+                "milo-frown",
+                "milo-shake"
+            );
+
+
+            /*
+             * DIRECTLY CONTROL THE MOUTH.
+             */
+            const mouth =
+                character.querySelector(
+                    ".milo-mouth"
+                );
+
+
+            if (mouth) {
+
+                /*
+                 * Store that Milo is currently
+                 * using the frown.
+                 */
+                mouth.dataset.miloFrown =
+                    "true";
+
+
+                /*
+                 * Remove any inline styles
+                 * that might conflict.
+                 */
+                mouth.style.setProperty(
+                    "width",
+                    "24px",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "height",
+                    "12px",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "background",
+                    "transparent",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "border",
+                    "3px solid currentColor",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "border-bottom",
+                    "0",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "border-radius",
+                    "50% 50% 0 0",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "transform",
+                    "translateX(-50%) rotate(180deg)",
+                    "important"
+                );
+
+
+                mouth.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+            }
+
+        },
+        0
+    );
+
+
+    /*
+     * Wrong-answer sound.
      */
     playSound(
         "wrong"
     );
 
 }
+
+
+/* =========================================================
+   RESET MILO MOUTH
+========================================================= */
+
+function resetMiloMouth() {
+
+    const character =
+        document.getElementById(
+            "miloCharacter"
+        );
+
+
+    if (!character) return;
+
+
+    const mouth =
+        character.querySelector(
+            ".milo-mouth"
+        );
+
+
+    if (!mouth) return;
+
+
+    mouth.removeAttribute(
+        "style"
+    );
+
+
+    delete mouth.dataset.miloFrown;
+
+}
+
 
 /* =========================================================
    GAME MODE
@@ -1056,6 +1191,185 @@ function miloOfferHelp() {
                     }
             }
         ]
+    );
+
+}
+
+
+/* =========================================================
+   MILO REACTION CSS
+========================================================= */
+
+function installMiloReactionStyles() {
+
+    if (
+        document.getElementById(
+            "studyMindMiloReactionStyles"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const style =
+        document.createElement("style");
+
+
+    style.id =
+        "studyMindMiloReactionStyles";
+
+
+    style.textContent = `
+
+        /* =================================================
+           MILO BASE MOUTH
+        ================================================= */
+
+        #miloCharacter .milo-mouth {
+            position: absolute;
+        }
+
+
+        /* =================================================
+           REAL FROWN
+        ================================================= */
+
+        #miloCharacter.milo-frown .milo-mouth,
+        #miloCharacter.milo-wrong .milo-mouth,
+        #miloCharacter.milo-wrong-reaction .milo-mouth,
+        #miloCharacter.milo-answer-wrong .milo-mouth {
+
+            width: 24px !important;
+
+            height: 12px !important;
+
+            background: transparent !important;
+
+            border: 3px solid currentColor !important;
+
+            border-bottom: 0 !important;
+
+            border-radius: 50% 50% 0 0 !important;
+
+            transform:
+                translateX(-50%)
+                rotate(180deg) !important;
+
+            display: block !important;
+
+        }
+
+
+        /* =================================================
+           WRONG ANSWER SHAKE
+        ================================================= */
+
+        #miloCharacter.milo-shake {
+
+            animation:
+                studyMindMiloShake
+                0.55s
+                ease-in-out;
+
+        }
+
+
+        @keyframes studyMindMiloShake {
+
+            0% {
+                transform:
+                    translateX(0)
+                    rotate(0deg);
+            }
+
+            20% {
+                transform:
+                    translateX(-7px)
+                    rotate(-4deg);
+            }
+
+            40% {
+                transform:
+                    translateX(7px)
+                    rotate(4deg);
+            }
+
+            60% {
+                transform:
+                    translateX(-6px)
+                    rotate(-3deg);
+            }
+
+            80% {
+                transform:
+                    translateX(5px)
+                    rotate(3deg);
+            }
+
+            100% {
+                transform:
+                    translateX(0)
+                    rotate(0deg);
+            }
+
+        }
+
+
+        /* =================================================
+           CORRECT CELEBRATION
+        ================================================= */
+
+        #miloCharacter.milo-celebrate {
+
+            animation:
+                studyMindMiloCelebrate
+                0.8s
+                ease-in-out;
+
+        }
+
+
+        @keyframes studyMindMiloCelebrate {
+
+            0% {
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+
+            30% {
+                transform:
+                    translateY(-10px)
+                    scale(1.05);
+            }
+
+            55% {
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+
+            75% {
+                transform:
+                    translateY(-5px)
+                    scale(1.03);
+            }
+
+            100% {
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
     );
 
 }
@@ -1253,13 +1567,6 @@ function playSound(
 }
 
 
-
-
-/* =========================================================
-   ADD TO PUBLIC MILO API
-========================================================= */
-
-
 /* =========================================================
    PUBLIC API
 ========================================================= */
@@ -1297,7 +1604,5 @@ window.Milo = {
     miloOfferHelp,
 
     playSound
-   
-
 
 };
