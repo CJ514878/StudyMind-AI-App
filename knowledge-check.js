@@ -2732,10 +2732,19 @@ function triggerMiloCorrect() {
             "function"
         ) {
 
-            /*
-             * React first.
-             */
             window.Milo.miloCorrectAnswer();
+
+            /*
+             * Run the Knowledge Check-specific
+             * visual reaction after Milo's own
+             * showMilo() function has finished.
+             */
+            setTimeout(
+                () => {
+                    animateMilo("correct");
+                },
+                0
+            );
 
             return;
         }
@@ -2768,11 +2777,20 @@ function triggerMiloWrong(
             "function"
         ) {
 
-            /*
-             * React first.
-             */
             window.Milo.miloWrongAnswer(
                 explanation
+            );
+
+            /*
+             * Run after showMilo() so its
+             * class reset does not erase
+             * our reaction class.
+             */
+            setTimeout(
+                () => {
+                    animateMilo("wrong");
+                },
+                0
             );
 
             return;
@@ -2788,7 +2806,6 @@ function triggerMiloWrong(
     }
 
 }
-
 
 /* =========================================================
    MILO DOM ANIMATION
