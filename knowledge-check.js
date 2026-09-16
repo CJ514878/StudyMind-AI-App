@@ -2724,23 +2724,6 @@ function getMiloElement() {
 
 function triggerMiloCorrect() {
 
-    /*
-     * FIRST:
-     * Immediately animate the actual Milo element.
-     *
-     * This happens regardless of whether the
-     * Milo JavaScript API exists.
-     */
-
-    animateMilo(
-        "correct"
-    );
-
-
-    /*
-     * THEN notify existing Milo system.
-     */
-
     try {
 
         if (
@@ -2749,28 +2732,12 @@ function triggerMiloCorrect() {
             "function"
         ) {
 
+            /*
+             * React first.
+             */
             window.Milo.miloCorrectAnswer();
 
-        } else if (
-            window.Milo &&
-            typeof window.Milo.react ===
-            "function"
-        ) {
-
-            window.Milo.react(
-                "correct"
-            );
-
-        } else if (
-            window.Milo &&
-            typeof window.Milo.show ===
-            "function"
-        ) {
-
-            window.Milo.show(
-                "Correct! 🎉",
-                "celebrate"
-            );
+            return;
         }
 
     } catch (error) {
@@ -2779,7 +2746,9 @@ function triggerMiloCorrect() {
             "Milo correct reaction failed:",
             error
         );
+
     }
+
 }
 
 
@@ -2791,20 +2760,6 @@ function triggerMiloWrong(
     explanation
 ) {
 
-    /*
-     * FIRST:
-     * Immediate DOM animation.
-     */
-
-    animateMilo(
-        "wrong"
-    );
-
-
-    /*
-     * THEN existing Milo API.
-     */
-
     try {
 
         if (
@@ -2813,31 +2768,14 @@ function triggerMiloWrong(
             "function"
         ) {
 
+            /*
+             * React first.
+             */
             window.Milo.miloWrongAnswer(
-                explanation ||
-                "Let's review that one together."
+                explanation
             );
 
-        } else if (
-            window.Milo &&
-            typeof window.Milo.react ===
-            "function"
-        ) {
-
-            window.Milo.react(
-                "incorrect"
-            );
-
-        } else if (
-            window.Milo &&
-            typeof window.Milo.show ===
-            "function"
-        ) {
-
-            window.Milo.show(
-                "Let's review that one.",
-                "sad"
-            );
+            return;
         }
 
     } catch (error) {
@@ -2846,7 +2784,9 @@ function triggerMiloWrong(
             "Milo wrong reaction failed:",
             error
         );
+
     }
+
 }
 
 
