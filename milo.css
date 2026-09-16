@@ -729,3 +729,62 @@ body.dark .milo-bubble {
     }
 
 }
+/* =========================================================
+   MILO — WRONG ANSWER / FROWN
+========================================================= */
+
+.milo-character.milo-frown .milo-mouth,
+.milo-character.milo-wrong-reaction .milo-mouth,
+.milo-character.milo-answer-wrong .milo-mouth {
+    width: 22px !important;
+    height: 11px !important;
+    border-radius: 50% 50% 0 0 !important;
+    border-top: 3px solid currentColor !important;
+    border-bottom: 0 !important;
+    background: transparent !important;
+    transform: translateX(-50%) rotate(180deg) !important;
+    top: 63% !important;
+}
+
+/* =========================================================
+   MILO — NORMAL / HAPPY MOUTH
+========================================================= */
+
+.milo-character:not(.milo-frown):not(.milo-wrong-reaction):not(.milo-answer-wrong) .milo-mouth {
+    transform: translateX(-50%) !important;
+}
+
+/* =========================================================
+   MILO — WRONG ANSWER SHAKE
+========================================================= */
+
+.milo-character.milo-shake {
+    animation: studyMindMiloShake 0.45s ease-in-out;
+}
+
+@keyframes studyMindMiloShake {
+
+    0% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    20% {
+        transform: translateX(-7px) rotate(-4deg);
+    }
+
+    40% {
+        transform: translateX(7px) rotate(4deg);
+    }
+
+    60% {
+        transform: translateX(-5px) rotate(-3deg);
+    }
+
+    80% {
+        transform: translateX(5px) rotate(3deg);
+    }
+
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+}
