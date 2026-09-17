@@ -814,98 +814,299 @@ function playSound(type) {
 
     try {
 
-        const ctx =
-            getAudioContext();
-
+        const ctx = getAudioContext();
 
         if (!ctx) return;
 
-
-        const now =
-            ctx.currentTime;
+        const now = ctx.currentTime;
 
 
-        if (type === "woohoo") {
+        /* =====================================================
+           HELPER — LOUDER ENVELOPE
+        ===================================================== */
 
-            miloTone(
-                540,
-                .18,
-                now,
-                "sine",
-                .07
+        function tone(
+            frequency,
+            duration,
+            start,
+            waveform = "sine",
+            volume = 0.18
+        ) {
+
+            const oscillator =
+                ctx.createOscillator();
+
+            const gain =
+                ctx.createGain();
+
+
+            oscillator.type =
+                waveform;
+
+
+            oscillator.frequency.setValueAtTime(
+                frequency,
+                start
             );
 
-            miloTone(
-                680,
-                .20,
-                now + .15,
-                "sine",
-                .08
+
+            gain.gain.setValueAtTime(
+                0.0001,
+                start
             );
 
-            miloTone(
-                820,
-                .22,
-                now + .31,
-                "sine",
-                .08
+
+            gain.gain.exponentialRampToValueAtTime(
+                volume,
+                start + 0.015
             );
 
-            miloTone(
-                980,
-                .25,
-                now + .49,
-                "sine",
-                .08
+
+            gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                start + duration
             );
 
-            return;
+
+            oscillator.connect(gain);
+
+            gain.connect(
+                ctx.destination
+            );
+
+
+            oscillator.start(start);
+
+            oscillator.stop(
+                start + duration + 0.02
+            );
         }
 
+
+        /* =====================================================
+           OW
+        ===================================================== */
 
         if (type === "ow") {
 
-            miloTone(
+            /*
+             * Short "ouch" style descending sound.
+             * Noticeably louder than the previous version.
+             */
+
+            tone(
                 520,
-                .12,
+                0.16,
                 now,
-                "sine",
-                .07
+                "sawtooth",
+                0.16
             );
 
-            miloTone(
+            tone(
                 390,
-                .20,
-                now + .10,
-                "sine",
-                .06
+                0.20,
+                now + 0.11,
+                "triangle",
+                0.18
+            );
+
+            tone(
+                280,
+                0.25,
+                now + 0.25,
+                "triangle",
+                0.13
             );
 
             return;
         }
 
+
+        /* =====================================================
+           WOOHOO
+        ===================================================== */
+
+        if (type === "woohoo") {
+
+            /*
+             * Bright 4-note celebration.
+             */
+
+            tone(
+                520,
+                0.18,
+                now,
+                "triangle",
+                0.16
+            );
+
+            tone(
+                650,
+                0.18,
+                now + 0.13,
+                "triangle",
+                0.18
+            );
+
+            tone(
+                780,
+                0.20,
+                now + 0.26,
+                "triangle",
+                0.20
+            );
+
+            tone(
+                980,
+                0.30,
+                now + 0.40,
+                "triangle",
+                0.22
+            );
+
+            /*
+             * Little sparkle on top.
+             */
+
+            tone(
+                1250,
+                0.12,
+                now + 0.46,
+                "sine",
+                0.10
+            );
+
+            tone(
+                1500,
+                0.16,
+                now + 0.58,
+                "sine",
+                0.08
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           CORRECT
+        ===================================================== */
 
         if (type === "correct") {
 
-            miloTone(
+            tone(
                 620,
-                .13,
+                0.14,
                 now,
-                "sine",
-                .07
+                "triangle",
+                0.16
             );
 
-            miloTone(
+            tone(
                 820,
-                .18,
-                now + .13,
-                "sine",
-                .07
+                0.18,
+                now + 0.13,
+                "triangle",
+                0.18
+            );
+
+            tone(
+                1040,
+                0.24,
+                now + 0.27,
+                "triangle",
+                0.19
             );
 
             return;
         }
 
+
+        /* =====================================================
+           WRONG
+        ===================================================== */
+
+        if (type === "wrong") {
+
+            tone(
+                420,
+                0.18,
+                now,
+                "sawtooth",
+                0.13
+            );
+
+            tone(
+                300,
+                0.25,
+                now + 0.15,
+                "triangle",
+                0.16
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           PUNCH
+        ===================================================== */
+
+        if (type === "punch") {
+
+            tone(
+                120,
+                0.08,
+                now,
+                "square",
+                0.22
+            );
+
+            tone(
+                75,
+                0.14,
+                now + 0.045,
+                "sawtooth",
+                0.18
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           XP
+        ===================================================== */
+
+        if (type === "xp") {
+
+            tone(
+                700,
+                0.10,
+                now,
+                "triangle",
+                0.11
+            );
+
+            tone(
+                900,
+                0.12,
+                now + 0.09,
+                "triangle",
+                0.13
+            );
+
+            return;
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Milo audio error:",
+            error
+        );
+    }
+}
 
         if (type === "wrong") {
 
