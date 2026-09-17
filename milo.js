@@ -3,10 +3,12 @@
 /* =========================================================
    STUDYMIND AI — MILO
    COOL MONKEY MASCOT
-   VERSION 6
+   VERSION 7
+   FIXED AUDIO + CLEANED PLAYBACK ENGINE
 ========================================================= */
 
-console.log("StudyMind AI — Milo Monkey v6 loaded");
+console.log("StudyMind AI — Milo Monkey v7 loaded");
+
 
 /* =========================================================
    STORAGE
@@ -26,6 +28,7 @@ const MILO_KEYS = {
 ========================================================= */
 
 let miloAudioContext = null;
+let miloAudioUnlocked = false;
 
 let miloTapCount = 0;
 let miloTapResetTimer = null;
@@ -73,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     createMilo();
 
     if ("speechSynthesis" in window) {
+
         window.speechSynthesis.getVoices();
 
         window.speechSynthesis.onvoiceschanged = () => {
@@ -109,7 +113,7 @@ function createMilo() {
 
     container.id = "miloCompanion";
     container.className = "milo-container";
-    container.dataset.miloVersion = "6-monkey";
+    container.dataset.miloVersion = "7-monkey";
 
 
     container.innerHTML = `
@@ -193,6 +197,7 @@ function createMilo() {
                     <div class="milo-hood"></div>
 
                     <div class="milo-hood-string milo-hood-string-left"></div>
+
                     <div class="milo-hood-string milo-hood-string-right"></div>
 
                     <div class="milo-chest-badge">
@@ -250,15 +255,11 @@ function createMilo() {
                     <!-- EARS -->
 
                     <div class="milo-ear milo-ear-left">
-
                         <div class="milo-ear-inner"></div>
-
                     </div>
 
                     <div class="milo-ear milo-ear-right">
-
                         <div class="milo-ear-inner"></div>
-
                     </div>
 
 
@@ -281,7 +282,7 @@ function createMilo() {
 
 
                     <!-- =================================================
-                         HAIR TUFT
+                         HAIR
                     ================================================== -->
 
                     <div class="milo-hair">
@@ -294,7 +295,7 @@ function createMilo() {
 
 
                     <!-- =================================================
-                         FACE
+                         EYEBROWS
                     ================================================== -->
 
                     <div
@@ -306,22 +307,20 @@ function createMilo() {
                     ></div>
 
 
-                    <!-- EYES -->
+                    <!-- =================================================
+                         EYES
+                    ================================================== -->
 
                     <div
                         class="milo-eye milo-eye-left"
                     >
-
                         <div class="milo-pupil"></div>
-
                     </div>
 
                     <div
                         class="milo-eye milo-eye-right"
                     >
-
                         <div class="milo-pupil"></div>
-
                     </div>
 
 
@@ -335,15 +334,11 @@ function createMilo() {
                     >
 
                         <div class="milo-glass milo-glass-left">
-
                             <div class="milo-lens-shine"></div>
-
                         </div>
 
                         <div class="milo-glass milo-glass-right">
-
                             <div class="milo-lens-shine"></div>
-
                         </div>
 
                         <div class="milo-glasses-bridge"></div>
@@ -351,26 +346,28 @@ function createMilo() {
                     </div>
 
 
-                    <!-- NOSE -->
+                    <!-- =================================================
+                         NOSE
+                    ================================================== -->
 
                     <div class="milo-nose"></div>
 
 
-                    <!-- MUZZLE -->
+                    <!-- =================================================
+                         MUZZLE
+                    ================================================== -->
 
                     <div class="milo-muzzle">
-
                         <div class="milo-muzzle-highlight"></div>
-
                     </div>
 
 
-                    <!-- MOUTH -->
+                    <!-- =================================================
+                         MOUTH
+                    ================================================== -->
 
                     <div class="milo-mouth">
-
                         <span class="milo-mouth-inner"></span>
-
                     </div>
 
                 </div>
@@ -415,16 +412,19 @@ function createMilo() {
 
                 event.preventDefault();
 
+                unlockMiloAudio();
+
                 handleMiloTap();
             }
         }
     );
 }
-/* =========================================================
-   UNLOCK MILO AUDIO AFTER FIRST USER INTERACTION
-========================================================= */
 
-let miloAudioUnlocked = false;
+
+/* =========================================================
+   AUDIO UNLOCK
+   Browsers require user interaction before audio.
+========================================================= */
 
 function unlockMiloAudio() {
 
@@ -432,13 +432,25 @@ function unlockMiloAudio() {
 
     try {
 
-        const ctx = getAudioContext();
+        const ctx =
+            getAudioContext();
 
         if (ctx) {
 
-            if (ctx.state === "suspended") {
+            if (
+                ctx.state ===
+                "suspended"
+            ) {
+
                 ctx.resume();
             }
+
+
+            /*
+             * Tiny silent oscillator.
+             * This unlocks the audio destination
+             * without making an audible sound.
+             */
 
             const oscillator =
                 ctx.createOscillator();
@@ -446,12 +458,17 @@ function unlockMiloAudio() {
             const gain =
                 ctx.createGain();
 
-            gain.gain.value = 0.0001;
+
+            gain.gain.value =
+                0.0001;
+
 
             oscillator.connect(gain);
             gain.connect(ctx.destination);
 
+
             oscillator.start();
+
 
             oscillator.stop(
                 ctx.currentTime + 0.01
@@ -459,7 +476,9 @@ function unlockMiloAudio() {
         }
 
 
-        if ("speechSynthesis" in window) {
+        if (
+            "speechSynthesis" in window
+        ) {
 
             window.speechSynthesis
                 .getVoices();
@@ -478,6 +497,11 @@ function unlockMiloAudio() {
 }
 
 
+/*
+ * Unlock on the first real interaction anywhere
+ * on the page.
+ */
+
 document.addEventListener(
     "pointerdown",
     unlockMiloAudio,
@@ -486,6 +510,7 @@ document.addEventListener(
         passive: true
     }
 );
+
 
 /* =========================================================
    FACE CONTROL
@@ -503,6 +528,7 @@ function setMiloFace(state) {
 
     MILO_FACE_STATES.forEach(
         className => {
+
             character.classList.remove(
                 className
             );
@@ -568,7 +594,9 @@ function showMilo(
                 );
 
 
-            button.type = "button";
+            button.type =
+                "button";
+
 
             button.textContent =
                 action.label;
@@ -643,7 +671,8 @@ function getPreferredMiloVoice() {
 
 
     const voices =
-        window.speechSynthesis.getVoices();
+        window.speechSynthesis
+            .getVoices();
 
 
     if (!voices.length) {
@@ -689,6 +718,7 @@ function getPreferredMiloVoice() {
 
 
     return (
+
         voices.find(
             voice =>
                 voice.lang &&
@@ -734,13 +764,16 @@ function speakMilo(
 
 
         utterance.rate =
-            options.rate ?? .98;
+            options.rate ?? 0.98;
+
 
         utterance.pitch =
             options.pitch ?? 1;
 
+
         utterance.volume =
-            options.volume ?? .95;
+            options.volume ?? 0.95;
+
 
         utterance.lang =
             "en-US";
@@ -772,7 +805,7 @@ function speakMilo(
 
 
 /* =========================================================
-   AUDIO
+   AUDIO ENGINE
 ========================================================= */
 
 function getAudioContext() {
@@ -799,7 +832,8 @@ function getAudioContext() {
         "suspended"
     ) {
 
-        miloAudioContext.resume();
+        miloAudioContext.resume()
+            .catch(() => {});
     }
 
 
@@ -807,12 +841,16 @@ function getAudioContext() {
 }
 
 
+/* =========================================================
+   AUDIO TONE HELPER
+========================================================= */
+
 function miloTone(
     frequency,
     duration,
     startTime,
-    type = "sine",
-    volume = .08
+    waveform = "sine",
+    volume = 0.12
 ) {
 
     const ctx =
@@ -830,7 +868,7 @@ function miloTone(
 
 
     oscillator.type =
-        type;
+        waveform;
 
 
     oscillator.frequency.setValueAtTime(
@@ -840,19 +878,19 @@ function miloTone(
 
 
     gain.gain.setValueAtTime(
-        0,
+        0.0001,
         startTime
     );
 
 
-    gain.gain.linearRampToValueAtTime(
+    gain.gain.exponentialRampToValueAtTime(
         volume,
-        startTime + .02
+        startTime + 0.015
     );
 
 
     gain.gain.exponentialRampToValueAtTime(
-        .001,
+        0.0001,
         startTime + duration
     );
 
@@ -870,118 +908,72 @@ function miloTone(
 
 
     oscillator.stop(
-        startTime + duration
+        startTime + duration + 0.03
     );
 }
 
+
+/* =========================================================
+   PLAY SOUND
+========================================================= */
 
 function playSound(type) {
 
     try {
 
-        const ctx = getAudioContext();
+        const ctx =
+            getAudioContext();
+
 
         if (!ctx) return;
 
-        const now = ctx.currentTime;
 
-
-        /* =====================================================
-           HELPER — LOUDER ENVELOPE
-        ===================================================== */
-
-        function tone(
-            frequency,
-            duration,
-            start,
-            waveform = "sine",
-            volume = 0.18
+        if (
+            ctx.state ===
+            "suspended"
         ) {
 
-            const oscillator =
-                ctx.createOscillator();
-
-            const gain =
-                ctx.createGain();
-
-
-            oscillator.type =
-                waveform;
-
-
-            oscillator.frequency.setValueAtTime(
-                frequency,
-                start
-            );
-
-
-            gain.gain.setValueAtTime(
-                0.0001,
-                start
-            );
-
-
-            gain.gain.exponentialRampToValueAtTime(
-                volume,
-                start + 0.015
-            );
-
-
-            gain.gain.exponentialRampToValueAtTime(
-                0.0001,
-                start + duration
-            );
-
-
-            oscillator.connect(gain);
-
-            gain.connect(
-                ctx.destination
-            );
-
-
-            oscillator.start(start);
-
-            oscillator.stop(
-                start + duration + 0.02
-            );
+            ctx.resume();
         }
+
+
+        const now =
+            ctx.currentTime;
 
 
         /* =====================================================
            OW
+           Descending cartoon "OUCH!"
         ===================================================== */
 
         if (type === "ow") {
 
-            /*
-             * Short "ouch" style descending sound.
-             * Noticeably louder than the previous version.
-             */
-
-            tone(
-                520,
-                0.16,
+            miloTone(
+                560,
+                0.15,
                 now,
                 "sawtooth",
-                0.16
+                0.22
             );
 
-            tone(
-                390,
-                0.20,
-                now + 0.11,
+
+            miloTone(
+                410,
+                0.18,
+                now + 0.10,
+                "triangle",
+                0.23
+            );
+
+
+            miloTone(
+                290,
+                0.25,
+                now + 0.22,
                 "triangle",
                 0.18
             );
 
-            tone(
-                280,
-                0.25,
-                now + 0.25,
-                "triangle",
-                0.13
-            );
 
             return;
         }
@@ -989,65 +981,64 @@ function playSound(type) {
 
         /* =====================================================
            WOOHOO
+           Bright celebratory sound
         ===================================================== */
 
         if (type === "woohoo") {
 
-            /*
-             * Bright 4-note celebration.
-             */
-
-            tone(
+            miloTone(
                 520,
-                0.18,
+                0.16,
                 now,
-                "triangle",
-                0.16
-            );
-
-            tone(
-                650,
-                0.18,
-                now + 0.13,
-                "triangle",
-                0.18
-            );
-
-            tone(
-                780,
-                0.20,
-                now + 0.26,
                 "triangle",
                 0.20
             );
 
-            tone(
-                980,
-                0.30,
-                now + 0.40,
+
+            miloTone(
+                660,
+                0.16,
+                now + 0.12,
                 "triangle",
                 0.22
             );
 
-            /*
-             * Little sparkle on top.
-             */
 
-            tone(
+            miloTone(
+                790,
+                0.18,
+                now + 0.24,
+                "triangle",
+                0.24
+            );
+
+
+            miloTone(
+                980,
+                0.28,
+                now + 0.38,
+                "triangle",
+                0.26
+            );
+
+
+            miloTone(
                 1250,
                 0.12,
-                now + 0.46,
+                now + 0.45,
                 "sine",
-                0.10
+                0.14
             );
 
-            tone(
-                1500,
-                0.16,
-                now + 0.58,
+
+            miloTone(
+                1550,
+                0.15,
+                now + 0.57,
                 "sine",
-                0.08
+                0.12
             );
+
 
             return;
         }
@@ -1059,29 +1050,32 @@ function playSound(type) {
 
         if (type === "correct") {
 
-            tone(
+            miloTone(
                 620,
                 0.14,
                 now,
                 "triangle",
-                0.16
-            );
-
-            tone(
-                820,
-                0.18,
-                now + 0.13,
-                "triangle",
-                0.18
-            );
-
-            tone(
-                1040,
-                0.24,
-                now + 0.27,
-                "triangle",
                 0.19
             );
+
+
+            miloTone(
+                820,
+                0.17,
+                now + 0.12,
+                "triangle",
+                0.21
+            );
+
+
+            miloTone(
+                1040,
+                0.25,
+                now + 0.25,
+                "triangle",
+                0.23
+            );
+
 
             return;
         }
@@ -1093,21 +1087,23 @@ function playSound(type) {
 
         if (type === "wrong") {
 
-            tone(
-                420,
+            miloTone(
+                430,
                 0.18,
                 now,
                 "sawtooth",
-                0.13
+                0.17
             );
 
-            tone(
+
+            miloTone(
                 300,
                 0.25,
-                now + 0.15,
+                now + 0.16,
                 "triangle",
-                0.16
+                0.19
             );
+
 
             return;
         }
@@ -1119,21 +1115,23 @@ function playSound(type) {
 
         if (type === "punch") {
 
-            tone(
+            miloTone(
                 120,
                 0.08,
                 now,
                 "square",
-                0.22
+                0.25
             );
 
-            tone(
+
+            miloTone(
                 75,
                 0.14,
                 now + 0.045,
                 "sawtooth",
-                0.18
+                0.21
             );
+
 
             return;
         }
@@ -1145,95 +1143,25 @@ function playSound(type) {
 
         if (type === "xp") {
 
-            tone(
+            miloTone(
                 700,
                 0.10,
                 now,
                 "triangle",
-                0.11
+                0.13
             );
 
-            tone(
+
+            miloTone(
                 900,
                 0.12,
                 now + 0.09,
                 "triangle",
-                0.13
+                0.15
             );
+
 
             return;
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Milo audio error:",
-            error
-        );
-    }
-}
-
-        if (type === "wrong") {
-
-            miloTone(
-                430,
-                .18,
-                now,
-                "sine",
-                .06
-            );
-
-            miloTone(
-                300,
-                .25,
-                now + .17,
-                "sine",
-                .06
-            );
-
-            return;
-        }
-
-
-        if (type === "punch") {
-
-            miloTone(
-                110,
-                .08,
-                now,
-                "square",
-                .09
-            );
-
-            miloTone(
-                70,
-                .14,
-                now + .05,
-                "square",
-                .06
-            );
-
-            return;
-        }
-
-
-        if (type === "xp") {
-
-            miloTone(
-                700,
-                .09,
-                now,
-                "sine",
-                .04
-            );
-
-            miloTone(
-                900,
-                .11,
-                now + .09,
-                "sine",
-                .04
-            );
         }
 
     } catch (error) {
@@ -1256,6 +1184,7 @@ function clearMiloReactionTimers() {
         timer =>
             clearTimeout(timer)
     );
+
 
     miloReactionTimers = [];
 }
@@ -1287,6 +1216,9 @@ function miloTimeout(
 ========================================================= */
 
 function handleMiloTap() {
+
+    unlockMiloAudio();
+
 
     if (miloCollapsed) return;
 
@@ -1364,7 +1296,7 @@ function miloTapReaction() {
         {
             rate: 1,
             pitch: 1,
-            volume: .95
+            volume: 1
         }
     );
 
@@ -1460,6 +1392,7 @@ function startMiloKnockoutSequence() {
         miloTapResetTimer
     );
 
+
     clearTimeout(
         miloDizzyTimer
     );
@@ -1497,9 +1430,7 @@ function startMiloKnockoutSequence() {
 
     /* BIG OW */
 
-    setMiloFace(
-        "ow"
-    );
+    setMiloFace("ow");
 
 
     showMilo(
@@ -1508,16 +1439,14 @@ function startMiloKnockoutSequence() {
     );
 
 
-    playSound(
-        "punch"
-    );
+    playSound("punch");
 
 
     speakMilo(
         "Ow!",
         {
             rate: 1,
-            pitch: .98,
+            pitch: 0.98,
             volume: 1
         }
     );
@@ -1594,19 +1523,16 @@ function startMiloKnockoutSequence() {
         speakMilo(
             "Okay... I think I need a minute.",
             {
-                rate: .88,
-                pitch: .96,
-                volume: .95
+                rate: 0.88,
+                pitch: 0.96,
+                volume: 0.95
             }
         );
 
     }, 2300);
 
 
-    /*
-       DIZZY PERIOD
-       Approximately 3 seconds.
-    */
+    /* DIZZY PERIOD */
 
     miloDizzyTimer =
         setTimeout(() => {
@@ -1838,6 +1764,9 @@ function detectKnowledgeQuestion() {
 
 function miloCorrectAnswer() {
 
+    unlockMiloAudio();
+
+
     miloQuestionAnswered();
 
     miloBusy = true;
@@ -1883,7 +1812,7 @@ function miloCorrectAnswer() {
     speakMilo(
         "Woohoo!",
         {
-            rate: .94,
+            rate: 0.94,
             pitch: 1.04,
             volume: 1
         }
@@ -1921,6 +1850,9 @@ function miloCorrectAnswer() {
 function miloWrongAnswer(
     explanation = ""
 ) {
+
+    unlockMiloAudio();
+
 
     miloQuestionAnswered();
 
@@ -2002,6 +1934,9 @@ function miloWrongAnswer(
 
 function miloGameCorrect() {
 
+    unlockMiloAudio();
+
+
     miloBusy = true;
 
 
@@ -2024,7 +1959,7 @@ function miloGameCorrect() {
     speakMilo(
         "Woohoo!",
         {
-            rate: .94,
+            rate: 0.94,
             pitch: 1.05,
             volume: 1
         }
@@ -2034,7 +1969,7 @@ function miloGameCorrect() {
     addXP(10);
 
 
-    setTimeout(() => {
+    miloTimeout(() => {
 
         setMiloFace(
             "happy"
@@ -2052,6 +1987,9 @@ function miloGameCorrect() {
 ========================================================= */
 
 function miloGameWrong() {
+
+    unlockMiloAudio();
+
 
     miloBusy = true;
 
@@ -2094,7 +2032,7 @@ function miloGameWrong() {
     }
 
 
-    setTimeout(() => {
+    miloTimeout(() => {
 
         if (character) {
 
@@ -2121,6 +2059,9 @@ function miloGameWrong() {
 
 function miloStudySessionComplete() {
 
+    unlockMiloAudio();
+
+
     miloBusy = true;
 
 
@@ -2143,7 +2084,7 @@ function miloStudySessionComplete() {
     speakMilo(
         "Awesome! You did it!",
         {
-            rate: .95,
+            rate: 0.95,
             pitch: 1.05,
             volume: 1
         }
@@ -2153,7 +2094,7 @@ function miloStudySessionComplete() {
     addXP(25);
 
 
-    setTimeout(() => {
+    miloTimeout(() => {
 
         setMiloFace(
             "happy"
@@ -2313,7 +2254,7 @@ function miloOfferHelp() {
     );
 
 
-    setTimeout(() => {
+    miloTimeout(() => {
 
         setMiloFace(
             "happy"
@@ -2415,6 +2356,9 @@ function askStreakGoal() {
 
 function celebrateStreak(days) {
 
+    unlockMiloAudio();
+
+
     setMiloFace(
         "celebrate"
     );
@@ -2434,7 +2378,7 @@ function celebrateStreak(days) {
     speakMilo(
         `${days} day streak!`,
         {
-            rate: .95,
+            rate: 0.95,
             pitch: 1.05,
             volume: 1
         }
@@ -2494,5 +2438,5 @@ window.Milo = {
 
 
 console.log(
-    "StudyMind AI — Milo Monkey v6 ready"
+    "StudyMind AI — Milo Monkey v7 ready"
 );
