@@ -420,7 +420,72 @@ function createMilo() {
         }
     );
 }
+/* =========================================================
+   UNLOCK MILO AUDIO AFTER FIRST USER INTERACTION
+========================================================= */
 
+let miloAudioUnlocked = false;
+
+function unlockMiloAudio() {
+
+    if (miloAudioUnlocked) return;
+
+    try {
+
+        const ctx = getAudioContext();
+
+        if (ctx) {
+
+            if (ctx.state === "suspended") {
+                ctx.resume();
+            }
+
+            const oscillator =
+                ctx.createOscillator();
+
+            const gain =
+                ctx.createGain();
+
+            gain.gain.value = 0.0001;
+
+            oscillator.connect(gain);
+            gain.connect(ctx.destination);
+
+            oscillator.start();
+
+            oscillator.stop(
+                ctx.currentTime + 0.01
+            );
+        }
+
+
+        if ("speechSynthesis" in window) {
+
+            window.speechSynthesis
+                .getVoices();
+        }
+
+
+        miloAudioUnlocked = true;
+
+    } catch (error) {
+
+        console.warn(
+            "Could not unlock Milo audio:",
+            error
+        );
+    }
+}
+
+
+document.addEventListener(
+    "pointerdown",
+    unlockMiloAudio,
+    {
+        once: true,
+        passive: true
+    }
+);
 
 /* =========================================================
    FACE CONTROL
