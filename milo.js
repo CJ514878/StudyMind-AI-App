@@ -2,11 +2,11 @@
 
 /* =========================================================
    STUDYMIND AI — MILO
-   POLISHED HUMANOID MASCOT
-   VERSION 4
+   CHILL / CALM / STYLISH AVATAR
+   VERSION 5
 ========================================================= */
 
-console.log("StudyMind AI — Milo v4 loaded");
+console.log("StudyMind AI — Milo v5 loaded");
 
 const MILO_KEYS = {
     FIRST_VISIT: "studyMindMiloFirstVisit",
@@ -34,6 +34,10 @@ let miloBubbleTimer = null;
 let miloReactionTimers = [];
 let miloDizzyTimer = null;
 
+/* =========================================================
+   FACE STATES
+========================================================= */
+
 const MILO_FACE_STATES = [
     "milo-happy",
     "milo-celebrate",
@@ -57,12 +61,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     createMilo();
 
+    /*
+       Some browsers load speech voices
+       asynchronously.
+    */
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.getVoices();
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
+
     setTimeout(() => {
+
         startMiloExperience();
         startMiloIdleExpressions();
         installQuestionObserver();
-    }, 700);
 
+    }, 700);
 });
 
 /* =========================================================
@@ -71,39 +88,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function createMilo() {
 
-    const oldMilo = document.getElementById("miloCompanion");
+    const oldMilo =
+        document.getElementById("miloCompanion");
 
     if (oldMilo) {
         oldMilo.remove();
     }
 
-    const container = document.createElement("div");
+    const container =
+        document.createElement("div");
 
     container.id = "miloCompanion";
     container.className = "milo-container";
-    container.dataset.miloVersion = "4";
+    container.dataset.miloVersion = "5";
 
     container.innerHTML = `
+
+        <!-- =================================================
+             SPEECH BUBBLE
+        ================================================== -->
+
         <div
             class="milo-bubble"
             id="miloBubble"
             style="display:none;"
             aria-live="polite"
         >
+
             <div class="milo-name">
                 Milo
             </div>
 
             <div
                 class="milo-message"
-                id="miloMessage">
-            </div>
+                id="miloMessage"
+            ></div>
 
             <div
                 class="milo-actions"
-                id="miloActions">
-            </div>
+                id="miloActions"
+            ></div>
+
         </div>
+
+
+        <!-- =================================================
+             MILO CHARACTER
+        ================================================== -->
 
         <div
             class="milo-character milo-happy"
@@ -115,6 +146,11 @@ function createMilo() {
 
             <div class="milo-shadow"></div>
 
+
+            <!-- =================================================
+                 DIZZY STARS
+            ================================================== -->
+
             <div
                 class="milo-dizzy-stars"
                 aria-hidden="true"
@@ -125,70 +161,178 @@ function createMilo() {
                 <span>★</span>
             </div>
 
+
             <div class="milo-mascot">
 
-                <!-- HEAD -->
+
+                <!-- =================================================
+                     HEAD
+                ================================================== -->
 
                 <div class="milo-head">
+
+
+                    <!-- EARS -->
 
                     <div class="milo-ear milo-ear-left"></div>
                     <div class="milo-ear milo-ear-right"></div>
 
-                    <div class="milo-hair">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
+
+                    <!-- =================================================
+                         STYLISH HAT
+                    ================================================== -->
 
                     <div
-                        class="milo-eyebrow milo-eyebrow-left">
+                        class="milo-hat"
+                        aria-hidden="true"
+                    >
+
+                        <div class="milo-hat-crown"></div>
+
+                        <div class="milo-hat-brim"></div>
+
                     </div>
+
+
+                    <!-- =================================================
+                         HAIR
+                    ================================================== -->
 
                     <div
-                        class="milo-eyebrow milo-eyebrow-right">
+                        class="milo-hair"
+                        aria-hidden="true"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </div>
 
-                    <div class="milo-eye milo-eye-left">
+
+                    <!-- EYEBROWS -->
+
+                    <div
+                        class="milo-eyebrow milo-eyebrow-left"
+                    ></div>
+
+                    <div
+                        class="milo-eyebrow milo-eyebrow-right"
+                    ></div>
+
+
+                    <!-- EYES -->
+
+                    <div
+                        class="milo-eye milo-eye-left"
+                    >
                         <div class="milo-pupil"></div>
                     </div>
 
-                    <div class="milo-eye milo-eye-right">
+                    <div
+                        class="milo-eye milo-eye-right"
+                    >
                         <div class="milo-pupil"></div>
                     </div>
+
+
+                    <!-- =================================================
+                         SUNGLASSES
+                    ================================================== -->
+
+                    <div
+                        class="milo-sunglasses"
+                        aria-hidden="true"
+                    >
+
+                        <div
+                            class="milo-glass-left"
+                        ></div>
+
+                        <div
+                            class="milo-glass-right"
+                        ></div>
+
+                        <div
+                            class="milo-glasses-bridge"
+                        ></div>
+
+                        <div
+                            class="milo-glasses-arm-left"
+                        ></div>
+
+                        <div
+                            class="milo-glasses-arm-right"
+                        ></div>
+
+                    </div>
+
+
+                    <!-- NOSE -->
 
                     <div class="milo-nose"></div>
 
-                    <div
-                        class="milo-cheek milo-cheek-left">
-                    </div>
+
+                    <!-- CHEEKS -->
 
                     <div
-                        class="milo-cheek milo-cheek-right">
-                    </div>
+                        class="milo-cheek milo-cheek-left"
+                    ></div>
+
+                    <div
+                        class="milo-cheek milo-cheek-right"
+                    ></div>
+
+
+                    <!-- MOUTH -->
 
                     <div class="milo-mouth">
-                        <span class="milo-mouth-inner"></span>
+
+                        <span
+                            class="milo-mouth-inner"
+                        ></span>
+
                     </div>
 
                 </div>
 
-                <!-- NECK -->
+
+                <!-- =================================================
+                     NECK
+                ================================================== -->
 
                 <div class="milo-neck"></div>
 
-                <!-- ARMS -->
 
-                <div class="milo-arm milo-arm-left">
+                <!-- =================================================
+                     LEFT ARM
+                ================================================== -->
+
+                <div
+                    class="milo-arm milo-arm-left"
+                >
+
                     <div class="milo-hand"></div>
+
                 </div>
 
-                <div class="milo-arm milo-arm-right">
+
+                <!-- =================================================
+                     RIGHT ARM
+                ================================================== -->
+
+                <div
+                    class="milo-arm milo-arm-right"
+                >
+
                     <div class="milo-hand"></div>
+
                 </div>
 
-                <!-- BODY -->
+
+                <!-- =================================================
+                     BODY
+                ================================================== -->
 
                 <div class="milo-body">
 
@@ -200,39 +344,65 @@ function createMilo() {
 
                 </div>
 
-                <!-- SHOES -->
 
-                <div class="milo-foot milo-foot-left"></div>
-                <div class="milo-foot milo-foot-right"></div>
+                <!-- =================================================
+                     SHOES
+                ================================================== -->
+
+                <div
+                    class="milo-foot milo-foot-left"
+                ></div>
+
+                <div
+                    class="milo-foot milo-foot-right"
+                ></div>
 
             </div>
+
         </div>
     `;
 
     document.body.appendChild(container);
 
-    const character = document.getElementById("miloCharacter");
+
+    const character =
+        document.getElementById("miloCharacter");
 
     if (!character) {
-        console.error("Milo character failed to initialize.");
+
+        console.error(
+            "Milo character failed to initialize."
+        );
+
         return;
     }
 
-    character.addEventListener("click", handleMiloTap);
 
-    character.addEventListener("keydown", event => {
+    /* CLICK */
 
-        if (
-            event.key === "Enter" ||
-            event.key === " "
-        ) {
+    character.addEventListener(
+        "click",
+        handleMiloTap
+    );
 
-            event.preventDefault();
-            handleMiloTap();
 
+    /* KEYBOARD */
+
+    character.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+
+                event.preventDefault();
+
+                handleMiloTap();
+            }
         }
-
-    });
+    );
 }
 
 /* =========================================================
@@ -242,15 +412,27 @@ function createMilo() {
 function setMiloFace(state) {
 
     const character =
-        document.getElementById("miloCharacter");
+        document.getElementById(
+            "miloCharacter"
+        );
 
     if (!character) return;
 
-    MILO_FACE_STATES.forEach(className => {
-        character.classList.remove(className);
-    });
 
-    character.classList.add(`milo-${state}`);
+    MILO_FACE_STATES.forEach(
+        className => {
+
+            character.classList.remove(
+                className
+            );
+
+        }
+    );
+
+
+    character.classList.add(
+        `milo-${state}`
+    );
 }
 
 /* =========================================================
@@ -264,67 +446,97 @@ function showMilo(
 ) {
 
     const bubble =
-        document.getElementById("miloBubble");
+        document.getElementById(
+            "miloBubble"
+        );
 
     const messageElement =
-        document.getElementById("miloMessage");
+        document.getElementById(
+            "miloMessage"
+        );
 
     const actionsElement =
-        document.getElementById("miloActions");
+        document.getElementById(
+            "miloActions"
+        );
 
     if (!bubble) return;
 
+
     setMiloFace(state);
 
+
     if (messageElement) {
-        messageElement.textContent = message;
+
+        messageElement.textContent =
+            message;
     }
+
 
     if (actionsElement) {
 
         actionsElement.innerHTML = "";
 
+
         actions.forEach(action => {
 
             const button =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
             button.type = "button";
-            button.textContent = action.label;
+
+            button.textContent =
+                action.label;
 
             button.addEventListener(
                 "click",
                 action.onClick
             );
 
-            actionsElement.appendChild(button);
-
+            actionsElement.appendChild(
+                button
+            );
         });
     }
 
+
     bubble.style.display = "block";
 
-    clearTimeout(miloBubbleTimer);
+
+    clearTimeout(
+        miloBubbleTimer
+    );
+
 
     if (!miloBusy) {
 
-        miloBubbleTimer = setTimeout(() => {
+        miloBubbleTimer =
+            setTimeout(() => {
 
-            if (!miloBusy) {
-                bubble.style.display = "none";
-            }
+                if (!miloBusy) {
 
-        }, 6500);
+                    bubble.style.display =
+                        "none";
+                }
+
+            }, 6500);
     }
 }
+
 
 function hideMilo() {
 
     const bubble =
-        document.getElementById("miloBubble");
+        document.getElementById(
+            "miloBubble"
+        );
 
     if (bubble) {
-        bubble.style.display = "none";
+
+        bubble.style.display =
+            "none";
     }
 }
 
@@ -334,48 +546,96 @@ function hideMilo() {
 
 function getPreferredMiloVoice() {
 
-    if (!("speechSynthesis" in window)) {
+    if (
+        !("speechSynthesis" in window)
+    ) {
         return null;
     }
 
+
     const voices =
         window.speechSynthesis.getVoices();
+
 
     if (!voices.length) {
         return null;
     }
 
+
+    /*
+       Try natural-sounding English voices first.
+    */
+
     const preferredNames = [
+
         "Samantha",
+
         "Google US English",
+
         "Microsoft Aria",
+
         "Microsoft Jenny",
+
         "Microsoft Ava",
+
         "Microsoft Zira",
-        "Alex"
+
+        "Microsoft Guy",
+
+        "Microsoft Christopher",
+
+        "Alex",
+
+        "Daniel"
     ];
 
-    for (const name of preferredNames) {
 
-        const match = voices.find(voice =>
-            voice.name
-                .toLowerCase()
-                .includes(name.toLowerCase())
-        );
+    for (
+        const name of preferredNames
+    ) {
+
+        const match =
+            voices.find(
+                voice =>
+                    voice.name
+                        .toLowerCase()
+                        .includes(
+                            name.toLowerCase()
+                        )
+            );
+
 
         if (match) {
+
             return match;
         }
     }
 
-    return (
+
+    /*
+       Otherwise use American English.
+    */
+
+    const american =
         voices.find(
             voice =>
                 voice.lang &&
                 voice.lang
                     .toLowerCase()
                     .startsWith("en-us")
-        ) ||
+        );
+
+
+    if (american) {
+        return american;
+    }
+
+
+    /*
+       Last fallback: any English voice.
+    */
+
+    return (
         voices.find(
             voice =>
                 voice.lang &&
@@ -387,21 +647,29 @@ function getPreferredMiloVoice() {
     );
 }
 
+
 function speakMilo(
     text,
     options = {}
 ) {
 
-    if (!("speechSynthesis" in window)) {
+    if (
+        !("speechSynthesis" in window)
+    ) {
         return;
     }
+
 
     try {
 
         window.speechSynthesis.cancel();
 
+
         const utterance =
-            new SpeechSynthesisUtterance(text);
+            new SpeechSynthesisUtterance(
+                text
+            );
+
 
         utterance.rate =
             options.rate ?? .98;
@@ -412,16 +680,24 @@ function speakMilo(
         utterance.volume =
             options.volume ?? .95;
 
-        utterance.lang = "en-US";
+        utterance.lang =
+            "en-US";
+
 
         const voice =
             getPreferredMiloVoice();
 
+
         if (voice) {
-            utterance.voice = voice;
+
+            utterance.voice =
+                voice;
         }
 
-        window.speechSynthesis.speak(utterance);
+
+        window.speechSynthesis.speak(
+            utterance
+        );
 
     } catch (error) {
 
@@ -433,7 +709,7 @@ function speakMilo(
 }
 
 /* =========================================================
-   AUDIO
+   AUDIO ENGINE
 ========================================================= */
 
 function getAudioContext() {
@@ -444,23 +720,29 @@ function getAudioContext() {
             window.AudioContext ||
             window.webkitAudioContext;
 
+
         if (!AudioContext) {
             return null;
         }
+
 
         miloAudioContext =
             new AudioContext();
     }
 
+
     if (
         miloAudioContext.state ===
         "suspended"
     ) {
+
         miloAudioContext.resume();
     }
 
+
     return miloAudioContext;
 }
+
 
 function miloTone(
     frequency,
@@ -470,9 +752,12 @@ function miloTone(
     volume = .08
 ) {
 
-    const ctx = getAudioContext();
+    const ctx =
+        getAudioContext();
+
 
     if (!ctx) return;
+
 
     const oscillator =
         ctx.createOscillator();
@@ -480,94 +765,222 @@ function miloTone(
     const gain =
         ctx.createGain();
 
-    oscillator.type = type;
+
+    oscillator.type =
+        type;
+
 
     oscillator.frequency.setValueAtTime(
         frequency,
         startTime
     );
 
+
     gain.gain.setValueAtTime(
         0,
         startTime
     );
+
 
     gain.gain.linearRampToValueAtTime(
         volume,
         startTime + .02
     );
 
+
     gain.gain.exponentialRampToValueAtTime(
         .001,
         startTime + duration
     );
 
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
 
-    oscillator.start(startTime);
+    oscillator.connect(gain);
+
+    gain.connect(
+        ctx.destination
+    );
+
+
+    oscillator.start(
+        startTime
+    );
+
     oscillator.stop(
         startTime + duration
     );
 }
 
+
 function playSound(type) {
 
     try {
 
-        const ctx = getAudioContext();
+        const ctx =
+            getAudioContext();
+
 
         if (!ctx) return;
 
-        const now = ctx.currentTime;
+
+        const now =
+            ctx.currentTime;
+
+
+        /* CORRECT */
 
         if (type === "woohoo") {
 
-            miloTone(540,.18,now,"sine",.07);
-            miloTone(680,.20,now+.15,"sine",.08);
-            miloTone(820,.22,now+.31,"sine",.08);
-            miloTone(980,.25,now+.49,"sine",.08);
+            miloTone(
+                540,
+                .18,
+                now,
+                "sine",
+                .07
+            );
+
+            miloTone(
+                680,
+                .20,
+                now + .15,
+                "sine",
+                .08
+            );
+
+            miloTone(
+                820,
+                .22,
+                now + .31,
+                "sine",
+                .08
+            );
+
+            miloTone(
+                980,
+                .25,
+                now + .49,
+                "sine",
+                .08
+            );
 
             return;
         }
+
+
+        /* OW */
 
         if (type === "ow") {
 
-            miloTone(520,.12,now,"sine",.07);
-            miloTone(390,.20,now+.10,"sine",.06);
+            miloTone(
+                520,
+                .12,
+                now,
+                "sine",
+                .07
+            );
+
+            miloTone(
+                390,
+                .20,
+                now + .10,
+                "sine",
+                .06
+            );
 
             return;
         }
+
+
+        /* CORRECT SHORT */
 
         if (type === "correct") {
 
-            miloTone(620,.13,now,"sine",.07);
-            miloTone(820,.18,now+.13,"sine",.07);
+            miloTone(
+                620,
+                .13,
+                now,
+                "sine",
+                .07
+            );
+
+            miloTone(
+                820,
+                .18,
+                now + .13,
+                "sine",
+                .07
+            );
 
             return;
         }
+
+
+        /* WRONG */
 
         if (type === "wrong") {
 
-            miloTone(430,.18,now,"sine",.06);
-            miloTone(300,.25,now+.17,"sine",.06);
+            miloTone(
+                430,
+                .18,
+                now,
+                "sine",
+                .06
+            );
+
+            miloTone(
+                300,
+                .25,
+                now + .17,
+                "sine",
+                .06
+            );
 
             return;
         }
+
+
+        /* IMPACT */
 
         if (type === "punch") {
 
-            miloTone(110,.08,now,"square",.09);
-            miloTone(70,.14,now+.05,"square",.06);
+            miloTone(
+                110,
+                .08,
+                now,
+                "square",
+                .09
+            );
+
+            miloTone(
+                70,
+                .14,
+                now + .05,
+                "square",
+                .06
+            );
 
             return;
         }
 
+
+        /* XP */
+
         if (type === "xp") {
 
-            miloTone(700,.09,now,"sine",.04);
-            miloTone(900,.11,now+.09,"sine",.04);
+            miloTone(
+                700,
+                .09,
+                now,
+                "sine",
+                .04
+            );
 
+            miloTone(
+                900,
+                .11,
+                now + .09,
+                "sine",
+                .04
+            );
         }
 
     } catch (error) {
@@ -580,17 +993,19 @@ function playSound(type) {
 }
 
 /* =========================================================
-   TIMER MANAGEMENT
+   REACTION TIMER MANAGEMENT
 ========================================================= */
 
 function clearMiloReactionTimers() {
 
     miloReactionTimers.forEach(
-        timer => clearTimeout(timer)
+        timer =>
+            clearTimeout(timer)
     );
 
     miloReactionTimers = [];
 }
+
 
 function miloTimeout(
     callback,
@@ -598,9 +1013,14 @@ function miloTimeout(
 ) {
 
     const timer =
-        setTimeout(callback, delay);
+        setTimeout(
+            callback,
+            delay
+        );
 
-    miloReactionTimers.push(timer);
+    miloReactionTimers.push(
+        timer
+    );
 
     return timer;
 }
@@ -611,14 +1031,22 @@ function miloTimeout(
 
 function handleMiloTap() {
 
-    if (miloCollapsed) return;
-    if (miloBusy) return;
+    if (miloCollapsed) {
+        return;
+    }
+
+    if (miloBusy) {
+        return;
+    }
+
 
     miloTapCount++;
+
 
     clearTimeout(
         miloTapResetTimer
     );
+
 
     miloTapResetTimer =
         setTimeout(() => {
@@ -627,12 +1055,22 @@ function handleMiloTap() {
 
         }, 5000);
 
+
+    /*
+       FIVE HITS
+    */
+
     if (miloTapCount >= 5) {
 
         startMiloKnockoutSequence();
 
         return;
     }
+
+
+    /*
+       NORMAL HIT
+    */
 
     miloTapReaction();
 }
@@ -645,55 +1083,80 @@ function miloTapReaction() {
 
     miloBusy = true;
 
+
     const character =
-        document.getElementById("miloCharacter");
+        document.getElementById(
+            "miloCharacter"
+        );
+
 
     if (!character) {
 
         miloBusy = false;
+
         return;
     }
 
+
     clearMiloReactionTimers();
 
+
     setMiloFace("ow");
+
 
     showMilo(
         "Ow!",
         "ow"
     );
 
+
     playSound("ow");
+
 
     speakMilo(
         "Ow!",
         {
-            rate: 1.0,
-            pitch: 1.0,
+            rate: 1,
+            pitch: 1,
             volume: .95
         }
     );
+
+
+    /*
+       Mouth animation.
+    */
 
     character.classList.remove(
         "milo-speaking-ow",
         "milo-ow-speaking"
     );
 
+
     void character.offsetWidth;
+
 
     character.classList.add(
         "milo-speaking-ow"
     );
 
+
+    /*
+       Body reaction.
+    */
+
     character.classList.remove(
         "milo-hit"
     );
 
+
     void character.offsetWidth;
+
 
     character.classList.add(
         "milo-hit"
     );
+
 
     miloTimeout(() => {
 
@@ -703,13 +1166,18 @@ function miloTapReaction() {
 
     }, 800);
 
+
     miloTimeout(() => {
 
         if (!miloCollapsed) {
-            setMiloFace("surprised");
+
+            setMiloFace(
+                "surprised"
+            );
         }
 
     }, 300);
+
 
     miloTimeout(() => {
 
@@ -719,11 +1187,16 @@ function miloTapReaction() {
 
     }, 700);
 
+
     miloTimeout(() => {
 
         if (!miloCollapsed) {
-            setMiloFace("happy");
+
+            setMiloFace(
+                "happy"
+            );
         }
+
 
         miloBusy = false;
 
@@ -732,22 +1205,36 @@ function miloTapReaction() {
 
 /* =========================================================
    FIFTH TAP
-   FALL → DIZZY → GET UP
+   HIT → FALL → GET UP → DIZZY
 ========================================================= */
 
 function startMiloKnockoutSequence() {
 
-    if (miloCollapsed) return;
+    if (miloCollapsed) {
+        return;
+    }
+
 
     miloCollapsed = true;
     miloBusy = true;
 
-    clearTimeout(miloTapResetTimer);
-    clearTimeout(miloDizzyTimer);
+
+    clearTimeout(
+        miloTapResetTimer
+    );
+
+    clearTimeout(
+        miloDizzyTimer
+    );
+
     clearMiloReactionTimers();
 
+
     const character =
-        document.getElementById("miloCharacter");
+        document.getElementById(
+            "miloCharacter"
+        );
+
 
     if (!character) {
 
@@ -757,6 +1244,7 @@ function startMiloKnockoutSequence() {
         return;
     }
 
+
     character.classList.remove(
         "milo-hit",
         "milo-fall",
@@ -765,18 +1253,25 @@ function startMiloKnockoutSequence() {
         "milo-speaking-ow"
     );
 
+
     void character.offsetWidth;
 
-    /* HIT */
+
+    /* =====================================================
+       BIG OW
+    ===================================================== */
 
     setMiloFace("ow");
+
 
     showMilo(
         "OW!",
         "ow"
     );
 
+
     playSound("punch");
+
 
     speakMilo(
         "Ow!",
@@ -787,15 +1282,20 @@ function startMiloKnockoutSequence() {
         }
     );
 
+
     character.classList.add(
         "milo-hit"
     );
+
 
     character.classList.add(
         "milo-speaking-ow"
     );
 
-    /* FALL */
+
+    /* =====================================================
+       FALL
+    ===================================================== */
 
     miloTimeout(() => {
 
@@ -803,15 +1303,20 @@ function startMiloKnockoutSequence() {
             "milo-hit"
         );
 
+
         character.classList.add(
             "milo-fall"
         );
+
 
         hideMilo();
 
     }, 500);
 
-    /* GET BACK UP */
+
+    /* =====================================================
+       GET UP
+    ===================================================== */
 
     miloTimeout(() => {
 
@@ -819,7 +1324,9 @@ function startMiloKnockoutSequence() {
             "milo-fall"
         );
 
+
         void character.offsetWidth;
+
 
         character.classList.add(
             "milo-get-up"
@@ -827,7 +1334,10 @@ function startMiloKnockoutSequence() {
 
     }, 1450);
 
-    /* DIZZY */
+
+    /* =====================================================
+       DIZZY
+    ===================================================== */
 
     miloTimeout(() => {
 
@@ -835,12 +1345,17 @@ function startMiloKnockoutSequence() {
             "milo-get-up"
         );
 
-        setMiloFace("dizzy");
+
+        setMiloFace(
+            "dizzy"
+        );
+
 
         showMilo(
             "Okay... I think I need a minute.",
             "dizzy"
         );
+
 
         speakMilo(
             "Okay... I think I need a minute.",
@@ -853,7 +1368,10 @@ function startMiloKnockoutSequence() {
 
     }, 2300);
 
-    /* END DIZZY */
+
+    /*
+       DIZZY FOR APPROXIMATELY 3 SECONDS
+    */
 
     miloDizzyTimer =
         setTimeout(() => {
@@ -864,13 +1382,16 @@ function startMiloKnockoutSequence() {
 }
 
 /* =========================================================
-   END FIFTH TAP SEQUENCE
+   END FIFTH TAP
 ========================================================= */
 
 function endMiloKnockoutSequence() {
 
     const character =
-        document.getElementById("miloCharacter");
+        document.getElementById(
+            "miloCharacter"
+        );
+
 
     if (!character) {
 
@@ -880,26 +1401,37 @@ function endMiloKnockoutSequence() {
         return;
     }
 
+
     character.classList.remove(
         "milo-dizzy",
         "milo-fall",
         "milo-get-up"
     );
 
-    setMiloFace("surprised");
+
+    setMiloFace(
+        "surprised"
+    );
+
 
     showMilo(
         "Okay... I'm good now. 😅",
         "surprised"
     );
 
+
     setTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         hideMilo();
 
+
         miloTapCount = 0;
+
 
         miloCollapsed = false;
         miloBusy = false;
@@ -913,13 +1445,23 @@ function endMiloKnockoutSequence() {
 
 function startMiloQuestionTimer() {
 
-    clearTimeout(miloQuestionTimer);
+    clearTimeout(
+        miloQuestionTimer
+    );
+
 
     miloQuestionTimer = null;
 
-    if (miloBusy) return;
 
-    setMiloFace("thinking");
+    if (miloBusy) {
+        return;
+    }
+
+
+    setMiloFace(
+        "thinking"
+    );
+
 
     miloQuestionTimer =
         setTimeout(() => {
@@ -931,7 +1473,11 @@ function startMiloQuestionTimer() {
                 return;
             }
 
-            setMiloFace("impatient");
+
+            setMiloFace(
+                "impatient"
+            );
+
 
             showMilo(
                 "Ahem... I'm still waiting. 😅",
@@ -941,13 +1487,16 @@ function startMiloQuestionTimer() {
         }, 15000);
 }
 
+
 function miloQuestionStarted() {
 
     clearTimeout(
         miloQuestionTimer
     );
 
+
     miloQuestionTimer = null;
+
 
     if (
         miloBusy ||
@@ -956,14 +1505,17 @@ function miloQuestionStarted() {
         return;
     }
 
+
     startMiloQuestionTimer();
 }
+
 
 function miloQuestionAnswered() {
 
     clearTimeout(
         miloQuestionTimer
     );
+
 
     miloQuestionTimer = null;
 }
@@ -974,16 +1526,24 @@ function miloQuestionAnswered() {
 
 function installQuestionObserver() {
 
-    if (!document.body) return;
+    if (!document.body) {
+        return;
+    }
+
 
     if (miloQuestionObserver) {
+
         miloQuestionObserver.disconnect();
     }
 
+
     miloQuestionObserver =
         new MutationObserver(() => {
+
             detectKnowledgeQuestion();
+
         });
+
 
     miloQuestionObserver.observe(
         document.body,
@@ -994,11 +1554,13 @@ function installQuestionObserver() {
         }
     );
 
+
     setTimeout(
         detectKnowledgeQuestion,
         500
     );
 }
+
 
 function detectKnowledgeQuestion() {
 
@@ -1007,14 +1569,22 @@ function detectKnowledgeQuestion() {
             ".knowledge-question-card"
         );
 
-    if (!question) return;
+
+    if (!question) {
+        return;
+    }
+
 
     const signature =
         question.innerText
             .trim()
-            .slice(0,500);
+            .slice(0, 500);
 
-    if (!signature) return;
+
+    if (!signature) {
+        return;
+    }
+
 
     if (
         signature ===
@@ -1023,8 +1593,10 @@ function detectKnowledgeQuestion() {
         return;
     }
 
+
     miloLastQuestionSignature =
         signature;
+
 
     miloQuestionStarted();
 }
@@ -1039,8 +1611,12 @@ function miloCorrectAnswer() {
 
     miloBusy = true;
 
+
     const character =
-        document.getElementById("miloCharacter");
+        document.getElementById(
+            "miloCharacter"
+        );
+
 
     if (character) {
 
@@ -1050,20 +1626,28 @@ function miloCorrectAnswer() {
             "milo-wrong-reaction"
         );
 
+
         character.classList.add(
             "milo-answer-correct"
         );
-
     }
 
-    setMiloFace("celebrate");
+
+    setMiloFace(
+        "celebrate"
+    );
+
 
     showMilo(
         "Woohoo! You got it! 🎉",
         "celebrate"
     );
 
-    playSound("woohoo");
+
+    playSound(
+        "woohoo"
+    );
+
 
     speakMilo(
         "Woohoo!",
@@ -1074,17 +1658,24 @@ function miloCorrectAnswer() {
         }
     );
 
+
     addXP(5);
+
 
     miloTimeout(() => {
 
         if (character) {
+
             character.classList.remove(
                 "milo-answer-correct"
             );
         }
 
-        setMiloFace("happy");
+
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1103,10 +1694,17 @@ function miloWrongAnswer(
 
     miloBusy = true;
 
-    const character =
-        document.getElementById("miloCharacter");
 
-    setMiloFace("wrong");
+    const character =
+        document.getElementById(
+            "miloCharacter"
+        );
+
+
+    setMiloFace(
+        "wrong"
+    );
+
 
     showMilo(
         explanation ||
@@ -1114,7 +1712,11 @@ function miloWrongAnswer(
         "wrong"
     );
 
-    playSound("wrong");
+
+    playSound(
+        "wrong"
+    );
+
 
     if (character) {
 
@@ -1124,15 +1726,19 @@ function miloWrongAnswer(
             "milo-wrong-reaction"
         );
 
+
         void character.offsetWidth;
+
 
         character.classList.add(
             "milo-disappointed"
         );
 
+
         character.classList.add(
             "milo-wrong-reaction"
         );
+
 
         miloTimeout(() => {
 
@@ -1144,9 +1750,13 @@ function miloWrongAnswer(
         }, 700);
     }
 
+
     miloTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1161,14 +1771,22 @@ function miloGameCorrect() {
 
     miloBusy = true;
 
-    setMiloFace("celebrate");
+
+    setMiloFace(
+        "celebrate"
+    );
+
 
     showMilo(
         "YESSS! Woohoo! 🎉",
         "celebrate"
     );
 
-    playSound("woohoo");
+
+    playSound(
+        "woohoo"
+    );
+
 
     speakMilo(
         "Woohoo!",
@@ -1179,11 +1797,16 @@ function miloGameCorrect() {
         }
     );
 
+
     addXP(10);
+
 
     setTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1198,17 +1821,28 @@ function miloGameWrong() {
 
     miloBusy = true;
 
-    const character =
-        document.getElementById("miloCharacter");
 
-    setMiloFace("wrong");
+    const character =
+        document.getElementById(
+            "miloCharacter"
+        );
+
+
+    setMiloFace(
+        "wrong"
+    );
+
 
     showMilo(
         "Oh no... 😕",
         "wrong"
     );
 
-    playSound("wrong");
+
+    playSound(
+        "wrong"
+    );
+
 
     if (character) {
 
@@ -1216,12 +1850,15 @@ function miloGameWrong() {
             "milo-disappointed"
         );
 
+
         void character.offsetWidth;
+
 
         character.classList.add(
             "milo-disappointed"
         );
     }
+
 
     setTimeout(() => {
 
@@ -1230,10 +1867,13 @@ function miloGameWrong() {
             character.classList.remove(
                 "milo-disappointed"
             );
-
         }
 
-        setMiloFace("happy");
+
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1248,14 +1888,22 @@ function miloStudySessionComplete() {
 
     miloBusy = true;
 
-    setMiloFace("celebrate");
+
+    setMiloFace(
+        "celebrate"
+    );
+
 
     showMilo(
         "Study session complete! 🎉",
         "celebrate"
     );
 
-    playSound("woohoo");
+
+    playSound(
+        "woohoo"
+    );
+
 
     speakMilo(
         "Awesome! You did it!",
@@ -1266,11 +1914,16 @@ function miloStudySessionComplete() {
         }
     );
 
+
     addXP(25);
+
 
     setTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1290,17 +1943,23 @@ function getXP() {
     );
 }
 
+
 function addXP(amount) {
 
-    const current = getXP();
+    const current =
+        getXP();
+
 
     const updated =
-        current + Number(amount);
+        current +
+        Number(amount);
+
 
     localStorage.setItem(
         MILO_KEYS.XP,
         String(updated)
     );
+
 
     document.dispatchEvent(
         new CustomEvent(
@@ -1314,7 +1973,10 @@ function addXP(amount) {
         )
     );
 
-    playSound("xp");
+
+    playSound(
+        "xp"
+    );
 }
 
 /* =========================================================
@@ -1327,11 +1989,13 @@ function startMiloIdleExpressions() {
         miloIdleExpressionTimer
     );
 
+
     function schedule() {
 
         const delay =
             9000 +
             Math.random() * 11000;
+
 
         miloIdleExpressionTimer =
             setTimeout(() => {
@@ -1342,12 +2006,19 @@ function startMiloIdleExpressions() {
                 ) {
 
                     const expressions = [
+
                         "blink",
+
                         "happy",
+
                         "thinking",
+
                         "surprised",
+
                         "sleepy"
+
                     ];
+
 
                     const expression =
                         expressions[
@@ -1357,7 +2028,11 @@ function startMiloIdleExpressions() {
                             )
                         ];
 
-                    setMiloFace(expression);
+
+                    setMiloFace(
+                        expression
+                    );
+
 
                     setTimeout(() => {
 
@@ -1365,16 +2040,21 @@ function startMiloIdleExpressions() {
                             !miloBusy &&
                             !miloCollapsed
                         ) {
-                            setMiloFace("happy");
+
+                            setMiloFace(
+                                "happy"
+                            );
                         }
 
                     }, 1800);
                 }
 
+
                 schedule();
 
             }, delay);
     }
+
 
     schedule();
 }
@@ -1387,16 +2067,24 @@ function miloOfferHelp() {
 
     miloBusy = true;
 
-    setMiloFace("thinking");
+
+    setMiloFace(
+        "thinking"
+    );
+
 
     showMilo(
         "Need some help? I'm here. 🤔",
         "thinking"
     );
 
+
     setTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         miloBusy = false;
 
@@ -1414,16 +2102,24 @@ function startMiloExperience() {
             MILO_KEYS.FIRST_VISIT
         );
 
-    if (visited) return;
+
+    if (visited) {
+        return;
+    }
+
 
     localStorage.setItem(
         MILO_KEYS.FIRST_VISIT,
         "true"
     );
 
+
     setTimeout(() => {
 
-        setMiloFace("happy");
+        setMiloFace(
+            "happy"
+        );
+
 
         showMilo(
             "Hey! I'm Milo 👋",
@@ -1431,6 +2127,7 @@ function startMiloExperience() {
         );
 
     }, 900);
+
 
     setTimeout(() => {
 
@@ -1455,6 +2152,7 @@ function getStreakGoal() {
     );
 }
 
+
 function setStreakGoal(goal) {
 
     localStorage.setItem(
@@ -1463,29 +2161,41 @@ function setStreakGoal(goal) {
     );
 }
 
+
 function askStreakGoal() {
 
     const current =
         getStreakGoal();
 
+
     showMilo(
+
         current
             ? `Your streak goal is ${current} days! 🔥`
             : "Set a streak goal and let's work toward it! 🔥",
+
         "excited"
     );
 }
 
+
 function celebrateStreak(days) {
 
-    setMiloFace("celebrate");
+    setMiloFace(
+        "celebrate"
+    );
+
 
     showMilo(
         `${days} day streak! 🔥🎉`,
         "celebrate"
     );
 
-    playSound("woohoo");
+
+    playSound(
+        "woohoo"
+    );
+
 
     speakMilo(
         `${days} day streak!`,
@@ -1538,9 +2248,15 @@ window.Milo = {
     miloTap: handleMiloTap,
 
     resetTapCount: () => {
+
         miloTapCount = 0;
+
     },
 
     playSound
 
 };
+
+console.log(
+    "StudyMind AI — Milo v5 ready"
+);
