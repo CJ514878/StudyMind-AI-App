@@ -1,29 +1,36 @@
 /* =========================================================
    STUDYMIND AI — STUDY SESSION
-   COMPLETE CORRECTED VERSION
+   COMPLETE SHARED-TIMER VERSION
 
    Architecture:
+
    Dashboard Timer
-        ↕
+          ↕
    Study Timer
-        ↕
-   Study Session Timer
-        ↓
-   ONE shared timer reaches 00:00
-        ↓
+          ↕
+   Study Session
+          ↓
+   window.StudyMindTimer
+          ↓
+   ONE shared timer
+          ↓
    ONE completion event
-        ↓
-   streak activity recorded
-        ↓
-   existing streak engine updated
-        ↓
+          ↓
+   streak activity
+          ↓
+   existing streak engine
+          ↓
    Milo celebration
-        ↓
+          ↓
    streak popup
 
    IMPORTANT:
    "Complete Session" remains completely separate.
    It still controls topic completion and knowledge-check flow.
+
+   IMPORTANT:
+   This file DOES NOT create its own timer engine.
+   The authoritative timer is study-timer.js.
    ========================================================= */
 
 "use strict";
@@ -56,9 +63,8 @@ const SESSION_KEYS = {
     USERNAME:
         "studyMindUsername",
 
-    /* -----------------------------------------------------
-       SHARED TIMER
-    ----------------------------------------------------- */
+    /* Shared timer keys are kept here only for
+       reading/displaying the authoritative timer. */
 
     TIMER_SECONDS:
         "studyMindTimerSeconds",
@@ -71,10 +77,6 @@ const SESSION_KEYS = {
 
     TIMER_SELECTED:
         "studyMindSelectedTimerSeconds",
-
-    /* -----------------------------------------------------
-       TIMER COMPLETION
-    ----------------------------------------------------- */
 
     TIMER_COMPLETED_AT:
         "studyMindLastTimerCompletedAt",
@@ -93,23 +95,15 @@ let studyPlan = null;
 
 let currentTopic = null;
 
-let timerInterval = null;
-
-let selectedTimerSeconds =
-    25 * 60;
+let selectedTimerSeconds = 25 * 60;
 
 
 /*
- * Prevents duplicate completion processing inside
- * this particular page.
+ * Prevent duplicate DOM event listeners.
  */
-let currentTimerCompletionId = null;
+let timerBridgeInitialized = false;
 
-
-/*
- * Prevents duplicate Milo/popup celebration calls.
- */
-let streakCelebrationRunning = false;
+let timerPresetListenersInitialized = false;
 
 
 /* =========================================================
@@ -133,13 +127,11 @@ function safeJSON(
         const value =
             localStorage.getItem(key);
 
-
         if (!value) {
 
             return fallback;
 
         }
-
 
         return JSON.parse(value);
 
@@ -798,7 +790,23 @@ function saveNotes() {
 
 
 /* =========================================================
-   SHARED TIMER
+   SHARED TIMER BRIDGE
+   =========================================================
+
+   IMPORTANT:
+
+   There is NO timer loop here.
+
+   There is NO finishSharedTimer() here.
+
+   There is NO second streak celebration here.
+
+   StudyMindTimer owns all of that.
+
+   This page only:
+   - displays the shared timer
+   - starts/pauses/resets the shared timer
+   - reacts to shared timer changes
    ========================================================= */
 
 function initializeTimer() {
@@ -824,7 +832,6 @@ function initializeTimer() {
         selectedTimerSeconds =
             25 * 60;
 
-
         localStorage.setItem(
             SESSION_KEYS.TIMER_SELECTED,
             String(
@@ -835,58 +842,21 @@ function initializeTimer() {
     }
 
 
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
+    /*
+     * If the authoritative timer engine has already loaded,
+     * initialize it and immediately render its state.
+     */
+
+    connectToSharedTimer();
 
 
-    const endTime =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_END
-            )
-        );
+    /*
+     * Cross-page synchronization.
 
-
-    if (
-        running &&
-        Number.isFinite(endTime) &&
-        endTime > Date.now()
-    ) {
-
-        startTimerLoop();
-
-    } else if (running) {
-
-        /*
-         * The timer was supposed to be running,
-         * but its end time has passed.
-         *
-         * Treat it as the ONE shared completion.
-         */
-
-        finishSharedTimer();
-
-    } else {
-
-        const storedSeconds =
-            Number(
-                localStorage.getItem(
-                    SESSION_KEYS.TIMER_SECONDS
-                )
-            );
-
-
-        updateTimerDisplay(
-            Number.isFinite(storedSeconds) &&
-            storedSeconds > 0
-                ? storedSeconds
-                : selectedTimerSeconds
-        );
-
-    }
-
+     * "storage" catches changes from other browser tabs/pages.
+     * "studyMindTimerChanged" catches same-page changes.
+     * "studyMindTimerCompleted" catches the ONE completion event.
+     */
 
     window.addEventListener(
         "storage",
@@ -896,8 +866,94 @@ function initializeTimer() {
 
     window.addEventListener(
         "studyMindTimerChanged",
-        handleTimerEvent
+        refreshTimerFromSharedEngine
     );
+
+
+    window.addEventListener(
+        "studyMindTimerCompleted",
+        refreshTimerFromSharedEngine
+    );
+
+
+    window.addEventListener(
+        "studyMindStreakUpdated",
+        refreshTimerFromSharedEngine
+    );
+
+}
+
+
+/* =========================================================
+   CONNECT TO AUTHORITATIVE TIMER
+   ========================================================= */
+
+function connectToSharedTimer() {
+
+    if (
+        timerBridgeInitialized
+    ) {
+
+        refreshTimerFromSharedEngine();
+
+        return true;
+
+    }
+
+
+    if (
+        !window.StudyMindTimer
+    ) {
+
+        /*
+         * study-timer.js may appear after this script.
+         * Give it a moment to initialize instead of creating
+         * another timer engine.
+         */
+
+        setTimeout(
+            connectToSharedTimer,
+            100
+        );
+
+        return false;
+
+    }
+
+
+    timerBridgeInitialized =
+        true;
+
+
+    /*
+     * Let the authoritative engine initialize itself.
+     */
+
+    if (
+        typeof window.StudyMindTimer.initialize ===
+            "function"
+    ) {
+
+        try {
+
+            window.StudyMindTimer.initialize();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMindTimer initialization warning:",
+                error
+            );
+
+        }
+
+    }
+
+
+    refreshTimerFromSharedEngine();
+
+
+    return true;
 
 }
 
@@ -907,6 +963,44 @@ function initializeTimer() {
    ========================================================= */
 
 function setupTimerControls() {
+
+    setupTimerPresets();
+
+
+    $("timerStart")
+        ?.addEventListener(
+            "click",
+            toggleTimer
+        );
+
+
+    $("timerReset")
+        ?.addEventListener(
+            "click",
+            resetTimer
+        );
+
+}
+
+
+/* =========================================================
+   TIMER PRESETS
+   ========================================================= */
+
+function setupTimerPresets() {
+
+    if (
+        timerPresetListenersInitialized
+    ) {
+
+        return;
+
+    }
+
+
+    timerPresetListenersInitialized =
+        true;
+
 
     document
         .querySelectorAll(
@@ -928,7 +1022,8 @@ function setupTimerControls() {
                         if (
                             !Number.isFinite(
                                 minutes
-                            )
+                            ) ||
+                            minutes <= 0
                         ) {
 
                             return;
@@ -971,6 +1066,11 @@ function setupTimerControls() {
                             ) === "true";
 
 
+                        /*
+                         * Never alter the remaining time of
+                         * a running session.
+                         */
+
                         if (!running) {
 
                             localStorage.setItem(
@@ -981,9 +1081,12 @@ function setupTimerControls() {
                             );
 
 
-                            updateTimerDisplay(
-                                selectedTimerSeconds
+                            localStorage.removeItem(
+                                SESSION_KEYS.TIMER_END
                             );
+
+
+                            refreshTimerFromSharedEngine();
 
                         }
 
@@ -994,17 +1097,41 @@ function setupTimerControls() {
         );
 
 
-    $("timerStart")
-        ?.addEventListener(
-            "click",
-            toggleTimer
+    /*
+     * Restore active preset.
+     */
+
+    const selectedMinutes =
+        Math.round(
+            selectedTimerSeconds / 60
         );
 
 
-    $("timerReset")
-        ?.addEventListener(
-            "click",
-            resetTimer
+    document
+        .querySelectorAll(
+            ".timer-preset"
+        )
+        .forEach(
+            button => {
+
+                const minutes =
+                    Number(
+                        button.dataset.minutes
+                    );
+
+
+                if (
+                    minutes ===
+                    selectedMinutes
+                ) {
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
         );
 
 }
@@ -1016,10 +1143,59 @@ function setupTimerControls() {
 
 function toggleTimer() {
 
-    const running =
+    connectToSharedTimer();
+
+
+    const timer =
+        window.StudyMindTimer;
+
+
+    if (!timer) {
+
+        console.warn(
+            "StudyMindTimer is not loaded."
+        );
+
+        return;
+
+    }
+
+
+    let running =
         localStorage.getItem(
             SESSION_KEYS.TIMER_RUNNING
         ) === "true";
+
+
+    /*
+     * Prefer the authoritative engine state when available.
+     */
+
+    if (
+        typeof timer.getState ===
+            "function"
+    ) {
+
+        try {
+
+            const state =
+                timer.getState();
+
+
+            if (
+                state &&
+                typeof state.running ===
+                    "boolean"
+            ) {
+
+                running =
+                    state.running;
+
+            }
+
+        } catch {}
+
+    }
 
 
     if (running) {
@@ -1041,681 +1217,22 @@ function toggleTimer() {
 
 function startSharedTimer() {
 
-    let seconds =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_SECONDS
-            )
-        );
+    connectToSharedTimer();
+
+
+    const timer =
+        window.StudyMindTimer;
 
 
     if (
-        !Number.isFinite(seconds) ||
-        seconds <= 0
-    ) {
-
-        seconds =
-            selectedTimerSeconds;
-
-    }
-
-
-    /*
-     * Starting a new timer creates a new timer state.
-     */
-
-    currentTimerCompletionId =
-        null;
-
-
-    /*
-     * Clear the previous completion marker so a newly
-     * started timer cannot be mistaken for an old one.
-     */
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_COMPLETED_AT
-    );
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_CELEBRATED_AT
-    );
-
-
-    const endTime =
-        Date.now() +
-        seconds * 1000;
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SECONDS,
-        String(seconds)
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_END,
-        String(endTime)
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_RUNNING,
-        "true"
-    );
-
-
-    notifyTimerChanged();
-
-    startTimerLoop();
-
-}
-
-
-/* =========================================================
-   PAUSE
-   ========================================================= */
-
-function pauseSharedTimer() {
-
-    const endTime =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_END
-            )
-        );
-
-
-    let remaining =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_SECONDS
-            )
-        );
-
-
-    if (
-        Number.isFinite(endTime)
-    ) {
-
-        remaining =
-            Math.max(
-                0,
-                Math.ceil(
-                    (
-                        endTime -
-                        Date.now()
-                    ) / 1000
-                )
-            );
-
-    }
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SECONDS,
-        String(
-            remaining
-        )
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_RUNNING,
-        "false"
-    );
-
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_END
-    );
-
-
-    stopTimerLoop();
-
-
-    updateTimerDisplay(
-        remaining
-    );
-
-
-    notifyTimerChanged();
-
-}
-
-
-/* =========================================================
-   RESET
-   ========================================================= */
-
-function resetTimer() {
-
-    stopTimerLoop();
-
-
-    currentTimerCompletionId =
-        null;
-
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_COMPLETED_AT
-    );
-
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_CELEBRATED_AT
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SECONDS,
-        String(
-            selectedTimerSeconds
-        )
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SELECTED,
-        String(
-            selectedTimerSeconds
-        )
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_RUNNING,
-        "false"
-    );
-
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_END
-    );
-
-
-    updateTimerDisplay(
-        selectedTimerSeconds
-    );
-
-
-    notifyTimerChanged();
-
-}
-
-
-/* =========================================================
-   TIMER LOOP
-   ========================================================= */
-
-function startTimerLoop() {
-
-    stopTimerLoop();
-
-    updateTimerButtons();
-
-
-    timerInterval =
-        setInterval(
-            updateSharedTimer,
-            250
-        );
-
-
-    updateSharedTimer();
-
-}
-
-
-function stopTimerLoop() {
-
-    if (timerInterval) {
-
-        clearInterval(
-            timerInterval
-        );
-
-        timerInterval = null;
-
-    }
-
-}
-
-
-/* =========================================================
-   UPDATE TIMER
-   ========================================================= */
-
-function updateSharedTimer() {
-
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
-
-
-    if (!running) {
-
-        stopTimerLoop();
-
-        updateTimerButtons();
-
-        return;
-
-    }
-
-
-    const endTime =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_END
-            )
-        );
-
-
-    if (!Number.isFinite(endTime)) {
-
-        pauseSharedTimer();
-
-        return;
-
-    }
-
-
-    const remaining =
-        Math.max(
-            0,
-            Math.ceil(
-                (
-                    endTime -
-                    Date.now()
-                ) / 1000
-            )
-        );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SECONDS,
-        String(
-            remaining
-        )
-    );
-
-
-    updateTimerDisplay(
-        remaining
-    );
-
-
-    updateTimerButtons();
-
-
-    if (remaining <= 0) {
-
-        finishSharedTimer();
-
-    }
-
-}
-
-
-/* =========================================================
-   FINISH SHARED TIMER
-   ========================================================= */
-
-function finishSharedTimer() {
-
-    /*
-     * Stop this page's interval immediately.
-     */
-
-    stopTimerLoop();
-
-
-    /*
-     * If another page has already finished the timer,
-     * do not create another completion.
-     */
-
-    const existingCompletionId =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_COMPLETED_AT
-        );
-
-
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
-
-
-    if (
-        !running &&
-        existingCompletionId
-    ) {
-
-        updateTimerDisplay(0);
-
-        updateTimerButtons();
-
-        return;
-
-    }
-
-
-    /*
-     * The completion ID is the timestamp of the ONE
-     * shared completion event.
-     */
-
-    const completionId =
-        String(
-            Date.now()
-        );
-
-
-    currentTimerCompletionId =
-        completionId;
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_COMPLETED_AT,
-        completionId
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_SECONDS,
-        "0"
-    );
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_RUNNING,
-        "false"
-    );
-
-
-    localStorage.removeItem(
-        SESSION_KEYS.TIMER_END
-    );
-
-
-    updateTimerDisplay(0);
-
-    updateTimerButtons();
-
-
-    const state =
-        $("timerState");
-
-
-    if (state) {
-
-        state.textContent =
-            "Focus session complete 🎉";
-
-    }
-
-
-    /*
-     * Notify the other StudyMind timer pages first.
-     */
-
-    notifyTimerChanged();
-
-
-    /*
-     * Then process the ONE completion event.
-     */
-
-    celebrateTimerCompletion(
-        completionId
-    );
-
-}
-
-
-/* =========================================================
-   TIMER COMPLETION → STREAK
-   ========================================================= */
-
-function celebrateTimerCompletion(
-    completionId
-) {
-
-    if (!completionId) {
-
-        return;
-
-    }
-
-
-    const normalizedCompletionId =
-        String(
-            completionId
-        );
-
-
-    /*
-     * Prevent duplicate processing inside this page.
-     */
-
-    if (
-        currentTimerCompletionId ===
-        normalizedCompletionId &&
-        streakCelebrationRunning
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Prevent the same completion from being celebrated
-     * more than once across pages.
-     */
-
-    const alreadyCelebrated =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_CELEBRATED_AT
-        );
-
-
-    if (
-        alreadyCelebrated ===
-        normalizedCompletionId
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Lock this completion BEFORE running the celebration.
-     */
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_CELEBRATED_AT,
-        normalizedCompletionId
-    );
-
-
-    currentTimerCompletionId =
-        normalizedCompletionId;
-
-
-    streakCelebrationRunning =
-        true;
-
-
-    /* -----------------------------------------------------
-       RECORD TODAY'S STUDY ACTIVITY
-    ----------------------------------------------------- */
-
-    const today =
-        getLocalDateKey();
-
-
-    let activity =
-        safeJSON(
-            "studyMindStreakActivity",
-            {}
-        );
-
-
-    if (
-        !activity ||
-        typeof activity !== "object" ||
-        Array.isArray(activity)
-    ) {
-
-        activity = {};
-
-    }
-
-
-    /*
-     * Multiple sessions on the same day remain one
-     * streak day.
-     */
-
-    activity[today] = true;
-
-
-    saveJSON(
-        "studyMindStreakActivity",
-        activity
-    );
-
-
-    /* -----------------------------------------------------
-       UPDATE EXISTING STUDYMIND STREAK ENGINE
-    ----------------------------------------------------- */
-
-    if (
-        window.StudyMindStreak &&
-        typeof window.StudyMindStreak.recordStudyActivity ===
+        !timer ||
+        typeof timer.start !==
             "function"
     ) {
 
-        try {
-
-            window.StudyMindStreak.recordStudyActivity();
-
-        } catch (error) {
-
-            console.warn(
-                "StudyMind streak update failed:",
-                error
-            );
-
-        }
-
-    }
-
-
-    /* -----------------------------------------------------
-       CALCULATE CURRENT STREAK
-    ----------------------------------------------------- */
-
-    const streak =
-        calculateTimerStreak(
-            activity,
-            today
+        console.warn(
+            "StudyMindTimer.start() is unavailable."
         );
-
-
-    /* -----------------------------------------------------
-       MILO CELEBRATION
-    ----------------------------------------------------- */
-
-    triggerMiloTimerCelebration(
-        streak
-    );
-
-
-    /* -----------------------------------------------------
-       STREAK POPUP
-    ----------------------------------------------------- */
-
-    showTimerStreakPopup(
-        streak
-    );
-
-
-    /* -----------------------------------------------------
-       NOTIFY THE REST OF THE APP
-    ----------------------------------------------------- */
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakUpdated",
-            {
-                detail: {
-
-                    streak:
-                        streak,
-
-                    date:
-                        today,
-
-                    source:
-                        "study-session-timer"
-
-                }
-            }
-        )
-    );
-
-
-    console.log(
-        "🔥 StudyMind timer completion recorded:",
-        {
-            completionId:
-                normalizedCompletionId,
-
-            streak:
-                streak,
-
-            date:
-                today
-        }
-    );
-
-
-    /*
-     * Allow another future timer completion to celebrate.
-     *
-     * We intentionally do NOT clear TIMER_CELEBRATED_AT.
-     * That value belongs to the completed timer and prevents
-     * other pages from replaying it.
-     */
-
-    setTimeout(
-        () => {
-
-            streakCelebrationRunning =
-                false;
-
-        },
-        3000
-    );
-
-}
-
-
-/* =========================================================
-   MILO TIMER CELEBRATION
-   ========================================================= */
-
-function triggerMiloTimerCelebration(
-    streak
-) {
-
-    if (!window.Milo) {
 
         return;
 
@@ -1725,388 +1242,277 @@ function triggerMiloTimerCelebration(
     try {
 
         /*
-         * Preferred current Milo API.
-         *
-         * This is responsible for:
-         * - celebration sound
-         * - Milo dancing
-         * - celebration animation
+         * The authoritative timer decides whether this is
+         * a resumed timer or a new timer.
          */
 
-        if (
-            typeof window.Milo
-                .miloStudySessionComplete ===
-                "function"
-        ) {
-
-            window.Milo.miloStudySessionComplete(
-                streak
-            );
-
-            return;
-
-        }
-
-
-        /*
-         * Compatibility fallback for older Milo versions.
-         */
-
-        if (
-            typeof window.Milo.playSound ===
-                "function"
-        ) {
-
-            window.Milo.playSound(
-                "woohoo"
-            );
-
-        }
-
-
-        if (
-            typeof window.Milo.show ===
-                "function"
-        ) {
-
-            window.Milo.show(
-                `🔥 ${streak}-day streak!`,
-                "celebrate"
-            );
-
-        }
+        timer.start();
 
     } catch (error) {
 
         console.warn(
-            "Milo celebration failed:",
+            "Could not start shared timer:",
             error
         );
 
     }
 
+
+    refreshTimerFromSharedEngine();
+
 }
 
 
 /* =========================================================
-   CALCULATE TIMER STREAK
+   PAUSE SHARED TIMER
    ========================================================= */
 
-function calculateTimerStreak(
-    activity,
-    today
-) {
+function pauseSharedTimer() {
+
+    const timer =
+        window.StudyMindTimer;
+
 
     if (
-        !activity ||
-        typeof activity !== "object"
+        !timer ||
+        typeof timer.pause !==
+            "function"
     ) {
 
-        return 1;
+        return;
 
     }
 
 
-    let streak = 0;
+    try {
 
+        timer.pause();
 
-    const cursor =
-        new Date(
-            `${today}T12:00:00`
-        );
+    } catch (error) {
 
-
-    /*
-     * Walk backwards from today until the first
-     * missing activity date.
-     */
-
-    for (
-        let i = 0;
-        i < 10000;
-        i++
-    ) {
-
-        const year =
-            cursor.getFullYear();
-
-
-        const month =
-            String(
-                cursor.getMonth() + 1
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const day =
-            String(
-                cursor.getDate()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const key =
-            `${year}-${month}-${day}`;
-
-
-        if (!activity[key]) {
-
-            break;
-
-        }
-
-
-        streak++;
-
-
-        cursor.setDate(
-            cursor.getDate() - 1
+        console.warn(
+            "Could not pause shared timer:",
+            error
         );
 
     }
 
 
-    return Math.max(
-        1,
-        streak
-    );
+    refreshTimerFromSharedEngine();
 
 }
 
 
 /* =========================================================
-   TIMER STREAK POPUP
+   RESET SHARED TIMER
    ========================================================= */
 
-function showTimerStreakPopup(
-    streak
-) {
+function resetTimer() {
+
+    const timer =
+        window.StudyMindTimer;
+
+
+    if (
+        !timer ||
+        typeof timer.reset !==
+            "function"
+    ) {
+
+        /*
+         * Small fallback for display state only.
+         * This does NOT create another timer engine.
+         */
+
+        localStorage.setItem(
+            SESSION_KEYS.TIMER_SECONDS,
+            String(
+                selectedTimerSeconds
+            )
+        );
+
+
+        localStorage.setItem(
+            SESSION_KEYS.TIMER_RUNNING,
+            "false"
+        );
+
+
+        localStorage.removeItem(
+            SESSION_KEYS.TIMER_END
+        );
+
+
+        refreshTimerFromSharedEngine();
+
+        return;
+
+    }
+
+
+    try {
+
+        timer.reset();
+
+    } catch (error) {
+
+        console.warn(
+            "Could not reset shared timer:",
+            error
+        );
+
+    }
+
+
+    refreshTimerFromSharedEngine();
+
+}
+
+
+/* =========================================================
+   REFRESH FROM AUTHORITATIVE TIMER
+   ========================================================= */
+
+function refreshTimerFromSharedEngine() {
+
+    let seconds =
+        Number(
+            localStorage.getItem(
+                SESSION_KEYS.TIMER_SECONDS
+            )
+        );
+
+
+    let running =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_RUNNING
+        ) === "true";
+
+
+    const timer =
+        window.StudyMindTimer;
+
 
     /*
-     * Remove any previous timer-streak popup.
+     * If the authoritative engine exposes getState(),
+     * use it as the source of truth.
      */
 
-    document
-        .querySelectorAll(
-            ".milo-timer-streak-popup"
-        )
-        .forEach(
-            popup =>
-                popup.remove()
-        );
+    if (
+        timer &&
+        typeof timer.getState ===
+            "function"
+    ) {
+
+        try {
+
+            const state =
+                timer.getState();
 
 
-    const popup =
-        document.createElement(
-            "div"
-        );
+            if (state) {
 
+                if (
+                    Number.isFinite(
+                        Number(
+                            state.seconds
+                        )
+                    )
+                ) {
 
-    popup.className =
-        "milo-timer-streak-popup";
-
-
-    popup.innerHTML = `
-
-        <div class="milo-timer-streak-card">
-
-            <div class="milo-timer-streak-fire">
-                🔥
-            </div>
-
-            <div class="milo-timer-streak-small">
-                STUDY SESSION COMPLETE
-            </div>
-
-            <div class="milo-timer-streak-title">
-                ${streak}-Day Streak!
-            </div>
-
-            <div class="milo-timer-streak-message">
-                ${getTimerStreakMessage(streak)}
-            </div>
-
-            <div class="milo-timer-streak-dots">
-
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-
-            </div>
-
-            <button
-                type="button"
-                class="milo-timer-streak-button"
-            >
-                Keep Going 🚀
-            </button>
-
-        </div>
-
-    `;
-
-
-    document.body.appendChild(
-        popup
-    );
-
-
-    installTimerStreakStyles();
-
-
-    requestAnimationFrame(
-        () => {
-
-            requestAnimationFrame(
-                () => {
-
-                    popup.classList.add(
-                        "show"
-                    );
+                    seconds =
+                        Number(
+                            state.seconds
+                        );
 
                 }
+
+
+                if (
+                    typeof state.running ===
+                        "boolean"
+                ) {
+
+                    running =
+                        state.running;
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Could not read StudyMindTimer state:",
+                error
             );
 
         }
-    );
-
-
-    const button =
-        popup.querySelector(
-            ".milo-timer-streak-button"
-        );
-
-
-    button?.addEventListener(
-        "click",
-        () => {
-
-            closeTimerStreakPopup(
-                popup
-            );
-
-        }
-    );
-
-
-    setTimeout(
-        () => {
-
-            closeTimerStreakPopup(
-                popup
-            );
-
-        },
-        6500
-    );
-
-}
-
-
-/* =========================================================
-   STREAK MESSAGE
-   ========================================================= */
-
-function getTimerStreakMessage(
-    streak
-) {
-
-    if (streak <= 1) {
-
-        return (
-            "Your study streak has started! " +
-            "Come back tomorrow and keep it alive."
-        );
 
     }
 
-
-    if (streak < 5) {
-
-        return (
-            "You're building momentum. " +
-            "Keep showing up!"
-        );
-
-    }
-
-
-    if (streak < 10) {
-
-        return (
-            "You're on fire! " +
-            "Your consistency is paying off."
-        );
-
-    }
-
-
-    if (streak < 30) {
-
-        return (
-            "Amazing consistency! " +
-            "Milo is seriously impressed."
-        );
-
-    }
-
-
-    return (
-        "Legendary consistency! " +
-        "Keep that streak alive!"
-    );
-
-}
-
-
-/* =========================================================
-   CLOSE STREAK POPUP
-   ========================================================= */
-
-function closeTimerStreakPopup(
-    popup
-) {
-
-    if (!popup) {
-
-        return;
-
-    }
-
-
-    popup.classList.remove(
-        "show"
-    );
-
-
-    setTimeout(
-        () => {
-
-            popup.remove();
-
-        },
-        350
-    );
-
-}
-
-
-/* =========================================================
-   STREAK POPUP STYLES
-   ========================================================= */
-
-function installTimerStreakStyles() {
 
     if (
-        document.getElementById(
-            "miloTimerStreakStyles"
-        )
+        !Number.isFinite(seconds) ||
+        seconds < 0
+    ) {
+
+        seconds =
+            selectedTimerSeconds;
+
+    }
+
+
+    updateTimerDisplay(
+        seconds,
+        running
+    );
+
+
+    updateTimerButtons(
+        running
+    );
+
+
+    /*
+     * If the selected duration changed elsewhere,
+     * mirror it here.
+     */
+
+    const selected =
+        Number(
+            localStorage.getItem(
+                SESSION_KEYS.TIMER_SELECTED
+            )
+        );
+
+
+    if (
+        Number.isFinite(selected) &&
+        selected > 0
+    ) {
+
+        selectedTimerSeconds =
+            selected;
+
+    }
+
+
+    updateActivePreset();
+
+}
+
+
+/* =========================================================
+   STORAGE SYNC
+   ========================================================= */
+
+function handleTimerStorage(
+    event
+) {
+
+    if (
+        !event
     ) {
 
         return;
@@ -2114,482 +1520,43 @@ function installTimerStreakStyles() {
     }
 
 
-    const style =
-        document.createElement(
-            "style"
-        );
+    const relevantKeys = [
 
+        SESSION_KEYS.TIMER_SECONDS,
 
-    style.id =
-        "miloTimerStreakStyles";
+        SESSION_KEYS.TIMER_END,
 
+        SESSION_KEYS.TIMER_RUNNING,
 
-    style.textContent = `
+        SESSION_KEYS.TIMER_SELECTED,
 
-        .milo-timer-streak-popup {
+        SESSION_KEYS.TIMER_COMPLETED_AT,
 
-            position: fixed;
+        SESSION_KEYS.TIMER_CELEBRATED_AT
 
-            inset: 0;
+    ];
 
-            z-index: 999999;
 
-            display: flex;
+    if (
+        relevantKeys.includes(
+            event.key
+        )
+    ) {
 
-            align-items: center;
+        refreshTimerFromSharedEngine();
 
-            justify-content: center;
-
-            padding: 20px;
-
-            background:
-                rgba(8, 12, 25, .62);
-
-            backdrop-filter:
-                blur(9px);
-
-            opacity: 0;
-
-            pointer-events: none;
-
-            transition:
-                opacity .3s ease;
-
-        }
-
-
-        .milo-timer-streak-popup.show {
-
-            opacity: 1;
-
-            pointer-events: auto;
-
-        }
-
-
-        .milo-timer-streak-card {
-
-            width:
-                min(440px, 100%);
-
-            padding:
-                34px 30px 28px;
-
-            border-radius:
-                30px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    #ffffff,
-                    #f6f7ff
-                );
-
-            box-shadow:
-                0 30px 100px
-                rgba(0,0,0,.35);
-
-            text-align:
-                center;
-
-            transform:
-                translateY(35px)
-                scale(.8);
-
-            transition:
-                transform
-                .5s
-                cubic-bezier(
-                    .18,
-                    1.25,
-                    .35,
-                    1
-                );
-
-            overflow:
-                hidden;
-
-            position:
-                relative;
-
-        }
-
-
-        .milo-timer-streak-popup.show
-        .milo-timer-streak-card {
-
-            transform:
-                translateY(0)
-                scale(1);
-
-        }
-
-
-        .milo-timer-streak-card::before {
-
-            content: "";
-
-            position: absolute;
-
-            width: 260px;
-
-            height: 260px;
-
-            left: 50%;
-
-            top: -180px;
-
-            transform:
-                translateX(-50%);
-
-            border-radius:
-                50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(255,190,40,.28),
-                    transparent 70%
-                );
-
-        }
-
-
-        .milo-timer-streak-fire {
-
-            position:
-                relative;
-
-            font-size:
-                68px;
-
-            line-height:
-                1;
-
-            margin-bottom:
-                12px;
-
-            animation:
-                timerStreakFire
-                .65s
-                ease-in-out
-                infinite
-                alternate;
-
-        }
-
-
-        @keyframes timerStreakFire {
-
-            from {
-
-                transform:
-                    scale(1)
-                    rotate(-5deg);
-
-            }
-
-            to {
-
-                transform:
-                    scale(1.15)
-                    rotate(5deg);
-
-            }
-
-        }
-
-
-        .milo-timer-streak-small {
-
-            position:
-                relative;
-
-            font-size:
-                11px;
-
-            font-weight:
-                800;
-
-            letter-spacing:
-                .15em;
-
-            color:
-                #777c91;
-
-            margin-bottom:
-                7px;
-
-        }
-
-
-        .milo-timer-streak-title {
-
-            position:
-                relative;
-
-            font-size:
-                clamp(
-                    30px,
-                    7vw,
-                    42px
-                );
-
-            line-height:
-                1.05;
-
-            font-weight:
-                900;
-
-            color:
-                #171a2b;
-
-            margin-bottom:
-                12px;
-
-        }
-
-
-        .milo-timer-streak-message {
-
-            position:
-                relative;
-
-            max-width:
-                340px;
-
-            margin:
-                0 auto 22px;
-
-            font-size:
-                15px;
-
-            line-height:
-                1.6;
-
-            color:
-                #62677b;
-
-        }
-
-
-        .milo-timer-streak-dots {
-
-            display:
-                flex;
-
-            justify-content:
-                center;
-
-            gap:
-                7px;
-
-            margin-bottom:
-                25px;
-
-        }
-
-
-        .milo-timer-streak-dots span {
-
-            width:
-                9px;
-
-            height:
-                9px;
-
-            border-radius:
-                50%;
-
-            background:
-                #ffbd38;
-
-            animation:
-                timerStreakDot
-                .75s
-                ease-in-out
-                infinite
-                alternate;
-
-        }
-
-
-        .milo-timer-streak-dots
-        span:nth-child(2) {
-
-            animation-delay:
-                .1s;
-
-        }
-
-
-        .milo-timer-streak-dots
-        span:nth-child(3) {
-
-            animation-delay:
-                .2s;
-
-        }
-
-
-        .milo-timer-streak-dots
-        span:nth-child(4) {
-
-            animation-delay:
-                .3s;
-
-        }
-
-
-        .milo-timer-streak-dots
-        span:nth-child(5) {
-
-            animation-delay:
-                .4s;
-
-        }
-
-
-        @keyframes timerStreakDot {
-
-            from {
-
-                transform:
-                    translateY(0)
-                    scale(.8);
-
-                opacity:
-                    .55;
-
-            }
-
-
-            to {
-
-                transform:
-                    translateY(-6px)
-                    scale(1.1);
-
-                opacity:
-                    1;
-
-            }
-
-        }
-
-
-        .milo-timer-streak-button {
-
-            position:
-                relative;
-
-            border:
-                0;
-
-            border-radius:
-                14px;
-
-            padding:
-                13px 23px;
-
-            font-size:
-                14px;
-
-            font-weight:
-                800;
-
-            color:
-                white;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #5b5ce2,
-                    #7567f5
-                );
-
-            cursor:
-                pointer;
-
-            box-shadow:
-                0 8px 22px
-                rgba(
-                    91,
-                    92,
-                    226,
-                    .28
-                );
-
-            transition:
-                transform .2s ease,
-                box-shadow .2s ease;
-
-        }
-
-
-        .milo-timer-streak-button:hover {
-
-            transform:
-                translateY(-2px);
-
-            box-shadow:
-                0 12px 28px
-                rgba(
-                    91,
-                    92,
-                    226,
-                    .36
-                );
-
-        }
-
-
-        .milo-timer-streak-button:active {
-
-            transform:
-                scale(.97);
-
-        }
-
-
-        @media (max-width: 520px) {
-
-            .milo-timer-streak-card {
-
-                padding:
-                    28px 20px 23px;
-
-                border-radius:
-                    25px;
-
-            }
-
-
-            .milo-timer-streak-fire {
-
-                font-size:
-                    56px;
-
-            }
-
-        }
-
-    `;
-
-
-    document.head.appendChild(
-        style
-    );
+    }
 
 }
 
 
 /* =========================================================
-   DISPLAY TIMER
+   TIMER DISPLAY
    ========================================================= */
 
 function updateTimerDisplay(
-    seconds
+    seconds,
+    running = null
 ) {
 
     seconds =
@@ -2621,10 +1588,16 @@ function updateTimerDisplay(
     }
 
 
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
+    if (
+        running === null
+    ) {
+
+        running =
+            localStorage.getItem(
+                SESSION_KEYS.TIMER_RUNNING
+            ) === "true";
+
+    }
 
 
     const state =
@@ -2659,7 +1632,9 @@ function updateTimerDisplay(
    BUTTON STATE
    ========================================================= */
 
-function updateTimerButtons() {
+function updateTimerButtons(
+    running = null
+) {
 
     const button =
         $("timerStart");
@@ -2672,10 +1647,16 @@ function updateTimerButtons() {
     }
 
 
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
+    if (
+        running === null
+    ) {
+
+        running =
+            localStorage.getItem(
+                SESSION_KEYS.TIMER_RUNNING
+            ) === "true";
+
+    }
 
 
     button.textContent =
@@ -2687,146 +1668,49 @@ function updateTimerButtons() {
 
 
 /* =========================================================
-   CROSS-PAGE TIMER EVENTS
+   ACTIVE PRESET
    ========================================================= */
 
-function notifyTimerChanged() {
+function updateActivePreset() {
 
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindTimerChanged"
-        )
-    );
-
-}
-
-
-function handleTimerStorage(
-    event
-) {
-
-    if (
-        event.key ===
-            SESSION_KEYS.TIMER_SECONDS ||
-
-        event.key ===
-            SESSION_KEYS.TIMER_END ||
-
-        event.key ===
-            SESSION_KEYS.TIMER_RUNNING ||
-
-        event.key ===
-            SESSION_KEYS.TIMER_SELECTED ||
-
-        event.key ===
-            SESSION_KEYS.TIMER_COMPLETED_AT
-    ) {
-
-        refreshTimerFromStorage();
-
-    }
-
-}
-
-
-function handleTimerEvent() {
-
-    refreshTimerFromStorage();
-
-}
-
-
-/* =========================================================
-   REFRESH TIMER FROM STORAGE
-   ========================================================= */
-
-function refreshTimerFromStorage() {
-
-    const running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
-
-
-    const seconds =
+    const selected =
         Number(
             localStorage.getItem(
-                SESSION_KEYS.TIMER_SECONDS
+                SESSION_KEYS.TIMER_SELECTED
             )
         );
 
 
-    if (running) {
-
-        startTimerLoop();
+    if (
+        !Number.isFinite(selected) ||
+        selected <= 0
+    ) {
 
         return;
 
     }
 
 
-    stopTimerLoop();
+    document
+        .querySelectorAll(
+            ".timer-preset"
+        )
+        .forEach(
+            button => {
+
+                const minutes =
+                    Number(
+                        button.dataset.minutes
+                    );
 
 
-    updateTimerDisplay(
-        Number.isFinite(seconds)
-            ? seconds
-            : selectedTimerSeconds
-    );
+                button.classList.toggle(
+                    "active",
+                    minutes * 60 === selected
+                );
 
-
-    updateTimerButtons();
-
-
-    /*
-     * If Dashboard or Study Timer finished the shared timer,
-     * this page can recognize the exact same completion.
-     */
-
-    const completionId =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_COMPLETED_AT
+            }
         );
-
-
-    const celebratedId =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_CELEBRATED_AT
-        );
-
-
-    if (
-        seconds === 0 &&
-        completionId &&
-        completionId !== celebratedId
-    ) {
-
-        const completionTime =
-            Number(
-                completionId
-            );
-
-
-        /*
-         * Only process a recent completion.
-         */
-
-        if (
-            Number.isFinite(
-                completionTime
-            ) &&
-            Date.now() -
-                completionTime <
-                10000
-        ) {
-
-            celebrateTimerCompletion(
-                completionId
-            );
-
-        }
-
-    }
 
 }
 
@@ -2891,7 +1775,7 @@ function setupButtons() {
 
     /*
      * IMPORTANT:
-     * This remains separate from timer completion.
+     * This remains completely separate from timer completion.
      */
 
     $("completeSessionButton")
@@ -2985,12 +1869,12 @@ function getCurrentTopicIndex() {
 
    IMPORTANT:
 
-   This is NOT the timer completion event.
+   This is NOT timer completion.
 
-   The student explicitly clicking Complete Session
-   still records the topic as completed.
+   The student explicitly clicking
+   "Complete Session" still records the topic.
 
-   The existing knowledge-check flow remains intact.
+   Knowledge-check flow remains untouched.
    ========================================================= */
 
 function completeSession() {
@@ -3081,7 +1965,7 @@ function completeSession() {
 
 
     /* -----------------------------------------------------
-       CHECK WHETHER ENTIRE PLAN IS COMPLETE
+       CHECK ENTIRE PLAN
     ----------------------------------------------------- */
 
     const allTopics =
@@ -3162,7 +2046,7 @@ function completeSession() {
 
     /*
      * Preserve existing behavior:
-     * return to dashboard after completing the topic.
+     * return to dashboard.
      */
 
     setTimeout(
@@ -3207,7 +2091,7 @@ function completeStudyDay() {
 
 
     /*
-     * Same date does not increase the streak.
+     * Same date remains one streak day.
      */
 
     activity[today] = true;
@@ -3220,7 +2104,7 @@ function completeStudyDay() {
 
 
     /*
-     * Existing streak system.
+     * Existing streak engine.
      */
 
     if (
@@ -3445,4 +2329,3 @@ async function logout() {
         "home.html";
 
 }
-
