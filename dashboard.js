@@ -27,7 +27,12 @@
    ---------------------------------------------------------
    streak.js is the SINGLE source of truth for streaks.
 
-   dashboard.js NEVER manually increments the streak.
+   study-timer.js is the SINGLE source of truth
+   for timer state and timer completion.
+
+   dashboard.js NEVER manually completes a timer.
+   dashboard.js NEVER manually awards timer XP.
+   dashboard.js NEVER manually creates timer streaks.
 ========================================================= */
 
 
@@ -60,7 +65,11 @@ const LAST_COMPLETED_KEY =
 /* =========================================================
    SHARED TIMER KEYS
 
-   THESE MUST MATCH study-timer.html / study-timer.js
+   These MUST remain identical across:
+
+   dashboard.js
+   study-timer.js
+   study-session.js
 ========================================================= */
 
 const TIMER_SECONDS_KEY =
@@ -102,14 +111,6 @@ let streak =
 
 
 /* =========================================================
-   TIMER STATE
-========================================================= */
-
-let timerInterval =
-    null;
-
-
-/* =========================================================
    AUTH — SHARED SUPABASE CLIENT
 ========================================================= */
 
@@ -129,18 +130,21 @@ document.addEventListener(
 
         await loadUser();
 
+
         /*
-         * Make sure the local values are current.
+         * Make sure local values are current.
          */
         syncLocalStats();
+
 
         /*
          * Ask streak.js whether today's required
          * study work has been completed.
          *
-         * dashboard.js does NOT increment streaks itself.
+         * Dashboard does NOT increment streaks itself.
          */
         checkStudyCompletion();
+
 
         /*
          * Render dashboard.
@@ -159,6 +163,11 @@ document.addEventListener(
 
         setupLogout();
 
+
+        /*
+         * Connect Dashboard timer controls
+         * to the SINGLE shared timer engine.
+         */
         setupSharedDashboardTimer();
 
 
@@ -195,6 +204,7 @@ document.addEventListener(
                     renderRecommendation();
 
                     renderToday();
+
                 }
 
 
@@ -223,6 +233,7 @@ document.addEventListener(
                     renderQuests();
 
                     renderRecommendation();
+
                 }
 
 
@@ -241,6 +252,7 @@ document.addEventListener(
                     renderLevel();
 
                     renderQuests();
+
                 }
 
 
@@ -255,11 +267,15 @@ document.addEventListener(
                     syncLocalStats();
 
                     renderStats();
+
                 }
 
 
                 /*
-                 * Timer state changed.
+                 * Shared timer changed in another tab/page.
+
+                 * Dashboard DOES NOT perform timer logic.
+                 * It simply redraws the UI.
                  */
                 if (
                     [
@@ -273,6 +289,7 @@ document.addEventListener(
                 ) {
 
                     renderSharedDashboardTimer();
+
                 }
 
             }
@@ -326,7 +343,7 @@ document.addEventListener(
 
 
         /* =================================================
-           SAME-PAGE TIMER EVENT
+           SHARED TIMER UI EVENT
         ================================================= */
 
         window.addEventListener(
@@ -339,9 +356,46 @@ document.addEventListener(
         );
 
 
-        /*
-         * Keep Dashboard synchronized with streak.js.
-         */
+        /* =================================================
+           SHARED TIMER COMPLETION EVENT
+        =================================================
+
+           The actual completion has already been handled
+           by study-timer.js.
+
+           Dashboard ONLY refreshes its UI here.
+        */
+
+        window.addEventListener(
+            "studyMindTimerCompleted",
+            event => {
+
+                console.log(
+                    "StudyMind Dashboard: shared timer completed.",
+                    event.detail || {}
+                );
+
+
+                syncLocalStats();
+
+                renderStats();
+
+                renderLevel();
+
+                renderQuests();
+
+                renderRecommendation();
+
+                renderSharedDashboardTimer();
+
+            }
+        );
+
+
+        /* =================================================
+           KEEP DASHBOARD SYNCHRONIZED WITH STREAK.JS
+        ================================================= */
+
         if (
             window.StudyMindStreak
         ) {
@@ -355,7 +409,9 @@ document.addEventListener(
                     const oldXP =
                         xp;
 
+
                     syncLocalStats();
+
 
                     if (
                         oldStreak !== streak ||
@@ -373,6 +429,13 @@ document.addEventListener(
             );
 
         }
+
+
+        /*
+         * If study-timer.js loaded slightly later than
+         * dashboard.js, retry connection briefly.
+         */
+        ensureSharedTimerEngine();
 
     }
 );
@@ -703,6 +766,7 @@ function renderToday() {
                         session?.type || ""
                     ).toLowerCase();
 
+
                 return (
                     type !== "break" &&
                     type !== "rest"
@@ -873,19 +937,139 @@ function startStudySession(
 
 /* =========================================================
    SHARED TIMER ENGINE
+=========================================================
+
+   IMPORTANT:
+
+   Dashboard no longer contains its own timer engine.
+
+   The authoritative engine is:
+
+       window.StudyMindTimer
+
+   This means:
+
+       Dashboard
+          ↓
+       Study Timer
+          ↓
+       Study Session
+
+   all use the SAME timer state.
 ========================================================= */
 
-/*
-   THERE IS ONLY ONE TIMER.
 
-   Dashboard and Study Timer use:
+/* =========================================================
+   ENSURE SHARED TIMER ENGINE
+========================================================= */
 
-   studyMindTimerSeconds
-   studyMindTimerEndTime
-   studyMindTimerRunning
-   studyMindSelectedTimerSeconds
-*/
+function ensureSharedTimerEngine() {
 
+    if (
+        window.StudyMindTimer &&
+        typeof
+            window.StudyMindTimer.initialize ===
+            "function"
+    ) {
+
+        try {
+
+            window.StudyMindTimer.initialize();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind shared timer initialization failed:",
+                error
+            );
+
+        }
+
+
+        renderSharedDashboardTimer();
+
+        return true;
+
+    }
+
+
+    /*
+     * study-timer.js may be loaded after dashboard.js.
+     *
+     * Retry briefly instead of creating another timer.
+     */
+
+    let attempts = 0;
+
+
+    const retry =
+        setInterval(
+            () => {
+
+                attempts++;
+
+
+                if (
+                    window.StudyMindTimer &&
+                    typeof
+                        window.StudyMindTimer.initialize ===
+                        "function"
+                ) {
+
+                    clearInterval(
+                        retry
+                    );
+
+
+                    try {
+
+                        window.StudyMindTimer.initialize();
+
+                    } catch (error) {
+
+                        console.warn(
+                            "StudyMind shared timer initialization failed:",
+                            error
+                        );
+
+                    }
+
+
+                    renderSharedDashboardTimer();
+
+                    return;
+
+                }
+
+
+                if (
+                    attempts >= 40
+                ) {
+
+                    clearInterval(
+                        retry
+                    );
+
+
+                    console.warn(
+                        "StudyMind: study-timer.js was not available."
+                    );
+
+                }
+
+            },
+            250
+        );
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   SETUP DASHBOARD TIMER
+========================================================= */
 
 function setupSharedDashboardTimer() {
 
@@ -900,9 +1084,15 @@ function setupSharedDashboardTimer() {
     }
 
 
-    initializeSharedTimer();
+    /*
+     * Connect to the real shared engine.
+     */
+    ensureSharedTimerEngine();
 
 
+    /*
+     * Duration presets.
+     */
     document
         .querySelectorAll(
             ".timer-preset"
@@ -926,7 +1116,9 @@ function setupSharedDashboardTimer() {
                             ) ||
                             duration <= 0
                         ) {
+
                             return;
+
                         }
 
 
@@ -941,6 +1133,9 @@ function setupSharedDashboardTimer() {
         );
 
 
+    /*
+     * Start / Pause.
+     */
     document
         .getElementById(
             "dashboardTimerStart"
@@ -949,22 +1144,66 @@ function setupSharedDashboardTimer() {
             "click",
             () => {
 
+                const engine =
+                    window.StudyMindTimer;
+
+
                 if (
-                    isSharedTimerRunning()
+                    !engine
                 ) {
 
-                    pauseSharedTimer();
+                    console.warn(
+                        "StudyMind timer engine is not loaded."
+                    );
+
+                    return;
+
+                }
+
+
+                const state =
+                    typeof engine.getState ===
+                    "function"
+                        ? engine.getState()
+                        : null;
+
+
+                if (
+                    state?.running
+                ) {
+
+                    if (
+                        typeof engine.pause ===
+                        "function"
+                    ) {
+
+                        engine.pause();
+
+                    }
 
                 } else {
 
-                    startSharedTimer();
+                    if (
+                        typeof engine.start ===
+                        "function"
+                    ) {
+
+                        engine.start();
+
+                    }
 
                 }
+
+
+                renderSharedDashboardTimer();
 
             }
         );
 
 
+    /*
+     * Reset.
+     */
     document
         .getElementById(
             "dashboardTimerReset"
@@ -973,255 +1212,37 @@ function setupSharedDashboardTimer() {
             "click",
             () => {
 
-                resetSharedTimer();
+                const engine =
+                    window.StudyMindTimer;
+
+
+                if (
+                    engine &&
+                    typeof engine.reset ===
+                    "function"
+                ) {
+
+                    engine.reset();
+
+                }
+
+
+                renderSharedDashboardTimer();
 
             }
         );
 
 
-    startDashboardTimerRefresh();
-
-}
-
-
-/* =========================================================
-   TIMER INITIALIZATION
-========================================================= */
-
-function initializeSharedTimer() {
-
-    let duration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        );
-
-
-    if (
-        !Number.isFinite(duration) ||
-        duration <= 0
-    ) {
-
-        duration =
-            25 * 60;
-
-
-        localStorage.setItem(
-            TIMER_DURATION_KEY,
-            String(duration)
-        );
-
-    }
-
-
-    const running =
-        localStorage.getItem(
-            TIMER_RUNNING_KEY
-        ) === "true";
-
-
-    const seconds =
-        Number(
-            localStorage.getItem(
-                TIMER_SECONDS_KEY
-            )
-        );
-
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds < 0
-    ) {
-
-        localStorage.setItem(
-            TIMER_SECONDS_KEY,
-            String(duration)
-        );
-
-    }
-
-
-    if (
-        running &&
-        !Number(
-            localStorage.getItem(
-                TIMER_END_KEY
-            )
-        )
-    ) {
-
-        localStorage.setItem(
-            TIMER_RUNNING_KEY,
-            "false"
-        );
-
-    }
-
-
+    /*
+     * Initial display.
+     */
     renderSharedDashboardTimer();
 
 }
 
 
 /* =========================================================
-   START TIMER
-========================================================= */
-
-function startSharedTimer() {
-
-    let seconds =
-        Number(
-            localStorage.getItem(
-                TIMER_SECONDS_KEY
-            )
-        );
-
-
-    const selectedDuration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        );
-
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds <= 0
-    ) {
-
-        seconds =
-            Number.isFinite(
-                selectedDuration
-            ) &&
-            selectedDuration > 0
-                ? selectedDuration
-                : 25 * 60;
-
-    }
-
-
-    const endTime =
-        Date.now() +
-        seconds * 1000;
-
-
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        String(seconds)
-    );
-
-
-    localStorage.setItem(
-        TIMER_END_KEY,
-        String(endTime)
-    );
-
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "true"
-    );
-
-
-    dispatchTimerChanged();
-
-    renderSharedDashboardTimer();
-
-}
-
-
-/* =========================================================
-   PAUSE TIMER
-========================================================= */
-
-function pauseSharedTimer() {
-
-    const remaining =
-        getSharedTimerRemaining();
-
-
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        String(
-            Math.max(
-                0,
-                remaining
-            )
-        )
-    );
-
-
-    localStorage.removeItem(
-        TIMER_END_KEY
-    );
-
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "false"
-    );
-
-
-    dispatchTimerChanged();
-
-    renderSharedDashboardTimer();
-
-}
-
-
-/* =========================================================
-   RESET TIMER
-========================================================= */
-
-function resetSharedTimer() {
-
-    let duration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        );
-
-
-    if (
-        !Number.isFinite(duration) ||
-        duration <= 0
-    ) {
-
-        duration =
-            25 * 60;
-
-    }
-
-
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        String(duration)
-    );
-
-
-    localStorage.removeItem(
-        TIMER_END_KEY
-    );
-
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "false"
-    );
-
-
-    dispatchTimerChanged();
-
-    renderSharedDashboardTimer();
-
-}
-
-
-/* =========================================================
-   SELECT TIMER DURATION
+   SELECT SHARED TIMER DURATION
 ========================================================= */
 
 function selectSharedTimerDuration(
@@ -1236,17 +1257,48 @@ function selectSharedTimerDuration(
         !Number.isFinite(duration) ||
         duration <= 0
     ) {
+
         return;
+
+    }
+
+
+    const engine =
+        window.StudyMindTimer;
+
+
+    /*
+     * The new shared engine owns duration selection.
+     */
+    if (
+        engine &&
+        typeof engine.selectDuration ===
+        "function"
+    ) {
+
+        engine.selectDuration(
+            duration
+        );
+
+        renderSharedDashboardTimer();
+
+        return;
+
     }
 
 
     /*
-     * Never destroy an active session.
+     * Compatibility fallback.
+
+     * This does NOT create a timer engine.
+     * It only updates the shared selection keys.
      */
     if (
         isSharedTimerRunning()
     ) {
+
         return;
+
     }
 
 
@@ -1273,47 +1325,47 @@ function selectSharedTimerDuration(
     );
 
 
-    dispatchTimerChanged();
-
     renderSharedDashboardTimer();
 
 }
 
 
 /* =========================================================
-   GET REMAINING TIME
+   GET SHARED TIMER STATE
 ========================================================= */
 
-function getSharedTimerRemaining() {
+function getSharedTimerState() {
+
+    const engine =
+        window.StudyMindTimer;
+
+
+    if (
+        engine &&
+        typeof engine.getState ===
+        "function"
+    ) {
+
+        try {
+
+            return engine.getState();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind timer state lookup failed:",
+                error
+            );
+
+        }
+
+    }
+
 
     const running =
         localStorage.getItem(
             TIMER_RUNNING_KEY
         ) === "true";
-
-
-    if (!running) {
-
-        const pausedSeconds =
-            Number(
-                localStorage.getItem(
-                    TIMER_SECONDS_KEY
-                )
-            );
-
-
-        return Number.isFinite(
-            pausedSeconds
-        )
-            ? Math.max(
-                0,
-                Math.floor(
-                    pausedSeconds
-                )
-            )
-            : 0;
-
-    }
 
 
     const endTime =
@@ -1324,23 +1376,88 @@ function getSharedTimerRemaining() {
         );
 
 
+    const storedSeconds =
+        Number(
+            localStorage.getItem(
+                TIMER_SECONDS_KEY
+            )
+        );
+
+
+    let seconds =
+        Number.isFinite(
+            storedSeconds
+        )
+            ? Math.max(
+                0,
+                Math.floor(
+                    storedSeconds
+                )
+            )
+            : 0;
+
+
     if (
-        !Number.isFinite(endTime)
+        running &&
+        Number.isFinite(
+            endTime
+        )
     ) {
 
-        return 0;
+        seconds =
+            Math.max(
+                0,
+                Math.ceil(
+                    (
+                        endTime -
+                        Date.now()
+                    ) / 1000
+                )
+            );
 
     }
 
 
+    return {
+
+        running,
+
+        seconds,
+
+        endTime:
+            Number.isFinite(
+                endTime
+            )
+                ? endTime
+                : null,
+
+        selectedSeconds:
+            Number(
+                localStorage.getItem(
+                    TIMER_DURATION_KEY
+                )
+            ) || 25 * 60
+
+    };
+
+}
+
+
+/* =========================================================
+   GET REMAINING TIMER TIME
+========================================================= */
+
+function getSharedTimerRemaining() {
+
+    const state =
+        getSharedTimerState();
+
+
     return Math.max(
         0,
-        Math.ceil(
-            (
-                endTime -
-                Date.now()
-            ) / 1000
-        )
+        Number(
+            state?.seconds
+        ) || 0
     );
 
 }
@@ -1352,10 +1469,108 @@ function getSharedTimerRemaining() {
 
 function isSharedTimerRunning() {
 
+    const state =
+        getSharedTimerState();
+
+
     return (
-        localStorage.getItem(
-            TIMER_RUNNING_KEY
-        ) === "true"
+        state?.running === true
+    );
+
+}
+
+
+/* =========================================================
+   START SHARED TIMER
+========================================================= */
+
+function startSharedTimer() {
+
+    const engine =
+        window.StudyMindTimer;
+
+
+    if (
+        engine &&
+        typeof engine.start ===
+        "function"
+    ) {
+
+        engine.start();
+
+        renderSharedDashboardTimer();
+
+        return;
+
+    }
+
+
+    console.warn(
+        "StudyMind timer engine is not available."
+    );
+
+}
+
+
+/* =========================================================
+   PAUSE SHARED TIMER
+========================================================= */
+
+function pauseSharedTimer() {
+
+    const engine =
+        window.StudyMindTimer;
+
+
+    if (
+        engine &&
+        typeof engine.pause ===
+        "function"
+    ) {
+
+        engine.pause();
+
+        renderSharedDashboardTimer();
+
+        return;
+
+    }
+
+
+    console.warn(
+        "StudyMind timer engine is not available."
+    );
+
+}
+
+
+/* =========================================================
+   RESET SHARED TIMER
+========================================================= */
+
+function resetSharedTimer() {
+
+    const engine =
+        window.StudyMindTimer;
+
+
+    if (
+        engine &&
+        typeof engine.reset ===
+        "function"
+    ) {
+
+        engine.reset();
+
+        renderSharedDashboardTimer();
+
+        return;
+
+    }
+
+
+    console.warn(
+        "StudyMind timer engine is not available."
     );
 
 }
@@ -1378,24 +1593,21 @@ function renderSharedDashboardTimer() {
     }
 
 
-    let remaining =
-        getSharedTimerRemaining();
+    const state =
+        getSharedTimerState();
+
+
+    const remaining =
+        Math.max(
+            0,
+            Number(
+                state?.seconds
+            ) || 0
+        );
 
 
     const running =
-        isSharedTimerRunning();
-
-
-    if (
-        running &&
-        remaining <= 0
-    ) {
-
-        finishSharedTimer();
-
-        remaining = 0;
-
-    }
+        state?.running === true;
 
 
     display.textContent =
@@ -1459,236 +1671,146 @@ function renderSharedDashboardTimer() {
 
 /* =========================================================
    TIMER REFRESH LOOP
+=========================================================
+
+   This is ONLY a display refresh.
+
+   It does NOT complete the timer.
+
+   study-timer.js detects completion and owns
+   the completion event.
 ========================================================= */
 
 function startDashboardTimerRefresh() {
 
-    if (timerInterval) {
+    /*
+     * Avoid creating another timer engine.
+     *
+     * A small display refresh is safe because it
+     * never mutates timer state.
+     */
 
-        clearInterval(
-            timerInterval
+    window.setInterval(
+        () => {
+
+            renderSharedDashboardTimer();
+
+        },
+        250
+    );
+
+}
+
+
+/* =========================================================
+   TIMER FORMAT
+========================================================= */
+
+function formatTimerSeconds(
+    seconds
+) {
+
+    seconds =
+        Math.max(
+            0,
+            Math.floor(
+                Number(seconds) || 0
+            )
         );
 
-    }
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
 
 
-    timerInterval =
-        setInterval(
-            () => {
+    const remainingSeconds =
+        seconds % 60;
 
-                renderSharedDashboardTimer();
 
-            },
-            250
+    return (
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        ) +
+
+        ":" +
+
+        String(
+            remainingSeconds
+        ).padStart(
+            2,
+            "0"
+        )
+    );
+
+}
+
+
+/* =========================================================
+   TIMER PRESET VISUAL STATE
+========================================================= */
+
+function updateTimerPresetButtons() {
+
+    const selected =
+        Number(
+            localStorage.getItem(
+                TIMER_DURATION_KEY
+            )
+        );
+
+
+    document
+        .querySelectorAll(
+            ".timer-preset"
+        )
+        .forEach(
+            button => {
+
+                const duration =
+                    Number(
+                        button.dataset.duration
+                    );
+
+
+                button.classList.toggle(
+                    "active",
+                    duration === selected
+                );
+
+            }
         );
 
 }
 
 
 /* =========================================================
-   TIMER FINISHED
+   CROSS-PAGE TIMER UI EVENT
 ========================================================= */
 
-function finishSharedTimer() {
+function dispatchTimerChanged() {
 
-    /*
-     * Prevent duplicate completion.
-     */
-    if (
-        localStorage.getItem(
-            TIMER_RUNNING_KEY
-        ) !== "true"
-    ) {
-        return;
-    }
-
-
-    const duration =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        ) ||
-        25 * 60;
-
-
-    const completedMinutes =
-        Math.max(
-            1,
-            Math.round(
-                duration / 60
-            )
-        );
-
-
-    /* -----------------------------------------
-       STOP TIMER
-    ----------------------------------------- */
-
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        "0"
-    );
-
-
-    localStorage.removeItem(
-        TIMER_END_KEY
-    );
-
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "false"
-    );
-
-
-    /* -----------------------------------------
-       RECORD STUDY SESSION
-    ----------------------------------------- */
-
-    const sessions =
-        loadJSON(
-            SESSION_KEY,
-            []
-        );
-
-
-    const today =
-        getLocalDateKey();
-
-
-    const currentSession =
-        loadJSON(
-            "studyMindCurrentStudySession",
-            null
-        );
-
-
-    sessions.push({
-
-        id:
-            `session_${Date.now()}`,
-
-        date:
-            today,
-
-        duration:
-            completedMinutes,
-
-        seconds:
-            duration,
-
-        subject:
-            currentSession?.subject ||
-            "General Study",
-
-        topic:
-            currentSession?.topic ||
-            "",
-
-        completed:
-            true,
-
-        completedAt:
-            new Date().toISOString()
-
-    });
-
-
-    localStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify(
-            sessions
+    window.dispatchEvent(
+        new Event(
+            "studyMindTimerChanged"
         )
     );
-
-
-    /* -----------------------------------------
-       XP
-    ----------------------------------------- */
-
-    awardXP(
-        Math.max(
-            10,
-            completedMinutes
-        ),
-        `${completedMinutes}-minute study session`
-    );
-
-
-    /* -----------------------------------------
-       DAILY STUDY TIME
-    ----------------------------------------- */
-
-    updateDailyStudyTime(
-        completedMinutes
-    );
-
-
-    /*
-     * The timer itself does NOT complete
-     * the study topic.
-     *
-     * The actual topic completion system
-     * is responsible for that.
-     */
-
-    dispatchTimerChanged();
-
-
-    syncLocalStats();
-
-    renderStats();
-
-    renderLevel();
-
-    renderQuests();
-
-    renderRecommendation();
-
-
-    /*
-     * Check whether today's topics are now
-     * complete in case the user had already
-     * completed them.
-     */
-    checkStudyCompletion();
-
-
-    /*
-     * Milo reaction if available.
-     */
-    if (
-        window.Milo &&
-        typeof
-            window.Milo
-                .celebrateStudySession ===
-            "function"
-    ) {
-
-        try {
-
-            window.Milo
-                .celebrateStudySession(
-                    completedMinutes
-                );
-
-        } catch (error) {
-
-            console.warn(
-                "Milo session celebration failed:",
-                error
-            );
-
-        }
-
-    }
 
 }
 
 
 /* =========================================================
    DAILY STUDY TIME
+=========================================================
+
+   Kept for compatibility with existing Dashboard code.
+
+   The authoritative shared timer engine records
+   completed sessions.
 ========================================================= */
 
 function updateDailyStudyTime(
@@ -1761,7 +1883,9 @@ function getAllStudyTopics() {
                         subject?.topics
                     )
                 ) {
+
                     return;
+
                 }
 
 
@@ -1795,6 +1919,7 @@ function getAllStudyTopics() {
                             }
 
                             return;
+
                         }
 
 
@@ -1880,6 +2005,7 @@ function getAllStudyTopics() {
                     }
 
                     return;
+
                 }
 
 
@@ -1928,6 +2054,7 @@ function getAllStudyTopics() {
     /*
      * Remove exact duplicates.
      */
+
     const unique =
         new Map();
 
@@ -2201,6 +2328,7 @@ function getTodaysRequiredTopics() {
      * If streak.js is loaded, use its
      * schedule-aware logic.
      */
+
     if (
         window.StudyMindStreak &&
         typeof
@@ -2233,6 +2361,7 @@ function getTodaysRequiredTopics() {
      * Fallback for pages where streak.js
      * has not loaded.
      */
+
     const today =
         getLocalDateKey();
 
@@ -2278,7 +2407,9 @@ function getTodaysRequiredTopics() {
                 type === "break" ||
                 type === "rest"
             ) {
+
                 return;
+
             }
 
 
@@ -2373,12 +2504,6 @@ function checkStudyCompletion() {
 
             renderLevel();
 
-            /*
-             * Do not show a second alert here.
-             *
-             * streak.js / Milo owns the celebration.
-             */
-
         }
 
 
@@ -2411,7 +2536,9 @@ function showCompletionCelebration() {
             "studyMindCompletionPopup"
         )
     ) {
+
         return;
+
     }
 
 
@@ -2687,6 +2814,15 @@ function renderLevel() {
 
 /* =========================================================
    AWARD XP
+=========================================================
+
+   Kept for compatibility with other Dashboard
+   features.
+
+   IMPORTANT:
+   study-timer.js handles XP for completed timers.
+   Dashboard does NOT call awardXP() when the
+   shared timer finishes.
 ========================================================= */
 
 function awardXP(
@@ -2704,7 +2840,9 @@ function awardXP(
     if (
         amount <= 0
     ) {
+
         return;
+
     }
 
 
@@ -2886,101 +3024,6 @@ function setupLogout() {
 
             }
         );
-
-}
-
-
-/* =========================================================
-   TIMER FORMAT
-========================================================= */
-
-function formatTimerSeconds(
-    seconds
-) {
-
-    seconds =
-        Math.max(
-            0,
-            Math.floor(
-                Number(seconds) || 0
-            )
-        );
-
-
-    const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
-
-    const remainingSeconds =
-        seconds % 60;
-
-
-    return (
-        String(
-            minutes
-        ).padStart(2, "0") +
-
-        ":" +
-
-        String(
-            remainingSeconds
-        ).padStart(2, "0")
-    );
-
-}
-
-
-/* =========================================================
-   TIMER PRESET VISUAL STATE
-========================================================= */
-
-function updateTimerPresetButtons() {
-
-    const selected =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        );
-
-
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
-
-                const duration =
-                    Number(
-                        button.dataset.duration
-                    );
-
-
-                button.classList.toggle(
-                    "active",
-                    duration === selected
-                );
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   TIMER CROSS-PAGE EVENT
-========================================================= */
-
-function dispatchTimerChanged() {
-
-    window.dispatchEvent(
-        new Event(
-            "studyMindTimerChanged"
-        )
-    );
 
 }
 
@@ -3290,7 +3333,6 @@ function escapeAttribute(
 
 /* =========================================================
    PUBLIC DASHBOARD API
-   Useful for other StudyMind scripts.
 ========================================================= */
 
 window.StudyMindDashboard = {
@@ -3330,4 +3372,3 @@ window.StudyMindDashboard = {
     selectSharedTimerDuration
 
 };
-
