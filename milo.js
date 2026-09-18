@@ -941,43 +941,33 @@ function playSound(type) {
             ctx.currentTime;
 
 
-        /* =====================================================
-           OW
-           Descending cartoon "OUCH!"
-        ===================================================== */
+       if (type === "ow") {
 
-        if (type === "ow") {
+    /*
+     * SYNCHRONIZED CARTOON OW
+     *
+     * Main "OW" begins immediately.
+     * Second tone gives it the downward cartoon finish.
+     */
 
-            miloTone(
-                560,
-                0.15,
-                now,
-                "sawtooth",
-                0.22
-            );
+    miloTone(
+        560,
+        0.20,
+        now,
+        "sawtooth",
+        0.22
+    );
 
+    miloTone(
+        360,
+        0.28,
+        now + 0.16,
+        "triangle",
+        0.20
+    );
 
-            miloTone(
-                410,
-                0.18,
-                now + 0.10,
-                "triangle",
-                0.23
-            );
-
-
-            miloTone(
-                290,
-                0.25,
-                now + 0.22,
-                "triangle",
-                0.18
-            );
-
-
-            return;
-        }
-
+    return;
+}
 
         /* =====================================================
            WOOHOO
