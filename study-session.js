@@ -47,6 +47,12 @@ const SESSION_KEYS = {
     TIMER_SELECTED:
         "studyMindSelectedTimerSeconds",
 
+       TIMER_COMPLETED_AT:
+        "studyMindLastTimerCompletedAt",
+
+    TIMER_CELEBRATED_AT:
+        "studyMindLastTimerCelebratedAt"
+
     /* TIMER COMPLETION */
 
     TIMER_COMPLETED_AT:
