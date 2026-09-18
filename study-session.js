@@ -1,6 +1,29 @@
 /* =========================================================
    STUDYMIND AI — STUDY SESSION
-   COMPLETE REPLACEMENT
+   COMPLETE CORRECTED VERSION
+
+   Architecture:
+   Dashboard Timer
+        ↕
+   Study Timer
+        ↕
+   Study Session Timer
+        ↓
+   ONE shared timer reaches 00:00
+        ↓
+   ONE completion event
+        ↓
+   streak activity recorded
+        ↓
+   existing streak engine updated
+        ↓
+   Milo celebration
+        ↓
+   streak popup
+
+   IMPORTANT:
+   "Complete Session" remains completely separate.
+   It still controls topic completion and knowledge-check flow.
    ========================================================= */
 
 "use strict";
@@ -33,7 +56,9 @@ const SESSION_KEYS = {
     USERNAME:
         "studyMindUsername",
 
-    /* SHARED TIMER */
+    /* -----------------------------------------------------
+       SHARED TIMER
+    ----------------------------------------------------- */
 
     TIMER_SECONDS:
         "studyMindTimerSeconds",
@@ -47,13 +72,9 @@ const SESSION_KEYS = {
     TIMER_SELECTED:
         "studyMindSelectedTimerSeconds",
 
-       TIMER_COMPLETED_AT:
-        "studyMindLastTimerCompletedAt",
-
-    TIMER_CELEBRATED_AT:
-        "studyMindLastTimerCelebratedAt"
-
-    /* TIMER COMPLETION */
+    /* -----------------------------------------------------
+       TIMER COMPLETION
+    ----------------------------------------------------- */
 
     TIMER_COMPLETED_AT:
         "studyMindLastTimerCompletedAt",
@@ -69,23 +90,24 @@ const SESSION_KEYS = {
    ========================================================= */
 
 let studyPlan = null;
+
 let currentTopic = null;
 
 let timerInterval = null;
 
-let selectedTimerSeconds = 25 * 60;
+let selectedTimerSeconds =
+    25 * 60;
 
 
 /*
- * Prevents the same timer completion from triggering
- * multiple celebrations.
+ * Prevents duplicate completion processing inside
+ * this particular page.
  */
 let currentTimerCompletionId = null;
 
 
 /*
- * Prevents duplicate celebration calls caused by
- * multiple timer/storage events.
+ * Prevents duplicate Milo/popup celebration calls.
  */
 let streakCelebrationRunning = false;
 
@@ -101,16 +123,23 @@ function $(id) {
 }
 
 
-function safeJSON(key, fallback = null) {
+function safeJSON(
+    key,
+    fallback = null
+) {
 
     try {
 
         const value =
             localStorage.getItem(key);
 
+
         if (!value) {
+
             return fallback;
+
         }
+
 
         return JSON.parse(value);
 
@@ -123,7 +152,10 @@ function safeJSON(key, fallback = null) {
 }
 
 
-function saveJSON(key, value) {
+function saveJSON(
+    key,
+    value
+) {
 
     try {
 
@@ -200,8 +232,11 @@ function determineCurrentTopic() {
 
     currentTopic = null;
 
+
     if (!studyPlan) {
+
         return;
+
     }
 
 
@@ -244,7 +279,9 @@ function determineCurrentTopic() {
 
 
     if (!Number.isFinite(index)) {
+
         index = 0;
+
     }
 
 
@@ -266,8 +303,6 @@ function determineCurrentTopic() {
                     )
                 ]
             );
-
-        return;
 
     }
 
@@ -296,7 +331,9 @@ function getAllTopics() {
                     !subject ||
                     typeof subject !== "object"
                 ) {
+
                     return;
+
                 }
 
 
@@ -313,7 +350,9 @@ function getAllTopics() {
                         subject.topics
                     )
                 ) {
+
                     return;
+
                 }
 
 
@@ -328,7 +367,11 @@ function getAllTopics() {
 
 
                         if (normalized) {
-                            result.push(normalized);
+
+                            result.push(
+                                normalized
+                            );
+
                         }
 
                     }
@@ -350,11 +393,17 @@ function getAllTopics() {
             topic => {
 
                 const normalized =
-                    normalizeTopic(topic);
+                    normalizeTopic(
+                        topic
+                    );
 
 
                 if (normalized) {
-                    result.push(normalized);
+
+                    result.push(
+                        normalized
+                    );
+
                 }
 
             }
@@ -378,11 +427,15 @@ function normalizeTopic(
 ) {
 
     if (!topic) {
+
         return null;
+
     }
 
 
-    if (typeof topic === "string") {
+    if (
+        typeof topic === "string"
+    ) {
 
         return {
 
@@ -398,7 +451,9 @@ function normalizeTopic(
     }
 
 
-    if (typeof topic === "object") {
+    if (
+        typeof topic === "object"
+    ) {
 
         return {
 
@@ -438,7 +493,9 @@ function normalizeTopic(
    FIRST VALUE
    ========================================================= */
 
-function firstValue(...values) {
+function firstValue(
+    ...values
+) {
 
     for (const value of values) {
 
@@ -482,24 +539,36 @@ function renderTopic() {
     if (!currentTopic) {
 
         if (title) {
+
             title.textContent =
                 "No Active Study Topic";
+
         }
+
 
         if (subtitle) {
+
             subtitle.textContent =
                 "Return to your dashboard and start a study session.";
+
         }
+
 
         if (topicName) {
+
             topicName.textContent =
                 "No topic selected";
+
         }
 
+
         if (subjectName) {
+
             subjectName.textContent =
                 "StudyMind";
+
         }
+
 
         return;
 
@@ -539,14 +608,18 @@ function renderTopic() {
 
 
     if ($("infoSubject")) {
+
         $("infoSubject").textContent =
             currentTopic.subject || "—";
+
     }
 
 
     if ($("infoTopic")) {
+
         $("infoTopic").textContent =
             currentTopic.name || "—";
+
     }
 
 
@@ -560,8 +633,10 @@ function renderTopic() {
 
 
     if ($("infoExam")) {
+
         $("infoExam").textContent =
             exam || "—";
+
     }
 
 
@@ -573,9 +648,9 @@ function renderTopic() {
         topics.findIndex(
             topic =>
                 topic.name ===
-                currentTopic.name &&
+                    currentTopic.name &&
                 topic.subject ===
-                currentTopic.subject
+                    currentTopic.subject
         );
 
 
@@ -586,29 +661,39 @@ function renderTopic() {
 
 
     if ($("topicNumber")) {
+
         $("topicNumber").textContent =
-            String(safeIndex + 1);
+            String(
+                safeIndex + 1
+            );
+
     }
 
 
     const percent =
         topics.length
             ? Math.round(
-                ((safeIndex + 1) /
-                topics.length) * 100
+                (
+                    (safeIndex + 1) /
+                    topics.length
+                ) * 100
             )
             : 0;
 
 
     if ($("progressPercent")) {
+
         $("progressPercent").textContent =
             `${percent}%`;
+
     }
 
 
     if ($("topicProgress")) {
+
         $("topicProgress").style.width =
             `${percent}%`;
+
     }
 
 }
@@ -621,11 +706,15 @@ function renderTopic() {
 function getNotesKey() {
 
     if (!currentTopic) {
+
         return SESSION_KEYS.NOTES;
+
     }
 
 
-    return `${SESSION_KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`;
+    return (
+        `${SESSION_KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`
+    );
 
 }
 
@@ -665,7 +754,9 @@ function saveNotes() {
 
 
     if (!textarea) {
+
         return;
+
     }
 
 
@@ -768,6 +859,13 @@ function initializeTimer() {
 
     } else if (running) {
 
+        /*
+         * The timer was supposed to be running,
+         * but its end time has passed.
+         *
+         * Treat it as the ONE shared completion.
+         */
+
         finishSharedTimer();
 
     } else {
@@ -814,80 +912,86 @@ function setupTimerControls() {
         .querySelectorAll(
             ".timer-preset"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const minutes =
-                        Number(
-                            button.dataset.minutes
-                        );
-
-
-                    if (
-                        !Number.isFinite(minutes)
-                    ) {
-                        return;
-                    }
+                        const minutes =
+                            Number(
+                                button.dataset.minutes
+                            );
 
 
-                    selectedTimerSeconds =
-                        minutes * 60;
+                        if (
+                            !Number.isFinite(
+                                minutes
+                            )
+                        ) {
+
+                            return;
+
+                        }
 
 
-                    localStorage.setItem(
-                        SESSION_KEYS.TIMER_SELECTED,
-                        String(
-                            selectedTimerSeconds
-                        )
-                    );
+                        selectedTimerSeconds =
+                            minutes * 60;
 
-
-                    document
-                        .querySelectorAll(
-                            ".timer-preset"
-                        )
-                        .forEach(
-                            item =>
-                                item.classList.remove(
-                                    "active"
-                                )
-                        );
-
-
-                    button.classList.add(
-                        "active"
-                    );
-
-
-                    const running =
-                        localStorage.getItem(
-                            SESSION_KEYS.TIMER_RUNNING
-                        ) === "true";
-
-
-                    if (!running) {
 
                         localStorage.setItem(
-                            SESSION_KEYS.TIMER_SECONDS,
+                            SESSION_KEYS.TIMER_SELECTED,
                             String(
                                 selectedTimerSeconds
                             )
                         );
 
 
-                        updateTimerDisplay(
-                            selectedTimerSeconds
+                        document
+                            .querySelectorAll(
+                                ".timer-preset"
+                            )
+                            .forEach(
+                                item =>
+                                    item.classList.remove(
+                                        "active"
+                                    )
+                            );
+
+
+                        button.classList.add(
+                            "active"
                         );
 
+
+                        const running =
+                            localStorage.getItem(
+                                SESSION_KEYS.TIMER_RUNNING
+                            ) === "true";
+
+
+                        if (!running) {
+
+                            localStorage.setItem(
+                                SESSION_KEYS.TIMER_SECONDS,
+                                String(
+                                    selectedTimerSeconds
+                                )
+                            );
+
+
+                            updateTimerDisplay(
+                                selectedTimerSeconds
+                            );
+
+                        }
+
                     }
+                );
 
-                }
-            );
-
-        });
+            }
+        );
 
 
     $("timerStart")
@@ -956,6 +1060,28 @@ function startSharedTimer() {
     }
 
 
+    /*
+     * Starting a new timer creates a new timer state.
+     */
+
+    currentTimerCompletionId =
+        null;
+
+
+    /*
+     * Clear the previous completion marker so a newly
+     * started timer cannot be mistaken for an old one.
+     */
+
+    localStorage.removeItem(
+        SESSION_KEYS.TIMER_COMPLETED_AT
+    );
+
+    localStorage.removeItem(
+        SESSION_KEYS.TIMER_CELEBRATED_AT
+    );
+
+
     const endTime =
         Date.now() +
         seconds * 1000;
@@ -1016,8 +1142,10 @@ function pauseSharedTimer() {
             Math.max(
                 0,
                 Math.ceil(
-                    (endTime - Date.now()) /
-                    1000
+                    (
+                        endTime -
+                        Date.now()
+                    ) / 1000
                 )
             );
 
@@ -1063,6 +1191,20 @@ function pauseSharedTimer() {
 function resetTimer() {
 
     stopTimerLoop();
+
+
+    currentTimerCompletionId =
+        null;
+
+
+    localStorage.removeItem(
+        SESSION_KEYS.TIMER_COMPLETED_AT
+    );
+
+
+    localStorage.removeItem(
+        SESSION_KEYS.TIMER_CELEBRATED_AT
+    );
 
 
     localStorage.setItem(
@@ -1184,8 +1326,10 @@ function updateSharedTimer() {
         Math.max(
             0,
             Math.ceil(
-                (endTime - Date.now()) /
-                1000
+                (
+                    endTime -
+                    Date.now()
+                ) / 1000
             )
         );
 
@@ -1217,21 +1361,61 @@ function updateSharedTimer() {
 
 /* =========================================================
    FINISH SHARED TIMER
-========================================================= */
+   ========================================================= */
 
 function finishSharedTimer() {
+
+    /*
+     * Stop this page's interval immediately.
+     */
 
     stopTimerLoop();
 
 
     /*
-     * Create one unique ID for this timer completion.
-     * This prevents the same completed timer from triggering
-     * the streak celebration multiple times.
+     * If another page has already finished the timer,
+     * do not create another completion.
+     */
+
+    const existingCompletionId =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_COMPLETED_AT
+        );
+
+
+    const running =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_RUNNING
+        ) === "true";
+
+
+    if (
+        !running &&
+        existingCompletionId
+    ) {
+
+        updateTimerDisplay(0);
+
+        updateTimerButtons();
+
+        return;
+
+    }
+
+
+    /*
+     * The completion ID is the timestamp of the ONE
+     * shared completion event.
      */
 
     const completionId =
-        String(Date.now());
+        String(
+            Date.now()
+        );
+
+
+    currentTimerCompletionId =
+        completionId;
 
 
     localStorage.setItem(
@@ -1261,8 +1445,6 @@ function finishSharedTimer() {
 
     updateTimerButtons();
 
-    notifyTimerChanged();
-
 
     const state =
         $("timerState");
@@ -1277,8 +1459,14 @@ function finishSharedTimer() {
 
 
     /*
-     * The timer reaching zero is now a REAL completed
-     * study session.
+     * Notify the other StudyMind timer pages first.
+     */
+
+    notifyTimerChanged();
+
+
+    /*
+     * Then process the ONE completion event.
      */
 
     celebrateTimerCompletion(
@@ -1286,21 +1474,47 @@ function finishSharedTimer() {
     );
 
 }
+
+
 /* =========================================================
-   TIMER COMPLETION → STREAK CELEBRATION
-========================================================= */
+   TIMER COMPLETION → STREAK
+   ========================================================= */
 
 function celebrateTimerCompletion(
     completionId
 ) {
 
     if (!completionId) {
+
         return;
+
+    }
+
+
+    const normalizedCompletionId =
+        String(
+            completionId
+        );
+
+
+    /*
+     * Prevent duplicate processing inside this page.
+     */
+
+    if (
+        currentTimerCompletionId ===
+        normalizedCompletionId &&
+        streakCelebrationRunning
+    ) {
+
+        return;
+
     }
 
 
     /*
-     * Never celebrate the same completion twice.
+     * Prevent the same completion from being celebrated
+     * more than once across pages.
      */
 
     const alreadyCelebrated =
@@ -1311,7 +1525,7 @@ function celebrateTimerCompletion(
 
     if (
         alreadyCelebrated ===
-        completionId
+        normalizedCompletionId
     ) {
 
         return;
@@ -1319,10 +1533,22 @@ function celebrateTimerCompletion(
     }
 
 
+    /*
+     * Lock this completion BEFORE running the celebration.
+     */
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_CELEBRATED_AT,
-        completionId
+        normalizedCompletionId
     );
+
+
+    currentTimerCompletionId =
+        normalizedCompletionId;
+
+
+    streakCelebrationRunning =
+        true;
 
 
     /* -----------------------------------------------------
@@ -1352,7 +1578,8 @@ function celebrateTimerCompletion(
 
 
     /*
-     * Same-day sessions remain one streak day.
+     * Multiple sessions on the same day remain one
+     * streak day.
      */
 
     activity[today] = true;
@@ -1405,63 +1632,9 @@ function celebrateTimerCompletion(
        MILO CELEBRATION
     ----------------------------------------------------- */
 
-    if (
-        window.Milo
-    ) {
-
-        try {
-
-            if (
-                typeof window.Milo.miloStudySessionComplete ===
-                    "function"
-            ) {
-
-                window.Milo.miloStudySessionComplete(
-                    streak
-                );
-
-            } else {
-
-                /*
-                 * Compatibility fallback.
-                 */
-
-                if (
-                    typeof window.Milo.playSound ===
-                        "function"
-                ) {
-
-                    window.Milo.playSound(
-                        "woohoo"
-                    );
-
-                }
-
-
-                if (
-                    typeof window.Milo.show ===
-                        "function"
-                ) {
-
-                    window.Milo.show(
-                        `🔥 ${streak}-day streak!`,
-                        "celebrate"
-                    );
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Milo celebration failed:",
-                error
-            );
-
-        }
-
-    }
+    triggerMiloTimerCelebration(
+        streak
+    );
 
 
     /* -----------------------------------------------------
@@ -1474,7 +1647,7 @@ function celebrateTimerCompletion(
 
 
     /* -----------------------------------------------------
-       LET DASHBOARD / OTHER PAGES KNOW
+       NOTIFY THE REST OF THE APP
     ----------------------------------------------------- */
 
     window.dispatchEvent(
@@ -1482,9 +1655,16 @@ function celebrateTimerCompletion(
             "studyMindStreakUpdated",
             {
                 detail: {
-                    streak: streak,
-                    date: today,
-                    source: "study-session-timer"
+
+                    streak:
+                        streak,
+
+                    date:
+                        today,
+
+                    source:
+                        "study-session-timer"
+
                 }
             }
         )
@@ -1492,14 +1672,125 @@ function celebrateTimerCompletion(
 
 
     console.log(
-        "🔥 Study streak updated:",
-        streak
+        "🔥 StudyMind timer completion recorded:",
+        {
+            completionId:
+                normalizedCompletionId,
+
+            streak:
+                streak,
+
+            date:
+                today
+        }
+    );
+
+
+    /*
+     * Allow another future timer completion to celebrate.
+     *
+     * We intentionally do NOT clear TIMER_CELEBRATED_AT.
+     * That value belongs to the completed timer and prevents
+     * other pages from replaying it.
+     */
+
+    setTimeout(
+        () => {
+
+            streakCelebrationRunning =
+                false;
+
+        },
+        3000
     );
 
 }
+
+
+/* =========================================================
+   MILO TIMER CELEBRATION
+   ========================================================= */
+
+function triggerMiloTimerCelebration(
+    streak
+) {
+
+    if (!window.Milo) {
+
+        return;
+
+    }
+
+
+    try {
+
+        /*
+         * Preferred current Milo API.
+         *
+         * This is responsible for:
+         * - celebration sound
+         * - Milo dancing
+         * - celebration animation
+         */
+
+        if (
+            typeof window.Milo
+                .miloStudySessionComplete ===
+                "function"
+        ) {
+
+            window.Milo.miloStudySessionComplete(
+                streak
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Compatibility fallback for older Milo versions.
+         */
+
+        if (
+            typeof window.Milo.playSound ===
+                "function"
+        ) {
+
+            window.Milo.playSound(
+                "woohoo"
+            );
+
+        }
+
+
+        if (
+            typeof window.Milo.show ===
+                "function"
+        ) {
+
+            window.Milo.show(
+                `🔥 ${streak}-day streak!`,
+                "celebrate"
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Milo celebration failed:",
+            error
+        );
+
+    }
+
+}
+
+
 /* =========================================================
    CALCULATE TIMER STREAK
-========================================================= */
+   ========================================================= */
 
 function calculateTimerStreak(
     activity,
@@ -1524,6 +1815,11 @@ function calculateTimerStreak(
             `${today}T12:00:00`
         );
 
+
+    /*
+     * Walk backwards from today until the first
+     * missing activity date.
+     */
 
     for (
         let i = 0;
@@ -1558,7 +1854,9 @@ function calculateTimerStreak(
 
 
         if (!activity[key]) {
+
             break;
+
         }
 
 
@@ -1578,20 +1876,27 @@ function calculateTimerStreak(
     );
 
 }
+
+
 /* =========================================================
    TIMER STREAK POPUP
-========================================================= */
+   ========================================================= */
 
 function showTimerStreakPopup(
     streak
 ) {
+
+    /*
+     * Remove any previous timer-streak popup.
+     */
 
     document
         .querySelectorAll(
             ".milo-timer-streak-popup"
         )
         .forEach(
-            popup => popup.remove()
+            popup =>
+                popup.remove()
         );
 
 
@@ -1626,11 +1931,13 @@ function showTimerStreakPopup(
             </div>
 
             <div class="milo-timer-streak-dots">
+
                 <span></span>
                 <span></span>
                 <span></span>
                 <span></span>
                 <span></span>
+
             </div>
 
             <button
@@ -1700,9 +2007,11 @@ function showTimerStreakPopup(
     );
 
 }
+
+
 /* =========================================================
    STREAK MESSAGE
-========================================================= */
+   ========================================================= */
 
 function getTimerStreakMessage(
     streak
@@ -1758,14 +2067,16 @@ function getTimerStreakMessage(
 
 /* =========================================================
    CLOSE STREAK POPUP
-========================================================= */
+   ========================================================= */
 
 function closeTimerStreakPopup(
     popup
 ) {
 
     if (!popup) {
+
         return;
+
     }
 
 
@@ -1784,9 +2095,11 @@ function closeTimerStreakPopup(
     );
 
 }
+
+
 /* =========================================================
    STREAK POPUP STYLES
-========================================================= */
+   ========================================================= */
 
 function installTimerStreakStyles() {
 
@@ -2103,29 +2416,37 @@ function installTimerStreakStyles() {
 
         .milo-timer-streak-dots
         span:nth-child(2) {
+
             animation-delay:
                 .1s;
+
         }
 
 
         .milo-timer-streak-dots
         span:nth-child(3) {
+
             animation-delay:
                 .2s;
+
         }
 
 
         .milo-timer-streak-dots
         span:nth-child(4) {
+
             animation-delay:
                 .3s;
+
         }
 
 
         .milo-timer-streak-dots
         span:nth-child(5) {
+
             animation-delay:
                 .4s;
+
         }
 
 
@@ -2141,6 +2462,7 @@ function installTimerStreakStyles() {
                     .55;
 
             }
+
 
             to {
 
@@ -2263,978 +2585,6 @@ function installTimerStreakStyles() {
 
 
 /* =========================================================
-   COMPLETED STUDY SESSION CELEBRATION
-   ========================================================= */
-
-function celebrateCompletedStudySession(
-    completionId
-) {
-
-    if (
-        !completionId ||
-        streakCelebrationRunning
-    ) {
-        return;
-    }
-
-
-    const alreadyCelebrated =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_CELEBRATED_AT
-        );
-
-
-    /*
-     * Never celebrate the exact same timer completion twice.
-     */
-
-    if (
-        alreadyCelebrated ===
-        String(completionId)
-    ) {
-        return;
-    }
-
-
-    streakCelebrationRunning =
-        true;
-
-
-    localStorage.setItem(
-        SESSION_KEYS.TIMER_CELEBRATED_AT,
-        String(completionId)
-    );
-
-
-    /*
-     * Record today's study activity.
-     *
-     * This uses the same streak activity storage already
-     * used by the rest of StudyMind.
-     */
-
-    const today =
-        getLocalDateKey();
-
-
-    let activity =
-        safeJSON(
-            "studyMindStreakActivity",
-            {}
-        );
-
-
-    if (
-        !activity ||
-        typeof activity !== "object" ||
-        Array.isArray(activity)
-    ) {
-
-        activity = {};
-
-    }
-
-
-    /*
-     * Recording the same day again does not increase
-     * the streak.
-     */
-
-    activity[today] = true;
-
-
-    saveJSON(
-        "studyMindStreakActivity",
-        activity
-    );
-
-
-    /*
-     * Let the existing StudyMind streak engine process
-     * today's activity.
-     */
-
-    if (
-        window.StudyMindStreak &&
-        typeof window.StudyMindStreak.recordStudyActivity ===
-            "function"
-    ) {
-
-        try {
-
-            window.StudyMindStreak.recordStudyActivity();
-
-        } catch (error) {
-
-            console.warn(
-                "StudyMind streak update error:",
-                error
-            );
-
-        }
-
-    }
-
-
-    /*
-     * Calculate the visible consecutive streak from the
-     * activity dates so the popup can show the current value.
-     */
-
-    const streak =
-        calculateCurrentStreak(
-            activity,
-            today
-        );
-
-
-    /*
-     * Tell Milo to celebrate.
-     */
-
-    if (
-        window.Milo
-    ) {
-
-        try {
-
-            if (
-                typeof window.Milo.miloStudySessionComplete ===
-                    "function"
-            ) {
-
-                window.Milo.miloStudySessionComplete(
-                    streak
-                );
-
-            } else {
-
-                /*
-                 * Fallback for an older Milo version.
-                 */
-
-                if (
-                    typeof window.Milo.playSound ===
-                        "function"
-                ) {
-
-                    window.Milo.playSound(
-                        "woohoo"
-                    );
-
-                }
-
-                if (
-                    typeof window.Milo.show ===
-                        "function"
-                ) {
-
-                    window.Milo.show(
-                        `🔥 ${streak}-day streak!`,
-                        "celebrate"
-                    );
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Milo celebration error:",
-                error
-            );
-
-        }
-
-    }
-
-
-    /*
-     * Show the large streak achievement popup.
-     */
-
-    showStreakCelebrationPopup(
-        streak
-    );
-
-
-    /*
-     * Notify the rest of the application.
-     */
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakUpdated",
-            {
-                detail: {
-                    streak,
-                    date: today,
-                    source: "study-session-timer"
-                }
-            }
-        )
-    );
-
-
-    /*
-     * Allow another future session to celebrate.
-     */
-
-    setTimeout(
-        () => {
-
-            streakCelebrationRunning =
-                false;
-
-        },
-        3000
-    );
-
-}
-
-
-/* =========================================================
-   CALCULATE CURRENT STREAK
-   ========================================================= */
-
-function calculateCurrentStreak(
-    activity,
-    today
-) {
-
-    if (
-        !activity ||
-        typeof activity !== "object"
-    ) {
-        return 1;
-    }
-
-
-    let streak = 0;
-
-    let cursor =
-        new Date(
-            `${today}T12:00:00`
-        );
-
-
-    /*
-     * Walk backwards through consecutive completed days.
-     */
-
-    for (
-        let i = 0;
-        i < 10000;
-        i++
-    ) {
-
-        const year =
-            cursor.getFullYear();
-
-        const month =
-            String(
-                cursor.getMonth() + 1
-            ).padStart(2, "0");
-
-        const day =
-            String(
-                cursor.getDate()
-            ).padStart(2, "0");
-
-
-        const key =
-            `${year}-${month}-${day}`;
-
-
-        if (!activity[key]) {
-            break;
-        }
-
-
-        streak++;
-
-
-        cursor.setDate(
-            cursor.getDate() - 1
-        );
-
-    }
-
-
-    return Math.max(
-        1,
-        streak
-    );
-
-}
-
-
-/* =========================================================
-   STREAK CELEBRATION POPUP
-   ========================================================= */
-
-function showStreakCelebrationPopup(
-    streak
-) {
-
-    /*
-     * Remove an old popup if one somehow exists.
-     */
-
-    document
-        .querySelectorAll(
-            ".milo-streak-popup"
-        )
-        .forEach(
-            popup => popup.remove()
-        );
-
-
-    const popup =
-        document.createElement(
-            "div"
-        );
-
-
-    popup.className =
-        "milo-streak-popup";
-
-
-    popup.innerHTML = `
-
-        <div class="milo-streak-popup-card">
-
-            <div class="milo-streak-fire">
-                🔥
-            </div>
-
-            <div class="milo-streak-eyebrow">
-                STUDY SESSION COMPLETE
-            </div>
-
-            <div class="milo-streak-title">
-                ${streak}-Day Streak!
-            </div>
-
-            <div class="milo-streak-message">
-                ${getStreakMessage(streak)}
-            </div>
-
-            <div class="milo-streak-progress">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-
-            <button
-                type="button"
-                class="milo-streak-close"
-            >
-                Keep Going 🚀
-            </button>
-
-        </div>
-
-    `;
-
-
-    document.body.appendChild(
-        popup
-    );
-
-
-    /*
-     * Add popup styles dynamically so this feature works
-     * without requiring changes to study-session.css.
-     */
-
-    installStreakPopupStyles();
-
-
-    /*
-     * Force the browser to recognize the initial state
-     * before adding .show.
-     */
-
-    requestAnimationFrame(
-        () => {
-
-            requestAnimationFrame(
-                () => {
-
-                    popup.classList.add(
-                        "show"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-    const closeButton =
-        popup.querySelector(
-            ".milo-streak-close"
-        );
-
-
-    closeButton?.addEventListener(
-        "click",
-        () => {
-
-            closeStreakCelebrationPopup(
-                popup
-            );
-
-        }
-    );
-
-
-    /*
-     * Automatically close after a few seconds.
-     */
-
-    setTimeout(
-        () => {
-
-            closeStreakCelebrationPopup(
-                popup
-            );
-
-        },
-        6500
-    );
-
-}
-
-
-/* =========================================================
-   STREAK MESSAGE
-   ========================================================= */
-
-function getStreakMessage(
-    streak
-) {
-
-    if (streak <= 1) {
-
-        return (
-            "You just started your streak. " +
-            "Come back tomorrow and keep it alive!"
-        );
-
-    }
-
-
-    if (streak < 5) {
-
-        return (
-            "You're building momentum. " +
-            "Keep showing up!"
-        );
-
-    }
-
-
-    if (streak < 10) {
-
-        return (
-            "You're on fire! " +
-            "Your consistency is paying off."
-        );
-
-    }
-
-
-    if (streak < 30) {
-
-        return (
-            "Incredible consistency! " +
-            "Milo is seriously impressed."
-        );
-
-    }
-
-
-    return (
-        "Legendary consistency! " +
-        "Keep that streak alive."
-    );
-
-}
-
-
-/* =========================================================
-   CLOSE STREAK POPUP
-   ========================================================= */
-
-function closeStreakCelebrationPopup(
-    popup
-) {
-
-    if (!popup) {
-        return;
-    }
-
-
-    popup.classList.remove(
-        "show"
-    );
-
-
-    setTimeout(
-        () => {
-
-            popup.remove();
-
-        },
-        350
-    );
-
-}
-
-
-/* =========================================================
-   STREAK POPUP STYLES
-   ========================================================= */
-
-function installStreakPopupStyles() {
-
-    if (
-        document.getElementById(
-            "miloStreakPopupStyles"
-        )
-    ) {
-        return;
-    }
-
-
-    const style =
-        document.createElement(
-            "style"
-        );
-
-
-    style.id =
-        "miloStreakPopupStyles";
-
-
-    style.textContent = `
-
-        .milo-streak-popup {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            padding: 24px;
-
-            background:
-                rgba(8, 12, 25, .58);
-
-            backdrop-filter:
-                blur(8px);
-
-            opacity: 0;
-
-            pointer-events: none;
-
-            transition:
-                opacity .3s ease;
-        }
-
-
-        .milo-streak-popup.show {
-            opacity: 1;
-
-            pointer-events: auto;
-        }
-
-
-        .milo-streak-popup-card {
-            width:
-                min(440px, 100%);
-
-            padding:
-                34px 30px 28px;
-
-            border-radius:
-                30px;
-
-            text-align:
-                center;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    #ffffff,
-                    #f7f8ff
-                );
-
-            box-shadow:
-                0 30px 100px
-                rgba(0,0,0,.32);
-
-            transform:
-                translateY(30px)
-                scale(.82);
-
-            transition:
-                transform
-                .5s
-                cubic-bezier(
-                    .18,
-                    1.25,
-                    .35,
-                    1
-                );
-
-            position:
-                relative;
-
-            overflow:
-                hidden;
-        }
-
-
-        .milo-streak-popup.show
-        .milo-streak-popup-card {
-
-            transform:
-                translateY(0)
-                scale(1);
-
-        }
-
-
-        .milo-streak-popup-card::before {
-
-            content: "";
-
-            position: absolute;
-
-            width: 240px;
-            height: 240px;
-
-            left: 50%;
-            top: -150px;
-
-            transform:
-                translateX(-50%);
-
-            border-radius: 50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(255, 190, 40, .24),
-                    transparent 70%
-                );
-
-            pointer-events:
-                none;
-        }
-
-
-        .milo-streak-fire {
-
-            font-size:
-                68px;
-
-            line-height:
-                1;
-
-            margin-bottom:
-                12px;
-
-            animation:
-                miloStreakFire
-                .65s
-                ease-in-out
-                infinite
-                alternate;
-        }
-
-
-        @keyframes miloStreakFire {
-
-            from {
-                transform:
-                    scale(1)
-                    rotate(-4deg);
-            }
-
-            to {
-                transform:
-                    scale(1.14)
-                    rotate(4deg);
-            }
-
-        }
-
-
-        .milo-streak-eyebrow {
-
-            font-size:
-                11px;
-
-            font-weight:
-                800;
-
-            letter-spacing:
-                .16em;
-
-            color:
-                #777c91;
-
-            margin-bottom:
-                7px;
-        }
-
-
-        .milo-streak-title {
-
-            font-size:
-                clamp(
-                    30px,
-                    6vw,
-                    42px
-                );
-
-            line-height:
-                1.05;
-
-            font-weight:
-                900;
-
-            color:
-                #171a2b;
-
-            margin-bottom:
-                12px;
-        }
-
-
-        .milo-streak-message {
-
-            font-size:
-                15px;
-
-            line-height:
-                1.6;
-
-            color:
-                #62677b;
-
-            max-width:
-                330px;
-
-            margin:
-                0 auto 22px;
-        }
-
-
-        .milo-streak-progress {
-
-            display:
-                flex;
-
-            justify-content:
-                center;
-
-            gap:
-                7px;
-
-            margin-bottom:
-                25px;
-        }
-
-
-        .milo-streak-progress span {
-
-            width:
-                9px;
-
-            height:
-                9px;
-
-            border-radius:
-                50%;
-
-            background:
-                #ffbd38;
-
-            animation:
-                miloStreakDot
-                .8s
-                ease-in-out
-                infinite
-                alternate;
-        }
-
-
-        .milo-streak-progress
-        span:nth-child(2) {
-            animation-delay:
-                .1s;
-        }
-
-
-        .milo-streak-progress
-        span:nth-child(3) {
-            animation-delay:
-                .2s;
-        }
-
-
-        .milo-streak-progress
-        span:nth-child(4) {
-            animation-delay:
-                .3s;
-        }
-
-
-        .milo-streak-progress
-        span:nth-child(5) {
-            animation-delay:
-                .4s;
-        }
-
-
-        @keyframes miloStreakDot {
-
-            from {
-                transform:
-                    translateY(0)
-                    scale(.8);
-
-                opacity:
-                    .55;
-            }
-
-            to {
-                transform:
-                    translateY(-6px)
-                    scale(1.1);
-
-                opacity:
-                    1;
-            }
-
-        }
-
-
-        .milo-streak-close {
-
-            border:
-                0;
-
-            border-radius:
-                14px;
-
-            padding:
-                13px 23px;
-
-            font-size:
-                14px;
-
-            font-weight:
-                800;
-
-            color:
-                white;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #5b5ce2,
-                    #7567f5
-                );
-
-            cursor:
-                pointer;
-
-            box-shadow:
-                0 8px 22px
-                rgba(
-                    91,
-                    92,
-                    226,
-                    .28
-                );
-
-            transition:
-                transform .2s ease,
-                box-shadow .2s ease;
-        }
-
-
-        .milo-streak-close:hover {
-
-            transform:
-                translateY(-2px);
-
-            box-shadow:
-                0 12px 28px
-                rgba(
-                    91,
-                    92,
-                    226,
-                    .36
-                );
-        }
-
-
-        .milo-streak-close:active {
-
-            transform:
-                translateY(0)
-                scale(.97);
-        }
-
-
-        @media (max-width: 520px) {
-
-            .milo-streak-popup {
-                padding:
-                    16px;
-            }
-
-
-            .milo-streak-popup-card {
-                padding:
-                    28px 20px 23px;
-
-                border-radius:
-                    25px;
-            }
-
-
-            .milo-streak-fire {
-                font-size:
-                    56px;
-            }
-
-        }
-
-    `;
-
-
-    document.head.appendChild(
-        style
-    );
-
-}
-
-
-/* =========================================================
    DISPLAY TIMER
    ========================================================= */
 
@@ -3316,7 +2666,9 @@ function updateTimerButtons() {
 
 
     if (!button) {
+
         return;
+
     }
 
 
@@ -3356,12 +2708,16 @@ function handleTimerStorage(
     if (
         event.key ===
             SESSION_KEYS.TIMER_SECONDS ||
+
         event.key ===
             SESSION_KEYS.TIMER_END ||
+
         event.key ===
             SESSION_KEYS.TIMER_RUNNING ||
+
         event.key ===
             SESSION_KEYS.TIMER_SELECTED ||
+
         event.key ===
             SESSION_KEYS.TIMER_COMPLETED_AT
     ) {
@@ -3423,8 +2779,8 @@ function refreshTimerFromStorage() {
 
 
     /*
-     * If another StudyMind page finished the shared timer,
-     * recognize the completion here.
+     * If Dashboard or Study Timer finished the shared timer,
+     * this page can recognize the exact same completion.
      */
 
     const completionId =
@@ -3452,12 +2808,16 @@ function refreshTimerFromStorage() {
 
 
         /*
-         * Only react to a recent completion.
+         * Only process a recent completion.
          */
 
         if (
-            Number.isFinite(completionTime) &&
-            Date.now() - completionTime < 10000
+            Number.isFinite(
+                completionTime
+            ) &&
+            Date.now() -
+                completionTime <
+                10000
         ) {
 
             celebrateTimerCompletion(
@@ -3469,6 +2829,7 @@ function refreshTimerFromStorage() {
     }
 
 }
+
 
 /* =========================================================
    CHECKLIST
@@ -3490,7 +2851,9 @@ function setupChecklist() {
 
 
             checkbox.checked =
-                localStorage.getItem(key) === "true";
+                localStorage.getItem(
+                    key
+                ) === "true";
 
 
             checkbox.addEventListener(
@@ -3526,6 +2889,11 @@ function setupButtons() {
         );
 
 
+    /*
+     * IMPORTANT:
+     * This remains separate from timer completion.
+     */
+
     $("completeSessionButton")
         ?.addEventListener(
             "click",
@@ -3549,7 +2917,9 @@ function setupButtons() {
 function startKnowledgeCheck() {
 
     if (!currentTopic) {
+
         return;
+
     }
 
 
@@ -3586,7 +2956,9 @@ function getCurrentTopicIndex() {
 
 
     if (!currentTopic) {
+
         return 0;
+
     }
 
 
@@ -3594,9 +2966,9 @@ function getCurrentTopicIndex() {
         topics.findIndex(
             topic =>
                 topic.name ===
-                currentTopic.name &&
+                    currentTopic.name &&
                 topic.subject ===
-                currentTopic.subject
+                    currentTopic.subject
         );
 
 
@@ -3609,12 +2981,24 @@ function getCurrentTopicIndex() {
 
 /* =========================================================
    COMPLETE SESSION
+   =========================================================
+
+   IMPORTANT:
+
+   This is NOT the timer completion event.
+
+   The student explicitly clicking Complete Session
+   still records the topic as completed.
+
+   The existing knowledge-check flow remains intact.
    ========================================================= */
 
 function completeSession() {
 
     if (!currentTopic) {
+
         return;
+
     }
 
 
@@ -3634,7 +3018,9 @@ function completeSession() {
 
 
     if (!Array.isArray(completed)) {
+
         completed = [];
+
     }
 
 
@@ -3673,7 +3059,9 @@ function completeSession() {
 
 
         if (!Array.isArray(qCompleted)) {
+
             qCompleted = [];
+
         }
 
 
@@ -3701,7 +3089,9 @@ function completeSession() {
 
 
     const completedSet =
-        new Set(completed);
+        new Set(
+            completed
+        );
 
 
     const completedCount =
@@ -3712,7 +3102,9 @@ function completeSession() {
                     `${topic.subject}::${topic.name}`;
 
 
-                return completedSet.has(key);
+                return completedSet.has(
+                    key
+                );
 
             }
         ).length;
@@ -3725,9 +3117,10 @@ function completeSession() {
     const progress =
         totalTopics
             ? Math.round(
-                completedCount /
-                totalTopics *
-                100
+                (
+                    completedCount /
+                    totalTopics
+                ) * 100
             )
             : 0;
 
@@ -3768,7 +3161,7 @@ function completeSession() {
 
 
     /*
-     * Preserve the existing behavior:
+     * Preserve existing behavior:
      * return to dashboard after completing the topic.
      */
 
@@ -3836,7 +3229,18 @@ function completeStudyDay() {
             "function"
     ) {
 
-        window.StudyMindStreak.recordStudyActivity();
+        try {
+
+            window.StudyMindStreak.recordStudyActivity();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind streak update error:",
+                error
+            );
+
+        }
 
     }
 
@@ -3891,7 +3295,9 @@ function getLocalDateKey() {
         );
 
 
-    return `${year}-${month}-${day}`;
+    return (
+        `${year}-${month}-${day}`
+    );
 
 }
 
@@ -3935,7 +3341,8 @@ async function loadUser() {
         if (
             window.supabaseClient &&
             typeof window.supabaseClient.auth
-                ?.getUser === "function"
+                ?.getUser ===
+                "function"
         ) {
 
             const {
@@ -3975,7 +3382,8 @@ async function loadUser() {
 
 
     name =
-        name || "Student";
+        name ||
+        "Student";
 
 
     localStorage.setItem(
@@ -3995,7 +3403,9 @@ async function loadUser() {
     if ($("userAvatar")) {
 
         $("userAvatar").textContent =
-            name.charAt(0).toUpperCase();
+            name
+                .charAt(0)
+                .toUpperCase();
 
     }
 
@@ -4013,7 +3423,8 @@ async function logout() {
         if (
             window.supabaseClient &&
             typeof window.supabaseClient.auth
-                ?.signOut === "function"
+                ?.signOut ===
+                "function"
         ) {
 
             await window.supabaseClient.auth.signOut();
@@ -4034,3 +3445,4 @@ async function logout() {
         "home.html";
 
 }
+
