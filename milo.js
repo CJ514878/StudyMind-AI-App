@@ -1254,19 +1254,17 @@ function handleMiloTap() {
 
 
 /* =========================================================
-   NORMAL HIT
+   NORMAL HIT — SYNCHRONIZED OW
 ========================================================= */
 
 function miloTapReaction() {
 
     miloBusy = true;
 
-
     const character =
         document.getElementById(
             "miloCharacter"
         );
-
 
     if (!character) {
 
@@ -1279,8 +1277,24 @@ function miloTapReaction() {
     clearMiloReactionTimers();
 
 
-    setMiloFace("ow");
+    /* ---------------------------------------------------------
+       RESET ANIMATION
+    --------------------------------------------------------- */
 
+    character.classList.remove(
+        "milo-speaking-ow",
+        "milo-ow-speaking",
+        "milo-hit"
+    );
+
+    void character.offsetWidth;
+
+
+    /* ---------------------------------------------------------
+       SET FACE
+    --------------------------------------------------------- */
+
+    setMiloFace("ow");
 
     showMilo(
         "Ow!",
@@ -1288,45 +1302,50 @@ function miloTapReaction() {
     );
 
 
-    playSound("ow");
+    /* ---------------------------------------------------------
+       START EVERYTHING TOGETHER
+       Sound + mouth + body reaction
+    --------------------------------------------------------- */
+
+    const startTime =
+        performance.now();
 
 
-    speakMilo(
-        "Ow!",
-        {
-            rate: 1,
-            pitch: 1,
-            volume: 1
-        }
-    );
-
-
-    character.classList.remove(
-        "milo-speaking-ow",
-        "milo-ow-speaking"
-    );
-
-
-    void character.offsetWidth;
-
+    /* Mouth starts immediately */
 
     character.classList.add(
         "milo-speaking-ow"
     );
 
 
-    character.classList.remove(
-        "milo-hit"
-    );
-
-
-    void character.offsetWidth;
-
+    /* Body hit starts immediately */
 
     character.classList.add(
         "milo-hit"
     );
 
+
+    /* Sound starts immediately */
+
+    playSound("ow");
+
+
+    /* Voice starts immediately */
+
+    speakMilo(
+        "Ow!",
+        {
+            rate: 1.15,
+            pitch: 1.0,
+            volume: 1
+        }
+    );
+
+
+    /* ---------------------------------------------------------
+       CLOSE MOUTH AFTER SOUND'S MAIN OW
+       The sound is roughly 0.47 seconds.
+    --------------------------------------------------------- */
 
     miloTimeout(() => {
 
@@ -1334,8 +1353,12 @@ function miloTapReaction() {
             "milo-speaking-ow"
         );
 
-    }, 800);
+    }, 480);
 
+
+    /* ---------------------------------------------------------
+       RETURN TO SURPRISED FACE
+    --------------------------------------------------------- */
 
     miloTimeout(() => {
 
@@ -1346,8 +1369,12 @@ function miloTapReaction() {
             );
         }
 
-    }, 300);
+    }, 500);
 
+
+    /* ---------------------------------------------------------
+       END HIT MOTION
+    --------------------------------------------------------- */
 
     miloTimeout(() => {
 
@@ -1358,6 +1385,10 @@ function miloTapReaction() {
     }, 700);
 
 
+    /* ---------------------------------------------------------
+       RETURN TO NORMAL
+    --------------------------------------------------------- */
+
     miloTimeout(() => {
 
         if (!miloCollapsed) {
@@ -1367,12 +1398,10 @@ function miloTapReaction() {
             );
         }
 
-
         miloBusy = false;
 
     }, 1300);
 }
-
 
 /* =========================================================
    FIFTH TAP
