@@ -26,7 +26,14 @@ document.addEventListener(
     initStreak
 );
 
+
 function initStreak() {
+
+    /*
+       IMPORTANT:
+       Normalize old streak activity formats before
+       anything tries to calculate the streak.
+    */
 
     migrateActivityFormat();
 
@@ -37,6 +44,7 @@ function initStreak() {
     loadUser();
 
     setupLogout();
+
 
     window.addEventListener(
         "storage",
@@ -64,8 +72,6 @@ function initStreak() {
 
     /*
        Same-page updates.
-
-       This is deliberately lightweight.
     */
 
     window.addEventListener(
@@ -79,6 +85,12 @@ function initStreak() {
         }
     );
 
+
+    /*
+       Keep the UI synchronized with changes made
+       by the shared timer, dashboard, study session,
+       or another page.
+    */
 
     setInterval(
         () => {
@@ -154,6 +166,238 @@ function writeJSON(
         );
 
     }
+
+}
+
+
+/* =========================================================
+   ACTIVITY FORMAT MIGRATION
+=========================================================
+
+   Older StudyMind versions stored streak activity in
+   several different formats.
+
+   Supported examples:
+
+   1. Object:
+      {
+          "2026-09-17": true,
+          "2026-09-18": true
+      }
+
+   2. Array of date strings:
+      [
+          "2026-09-17",
+          "2026-09-18"
+      ]
+
+   3. Array of objects:
+      [
+          { date: "2026-09-17" },
+          { completedAt: "2026-09-18T12:00:00.000Z" }
+      ]
+
+   This function converts all supported formats into
+   the current canonical object format.
+========================================================= */
+
+function migrateActivityFormat() {
+
+    const raw =
+        localStorage.getItem(
+            STREAK_KEYS.ACTIVITY
+        );
+
+
+    /*
+       Nothing to migrate.
+    */
+
+    if (!raw) {
+
+        return {};
+
+    }
+
+
+    let parsed;
+
+
+    try {
+
+        parsed =
+            JSON.parse(raw);
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind streak activity was invalid JSON. Resetting safely.",
+            error
+        );
+
+        const empty = {};
+
+        writeJSON(
+            STREAK_KEYS.ACTIVITY,
+            empty
+        );
+
+        return empty;
+
+    }
+
+
+    const activity = {};
+
+
+    /* -----------------------------------------------------
+       CURRENT FORMAT
+
+       {
+           "2026-09-17": true
+       }
+    ----------------------------------------------------- */
+
+    if (
+        parsed &&
+        typeof parsed === "object" &&
+        !Array.isArray(parsed)
+    ) {
+
+        Object.entries(parsed).forEach(
+            ([key, value]) => {
+
+                if (
+                    value !== true &&
+                    value !== 1 &&
+                    value !== "true"
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    /^\d{4}-\d{2}-\d{2}$/.test(key)
+                ) {
+
+                    activity[key] = true;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* -----------------------------------------------------
+       ARRAY FORMAT
+    ----------------------------------------------------- */
+
+    if (
+        Array.isArray(parsed)
+    ) {
+
+        parsed.forEach(
+            item => {
+
+                /*
+                   Simple date string.
+                */
+
+                if (
+                    typeof item === "string"
+                ) {
+
+                    const key =
+                        item.slice(0, 10);
+
+
+                    if (
+                        /^\d{4}-\d{2}-\d{2}$/.test(key)
+                    ) {
+
+                        activity[key] = true;
+
+                    }
+
+                    return;
+
+                }
+
+
+                /*
+                   Object format.
+                */
+
+                if (
+                    item &&
+                    typeof item === "object"
+                ) {
+
+                    const possibleDate =
+                        item.date ||
+                        item.day ||
+                        item.completedDate ||
+                        item.completedAt ||
+                        item.timestamp;
+
+
+                    if (!possibleDate) {
+
+                        return;
+
+                    }
+
+
+                    const key =
+                        String(
+                            possibleDate
+                        ).slice(0, 10);
+
+
+                    if (
+                        /^\d{4}-\d{2}-\d{2}$/.test(key)
+                    ) {
+
+                        activity[key] = true;
+
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+       Only rewrite storage if the normalized result
+       differs from what was originally stored.
+
+       This prevents unnecessary storage events.
+    */
+
+    const normalized =
+        JSON.stringify(activity);
+
+
+    if (
+        normalized !== raw
+    ) {
+
+        writeJSON(
+            STREAK_KEYS.ACTIVITY,
+            activity
+        );
+
+    }
+
+
+    return activity;
 
 }
 
@@ -249,6 +493,7 @@ function getCompletedTopics() {
             []
         );
 
+
     if (
         Array.isArray(completed)
     ) {
@@ -256,6 +501,7 @@ function getCompletedTopics() {
         return completed;
 
     }
+
 
     if (
         completed &&
@@ -268,6 +514,7 @@ function getCompletedTopics() {
 
     }
 
+
     return [];
 
 }
@@ -279,94 +526,14 @@ function getCompletedTopics() {
 
 function getActivity() {
 
-    const stored =
-        readJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
+    /*
+       Always normalize through the migration layer.
 
+       This guarantees the rest of the streak engine
+       works with one consistent format.
+    */
 
-    if (
-        stored &&
-        typeof stored === "object" &&
-        !Array.isArray(stored)
-    ) {
-
-        return stored;
-
-    }
-
-
-    if (
-        Array.isArray(stored)
-    ) {
-
-        const activity = {};
-
-        stored.forEach(
-            item => {
-
-                if (
-                    typeof item === "string"
-                ) {
-
-                    const key =
-                        item.slice(0, 10);
-
-                    if (
-                        /^\d{4}-\d{2}-\d{2}$/.test(key)
-                    ) {
-
-                        activity[key] = true;
-
-                    }
-
-                    return;
-
-                }
-
-
-                if (
-                    item &&
-                    typeof item === "object"
-                ) {
-
-                    const date =
-                        item.date ||
-                        item.day ||
-                        item.completedDate ||
-                        item.completedAt;
-
-
-                    if (!date) {
-
-                        return;
-
-                    }
-
-
-                    const key =
-                        String(date).slice(0, 10);
-
-
-                    if (
-                        /^\d{4}-\d{2}-\d{2}$/.test(key)
-                    ) {
-
-                        activity[key] = true;
-
-                    }
-
-                }
-
-            }
-        );
-
-        return activity;
-
-    }
-
-    return {};
+    return migrateActivityFormat();
 
 }
 
@@ -406,17 +573,21 @@ function calculateCurrentStreak(
             activity
         );
 
+
     if (!days.length) {
 
         return 0;
 
     }
 
+
     const daySet =
         new Set(days);
 
+
     const today =
         todayKey();
+
 
     let currentDate =
         new Date();
@@ -478,11 +649,13 @@ function calculateLongestStreak(
             activity
         );
 
+
     if (!days.length) {
 
         return 0;
 
     }
+
 
     let longest = 1;
     let current = 1;
@@ -1199,18 +1372,32 @@ function recordCompletedStudyDay() {
 
     /*
        Tell Milo.
+
+       Keep the existing streak celebration API.
     */
 
     if (
-        window.Milo
+        window.Milo &&
+        typeof window.Milo.celebrateStreak === "function"
     ) {
 
         setTimeout(
             () => {
 
-                window.Milo.celebrateStreak(
-                    stats.current
-                );
+                try {
+
+                    window.Milo.celebrateStreak(
+                        stats.current
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "Milo streak celebration failed:",
+                        error
+                    );
+
+                }
 
             },
             250
@@ -2171,10 +2358,13 @@ function recordStudyActivity() {
     /*
        IMPORTANT:
 
-       This no longer blindly creates a streak.
+       This preserves the existing StudyMind rule:
+       merely starting a timer does not automatically
+       mean the day's required study plan is complete.
 
-       It checks whether today's actual required
-       study work has been completed.
+       The shared timer can still notify the streak
+       system, but completion of the actual plan is
+       handled here.
     */
 
     return checkTodayCompletion();
