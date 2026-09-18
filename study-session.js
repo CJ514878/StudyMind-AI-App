@@ -3400,91 +3400,75 @@ function refreshTimerFromStorage() {
         );
 
 
+    if (running) {
+
+        startTimerLoop();
+
+        return;
+
+    }
+
+
+    stopTimerLoop();
+
+
+    updateTimerDisplay(
+        Number.isFinite(seconds)
+            ? seconds
+            : selectedTimerSeconds
+    );
+
+
+    updateTimerButtons();
+
+
     /*
-     * If another StudyMind page completed the timer,
-     * recognize that completion here too.
+     * If another StudyMind page finished the shared timer,
+     * recognize the completion here.
      */
 
-    const completedAt =
+    const completionId =
         localStorage.getItem(
             SESSION_KEYS.TIMER_COMPLETED_AT
         );
 
 
+    const celebratedId =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_CELEBRATED_AT
+        );
+
+
     if (
-        !running &&
-        completedAt &&
-        seconds === 0
+        seconds === 0 &&
+        completionId &&
+        completionId !== celebratedId
     ) {
 
-        /*
-         * Only celebrate a completion that this page
-         * has not already celebrated.
-         */
-
-        const celebratedAt =
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_CELEBRATED_AT
+        const completionTime =
+            Number(
+                completionId
             );
 
 
+        /*
+         * Only react to a recent completion.
+         */
+
         if (
-            celebratedAt !==
-            completedAt
+            Number.isFinite(completionTime) &&
+            Date.now() - completionTime < 10000
         ) {
 
-            /*
-             * Do not celebrate an ancient completion
-             * when the page is merely loaded later.
-             *
-             * A completion is considered current when it
-             * happened within the last 10 seconds.
-             */
-
-            const completionTime =
-                Number(
-                    completedAt
-                );
-
-
-            if (
-                Number.isFinite(completionTime) &&
-                Date.now() - completionTime < 10000
-            ) {
-
-                celebrateCompletedStudySession(
-                    completedAt
-                );
-
-            }
+            celebrateTimerCompletion(
+                completionId
+            );
 
         }
 
     }
 
-
-    if (running) {
-
-        startTimerLoop();
-
-    } else {
-
-        stopTimerLoop();
-
-
-        updateTimerDisplay(
-            Number.isFinite(seconds)
-                ? seconds
-                : selectedTimerSeconds
-        );
-
-
-        updateTimerButtons();
-
-    }
-
 }
-
 
 /* =========================================================
    CHECKLIST
