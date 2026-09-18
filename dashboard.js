@@ -2,37 +2,28 @@
 
 /* =========================================================
    STUDYMIND AI — DASHBOARD
-   COMPLETE VERSION
-
-   FEATURES
-   ---------------------------------------------------------
-   ✓ Shared timer engine
-   ✓ Dashboard ↔ Study Timer synchronization
-   ✓ Study sessions
-   ✓ Daily study time
-   ✓ XP
-   ✓ Levels
-   ✓ Study streak integration
-   ✓ Today's completion detection
-   ✓ Subject → topic plan support
-   ✓ Flat topic plan support
-   ✓ Daily quests
-   ✓ Exams
-   ✓ AI recommendation
-   ✓ Supabase user loading
-   ✓ Logout
-   ✓ Cross-page synchronization
+   SHARED TIMER ARCHITECTURE
 
    IMPORTANT
    ---------------------------------------------------------
-   streak.js is the SINGLE source of truth for streaks.
+   streak.js = SINGLE SOURCE OF TRUTH FOR STREAKS
+   study-timer.js = SINGLE SOURCE OF TRUTH FOR TIMER STATE
+                     AND TIMER COMPLETION
 
-   study-timer.js is the SINGLE source of truth
-   for timer state and timer completion.
+   dashboard.js:
+   ✓ Displays timer
+   ✓ Starts / pauses / resets shared timer
+   ✓ Changes shared duration
+   ✓ Refreshes dashboard after timer completion
 
-   dashboard.js NEVER manually completes a timer.
-   dashboard.js NEVER manually awards timer XP.
-   dashboard.js NEVER manually creates timer streaks.
+   dashboard.js DOES NOT:
+   ✗ Run its own timer countdown
+   ✗ Complete timers
+   ✗ Award timer XP
+   ✗ Create timer streaks
+   ✗ Create timer sessions
+
+   All timer completion work belongs to study-timer.js.
 ========================================================= */
 
 
@@ -131,24 +122,25 @@ document.addEventListener(
         await loadUser();
 
 
-        /*
-         * Make sure local values are current.
-         */
+        studyPlan =
+            loadJSON(
+                PLAN_KEY,
+                null
+            );
+
+
         syncLocalStats();
 
 
         /*
-         * Ask streak.js whether today's required
-         * study work has been completed.
+         * Ask streak.js to check whether today's
+         * scheduled study work has been completed.
          *
-         * Dashboard does NOT increment streaks itself.
+         * Dashboard does not increment streaks itself.
          */
         checkStudyCompletion();
 
 
-        /*
-         * Render dashboard.
-         */
         renderStats();
 
         renderToday();
@@ -165,10 +157,18 @@ document.addEventListener(
 
 
         /*
-         * Connect Dashboard timer controls
-         * to the SINGLE shared timer engine.
+         * Connect Dashboard controls to the
+         * authoritative shared timer.
          */
         setupSharedDashboardTimer();
+
+
+        /*
+         * Start a display-only refresh loop.
+         *
+         * This does NOT run or complete the timer.
+         */
+        startDashboardTimerRefresh();
 
 
         /* =================================================
@@ -179,9 +179,6 @@ document.addEventListener(
             "storage",
             event => {
 
-                /*
-                 * Study topic completion changed.
-                 */
                 if (
                     event.key ===
                     COMPLETED_TOPICS_KEY
@@ -208,9 +205,6 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Plan changed.
-                 */
                 if (
                     event.key ===
                     PLAN_KEY
@@ -237,9 +231,6 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * XP changed.
-                 */
                 if (
                     event.key ===
                     XP_KEY
@@ -256,9 +247,6 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Streak changed.
-                 */
                 if (
                     event.key ===
                     STREAK_KEY
@@ -272,10 +260,9 @@ document.addEventListener(
 
 
                 /*
-                 * Shared timer changed in another tab/page.
-
-                 * Dashboard DOES NOT perform timer logic.
-                 * It simply redraws the UI.
+                 * Shared timer changed in another page/tab.
+                 *
+                 * Dashboard only redraws.
                  */
                 if (
                     [
@@ -297,7 +284,7 @@ document.addEventListener(
 
 
         /* =================================================
-           CUSTOM STREAK EVENT
+           STREAK EVENT
         ================================================= */
 
         window.addEventListener(
@@ -320,7 +307,7 @@ document.addEventListener(
 
 
         /* =================================================
-           CUSTOM XP EVENT
+           XP EVENT
         ================================================= */
 
         window.addEventListener(
@@ -332,6 +319,8 @@ document.addEventListener(
                 renderStats();
 
                 renderLevel();
+
+                renderQuests();
 
                 console.log(
                     "StudyMind Dashboard: XP updated.",
@@ -357,13 +346,20 @@ document.addEventListener(
 
 
         /* =================================================
-           SHARED TIMER COMPLETION EVENT
+           SHARED TIMER COMPLETION
         =================================================
 
-           The actual completion has already been handled
-           by study-timer.js.
+           study-timer.js has already handled:
 
-           Dashboard ONLY refreshes its UI here.
+           ✓ timer completion
+           ✓ session recording
+           ✓ XP
+           ✓ streak activity
+           ✓ Milo
+           ✓ celebration
+           ✓ popup
+
+           Dashboard ONLY refreshes its UI.
         */
 
         window.addEventListener(
@@ -386,6 +382,8 @@ document.addEventListener(
 
                 renderRecommendation();
 
+                renderToday();
+
                 renderSharedDashboardTimer();
 
             }
@@ -393,7 +391,7 @@ document.addEventListener(
 
 
         /* =================================================
-           KEEP DASHBOARD SYNCHRONIZED WITH STREAK.JS
+           STREAK / XP SYNCHRONIZATION
         ================================================= */
 
         if (
@@ -422,6 +420,8 @@ document.addEventListener(
 
                         renderLevel();
 
+                        renderQuests();
+
                     }
 
                 },
@@ -432,8 +432,7 @@ document.addEventListener(
 
 
         /*
-         * If study-timer.js loaded slightly later than
-         * dashboard.js, retry connection briefly.
+         * Make sure the shared timer engine is available.
          */
         ensureSharedTimerEngine();
 
@@ -456,7 +455,7 @@ function syncLocalStats() {
 
 
     /*
-     * Prefer the streak engine's calculated value.
+     * Streak engine is authoritative.
      */
     if (
         window.StudyMindStreak &&
@@ -466,12 +465,30 @@ function syncLocalStats() {
             "function"
     ) {
 
-        streak =
-            Number(
-                window.StudyMindStreak
-                    .calculateCurrentStreak() ||
-                0
+        try {
+
+            streak =
+                Number(
+                    window.StudyMindStreak
+                        .calculateCurrentStreak() ||
+                    0
+                );
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind streak calculation failed:",
+                error
             );
+
+            streak =
+                Number(
+                    localStorage.getItem(
+                        STREAK_KEY
+                    ) || 0
+                );
+
+        }
 
     } else {
 
@@ -937,26 +954,25 @@ function startStudySession(
 
 /* =========================================================
    SHARED TIMER ENGINE
-=========================================================
-
-   IMPORTANT:
-
-   Dashboard no longer contains its own timer engine.
-
-   The authoritative engine is:
-
-       window.StudyMindTimer
-
-   This means:
-
-       Dashboard
-          ↓
-       Study Timer
-          ↓
-       Study Session
-
-   all use the SAME timer state.
 ========================================================= */
+
+function getSharedTimerEngine() {
+
+    if (
+        window.StudyMindTimer &&
+        typeof
+            window.StudyMindTimer.getState ===
+            "function"
+    ) {
+
+        return window.StudyMindTimer;
+
+    }
+
+
+    return null;
+
+}
 
 
 /* =========================================================
@@ -965,16 +981,19 @@ function startStudySession(
 
 function ensureSharedTimerEngine() {
 
+    const engine =
+        getSharedTimerEngine();
+
+
     if (
-        window.StudyMindTimer &&
-        typeof
-            window.StudyMindTimer.initialize ===
-            "function"
+        engine &&
+        typeof engine.initialize ===
+        "function"
     ) {
 
         try {
 
-            window.StudyMindTimer.initialize();
+            engine.initialize();
 
         } catch (error) {
 
@@ -994,36 +1013,39 @@ function ensureSharedTimerEngine() {
 
 
     /*
-     * study-timer.js may be loaded after dashboard.js.
+     * Never create a second timer.
      *
-     * Retry briefly instead of creating another timer.
+     * Wait briefly for study-timer.js.
      */
-
     let attempts = 0;
 
 
     const retry =
-        setInterval(
+        window.setInterval(
             () => {
 
                 attempts++;
 
 
+                const sharedEngine =
+                    getSharedTimerEngine();
+
+
                 if (
-                    window.StudyMindTimer &&
+                    sharedEngine &&
                     typeof
-                        window.StudyMindTimer.initialize ===
+                        sharedEngine.initialize ===
                         "function"
                 ) {
 
-                    clearInterval(
+                    window.clearInterval(
                         retry
                     );
 
 
                     try {
 
-                        window.StudyMindTimer.initialize();
+                        sharedEngine.initialize();
 
                     } catch (error) {
 
@@ -1046,7 +1068,7 @@ function ensureSharedTimerEngine() {
                     attempts >= 40
                 ) {
 
-                    clearInterval(
+                    window.clearInterval(
                         retry
                     );
 
@@ -1084,9 +1106,6 @@ function setupSharedDashboardTimer() {
     }
 
 
-    /*
-     * Connect to the real shared engine.
-     */
     ensureSharedTimerEngine();
 
 
@@ -1134,7 +1153,7 @@ function setupSharedDashboardTimer() {
 
 
     /*
-     * Start / Pause.
+     * Start / pause.
      */
     document
         .getElementById(
@@ -1145,16 +1164,16 @@ function setupSharedDashboardTimer() {
             () => {
 
                 const engine =
-                    window.StudyMindTimer;
+                    getSharedTimerEngine();
 
 
-                if (
-                    !engine
-                ) {
+                if (!engine) {
 
                     console.warn(
                         "StudyMind timer engine is not loaded."
                     );
+
+                    ensureSharedTimerEngine();
 
                     return;
 
@@ -1162,10 +1181,7 @@ function setupSharedDashboardTimer() {
 
 
                 const state =
-                    typeof engine.getState ===
-                    "function"
-                        ? engine.getState()
-                        : null;
+                    engine.getState();
 
 
                 if (
@@ -1213,7 +1229,7 @@ function setupSharedDashboardTimer() {
             () => {
 
                 const engine =
-                    window.StudyMindTimer;
+                    getSharedTimerEngine();
 
 
                 if (
@@ -1233,9 +1249,6 @@ function setupSharedDashboardTimer() {
         );
 
 
-    /*
-     * Initial display.
-     */
     renderSharedDashboardTimer();
 
 }
@@ -1264,11 +1277,12 @@ function selectSharedTimerDuration(
 
 
     const engine =
-        window.StudyMindTimer;
+        getSharedTimerEngine();
 
 
     /*
-     * The new shared engine owns duration selection.
+     * Use the authoritative engine if it exposes
+     * a duration-selection method.
      */
     if (
         engine &&
@@ -1276,9 +1290,21 @@ function selectSharedTimerDuration(
         "function"
     ) {
 
-        engine.selectDuration(
-            duration
-        );
+        try {
+
+            engine.selectDuration(
+                duration
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind timer duration selection failed:",
+                error
+            );
+
+        }
+
 
         renderSharedDashboardTimer();
 
@@ -1289,9 +1315,9 @@ function selectSharedTimerDuration(
 
     /*
      * Compatibility fallback.
-
-     * This does NOT create a timer engine.
-     * It only updates the shared selection keys.
+     *
+     * This only changes shared storage while the
+     * timer is stopped. It never creates a timer.
      */
     if (
         isSharedTimerRunning()
@@ -1325,6 +1351,13 @@ function selectSharedTimerDuration(
     );
 
 
+    window.dispatchEvent(
+        new Event(
+            "studyMindTimerChanged"
+        )
+    );
+
+
     renderSharedDashboardTimer();
 
 }
@@ -1337,14 +1370,10 @@ function selectSharedTimerDuration(
 function getSharedTimerState() {
 
     const engine =
-        window.StudyMindTimer;
+        getSharedTimerEngine();
 
 
-    if (
-        engine &&
-        typeof engine.getState ===
-        "function"
-    ) {
+    if (engine) {
 
         try {
 
@@ -1362,6 +1391,11 @@ function getSharedTimerState() {
     }
 
 
+    /*
+     * Read-only compatibility fallback.
+     *
+     * This does NOT run or complete a timer.
+     */
     const running =
         localStorage.getItem(
             TIMER_RUNNING_KEY
@@ -1436,7 +1470,8 @@ function getSharedTimerState() {
                 localStorage.getItem(
                     TIMER_DURATION_KEY
                 )
-            ) || 25 * 60
+            ) ||
+            25 * 60
 
     };
 
@@ -1487,7 +1522,7 @@ function isSharedTimerRunning() {
 function startSharedTimer() {
 
     const engine =
-        window.StudyMindTimer;
+        getSharedTimerEngine();
 
 
     if (
@@ -1500,7 +1535,7 @@ function startSharedTimer() {
 
         renderSharedDashboardTimer();
 
-        return;
+        return true;
 
     }
 
@@ -1508,6 +1543,11 @@ function startSharedTimer() {
     console.warn(
         "StudyMind timer engine is not available."
     );
+
+
+    ensureSharedTimerEngine();
+
+    return false;
 
 }
 
@@ -1519,7 +1559,7 @@ function startSharedTimer() {
 function pauseSharedTimer() {
 
     const engine =
-        window.StudyMindTimer;
+        getSharedTimerEngine();
 
 
     if (
@@ -1532,7 +1572,7 @@ function pauseSharedTimer() {
 
         renderSharedDashboardTimer();
 
-        return;
+        return true;
 
     }
 
@@ -1540,6 +1580,9 @@ function pauseSharedTimer() {
     console.warn(
         "StudyMind timer engine is not available."
     );
+
+
+    return false;
 
 }
 
@@ -1551,7 +1594,7 @@ function pauseSharedTimer() {
 function resetSharedTimer() {
 
     const engine =
-        window.StudyMindTimer;
+        getSharedTimerEngine();
 
 
     if (
@@ -1564,7 +1607,7 @@ function resetSharedTimer() {
 
         renderSharedDashboardTimer();
 
-        return;
+        return true;
 
     }
 
@@ -1572,6 +1615,9 @@ function resetSharedTimer() {
     console.warn(
         "StudyMind timer engine is not available."
     );
+
+
+    return false;
 
 }
 
@@ -1673,22 +1719,36 @@ function renderSharedDashboardTimer() {
    TIMER REFRESH LOOP
 =========================================================
 
-   This is ONLY a display refresh.
+   DISPLAY ONLY.
 
-   It does NOT complete the timer.
+   It does NOT:
+   ✓ start timer
+   ✓ pause timer
+   ✓ complete timer
+   ✓ award XP
+   ✓ update streak
 
-   study-timer.js detects completion and owns
-   the completion event.
+   study-timer.js owns all of that.
 ========================================================= */
+
+let dashboardTimerRefreshStarted =
+    false;
+
 
 function startDashboardTimerRefresh() {
 
-    /*
-     * Avoid creating another timer engine.
-     *
-     * A small display refresh is safe because it
-     * never mutates timer state.
-     */
+    if (
+        dashboardTimerRefreshStarted
+    ) {
+
+        return;
+
+    }
+
+
+    dashboardTimerRefreshStarted =
+        true;
+
 
     window.setInterval(
         () => {
@@ -1807,10 +1867,11 @@ function dispatchTimerChanged() {
    DAILY STUDY TIME
 =========================================================
 
-   Kept for compatibility with existing Dashboard code.
+   Kept only for compatibility with older
+   dashboard features.
 
-   The authoritative shared timer engine records
-   completed sessions.
+   Timer completion itself is owned by
+   study-timer.js.
 ========================================================= */
 
 function updateDailyStudyTime(
@@ -1865,10 +1926,9 @@ function getAllStudyTopics() {
     const topics = [];
 
 
-    /* -----------------------------------------
-       SUBJECT → TOPICS
-    ----------------------------------------- */
-
+    /*
+     * SUBJECT → TOPICS
+     */
     if (
         Array.isArray(
             studyPlan.subjects
@@ -1970,10 +2030,9 @@ function getAllStudyTopics() {
     }
 
 
-    /* -----------------------------------------
-       FLAT TOPICS
-    ----------------------------------------- */
-
+    /*
+     * FLAT TOPICS
+     */
     if (
         Array.isArray(
             studyPlan.topics
@@ -2054,7 +2113,6 @@ function getAllStudyTopics() {
     /*
      * Remove exact duplicates.
      */
-
     const unique =
         new Map();
 
@@ -2231,9 +2289,7 @@ function isTopicCompleted(
     completedSet
 ) {
 
-    if (
-        !topic
-    ) {
+    if (!topic) {
         return false;
     }
 
@@ -2324,11 +2380,6 @@ function getStudyProgress() {
 
 function getTodaysRequiredTopics() {
 
-    /*
-     * If streak.js is loaded, use its
-     * schedule-aware logic.
-     */
-
     if (
         window.StudyMindStreak &&
         typeof
@@ -2356,11 +2407,6 @@ function getTodaysRequiredTopics() {
 
     }
 
-
-    /*
-     * Fallback for pages where streak.js
-     * has not loaded.
-     */
 
     const today =
         getLocalDateKey();
@@ -2450,11 +2496,6 @@ function getTodaysRequiredTopics() {
 
 /* =========================================================
    CHECK STUDY COMPLETION
-
-   IMPORTANT:
-   streak.js owns the streak.
-
-   dashboard.js only asks it to check completion.
 ========================================================= */
 
 function checkStudyCompletion() {
@@ -2525,8 +2566,6 @@ function checkStudyCompletion() {
 
 /* =========================================================
    COMPLETION POPUP
-
-   Kept for compatibility with older dashboard HTML.
 ========================================================= */
 
 function showCompletionCelebration() {
@@ -2816,13 +2855,10 @@ function renderLevel() {
    AWARD XP
 =========================================================
 
-   Kept for compatibility with other Dashboard
-   features.
+   Kept for compatibility with other Dashboard features.
 
    IMPORTANT:
-   study-timer.js handles XP for completed timers.
-   Dashboard does NOT call awardXP() when the
-   shared timer finishes.
+   study-timer.js handles timer XP.
 ========================================================= */
 
 function awardXP(
@@ -3372,3 +3408,4 @@ window.StudyMindDashboard = {
     selectSharedTimerDuration
 
 };
+
