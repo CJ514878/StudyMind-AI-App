@@ -1217,33 +1217,26 @@ function updateSharedTimer() {
 
 /* =========================================================
    FINISH SHARED TIMER
-   ========================================================= */
+========================================================= */
 
 function finishSharedTimer() {
-
-    /*
-     * Stop immediately so the 250ms interval cannot
-     * fire the completion more than once.
-     */
 
     stopTimerLoop();
 
 
-    const completedAt =
-        Date.now();
-
-
     /*
-     * Store a unique completion timestamp.
-     * This also gives other StudyMind pages a way to
-     * recognize that a real timer completion occurred.
+     * Create one unique ID for this timer completion.
+     * This prevents the same completed timer from triggering
+     * the streak celebration multiple times.
      */
+
+    const completionId =
+        String(Date.now());
+
 
     localStorage.setItem(
         SESSION_KEYS.TIMER_COMPLETED_AT,
-        String(
-            completedAt
-        )
+        completionId
     );
 
 
@@ -1284,14 +1277,986 @@ function finishSharedTimer() {
 
 
     /*
-     * THIS IS THE NEW IMPORTANT PART.
-     *
-     * Reaching 00:00 is now treated as a completed
-     * study session and triggers the streak celebration.
+     * The timer reaching zero is now a REAL completed
+     * study session.
      */
 
-    celebrateCompletedStudySession(
-        completedAt
+    celebrateTimerCompletion(
+        completionId
+    );
+
+}
+/* =========================================================
+   TIMER COMPLETION → STREAK CELEBRATION
+========================================================= */
+
+function celebrateTimerCompletion(
+    completionId
+) {
+
+    if (!completionId) {
+        return;
+    }
+
+
+    /*
+     * Never celebrate the same completion twice.
+     */
+
+    const alreadyCelebrated =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_CELEBRATED_AT
+        );
+
+
+    if (
+        alreadyCelebrated ===
+        completionId
+    ) {
+
+        return;
+
+    }
+
+
+    localStorage.setItem(
+        SESSION_KEYS.TIMER_CELEBRATED_AT,
+        completionId
+    );
+
+
+    /* -----------------------------------------------------
+       RECORD TODAY'S STUDY ACTIVITY
+    ----------------------------------------------------- */
+
+    const today =
+        getLocalDateKey();
+
+
+    let activity =
+        safeJSON(
+            "studyMindStreakActivity",
+            {}
+        );
+
+
+    if (
+        !activity ||
+        typeof activity !== "object" ||
+        Array.isArray(activity)
+    ) {
+
+        activity = {};
+
+    }
+
+
+    /*
+     * Same-day sessions remain one streak day.
+     */
+
+    activity[today] = true;
+
+
+    saveJSON(
+        "studyMindStreakActivity",
+        activity
+    );
+
+
+    /* -----------------------------------------------------
+       UPDATE EXISTING STUDYMIND STREAK ENGINE
+    ----------------------------------------------------- */
+
+    if (
+        window.StudyMindStreak &&
+        typeof window.StudyMindStreak.recordStudyActivity ===
+            "function"
+    ) {
+
+        try {
+
+            window.StudyMindStreak.recordStudyActivity();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind streak update failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* -----------------------------------------------------
+       CALCULATE CURRENT STREAK
+    ----------------------------------------------------- */
+
+    const streak =
+        calculateTimerStreak(
+            activity,
+            today
+        );
+
+
+    /* -----------------------------------------------------
+       MILO CELEBRATION
+    ----------------------------------------------------- */
+
+    if (
+        window.Milo
+    ) {
+
+        try {
+
+            if (
+                typeof window.Milo.miloStudySessionComplete ===
+                    "function"
+            ) {
+
+                window.Milo.miloStudySessionComplete(
+                    streak
+                );
+
+            } else {
+
+                /*
+                 * Compatibility fallback.
+                 */
+
+                if (
+                    typeof window.Milo.playSound ===
+                        "function"
+                ) {
+
+                    window.Milo.playSound(
+                        "woohoo"
+                    );
+
+                }
+
+
+                if (
+                    typeof window.Milo.show ===
+                        "function"
+                ) {
+
+                    window.Milo.show(
+                        `🔥 ${streak}-day streak!`,
+                        "celebrate"
+                    );
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Milo celebration failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* -----------------------------------------------------
+       STREAK POPUP
+    ----------------------------------------------------- */
+
+    showTimerStreakPopup(
+        streak
+    );
+
+
+    /* -----------------------------------------------------
+       LET DASHBOARD / OTHER PAGES KNOW
+    ----------------------------------------------------- */
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakUpdated",
+            {
+                detail: {
+                    streak: streak,
+                    date: today,
+                    source: "study-session-timer"
+                }
+            }
+        )
+    );
+
+
+    console.log(
+        "🔥 Study streak updated:",
+        streak
+    );
+
+}
+/* =========================================================
+   CALCULATE TIMER STREAK
+========================================================= */
+
+function calculateTimerStreak(
+    activity,
+    today
+) {
+
+    if (
+        !activity ||
+        typeof activity !== "object"
+    ) {
+
+        return 1;
+
+    }
+
+
+    let streak = 0;
+
+
+    const cursor =
+        new Date(
+            `${today}T12:00:00`
+        );
+
+
+    for (
+        let i = 0;
+        i < 10000;
+        i++
+    ) {
+
+        const year =
+            cursor.getFullYear();
+
+
+        const month =
+            String(
+                cursor.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const day =
+            String(
+                cursor.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const key =
+            `${year}-${month}-${day}`;
+
+
+        if (!activity[key]) {
+            break;
+        }
+
+
+        streak++;
+
+
+        cursor.setDate(
+            cursor.getDate() - 1
+        );
+
+    }
+
+
+    return Math.max(
+        1,
+        streak
+    );
+
+}
+/* =========================================================
+   TIMER STREAK POPUP
+========================================================= */
+
+function showTimerStreakPopup(
+    streak
+) {
+
+    document
+        .querySelectorAll(
+            ".milo-timer-streak-popup"
+        )
+        .forEach(
+            popup => popup.remove()
+        );
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+
+    popup.className =
+        "milo-timer-streak-popup";
+
+
+    popup.innerHTML = `
+
+        <div class="milo-timer-streak-card">
+
+            <div class="milo-timer-streak-fire">
+                🔥
+            </div>
+
+            <div class="milo-timer-streak-small">
+                STUDY SESSION COMPLETE
+            </div>
+
+            <div class="milo-timer-streak-title">
+                ${streak}-Day Streak!
+            </div>
+
+            <div class="milo-timer-streak-message">
+                ${getTimerStreakMessage(streak)}
+            </div>
+
+            <div class="milo-timer-streak-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <button
+                type="button"
+                class="milo-timer-streak-button"
+            >
+                Keep Going 🚀
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        popup
+    );
+
+
+    installTimerStreakStyles();
+
+
+    requestAnimationFrame(
+        () => {
+
+            requestAnimationFrame(
+                () => {
+
+                    popup.classList.add(
+                        "show"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    const button =
+        popup.querySelector(
+            ".milo-timer-streak-button"
+        );
+
+
+    button?.addEventListener(
+        "click",
+        () => {
+
+            closeTimerStreakPopup(
+                popup
+            );
+
+        }
+    );
+
+
+    setTimeout(
+        () => {
+
+            closeTimerStreakPopup(
+                popup
+            );
+
+        },
+        6500
+    );
+
+}
+/* =========================================================
+   STREAK MESSAGE
+========================================================= */
+
+function getTimerStreakMessage(
+    streak
+) {
+
+    if (streak <= 1) {
+
+        return (
+            "Your study streak has started! " +
+            "Come back tomorrow and keep it alive."
+        );
+
+    }
+
+
+    if (streak < 5) {
+
+        return (
+            "You're building momentum. " +
+            "Keep showing up!"
+        );
+
+    }
+
+
+    if (streak < 10) {
+
+        return (
+            "You're on fire! " +
+            "Your consistency is paying off."
+        );
+
+    }
+
+
+    if (streak < 30) {
+
+        return (
+            "Amazing consistency! " +
+            "Milo is seriously impressed."
+        );
+
+    }
+
+
+    return (
+        "Legendary consistency! " +
+        "Keep that streak alive!"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE STREAK POPUP
+========================================================= */
+
+function closeTimerStreakPopup(
+    popup
+) {
+
+    if (!popup) {
+        return;
+    }
+
+
+    popup.classList.remove(
+        "show"
+    );
+
+
+    setTimeout(
+        () => {
+
+            popup.remove();
+
+        },
+        350
+    );
+
+}
+/* =========================================================
+   STREAK POPUP STYLES
+========================================================= */
+
+function installTimerStreakStyles() {
+
+    if (
+        document.getElementById(
+            "miloTimerStreakStyles"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "miloTimerStreakStyles";
+
+
+    style.textContent = `
+
+        .milo-timer-streak-popup {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 999999;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+                rgba(8, 12, 25, .62);
+
+            backdrop-filter:
+                blur(9px);
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition:
+                opacity .3s ease;
+
+        }
+
+
+        .milo-timer-streak-popup.show {
+
+            opacity: 1;
+
+            pointer-events: auto;
+
+        }
+
+
+        .milo-timer-streak-card {
+
+            width:
+                min(440px, 100%);
+
+            padding:
+                34px 30px 28px;
+
+            border-radius:
+                30px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffffff,
+                    #f6f7ff
+                );
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,.35);
+
+            text-align:
+                center;
+
+            transform:
+                translateY(35px)
+                scale(.8);
+
+            transition:
+                transform
+                .5s
+                cubic-bezier(
+                    .18,
+                    1.25,
+                    .35,
+                    1
+                );
+
+            overflow:
+                hidden;
+
+            position:
+                relative;
+
+        }
+
+
+        .milo-timer-streak-popup.show
+        .milo-timer-streak-card {
+
+            transform:
+                translateY(0)
+                scale(1);
+
+        }
+
+
+        .milo-timer-streak-card::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 260px;
+
+            height: 260px;
+
+            left: 50%;
+
+            top: -180px;
+
+            transform:
+                translateX(-50%);
+
+            border-radius:
+                50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(255,190,40,.28),
+                    transparent 70%
+                );
+
+        }
+
+
+        .milo-timer-streak-fire {
+
+            position:
+                relative;
+
+            font-size:
+                68px;
+
+            line-height:
+                1;
+
+            margin-bottom:
+                12px;
+
+            animation:
+                timerStreakFire
+                .65s
+                ease-in-out
+                infinite
+                alternate;
+
+        }
+
+
+        @keyframes timerStreakFire {
+
+            from {
+
+                transform:
+                    scale(1)
+                    rotate(-5deg);
+
+            }
+
+            to {
+
+                transform:
+                    scale(1.15)
+                    rotate(5deg);
+
+            }
+
+        }
+
+
+        .milo-timer-streak-small {
+
+            position:
+                relative;
+
+            font-size:
+                11px;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                .15em;
+
+            color:
+                #777c91;
+
+            margin-bottom:
+                7px;
+
+        }
+
+
+        .milo-timer-streak-title {
+
+            position:
+                relative;
+
+            font-size:
+                clamp(
+                    30px,
+                    7vw,
+                    42px
+                );
+
+            line-height:
+                1.05;
+
+            font-weight:
+                900;
+
+            color:
+                #171a2b;
+
+            margin-bottom:
+                12px;
+
+        }
+
+
+        .milo-timer-streak-message {
+
+            position:
+                relative;
+
+            max-width:
+                340px;
+
+            margin:
+                0 auto 22px;
+
+            font-size:
+                15px;
+
+            line-height:
+                1.6;
+
+            color:
+                #62677b;
+
+        }
+
+
+        .milo-timer-streak-dots {
+
+            display:
+                flex;
+
+            justify-content:
+                center;
+
+            gap:
+                7px;
+
+            margin-bottom:
+                25px;
+
+        }
+
+
+        .milo-timer-streak-dots span {
+
+            width:
+                9px;
+
+            height:
+                9px;
+
+            border-radius:
+                50%;
+
+            background:
+                #ffbd38;
+
+            animation:
+                timerStreakDot
+                .75s
+                ease-in-out
+                infinite
+                alternate;
+
+        }
+
+
+        .milo-timer-streak-dots
+        span:nth-child(2) {
+            animation-delay:
+                .1s;
+        }
+
+
+        .milo-timer-streak-dots
+        span:nth-child(3) {
+            animation-delay:
+                .2s;
+        }
+
+
+        .milo-timer-streak-dots
+        span:nth-child(4) {
+            animation-delay:
+                .3s;
+        }
+
+
+        .milo-timer-streak-dots
+        span:nth-child(5) {
+            animation-delay:
+                .4s;
+        }
+
+
+        @keyframes timerStreakDot {
+
+            from {
+
+                transform:
+                    translateY(0)
+                    scale(.8);
+
+                opacity:
+                    .55;
+
+            }
+
+            to {
+
+                transform:
+                    translateY(-6px)
+                    scale(1.1);
+
+                opacity:
+                    1;
+
+            }
+
+        }
+
+
+        .milo-timer-streak-button {
+
+            position:
+                relative;
+
+            border:
+                0;
+
+            border-radius:
+                14px;
+
+            padding:
+                13px 23px;
+
+            font-size:
+                14px;
+
+            font-weight:
+                800;
+
+            color:
+                white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #5b5ce2,
+                    #7567f5
+                );
+
+            cursor:
+                pointer;
+
+            box-shadow:
+                0 8px 22px
+                rgba(
+                    91,
+                    92,
+                    226,
+                    .28
+                );
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+
+        }
+
+
+        .milo-timer-streak-button:hover {
+
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 12px 28px
+                rgba(
+                    91,
+                    92,
+                    226,
+                    .36
+                );
+
+        }
+
+
+        .milo-timer-streak-button:active {
+
+            transform:
+                scale(.97);
+
+        }
+
+
+        @media (max-width: 520px) {
+
+            .milo-timer-streak-card {
+
+                padding:
+                    28px 20px 23px;
+
+                border-radius:
+                    25px;
+
+            }
+
+
+            .milo-timer-streak-fire {
+
+                font-size:
+                    56px;
+
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
     );
 
 }
