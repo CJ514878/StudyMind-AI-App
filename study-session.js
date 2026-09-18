@@ -1,13 +1,14 @@
 /* =========================================================
    STUDYMIND AI — STUDY SESSION
-========================================================= */
+   COMPLETE REPLACEMENT
+   ========================================================= */
 
 "use strict";
 
 
 /* =========================================================
    STORAGE
-========================================================= */
+   ========================================================= */
 
 const SESSION_KEYS = {
 
@@ -44,14 +45,22 @@ const SESSION_KEYS = {
         "studyMindTimerRunning",
 
     TIMER_SELECTED:
-        "studyMindSelectedTimerSeconds"
+        "studyMindSelectedTimerSeconds",
+
+    /* TIMER COMPLETION */
+
+    TIMER_COMPLETED_AT:
+        "studyMindLastTimerCompletedAt",
+
+    TIMER_CELEBRATED_AT:
+        "studyMindLastTimerCelebratedAt"
 
 };
 
 
 /* =========================================================
    STATE
-========================================================= */
+   ========================================================= */
 
 let studyPlan = null;
 let currentTopic = null;
@@ -61,12 +70,28 @@ let timerInterval = null;
 let selectedTimerSeconds = 25 * 60;
 
 
+/*
+ * Prevents the same timer completion from triggering
+ * multiple celebrations.
+ */
+let currentTimerCompletionId = null;
+
+
+/*
+ * Prevents duplicate celebration calls caused by
+ * multiple timer/storage events.
+ */
+let streakCelebrationRunning = false;
+
+
 /* =========================================================
    HELPERS
-========================================================= */
+   ========================================================= */
 
 function $(id) {
+
     return document.getElementById(id);
+
 }
 
 
@@ -115,7 +140,7 @@ function saveJSON(key, value) {
 
 /* =========================================================
    INITIALIZE
-========================================================= */
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -148,7 +173,7 @@ function initializeSession() {
 
 /* =========================================================
    LOAD PLAN
-========================================================= */
+   ========================================================= */
 
 function loadStudyPlan() {
 
@@ -163,7 +188,7 @@ function loadStudyPlan() {
 
 /* =========================================================
    DETERMINE TOPIC
-========================================================= */
+   ========================================================= */
 
 function determineCurrentTopic() {
 
@@ -183,6 +208,7 @@ function determineCurrentTopic() {
             SESSION_KEYS.CURRENT_TOPIC,
             null
         );
+
 
     if (
         storedCurrent &&
@@ -209,6 +235,7 @@ function determineCurrentTopic() {
                 SESSION_KEYS.TOPIC_INDEX
             )
         );
+
 
     if (!Number.isFinite(index)) {
         index = 0;
@@ -243,7 +270,7 @@ function determineCurrentTopic() {
 
 /* =========================================================
    GET ALL TOPICS
-========================================================= */
+   ========================================================= */
 
 function getAllTopics() {
 
@@ -265,6 +292,7 @@ function getAllTopics() {
                 ) {
                     return;
                 }
+
 
                 const subjectName =
                     firstValue(
@@ -292,6 +320,7 @@ function getAllTopics() {
                                 subjectName
                             );
 
+
                         if (normalized) {
                             result.push(normalized);
                         }
@@ -317,6 +346,7 @@ function getAllTopics() {
                 const normalized =
                     normalizeTopic(topic);
 
+
                 if (normalized) {
                     result.push(normalized);
                 }
@@ -334,7 +364,7 @@ function getAllTopics() {
 
 /* =========================================================
    NORMALIZE TOPIC
-========================================================= */
+   ========================================================= */
 
 function normalizeTopic(
     topic,
@@ -350,10 +380,12 @@ function normalizeTopic(
 
         return {
 
-            name: topic,
+            name:
+                topic,
 
             subject:
-                fallbackSubject || "Study Topic"
+                fallbackSubject ||
+                "Study Topic"
 
         };
 
@@ -369,13 +401,16 @@ function normalizeTopic(
                     topic.name,
                     topic.title,
                     topic.topic
-                ) || "Study Topic",
+                ) ||
+                "Study Topic",
 
             subject:
                 firstValue(
                     topic.subject,
                     topic.subjectName
-                ) || fallbackSubject || "Study Topic",
+                ) ||
+                fallbackSubject ||
+                "Study Topic",
 
             difficulty:
                 firstValue(
@@ -395,7 +430,7 @@ function normalizeTopic(
 
 /* =========================================================
    FIRST VALUE
-========================================================= */
+   ========================================================= */
 
 function firstValue(...values) {
 
@@ -413,6 +448,7 @@ function firstValue(...values) {
 
     }
 
+
     return "";
 
 }
@@ -420,7 +456,7 @@ function firstValue(...values) {
 
 /* =========================================================
    RENDER TOPIC
-========================================================= */
+   ========================================================= */
 
 function renderTopic() {
 
@@ -496,11 +532,16 @@ function renderTopic() {
     }
 
 
-    $("infoSubject").textContent =
-        currentTopic.subject || "—";
+    if ($("infoSubject")) {
+        $("infoSubject").textContent =
+            currentTopic.subject || "—";
+    }
 
-    $("infoTopic").textContent =
-        currentTopic.name || "—";
+
+    if ($("infoTopic")) {
+        $("infoTopic").textContent =
+            currentTopic.name || "—";
+    }
 
 
     const exam =
@@ -512,8 +553,10 @@ function renderTopic() {
         );
 
 
-    $("infoExam").textContent =
-        exam || "—";
+    if ($("infoExam")) {
+        $("infoExam").textContent =
+            exam || "—";
+    }
 
 
     const topics =
@@ -536,8 +579,10 @@ function renderTopic() {
             : 0;
 
 
-    $("topicNumber").textContent =
-        String(safeIndex + 1);
+    if ($("topicNumber")) {
+        $("topicNumber").textContent =
+            String(safeIndex + 1);
+    }
 
 
     const percent =
@@ -549,24 +594,30 @@ function renderTopic() {
             : 0;
 
 
-    $("progressPercent").textContent =
-        `${percent}%`;
+    if ($("progressPercent")) {
+        $("progressPercent").textContent =
+            `${percent}%`;
+    }
 
-    $("topicProgress").style.width =
-        `${percent}%`;
+
+    if ($("topicProgress")) {
+        $("topicProgress").style.width =
+            `${percent}%`;
+    }
 
 }
 
 
 /* =========================================================
    NOTES
-========================================================= */
+   ========================================================= */
 
 function getNotesKey() {
 
     if (!currentTopic) {
         return SESSION_KEYS.NOTES;
     }
+
 
     return `${SESSION_KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`;
 
@@ -580,13 +631,16 @@ function loadNotes() {
             getNotesKey()
         ) || "";
 
+
     const textarea =
         $("sessionNotes");
+
 
     if (textarea) {
 
         textarea.value =
             notes;
+
 
         textarea.addEventListener(
             "input",
@@ -603,6 +657,7 @@ function saveNotes() {
     const textarea =
         $("sessionNotes");
 
+
     if (!textarea) {
         return;
     }
@@ -617,20 +672,25 @@ function saveNotes() {
     const status =
         $("notesStatus");
 
+
     if (status) {
 
         status.textContent =
             "Saved just now";
 
+
         clearTimeout(
             saveNotes.timeout
         );
 
+
         saveNotes.timeout =
             setTimeout(
                 () => {
+
                     status.textContent =
                         "Saved locally";
+
                 },
                 1500
             );
@@ -642,7 +702,7 @@ function saveNotes() {
 
 /* =========================================================
    SHARED TIMER
-========================================================= */
+   ========================================================= */
 
 function initializeTimer() {
 
@@ -666,6 +726,7 @@ function initializeTimer() {
 
         selectedTimerSeconds =
             25 * 60;
+
 
         localStorage.setItem(
             SESSION_KEYS.TIMER_SELECTED,
@@ -739,7 +800,7 @@ function initializeTimer() {
 
 /* =========================================================
    TIMER CONTROLS
-========================================================= */
+   ========================================================= */
 
 function setupTimerControls() {
 
@@ -758,11 +819,13 @@ function setupTimerControls() {
                             button.dataset.minutes
                         );
 
+
                     if (
                         !Number.isFinite(minutes)
                     ) {
                         return;
                     }
+
 
                     selectedTimerSeconds =
                         minutes * 60;
@@ -787,6 +850,7 @@ function setupTimerControls() {
                                 )
                         );
 
+
                     button.classList.add(
                         "active"
                     );
@@ -806,6 +870,7 @@ function setupTimerControls() {
                                 selectedTimerSeconds
                             )
                         );
+
 
                         updateTimerDisplay(
                             selectedTimerSeconds
@@ -837,7 +902,7 @@ function setupTimerControls() {
 
 /* =========================================================
    TOGGLE TIMER
-========================================================= */
+   ========================================================= */
 
 function toggleTimer() {
 
@@ -862,7 +927,7 @@ function toggleTimer() {
 
 /* =========================================================
    START SHARED TIMER
-========================================================= */
+   ========================================================= */
 
 function startSharedTimer() {
 
@@ -895,10 +960,12 @@ function startSharedTimer() {
         String(seconds)
     );
 
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_END,
         String(endTime)
     );
+
 
     localStorage.setItem(
         SESSION_KEYS.TIMER_RUNNING,
@@ -915,7 +982,7 @@ function startSharedTimer() {
 
 /* =========================================================
    PAUSE
-========================================================= */
+   ========================================================= */
 
 function pauseSharedTimer() {
 
@@ -958,10 +1025,12 @@ function pauseSharedTimer() {
         )
     );
 
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_RUNNING,
         "false"
     );
+
 
     localStorage.removeItem(
         SESSION_KEYS.TIMER_END
@@ -970,9 +1039,11 @@ function pauseSharedTimer() {
 
     stopTimerLoop();
 
+
     updateTimerDisplay(
         remaining
     );
+
 
     notifyTimerChanged();
 
@@ -981,7 +1052,7 @@ function pauseSharedTimer() {
 
 /* =========================================================
    RESET
-========================================================= */
+   ========================================================= */
 
 function resetTimer() {
 
@@ -995,6 +1066,7 @@ function resetTimer() {
         )
     );
 
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_SELECTED,
         String(
@@ -1002,10 +1074,12 @@ function resetTimer() {
         )
     );
 
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_RUNNING,
         "false"
     );
+
 
     localStorage.removeItem(
         SESSION_KEYS.TIMER_END
@@ -1016,6 +1090,7 @@ function resetTimer() {
         selectedTimerSeconds
     );
 
+
     notifyTimerChanged();
 
 }
@@ -1023,7 +1098,7 @@ function resetTimer() {
 
 /* =========================================================
    TIMER LOOP
-========================================================= */
+   ========================================================= */
 
 function startTimerLoop() {
 
@@ -1037,6 +1112,7 @@ function startTimerLoop() {
             updateSharedTimer,
             250
         );
+
 
     updateSharedTimer();
 
@@ -1060,7 +1136,7 @@ function stopTimerLoop() {
 
 /* =========================================================
    UPDATE TIMER
-========================================================= */
+   ========================================================= */
 
 function updateSharedTimer() {
 
@@ -1134,12 +1210,35 @@ function updateSharedTimer() {
 
 
 /* =========================================================
-   FINISH
-========================================================= */
+   FINISH SHARED TIMER
+   ========================================================= */
 
 function finishSharedTimer() {
 
+    /*
+     * Stop immediately so the 250ms interval cannot
+     * fire the completion more than once.
+     */
+
     stopTimerLoop();
+
+
+    const completedAt =
+        Date.now();
+
+
+    /*
+     * Store a unique completion timestamp.
+     * This also gives other StudyMind pages a way to
+     * recognize that a real timer completion occurred.
+     */
+
+    localStorage.setItem(
+        SESSION_KEYS.TIMER_COMPLETED_AT,
+        String(
+            completedAt
+        )
+    );
 
 
     localStorage.setItem(
@@ -1147,10 +1246,12 @@ function finishSharedTimer() {
         "0"
     );
 
+
     localStorage.setItem(
         SESSION_KEYS.TIMER_RUNNING,
         "false"
     );
+
 
     localStorage.removeItem(
         SESSION_KEYS.TIMER_END
@@ -1167,6 +1268,7 @@ function finishSharedTimer() {
     const state =
         $("timerState");
 
+
     if (state) {
 
         state.textContent =
@@ -1174,14 +1276,1000 @@ function finishSharedTimer() {
 
     }
 
+
+    /*
+     * THIS IS THE NEW IMPORTANT PART.
+     *
+     * Reaching 00:00 is now treated as a completed
+     * study session and triggers the streak celebration.
+     */
+
+    celebrateCompletedStudySession(
+        completedAt
+    );
+
+}
+
+
+/* =========================================================
+   COMPLETED STUDY SESSION CELEBRATION
+   ========================================================= */
+
+function celebrateCompletedStudySession(
+    completionId
+) {
+
+    if (
+        !completionId ||
+        streakCelebrationRunning
+    ) {
+        return;
+    }
+
+
+    const alreadyCelebrated =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_CELEBRATED_AT
+        );
+
+
+    /*
+     * Never celebrate the exact same timer completion twice.
+     */
+
+    if (
+        alreadyCelebrated ===
+        String(completionId)
+    ) {
+        return;
+    }
+
+
+    streakCelebrationRunning =
+        true;
+
+
+    localStorage.setItem(
+        SESSION_KEYS.TIMER_CELEBRATED_AT,
+        String(completionId)
+    );
+
+
+    /*
+     * Record today's study activity.
+     *
+     * This uses the same streak activity storage already
+     * used by the rest of StudyMind.
+     */
+
+    const today =
+        getLocalDateKey();
+
+
+    let activity =
+        safeJSON(
+            "studyMindStreakActivity",
+            {}
+        );
+
+
+    if (
+        !activity ||
+        typeof activity !== "object" ||
+        Array.isArray(activity)
+    ) {
+
+        activity = {};
+
+    }
+
+
+    /*
+     * Recording the same day again does not increase
+     * the streak.
+     */
+
+    activity[today] = true;
+
+
+    saveJSON(
+        "studyMindStreakActivity",
+        activity
+    );
+
+
+    /*
+     * Let the existing StudyMind streak engine process
+     * today's activity.
+     */
+
+    if (
+        window.StudyMindStreak &&
+        typeof window.StudyMindStreak.recordStudyActivity ===
+            "function"
+    ) {
+
+        try {
+
+            window.StudyMindStreak.recordStudyActivity();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind streak update error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+     * Calculate the visible consecutive streak from the
+     * activity dates so the popup can show the current value.
+     */
+
+    const streak =
+        calculateCurrentStreak(
+            activity,
+            today
+        );
+
+
+    /*
+     * Tell Milo to celebrate.
+     */
+
+    if (
+        window.Milo
+    ) {
+
+        try {
+
+            if (
+                typeof window.Milo.miloStudySessionComplete ===
+                    "function"
+            ) {
+
+                window.Milo.miloStudySessionComplete(
+                    streak
+                );
+
+            } else {
+
+                /*
+                 * Fallback for an older Milo version.
+                 */
+
+                if (
+                    typeof window.Milo.playSound ===
+                        "function"
+                ) {
+
+                    window.Milo.playSound(
+                        "woohoo"
+                    );
+
+                }
+
+                if (
+                    typeof window.Milo.show ===
+                        "function"
+                ) {
+
+                    window.Milo.show(
+                        `🔥 ${streak}-day streak!`,
+                        "celebrate"
+                    );
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Milo celebration error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+     * Show the large streak achievement popup.
+     */
+
+    showStreakCelebrationPopup(
+        streak
+    );
+
+
+    /*
+     * Notify the rest of the application.
+     */
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakUpdated",
+            {
+                detail: {
+                    streak,
+                    date: today,
+                    source: "study-session-timer"
+                }
+            }
+        )
+    );
+
+
+    /*
+     * Allow another future session to celebrate.
+     */
+
+    setTimeout(
+        () => {
+
+            streakCelebrationRunning =
+                false;
+
+        },
+        3000
+    );
+
+}
+
+
+/* =========================================================
+   CALCULATE CURRENT STREAK
+   ========================================================= */
+
+function calculateCurrentStreak(
+    activity,
+    today
+) {
+
+    if (
+        !activity ||
+        typeof activity !== "object"
+    ) {
+        return 1;
+    }
+
+
+    let streak = 0;
+
+    let cursor =
+        new Date(
+            `${today}T12:00:00`
+        );
+
+
+    /*
+     * Walk backwards through consecutive completed days.
+     */
+
+    for (
+        let i = 0;
+        i < 10000;
+        i++
+    ) {
+
+        const year =
+            cursor.getFullYear();
+
+        const month =
+            String(
+                cursor.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                cursor.getDate()
+            ).padStart(2, "0");
+
+
+        const key =
+            `${year}-${month}-${day}`;
+
+
+        if (!activity[key]) {
+            break;
+        }
+
+
+        streak++;
+
+
+        cursor.setDate(
+            cursor.getDate() - 1
+        );
+
+    }
+
+
+    return Math.max(
+        1,
+        streak
+    );
+
+}
+
+
+/* =========================================================
+   STREAK CELEBRATION POPUP
+   ========================================================= */
+
+function showStreakCelebrationPopup(
+    streak
+) {
+
+    /*
+     * Remove an old popup if one somehow exists.
+     */
+
+    document
+        .querySelectorAll(
+            ".milo-streak-popup"
+        )
+        .forEach(
+            popup => popup.remove()
+        );
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+
+    popup.className =
+        "milo-streak-popup";
+
+
+    popup.innerHTML = `
+
+        <div class="milo-streak-popup-card">
+
+            <div class="milo-streak-fire">
+                🔥
+            </div>
+
+            <div class="milo-streak-eyebrow">
+                STUDY SESSION COMPLETE
+            </div>
+
+            <div class="milo-streak-title">
+                ${streak}-Day Streak!
+            </div>
+
+            <div class="milo-streak-message">
+                ${getStreakMessage(streak)}
+            </div>
+
+            <div class="milo-streak-progress">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <button
+                type="button"
+                class="milo-streak-close"
+            >
+                Keep Going 🚀
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        popup
+    );
+
+
+    /*
+     * Add popup styles dynamically so this feature works
+     * without requiring changes to study-session.css.
+     */
+
+    installStreakPopupStyles();
+
+
+    /*
+     * Force the browser to recognize the initial state
+     * before adding .show.
+     */
+
+    requestAnimationFrame(
+        () => {
+
+            requestAnimationFrame(
+                () => {
+
+                    popup.classList.add(
+                        "show"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    const closeButton =
+        popup.querySelector(
+            ".milo-streak-close"
+        );
+
+
+    closeButton?.addEventListener(
+        "click",
+        () => {
+
+            closeStreakCelebrationPopup(
+                popup
+            );
+
+        }
+    );
+
+
+    /*
+     * Automatically close after a few seconds.
+     */
+
+    setTimeout(
+        () => {
+
+            closeStreakCelebrationPopup(
+                popup
+            );
+
+        },
+        6500
+    );
+
+}
+
+
+/* =========================================================
+   STREAK MESSAGE
+   ========================================================= */
+
+function getStreakMessage(
+    streak
+) {
+
+    if (streak <= 1) {
+
+        return (
+            "You just started your streak. " +
+            "Come back tomorrow and keep it alive!"
+        );
+
+    }
+
+
+    if (streak < 5) {
+
+        return (
+            "You're building momentum. " +
+            "Keep showing up!"
+        );
+
+    }
+
+
+    if (streak < 10) {
+
+        return (
+            "You're on fire! " +
+            "Your consistency is paying off."
+        );
+
+    }
+
+
+    if (streak < 30) {
+
+        return (
+            "Incredible consistency! " +
+            "Milo is seriously impressed."
+        );
+
+    }
+
+
+    return (
+        "Legendary consistency! " +
+        "Keep that streak alive."
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE STREAK POPUP
+   ========================================================= */
+
+function closeStreakCelebrationPopup(
+    popup
+) {
+
+    if (!popup) {
+        return;
+    }
+
+
+    popup.classList.remove(
+        "show"
+    );
+
+
+    setTimeout(
+        () => {
+
+            popup.remove();
+
+        },
+        350
+    );
+
+}
+
+
+/* =========================================================
+   STREAK POPUP STYLES
+   ========================================================= */
+
+function installStreakPopupStyles() {
+
+    if (
+        document.getElementById(
+            "miloStreakPopupStyles"
+        )
+    ) {
+        return;
+    }
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "miloStreakPopupStyles";
+
+
+    style.textContent = `
+
+        .milo-streak-popup {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 24px;
+
+            background:
+                rgba(8, 12, 25, .58);
+
+            backdrop-filter:
+                blur(8px);
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition:
+                opacity .3s ease;
+        }
+
+
+        .milo-streak-popup.show {
+            opacity: 1;
+
+            pointer-events: auto;
+        }
+
+
+        .milo-streak-popup-card {
+            width:
+                min(440px, 100%);
+
+            padding:
+                34px 30px 28px;
+
+            border-radius:
+                30px;
+
+            text-align:
+                center;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffffff,
+                    #f7f8ff
+                );
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,.32);
+
+            transform:
+                translateY(30px)
+                scale(.82);
+
+            transition:
+                transform
+                .5s
+                cubic-bezier(
+                    .18,
+                    1.25,
+                    .35,
+                    1
+                );
+
+            position:
+                relative;
+
+            overflow:
+                hidden;
+        }
+
+
+        .milo-streak-popup.show
+        .milo-streak-popup-card {
+
+            transform:
+                translateY(0)
+                scale(1);
+
+        }
+
+
+        .milo-streak-popup-card::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 240px;
+            height: 240px;
+
+            left: 50%;
+            top: -150px;
+
+            transform:
+                translateX(-50%);
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(255, 190, 40, .24),
+                    transparent 70%
+                );
+
+            pointer-events:
+                none;
+        }
+
+
+        .milo-streak-fire {
+
+            font-size:
+                68px;
+
+            line-height:
+                1;
+
+            margin-bottom:
+                12px;
+
+            animation:
+                miloStreakFire
+                .65s
+                ease-in-out
+                infinite
+                alternate;
+        }
+
+
+        @keyframes miloStreakFire {
+
+            from {
+                transform:
+                    scale(1)
+                    rotate(-4deg);
+            }
+
+            to {
+                transform:
+                    scale(1.14)
+                    rotate(4deg);
+            }
+
+        }
+
+
+        .milo-streak-eyebrow {
+
+            font-size:
+                11px;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                .16em;
+
+            color:
+                #777c91;
+
+            margin-bottom:
+                7px;
+        }
+
+
+        .milo-streak-title {
+
+            font-size:
+                clamp(
+                    30px,
+                    6vw,
+                    42px
+                );
+
+            line-height:
+                1.05;
+
+            font-weight:
+                900;
+
+            color:
+                #171a2b;
+
+            margin-bottom:
+                12px;
+        }
+
+
+        .milo-streak-message {
+
+            font-size:
+                15px;
+
+            line-height:
+                1.6;
+
+            color:
+                #62677b;
+
+            max-width:
+                330px;
+
+            margin:
+                0 auto 22px;
+        }
+
+
+        .milo-streak-progress {
+
+            display:
+                flex;
+
+            justify-content:
+                center;
+
+            gap:
+                7px;
+
+            margin-bottom:
+                25px;
+        }
+
+
+        .milo-streak-progress span {
+
+            width:
+                9px;
+
+            height:
+                9px;
+
+            border-radius:
+                50%;
+
+            background:
+                #ffbd38;
+
+            animation:
+                miloStreakDot
+                .8s
+                ease-in-out
+                infinite
+                alternate;
+        }
+
+
+        .milo-streak-progress
+        span:nth-child(2) {
+            animation-delay:
+                .1s;
+        }
+
+
+        .milo-streak-progress
+        span:nth-child(3) {
+            animation-delay:
+                .2s;
+        }
+
+
+        .milo-streak-progress
+        span:nth-child(4) {
+            animation-delay:
+                .3s;
+        }
+
+
+        .milo-streak-progress
+        span:nth-child(5) {
+            animation-delay:
+                .4s;
+        }
+
+
+        @keyframes miloStreakDot {
+
+            from {
+                transform:
+                    translateY(0)
+                    scale(.8);
+
+                opacity:
+                    .55;
+            }
+
+            to {
+                transform:
+                    translateY(-6px)
+                    scale(1.1);
+
+                opacity:
+                    1;
+            }
+
+        }
+
+
+        .milo-streak-close {
+
+            border:
+                0;
+
+            border-radius:
+                14px;
+
+            padding:
+                13px 23px;
+
+            font-size:
+                14px;
+
+            font-weight:
+                800;
+
+            color:
+                white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #5b5ce2,
+                    #7567f5
+                );
+
+            cursor:
+                pointer;
+
+            box-shadow:
+                0 8px 22px
+                rgba(
+                    91,
+                    92,
+                    226,
+                    .28
+                );
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        }
+
+
+        .milo-streak-close:hover {
+
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 12px 28px
+                rgba(
+                    91,
+                    92,
+                    226,
+                    .36
+                );
+        }
+
+
+        .milo-streak-close:active {
+
+            transform:
+                translateY(0)
+                scale(.97);
+        }
+
+
+        @media (max-width: 520px) {
+
+            .milo-streak-popup {
+                padding:
+                    16px;
+            }
+
+
+            .milo-streak-popup-card {
+                padding:
+                    28px 20px 23px;
+
+                border-radius:
+                    25px;
+            }
+
+
+            .milo-streak-fire {
+                font-size:
+                    56px;
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
+    );
+
 }
 
 
 /* =========================================================
    DISPLAY TIMER
-========================================================= */
+   ========================================================= */
 
-function updateTimerDisplay(seconds) {
+function updateTimerDisplay(
+    seconds
+) {
 
     seconds =
         Math.max(
@@ -1195,6 +2283,7 @@ function updateTimerDisplay(seconds) {
             seconds / 60
         );
 
+
     const secs =
         seconds % 60;
 
@@ -1202,10 +2291,11 @@ function updateTimerDisplay(seconds) {
     const display =
         $("timerDisplay");
 
+
     if (display) {
 
         display.textContent =
-            `${String(minutes).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+            `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
     }
 
@@ -1218,6 +2308,7 @@ function updateTimerDisplay(seconds) {
 
     const state =
         $("timerState");
+
 
     if (state) {
 
@@ -1245,12 +2336,13 @@ function updateTimerDisplay(seconds) {
 
 /* =========================================================
    BUTTON STATE
-========================================================= */
+   ========================================================= */
 
 function updateTimerButtons() {
 
     const button =
         $("timerStart");
+
 
     if (!button) {
         return;
@@ -1273,7 +2365,7 @@ function updateTimerButtons() {
 
 /* =========================================================
    CROSS-PAGE TIMER EVENTS
-========================================================= */
+   ========================================================= */
 
 function notifyTimerChanged() {
 
@@ -1286,7 +2378,9 @@ function notifyTimerChanged() {
 }
 
 
-function handleTimerStorage(event) {
+function handleTimerStorage(
+    event
+) {
 
     if (
         event.key ===
@@ -1296,7 +2390,9 @@ function handleTimerStorage(event) {
         event.key ===
             SESSION_KEYS.TIMER_RUNNING ||
         event.key ===
-            SESSION_KEYS.TIMER_SELECTED
+            SESSION_KEYS.TIMER_SELECTED ||
+        event.key ===
+            SESSION_KEYS.TIMER_COMPLETED_AT
     ) {
 
         refreshTimerFromStorage();
@@ -1312,6 +2408,10 @@ function handleTimerEvent() {
 
 }
 
+
+/* =========================================================
+   REFRESH TIMER FROM STORAGE
+   ========================================================= */
 
 function refreshTimerFromStorage() {
 
@@ -1329,6 +2429,69 @@ function refreshTimerFromStorage() {
         );
 
 
+    /*
+     * If another StudyMind page completed the timer,
+     * recognize that completion here too.
+     */
+
+    const completedAt =
+        localStorage.getItem(
+            SESSION_KEYS.TIMER_COMPLETED_AT
+        );
+
+
+    if (
+        !running &&
+        completedAt &&
+        seconds === 0
+    ) {
+
+        /*
+         * Only celebrate a completion that this page
+         * has not already celebrated.
+         */
+
+        const celebratedAt =
+            localStorage.getItem(
+                SESSION_KEYS.TIMER_CELEBRATED_AT
+            );
+
+
+        if (
+            celebratedAt !==
+            completedAt
+        ) {
+
+            /*
+             * Do not celebrate an ancient completion
+             * when the page is merely loaded later.
+             *
+             * A completion is considered current when it
+             * happened within the last 10 seconds.
+             */
+
+            const completionTime =
+                Number(
+                    completedAt
+                );
+
+
+            if (
+                Number.isFinite(completionTime) &&
+                Date.now() - completionTime < 10000
+            ) {
+
+                celebrateCompletedStudySession(
+                    completedAt
+                );
+
+            }
+
+        }
+
+    }
+
+
     if (running) {
 
         startTimerLoop();
@@ -1337,11 +2500,13 @@ function refreshTimerFromStorage() {
 
         stopTimerLoop();
 
+
         updateTimerDisplay(
             Number.isFinite(seconds)
                 ? seconds
                 : selectedTimerSeconds
         );
+
 
         updateTimerButtons();
 
@@ -1352,7 +2517,7 @@ function refreshTimerFromStorage() {
 
 /* =========================================================
    CHECKLIST
-========================================================= */
+   ========================================================= */
 
 function setupChecklist() {
 
@@ -1395,7 +2560,7 @@ function setupChecklist() {
 
 /* =========================================================
    BUTTONS
-========================================================= */
+   ========================================================= */
 
 function setupButtons() {
 
@@ -1424,7 +2589,7 @@ function setupButtons() {
 
 /* =========================================================
    KNOWLEDGE CHECK
-========================================================= */
+   ========================================================= */
 
 function startKnowledgeCheck() {
 
@@ -1457,7 +2622,7 @@ function startKnowledgeCheck() {
 
 /* =========================================================
    CURRENT INDEX
-========================================================= */
+   ========================================================= */
 
 function getCurrentTopicIndex() {
 
@@ -1486,9 +2651,10 @@ function getCurrentTopicIndex() {
 
 }
 
+
 /* =========================================================
    COMPLETE SESSION
-========================================================= */
+   ========================================================= */
 
 function completeSession() {
 
@@ -1519,8 +2685,6 @@ function completeSession() {
 
     /*
      * Use subject + topic rather than topic name alone.
-     * This prevents two subjects containing topics with the
-     * same name from being treated as the same topic.
      */
 
     if (!completed.includes(topicKey)) {
@@ -1574,7 +2738,7 @@ function completeSession() {
 
 
     /* -----------------------------------------------------
-       CHECK WHETHER THE ENTIRE STUDY PLAN IS COMPLETE
+       CHECK WHETHER ENTIRE PLAN IS COMPLETE
     ----------------------------------------------------- */
 
     const allTopics =
@@ -1586,14 +2750,17 @@ function completeSession() {
 
 
     const completedCount =
-        allTopics.filter(topic => {
+        allTopics.filter(
+            topic => {
 
-            const key =
-                `${topic.subject}::${topic.name}`;
+                const key =
+                    `${topic.subject}::${topic.name}`;
 
-            return completedSet.has(key);
 
-        }).length;
+                return completedSet.has(key);
+
+            }
+        ).length;
 
 
     const totalTopics =
@@ -1646,8 +2813,8 @@ function completeSession() {
 
 
     /*
-     * Give localStorage a moment to update before returning
-     * to the dashboard.
+     * Preserve the existing behavior:
+     * return to dashboard after completing the topic.
      */
 
     setTimeout(
@@ -1661,9 +2828,11 @@ function completeSession() {
     );
 
 }
+
+
 /* =========================================================
    COMPLETE STUDY DAY
-========================================================= */
+   ========================================================= */
 
 function completeStudyDay() {
 
@@ -1690,10 +2859,7 @@ function completeStudyDay() {
 
 
     /*
-     * Important:
-     * Writing the same date again does NOT increase the
-     * streak. It simply confirms that today's study day
-     * has been completed.
+     * Same date does not increase the streak.
      */
 
     activity[today] = true;
@@ -1706,8 +2872,7 @@ function completeStudyDay() {
 
 
     /*
-     * Tell the dashboard/streak system that today's complete
-     * study day has been achieved.
+     * Existing streak system.
      */
 
     if (
@@ -1722,7 +2887,7 @@ function completeStudyDay() {
 
 
     /*
-     * Congratulations popup flag.
+     * Existing congratulations flag.
      */
 
     localStorage.setItem(
@@ -1741,7 +2906,7 @@ function completeStudyDay() {
 
 /* =========================================================
    LOCAL DATE KEY
-========================================================= */
+   ========================================================= */
 
 function getLocalDateKey() {
 
@@ -1756,27 +2921,37 @@ function getLocalDateKey() {
     const month =
         String(
             now.getMonth() + 1
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
 
 
     const day =
         String(
             now.getDate()
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
 
 
     return `${year}-${month}-${day}`;
 
 }
 
+
 /* =========================================================
    STATUS
-========================================================= */
+   ========================================================= */
 
-function updateSessionStatus(message) {
+function updateSessionStatus(
+    message
+) {
 
     const status =
         $("sessionStatus");
+
 
     if (status) {
 
@@ -1790,7 +2965,7 @@ function updateSessionStatus(message) {
 
 /* =========================================================
    USER
-========================================================= */
+   ========================================================= */
 
 async function loadUser() {
 
@@ -1854,19 +3029,27 @@ async function loadUser() {
     );
 
 
-    $("usernameDisplay").textContent =
-        name;
+    if ($("usernameDisplay")) {
+
+        $("usernameDisplay").textContent =
+            name;
+
+    }
 
 
-    $("userAvatar").textContent =
-        name.charAt(0).toUpperCase();
+    if ($("userAvatar")) {
+
+        $("userAvatar").textContent =
+            name.charAt(0).toUpperCase();
+
+    }
 
 }
 
 
 /* =========================================================
    LOGOUT
-========================================================= */
+   ========================================================= */
 
 async function logout() {
 
