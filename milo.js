@@ -1711,6 +1711,37 @@ function miloStudySessionComplete(streak = null) {
 
     const container =
         document.getElementById("miloCompanion");
+   if (container) {
+    container.style.display = "block";
+    container.style.visibility = "visible";
+    container.style.opacity = "1";
+    container.style.position = "fixed";
+    container.style.zIndex = "2147483647";
+    container.style.pointerEvents = "none";
+    container.style.left = "0";
+    container.style.top = "0";
+    container.style.width = "100vw";
+    container.style.height = "100vh";
+
+    // Force Milo itself to be visible
+    const character = container.querySelector("#miloCharacter");
+
+    if (character) {
+        character.style.display = "block";
+        character.style.visibility = "visible";
+        character.style.opacity = "1";
+        character.style.zIndex = "2147483647";
+    }
+
+    // Force the monkey wrapper to be visible
+    const monkey = container.querySelector(".milo-monkey");
+
+    if (monkey) {
+        monkey.style.display = "block";
+        monkey.style.visibility = "visible";
+        monkey.style.opacity = "1";
+    }
+}
 
     const character =
         document.getElementById("miloCharacter");
