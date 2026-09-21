@@ -1888,3 +1888,207 @@
             bottom right;
     }
 }
+/* =========================================================
+   STUDYMIND AI — MILO V8 VISIBILITY / CELEBRATION FIX
+   ========================================================= */
+
+/*
+   Milo must always be capable of appearing above
+   celebration overlays, modals and dashboard elements.
+*/
+
+#miloCompanion {
+    position: fixed !important;
+
+    right: 22px !important;
+    bottom: 15px !important;
+
+    width: 235px !important;
+    min-height: 285px !important;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    overflow: visible !important;
+
+    z-index: 2147483647 !important;
+
+    pointer-events: none !important;
+
+    isolation: isolate !important;
+}
+
+
+/*
+   The character itself must never disappear when
+   the timer celebration starts.
+*/
+
+#miloCompanion #miloCharacter {
+    position: relative !important;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    width: 190px !important;
+    height: 265px !important;
+
+    margin: 0 auto !important;
+
+    overflow: visible !important;
+
+    z-index: 2147483647 !important;
+
+    pointer-events: auto !important;
+
+    transform-origin: 50% 88% !important;
+}
+
+
+/*
+   Milo's internal monkey layer.
+*/
+
+#miloCompanion .milo-monkey {
+    position: absolute !important;
+
+    inset: 0 !important;
+
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    overflow: visible !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/*
+   Make sure the individual character pieces
+   are not clipped.
+*/
+
+#miloCompanion .milo-head,
+#miloCompanion .milo-body,
+#miloCompanion .milo-arm,
+#miloCompanion .milo-leg,
+#miloCompanion .milo-shoe,
+#miloCompanion .milo-neck,
+#miloCompanion .milo-tail,
+#miloCompanion .milo-hat,
+#miloCompanion .milo-hair {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/*
+   Celebration state.
+   The CSS animation remains responsible for the
+   visual dancing while JavaScript controls the state.
+*/
+
+#miloCompanion #miloCharacter.milo-celebrate {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    animation:
+        miloCelebrate .62s ease-in-out infinite alternate !important;
+}
+
+
+/*
+   Celebration arms must remain visible and animated.
+*/
+
+#miloCompanion #miloCharacter.milo-celebrate .milo-arm-left {
+    animation:
+        miloCelebrateLeft .55s infinite alternate !important;
+}
+
+#miloCompanion #miloCharacter.milo-celebrate .milo-arm-right {
+    animation:
+        miloCelebrateRight .55s infinite alternate !important;
+}
+
+
+/*
+   Speech bubble must also remain above the page.
+*/
+
+#miloCompanion #miloBubble {
+    position: relative !important;
+
+    display: block;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/*
+   During celebration, prevent page-level transforms
+   from accidentally affecting Milo.
+*/
+
+#miloCompanion,
+#miloCompanion * {
+    box-sizing: border-box;
+}
+
+
+/*
+   IMPORTANT:
+   Do not allow an accidental global rule such as
+   .hidden { display:none } or [aria-hidden=true]
+   to hide Milo's visual character.
+*/
+
+#miloCompanion #miloCharacter[aria-hidden="true"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+
+/*
+   Desktop celebration position.
+*/
+
+@media (min-width: 601px) {
+
+    #miloCompanion {
+        right: 22px !important;
+        bottom: 15px !important;
+
+        transform: none !important;
+        transform-origin: bottom right !important;
+    }
+
+}
+
+
+/*
+   Mobile.
+*/
+
+@media (max-width: 600px) {
+
+    #miloCompanion {
+        right: 3px !important;
+        bottom: 4px !important;
+
+        width: 235px !important;
+        min-height: 285px !important;
+
+        transform: scale(.78) !important;
+        transform-origin: bottom right !important;
+    }
+
+}
