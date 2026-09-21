@@ -2092,3 +2092,55 @@
     }
 
 }
+/* =========================================================
+   STUDYMIND AI — MILO FINAL DIMENSION PROTECTION
+   ========================================================= */
+
+#miloCompanion #miloCharacter {
+    width: 190px !important;
+    height: 265px !important;
+    position: relative !important;
+}
+
+#miloCompanion .milo-monkey {
+    width: 190px !important;
+    height: 265px !important;
+    position: absolute !important;
+    inset: 0 !important;
+}
+
+/* Restore the intended dimensions of Milo's body parts */
+#miloCompanion .milo-tail {
+    width: 55px !important;
+    height: 83px !important;
+}
+
+#miloCompanion .milo-body {
+    width: 108px !important;
+    height: 101px !important;
+}
+
+#miloCompanion .milo-arm {
+    width: 28px !important;
+    height: 78px !important;
+}
+
+#miloCompanion .milo-leg {
+    width: 27px !important;
+    height: 29px !important;
+}
+
+#miloCompanion .milo-shoe {
+    width: 57px !important;
+    height: 27px !important;
+}
+
+#miloCompanion .milo-neck {
+    width: 35px !important;
+    height: 25px !important;
+}
+
+#miloCompanion .milo-head {
+    width: 137px !important;
+    height: 119px !important;
+}
