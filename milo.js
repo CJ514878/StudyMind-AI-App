@@ -125,9 +125,12 @@ function createMilo() {
      * This prevents the white streak screen from hiding him.
      */
 
-    container.style.position = "fixed";
-    container.style.zIndex = "2147483000";
-    container.style.pointerEvents = "none";
+  container.style.position = "fixed";
+container.style.display = "block";
+container.style.visibility = "visible";
+container.style.opacity = "1";
+container.style.zIndex = "2147483647";
+container.style.pointerEvents = "none";
 
 
     container.innerHTML = `
