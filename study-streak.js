@@ -1,13 +1,19 @@
-/* =========================================================
-   STUDYMIND AI — STUDY STREAK ENGINE
-   COMPLETE REPLACEMENT
-   ========================================================= */
-
 "use strict";
 
+/* =========================================================
+   STUDYMIND AI — STUDY STREAK
+   Dedicated streak-page engine
+
+   IMPORTANT:
+   - Does NOT create another timer.
+   - Does NOT replace the shared timer.
+   - Does NOT use global Milo.
+   - Same study day can only count once.
+========================================================= */
+
 
 /* =========================================================
-   STORAGE
+   STORAGE KEYS
 ========================================================= */
 
 const STREAK_KEYS = {
@@ -34,7 +40,13 @@ const STREAK_KEYS = {
         "studyMindUsername",
 
     THEME:
-        "studyMindTheme"
+        "studyMindTheme",
+
+    LAST_TIMER_COMPLETION:
+        "studyMindLastTimerCompletedAt",
+
+    PAGE_LAST_TIMER_COMPLETION:
+        "studyMindStreakPageLastSeenTimerCompletion"
 
 };
 
@@ -49,21 +61,27 @@ let activity = {};
 
 let previousCurrentStreak = 0;
 
+let previousActivitySnapshot = {};
+
+let pendingAnimation = false;
+
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
 function $(id) {
+
     return document.getElementById(id);
+
 }
 
 
 function todayKey() {
 
-    return formatDate(
-        new Date()
-    );
+    const d = new Date();
+
+    return formatDate(d);
 
 }
 
@@ -91,7 +109,18 @@ function formatDate(date) {
 function parseDate(key) {
 
     const parts =
-        key.split("-").map(Number);
+        String(key)
+            .split("-")
+            .map(Number);
+
+    if (
+        parts.length !== 3 ||
+        parts.some(Number.isNaN)
+    ) {
+
+        return null;
+
+    }
 
     return new Date(
         parts[0],
@@ -104,17 +133,17 @@ function parseDate(key) {
 
 function startOfDay(date) {
 
-    const copy =
+    const result =
         new Date(date);
 
-    copy.setHours(
+    result.setHours(
         0,
         0,
         0,
         0
     );
 
-    return copy;
+    return result;
 
 }
 
@@ -127,12 +156,19 @@ function loadJSON(key, fallback) {
             localStorage.getItem(key);
 
         if (!value) {
+
             return fallback;
+
         }
 
         return JSON.parse(value);
 
-    } catch {
+    } catch (error) {
+
+        console.warn(
+            `StudyMind: could not read ${key}`,
+            error
+        );
 
         return fallback;
 
@@ -153,11 +189,65 @@ function saveJSON(key, value) {
     } catch (error) {
 
         console.warn(
-            "StudyMind: Could not save streak data:",
+            `StudyMind: could not save ${key}`,
             error
         );
 
     }
+
+}
+
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
+
+function loadActivity() {
+
+    const stored =
+        loadJSON(
+            STREAK_KEYS.ACTIVITY,
+            {}
+        );
+
+    activity =
+        stored &&
+        typeof stored === "object"
+            ? stored
+            : {};
+
+    return activity;
+
+}
+
+
+function saveActivity() {
+
+    saveJSON(
+        STREAK_KEYS.ACTIVITY,
+        activity
+    );
+
+}
+
+
+function getActivitySnapshot() {
+
+    return JSON.stringify(
+        activity
+    );
+
+}
+
+
+function hasActivity(date) {
+
+    const key =
+        typeof date === "string"
+            ? date
+            : formatDate(date);
+
+    return activity[key] === true;
 
 }
 
@@ -177,286 +267,84 @@ function getStudyPlan() {
 
 
 /* =========================================================
-   NORMALIZE COMPLETED TOPICS
+   COMPLETED TOPICS
 ========================================================= */
 
 function getCompletedTopicKeys() {
 
-    const stored =
+    const value =
         loadJSON(
             STREAK_KEYS.COMPLETED,
             []
         );
 
+    if (Array.isArray(value)) {
 
-    if (!Array.isArray(stored)) {
-        return new Set();
+        return value;
+
     }
 
+    if (
+        value &&
+        typeof value === "object"
+    ) {
 
-    const completed =
-        new Set();
+        return Object.keys(value)
+            .filter(
+                key => value[key] === true
+            );
 
+    }
 
-    stored.forEach(item => {
-
-        if (
-            typeof item === "string"
-        ) {
-
-            const value =
-                item.trim();
-
-            if (!value) return;
-
-            completed.add(value);
-
-
-            /*
-               Support:
-               Subject::Topic
-            */
-
-            if (
-                value.includes("::")
-            ) {
-
-                const parts =
-                    value.split("::");
-
-                const topic =
-                    parts
-                        .slice(1)
-                        .join("::")
-                        .trim();
-
-                if (topic) {
-                    completed.add(topic);
-                }
-
-            }
-
-            return;
-
-        }
-
-
-        if (
-            item &&
-            typeof item === "object"
-        ) {
-
-            const subject =
-                String(
-                    item.subject ||
-                    item.subjectName ||
-                    ""
-                ).trim();
-
-            const topic =
-                String(
-                    item.topic ||
-                    item.name ||
-                    item.title ||
-                    ""
-                ).trim();
-
-
-            if (topic) {
-                completed.add(topic);
-            }
-
-
-            if (
-                subject &&
-                topic
-            ) {
-
-                completed.add(
-                    `${subject}::${topic}`
-                );
-
-            }
-
-        }
-
-    });
-
-
-    return completed;
+    return [];
 
 }
 
-
-/* =========================================================
-   GET ALL PLAN TOPICS
-========================================================= */
 
 function getAllStudyTopics() {
 
     const plan =
         getStudyPlan();
 
-
     if (!plan) {
+
         return [];
-    }
-
-
-    const topics = [];
-
-
-    /*
-       Flat topics
-    */
-
-    if (
-        Array.isArray(
-            plan.topics
-        )
-    ) {
-
-        plan.topics.forEach(
-            (topic, index) => {
-
-                if (
-                    typeof topic === "string"
-                ) {
-
-                    topics.push({
-                        id:
-                            String(index + 1),
-
-                        subject:
-                            "",
-
-                        name:
-                            topic
-                    });
-
-                } else if (
-                    topic &&
-                    typeof topic === "object"
-                ) {
-
-                    topics.push({
-                        id:
-                            String(
-                                topic.id ||
-                                index + 1
-                            ),
-
-                        subject:
-                            String(
-                                topic.subject ||
-                                topic.subjectName ||
-                                ""
-                            ).trim(),
-
-                        name:
-                            String(
-                                topic.name ||
-                                topic.topic ||
-                                topic.title ||
-                                ""
-                            ).trim()
-                    });
-
-                }
-
-            }
-        );
 
     }
 
+    const result = [];
 
-    /*
-       Subject-based plan
-    */
-
-    if (
-        Array.isArray(
-            plan.subjects
-        )
-    ) {
+    if (Array.isArray(plan.subjects)) {
 
         plan.subjects.forEach(
             subject => {
 
                 if (!subject) return;
 
-
-                const subjectName =
-                    String(
-                        subject.name ||
-                        subject.subject ||
-                        subject.subjectName ||
-                        ""
-                    ).trim();
-
-
                 if (
-                    !Array.isArray(
+                    Array.isArray(
                         subject.topics
                     )
                 ) {
-                    return;
-                }
 
+                    subject.topics.forEach(
+                        topic => {
 
-                subject.topics.forEach(
-                    (topic, index) => {
+                            if (
+                                typeof topic ===
+                                "string"
+                            ) {
 
-                        if (
-                            typeof topic === "string"
-                        ) {
+                                result.push(
+                                    topic
+                                );
 
-                            topics.push({
-
-                                id:
-                                    `${subjectName}-${index + 1}`,
-
-                                subject:
-                                    subjectName,
-
-                                name:
-                                    topic.trim()
-
-                            });
-
-                        } else if (
-                            topic &&
-                            typeof topic === "object"
-                        ) {
-
-                            topics.push({
-
-                                id:
-                                    String(
-                                        topic.id ||
-                                        `${subjectName}-${index + 1}`
-                                    ),
-
-                                subject:
-                                    String(
-                                        topic.subject ||
-                                        subjectName
-                                    ).trim(),
-
-                                name:
-                                    String(
-                                        topic.name ||
-                                        topic.topic ||
-                                        topic.title ||
-                                        ""
-                                    ).trim()
-
-                            });
+                            }
 
                         }
+                    );
 
-                    }
-                );
+                }
 
             }
         );
@@ -464,50 +352,38 @@ function getAllStudyTopics() {
     }
 
 
-    /*
-       Remove duplicates
-    */
+    if (
+        Array.isArray(
+            plan.flatTopics
+        )
+    ) {
 
-    const unique = [];
+        plan.flatTopics.forEach(
+            topic => {
 
-    const seen = new Set();
+                if (
+                    typeof topic ===
+                    "string" &&
+                    !result.includes(topic)
+                ) {
 
+                    result.push(topic);
 
-    topics.forEach(topic => {
+                }
 
-        if (!topic.name) return;
+            }
+        );
 
-
-        const key =
-            topic.subject
-                ? `${topic.subject}::${topic.name}`
-                : topic.name;
-
-
-        if (
-            seen.has(key)
-        ) {
-            return;
-        }
+    }
 
 
-        seen.add(key);
-
-        unique.push({
-            ...topic,
-            key
-        });
-
-    });
-
-
-    return unique;
+    return result;
 
 }
 
 
 /* =========================================================
-   GET TODAY'S SCHEDULE
+   TODAY'S PLAN PROGRESS
 ========================================================= */
 
 function getTodaySchedule() {
@@ -515,93 +391,79 @@ function getTodaySchedule() {
     const plan =
         getStudyPlan();
 
-
     if (!plan) {
+
         return [];
+
     }
 
 
     const today =
         todayKey();
 
+    const schedule =
+        plan.timetableData ||
+        plan.schedule ||
+        plan.timetable;
 
-    /*
-       Current StudyMind schedule format:
-       plan.schedule = [
-           {
-               date,
-               dayType,
-               sessions: [...]
-           }
-       ]
-    */
+
+    if (!schedule) {
+
+        return [];
+
+    }
+
+
+    let todayData = null;
+
+
+    if (
+        Array.isArray(schedule)
+    ) {
+
+        todayData =
+            schedule.find(
+                item =>
+                    item &&
+                    (
+                        item.date === today ||
+                        item.dayKey === today
+                    )
+            );
+
+    } else if (
+        typeof schedule === "object"
+    ) {
+
+        todayData =
+            schedule[today];
+
+    }
+
+
+    if (!todayData) {
+
+        return [];
+
+    }
+
+
+    if (
+        Array.isArray(todayData)
+    ) {
+
+        return todayData;
+
+    }
+
 
     if (
         Array.isArray(
-            plan.schedule
+            todayData.topics
         )
     ) {
 
-        const day =
-            plan.schedule.find(
-                item =>
-                    String(
-                        item?.date || ""
-                    ).slice(0, 10) === today
-            );
-
-
-        if (
-            !day ||
-            !Array.isArray(
-                day.sessions
-            )
-        ) {
-
-            return [];
-
-        }
-
-
-        return day.sessions.filter(
-            session => {
-
-                if (!session) {
-                    return false;
-                }
-
-
-                const type =
-                    String(
-                        session.type ||
-                        ""
-                    ).toLowerCase();
-
-
-                /*
-                   Breaks and rest sessions
-                   are not required study topics.
-                */
-
-                if (
-                    type === "break" ||
-                    type === "rest" ||
-                    type === "breakday" ||
-                    type === "restday"
-                ) {
-
-                    return false;
-
-                }
-
-
-                return Boolean(
-                    session.topic ||
-                    session.name
-                );
-
-            }
-        );
+        return todayData.topics;
 
     }
 
@@ -611,284 +473,329 @@ function getTodaySchedule() {
 }
 
 
-/* =========================================================
-   GET TODAY'S REQUIRED TOPICS
-========================================================= */
-
 function getTodaysRequiredTopics() {
 
-    const sessions =
+    const schedule =
         getTodaySchedule();
 
+    return schedule
+        .map(item => {
 
-    const topics = [];
+            if (
+                typeof item ===
+                "string"
+            ) {
 
+                return item;
 
-    sessions.forEach(
-        session => {
-
-            const subject =
-                String(
-                    session.subject ||
-                    session.subjectName ||
-                    ""
-                ).trim();
-
-
-            const topic =
-                String(
-                    session.topic ||
-                    session.name ||
-                    session.title ||
-                    ""
-                ).trim();
-
-
-            if (!topic) {
-                return;
             }
 
+            if (
+                item &&
+                typeof item.topic ===
+                "string"
+            ) {
 
-            topics.push({
+                return item.topic;
 
-                subject,
+            }
 
-                name:
-                    topic,
+            if (
+                item &&
+                typeof item.title ===
+                "string"
+            ) {
 
-                key:
-                    subject
-                        ? `${subject}::${topic}`
-                        : topic
+                return item.title;
 
-            });
+            }
 
-        }
-    );
+            return null;
 
-
-    /*
-       Remove duplicates
-    */
-
-    const unique = [];
-
-    const seen = new Set();
-
-
-    topics.forEach(topic => {
-
-        if (
-            seen.has(topic.key)
-        ) {
-            return;
-        }
-
-
-        seen.add(topic.key);
-
-        unique.push(topic);
-
-    });
-
-
-    return unique;
+        })
+        .filter(Boolean);
 
 }
 
 
 /* =========================================================
-   CHECK TODAY'S COMPLETION
+   TOPIC PROGRESS
 ========================================================= */
 
-function checkTodayCompletion() {
+function getTodayTopicProgress() {
 
     const required =
         getTodaysRequiredTopics();
 
-
-    /*
-       If the schedule exists but today has
-       no study topics, do not automatically
-       award a streak day.
-    */
+    const completed =
+        getCompletedTopicKeys();
 
     if (!required.length) {
 
-        console.log(
-            "StudyMind streak: no required study topics scheduled today."
-        );
-
-        return false;
+        return {
+            total: 0,
+            completed: 0,
+            percentage: 0
+        };
 
     }
 
 
-    const completed =
-        getCompletedTopicKeys();
+    let count = 0;
 
 
-    let completedCount = 0;
+    required.forEach(
+        topic => {
 
+            const possibleKeys = [
+                topic,
+                `::${topic}`
+            ];
 
-    required.forEach(topic => {
+            const found =
+                possibleKeys.some(
+                    key =>
+                        completed.includes(key)
+                );
 
-        const matches =
-            completed.has(topic.key) ||
-            completed.has(topic.name);
+            if (found) {
 
+                count++;
 
-        if (matches) {
-            completedCount++;
-        }
+            }
 
-    });
-
-
-    const total =
-        required.length;
-
-
-    const progress =
-        Math.round(
-            (completedCount / total) * 100
-        );
-
-
-    console.log(
-        "StudyMind daily completion:",
-        {
-            completedCount,
-            total,
-            progress,
-            requiredTopics: required,
-            completedTopics: [...completed]
         }
     );
 
 
-    if (
-        completedCount < total
-    ) {
+    return {
 
-        return false;
+        total:
+            required.length,
 
-    }
+        completed:
+            count,
 
+        percentage:
+            Math.round(
+                (count /
+                    required.length) *
+                100
+            )
 
-    /*
-       Today is fully completed.
-    */
-
-    recordCompletedStudyDay();
-
-    return true;
+    };
 
 }
 
 
 /* =========================================================
-   RECORD COMPLETED STUDY DAY
+   CHECK TODAY COMPLETION
+   Legacy/manual compatibility function.
+
+   This remains available for older code.
+
+   The authoritative timer completion path uses
+   recordStudyActivity().
 ========================================================= */
 
-function recordCompletedStudyDay() {
+function checkTodayCompletion() {
 
     loadActivity();
 
-
-    const key =
+    const today =
         todayKey();
 
-
-    /*
-       Prevent duplicate recording.
-    */
-
     if (
-        activity[key] === true
+        activity[today] === true
     ) {
 
-        recalculateStreaks();
+        return {
 
-        return false;
+            completed: true,
+
+            alreadyCompleted: true,
+
+            current:
+                calculateCurrentStreak(),
+
+            longest:
+                calculateLongestStreak()
+
+        };
 
     }
 
 
-    activity[key] = true;
+    const progress =
+        getTodayTopicProgress();
 
 
-    saveJSON(
-        STREAK_KEYS.ACTIVITY,
-        activity
-    );
+    if (
+        progress.total > 0 &&
+        progress.completed >=
+        progress.total
+    ) {
+
+        return recordStudyActivity(
+            "completed-topics"
+        );
+
+    }
 
 
-    localStorage.setItem(
-        STREAK_KEYS.LAST_COMPLETED,
-        key
-    );
+    return {
+
+        completed: false,
+
+        alreadyCompleted: false,
+
+        current:
+            calculateCurrentStreak(),
+
+        longest:
+            calculateLongestStreak(),
+
+        progress
+
+    };
+
+}
+
+
+/* =========================================================
+   RECORD STUDY ACTIVITY
+========================================================= */
+
+function recordStudyActivity(source = "study-session") {
+
+    loadActivity();
+
+    const today =
+        todayKey();
+
+    const alreadyCompleted =
+        activity[today] === true;
+
+
+    /*
+       IMPORTANT:
+
+       A study day is recorded here when the shared timer
+       reaches zero or another valid study completion path
+       calls this function.
+
+       It does NOT modify:
+       - completed topics
+       - knowledge checks
+       - timer state
+       - current topic
+    */
+
+    if (!alreadyCompleted) {
+
+        activity[today] = true;
+
+        saveActivity();
+
+        localStorage.setItem(
+            STREAK_KEYS.LAST_COMPLETED,
+            today
+        );
+
+    }
 
 
     const result =
         recalculateStreaks();
 
 
-    console.log(
-        "StudyMind: study day completed.",
-        result
+    /*
+       Dispatch an event so the Streak page can immediately
+       animate if it is currently open.
+
+       This does not create another streak engine.
+    */
+
+    try {
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindStreakUpdated",
+                {
+                    detail: {
+
+                        source,
+
+                        date: today,
+
+                        isNewDay:
+                            !alreadyCompleted,
+
+                        current:
+                            result.current,
+
+                        longest:
+                            result.longest,
+
+                        totalStudyDays:
+                            result.totalStudyDays
+
+                    }
+
+                }
+            )
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind: could not dispatch streak update",
+            error
+        );
+
+    }
+
+
+    refreshPageData(
+        !alreadyCompleted
     );
 
 
-    /*
-       Refresh UI.
-    */
+    return {
 
-    refreshPageData();
+        ...result,
 
+        date: today,
 
-    /*
-       Celebration only happens when
-       the streak actually increases.
-    */
+        isNewDay:
+            !alreadyCompleted
 
-    showDailyCompletionCelebration(
-        result.current
-    );
-
-
-    return true;
+    };
 
 }
 
 
 /* =========================================================
-   PUBLIC ACTIVITY ENGINE
+   COMPATIBILITY FUNCTION
 ========================================================= */
 
-/*
-   Kept for compatibility with the Study Session page.
+function recordCompletedStudyDay() {
 
-   IMPORTANT:
-   It no longer immediately marks a day
-   as complete.
-
-   Instead it checks whether ALL topics
-   scheduled for today are complete.
-*/
-
-function recordStudyActivity() {
-
-    return checkTodayCompletion();
+    return recordStudyActivity(
+        "completed-study-day"
+    );
 
 }
 
 
 /* =========================================================
-   RECALCULATE CURRENT STREAK
+   CURRENT STREAK
 ========================================================= */
 
 function calculateCurrentStreak() {
+
+    loadActivity();
+
 
     const today =
         startOfDay(
@@ -896,35 +803,52 @@ function calculateCurrentStreak() {
         );
 
 
-    let cursor =
-        new Date(today);
-
-
-    let count = 0;
+    const todayString =
+        formatDate(today);
 
 
     /*
-       If today is not complete,
-       continue checking from yesterday.
+       If today has activity, start from today.
+
+       Otherwise allow the existing streak to continue
+       from yesterday.
+
+       This means simply opening the page does not increase
+       the streak.
     */
 
+    let cursor;
+
+
     if (
-        !hasActivity(cursor)
+        activity[todayString] === true
     ) {
+
+        cursor =
+            new Date(today);
+
+    } else {
+
+        cursor =
+            new Date(today);
 
         cursor.setDate(
             cursor.getDate() - 1
         );
 
     }
+
+
+    let streak = 0;
 
 
     while (
-        hasActivity(cursor)
+        activity[
+            formatDate(cursor)
+        ] === true
     ) {
 
-        count++;
-
+        streak++;
 
         cursor.setDate(
             cursor.getDate() - 1
@@ -933,16 +857,7 @@ function calculateCurrentStreak() {
     }
 
 
-    return count;
-
-}
-
-
-function hasActivity(date) {
-
-    return activity[
-        formatDate(date)
-    ] === true;
+    return streak;
 
 }
 
@@ -952,6 +867,9 @@ function hasActivity(date) {
 ========================================================= */
 
 function calculateLongestStreak() {
+
+    loadActivity();
+
 
     const dates =
         Object.keys(activity)
@@ -963,7 +881,9 @@ function calculateLongestStreak() {
 
 
     if (!dates.length) {
+
         return 0;
+
     }
 
 
@@ -983,21 +903,32 @@ function calculateLongestStreak() {
                 dates[i - 1]
             );
 
-
         const currentDate =
             parseDate(
                 dates[i]
             );
 
 
+        if (
+            !previous ||
+            !currentDate
+        ) {
+
+            continue;
+
+        }
+
+
         const difference =
             Math.round(
                 (
-                    startOfDay(currentDate)
-                    -
-                    startOfDay(previous)
-                )
-                /
+                    startOfDay(
+                        currentDate
+                    ) -
+                    startOfDay(
+                        previous
+                    )
+                ) /
                 86400000
             );
 
@@ -1008,18 +939,17 @@ function calculateLongestStreak() {
 
             current++;
 
+            longest =
+                Math.max(
+                    longest,
+                    current
+                );
+
         } else {
 
             current = 1;
 
         }
-
-
-        longest =
-            Math.max(
-                longest,
-                current
-            );
 
     }
 
@@ -1030,24 +960,28 @@ function calculateLongestStreak() {
 
 
 /* =========================================================
-   RECALCULATE STREAKS
+   RECALCULATE
 ========================================================= */
 
 function recalculateStreaks() {
 
+    loadActivity();
+
+
     const current =
         calculateCurrentStreak();
 
-
     const longest =
         calculateLongestStreak();
+
+    const totalStudyDays =
+        getStudyDayCount();
 
 
     localStorage.setItem(
         STREAK_KEYS.CURRENT,
         String(current)
     );
-
 
     localStorage.setItem(
         STREAK_KEYS.LONGEST,
@@ -1056,45 +990,26 @@ function recalculateStreaks() {
 
 
     return {
+
         current,
-        longest
+
+        longest,
+
+        totalStudyDays
+
     };
 
 }
 
 
 /* =========================================================
-   TOPIC COUNT
-========================================================= */
-
-function getCompletedTopicCount() {
-
-    const completed =
-        loadJSON(
-            STREAK_KEYS.COMPLETED,
-            []
-        );
-
-
-    if (
-        !Array.isArray(completed)
-    ) {
-
-        return 0;
-
-    }
-
-
-    return completed.length;
-
-}
-
-
-/* =========================================================
-   TOTAL STUDY DAYS
+   COUNTS
 ========================================================= */
 
 function getStudyDayCount() {
+
+    loadActivity();
+
 
     return Object.keys(activity)
         .filter(
@@ -1106,45 +1021,49 @@ function getStudyDayCount() {
 }
 
 
+function getCompletedTopicCount() {
+
+    return getCompletedTopicKeys()
+        .length;
+
+}
+
+
 /* =========================================================
-   WEEK INFORMATION
+   WEEK HELPERS
 ========================================================= */
 
 function getMonday(date) {
 
-    const result =
+    const d =
         startOfDay(date);
 
-
     const day =
-        result.getDay();
-
+        d.getDay();
 
     const difference =
         day === 0
             ? -6
             : 1 - day;
 
-
-    result.setDate(
-        result.getDate() + difference
+    d.setDate(
+        d.getDate() +
+        difference
     );
 
-
-    return result;
+    return d;
 
 }
 
 
-function getCurrentWeek() {
+function getCurrentWeekDates() {
 
     const monday =
         getMonday(
             new Date()
         );
 
-
-    const days = [];
+    const dates = [];
 
 
     for (
@@ -1156,25 +1075,24 @@ function getCurrentWeek() {
         const date =
             new Date(monday);
 
-
         date.setDate(
-            monday.getDate() + i
+            monday.getDate() +
+            i
         );
 
-
-        days.push(date);
+        dates.push(date);
 
     }
 
 
-    return days;
+    return dates;
 
 }
 
 
 function getWeeklyStudyDays() {
 
-    return getCurrentWeek()
+    return getCurrentWeekDates()
         .filter(
             date =>
                 hasActivity(date)
@@ -1186,45 +1104,53 @@ function getWeeklyStudyDays() {
 
 function getBestWeek() {
 
+    loadActivity();
+
+
     const dates =
         Object.keys(activity)
             .filter(
                 key =>
-                    activity[key]
+                    activity[key] === true
             )
-            .sort();
+            .map(
+                key =>
+                    parseDate(key)
+            )
+            .filter(Boolean)
+            .sort(
+                (a, b) =>
+                    a - b
+            );
 
 
     if (!dates.length) {
+
         return 0;
+
     }
 
 
     const weeks = {};
 
 
-    dates.forEach(key => {
+    dates.forEach(
+        date => {
 
-        const date =
-            parseDate(key);
+            const monday =
+                getMonday(date);
 
+            const key =
+                formatDate(monday);
 
-        const monday =
-            getMonday(date);
+            weeks[key] =
+                (weeks[key] || 0) + 1;
 
-
-        const weekKey =
-            formatDate(monday);
-
-
-        weeks[weekKey] =
-            (weeks[weekKey] || 0) + 1;
-
-    });
+        }
+    );
 
 
     return Math.max(
-        0,
         ...Object.values(weeks)
     );
 
@@ -1235,35 +1161,128 @@ function getBestWeek() {
    USER
 ========================================================= */
 
-function loadUser() {
+function getUsername() {
 
-    const name =
+    const stored =
         localStorage.getItem(
             STREAK_KEYS.USERNAME
-        )
-        || "Student";
+        );
 
 
-    if (
-        $("usernameDisplay")
-    ) {
+    if (stored) {
 
-        $("usernameDisplay")
-            .textContent =
+        return stored;
+
+    }
+
+
+    try {
+
+        if (
+            window.supabaseClient &&
+            typeof
+            window.supabaseClient.auth?.getUser ===
+            "function"
+        ) {
+
+            return null;
+
+        }
+
+    } catch (error) {
+
+        /* Ignore */
+
+    }
+
+
+    return null;
+
+}
+
+
+async function loadUser() {
+
+    let name =
+        getUsername();
+
+
+    try {
+
+        if (
+            window.supabaseClient &&
+            typeof
+            window.supabaseClient.auth?.getUser ===
+            "function"
+        ) {
+
+            const {
+                data
+            } =
+                await window.supabaseClient.auth.getUser();
+
+
+            const user =
+                data?.user;
+
+
+            if (user) {
+
+                name =
+                    user.user_metadata?.username ||
+                    user.user_metadata?.name ||
+                    user.email?.split("@")[0] ||
+                    name ||
+                    "Student";
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind: could not load user",
+            error
+        );
+
+    }
+
+
+    name =
+        name ||
+        "Student";
+
+
+    localStorage.setItem(
+        STREAK_KEYS.USERNAME,
+        name
+    );
+
+
+    const username =
+        $("username");
+
+    const avatar =
+        $("avatar");
+
+
+    if (username) {
+
+        username.textContent =
             name;
 
     }
 
 
-    if (
-        $("userAvatar")
-    ) {
+    if (avatar) {
 
-        $("userAvatar")
-            .textContent =
-            name
+        avatar.textContent =
+            String(name)
+                .trim()
                 .charAt(0)
-                .toUpperCase();
+                .toUpperCase() ||
+            "S";
 
     }
 
@@ -1274,7 +1293,50 @@ function loadUser() {
    HERO
 ========================================================= */
 
-function renderHero() {
+function getStreakMessage(streak) {
+
+    if (streak <= 0) {
+
+        return "Complete a study session today to start your streak.";
+
+    }
+
+    if (streak === 1) {
+
+        return "Great start. Come back tomorrow to make it 2 days!";
+
+    }
+
+    if (streak === 2) {
+
+        return "Two days in a row. Keep the momentum going!";
+
+    }
+
+    if (streak === 3) {
+
+        return "Three days strong. You're building consistency!";
+
+    }
+
+    if (streak < 7) {
+
+        return `${streak} days in a row. Keep showing up!`;
+
+    }
+
+    if (streak === 7) {
+
+        return "One full week! That's serious consistency. 🔥";
+
+    }
+
+    return `${streak} consecutive study days. Keep going!`;
+
+}
+
+
+function renderHero(animate = false) {
 
     const result =
         recalculateStreaks();
@@ -1284,91 +1346,252 @@ function renderHero() {
         result.current;
 
 
-    const longest =
-        result.longest;
+    const currentElement =
+        $("currentStreak");
 
 
-    if (
-        $("currentStreak")
-    ) {
+    const numberContainer =
+        currentElement?.closest(
+            ".streak-number"
+        );
 
-        $("currentStreak")
-            .textContent =
+
+    if (currentElement) {
+
+        currentElement.textContent =
             current;
 
     }
 
 
     if (
-        $("bestStreak")
+        animate &&
+        numberContainer
     ) {
 
-        $("bestStreak")
-            .textContent =
-            `${longest} day${longest === 1 ? "" : "s"}`;
+        numberContainer.classList.remove(
+            "animate-up"
+        );
+
+
+        void numberContainer.offsetWidth;
+
+
+        numberContainer.classList.add(
+            "animate-up"
+        );
 
     }
 
 
-    if (
-        $("totalStudyDays")
-    ) {
-
-        $("totalStudyDays")
-            .textContent =
-            getStudyDayCount();
-
-    }
+    const message =
+        $("streakMessage");
 
 
-    let message;
+    if (message) {
 
-
-    if (
-        current === 0
-    ) {
-
-        message =
-            "Complete all of today's assigned topics to start your streak.";
-
-    } else if (
-        current === 1
-    ) {
-
-        message =
-            "Great start. Complete tomorrow's topics to make it 2 days!";
-
-    } else if (
-        current < 7
-    ) {
-
-        message =
-            `You're on a ${current}-day streak. Keep the momentum going!`;
-
-    } else if (
-        current < 30
-    ) {
-
-        message =
-            `${current} days strong. You're building a serious habit!`;
-
-    } else {
-
-        message =
-            `${current} days! That's incredible consistency.`;
+        message.textContent =
+            getStreakMessage(
+                current
+            );
 
     }
 
 
-    if (
-        $("streakMessage")
-    ) {
+    const best =
+        $("bestStreak");
 
-        $("streakMessage")
-            .textContent =
-            message;
+
+    if (best) {
+
+        best.textContent =
+            `${result.longest} ${
+                result.longest === 1
+                    ? "day"
+                    : "days"
+            }`;
 
     }
+
+
+    const total =
+        $("totalStudyDays");
+
+
+    if (total) {
+
+        total.textContent =
+            result.totalStudyDays;
+
+    }
+
+
+    renderStreakDayTrack(
+        animate
+    );
+
+}
+
+
+/* =========================================================
+   STREAK DAY TRACK
+========================================================= */
+
+function renderStreakDayTrack(
+    animate = false
+) {
+
+    const container =
+        $("streakDayTrack");
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    container.innerHTML = "";
+
+
+    const current =
+        calculateCurrentStreak();
+
+
+    if (current <= 0) {
+
+        return;
+
+    }
+
+
+    const today =
+        startOfDay(
+            new Date()
+        );
+
+
+    const dates = [];
+
+
+    /*
+       Show up to the most recent 7
+       consecutive streak days.
+    */
+
+    for (
+        let i = current - 1;
+        i >= 0 &&
+        dates.length < 7;
+        i--
+    ) {
+
+        const date =
+            new Date(today);
+
+        date.setDate(
+            date.getDate() - i
+        );
+
+
+        if (
+            hasActivity(date)
+        ) {
+
+            dates.push(date);
+
+        }
+
+    }
+
+
+    dates.forEach(
+        (date, index) => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "streak-day completed";
+
+
+            if (
+                formatDate(date) ===
+                todayKey()
+            ) {
+
+                item.classList.add(
+                    "today"
+                );
+
+            }
+
+
+            /*
+               Only animate the newest day
+               when an actual update occurred.
+            */
+
+            if (
+                animate &&
+                index === dates.length - 1
+            ) {
+
+                item.classList.add(
+                    "new-day"
+                );
+
+            }
+
+
+            const number =
+                document.createElement(
+                    "div"
+                );
+
+            number.className =
+                "streak-day-number";
+
+            number.textContent =
+                date.getDate();
+
+
+            const label =
+                document.createElement(
+                    "div"
+                );
+
+            label.className =
+                "streak-day-label";
+
+            label.textContent =
+                date.toLocaleDateString(
+                    undefined,
+                    {
+                        weekday: "short"
+                    }
+                );
+
+
+            item.appendChild(
+                number
+            );
+
+            item.appendChild(
+                label
+            );
+
+
+            container.appendChild(
+                item
+            );
+
+        }
+    );
 
 }
 
@@ -1380,63 +1603,62 @@ function renderHero() {
 function renderStats() {
 
     const topics =
-        getCompletedTopicCount();
+        $("topicsCompleted");
+
+
+    if (topics) {
+
+        topics.textContent =
+            getCompletedTopicCount();
+
+    }
 
 
     const weekly =
         getWeeklyStudyDays();
 
 
-    const consistency =
-        Math.round(
-            (weekly / 7) * 100
-        );
+    const weeklyDays =
+        $("weeklyDays");
 
 
-    const bestWeek =
-        getBestWeek();
+    if (weeklyDays) {
 
-
-    if (
-        $("topicsCompleted")
-    ) {
-
-        $("topicsCompleted")
-            .textContent =
-            topics;
-
-    }
-
-
-    if (
-        $("weeklyDays")
-    ) {
-
-        $("weeklyDays")
-            .textContent =
+        weeklyDays.textContent =
             `${weekly} / 7`;
 
     }
 
 
-    if (
-        $("weeklyConsistency")
-    ) {
+    const consistency =
+        $("weeklyConsistency");
 
-        $("weeklyConsistency")
-            .textContent =
-            `${consistency}%`;
+
+    if (consistency) {
+
+        consistency.textContent =
+            `${Math.round(
+                (weekly / 7) * 100
+            )}%`;
 
     }
 
 
-    if (
-        $("bestWeek")
-    ) {
+    const bestWeek =
+        $("bestWeek");
 
-        $("bestWeek")
-            .textContent =
-            `${bestWeek} day${bestWeek === 1 ? "" : "s"}`;
+
+    if (bestWeek) {
+
+        const value =
+            getBestWeek();
+
+        bestWeek.textContent =
+            `${value} ${
+                value === 1
+                    ? "day"
+                    : "days"
+            }`;
 
     }
 
@@ -1452,191 +1674,160 @@ function renderToday() {
     const today =
         todayKey();
 
-
     const studied =
         activity[today] === true;
 
 
-    const progress =
-        studied
-            ? 100
-            : calculateTodayProgress();
+    const icon =
+        $("todayIcon");
+
+    const status =
+        $("todayStatus");
+
+    const progressText =
+        $("todayProgress");
+
+    const progressBar =
+        $("todayProgressBar");
+
+    const caption =
+        $("todayCaption");
 
 
-    if (
-        $("todayProgress")
-    ) {
+    if (studied) {
 
-        $("todayProgress")
-            .style.width =
-            `${progress}%`;
+        if (icon) {
 
-    }
-
-
-    if (
-        $("todayIcon")
-    ) {
-
-        $("todayIcon")
-            .textContent =
-            studied
-                ? "✓"
-                : "○";
-
-
-        $("todayIcon")
-            .classList.toggle(
-                "complete",
-                studied
+            icon.classList.add(
+                "complete"
             );
 
+            icon.textContent =
+                "✓";
+
+        }
+
+
+        if (status) {
+
+            status.textContent =
+                "Study day completed!";
+
+        }
+
+
+        if (progressText) {
+
+            progressText.textContent =
+                "Today's study activity has been recorded.";
+
+        }
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                "100%";
+
+        }
+
+
+        if (caption) {
+
+            caption.textContent =
+                "100% — study day complete";
+
+        }
+
+
+        return;
+
     }
 
 
-    if (
-        $("todayStatus")
-    ) {
+    if (icon) {
 
-        if (studied) {
+        icon.classList.remove(
+            "complete"
+        );
 
-            $("todayStatus")
-                .innerHTML =
-                `
-                    <strong>Study day complete ✓</strong>
-                    <span>
-                        You've completed all of today's assigned topics.
-                        Your streak is protected.
-                    </span>
-                `;
+        icon.textContent =
+            "○";
 
-        } else {
-
-            const progressData =
-                getTodayProgressData();
+    }
 
 
-            if (
-                progressData.total === 0
-            ) {
+    const progress =
+        getTodayTopicProgress();
 
-                $("todayStatus")
-                    .innerHTML =
-                    `
-                        <strong>No study schedule today</strong>
-                        <span>
-                            There are no required study topics scheduled for today.
-                        </span>
-                    `;
 
-            } else {
+    if (progress.total > 0) {
 
-                $("todayStatus")
-                    .innerHTML =
-                    `
-                        <strong>
-                            ${progressData.completed}
-                            / 
-                            ${progressData.total}
-                            topics completed
-                        </strong>
-                        <span>
-                            Complete every assigned topic to protect your streak.
-                        </span>
-                    `;
+        if (status) {
 
-            }
+            status.textContent =
+                `${progress.completed} of ${progress.total} topics completed`;
+
+        }
+
+
+        if (progressText) {
+
+            progressText.textContent =
+                "Complete a study session to record today.";
+
+        }
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                `${progress.percentage}%`;
+
+        }
+
+
+        if (caption) {
+
+            caption.textContent =
+                `${progress.percentage}% topic progress`;
+
+        }
+
+    } else {
+
+        if (status) {
+
+            status.textContent =
+                "No study activity yet";
+
+        }
+
+
+        if (progressText) {
+
+            progressText.textContent =
+                "Complete a study session to record today.";
+
+        }
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                "0%";
+
+        }
+
+
+        if (caption) {
+
+            caption.textContent =
+                "0% complete";
 
         }
 
     }
-
-
-    if (
-        $("todayCaption")
-    ) {
-
-        $("todayCaption")
-            .textContent =
-            studied
-                ? "Today's study requirements are complete ✓"
-                : `${calculateTodayProgress()}% of today's study requirements completed`;
-
-    }
-
-
-    renderMotivation(
-        studied
-    );
-
-}
-
-
-/* =========================================================
-   TODAY PROGRESS
-========================================================= */
-
-function getTodayProgressData() {
-
-    const required =
-        getTodaysRequiredTopics();
-
-
-    const completed =
-        getCompletedTopicKeys();
-
-
-    let completedCount = 0;
-
-
-    required.forEach(topic => {
-
-        if (
-            completed.has(topic.key) ||
-            completed.has(topic.name)
-        ) {
-
-            completedCount++;
-
-        }
-
-    });
-
-
-    return {
-
-        completed:
-            completedCount,
-
-        total:
-            required.length
-
-    };
-
-}
-
-
-function calculateTodayProgress() {
-
-    const data =
-        getTodayProgressData();
-
-
-    if (
-        data.total === 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    return Math.round(
-        (
-            data.completed /
-            data.total
-        ) * 100
-    );
 
 }
 
@@ -1645,73 +1836,70 @@ function calculateTodayProgress() {
    MOTIVATION
 ========================================================= */
 
-function renderMotivation(studied) {
+function renderMotivation() {
 
-    const current =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.CURRENT
-            )
-        ) || 0;
+    const streak =
+        calculateCurrentStreak();
 
 
-    let title;
+    const title =
+        $("motivationTitle");
 
-    let text;
-
-
-    if (studied) {
-
-        title =
-            "Streak protected 🔥";
+    const text =
+        $("motivationText");
 
 
-        text =
-            "Excellent work. You've completed every topic assigned for today.";
+    if (!title || !text) {
 
-    } else if (
-        current === 0
-    ) {
-
-        title =
-            "Start your streak";
-
-
-        text =
-            "Complete all of today's assigned topics to create your first study day.";
-
-    } else {
-
-        title =
-            "Don't break the chain";
-
-
-        text =
-            `Your ${current}-day streak is waiting for today's study requirements.`;
+        return;
 
     }
 
 
-    if (
-        $("motivationTitle")
-    ) {
+    if (streak === 0) {
 
-        $("motivationTitle")
-            .textContent =
-            title;
+        title.textContent =
+            "Start today";
+
+        text.textContent =
+            "One study session is enough to start building your streak.";
+
+        return;
+
+    }
+
+
+    if (streak === 1) {
+
+        title.textContent =
+            "Keep it going";
+
+        text.textContent =
+            "Come back tomorrow and turn your first study day into a streak.";
+
+        return;
 
     }
 
 
-    if (
-        $("motivationText")
-    ) {
+    if (streak < 7) {
 
-        $("motivationText")
-            .textContent =
-            text;
+        title.textContent =
+            "You're building momentum";
+
+        text.textContent =
+            `You've studied ${streak} days in a row. Keep showing up.`;
+
+        return;
 
     }
+
+
+    title.textContent =
+        "You're on fire 🔥";
+
+    text.textContent =
+        `${streak} consecutive study days. Protect the streak!`;
 
 }
 
@@ -1720,44 +1908,39 @@ function renderMotivation(studied) {
    CALENDAR
 ========================================================= */
 
-function renderCalendar() {
+function renderCalendar(
+    newlyCompletedDate = null
+) {
+
+    const grid =
+        $("calendarGrid");
+
+    const title =
+        $("calendarMonth");
+
+
+    if (!grid || !title) {
+
+        return;
+
+    }
+
 
     const year =
         calendarDate.getFullYear();
-
 
     const month =
         calendarDate.getMonth();
 
 
-    const monthName =
-        calendarDate.toLocaleString(
-            "en-US",
+    title.textContent =
+        calendarDate.toLocaleDateString(
+            undefined,
             {
                 month: "long",
                 year: "numeric"
             }
         );
-
-
-    if (
-        $("calendarMonth")
-    ) {
-
-        $("calendarMonth")
-            .textContent =
-            monthName;
-
-    }
-
-
-    const grid =
-        $("calendarGrid");
-
-
-    if (!grid) {
-        return;
-    }
 
 
     grid.innerHTML = "";
@@ -1771,10 +1954,14 @@ function renderCalendar() {
         );
 
 
-    const start =
-        firstDay.getDay() === 0
-            ? 6
-            : firstDay.getDay() - 1;
+    /*
+       Convert Sunday=0 to Monday-based index.
+    */
+
+    const firstWeekday =
+        (
+            firstDay.getDay() + 6
+        ) % 7;
 
 
     const daysInMonth =
@@ -1787,7 +1974,7 @@ function renderCalendar() {
 
     for (
         let i = 0;
-        i < start;
+        i < firstWeekday;
         i++
     ) {
 
@@ -1796,10 +1983,8 @@ function renderCalendar() {
                 "div"
             );
 
-
         empty.className =
             "calendar-day empty";
-
 
         grid.appendChild(
             empty
@@ -1852,7 +2037,7 @@ function renderCalendar() {
 
 
         if (
-            activity[key]
+            activity[key] === true
         ) {
 
             cell.classList.add(
@@ -1860,16 +2045,42 @@ function renderCalendar() {
             );
 
 
-            cell.innerHTML =
-                `
-                    ${day}
-                    <span class="check">✓</span>
-                `;
+            if (
+                newlyCompletedDate &&
+                key === newlyCompletedDate
+            ) {
 
-        } else {
+                cell.classList.add(
+                    "newly-completed"
+                );
 
-            cell.textContent =
-                day;
+            }
+
+        }
+
+
+        cell.textContent =
+            day;
+
+
+        if (
+            activity[key] === true
+        ) {
+
+            const check =
+                document.createElement(
+                    "span"
+                );
+
+            check.className =
+                "check";
+
+            check.textContent =
+                "✓";
+
+            cell.appendChild(
+                check
+            );
 
         }
 
@@ -1884,88 +2095,90 @@ function renderCalendar() {
 
 
 /* =========================================================
-   CALENDAR CONTROLS
-========================================================= */
-
-function setupCalendarControls() {
-
-    $("previousMonth")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                calendarDate.setMonth(
-                    calendarDate.getMonth() - 1
-                );
-
-
-                renderCalendar();
-
-            }
-        );
-
-
-    $("nextMonth")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                calendarDate.setMonth(
-                    calendarDate.getMonth() + 1
-                );
-
-
-                renderCalendar();
-
-            }
-        );
-
-}
-
-
-/* =========================================================
    WEEKLY BARS
 ========================================================= */
 
-function renderWeeklyBars() {
+function renderWeeklyBars(
+    newlyCompletedDate = null
+) {
 
     const container =
         $("weeklyBars");
 
+    const range =
+        $("weekRange");
+
 
     if (!container) {
+
         return;
+
     }
 
 
     container.innerHTML = "";
 
 
-    const week =
-        getCurrentWeek();
+    const dates =
+        getCurrentWeekDates();
 
 
-    const names =
-        [
-            "Mon",
-            "Tue",
-            "Wed",
-            "Thu",
-            "Fri",
-            "Sat",
-            "Sun"
-        ];
+    if (range) {
+
+        const first =
+            dates[0];
+
+        const last =
+            dates[6];
 
 
-    const today =
-        todayKey();
+        range.textContent =
+            `${first.toLocaleDateString(
+                undefined,
+                {
+                    month: "short",
+                    day: "numeric"
+                }
+            )} – ${last.toLocaleDateString(
+                undefined,
+                {
+                    month: "short",
+                    day: "numeric"
+                }
+            )}`;
+
+    }
 
 
-    let total = 0;
+    dates.forEach(
+        date => {
+
+            const wrapper =
+                document.createElement(
+                    "div"
+                );
+
+            wrapper.className =
+                "week-day";
 
 
-    week.forEach(
-        (date, index) => {
+            const barWrapper =
+                document.createElement(
+                    "div"
+                );
+
+            barWrapper.className =
+                "week-bar-wrapper";
+
+
+            const bar =
+                document.createElement(
+                    "div"
+                );
+
+            bar.className =
+                "week-bar";
+
 
             const key =
                 formatDate(date);
@@ -1976,46 +2189,10 @@ function renderWeeklyBars() {
 
 
             if (studied) {
-                total++;
-            }
-
-
-            const day =
-                document.createElement(
-                    "div"
-                );
-
-
-            day.className =
-                "week-day";
-
-
-            const wrapper =
-                document.createElement(
-                    "div"
-                );
-
-
-            wrapper.className =
-                "week-bar-wrapper";
-
-
-            const bar =
-                document.createElement(
-                    "div"
-                );
-
-
-            bar.className =
-                "week-bar";
-
-
-            if (studied) {
 
                 bar.classList.add(
                     "active"
                 );
-
 
                 bar.style.height =
                     "100%";
@@ -2023,13 +2200,13 @@ function renderWeeklyBars() {
             } else {
 
                 bar.style.height =
-                    "5px";
+                    "8%";
 
             }
 
 
             if (
-                key === today
+                key === todayKey()
             ) {
 
                 bar.classList.add(
@@ -2039,93 +2216,151 @@ function renderWeeklyBars() {
             }
 
 
-            wrapper.appendChild(
+            if (
+                newlyCompletedDate &&
+                key === newlyCompletedDate
+            ) {
+
+                bar.classList.add(
+                    "newly-active"
+                );
+
+            }
+
+
+            barWrapper.appendChild(
                 bar
             );
 
 
             const label =
                 document.createElement(
-                    "span"
+                    "div"
                 );
-
 
             label.className =
                 "week-label";
 
-
             label.textContent =
-                names[index];
+                date.toLocaleDateString(
+                    undefined,
+                    {
+                        weekday: "short"
+                    }
+                ).slice(0, 3);
 
 
             const number =
                 document.createElement(
-                    "span"
+                    "div"
                 );
-
 
             number.className =
                 "week-number";
 
-
             number.textContent =
-                studied
-                    ? "✓"
-                    : "—";
+                date.getDate();
 
 
-            day.appendChild(
-                wrapper
+            wrapper.appendChild(
+                barWrapper
             );
 
-
-            day.appendChild(
+            wrapper.appendChild(
                 label
             );
 
-
-            day.appendChild(
+            wrapper.appendChild(
                 number
             );
 
 
             container.appendChild(
-                day
+                wrapper
             );
 
         }
     );
 
-
-    const first =
-        week[0];
+}
 
 
-    const last =
-        week[6];
+/* =========================================================
+   DEDICATED STREAK MILO
+========================================================= */
+
+let miloDanceTimeout = null;
 
 
-    if (
-        $("weekRange")
-    ) {
+function playStreakMilo() {
 
-        $("weekRange")
-            .textContent =
-            `${first.toLocaleDateString(
-                "en-US",
-                {
-                    month: "short",
-                    day: "numeric"
-                }
-            )} – ${last.toLocaleDateString(
-                "en-US",
-                {
-                    month: "short",
-                    day: "numeric"
-                }
-            )}`;
+    const milo =
+        $("streakMilo");
+
+
+    if (!milo) {
+
+        return;
 
     }
+
+
+    if (miloDanceTimeout) {
+
+        clearTimeout(
+            miloDanceTimeout
+        );
+
+    }
+
+
+    milo.classList.remove(
+        "show",
+        "dancing"
+    );
+
+
+    /*
+       Force reflow so repeated streaks can
+       trigger the animation again.
+    */
+
+    void milo.offsetWidth;
+
+
+    milo.classList.add(
+        "show",
+        "dancing"
+    );
+
+
+    miloDanceTimeout =
+        setTimeout(
+            () => {
+
+                milo.classList.remove(
+                    "dancing"
+                );
+
+                /*
+                   Leave Milo visible very briefly,
+                   then hide him.
+                */
+
+                setTimeout(
+                    () => {
+
+                        milo.classList.remove(
+                            "show"
+                        );
+
+                    },
+                    500
+                );
+
+            },
+            4200
+        );
 
 }
 
@@ -2134,53 +2369,57 @@ function renderWeeklyBars() {
    CELEBRATION
 ========================================================= */
 
-function checkForStreakUpdate() {
-
-    const result =
-        recalculateStreaks();
-
-
-    const current =
-        result.current;
-
-
-    if (
-        previousCurrentStreak > 0 &&
-        current > previousCurrentStreak
-    ) {
-
-        showCelebration(
-            current
-        );
-
-    }
-
-
-    previousCurrentStreak =
-        current;
-
-}
-
-
-function showDailyCompletionCelebration(streak) {
+function showDailyCompletionCelebration(
+    streak
+) {
 
     const overlay =
         $("celebrationOverlay");
 
+    const title =
+        $("celebrationTitle");
 
     const text =
         $("celebrationText");
 
 
     if (!overlay) {
+
         return;
+
+    }
+
+
+    if (title) {
+
+        if (streak === 1) {
+
+            title.textContent =
+                "1-Day Streak! 🔥";
+
+        } else {
+
+            title.textContent =
+                `${streak}-Day Streak! 🔥`;
+
+        }
+
     }
 
 
     if (text) {
 
-        text.textContent =
-            `You're now on a ${streak}-day study streak. Keep the momentum going!`;
+        if (streak === 1) {
+
+            text.textContent =
+                "Amazing start! You've completed your first study day.";
+
+        } else {
+
+            text.textContent =
+                `You just reached ${streak} consecutive study days. Keep going!`;
+
+        }
 
     }
 
@@ -2192,20 +2431,200 @@ function showDailyCompletionCelebration(streak) {
 }
 
 
-function showCelebration(streak) {
+function closeCelebration() {
+
+    const overlay =
+        $("celebrationOverlay");
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "show"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   STREAK UPDATE ANIMATION
+========================================================= */
+
+function handleNewStudyDay(
+    streak,
+    dateKey,
+    source
+) {
+
+    /*
+       Prevent accidental duplicate animation.
+    */
+
+    if (pendingAnimation) {
+
+        return;
+
+    }
+
+
+    pendingAnimation = true;
+
+
+    setTimeout(
+        () => {
+
+            pendingAnimation = false;
+
+        },
+        1000
+    );
+
+
+    renderHero(true);
+
+    renderStats();
+
+    renderToday();
+
+    renderMotivation();
+
+    renderCalendar(
+        dateKey
+    );
+
+    renderWeeklyBars(
+        dateKey
+    );
+
+
+    /*
+       Dedicated Streak-page Milo.
+       No global milo.js call.
+    */
+
+    playStreakMilo();
+
+
+    /*
+       Show celebration only for an actual
+       new study day.
+    */
 
     showDailyCompletionCelebration(
         streak
     );
 
+
+    console.log(
+        "StudyMind Streak:",
+        "new study day recorded",
+        {
+            streak,
+            date: dateKey,
+            source
+        }
+    );
+
 }
 
 
-function closeCelebration() {
+/* =========================================================
+   DETECT NEW TIMER COMPLETION
+========================================================= */
 
-    $("celebrationOverlay")
-        ?.classList
-        .remove("show");
+function checkForRecentTimerCompletion() {
+
+    const timestamp =
+        localStorage.getItem(
+            STREAK_KEYS.LAST_TIMER_COMPLETION
+        );
+
+
+    if (!timestamp) {
+
+        return;
+
+    }
+
+
+    const previous =
+        localStorage.getItem(
+            STREAK_KEYS.PAGE_LAST_TIMER_COMPLETION
+        );
+
+
+    if (
+        previous === timestamp
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Mark it as seen before animating so
+       refreshing the page does not replay it.
+    */
+
+    localStorage.setItem(
+        STREAK_KEYS.PAGE_LAST_TIMER_COMPLETION,
+        timestamp
+    );
+
+
+    const date =
+        todayKey();
+
+
+    if (
+        activity[date] !== true
+    ) {
+
+        return;
+
+    }
+
+
+    const result =
+        recalculateStreaks();
+
+
+    handleNewStudyDay(
+        result.current,
+        date,
+        "timer-navigation"
+    );
+
+}
+
+
+/* =========================================================
+   REFRESH PAGE
+========================================================= */
+
+function refreshPageData(
+    animate = false
+) {
+
+    loadActivity();
+
+
+    renderHero(
+        animate
+    );
+
+    renderStats();
+
+    renderToday();
+
+    renderMotivation();
+
+    renderCalendar();
+
+    renderWeeklyBars();
 
 }
 
@@ -2214,150 +2633,99 @@ function closeCelebration() {
    THEME
 ========================================================= */
 
-function applyTheme(theme) {
+function initializeTheme() {
 
-    let dark = false;
-
-
-    if (
-        theme === "dark"
-    ) {
-
-        dark = true;
-
-    } else if (
-        theme === "system"
-    ) {
-
-        dark =
-            window.matchMedia?.(
-                "(prefers-color-scheme: dark)"
-            ).matches || false;
-
-    }
-
-
-    document.body.classList.toggle(
-        "dark",
-        dark
-    );
+    const stored =
+        localStorage.getItem(
+            STREAK_KEYS.THEME
+        );
 
 
     if (
-        $("themeIcon")
+        stored === "dark"
     ) {
 
-        $("themeIcon")
-            .textContent =
-            dark
-                ? "☀️"
-                : "🌙";
-
-    }
-
-
-    if (
-        $("themeText")
-    ) {
-
-        $("themeText")
-            .textContent =
-            dark
-                ? "Light mode"
-                : "Dark mode";
+        document.body.classList.add(
+            "dark"
+        );
 
     }
 
 }
 
 
-function setupTheme() {
+function toggleTheme() {
 
-    let theme =
-        localStorage.getItem(
-            STREAK_KEYS.THEME
-        )
-        || "system";
+    document.body.classList.toggle(
+        "dark"
+    );
 
 
-    applyTheme(theme);
-
-
-    $("themeToggle")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const dark =
-                    document.body
-                        .classList
-                        .contains("dark");
-
-
-                theme =
-                    dark
-                        ? "light"
-                        : "dark";
-
-
-                localStorage.setItem(
-                    STREAK_KEYS.THEME,
-                    theme
-                );
-
-
-                applyTheme(theme);
-
-            }
+    const isDark =
+        document.body.classList.contains(
+            "dark"
         );
 
 
-    window
-        .matchMedia?.(
-            "(prefers-color-scheme: dark)"
-        )
-        .addEventListener(
-            "change",
-            () => {
-
-                const saved =
-                    localStorage.getItem(
-                        STREAK_KEYS.THEME
-                    );
-
-
-                if (
-                    saved === "system"
-                ) {
-
-                    applyTheme(
-                        "system"
-                    );
-
-                }
-
-            }
-        );
+    localStorage.setItem(
+        STREAK_KEYS.THEME,
+        isDark
+            ? "dark"
+            : "light"
+    );
 
 }
 
 
 /* =========================================================
-   MOBILE
+   MOBILE MENU
 ========================================================= */
 
-function setupMobileMenu() {
+function initializeMobileMenu() {
 
-    $("mobileMenu")
-        ?.addEventListener(
-            "click",
-            () => {
+    const button =
+        $("mobileMenu");
 
-                $("sidebar")
-                    ?.classList
-                    .toggle(
-                        "open"
-                    );
+    const sidebar =
+        $("sidebar");
+
+
+    if (!button || !sidebar) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            sidebar.classList.toggle(
+                "open"
+            );
+
+        }
+    );
+
+
+    document
+        .querySelectorAll(
+            ".navigation a"
+        )
+        .forEach(
+            link => {
+
+                link.addEventListener(
+                    "click",
+                    () => {
+
+                        sidebar.classList.remove(
+                            "open"
+                        );
+
+                    }
+                );
 
             }
         );
@@ -2369,97 +2737,246 @@ function setupMobileMenu() {
    LOGOUT
 ========================================================= */
 
-function setupLogout() {
+async function logout() {
 
-    $("logoutButton")
-        ?.addEventListener(
-            "click",
-            async () => {
+    try {
 
-                try {
+        if (
+            window.supabaseClient &&
+            typeof
+            window.supabaseClient.auth?.signOut ===
+            "function"
+        ) {
 
-                    if (
-                        window.supabaseClient &&
-                        typeof window
-                            .supabaseClient
-                            .auth
-                            ?.signOut ===
-                            "function"
-                    ) {
+            await window.supabaseClient.auth.signOut();
 
-                        await window
-                            .supabaseClient
-                            .auth
-                            .signOut();
+        }
 
-                    }
+    } catch (error) {
 
-                } catch (error) {
-
-                    console.warn(
-                        "StudyMind logout error:",
-                        error
-                    );
-
-                }
-
-
-                window.location.href =
-                    "home.html";
-
-            }
+        console.warn(
+            "StudyMind: logout error",
+            error
         );
+
+    }
+
+
+    window.location.href =
+        "login.html";
 
 }
 
 
 /* =========================================================
-   STORAGE CHANGES
+   CALENDAR CONTROLS
 ========================================================= */
 
-function refreshPageData() {
+function initializeCalendarControls() {
 
-    loadActivity();
+    const previous =
+        $("previousMonth");
 
-
-    renderHero();
-
-
-    renderStats();
+    const next =
+        $("nextMonth");
 
 
-    renderToday();
+    previous?.addEventListener(
+        "click",
+        () => {
+
+            calendarDate =
+                new Date(
+                    calendarDate.getFullYear(),
+                    calendarDate.getMonth() - 1,
+                    1
+                );
+
+            renderCalendar();
+
+        }
+    );
 
 
-    renderCalendar();
+    next?.addEventListener(
+        "click",
+        () => {
 
+            calendarDate =
+                new Date(
+                    calendarDate.getFullYear(),
+                    calendarDate.getMonth() + 1,
+                    1
+                );
 
-    renderWeeklyBars();
+            renderCalendar();
+
+        }
+    );
 
 }
 
 
-window.addEventListener(
-    "storage",
-    event => {
+/* =========================================================
+   CELEBRATION BUTTON
+========================================================= */
 
-        if (
-            event.key ===
-            STREAK_KEYS.ACTIVITY
-            ||
-            event.key ===
-            STREAK_KEYS.COMPLETED
-            ||
-            event.key ===
-            STREAK_KEYS.PLAN
-        ) {
+function initializeCelebration() {
 
-            refreshPageData();
+    const close =
+        $("closeCelebration");
+
+    const overlay =
+        $("celebrationOverlay");
+
+
+    close?.addEventListener(
+        "click",
+        closeCelebration
+    );
+
+
+    overlay?.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target === overlay
+            ) {
+
+                closeCelebration();
+
+            }
 
         }
+    );
 
-    }
-);
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeCelebration();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   STREAK EVENT LISTENER
+========================================================= */
+
+function initializeStreakEvents() {
+
+    window.addEventListener(
+        "studyMindStreakUpdated",
+        event => {
+
+            loadActivity();
+
+
+            const detail =
+                event.detail || {};
+
+
+            const isNewDay =
+                detail.isNewDay === true;
+
+
+            /*
+               If another part of StudyMind has already
+               recorded today's activity, we only animate
+               when the event says this was a new day.
+            */
+
+            if (
+                isNewDay
+            ) {
+
+                const result =
+                    recalculateStreaks();
+
+
+                handleNewStudyDay(
+                    detail.current ??
+                    result.current,
+                    detail.date ||
+                    todayKey(),
+                    detail.source ||
+                    "streak-event"
+                );
+
+            } else {
+
+                refreshPageData();
+
+            }
+
+        }
+    );
+
+
+    /*
+       Also listen for localStorage changes so the
+       page stays synchronized if another page/tab
+       changes streak activity.
+    */
+
+    window.addEventListener(
+        "storage",
+        event => {
+
+            if (
+                event.key ===
+                    STREAK_KEYS.ACTIVITY ||
+                event.key ===
+                    STREAK_KEYS.COMPLETED ||
+                event.key ===
+                    STREAK_KEYS.PLAN
+            ) {
+
+                const oldSnapshot =
+                    previousActivitySnapshot;
+
+
+                loadActivity();
+
+
+                const newSnapshot =
+                    getActivitySnapshot();
+
+
+                const activityChanged =
+                    oldSnapshot !==
+                    newSnapshot;
+
+
+                if (
+                    activityChanged
+                ) {
+
+                    refreshPageData();
+
+                }
+
+
+                previousActivitySnapshot =
+                    newSnapshot;
+
+            }
+
+        }
+    );
+
+}
 
 
 /* =========================================================
@@ -2480,7 +2997,8 @@ window.StudyMindStreak = {
 
     getStudyDayCount,
 
-    getTodayProgressData,
+    getTodayProgressData:
+        getTodayTopicProgress,
 
     refresh:
         refreshPageData
@@ -2489,49 +3007,77 @@ window.StudyMindStreak = {
 
 
 /* =========================================================
-   INITIALIZE
+   INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    async () => {
+
+        initializeTheme();
 
         loadActivity();
+
+
+        previousActivitySnapshot =
+            getActivitySnapshot();
 
 
         previousCurrentStreak =
             calculateCurrentStreak();
 
 
-        loadUser();
+        await loadUser();
 
 
-        setupTheme();
+        initializeMobileMenu();
+
+        initializeCalendarControls();
+
+        initializeCelebration();
 
 
-        setupMobileMenu();
+        $("themeToggle")?.addEventListener(
+            "click",
+            toggleTheme
+        );
 
 
-        setupLogout();
+        $("logoutButton")?.addEventListener(
+            "click",
+            logout
+        );
 
 
-        setupCalendarControls();
+        refreshPageData();
 
 
-        renderHero();
+        initializeStreakEvents();
 
 
-        renderStats();
+        /*
+           If the user completed a timer on another page
+           and then navigated here, detect that completion.
+        */
+
+        checkForRecentTimerCompletion();
 
 
-        renderToday();
+        console.log(
+            "StudyMind AI: Study Streak initialized.",
+            {
+                currentStreak:
+                    calculateCurrentStreak(),
 
+                longestStreak:
+                    calculateLongestStreak(),
 
-        renderCalendar();
+                totalStudyDays:
+                    getStudyDayCount(),
 
-
-        renderWeeklyBars();
+                activity
+            }
+        );
 
     }
 );
-
