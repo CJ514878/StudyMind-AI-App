@@ -1692,33 +1692,31 @@ function startMiloCelebrationAnimation() {
 
 /* =========================================================
    STUDY SESSION COMPLETE
+   FIXED — MILO ALWAYS APPEARS ABOVE STREAK OVERLAY
 ========================================================= */
 
 function miloStudySessionComplete(streak = null) {
 
     unlockMiloAudio();
 
-
-    /*
-     * Prevent duplicate celebration calls.
-     */
-
     if (miloCelebrationActive) {
         return;
     }
 
-
     miloCelebrationActive = true;
     miloBusy = true;
 
+    const container =
+        document.getElementById("miloCompanion");
 
     const character =
-        document.getElementById(
-            "miloCharacter"
+        document.getElementById("miloCharacter");
+
+    if (!container || !character) {
+
+        console.error(
+            "Milo celebration failed: Milo elements not found."
         );
-
-
-    if (!character) {
 
         miloCelebrationActive = false;
         miloBusy = false;
@@ -1726,51 +1724,57 @@ function miloStudySessionComplete(streak = null) {
         return;
     }
 
+    /* =====================================================
+       FORCE MILO INTO THE TOP-LEVEL DOCUMENT
+    ===================================================== */
 
-    /*
-     * Bring Milo above the streak celebration.
-     */
-
-    const container =
-        document.getElementById(
-            "miloCompanion"
-        );
-
-
-    if (container) {
-
-        container.style.zIndex =
-            "2147483000";
-
-        container.style.visibility =
-            "visible";
-
-        container.style.opacity =
-            "1";
+    if (container.parentElement !== document.body) {
+        document.body.appendChild(container);
     }
 
+    /* =====================================================
+       FORCE VISIBILITY
+    ===================================================== */
 
-    /*
-     * Clean old animations.
-     */
+    container.style.position = "fixed";
+    container.style.display = "block";
+    container.style.visibility = "visible";
+    container.style.opacity = "1";
+    container.style.zIndex = "2147483647";
+    container.style.pointerEvents = "none";
+
+    character.style.display = "block";
+    character.style.visibility = "visible";
+    character.style.opacity = "1";
+    character.style.pointerEvents = "auto";
+
+    /* =====================================================
+       REMOVE ANY POSSIBLE HIDDEN STATE
+    ===================================================== */
+
+    container.hidden = false;
+    character.hidden = false;
+
+    container.removeAttribute("aria-hidden");
+    character.removeAttribute("aria-hidden");
+
+    /* =====================================================
+       STOP OLD ANIMATIONS
+    ===================================================== */
 
     stopMiloCelebrationAnimation();
 
-
-    /*
-     * HAPPY CELEBRATION FACE
-     */
+    /* =====================================================
+       CELEBRATION FACE
+    ===================================================== */
 
     setMiloFace("celebrate");
 
+    /* =====================================================
+       STREAK MESSAGE
+    ===================================================== */
 
-    /*
-     * Build message using the real streak.
-     */
-
-    const numericStreak =
-        Number(streak);
-
+    const numericStreak = Number(streak);
 
     const message =
         Number.isFinite(numericStreak) &&
@@ -1780,30 +1784,41 @@ function miloStudySessionComplete(streak = null) {
 
             : "Study session complete! 🎉";
 
-
     showMilo(
         message,
         "celebrate"
     );
 
+    /* =====================================================
+       FORCE BUBBLE ABOVE EVERYTHING
+    ===================================================== */
 
-    /*
-     * START DANCE IMMEDIATELY
-     */
+    const bubble =
+        document.getElementById("miloBubble");
+
+    if (bubble) {
+
+        bubble.style.display = "block";
+        bubble.style.visibility = "visible";
+        bubble.style.opacity = "1";
+        bubble.style.zIndex = "2147483647";
+    }
+
+    /* =====================================================
+       START MILO DANCE
+    ===================================================== */
 
     startMiloCelebrationAnimation();
 
-
-    /*
-     * CELEBRATION SOUND
-     */
+    /* =====================================================
+       SOUND
+    ===================================================== */
 
     playSound("woohoo");
 
-
-    /*
-     * MOUTH + VOICE SYNC
-     */
+    /* =====================================================
+       VOICE
+    ===================================================== */
 
     speakMilo(
         Number.isFinite(numericStreak) &&
@@ -1820,33 +1835,26 @@ function miloStudySessionComplete(streak = null) {
         }
     );
 
-
-    /*
-     * Do NOT award XP here.
-     *
-     * The shared timer engine already handles XP.
-     * This prevents double XP.
-     */
-
-
-    /*
-     * Keep Milo celebrating long enough
-     * for the student to actually see him.
-     */
+    /* =====================================================
+       KEEP CELEBRATION ON SCREEN
+    ===================================================== */
 
     miloTimeout(() => {
 
         stopMiloCelebrationAnimation();
 
-
         setMiloFace("happy");
 
+        if (bubble) {
+            bubble.style.display = "none";
+        }
 
         miloCelebrationActive = false;
         miloBusy = false;
 
     }, 6500);
 }
+
 
 
 /* =========================================================
