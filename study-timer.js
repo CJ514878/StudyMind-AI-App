@@ -35,15 +35,19 @@
 
    all use this SAME timer engine.
 
-   Timer completion records study activity,
-   then dispatches:
-
-       studyMindTimerCompleted
-       studyMindStreakUpdated
-       studyMindTimerChanged
-
-   The Study Streak page is responsible for
-   its own visual streak celebration/Milo.
+   TIMER COMPLETE
+        ↓
+   SESSION SAVED
+        ↓
+   XP SAVED
+        ↓
+   TODAY'S ACTIVITY SAVED
+        ↓
+   STREAK UPDATED
+        ↓
+   PROGRESS UI UPDATED
+        ↓
+   EVENTS DISPATCHED
 ========================================================= */
 
 
@@ -64,6 +68,18 @@ window.StudyMindTimer = (() => {
         RUNNING:
             "studyMindTimerRunning",
 
+        /*
+         * IMPORTANT:
+         * This key stores SECONDS.
+         *
+         * Therefore:
+         * 25 min = 1500
+         * 45 min = 2700
+         * 60 min = 3600
+         *
+         * A 5-second test can also use:
+         * 5
+         */
         DURATION:
             "studyMindSelectedTimerSeconds",
 
@@ -101,12 +117,12 @@ window.StudyMindTimer = (() => {
        STATE
     ===================================================== */
 
-    let selectedDuration =
+    let selectedDurationSeconds =
         Number(
             localStorage.getItem(
                 KEYS.DURATION
             )
-        ) || 25;
+        ) || 1500;
 
 
     let remainingSeconds =
@@ -131,10 +147,16 @@ window.StudyMindTimer = (() => {
         ) || 0;
 
 
-    let timerInterval = null;
+    let timerInterval =
+        null;
 
 
-    let completionBeingHandled = false;
+    let completionBeingHandled =
+        false;
+
+
+    let pageInitialized =
+        false;
 
 
     /* =====================================================
@@ -160,7 +182,9 @@ window.StudyMindTimer = (() => {
         try {
 
             const value =
-                localStorage.getItem(key);
+                localStorage.getItem(
+                    key
+                );
 
 
             if (!value) {
@@ -170,7 +194,9 @@ window.StudyMindTimer = (() => {
             }
 
 
-            return JSON.parse(value);
+            return JSON.parse(
+                value
+            );
 
         } catch {
 
@@ -190,7 +216,9 @@ window.StudyMindTimer = (() => {
 
             localStorage.setItem(
                 key,
-                JSON.stringify(value)
+                JSON.stringify(
+                    value
+                )
             );
 
         } catch {}
@@ -214,11 +242,17 @@ window.StudyMindTimer = (() => {
 
             String(
                 d.getMonth() + 1
-            ).padStart(2, "0"),
+            ).padStart(
+                2,
+                "0"
+            ),
 
             String(
                 d.getDate()
-            ).padStart(2, "0")
+            ).padStart(
+                2,
+                "0"
+            )
 
         ].join("-");
 
@@ -235,11 +269,17 @@ window.StudyMindTimer = (() => {
 
             String(
                 date.getMonth() + 1
-            ).padStart(2, "0"),
+            ).padStart(
+                2,
+                "0"
+            ),
 
             String(
                 date.getDate()
-            ).padStart(2, "0")
+            ).padStart(
+                2,
+                "0"
+            )
 
         ].join("-");
 
@@ -277,8 +317,12 @@ window.StudyMindTimer = (() => {
 
         return (
 
-            String(minutes)
-                .padStart(2, "0")
+            String(
+                minutes
+            ).padStart(
+                2,
+                "0"
+            )
 
             +
 
@@ -286,8 +330,12 @@ window.StudyMindTimer = (() => {
 
             +
 
-            String(seconds)
-                .padStart(2, "0")
+            String(
+                seconds
+            ).padStart(
+                2,
+                "0"
+            )
 
         );
 
@@ -314,7 +362,9 @@ window.StudyMindTimer = (() => {
         ) {
 
             const raw =
-                localStorage.getItem(key);
+                localStorage.getItem(
+                    key
+                );
 
 
             if (!raw) {
@@ -327,7 +377,9 @@ window.StudyMindTimer = (() => {
             try {
 
                 const plan =
-                    JSON.parse(raw);
+                    JSON.parse(
+                        raw
+                    );
 
 
                 if (plan) {
@@ -548,7 +600,9 @@ window.StudyMindTimer = (() => {
 
 
         const topics =
-            normalizeTopics(plan);
+            normalizeTopics(
+                plan
+            );
 
 
         const completed =
@@ -567,8 +621,12 @@ window.StudyMindTimer = (() => {
 
 
                     return (
-                        !completed.includes(key) &&
-                        !completed.includes(item.topic)
+                        !completed.includes(
+                            key
+                        ) &&
+                        !completed.includes(
+                            item.topic
+                        )
                     );
 
                 }
@@ -684,17 +742,110 @@ window.StudyMindTimer = (() => {
 
 
     /* =====================================================
+       NORMALIZE OLD TIMER STORAGE
+       -----------------------------------------------------
+       Older versions of the timer stored DURATION as
+       minutes. New version stores seconds.
+
+       We use the actual timer seconds as the source
+       of truth.
+    ===================================================== */
+
+    function normalizeDurationStorage() {
+
+        let stored =
+            Number(
+                localStorage.getItem(
+                    KEYS.DURATION
+                )
+            );
+
+
+        if (
+            !Number.isFinite(
+                stored
+            ) ||
+            stored <= 0
+        ) {
+
+            stored =
+                1500;
+
+            localStorage.setItem(
+                KEYS.DURATION,
+                String(
+                    stored
+                )
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Recognize common old values:
+         *
+         * 25 → 25 minutes
+         * 45 → 45 minutes
+         * 60 → 60 minutes
+         *
+         * Values like 5 are deliberately
+         * preserved because they are useful
+         * for the 5-second completion test.
+         */
+        if (
+            stored === 25 ||
+            stored === 45 ||
+            stored === 60
+        ) {
+
+            /*
+             * Only convert if the timer itself
+             * is not also using that same value.
+             */
+            const timerSeconds =
+                Number(
+                    localStorage.getItem(
+                        KEYS.SECONDS
+                    )
+                );
+
+
+            if (
+                !timerSeconds ||
+                timerSeconds === stored
+            ) {
+
+                stored =
+                    stored * 60;
+
+            }
+
+        }
+
+
+        selectedDurationSeconds =
+            stored;
+
+    }
+
+
+    /* =====================================================
        INITIALIZE
     ===================================================== */
 
     function initializeTimer() {
 
-        selectedDuration =
+        normalizeDurationStorage();
+
+
+        selectedDurationSeconds =
             Number(
                 localStorage.getItem(
                     KEYS.DURATION
                 )
-            ) || 25;
+            ) || 1500;
 
 
         remainingSeconds =
@@ -723,12 +874,14 @@ window.StudyMindTimer = (() => {
          * No timer state yet.
          */
         if (
-            !remainingSeconds &&
-            !timerRunning
+            !Number.isFinite(
+                remainingSeconds
+            ) ||
+            remainingSeconds < 0
         ) {
 
             remainingSeconds =
-                selectedDuration * 60;
+                selectedDurationSeconds;
 
 
             localStorage.setItem(
@@ -790,6 +943,12 @@ window.StudyMindTimer = (() => {
 
         updateTimerUI();
 
+        renderStats();
+
+        renderHistory();
+
+        updateDurationButtons();
+
     }
 
 
@@ -816,7 +975,7 @@ window.StudyMindTimer = (() => {
         const totalSeconds =
             Math.max(
                 1,
-                selectedDuration * 60
+                selectedDurationSeconds
             );
 
 
@@ -873,7 +1032,9 @@ window.StudyMindTimer = (() => {
         if (elapsedText) {
 
             elapsedText.textContent =
-                `${Math.floor(elapsed / 60)} min studied`;
+                `${Math.floor(
+                    elapsed / 60
+                )} min studied`;
 
         }
 
@@ -885,7 +1046,9 @@ window.StudyMindTimer = (() => {
         if (remainingText) {
 
             remainingText.textContent =
-                `${Math.ceil(remainingSeconds / 60)} min remaining`;
+                `${Math.ceil(
+                    remainingSeconds / 60
+                )} min remaining`;
 
         }
 
@@ -981,7 +1144,7 @@ window.StudyMindTimer = (() => {
         ) {
 
             remainingSeconds =
-                selectedDuration * 60;
+                selectedDurationSeconds;
 
         }
 
@@ -1015,7 +1178,7 @@ window.StudyMindTimer = (() => {
                         current.topic,
 
                     duration:
-                        selectedDuration,
+                        selectedDurationSeconds,
 
                     startedAt:
                         Date.now()
@@ -1061,12 +1224,10 @@ window.StudyMindTimer = (() => {
 
         updateTimerUI();
 
-
         updateCoach(
             "Focus mode activated",
             "Stay with the current topic. StudyMind is tracking your genuine study time."
         );
-
 
         dispatchTimerChanged();
 
@@ -1168,7 +1329,7 @@ window.StudyMindTimer = (() => {
 
 
         remainingSeconds =
-            selectedDuration * 60;
+            selectedDurationSeconds;
 
 
         localStorage.setItem(
@@ -1191,6 +1352,8 @@ window.StudyMindTimer = (() => {
 
 
         updateTimerUI();
+
+        updateDurationButtons();
 
 
         updateCoach(
@@ -1282,10 +1445,6 @@ window.StudyMindTimer = (() => {
         }
 
 
-        /*
-         * Capture the completion information
-         * BEFORE clearing timerEndTime.
-         */
         const completedEndTime =
             Number(
                 timerEndTime
@@ -1299,9 +1458,6 @@ window.StudyMindTimer = (() => {
             );
 
 
-        /*
-         * Prevent duplicate processing.
-         */
         const existingCompleted =
             localStorage.getItem(
                 KEYS.LAST_COMPLETED
@@ -1313,10 +1469,6 @@ window.StudyMindTimer = (() => {
             completionId
         ) {
 
-            /*
-             * Make absolutely sure the timer
-             * is stopped.
-             */
             timerRunning =
                 false;
 
@@ -1349,6 +1501,10 @@ window.StudyMindTimer = (() => {
 
             updateTimerUI();
 
+            renderStats();
+
+            renderHistory();
+
             return;
 
         }
@@ -1367,13 +1523,28 @@ window.StudyMindTimer = (() => {
             null;
 
 
+        /*
+         * Calculate actual completed minutes.
+         *
+         * Normal sessions:
+         * 25 / 45 / 60 minutes.
+         *
+         * Test sessions:
+         * 5 seconds = 0.0833 minutes.
+         *
+         * XP uses the normal selected duration,
+         * but test sessions still register as a
+         * completed session.
+         */
+        const rawMinutes =
+            selectedDurationSeconds / 60;
+
+
         const minutes =
             Math.max(
                 1,
                 Math.round(
-                    Number(
-                        selectedDuration
-                    ) || 0
+                    rawMinutes
                 )
             );
 
@@ -1424,6 +1595,7 @@ window.StudyMindTimer = (() => {
         /*
          * Completion marker.
          */
+
         localStorage.setItem(
             KEYS.LAST_COMPLETED,
             completionId
@@ -1431,7 +1603,9 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * Save session.
+         * SAVE SESSION
+         *
+         * This MUST happen before renderStats().
          */
         recordStudySession(
             minutes,
@@ -1441,7 +1615,7 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * XP.
+         * ADD XP.
          */
         addXP(
             earnedXP
@@ -1449,34 +1623,64 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * Record today's study day.
-         *
-         * This is the important part:
-         *
-         * TIMER COMPLETE
-         *       ↓
-         * TODAY = TRUE
-         *       ↓
-         * STREAK ENGINE
+         * RECORD TODAY'S STUDY DAY.
          */
         const streakResult =
             recordStreakActivity();
 
 
         /*
-         * Update UI.
+         * IMPORTANT:
+         *
+         * Refresh the progress section
+         * immediately after saving the session.
          */
-        updateTimerUI();
-
         renderStats();
 
         renderHistory();
 
+        updateTimerUI();
+
 
         /*
-         * Normal timer completion modal.
-         *
-         * This is NOT the streak popup.
+         * Also tell any other StudyMind
+         * component to refresh its progress.
+         */
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressUpdated",
+                {
+                    detail: {
+
+                        minutes,
+
+                        sessions:
+                            getTodaySessionCount(),
+
+                        xp:
+                            getTodayXP(),
+
+                        totalXP:
+                            Number(
+                                localStorage.getItem(
+                                    KEYS.TOTAL_XP
+                                )
+                            ) || 0,
+
+                        completionId,
+
+                        date:
+                            todayKey()
+
+                    }
+
+                }
+            )
+        );
+
+
+        /*
+         * Completion modal.
          */
         showCompletion(
             minutes,
@@ -1485,7 +1689,7 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * Shared timer completion event.
+         * Shared completion event.
          */
         window.dispatchEvent(
             new CustomEvent(
@@ -1523,18 +1727,7 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * IMPORTANT
-         *
-         * We deliberately DO NOT call
-         * the global Milo celebration here.
-         *
-         * The Study Streak page owns its
-         * own Milo celebration.
-         */
-
-
-        /*
-         * Dispatch streak update.
+         * Streak event.
          */
         window.dispatchEvent(
             new CustomEvent(
@@ -1605,7 +1798,7 @@ window.StudyMindTimer = (() => {
             );
 
 
-        sessions.unshift({
+        const session = {
 
             id:
                 `session_${Date.now()}`,
@@ -1624,14 +1817,25 @@ window.StudyMindTimer = (() => {
                 current?.topic ||
                 "Study Session",
 
-            minutes,
+            minutes:
+                Number(
+                    minutes
+                ) || 0,
 
-            xp,
+            xp:
+                Number(
+                    xp
+                ) || 0,
 
             completed:
                 true
 
-        });
+        };
+
+
+        sessions.unshift(
+            session
+        );
 
 
         saveJSON(
@@ -1644,7 +1848,8 @@ window.StudyMindTimer = (() => {
 
 
         /*
-         * Generic session structure.
+         * Keep generic session storage
+         * synchronized.
          */
         const genericSessions =
             safeJSON(
@@ -1653,63 +1858,18 @@ window.StudyMindTimer = (() => {
             );
 
 
-        const alreadyExists =
-            genericSessions.some(
-                session =>
-                    session &&
-                    session.day ===
-                        todayKey() &&
-                    session.topic ===
-                        (
-                            current?.topic ||
-                            "Study Session"
-                        ) &&
-                    Number(
-                        session.minutes
-                    ) === minutes
-            );
+        genericSessions.unshift(
+            session
+        );
 
 
-        if (!alreadyExists) {
-
-            genericSessions.unshift({
-
-                id:
-                    `timer_${Date.now()}`,
-
-                date:
-                    new Date().toISOString(),
-
-                day:
-                    todayKey(),
-
-                subject:
-                    current?.subject ||
-                    "Study",
-
-                topic:
-                    current?.topic ||
-                    "Study Session",
-
-                minutes,
-
-                xp,
-
-                completed:
-                    true
-
-            });
-
-
-            saveJSON(
-                "studyMindStudySessions",
-                genericSessions.slice(
-                    0,
-                    100
-                )
-            );
-
-        }
+        saveJSON(
+            "studyMindStudySessions",
+            genericSessions.slice(
+                0,
+                100
+            )
+        );
 
     }
 
@@ -1738,10 +1898,24 @@ window.StudyMindTimer = (() => {
         amount
     ) {
 
+        amount =
+            Number(
+                amount
+            ) || 0;
+
+
         const currentXP =
             Number(
                 localStorage.getItem(
                     KEYS.XP
+                )
+            ) || 0;
+
+
+        const totalXP =
+            Number(
+                localStorage.getItem(
+                    KEYS.TOTAL_XP
                 )
             ) || 0;
 
@@ -1752,14 +1926,6 @@ window.StudyMindTimer = (() => {
                 currentXP + amount
             )
         );
-
-
-        const totalXP =
-            Number(
-                localStorage.getItem(
-                    KEYS.TOTAL_XP
-                )
-            ) || 0;
 
 
         localStorage.setItem(
@@ -1773,649 +1939,10 @@ window.StudyMindTimer = (() => {
 
 
     /* =====================================================
-       STREAK ACTIVITY
+       TODAY'S PROGRESS HELPERS
     ===================================================== */
 
-    function recordStreakActivity() {
-
-        const today =
-            todayKey();
-
-
-        const activity =
-            safeJSON(
-                KEYS.STREAK_ACTIVITY,
-                {}
-            );
-
-
-        const alreadyRecorded =
-            activity[today] === true;
-
-
-        /*
-         * A timer completion means the student
-         * studied today.
-         *
-         * Do NOT require every planned topic
-         * to be completed.
-         */
-        activity[today] =
-            true;
-
-
-        saveJSON(
-            KEYS.STREAK_ACTIVITY,
-            activity
-        );
-
-
-        localStorage.setItem(
-            "studyMindLastCompletedPlanDate",
-            today
-        );
-
-
-        /*
-         * Ask the existing streak engine
-         * to recalculate itself.
-         */
-        let streak =
-            calculateStreak();
-
-
-        try {
-
-            if (
-                window.StudyMindStreak &&
-                typeof
-                    window.StudyMindStreak
-                        .recordStudyActivity ===
-                    "function"
-            ) {
-
-                const result =
-                    window.StudyMindStreak
-                        .recordStudyActivity();
-
-
-                if (
-                    result &&
-                    typeof result.current ===
-                        "number"
-                ) {
-
-                    streak =
-                        result.current;
-
-                }
-
-                else if (
-                    result &&
-                    typeof result.streak ===
-                        "number"
-                ) {
-
-                    streak =
-                        result.streak;
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "StudyMind streak engine error:",
-                error
-            );
-
-        }
-
-
-        return {
-
-            streak,
-
-            date:
-                today,
-
-            newlyRecorded:
-                !alreadyRecorded
-
-        };
-
-    }
-
-
-    /* =====================================================
-       CALCULATE CURRENT STREAK
-    ===================================================== */
-
-    function calculateStreak() {
-
-        const activity =
-            safeJSON(
-                KEYS.STREAK_ACTIVITY,
-                {}
-            );
-
-
-        let date =
-            new Date();
-
-
-        let streak =
-            0;
-
-
-        while (true) {
-
-            const key =
-                localDateKey(
-                    date
-                );
-
-
-            if (
-                activity[key] !== true
-            ) {
-
-                break;
-
-            }
-
-
-            streak++;
-
-
-            date.setDate(
-                date.getDate() - 1
-            );
-
-        }
-
-
-        return streak;
-
-    }
-
-
-    /* =====================================================
-       STREAK POPUP
-       -----------------------------------------------------
-       This popup is ONLY for pages that explicitly
-       want the timer completion popup.
-
-       The Study Streak page has its own celebration.
-    ===================================================== */
-
-    function showStreakPopup(
-        streak
-    ) {
-
-        let popup =
-            document.getElementById(
-                "studyMindStreakPopup"
-            );
-
-
-        /*
-         * If another page already has the popup,
-         * update and show it.
-         */
-        if (!popup) {
-
-            popup =
-                document.createElement(
-                    "div"
-                );
-
-
-            popup.id =
-                "studyMindStreakPopup";
-
-
-            popup.innerHTML = `
-
-                <div
-                    class="study-mind-streak-popup-inner"
-                >
-
-                    <div
-                        class="study-mind-streak-emoji"
-                    >
-                        🔥
-                    </div>
-
-                    <div
-                        class="study-mind-streak-title"
-                    >
-                        ${streak}-Day Streak!
-                    </div>
-
-                    <div
-                        class="study-mind-streak-message"
-                    >
-                        Amazing work! You completed
-                        your study session today.
-                    </div>
-
-                    <button
-                        type="button"
-                        id="studyMindStreakCloseButton"
-                        class="study-mind-streak-button"
-                    >
-                        Keep Going 🚀
-                    </button>
-
-                </div>
-
-            `;
-
-
-            document.body.appendChild(
-                popup
-            );
-
-
-            const style =
-                document.createElement(
-                    "style"
-                );
-
-
-            style.id =
-                "studyMindStreakPopupStyles";
-
-
-            style.textContent = `
-
-                #studyMindStreakPopup {
-
-                    position: fixed;
-
-                    inset: 0;
-
-                    z-index: 999999;
-
-                    display: flex;
-
-                    align-items: center;
-
-                    justify-content: center;
-
-                    padding: 24px;
-
-                    background:
-                        rgba(
-                            8,
-                            15,
-                            30,
-                            0.58
-                        );
-
-                    backdrop-filter:
-                        blur(8px);
-
-                    opacity: 0;
-
-                    visibility: hidden;
-
-                    pointer-events: none;
-
-                    transition:
-                        opacity 0.25s ease,
-                        visibility 0.25s ease;
-
-                }
-
-
-                #studyMindStreakPopup.show {
-
-                    opacity: 1;
-
-                    visibility: visible;
-
-                    pointer-events: auto;
-
-                }
-
-
-                .study-mind-streak-popup-inner {
-
-                    width:
-                        min(
-                            420px,
-                            100%
-                        );
-
-                    padding:
-                        32px 28px;
-
-                    border-radius:
-                        28px;
-
-                    text-align:
-                        center;
-
-                    background:
-                        linear-gradient(
-                            145deg,
-                            #ffffff,
-                            #f5f8ff
-                        );
-
-                    box-shadow:
-                        0 30px 90px
-                        rgba(
-                            0,
-                            0,
-                            0,
-                            0.28
-                        );
-
-                    transform:
-                        scale(0.88)
-                        translateY(20px);
-
-                    transition:
-                        transform 0.3s ease;
-
-                }
-
-
-                #studyMindStreakPopup.show
-                .study-mind-streak-popup-inner {
-
-                    transform:
-                        scale(1)
-                        translateY(0);
-
-                }
-
-
-                .study-mind-streak-emoji {
-
-                    font-size:
-                        64px;
-
-                    margin-bottom:
-                        8px;
-
-                    animation:
-                        studyMindFireBounce
-                        0.8s
-                        ease-in-out
-                        infinite
-                        alternate;
-
-                }
-
-
-                .study-mind-streak-title {
-
-                    font-size:
-                        30px;
-
-                    font-weight:
-                        800;
-
-                    margin-bottom:
-                        10px;
-
-                }
-
-
-                .study-mind-streak-message {
-
-                    font-size:
-                        16px;
-
-                    line-height:
-                        1.55;
-
-                    opacity:
-                        0.72;
-
-                    margin-bottom:
-                        24px;
-
-                }
-
-
-                .study-mind-streak-button {
-
-                    border:
-                        0;
-
-                    border-radius:
-                        14px;
-
-                    padding:
-                        13px 22px;
-
-                    font-size:
-                        15px;
-
-                    font-weight:
-                        700;
-
-                    cursor:
-                        pointer;
-
-                    background:
-                        #111827;
-
-                    color:
-                        #ffffff;
-
-                    transition:
-                        transform
-                        0.15s ease;
-
-                }
-
-
-                .study-mind-streak-button:hover {
-
-                    transform:
-                        translateY(-2px);
-
-                }
-
-
-                .study-mind-streak-button:active {
-
-                    transform:
-                        scale(0.97);
-
-                }
-
-
-                @keyframes
-                studyMindFireBounce {
-
-                    from {
-
-                        transform:
-                            translateY(0)
-                            scale(1);
-
-                    }
-
-                    to {
-
-                        transform:
-                            translateY(-8px)
-                            scale(1.08);
-
-                    }
-
-                }
-
-            `;
-
-
-            document.head.appendChild(
-                style
-            );
-
-        }
-
-
-        const title =
-            popup.querySelector(
-                ".study-mind-streak-title"
-            );
-
-
-        if (title) {
-
-            title.textContent =
-                `${streak}-Day Streak!`;
-
-        }
-
-
-        const button =
-            popup.querySelector(
-                "#studyMindStreakCloseButton"
-            );
-
-
-        if (button) {
-
-            /*
-             * IMPORTANT:
-             * onclick replaces any previous
-             * handler instead of stacking handlers.
-             */
-            button.onclick =
-                function () {
-
-                    popup.classList.remove(
-                        "show"
-                    );
-
-                    popup.style.pointerEvents =
-                        "none";
-
-                    setTimeout(
-                        () => {
-
-                            if (
-                                !popup.classList.contains(
-                                    "show"
-                                )
-                            ) {
-
-                                popup.style.visibility =
-                                    "hidden";
-
-                            }
-
-                        },
-                        300
-                    );
-
-                };
-
-        }
-
-
-        popup.style.visibility =
-            "visible";
-
-
-        popup.style.pointerEvents =
-            "auto";
-
-
-        requestAnimationFrame(
-            () => {
-
-                popup.classList.add(
-                    "show"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       COMPLETION MODAL
-    ===================================================== */
-
-    function showCompletion(
-        minutes,
-        xp
-    ) {
-
-        const earnedMinutes =
-            $("earnedMinutes");
-
-
-        const earnedXP =
-            $("earnedXP");
-
-
-        const message =
-            $("completionMessage");
-
-
-        if (earnedMinutes) {
-
-            earnedMinutes.textContent =
-                minutes;
-
-        }
-
-
-        if (earnedXP) {
-
-            earnedXP.textContent =
-                xp;
-
-        }
-
-
-        if (message) {
-
-            message.textContent =
-                `You completed ${minutes} minutes of focused study. Your progress has been recorded.`;
-
-        }
-
-
-        const modal =
-            $("completionModal");
-
-
-        if (modal) {
-
-            modal.classList.add(
-                "show"
-            );
-
-        }
-
-
-        updateCoach(
-            "Excellent work",
-            "Your completed session has been recorded and XP has been added to your progress."
-        );
-
-    }
-
-
-    /* =====================================================
-       STATS
-    ===================================================== */
-
-    function renderStats() {
+    function getTodaySessions() {
 
         const sessions =
             safeJSON(
@@ -2424,15 +1951,142 @@ window.StudyMindTimer = (() => {
             );
 
 
+        if (!Array.isArray(sessions)) {
+
+            return [];
+
+        }
+
+
         const today =
             todayKey();
 
 
-        const todaySessions =
-            sessions.filter(
-                session =>
+        return sessions.filter(
+            session => {
+
+                if (!session) {
+
+                    return false;
+
+                }
+
+
+                /*
+                 * New session records use day.
+                 */
+                if (
                     session.day === today
+                ) {
+
+                    return true;
+
+                }
+
+
+                /*
+                 * Compatibility with older
+                 * session records.
+                 */
+                if (
+                    session.date
+                ) {
+
+                    const date =
+                        new Date(
+                            session.date
+                        );
+
+
+                    if (
+                        !Number.isNaN(
+                            date.getTime()
+                        )
+                    ) {
+
+                        return (
+                            localDateKey(
+                                date
+                            ) === today
+                        );
+
+                    }
+
+                }
+
+
+                return false;
+
+            }
+        );
+
+    }
+
+
+    function getTodayMinutes() {
+
+        return getTodaySessions()
+            .reduce(
+                (
+                    total,
+                    session
+                ) => {
+
+                    return (
+                        total +
+                        Number(
+                            session.minutes
+                        ) ||
+                        0
+                    );
+
+                },
+                0
             );
+
+    }
+
+
+    function getTodayXP() {
+
+        return getTodaySessions()
+            .reduce(
+                (
+                    total,
+                    session
+                ) => {
+
+                    return (
+                        total +
+                        Number(
+                            session.xp
+                        ) ||
+                        0
+                    );
+
+                },
+                0
+            );
+
+    }
+
+
+    function getTodaySessionCount() {
+
+        return getTodaySessions()
+            .length;
+
+    }
+
+
+    /* =====================================================
+       PROGRESS UI
+    ===================================================== */
+
+    function renderStats() {
+
+        const todaySessions =
+            getTodaySessions();
 
 
         const minutes =
@@ -2440,12 +2094,18 @@ window.StudyMindTimer = (() => {
                 (
                     total,
                     session
-                ) =>
-                    total +
-                    Number(
-                        session.minutes ||
-                        0
-                    ),
+                ) => {
+
+                    return (
+                        total +
+                        (
+                            Number(
+                                session.minutes
+                            ) || 0
+                        )
+                    );
+
+                },
                 0
             );
 
@@ -2455,16 +2115,29 @@ window.StudyMindTimer = (() => {
                 (
                     total,
                     session
-                ) =>
-                    total +
-                    Number(
-                        session.xp ||
-                        0
-                    ),
+                ) => {
+
+                    return (
+                        total +
+                        (
+                            Number(
+                                session.xp
+                            ) || 0
+                        )
+                    );
+
+                },
                 0
             );
 
 
+        const sessionCount =
+            todaySessions.length;
+
+
+        /*
+         * YOUR PROGRESS — MINUTES
+         */
         const minutesElement =
             $("todayMinutes");
 
@@ -2472,11 +2145,16 @@ window.StudyMindTimer = (() => {
         if (minutesElement) {
 
             minutesElement.textContent =
-                minutes;
+                String(
+                    minutes
+                );
 
         }
 
 
+        /*
+         * YOUR PROGRESS — SESSIONS
+         */
         const sessionsElement =
             $("todaySessions");
 
@@ -2484,11 +2162,16 @@ window.StudyMindTimer = (() => {
         if (sessionsElement) {
 
             sessionsElement.textContent =
-                todaySessions.length;
+                String(
+                    sessionCount
+                );
 
         }
 
 
+        /*
+         * YOUR PROGRESS — XP
+         */
         const xpElement =
             $("todayXP");
 
@@ -2496,9 +2179,117 @@ window.StudyMindTimer = (() => {
         if (xpElement) {
 
             xpElement.textContent =
-                xp;
+                String(
+                    xp
+                );
 
         }
+
+
+        /*
+         * Compatibility with alternative
+         * progress IDs if present.
+         */
+        const progressMinutes =
+            document.querySelector(
+                "[data-today-minutes]"
+            );
+
+
+        if (progressMinutes) {
+
+            progressMinutes.textContent =
+                String(
+                    minutes
+                );
+
+        }
+
+
+        const progressSessions =
+            document.querySelector(
+                "[data-today-sessions]"
+            );
+
+
+        if (progressSessions) {
+
+            progressSessions.textContent =
+                String(
+                    sessionCount
+                );
+
+        }
+
+
+        const progressXP =
+            document.querySelector(
+                "[data-today-xp]"
+            );
+
+
+        if (progressXP) {
+
+            progressXP.textContent =
+                String(
+                    xp
+                );
+
+        }
+
+
+        /*
+         * Optional total XP displays.
+         */
+        const totalXP =
+            Number(
+                localStorage.getItem(
+                    KEYS.TOTAL_XP
+                )
+            ) || 0;
+
+
+        const totalXPElement =
+            document.querySelector(
+                "[data-total-xp]"
+            );
+
+
+        if (totalXPElement) {
+
+            totalXPElement.textContent =
+                String(
+                    totalXP
+                );
+
+        }
+
+
+        /*
+         * Broadcast progress state so
+         * dashboard / study session widgets
+         * can react immediately.
+         */
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressRendered",
+                {
+                    detail: {
+
+                        minutes,
+
+                        sessions:
+                            sessionCount,
+
+                        xp,
+
+                        totalXP
+
+                    }
+
+                }
+            )
+        );
 
     }
 
@@ -2523,7 +2314,11 @@ window.StudyMindTimer = (() => {
         if (historyCount) {
 
             historyCount.textContent =
-                `${sessions.length} session${sessions.length === 1 ? "" : "s"}`;
+                `${sessions.length} session${
+                    sessions.length === 1
+                        ? ""
+                        : "s"
+                }`;
 
         }
 
@@ -2573,11 +2368,13 @@ window.StudyMindTimer = (() => {
                             date.toLocaleDateString(
                                 undefined,
                                 {
+
                                     month:
                                         "short",
 
                                     day:
                                         "numeric"
+
                                 }
                             );
 
@@ -2712,7 +2509,7 @@ window.StudyMindTimer = (() => {
                     current.topic,
 
                 duration:
-                    selectedDuration
+                    selectedDurationSeconds
 
             }
         );
@@ -2729,7 +2526,7 @@ window.StudyMindTimer = (() => {
 
 
     /* =====================================================
-       DURATION
+       DURATION BUTTONS
     ===================================================== */
 
     function selectDuration(
@@ -2747,20 +2544,38 @@ window.StudyMindTimer = (() => {
         }
 
 
-        selectedDuration =
-            Number(minutes);
+        minutes =
+            Number(
+                minutes
+            );
+
+
+        if (
+            !Number.isFinite(
+                minutes
+            ) ||
+            minutes <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        selectedDurationSeconds =
+            minutes * 60;
 
 
         localStorage.setItem(
             KEYS.DURATION,
             String(
-                selectedDuration
+                selectedDurationSeconds
             )
         );
 
 
         remainingSeconds =
-            selectedDuration * 60;
+            selectedDurationSeconds;
 
 
         localStorage.setItem(
@@ -2771,28 +2586,600 @@ window.StudyMindTimer = (() => {
         );
 
 
-        document
-            .querySelectorAll(
-                ".duration-button"
-            )
-            .forEach(
-                button => {
+        localStorage.setItem(
+            KEYS.RUNNING,
+            "false"
+        );
 
-                    button.classList.toggle(
-                        "active",
-                        Number(
-                            button.dataset.minutes
-                        ) ===
-                        selectedDuration
-                    );
 
-                }
-            );
+        localStorage.removeItem(
+            KEYS.END_TIME
+        );
 
+
+        updateDurationButtons();
 
         updateTimerUI();
 
         dispatchTimerChanged();
+
+    }
+
+
+    function updateDurationButtons() {
+
+        const buttons =
+            document.querySelectorAll(
+                ".duration-button"
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                const minutes =
+                    Number(
+                        button.dataset.minutes
+                    );
+
+
+                button.classList.toggle(
+                    "active",
+                    minutes * 60 ===
+                    selectedDurationSeconds
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       COMPLETION MODAL
+    ===================================================== */
+
+    function showCompletion(
+        minutes,
+        xp
+    ) {
+
+        const earnedMinutes =
+            $("earnedMinutes");
+
+
+        const earnedXP =
+            $("earnedXP");
+
+
+        const message =
+            $("completionMessage");
+
+
+        if (earnedMinutes) {
+
+            earnedMinutes.textContent =
+                minutes;
+
+        }
+
+
+        if (earnedXP) {
+
+            earnedXP.textContent =
+                xp;
+
+        }
+
+
+        if (message) {
+
+            message.textContent =
+                `You completed ${minutes} minutes of focused study. Your progress has been recorded.`;
+
+        }
+
+
+        const modal =
+            $("completionModal");
+
+
+        if (modal) {
+
+            modal.classList.add(
+                "show"
+            );
+
+        }
+
+
+        updateCoach(
+            "Excellent work",
+            "Your completed session has been recorded and XP has been added to your progress."
+        );
+
+    }
+
+
+    /* =====================================================
+       STREAK ACTIVITY
+    ===================================================== */
+
+    function recordStreakActivity() {
+
+        const today =
+            todayKey();
+
+
+        const activity =
+            safeJSON(
+                KEYS.STREAK_ACTIVITY,
+                {}
+            );
+
+
+        const alreadyRecorded =
+            activity[today] === true;
+
+
+        activity[today] =
+            true;
+
+
+        saveJSON(
+            KEYS.STREAK_ACTIVITY,
+            activity
+        );
+
+
+        localStorage.setItem(
+            "studyMindLastCompletedPlanDate",
+            today
+        );
+
+
+        let streak =
+            calculateStreak();
+
+
+        try {
+
+            if (
+                window.StudyMindStreak &&
+                typeof
+                    window.StudyMindStreak
+                        .recordStudyActivity ===
+                    "function"
+            ) {
+
+                const result =
+                    window.StudyMindStreak
+                        .recordStudyActivity();
+
+
+                if (
+                    result &&
+                    typeof result.current ===
+                    "number"
+                ) {
+
+                    streak =
+                        result.current;
+
+                } else if (
+                    result &&
+                    typeof result.streak ===
+                    "number"
+                ) {
+
+                    streak =
+                        result.streak;
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind streak engine error:",
+                error
+            );
+
+        }
+
+
+        return {
+
+            streak,
+
+            date:
+                today,
+
+            newlyRecorded:
+                !alreadyRecorded
+
+        };
+
+    }
+
+
+    /* =====================================================
+       CALCULATE CURRENT STREAK
+    ===================================================== */
+
+    function calculateStreak() {
+
+        const activity =
+            safeJSON(
+                KEYS.STREAK_ACTIVITY,
+                {}
+            );
+
+
+        let date =
+            new Date();
+
+
+        let streak =
+            0;
+
+
+        while (true) {
+
+            const key =
+                localDateKey(
+                    date
+                );
+
+
+            if (
+                activity[key] !== true
+            ) {
+
+                break;
+
+            }
+
+
+            streak++;
+
+
+            date.setDate(
+                date.getDate() - 1
+            );
+
+        }
+
+
+        return streak;
+
+    }
+
+
+    /* =====================================================
+       STREAK POPUP
+    ===================================================== */
+
+    function showStreakPopup(
+        streak
+    ) {
+
+        let popup =
+            document.getElementById(
+                "studyMindStreakPopup"
+            );
+
+
+        if (!popup) {
+
+            popup =
+                document.createElement(
+                    "div"
+                );
+
+
+            popup.id =
+                "studyMindStreakPopup";
+
+
+            popup.innerHTML = `
+
+                <div
+                    class="study-mind-streak-popup-inner"
+                >
+
+                    <div
+                        class="study-mind-streak-emoji"
+                    >
+                        🔥
+                    </div>
+
+                    <div
+                        class="study-mind-streak-title"
+                    >
+                        ${streak}-Day Streak!
+                    </div>
+
+                    <div
+                        class="study-mind-streak-message"
+                    >
+                        Amazing work! You completed
+                        your study session today.
+                    </div>
+
+                    <button
+                        type="button"
+                        id="studyMindStreakCloseButton"
+                        class="study-mind-streak-button"
+                    >
+                        Keep Going 🚀
+                    </button>
+
+                </div>
+
+            `;
+
+
+            document.body.appendChild(
+                popup
+            );
+
+
+            const style =
+                document.createElement(
+                    "style"
+                );
+
+
+            style.id =
+                "studyMindStreakPopupStyles";
+
+
+            style.textContent = `
+
+                #studyMindStreakPopup {
+
+                    position: fixed;
+                    inset: 0;
+                    z-index: 999999;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    padding: 24px;
+
+                    background:
+                        rgba(8,15,30,0.58);
+
+                    backdrop-filter:
+                        blur(8px);
+
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;
+
+                    transition:
+                        opacity 0.25s ease,
+                        visibility 0.25s ease;
+
+                }
+
+
+                #studyMindStreakPopup.show {
+
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+
+                }
+
+
+                .study-mind-streak-popup-inner {
+
+                    width:
+                        min(420px, 100%);
+
+                    padding:
+                        32px 28px;
+
+                    border-radius:
+                        28px;
+
+                    text-align:
+                        center;
+
+                    background:
+                        linear-gradient(
+                            145deg,
+                            #ffffff,
+                            #f5f8ff
+                        );
+
+                    box-shadow:
+                        0 30px 90px
+                        rgba(0,0,0,0.28);
+
+                    transform:
+                        scale(0.88)
+                        translateY(20px);
+
+                    transition:
+                        transform 0.3s ease;
+
+                }
+
+
+                #studyMindStreakPopup.show
+                .study-mind-streak-popup-inner {
+
+                    transform:
+                        scale(1)
+                        translateY(0);
+
+                }
+
+
+                .study-mind-streak-emoji {
+
+                    font-size:
+                        64px;
+
+                    margin-bottom:
+                        8px;
+
+                    animation:
+                        studyMindFireBounce
+                        0.8s
+                        ease-in-out
+                        infinite
+                        alternate;
+
+                }
+
+
+                .study-mind-streak-title {
+
+                    font-size:
+                        30px;
+
+                    font-weight:
+                        800;
+
+                    margin-bottom:
+                        10px;
+
+                }
+
+
+                .study-mind-streak-message {
+
+                    font-size:
+                        16px;
+
+                    line-height:
+                        1.55;
+
+                    opacity:
+                        0.72;
+
+                    margin-bottom:
+                        24px;
+
+                }
+
+
+                .study-mind-streak-button {
+
+                    border:
+                        0;
+
+                    border-radius:
+                        14px;
+
+                    padding:
+                        13px 22px;
+
+                    font-size:
+                        15px;
+
+                    font-weight:
+                        700;
+
+                    cursor:
+                        pointer;
+
+                    background:
+                        #111827;
+
+                    color:
+                        #ffffff;
+
+                }
+
+
+                @keyframes studyMindFireBounce {
+
+                    from {
+
+                        transform:
+                            translateY(0)
+                            scale(1);
+
+                    }
+
+                    to {
+
+                        transform:
+                            translateY(-8px)
+                            scale(1.08);
+
+                    }
+
+                }
+
+            `;
+
+
+            document.head.appendChild(
+                style
+            );
+
+        }
+
+
+        const title =
+            popup.querySelector(
+                ".study-mind-streak-title"
+            );
+
+
+        if (title) {
+
+            title.textContent =
+                `${streak}-Day Streak!`;
+
+        }
+
+
+        const button =
+            popup.querySelector(
+                "#studyMindStreakCloseButton"
+            );
+
+
+        if (button) {
+
+            button.onclick =
+                () => {
+
+                    popup.classList.remove(
+                        "show"
+                    );
+
+                };
+
+        }
+
+
+        popup.style.visibility =
+            "visible";
+
+
+        popup.style.pointerEvents =
+            "auto";
+
+
+        requestAnimationFrame(
+            () => {
+
+                popup.classList.add(
+                    "show"
+                );
+
+            }
+        );
 
     }
 
@@ -2854,8 +3241,10 @@ window.StudyMindTimer = (() => {
 
         if (
             userNameElement &&
-            userNameElement.textContent ===
+            (
+                userNameElement.textContent ===
                 "Student"
+            )
         ) {
 
             const localName =
@@ -2882,7 +3271,9 @@ window.StudyMindTimer = (() => {
     ) {
 
         const clean =
-            String(name)
+            String(
+                name
+            )
                 .trim()
                 .split(" ")
                 .slice(
@@ -2978,12 +3369,12 @@ window.StudyMindTimer = (() => {
 
     function syncFromStorage() {
 
-        selectedDuration =
+        selectedDurationSeconds =
             Number(
                 localStorage.getItem(
                     KEYS.DURATION
                 )
-            ) || 25;
+            ) || 1500;
 
 
         remainingSeconds =
@@ -3056,6 +3447,7 @@ window.StudyMindTimer = (() => {
                 timerInterval
             );
 
+
             timerInterval =
                 null;
 
@@ -3065,6 +3457,12 @@ window.StudyMindTimer = (() => {
         renderCurrentTopic();
 
         updateTimerUI();
+
+        renderStats();
+
+        renderHistory();
+
+        updateDurationButtons();
 
     }
 
@@ -3107,26 +3505,22 @@ window.StudyMindTimer = (() => {
             }
 
 
-            /*
-             * If another page completed the timer,
-             * this page should update itself but
-             * MUST NOT create another completion.
-             */
+            if (
+                event.key ===
+                KEYS.XP ||
+                event.key ===
+                KEYS.TOTAL_XP
+            ) {
+
+                renderStats();
+
+            }
+
+
             if (
                 event.key ===
                 KEYS.LAST_COMPLETED
             ) {
-
-                const completionId =
-                    event.newValue;
-
-
-                if (!completionId) {
-
-                    return;
-
-                }
-
 
                 renderStats();
 
@@ -3135,6 +3529,36 @@ window.StudyMindTimer = (() => {
                 updateTimerUI();
 
             }
+
+        }
+    );
+
+
+    /* =====================================================
+       SAME-PAGE PROGRESS EVENTS
+    ===================================================== */
+
+    window.addEventListener(
+        "studyMindProgressUpdated",
+        () => {
+
+            renderStats();
+
+            renderHistory();
+
+        }
+    );
+
+
+    window.addEventListener(
+        "studyMindTimerCompleted",
+        () => {
+
+            renderStats();
+
+            renderHistory();
+
+            updateTimerUI();
 
         }
     );
@@ -3163,7 +3587,7 @@ window.StudyMindTimer = (() => {
                             timerEndTime,
 
                         duration:
-                            selectedDuration
+                            selectedDurationSeconds
 
                     }
 
@@ -3175,16 +3599,40 @@ window.StudyMindTimer = (() => {
 
 
     /* =====================================================
-       BUTTONS
+       BUTTON SETUP
     ===================================================== */
 
     function setupControls() {
+
+        if (
+            pageInitialized
+        ) {
+
+            return;
+
+        }
+
+
+        pageInitialized =
+            true;
+
+
+        /* =================================================
+           START / PAUSE
+        ================================================= */
 
         const startPause =
             $("startPauseTimer");
 
 
-        if (startPause) {
+        if (
+            startPause &&
+            !startPause.dataset.timerBound
+        ) {
+
+            startPause.dataset.timerBound =
+                "true";
+
 
             startPause.addEventListener(
                 "click",
@@ -3208,11 +3656,22 @@ window.StudyMindTimer = (() => {
         }
 
 
+        /* =================================================
+           RESET
+        ================================================= */
+
         const reset =
             $("resetTimer");
 
 
-        if (reset) {
+        if (
+            reset &&
+            !reset.dataset.timerBound
+        ) {
+
+            reset.dataset.timerBound =
+                "true";
+
 
             reset.addEventListener(
                 "click",
@@ -3222,11 +3681,22 @@ window.StudyMindTimer = (() => {
         }
 
 
+        /* =================================================
+           RECOMMENDED
+        ================================================= */
+
         const recommended =
             $("useRecommended");
 
 
-        if (recommended) {
+        if (
+            recommended &&
+            !recommended.dataset.timerBound
+        ) {
+
+            recommended.dataset.timerBound =
+                "true";
+
 
             recommended.addEventListener(
                 "click",
@@ -3236,11 +3706,22 @@ window.StudyMindTimer = (() => {
         }
 
 
+        /* =================================================
+           CLOSE COMPLETION
+        ================================================= */
+
         const closeCompletion =
             $("closeCompletion");
 
 
-        if (closeCompletion) {
+        if (
+            closeCompletion &&
+            !closeCompletion.dataset.timerBound
+        ) {
+
+            closeCompletion.dataset.timerBound =
+                "true";
+
 
             closeCompletion.addEventListener(
                 "click",
@@ -3264,6 +3745,10 @@ window.StudyMindTimer = (() => {
         }
 
 
+        /* =================================================
+           25 / 45 / 60 MINUTE BUTTONS
+        ================================================= */
+
         document
             .querySelectorAll(
                 ".duration-button"
@@ -3271,12 +3756,48 @@ window.StudyMindTimer = (() => {
             .forEach(
                 button => {
 
+                    if (
+                        button.dataset.timerBound
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    button.dataset.timerBound =
+                        "true";
+
+
                     button.addEventListener(
                         "click",
                         () => {
 
+                            const minutes =
+                                Number(
+                                    button.dataset.minutes
+                                );
+
+
+                            if (
+                                !Number.isFinite(
+                                    minutes
+                                ) ||
+                                minutes <= 0
+                            ) {
+
+                                console.warn(
+                                    "Invalid timer duration:",
+                                    button.dataset.minutes
+                                );
+
+                                return;
+
+                            }
+
+
                             selectDuration(
-                                button.dataset.minutes
+                                minutes
                             );
 
                         }
@@ -3284,6 +3805,30 @@ window.StudyMindTimer = (() => {
 
                 }
             );
+
+
+        updateDurationButtons();
+
+    }
+
+
+    /* =====================================================
+       PAGE INITIALIZATION
+    ===================================================== */
+
+    function initializePage() {
+
+        initializeTimer();
+
+        setupControls();
+
+        renderCurrentTopic();
+
+        renderStats();
+
+        renderHistory();
+
+        loadUser();
 
     }
 
@@ -3321,8 +3866,13 @@ window.StudyMindTimer = (() => {
                 endTime:
                     timerEndTime,
 
+                /*
+                 * Public duration remains
+                 * seconds because that is what
+                 * the shared storage key represents.
+                 */
                 duration:
-                    selectedDuration
+                    selectedDurationSeconds
 
             }),
 
@@ -3331,428 +3881,53 @@ window.StudyMindTimer = (() => {
 
         calculateStreak,
 
-        recordStreakActivity
+        recordStreakActivity,
+
+        renderStats,
+
+        renderHistory,
+
+        getTodayMinutes,
+
+        getTodaySessionCount,
+
+        getTodayXP
 
     };
+
 
 })();
 
 
 /* =========================================================
-   PAGE INITIALIZATION
+   DOM READY
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        window.StudyMindTimer.initialize();
-
-        /*
-         * Connect controls after the DOM exists.
-         */
-        setupTimerPageControls();
-
-    }
-);
-
-
-/* =========================================================
-   PAGE-SPECIFIC CONTROLS
-========================================================= */
-
-function setupTimerPageControls() {
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    if (!timer) {
-        return;
-    }
-
-
-    /* =====================================================
-       START / PAUSE
-    ===================================================== */
-
-    const startPause =
-        document.getElementById(
-            "startPauseTimer"
-        );
-
-
-    if (
-        startPause &&
-        !startPause.dataset.timerBound
-    ) {
-
-        startPause.dataset.timerBound =
-            "true";
-
-
-        startPause.addEventListener(
-            "click",
-            () => {
-
-                const state =
-                    timer.getState();
-
-
-                if (state.running) {
-
-                    timer.pause();
-
-                } else {
-
-                    timer.start();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       RESET
-    ===================================================== */
-
-    const reset =
-        document.getElementById(
-            "resetTimer"
-        );
-
-
-    if (
-        reset &&
-        !reset.dataset.timerBound
-    ) {
-
-        reset.dataset.timerBound =
-            "true";
-
-
-        reset.addEventListener(
-            "click",
-            () => {
-
-                timer.reset();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       RECOMMENDED SESSION
-    ===================================================== */
-
-    const recommended =
-        document.getElementById(
-            "useRecommended"
-        );
-
-
-    if (
-        recommended &&
-        !recommended.dataset.timerBound
-    ) {
-
-        recommended.dataset.timerBound =
-            "true";
-
-
-        recommended.addEventListener(
-            "click",
-            () => {
-
-                const current =
-                    timer.getCurrentTopic();
-
-
-                if (!current) {
-
-                    return;
-
-                }
-
-
-                localStorage.setItem(
-                    "studyMindCurrentTopic",
-                    current.topic
-                );
-
-
-                localStorage.setItem(
-                    "studyMindCurrentSubject",
-                    current.subject
-                );
-
-
-                timer.reset();
-
-                timer.start();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       25 / 45 / 60 MINUTE BUTTONS
-       ===================================================== */
-
-    document
-        .querySelectorAll(
-            ".duration-button"
-        )
-        .forEach(
-            button => {
-
-                if (
-                    button.dataset.timerBound
-                ) {
-
-                    return;
-
-                }
-
-
-                button.dataset.timerBound =
-                    "true";
-
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const minutes =
-                            Number(
-                                button.dataset.minutes
-                            );
-
-
-                        if (
-                            !Number.isFinite(
-                                minutes
-                            ) ||
-                            minutes <= 0
-                        ) {
-
-                            console.warn(
-                                "Invalid timer duration:",
-                                button.dataset.minutes
-                            );
-
-                            return;
-
-                        }
-
-
-                        const state =
-                            timer.getState();
-
-
-                        /*
-                         * Don't allow the duration
-                         * to change while running.
-                         */
-                        if (state.running) {
-
-                            alert(
-                                "Pause the current session before changing the session length."
-                            );
-
-                            return;
-
-                        }
-
-
-                        /*
-                         * Save the selected duration.
-                         */
-                        localStorage.setItem(
-                            "studyMindSelectedTimerSeconds",
-                            String(
-                                minutes * 60
-                            )
-                        );
-
-
-                        /*
-                         * Set the actual timer seconds.
-                         */
-                        localStorage.setItem(
-                            "studyMindTimerSeconds",
-                            String(
-                                minutes * 60
-                            )
-                        );
-
-
-                        /*
-                         * Make sure the timer is
-                         * not considered running.
-                         */
-                        localStorage.setItem(
-                            "studyMindTimerRunning",
-                            "false"
-                        );
-
-
-                        localStorage.removeItem(
-                            "studyMindTimerEndTime"
-                        );
-
-
-                        /*
-                         * Reload the shared timer
-                         * state so every page sees
-                         * the new duration.
-                         */
-                        timer.initialize();
-
-
-                        /*
-                         * Update active button.
-                         */
-                        document
-                            .querySelectorAll(
-                                ".duration-button"
-                            )
-                            .forEach(
-                                otherButton => {
-
-                                    otherButton.classList.toggle(
-                                        "active",
-                                        Number(
-                                            otherButton.dataset.minutes
-                                        ) ===
-                                        minutes
-                                    );
-
-                                }
-                            );
-
-                    }
-                );
-
-            }
-        );
-
-
-    /* =====================================================
-       COMPLETION MODAL
-    ===================================================== */
-
-    const closeCompletion =
-        document.getElementById(
-            "closeCompletion"
-        );
-
-
-    if (
-        closeCompletion &&
-        !closeCompletion.dataset.timerBound
-    ) {
-
-        closeCompletion.dataset.timerBound =
-            "true";
-
-
-        closeCompletion.addEventListener(
-            "click",
-            () => {
-
-                const modal =
-                    document.getElementById(
-                        "completionModal"
-                    );
-
-
-                if (modal) {
-
-                    modal.classList.remove(
-                        "show"
-                    );
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       CURRENT TOPIC
-    ===================================================== */
-
-    const current =
-        timer.getCurrentTopic();
-
-
-    if (current) {
-
-        const subject =
-            document.getElementById(
-                "currentSubject"
-            );
-
-
-        const topic =
-            document.getElementById(
-                "currentTopic"
-            );
-
-
-        const recommendedSubject =
-            document.getElementById(
-                "recommendedSubject"
-            );
-
-
-        const recommendedTopic =
-            document.getElementById(
-                "recommendedTopic"
-            );
-
-
-        if (subject) {
-
-            subject.textContent =
-                current.subject;
-
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+            /*
+             * The timer engine's internal
+             * initialization is exposed here.
+             *
+             * Calling initialize() is safe.
+             */
+            window.StudyMindTimer.initialize();
+
+        },
+        {
+            once: true
         }
+    );
 
+} else {
 
-        if (topic) {
-
-            topic.textContent =
-                current.topic;
-
-        }
-
-
-        if (recommendedSubject) {
-
-            recommendedSubject.textContent =
-                current.subject;
-
-        }
-
-
-        if (recommendedTopic) {
-
-            recommendedTopic.textContent =
-                current.topic;
-
-        }
-
-    }
+    window.StudyMindTimer.initialize();
 
 }
