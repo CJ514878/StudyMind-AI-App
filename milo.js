@@ -1695,7 +1695,7 @@ function startMiloCelebrationAnimation() {
 
 /* =========================================================
    STUDY SESSION COMPLETE
-   FIXED — MILO ALWAYS APPEARS ABOVE STREAK OVERLAY
+   FIXED — MILO CELEBRATES IN NORMAL POSITION
 ========================================================= */
 
 function miloStudySessionComplete(streak = null) {
@@ -1709,42 +1709,13 @@ function miloStudySessionComplete(streak = null) {
     miloCelebrationActive = true;
     miloBusy = true;
 
+
     const container =
         document.getElementById("miloCompanion");
-   if (container) {
-    container.style.display = "block";
-    container.style.visibility = "visible";
-    container.style.opacity = "1";
-    container.style.position = "fixed";
-    container.style.zIndex = "2147483647";
-    container.style.pointerEvents = "none";
-    container.style.left = "0";
-    container.style.top = "0";
-    container.style.width = "100vw";
-    container.style.height = "100vh";
-
-    // Force Milo itself to be visible
-    const character = container.querySelector("#miloCharacter");
-
-    if (character) {
-        character.style.display = "block";
-        character.style.visibility = "visible";
-        character.style.opacity = "1";
-        character.style.zIndex = "2147483647";
-    }
-
-    // Force the monkey wrapper to be visible
-    const monkey = container.querySelector(".milo-monkey");
-
-    if (monkey) {
-        monkey.style.display = "block";
-        monkey.style.visibility = "visible";
-        monkey.style.opacity = "1";
-    }
-}
 
     const character =
         document.getElementById("miloCharacter");
+
 
     if (!container || !character) {
 
@@ -1758,17 +1729,19 @@ function miloStudySessionComplete(streak = null) {
         return;
     }
 
+
     /* =====================================================
-       FORCE MILO INTO THE TOP-LEVEL DOCUMENT
+       KEEP MILO AS A NORMAL BOTTOM-RIGHT CHARACTER
+
+       IMPORTANT:
+       DO NOT make the Milo container fullscreen.
+       The streak popup has its own fullscreen layer.
     ===================================================== */
 
     if (container.parentElement !== document.body) {
         document.body.appendChild(container);
     }
 
-    /* =====================================================
-       FORCE VISIBILITY
-    ===================================================== */
 
     container.style.position = "fixed";
     container.style.display = "block";
@@ -1777,13 +1750,56 @@ function miloStudySessionComplete(streak = null) {
     container.style.zIndex = "2147483647";
     container.style.pointerEvents = "none";
 
+    /* Remove the old fullscreen layout values */
+    container.style.left = "";
+    container.style.top = "";
+    container.style.width = "";
+    container.style.height = "";
+
+
+    /* =====================================================
+       RESTORE MILO CHARACTER SIZE
+    ===================================================== */
+
     character.style.display = "block";
     character.style.visibility = "visible";
     character.style.opacity = "1";
     character.style.pointerEvents = "auto";
 
+    character.style.width = "190px";
+    character.style.height = "265px";
+
+    character.style.margin = "0 auto";
+
+    character.style.position = "relative";
+
+    character.style.left = "";
+    character.style.top = "";
+
+
     /* =====================================================
-       REMOVE ANY POSSIBLE HIDDEN STATE
+       RESTORE MONKEY WRAPPER
+    ===================================================== */
+
+    const monkey =
+        character.querySelector(".milo-monkey");
+
+    if (monkey) {
+
+        monkey.style.display = "block";
+        monkey.style.visibility = "visible";
+        monkey.style.opacity = "1";
+
+        monkey.style.position = "absolute";
+        monkey.style.left = "";
+        monkey.style.top = "";
+        monkey.style.width = "";
+        monkey.style.height = "";
+    }
+
+
+    /* =====================================================
+       REMOVE HIDDEN STATE
     ===================================================== */
 
     container.hidden = false;
@@ -1792,17 +1808,20 @@ function miloStudySessionComplete(streak = null) {
     container.removeAttribute("aria-hidden");
     character.removeAttribute("aria-hidden");
 
+
     /* =====================================================
        STOP OLD ANIMATIONS
     ===================================================== */
 
     stopMiloCelebrationAnimation();
 
+
     /* =====================================================
        CELEBRATION FACE
     ===================================================== */
 
     setMiloFace("celebrate");
+
 
     /* =====================================================
        STREAK MESSAGE
@@ -1818,13 +1837,15 @@ function miloStudySessionComplete(streak = null) {
 
             : "Study session complete! 🎉";
 
+
     showMilo(
         message,
         "celebrate"
     );
 
+
     /* =====================================================
-       FORCE BUBBLE ABOVE EVERYTHING
+       BUBBLE
     ===================================================== */
 
     const bubble =
@@ -1838,11 +1859,13 @@ function miloStudySessionComplete(streak = null) {
         bubble.style.zIndex = "2147483647";
     }
 
+
     /* =====================================================
-       START MILO DANCE
+       MILO DANCE
     ===================================================== */
 
     startMiloCelebrationAnimation();
+
 
     /* =====================================================
        SOUND
@@ -1850,11 +1873,13 @@ function miloStudySessionComplete(streak = null) {
 
     playSound("woohoo");
 
+
     /* =====================================================
        VOICE
     ===================================================== */
 
     speakMilo(
+
         Number.isFinite(numericStreak) &&
         numericStreak > 0
 
@@ -1869,8 +1894,9 @@ function miloStudySessionComplete(streak = null) {
         }
     );
 
+
     /* =====================================================
-       KEEP CELEBRATION ON SCREEN
+       END CELEBRATION
     ===================================================== */
 
     miloTimeout(() => {
@@ -1888,7 +1914,6 @@ function miloStudySessionComplete(streak = null) {
 
     }, 6500);
 }
-
 
 
 /* =========================================================
