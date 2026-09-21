@@ -13,16 +13,21 @@
 
 <div class="app-shell">
 
-    <!-- SIDEBAR -->
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
     <aside class="sidebar" id="sidebar">
 
         <div class="brand">
+
             <div class="brand-icon">🧠</div>
 
             <div>
                 <strong>StudyMind</strong>
                 <span>AI Study Coach</span>
             </div>
+
         </div>
 
 
@@ -123,7 +128,10 @@
     </aside>
 
 
-    <!-- MAIN -->
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
     <main class="main-content">
 
         <header class="topbar">
@@ -133,7 +141,10 @@
             </button>
 
             <div>
-                <p class="eyebrow">YOUR PROGRESS</p>
+
+                <p class="eyebrow">
+                    YOUR PROGRESS
+                </p>
 
                 <h1>
                     Study Streak
@@ -142,12 +153,14 @@
                 <p class="subtitle">
                     Build consistency, one study day at a time.
                 </p>
+
             </div>
 
 
             <div class="user-area">
 
                 <div class="user-info">
+
                     <strong id="usernameDisplay">
                         Student
                     </strong>
@@ -155,6 +168,7 @@
                     <span>
                         Keep going 🔥
                     </span>
+
                 </div>
 
                 <div class="avatar" id="userAvatar">
@@ -166,7 +180,10 @@
         </header>
 
 
-        <!-- HERO -->
+        <!-- =================================================
+             STREAK HERO
+        ================================================== -->
+
         <section class="streak-hero">
 
             <div class="hero-content">
@@ -182,17 +199,34 @@
                     </p>
 
                     <div class="streak-number">
-                        <span id="currentStreak">
+
+                        <span
+                            id="currentStreak"
+                            class="streak-count-value"
+                        >
                             0
                         </span>
 
                         <span class="days-word">
                             days
                         </span>
+
                     </div>
 
-                    <p id="streakMessage" class="hero-message">
-                        Complete a study topic to start your streak.
+                    <!-- Animated change indicator -->
+
+                    <div
+                        id="streakTransition"
+                        class="streak-transition"
+                        aria-live="polite"
+                    ></div>
+
+                    <p
+                        id="streakMessage"
+                        class="hero-message"
+                    >
+                        Complete your study requirements
+                        to start your streak.
                     </p>
 
                 </div>
@@ -203,13 +237,28 @@
             <div class="hero-side">
 
                 <div class="hero-stat">
-                    <span>Best streak</span>
-                    <strong id="bestStreak">0 days</strong>
+
+                    <span>
+                        Best streak
+                    </span>
+
+                    <strong id="bestStreak">
+                        0 days
+                    </strong>
+
                 </div>
 
+
                 <div class="hero-stat">
-                    <span>Study days</span>
-                    <strong id="totalStudyDays">0</strong>
+
+                    <span>
+                        Completed study days
+                    </span>
+
+                    <strong id="totalStudyDays">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -217,7 +266,10 @@
         </section>
 
 
-        <!-- STATS -->
+        <!-- =================================================
+             STATS
+        ================================================== -->
+
         <section class="stats-grid">
 
             <div class="stat-card">
@@ -227,10 +279,15 @@
                 </div>
 
                 <div>
-                    <span>Topics completed</span>
+
+                    <span>
+                        Topics completed
+                    </span>
+
                     <strong id="topicsCompleted">
                         0
                     </strong>
+
                 </div>
 
             </div>
@@ -243,10 +300,15 @@
                 </div>
 
                 <div>
-                    <span>This week</span>
+
+                    <span>
+                        This week
+                    </span>
+
                     <strong id="weeklyDays">
                         0 / 7
                     </strong>
+
                 </div>
 
             </div>
@@ -259,10 +321,15 @@
                 </div>
 
                 <div>
-                    <span>Weekly consistency</span>
+
+                    <span>
+                        Weekly consistency
+                    </span>
+
                     <strong id="weeklyConsistency">
                         0%
                     </strong>
+
                 </div>
 
             </div>
@@ -275,10 +342,15 @@
                 </div>
 
                 <div>
-                    <span>Best week</span>
+
+                    <span>
+                        Best week
+                    </span>
+
                     <strong id="bestWeek">
                         0 days
                     </strong>
+
                 </div>
 
             </div>
@@ -286,16 +358,20 @@
         </section>
 
 
-        <!-- MAIN GRID -->
+        <!-- =================================================
+             MAIN GRID
+        ================================================== -->
+
         <section class="content-grid">
 
-
             <!-- CALENDAR -->
+
             <div class="panel calendar-panel">
 
                 <div class="panel-header">
 
                     <div>
+
                         <p class="panel-eyebrow">
                             ACTIVITY
                         </p>
@@ -303,7 +379,9 @@
                         <h2>
                             Your study activity
                         </h2>
+
                     </div>
+
 
                     <div class="calendar-controls">
 
@@ -339,8 +417,8 @@
 
                 <div
                     class="calendar-grid"
-                    id="calendarGrid">
-                </div>
+                    id="calendarGrid"
+                ></div>
 
 
                 <div class="calendar-legend">
@@ -366,15 +444,18 @@
 
 
             <!-- RIGHT COLUMN -->
+
             <div class="right-column">
 
 
                 <!-- TODAY -->
+
                 <div class="panel today-panel">
 
                     <div class="panel-header">
 
                         <div>
+
                             <p class="panel-eyebrow">
                                 TODAY
                             </p>
@@ -382,25 +463,31 @@
                             <h2>
                                 Today's progress
                             </h2>
+
                         </div>
 
-                        <div id="todayIcon"
-                             class="today-icon">
+                        <div
+                            id="todayIcon"
+                            class="today-icon"
+                        >
                             ○
                         </div>
 
                     </div>
 
 
-                    <div class="today-status"
-                         id="todayStatus">
+                    <div
+                        class="today-status"
+                        id="todayStatus"
+                    >
 
                         <strong>
                             No study activity yet
                         </strong>
 
                         <span>
-                            Complete a topic to protect your streak.
+                            Complete your assigned topics
+                            to protect your streak.
                         </span>
 
                     </div>
@@ -410,14 +497,16 @@
 
                         <div
                             id="todayProgress"
-                            class="progress-fill">
-                        </div>
+                            class="progress-fill"
+                        ></div>
 
                     </div>
 
 
-                    <p class="progress-caption"
-                       id="todayCaption">
+                    <p
+                        class="progress-caption"
+                        id="todayCaption"
+                    >
                         0 study activity today
                     </p>
 
@@ -425,6 +514,7 @@
 
 
                 <!-- MOTIVATION -->
+
                 <div class="motivation-card">
 
                     <div class="motivation-icon">
@@ -438,8 +528,9 @@
                         </h3>
 
                         <p id="motivationText">
-                            Your first completed topic will
-                            create your first study day.
+                            Complete today's assigned
+                            topics to create your first
+                            study day.
                         </p>
 
                     </div>
@@ -448,11 +539,13 @@
 
 
                 <!-- HOW IT WORKS -->
+
                 <div class="panel rules-panel">
 
                     <div class="panel-header">
 
                         <div>
+
                             <p class="panel-eyebrow">
                                 STREAK RULES
                             </p>
@@ -460,6 +553,7 @@
                             <h2>
                                 How it works
                             </h2>
+
                         </div>
 
                     </div>
@@ -470,7 +564,8 @@
                         <span>1</span>
 
                         <p>
-                            Complete at least one study topic.
+                            Complete all required study
+                            topics for the day.
                         </p>
 
                     </div>
@@ -481,7 +576,8 @@
                         <span>2</span>
 
                         <p>
-                            That day is recorded as a study day.
+                            The completed date becomes
+                            a study day.
                         </p>
 
                     </div>
@@ -492,8 +588,8 @@
                         <span>3</span>
 
                         <p>
-                            Study again the next day to continue
-                            your streak.
+                            Study again on the next day
+                            to continue your streak.
                         </p>
 
                     </div>
@@ -504,7 +600,7 @@
                         <span>4</span>
 
                         <p>
-                            Multiple topics on the same day
+                            Multiple topics on one day
                             still count as one study day.
                         </p>
 
@@ -517,12 +613,16 @@
         </section>
 
 
-        <!-- WEEKLY ACTIVITY -->
+        <!-- =================================================
+             WEEKLY ACTIVITY
+        ================================================== -->
+
         <section class="panel weekly-panel">
 
             <div class="panel-header">
 
                 <div>
+
                     <p class="panel-eyebrow">
                         THIS WEEK
                     </p>
@@ -530,23 +630,29 @@
                     <h2>
                         Weekly consistency
                     </h2>
+
                 </div>
 
-                <span id="weekRange"
-                      class="week-range">
-                </span>
+                <span
+                    id="weekRange"
+                    class="week-range"
+                ></span>
 
             </div>
 
 
-            <div class="weekly-bars"
-                 id="weeklyBars">
-            </div>
+            <div
+                class="weekly-bars"
+                id="weeklyBars"
+            ></div>
 
         </section>
 
 
-        <!-- CTA -->
+        <!-- =================================================
+             CTA
+        ================================================== -->
+
         <section class="streak-cta">
 
             <div>
@@ -562,7 +668,8 @@
                     </h2>
 
                     <p>
-                        Complete a topic and keep your streak alive.
+                        Complete today's requirements
+                        and keep your streak alive.
                     </p>
 
                 </div>
@@ -581,9 +688,75 @@
 </div>
 
 
-<!-- STREAK CELEBRATION -->
-<div class="celebration-overlay"
-     id="celebrationOverlay">
+<!-- =====================================================
+     STREAK PAGE MILO
+     THIS IS COMPLETELY INDEPENDENT OF milo.js
+====================================================== -->
+
+<div
+    id="streakMilo"
+    class="streak-milo"
+    aria-hidden="true"
+>
+
+    <div class="streak-milo-bubble">
+        <span id="streakMiloMessage">
+            Great job! 🔥
+        </span>
+    </div>
+
+
+    <div
+        id="streakMiloCharacter"
+        class="streak-milo-character"
+    >
+
+        <div class="milo-tail"></div>
+
+        <div class="milo-body">
+
+            <div class="milo-ear left"></div>
+            <div class="milo-ear right"></div>
+
+            <div class="milo-head">
+
+                <div class="milo-eye left"></div>
+                <div class="milo-eye right"></div>
+
+                <div class="milo-muzzle">
+
+                    <div class="milo-nose"></div>
+
+                    <div class="milo-mouth">
+                        <span></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="milo-arm left"></div>
+            <div class="milo-arm right"></div>
+
+            <div class="milo-leg left"></div>
+            <div class="milo-leg right"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     STREAK CELEBRATION
+====================================================== -->
+
+<div
+    class="celebration-overlay"
+    id="celebrationOverlay"
+>
 
     <div class="celebration-card">
 
@@ -591,8 +764,15 @@
             🔥
         </div>
 
+        <div
+            class="celebration-count"
+            id="celebrationCount"
+        >
+            1
+        </div>
+
         <h2>
-            Streak updated!
+            Study day completed!
         </h2>
 
         <p id="celebrationText">
@@ -600,7 +780,7 @@
         </p>
 
         <button id="closeCelebration">
-            Keep going
+            Keep going 🚀
         </button>
 
     </div>
@@ -612,4 +792,1992 @@
 
 </body>
 </html>
+```
+
+---
+
+# 2. `study-streak.css`
+
+This adds the new number transition, completed-day animation, and the **separate CSS Milo**.
+
+```css
+/* =========================================================
+   STUDYMIND AI — STUDY STREAK
+   COMPLETE REPLACEMENT
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+
+    --bg: #f4f7fb;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+
+    --text: #172033;
+    --muted: #738096;
+
+    --border: #e5eaf2;
+
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+
+    --fire: #f97316;
+    --fire-soft: #fff7ed;
+
+    --green: #16a34a;
+    --green-soft: #f0fdf4;
+
+    --purple: #7c3aed;
+    --purple-soft: #f5f3ff;
+
+    --shadow:
+        0 12px 35px rgba(15, 23, 42, .07);
+}
+
+body.dark {
+
+    --bg: #0a1020;
+    --surface: #111827;
+    --surface-soft: #172033;
+
+    --text: #f4f7fb;
+    --muted: #9aa8bd;
+
+    --border: #273247;
+
+    --primary: #60a5fa;
+    --primary-soft: rgba(96,165,250,.12);
+
+    --fire: #fb923c;
+    --fire-soft: rgba(249,115,22,.12);
+
+    --green: #4ade80;
+    --green-soft: rgba(74,222,128,.1);
+
+    --purple: #a78bfa;
+    --purple-soft: rgba(124,58,237,.12);
+
+    --shadow:
+        0 15px 45px rgba(0,0,0,.25);
+}
+
+body {
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background: var(--bg);
+    color: var(--text);
+
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app-shell {
+
+    min-height: 100vh;
+    display: flex;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 260px;
+
+    background: var(--surface);
+
+    border-right:
+        1px solid var(--border);
+
+    padding: 24px 16px;
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 100;
+}
+
+.brand {
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        0 10px 25px;
+}
+
+.brand-icon {
+
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #7c3aed
+        );
+
+    color: white;
+
+    font-size: 21px;
+}
+
+.brand strong {
+
+    display: block;
+    font-size: 17px;
+}
+
+.brand span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+.navigation {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.navigation a {
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    text-decoration: none;
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    padding: 10px 12px;
+
+    border-radius: 11px;
+
+    transition: .2s;
+}
+
+.navigation a:hover {
+
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.navigation a.active {
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-weight: 700;
+}
+
+.navigation a span {
+
+    width: 19px;
+    text-align: center;
+}
+
+.nav-title {
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+    letter-spacing: 1.3px;
+
+    font-weight: 800;
+
+    padding:
+        16px 12px 5px;
+}
+
+.sidebar-bottom {
+
+    margin-top: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.theme-button,
+.logout-button {
+
+    border: 0;
+
+    background:
+        var(--surface-soft);
+
+    color: var(--text);
+
+    border-radius: 11px;
+
+    padding: 11px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+.logout-button {
+
+    background: transparent;
+    color: var(--muted);
+}
+
+.logout-button:hover {
+
+    color: #dc2626;
+    background: #fef2f2;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main-content {
+
+    margin-left: 260px;
+
+    width:
+        calc(100% - 260px);
+
+    padding:
+        32px 42px 60px;
+
+    max-width: 1500px;
+}
+
+.topbar {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    margin-bottom: 30px;
+}
+
+.eyebrow {
+
+    color: var(--primary);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.7px;
+
+    margin-bottom: 5px;
+}
+
+.topbar h1 {
+
+    font-size: 31px;
+
+    letter-spacing: -.8px;
+}
+
+.subtitle {
+
+    color: var(--muted);
+
+    font-size: 14px;
+
+    margin-top: 5px;
+}
+
+.user-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+}
+
+.user-info {
+
+    text-align: right;
+}
+
+.user-info strong {
+
+    display: block;
+
+    font-size: 13px;
+}
+
+.user-info span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 3px;
+}
+
+.avatar {
+
+    width: 43px;
+    height: 43px;
+
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    background: var(--primary-soft);
+
+    color: var(--primary);
+
+    font-weight: 800;
+}
+
+.mobile-menu {
+
+    display: none;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.streak-hero {
+
+    min-height: 215px;
+
+    border-radius: 22px;
+
+    padding: 32px 38px;
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    overflow: hidden;
+
+    position: relative;
+
+    background:
+        linear-gradient(
+            125deg,
+            #172554,
+            #1d4ed8 55%,
+            #4338ca
+        );
+
+    box-shadow:
+        0 18px 45px
+        rgba(37,99,235,.22);
+}
+
+.streak-hero::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 300px;
+    height: 300px;
+
+    border-radius: 50%;
+
+    right: -90px;
+    top: -150px;
+
+    background:
+        rgba(255,255,255,.08);
+}
+
+.hero-content {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 24px;
+
+    position: relative;
+
+    z-index: 2;
+}
+
+.fire-circle {
+
+    width: 88px;
+    height: 88px;
+
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    font-size: 44px;
+
+    background:
+        rgba(255,255,255,.13);
+
+    border:
+        1px solid
+        rgba(255,255,255,.2);
+
+    box-shadow:
+        0 0 35px
+        rgba(249,115,22,.25);
+}
+
+.hero-label {
+
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    font-weight: 800;
+
+    opacity: .75;
+}
+
+.streak-number {
+
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 9px;
+
+    margin-top: 2px;
+
+    min-height: 65px;
+}
+
+.streak-number span:first-child {
+
+    font-size: 62px;
+
+    line-height: 1;
+
+    font-weight: 850;
+
+    letter-spacing: -3px;
+
+    display: inline-block;
+
+    transform-origin: center bottom;
+}
+
+.streak-count-value.bump {
+
+    animation:
+        streakNumberBump .7s cubic-bezier(.2,.9,.3,1.3);
+}
+
+@keyframes streakNumberBump {
+
+    0% {
+        transform:
+            scale(1)
+            translateY(0);
+    }
+
+    30% {
+        transform:
+            scale(1.28)
+            translateY(-8px);
+    }
+
+    55% {
+        transform:
+            scale(.92)
+            translateY(2px);
+    }
+
+    75% {
+        transform:
+            scale(1.08)
+            translateY(-2px);
+    }
+
+    100% {
+        transform:
+            scale(1)
+            translateY(0);
+    }
+}
+
+.days-word {
+
+    font-size: 16px;
+
+    opacity: .75;
+}
+
+.streak-transition {
+
+    min-height: 19px;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    color: #bfdbfe;
+
+    opacity: 0;
+}
+
+.streak-transition.show {
+
+    animation:
+        transitionMessage .9s ease forwards;
+}
+
+@keyframes transitionMessage {
+
+    0% {
+        opacity: 0;
+        transform:
+            translateY(8px);
+    }
+
+    25% {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+            translateY(-4px);
+    }
+}
+
+.hero-message {
+
+    margin-top: 4px;
+
+    font-size: 13px;
+
+    opacity: .82;
+}
+
+.hero-side {
+
+    display: flex;
+
+    gap: 35px;
+
+    position: relative;
+
+    z-index: 2;
+}
+
+.hero-stat {
+
+    min-width: 100px;
+}
+
+.hero-stat span {
+
+    display: block;
+
+    font-size: 11px;
+
+    opacity: .65;
+
+    margin-bottom: 6px;
+}
+
+.hero-stat strong {
+
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.stats-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 14px;
+
+    margin-top: 16px;
+}
+
+.stat-card {
+
+    background: var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 15px;
+
+    padding: 17px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    box-shadow: var(--shadow);
+}
+
+.stat-icon {
+
+    width: 43px;
+    height: 43px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 12px;
+
+    font-size: 19px;
+}
+
+.stat-icon.blue {
+    background: var(--primary-soft);
+}
+
+.stat-icon.purple {
+    background: var(--purple-soft);
+}
+
+.stat-icon.green {
+    background: var(--green-soft);
+}
+
+.stat-icon.orange {
+    background: var(--fire-soft);
+}
+
+.stat-card span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    margin-bottom: 4px;
+}
+
+.stat-card strong {
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   CONTENT GRID
+========================================================= */
+
+.content-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.6fr)
+        minmax(300px, .8fr);
+
+    gap: 16px;
+
+    margin-top: 16px;
+}
+
+.panel {
+
+    background: var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 18px;
+
+    padding: 23px;
+
+    box-shadow: var(--shadow);
+}
+
+.panel-header {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    margin-bottom: 22px;
+}
+
+.panel-eyebrow {
+
+    color: var(--primary);
+
+    font-size: 9px;
+
+    letter-spacing: 1.5px;
+
+    font-weight: 800;
+
+    margin-bottom: 4px;
+}
+
+.panel h2 {
+    font-size: 17px;
+}
+
+.calendar-controls {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.calendar-controls button {
+
+    width: 30px;
+    height: 30px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 8px;
+
+    background: var(--surface-soft);
+
+    color: var(--text);
+
+    cursor: pointer;
+
+    font-size: 18px;
+}
+
+.calendar-controls strong {
+
+    min-width: 105px;
+
+    text-align: center;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   CALENDAR
+========================================================= */
+
+.calendar-weekdays {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7, 1fr);
+
+    gap: 7px;
+
+    margin-bottom: 7px;
+}
+
+.calendar-weekdays span {
+
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+    font-weight: 800;
+}
+
+.calendar-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7, 1fr);
+
+    gap: 7px;
+}
+
+.calendar-day {
+
+    min-height: 47px;
+
+    border-radius: 9px;
+
+    background: var(--surface-soft);
+
+    border:
+        1px solid transparent;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+
+    font-size: 11px;
+
+    color: var(--muted);
+
+    transition:
+        transform .25s,
+        box-shadow .25s,
+        background .25s;
+}
+
+.calendar-day.empty {
+    background: transparent;
+}
+
+.calendar-day.today {
+
+    border:
+        1.5px solid var(--primary);
+
+    color: var(--primary);
+
+    font-weight: 800;
+}
+
+.calendar-day.studied {
+
+    background:
+        linear-gradient(
+            145deg,
+            #2563eb,
+            #4f46e5
+        );
+
+    color: white;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 5px 15px
+        rgba(37,99,235,.2);
+}
+
+.calendar-day.studied.today {
+
+    border:
+        2px solid white;
+
+    outline:
+        2px solid var(--primary);
+}
+
+.calendar-day .check {
+
+    position: absolute;
+
+    right: 5px;
+    bottom: 3px;
+
+    font-size: 8px;
+}
+
+
+/* New study day */
+
+.calendar-day.newly-completed {
+
+    animation:
+        newStudyDay .9s
+        cubic-bezier(.2,.9,.3,1.3);
+}
+
+@keyframes newStudyDay {
+
+    0% {
+
+        transform:
+            scale(.45)
+            rotate(-8deg);
+
+        opacity: .15;
+
+        box-shadow:
+            0 0 0
+            rgba(249,115,22,0);
+    }
+
+    45% {
+
+        transform:
+            scale(1.2)
+            rotate(3deg);
+
+        opacity: 1;
+
+        box-shadow:
+            0 0 30px
+            rgba(249,115,22,.75);
+    }
+
+    70% {
+
+        transform:
+            scale(.93)
+            rotate(-1deg);
+    }
+
+    100% {
+
+        transform:
+            scale(1)
+            rotate(0);
+
+        box-shadow:
+            0 5px 15px
+            rgba(37,99,235,.2);
+    }
+}
+
+.calendar-legend {
+
+    display: flex;
+
+    gap: 18px;
+
+    margin-top: 17px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+}
+
+.calendar-legend div {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+}
+
+.legend-dot {
+
+    width: 9px;
+    height: 9px;
+
+    border-radius: 3px;
+}
+
+.active-day {
+    background: var(--primary);
+}
+
+.today-dot {
+
+    border:
+        2px solid var(--primary);
+}
+
+.empty-day {
+
+    background: var(--surface-soft);
+
+    border:
+        1px solid var(--border);
+}
+
+
+/* =========================================================
+   RIGHT COLUMN
+========================================================= */
+
+.right-column {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+}
+
+.today-icon {
+
+    width: 34px;
+    height: 34px;
+
+    border-radius: 10px;
+
+    background: var(--surface-soft);
+
+    display: grid;
+    place-items: center;
+
+    color: var(--muted);
+
+    font-size: 17px;
+}
+
+.today-icon.complete {
+
+    background: var(--green-soft);
+
+    color: var(--green);
+}
+
+.today-status {
+
+    padding: 14px;
+
+    background: var(--surface-soft);
+
+    border-radius: 11px;
+}
+
+.today-status strong {
+
+    display: block;
+
+    font-size: 12px;
+}
+
+.today-status span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    line-height: 1.5;
+
+    margin-top: 4px;
+}
+
+.progress-track {
+
+    height: 8px;
+
+    border-radius: 20px;
+
+    background: var(--surface-soft);
+
+    overflow: hidden;
+
+    margin-top: 16px;
+}
+
+.progress-fill {
+
+    width: 0%;
+
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            #2563eb,
+            #7c3aed
+        );
+
+    transition: width .4s;
+}
+
+.progress-caption {
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+    margin-top: 7px;
+}
+
+
+/* =========================================================
+   MOTIVATION
+========================================================= */
+
+.motivation-card {
+
+    border-radius: 17px;
+
+    padding: 20px;
+
+    display: flex;
+
+    gap: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--fire-soft),
+            var(--surface)
+        );
+
+    border:
+        1px solid
+        rgba(249,115,22,.18);
+}
+
+.motivation-icon {
+
+    width: 43px;
+    height: 43px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(249,115,22,.12);
+
+    font-size: 21px;
+}
+
+.motivation-card h3 {
+    font-size: 13px;
+}
+
+.motivation-card p {
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    line-height: 1.6;
+
+    margin-top: 4px;
+}
+
+
+/* =========================================================
+   RULES
+========================================================= */
+
+.rule {
+
+    display: flex;
+
+    gap: 11px;
+
+    align-items: flex-start;
+
+    margin-top: 13px;
+}
+
+.rule span {
+
+    flex-shrink: 0;
+
+    width: 22px;
+    height: 22px;
+
+    border-radius: 7px;
+
+    display: grid;
+    place-items: center;
+
+    background: var(--primary-soft);
+
+    color: var(--primary);
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+.rule p {
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    line-height: 1.55;
+
+    padding-top: 2px;
+}
+
+
+/* =========================================================
+   WEEKLY
+========================================================= */
+
+.weekly-panel {
+    margin-top: 16px;
+}
+
+.week-range {
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+.weekly-bars {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7, 1fr);
+
+    gap: 10px;
+
+    align-items: end;
+
+    height: 130px;
+}
+
+.week-day {
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 7px;
+}
+
+.week-bar-wrapper {
+
+    width: 100%;
+
+    height: 88px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: center;
+}
+
+.week-bar {
+
+    width: min(34px, 65%);
+
+    min-height: 5px;
+
+    border-radius:
+        7px 7px 4px 4px;
+
+    background: var(--border);
+
+    transition:
+        height .55s
+        cubic-bezier(.2,.8,.2,1);
+}
+
+.week-bar.active {
+
+    background:
+        linear-gradient(
+            180deg,
+            #2563eb,
+            #4f46e5
+        );
+
+    box-shadow:
+        0 4px 12px
+        rgba(37,99,235,.2);
+}
+
+.week-bar.today {
+
+    outline:
+        2px solid var(--primary);
+
+    outline-offset: 2px;
+}
+
+.week-label {
+
+    font-size: 9px;
+
+    color: var(--muted);
+}
+
+.week-number {
+
+    font-size: 8px;
+
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   CTA
+========================================================= */
+
+.streak-cta {
+
+    margin-top: 16px;
+
+    padding: 21px 25px;
+
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            110deg,
+            var(--surface),
+            var(--primary-soft)
+        );
+
+    border:
+        1px solid var(--border);
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+}
+
+.streak-cta > div {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+}
+
+.cta-icon {
+
+    width: 42px;
+    height: 42px;
+
+    border-radius: 12px;
+
+    display: grid;
+    place-items: center;
+
+    background: var(--primary);
+
+    color: white;
+}
+
+.streak-cta h2 {
+    font-size: 14px;
+}
+
+.streak-cta p {
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    margin-top: 4px;
+}
+
+.streak-cta a {
+
+    text-decoration: none;
+
+    background: var(--primary);
+
+    color: white;
+
+    padding: 10px 15px;
+
+    border-radius: 9px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   STREAK PAGE MILO
+   COMPLETELY INDEPENDENT FROM milo.js
+========================================================= */
+
+.streak-milo {
+
+    position: fixed;
+
+    right: 28px;
+    bottom: 22px;
+
+    width: 205px;
+    height: 315px;
+
+    z-index: 800;
+
+    pointer-events: none;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    opacity: 0;
+
+    transform:
+        translateY(25px)
+        scale(.85);
+
+    transition:
+        opacity .3s ease,
+        transform .3s ease;
+}
+
+.streak-milo.active {
+
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+.streak-milo-bubble {
+
+    background: var(--surface);
+
+    color: var(--text);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 15px;
+
+    padding: 9px 13px;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 12px 30px
+        rgba(15,23,42,.15);
+
+    margin-bottom: 8px;
+
+    position: relative;
+
+    white-space: nowrap;
+}
+
+.streak-milo-bubble::after {
+
+    content: "";
+
+    position: absolute;
+
+    bottom: -6px;
+
+    left: 50%;
+
+    width: 11px;
+    height: 11px;
+
+    background: var(--surface);
+
+    border-right:
+        1px solid var(--border);
+
+    border-bottom:
+        1px solid var(--border);
+
+    transform:
+        translateX(-50%)
+        rotate(45deg);
+}
+
+
+/* Milo body */
+
+.streak-milo-character {
+
+    position: relative;
+
+    width: 150px;
+    height: 225px;
+
+    transform-origin:
+        50% 90%;
+}
+
+.streak-milo.dancing
+.streak-milo-character {
+
+    animation:
+        miloDance
+        1.15s
+        cubic-bezier(.4,0,.2,1)
+        infinite;
+}
+
+@keyframes miloDance {
+
+    0%,
+    100% {
+        transform:
+            rotate(-4deg)
+            translateY(0);
+    }
+
+    20% {
+        transform:
+            rotate(8deg)
+            translateY(-13px);
+    }
+
+    40% {
+        transform:
+            rotate(-8deg)
+            translateY(0);
+    }
+
+    60% {
+        transform:
+            rotate(9deg)
+            translateY(-15px);
+    }
+
+    80% {
+        transform:
+            rotate(-7deg)
+            translateY(0);
+    }
+}
+
+.milo-body {
+
+    position: absolute;
+
+    left: 30px;
+    top: 55px;
+
+    width: 90px;
+    height: 125px;
+
+    border-radius:
+        45% 45% 42% 42%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #9a6339,
+            #704322
+        );
+
+    box-shadow:
+        inset -9px -12px 0
+        rgba(0,0,0,.12),
+
+        0 12px 25px
+        rgba(0,0,0,.16);
+}
+
+
+/* Head */
+
+.milo-head {
+
+    position: absolute;
+
+    left: -13px;
+    top: -44px;
+
+    width: 116px;
+    height: 98px;
+
+    border-radius:
+        48% 48% 45% 45%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #a96f42,
+            #774825
+        );
+
+    box-shadow:
+        inset -7px -8px 0
+        rgba(0,0,0,.12);
+}
+
+
+/* Ears */
+
+.milo-ear {
+
+    position: absolute;
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 50%;
+
+    background: #80502c;
+
+    top: 18px;
+
+    z-index: -1;
+}
+
+.milo-ear.left {
+    left: -25px;
+}
+
+.milo-ear.right {
+    right: -25px;
+}
+
+
+/* Eyes */
+
+.milo-eye {
+
+    position: absolute;
+
+    top: 33px;
+
+    width: 12px;
+    height: 16px;
+
+    border-radius: 50%;
+
+    background: #15110d;
+}
+
+.milo-eye.left {
+    left: 28px;
+}
+
+.milo-eye.right {
+    right: 28px;
+}
+
+
+/* Muzzle */
+
+.milo-muzzle {
+
+    position: absolute;
+
+    left: 50%;
+    bottom: 10px;
+
+    width: 58px;
+    height: 40px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius: 50%;
+
+    background: #c58b5d;
+}
+
+.milo-nose {
+
+    position: absolute;
+
+    left: 50%;
+    top: 8px;
+
+    width: 15px;
+    height: 10px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius: 50%;
+
+    background: #24170e;
+}
+
+.milo-mouth {
+
+    position: absolute;
+
+    left: 50%;
+    top: 18px;
+
+    width: 28px;
+    height: 14px;
+
+    transform:
+        translateX(-50%);
+
+    border-bottom:
+        3px solid #24170e;
+
+    border-radius: 0 0 50% 50%;
+}
+
+.milo-mouth span {
+    display: none;
+}
+
+
+/* Arms */
+
+.milo-arm {
+
+    position: absolute;
+
+    top: 30px;
+
+    width: 22px;
+    height: 76px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #98603a,
+            #6c4022
+        );
+
+    transform-origin: top center;
+}
+
+.milo-arm.left {
+
+    left: -16px;
+
+    transform:
+        rotate(18deg);
+}
+
+.milo-arm.right {
+
+    right: -16px;
+
+    transform:
+        rotate(-18deg);
+}
+
+.streak-milo.dancing
+.milo-arm.left {
+
+    animation:
+        leftArmDance
+        .57s
+        ease-in-out
+        infinite
+        alternate;
+}
+
+.streak-milo.dancing
+.milo-arm.right {
+
+    animation:
+        rightArmDance
+        .57s
+        ease-in-out
+        infinite
+        alternate;
+}
+
+@keyframes leftArmDance {
+
+    from {
+        transform:
+            rotate(18deg);
+    }
+
+    to {
+        transform:
+            rotate(-65deg);
+    }
+}
+
+@keyframes rightArmDance {
+
+    from {
+        transform:
+            rotate(-18deg);
+    }
+
+    to {
+        transform:
+            rotate(65deg);
+    }
+}
+
+
+/* Legs */
+
+.milo-leg {
+
+    position: absolute;
+
+    bottom: -40px;
+
+    width: 27px;
+    height: 58px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #86512d,
+            #61391e
+        );
+
+    transform-origin: top center;
+}
+
+.milo-leg.left {
+    left: 16px;
+}
+
+.milo-leg.right {
+    right: 16px;
+}
+
+.streak-milo.dancing
+.milo-leg.left {
+
+    animation:
+        leftLegDance
+        .57s
+        ease-in-out
+        infinite
+        alternate;
+}
+
+.streak-milo.dancing
+.milo-leg.right {
+
+    animation:
+        rightLegDance
+        .57s
+        ease-in-out
+        infinite
+        alternate;
+}
+
+@keyframes leftLegDance {
+
+    from {
+        transform:
+            rotate(-4deg);
+    }
+
+    to {
+        transform:
+            rotate(22deg);
+    }
+}
+
+@keyframes rightLegDance {
+
+    from {
+        transform:
+            rotate(4deg);
+    }
+
+    to {
+        transform:
+            rotate(-22deg);
+    }
+}
+
+
+/* Tail */
+
+.milo-tail {
+
+    position: absolute;
+
+    right: 3px;
+    top: 87px;
+
+    width: 72px;
+    height: 26px;
+
+    border:
+        9px solid #754520;
+
+    border-left: 0;
 
