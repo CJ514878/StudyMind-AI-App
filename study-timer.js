@@ -3368,15 +3368,14 @@ function setupTimerPageControls() {
 
 
     if (!timer) {
-
         return;
-
     }
 
 
-    /*
-     * Start / pause button.
-     */
+    /* =====================================================
+       START / PAUSE
+    ===================================================== */
+
     const startPause =
         document.getElementById(
             "startPauseTimer"
@@ -3416,9 +3415,10 @@ function setupTimerPageControls() {
     }
 
 
-    /*
-     * Reset button.
-     */
+    /* =====================================================
+       RESET
+    ===================================================== */
+
     const reset =
         document.getElementById(
             "resetTimer"
@@ -3446,9 +3446,209 @@ function setupTimerPageControls() {
     }
 
 
-    /*
-     * Close completion modal.
-     */
+    /* =====================================================
+       RECOMMENDED SESSION
+    ===================================================== */
+
+    const recommended =
+        document.getElementById(
+            "useRecommended"
+        );
+
+
+    if (
+        recommended &&
+        !recommended.dataset.timerBound
+    ) {
+
+        recommended.dataset.timerBound =
+            "true";
+
+
+        recommended.addEventListener(
+            "click",
+            () => {
+
+                const current =
+                    timer.getCurrentTopic();
+
+
+                if (!current) {
+
+                    return;
+
+                }
+
+
+                localStorage.setItem(
+                    "studyMindCurrentTopic",
+                    current.topic
+                );
+
+
+                localStorage.setItem(
+                    "studyMindCurrentSubject",
+                    current.subject
+                );
+
+
+                timer.reset();
+
+                timer.start();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       25 / 45 / 60 MINUTE BUTTONS
+       ===================================================== */
+
+    document
+        .querySelectorAll(
+            ".duration-button"
+        )
+        .forEach(
+            button => {
+
+                if (
+                    button.dataset.timerBound
+                ) {
+
+                    return;
+
+                }
+
+
+                button.dataset.timerBound =
+                    "true";
+
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const minutes =
+                            Number(
+                                button.dataset.minutes
+                            );
+
+
+                        if (
+                            !Number.isFinite(
+                                minutes
+                            ) ||
+                            minutes <= 0
+                        ) {
+
+                            console.warn(
+                                "Invalid timer duration:",
+                                button.dataset.minutes
+                            );
+
+                            return;
+
+                        }
+
+
+                        const state =
+                            timer.getState();
+
+
+                        /*
+                         * Don't allow the duration
+                         * to change while running.
+                         */
+                        if (state.running) {
+
+                            alert(
+                                "Pause the current session before changing the session length."
+                            );
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Save the selected duration.
+                         */
+                        localStorage.setItem(
+                            "studyMindSelectedTimerSeconds",
+                            String(
+                                minutes * 60
+                            )
+                        );
+
+
+                        /*
+                         * Set the actual timer seconds.
+                         */
+                        localStorage.setItem(
+                            "studyMindTimerSeconds",
+                            String(
+                                minutes * 60
+                            )
+                        );
+
+
+                        /*
+                         * Make sure the timer is
+                         * not considered running.
+                         */
+                        localStorage.setItem(
+                            "studyMindTimerRunning",
+                            "false"
+                        );
+
+
+                        localStorage.removeItem(
+                            "studyMindTimerEndTime"
+                        );
+
+
+                        /*
+                         * Reload the shared timer
+                         * state so every page sees
+                         * the new duration.
+                         */
+                        timer.initialize();
+
+
+                        /*
+                         * Update active button.
+                         */
+                        document
+                            .querySelectorAll(
+                                ".duration-button"
+                            )
+                            .forEach(
+                                otherButton => {
+
+                                    otherButton.classList.toggle(
+                                        "active",
+                                        Number(
+                                            otherButton.dataset.minutes
+                                        ) ===
+                                        minutes
+                                    );
+
+                                }
+                            );
+
+                    }
+                );
+
+            }
+        );
+
+
+    /* =====================================================
+       COMPLETION MODAL
+    ===================================================== */
+
     const closeCompletion =
         document.getElementById(
             "closeCompletion"
@@ -3488,9 +3688,10 @@ function setupTimerPageControls() {
     }
 
 
-    /*
-     * Render current topic.
-     */
+    /* =====================================================
+       CURRENT TOPIC
+    ===================================================== */
+
     const current =
         timer.getCurrentTopic();
 
