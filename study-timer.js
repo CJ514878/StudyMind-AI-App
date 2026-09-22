@@ -2880,8 +2880,9 @@
                     Number(minutes) || 0
                 ),
 
-        recordStreakActivity,
-
+        recordStreakActivity:
+            recordTimerActivity,
+       
         renderStats,
 
         renderHistory,
