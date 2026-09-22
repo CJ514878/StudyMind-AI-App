@@ -4654,20 +4654,25 @@ function normalizePlan(plan) {
    SAVE PLAN
 ========================================================= */
 
+
 function savePlan(plan) {
 
-    localStorage.setItem(
-        "studyMindPlan",
-        JSON.stringify(plan)
-    );
+    if (
+        !plan ||
+        typeof plan !== "object"
+    ) {
 
-    localStorage.setItem(
-        "studyData",
-        JSON.stringify(plan)
-    );
+        console.error(
+            "StudyMind: Invalid plan."
+        );
+
+        return false;
+
+    }
 
 
     let plans = [];
+
 
     try {
 
@@ -4678,7 +4683,10 @@ function savePlan(plan) {
                 ) || "[]"
             );
 
-        if (!Array.isArray(plans)) {
+
+        if (
+            !Array.isArray(plans)
+        ) {
 
             plans = [];
 
@@ -4691,36 +4699,301 @@ function savePlan(plan) {
     }
 
 
-    const existing =
+    const existingIndex =
         plans.findIndex(
             item =>
-                item.id === plan.id
+                item &&
+                item.id ===
+                plan.id
         );
 
 
-    if (existing >= 0) {
+    const isNewPlan =
+        existingIndex === -1;
 
-        plans[existing] =
-            plan;
+
+    /* =====================================================
+       NEW PLAN = NO PROGRESS
+    ===================================================== */
+
+    if (
+        isNewPlan
+    ) {
+
+        plan.xp = 0;
+
+        plan.streak = 0;
+
+        plan.studyScore = 0;
+
+        plan.completedTopics = [];
+
+        plan.completedQuestionTopics = [];
+
+    }
+
+
+    /* =====================================================
+       PRIMARY STORAGE
+    ===================================================== */
+
+    localStorage.setItem(
+        "studyMindPlan",
+        JSON.stringify(
+            plan
+        )
+    );
+
+
+    /* =====================================================
+       COMPATIBILITY STORAGE
+    ===================================================== */
+
+    localStorage.setItem(
+        "studyData",
+        JSON.stringify(
+            plan
+        )
+    );
+
+
+    /* =====================================================
+       MULTI-PLAN STORAGE
+    ===================================================== */
+
+    if (
+        existingIndex >= 0
+    ) {
+
+        plans[
+            existingIndex
+        ] = plan;
 
     } else {
 
-        plans.push(plan);
+        plans.push(
+            plan
+        );
 
     }
 
 
     localStorage.setItem(
         "studyMindPlans",
-        JSON.stringify(plans)
+        JSON.stringify(
+            plans
+        )
     );
 
-    localStorage.setItem(
-        "studyMindActivePlanId",
+
+    if (
         plan.id
+    ) {
+
+        localStorage.setItem(
+            "studyMindActivePlanId",
+            String(
+                plan.id
+            )
+        );
+
+    }
+
+
+    /* =====================================================
+       RESET PROGRESS ONLY FOR A NEW PLAN
+    ===================================================== */
+
+    if (
+        isNewPlan
+    ) {
+
+        localStorage.setItem(
+            "studyMindXP",
+            "0"
+        );
+
+
+        localStorage.setItem(
+            "studyMindTotalXP",
+            "0"
+        );
+
+
+        localStorage.setItem(
+            "studyMindStreak",
+            "0"
+        );
+
+
+        localStorage.setItem(
+            "studyMindLongestStreak",
+            "0"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindLastCompletedPlanDate"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindStreakActivity"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindCompletedTopics"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindCompletedQuestionTopics"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindStudySessions"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindDailyStudyTime"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindXPEvents"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindTimerEndTime"
+        );
+
+
+        localStorage.setItem(
+            "studyMindTimerRunning",
+            "false"
+        );
+
+
+        const selectedTimer =
+            Number(
+                localStorage.getItem(
+                    "studyMindSelectedTimerSeconds"
+                )
+            ) || 25 * 60;
+
+
+        localStorage.setItem(
+            "studyMindTimerSeconds",
+            String(
+                selectedTimer
+            )
+        );
+
+
+        localStorage.removeItem(
+            "studyMindCurrentTopic"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindCurrentTopicIndex"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindTimerSessionStart"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindTimerAwardedMinute"
+        );
+
+
+        /* =================================================
+           TELL ALL OPEN STUDYMIND PAGES
+        ================================================= */
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindPlanCreated",
+                {
+                    detail: {
+                        planId:
+                            plan.id ||
+                            null
+                    }
+                }
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindXPUpdated",
+                {
+                    detail: {
+                        amount: 0,
+                        total: 0,
+                        reason:
+                            "new-study-plan"
+                    }
+                }
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindStreakUpdated",
+                {
+                    detail: {
+                        streak: 0,
+                        reason:
+                            "new-study-plan"
+                    }
+                }
+            )
+        );
+
+    }
+
+
+    console.log(
+        "StudyMind plan saved:",
+        {
+            id:
+                plan.id ||
+                null,
+
+            newPlan:
+                isNewPlan,
+
+            xp:
+                isNewPlan
+                    ? 0
+                    : localStorage.getItem(
+                        "studyMindXP"
+                    ),
+
+            streak:
+                isNewPlan
+                    ? 0
+                    : localStorage.getItem(
+                        "studyMindStreak"
+                    )
+        }
     );
+
+
+    return true;
 
 }
+
 
 
 /* =========================================================
