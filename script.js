@@ -4832,45 +4832,30 @@ function savePlan(plan) {
         );
 
 
+              /*
+         * NEW PLAN RESET
+         *
+         * Reset only the progress that belongs to the
+         * newly created plan. Do NOT erase the student's
+         * account-wide study history, XP, streak, or score.
+         */
+
         localStorage.removeItem(
-            "studyMindLastCompletedPlanDate"
+            "studyMindCurrentTopic"
+        );
+
+        localStorage.removeItem(
+            "studyMindCurrentTopicIndex"
         );
 
 
-        localStorage.removeItem(
-            "studyMindStreakActivity"
-        );
-
-
-        localStorage.removeItem(
-            "studyMindCompletedTopics"
-        );
-
-
-        localStorage.removeItem(
-            "studyMindCompletedQuestionTopics"
-        );
-
-
-        localStorage.removeItem(
-            "studyMindStudySessions"
-        );
-
-
-        localStorage.removeItem(
-            "studyMindDailyStudyTime"
-        );
-
-
-        localStorage.removeItem(
-            "studyMindXPEvents"
-        );
-
+        /*
+         * Stop any timer from the previous plan.
+         */
 
         localStorage.removeItem(
             "studyMindTimerEndTime"
         );
-
 
         localStorage.setItem(
             "studyMindTimerRunning",
@@ -4878,40 +4863,74 @@ function savePlan(plan) {
         );
 
 
+        /*
+         * Keep the student's selected timer duration.
+         * Default to 25 minutes only if none exists.
+         */
+
         const selectedTimer =
             Number(
                 localStorage.getItem(
                     "studyMindSelectedTimerSeconds"
                 )
-            ) || 25 * 60;
+            ) || (25 * 60);
 
 
         localStorage.setItem(
             "studyMindTimerSeconds",
-            String(
-                selectedTimer
-            )
+            String(selectedTimer)
         );
 
 
-        localStorage.removeItem(
-            "studyMindCurrentTopic"
+        /*
+         * Reset the NEW PLAN'S topic progress.
+         */
+
+        localStorage.setItem(
+            "studyMindCompletedTopics",
+            "[]"
+        );
+
+        localStorage.setItem(
+            "studyMindCompletedQuestionTopics",
+            "[]"
         );
 
 
-        localStorage.removeItem(
-            "studyMindCurrentTopicIndex"
-        );
-
+        /*
+         * Reset the timer's temporary session state.
+         */
 
         localStorage.removeItem(
             "studyMindTimerSessionStart"
         );
 
-
         localStorage.removeItem(
             "studyMindTimerAwardedMinute"
         );
+
+        localStorage.removeItem(
+            "studyMindTimerSessionBaseMinutes"
+        );
+
+
+        /*
+         * IMPORTANT:
+         *
+         * DO NOT REMOVE:
+         *
+         * studyMindXP
+         * studyMindTotalXP
+         * studyMindStreak
+         * studyMindLongestStreak
+         * studyMindLastCompletedPlanDate
+         * studyMindStreakActivity
+         * studyMindStudySessions
+         * studyMindDailyStudyTime
+         * studyMindXPEvents
+         *
+         * Those belong to the student's account/history.
+         */
 
 
         /* =================================================
