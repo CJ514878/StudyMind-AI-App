@@ -37,11 +37,24 @@ const STORAGE = {
 
     STUDY_HISTORY: "studyMindStudyHistory",
 
+    DAILY_STUDY_TIME: "studyMindDailyStudyTime",
+
+    STUDY_SESSIONS: "studyMindStudySessions",
+
+    KNOWLEDGE_RESULTS: "studyMindKnowledgeCheckResults",
+
+    COMPLETED_QUESTION_TOPICS:
+        "studyMindCompletedQuestionTopics",
+
     USER: "studyMindUser",
 
     THEME: "studyMindTheme",
 
-    DARK_MODE: "studyMindDarkMode"
+    DARK_MODE: "studyMindDarkMode",
+
+    AI_COUNT: "aiQuestionCount",
+
+    AI_DATE: "aiQuestionDate"
 };
 
 
@@ -56,6 +69,8 @@ let state = {
     metrics: null,
 
     completedTopics: [],
+
+    completedTopicNames: new Set(),
 
     today: new Date(),
 
@@ -314,11 +329,17 @@ function loadPlan() {
             activePlan =
                 plans.find(
                     item =>
+                        item &&
                         String(item.id) ===
                         String(activeId)
                 );
         }
 
+
+        /*
+           If no active ID exists, use
+           the first available plan.
+        */
 
         if (!activePlan) {
 
@@ -500,6 +521,16 @@ function getAllPlanTopics() {
     subjects.forEach(
         subject => {
 
+            if (
+                !Array.isArray(
+                    subject.topics
+                )
+            ) {
+
+                return;
+            }
+
+
             subject.topics.forEach(
                 topic => {
 
@@ -581,6 +612,54 @@ function getAllPlanTopics() {
     }
 
 
+    /*
+       Compatibility with topicList.
+    */
+
+    if (
+        !result.length &&
+        Array.isArray(
+            state.plan?.topicList
+        )
+    ) {
+
+        state.plan.topicList.forEach(
+            topic => {
+
+                const normalized =
+                    normalizeTopic(
+                        topic
+                    );
+
+
+                if (
+                    !normalized.name
+                ) {
+
+                    return;
+                }
+
+
+                result.push({
+
+                    ...normalized,
+
+                    subject:
+                        typeof topic ===
+                        "object"
+                            ? (
+                                topic.subject ||
+                                "General"
+                            )
+                            : "General"
+
+                });
+
+            }
+        );
+    }
+
+
     return result;
 }
 
@@ -588,7 +667,10 @@ function getAllPlanTopics() {
 /* =========================================================
    COMPLETED TOPICS
    ---------------------------------------------------------
-   Goals reads the same completion data as Score.
+   This is retained for compatibility and subject rendering.
+
+   StudyMindScore remains the canonical source whenever
+   getMetrics() is available.
 ========================================================= */
 
 function loadCompletedTopics() {
@@ -635,6 +717,37 @@ function topicIsCompleted(topic) {
     const normalized =
         normalizeTopic(topic);
 
+
+    /*
+       FIRST:
+       Use canonical completed topic names
+       supplied by StudyMindScore.
+    */
+
+    if (
+        state.completedTopicNames instanceof Set &&
+        state.completedTopicNames.size
+    ) {
+
+        if (
+            state.completedTopicNames.has(
+                normalized.name
+            ) ||
+            state.completedTopicNames.has(
+                normalized.id
+            )
+        ) {
+
+            return true;
+        }
+    }
+
+
+    /*
+       SECOND:
+       Compatibility fallback for older
+       completed-topic storage.
+    */
 
     return state.completedTopics.some(
         item => {
@@ -697,9 +810,7 @@ function getSharedScoreData() {
        StudyMindScore MUST be the source of truth.
 
        getMetrics() is preferred because it exposes
-       all shared study data.
-
-       calculate() remains as a compatibility fallback.
+       the complete shared data model.
     */
 
     if (
@@ -714,6 +825,12 @@ function getSharedScoreData() {
         );
     }
 
+
+    /*
+       Compatibility with an older Score engine.
+
+       This does NOT create a second scoring system.
+    */
 
     if (
         window.StudyMindScore &&
@@ -743,14 +860,27 @@ function getSharedScoreData() {
                     score.totalTopics
                 ) || 0,
 
-            todayCompletedTopics:
+            todayCompleted:
+                Number(
+                    score.todayCompleted
+                ) ||
+
                 Number(
                     score.todayCompletedTopics
                 ) || 0,
 
-            weeklyCompletedTopics:
+            weeklyCompleted:
+                Number(
+                    score.weeklyCompleted
+                ) ||
+
                 Number(
                     score.weeklyCompletedTopics
+                ) || 0,
+
+            weeklyActiveDays:
+                Number(
+                    score.weeklyActiveDays
                 ) || 0,
 
             todayMinutes:
@@ -786,7 +916,17 @@ function getSharedScoreData() {
             knowledgeAverage:
                 Number(
                     score.knowledgeAverage
-                ) || 0
+                ) || 0,
+
+            completedTopicNames:
+                Array.isArray(
+                    score.completedTopicNames
+                )
+                    ? score.completedTopicNames
+                    : [],
+
+            plan:
+                score.plan || null
 
         };
     }
@@ -795,7 +935,7 @@ function getSharedScoreData() {
     /*
        Score engine has not loaded yet.
 
-       Do NOT create a second scoring system here.
+       Do NOT calculate a second score here.
     */
 
     return {
@@ -806,9 +946,11 @@ function getSharedScoreData() {
 
         totalTopics: 0,
 
-        todayCompletedTopics: 0,
+        todayCompleted: 0,
 
-        weeklyCompletedTopics: 0,
+        weeklyCompleted: 0,
+
+        weeklyActiveDays: 0,
 
         todayMinutes: 0,
 
@@ -822,7 +964,11 @@ function getSharedScoreData() {
 
         knowledgeCheckCount: 0,
 
-        knowledgeAverage: 0
+        knowledgeAverage: 0,
+
+        completedTopicNames: [],
+
+        plan: null
 
     };
 }
@@ -847,19 +993,37 @@ function calculateState() {
 
 
     /*
-       Plan/topic information.
+       If Score has a canonical plan,
+       use that plan.
+    */
 
-       Prefer Score's canonical values.
+    if (
+        metrics &&
+        metrics.plan
+    ) {
+
+        state.plan =
+            metrics.plan;
+    }
+
+
+    /*
+       Local topic list is used only for
+       compatibility and subject display.
     */
 
     const localPlanTopics =
         getAllPlanTopics();
 
 
+    /*
+       TOTAL TOPICS
+    */
+
     state.totalTopics =
         Number(
             metrics.totalTopics
-        );
+        ) || 0;
 
 
     if (
@@ -868,8 +1032,9 @@ function calculateState() {
     ) {
 
         /*
-           This is only a compatibility fallback
-           for an older Score engine.
+           Compatibility fallback only.
+
+           This does NOT calculate Score.
         */
 
         state.totalTopics =
@@ -877,19 +1042,27 @@ function calculateState() {
     }
 
 
+    /*
+       COMPLETED TOPICS
+    */
+
     state.completedTotal =
         Number(
             metrics.completedTopics
-        );
+        ) || 0;
 
 
     if (
         !state.completedTotal &&
-        state.completedTopics.length
+        state.completedTopics.length &&
+        localPlanTopics.length
     ) {
 
         /*
            Compatibility fallback only.
+
+           Used if an older Score engine doesn't
+           expose completedTopics correctly.
         */
 
         state.completedTotal =
@@ -900,14 +1073,112 @@ function calculateState() {
 
 
     /*
+       CANONICAL COMPLETED TOPIC NAMES
+    */
+
+    state.completedTopicNames =
+        new Set(
+            Array.isArray(
+                metrics.completedTopicNames
+            )
+                ? metrics.completedTopicNames
+                : []
+        );
+
+
+    /*
+       If Score doesn't expose the names,
+       keep the compatibility data available.
+    */
+
+    if (
+        !state.completedTopicNames.size &&
+        state.completedTopics.length
+    ) {
+
+        state.completedTopics.forEach(
+            item => {
+
+                if (
+                    typeof item ===
+                    "string"
+                ) {
+
+                    state.completedTopicNames.add(
+                        item
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    item &&
+                    typeof item ===
+                    "object"
+                ) {
+
+                    const name =
+                        item.name ||
+                        item.topic ||
+                        item.title ||
+                        item.id ||
+                        item.topicId;
+
+
+                    if (name) {
+
+                        state.completedTopicNames.add(
+                            String(name)
+                        );
+                    }
+                }
+
+            }
+        );
+    }
+
+
+    /*
        TODAY
+
+       IMPORTANT:
+       The new Score engine uses
+       metrics.todayCompleted.
     */
 
     state.todayCompleted =
         Number(
-            metrics.todayCompletedTopics
+            metrics.todayCompleted
         ) || 0;
 
+
+    /*
+       WEEK
+
+       IMPORTANT:
+       The new Score engine uses
+       metrics.weeklyCompleted.
+    */
+
+    state.weeklyTopics =
+        Number(
+            metrics.weeklyCompleted
+        ) || 0;
+
+
+    state.weeklyDays =
+        Number(
+            metrics.weeklyActiveDays
+        ) || 0;
+
+
+    /*
+       STUDY TIME
+
+       All study-time aggregation comes
+       from StudyMindScore.
+    */
 
     state.todayHours =
         (
@@ -917,28 +1188,12 @@ function calculateState() {
         ) / 60;
 
 
-    /*
-       WEEK
-    */
-
     state.weeklyHours =
         (
             Number(
                 metrics.weeklyMinutes
             ) || 0
         ) / 60;
-
-
-    state.weeklyTopics =
-        Number(
-            metrics.weeklyCompletedTopics
-        ) || 0;
-
-
-    state.weeklyDays =
-        Number(
-            metrics.weeklyActiveDays
-        ) || 0;
 
 
     /*
@@ -961,6 +1216,10 @@ function calculateState() {
 
     /*
        SCORE
+
+       This is display-only.
+
+       Goals never modifies it.
     */
 
     state.sharedScore =
@@ -1299,6 +1558,12 @@ function renderHero() {
             7
         );
 
+
+    /*
+       This is GOAL progress only.
+
+       It is NOT StudyMindScore.
+    */
 
     const overall =
         Math.round(
@@ -1648,10 +1913,13 @@ function renderWeekly() {
         );
 
 
+    const dailyTopicTarget =
+        getDailyTopicTarget();
+
+
     const estimatedWeeklyTopics =
         Math.max(
-            getDailyTopicTarget() *
-            7,
+            dailyTopicTarget * 7,
             1
         );
 
@@ -1788,6 +2056,26 @@ function renderPlan() {
                 false;
         }
 
+        setText(
+            "planCompleted",
+            0
+        );
+
+        setText(
+            "planTotal",
+            0
+        );
+
+        setText(
+            "planPercent",
+            "0%"
+        );
+
+        setWidth(
+            "planProgress",
+            0
+        );
+
         return;
     }
 
@@ -1886,17 +2174,19 @@ function renderPlan() {
 
 
     /*
-       Prefer the canonical Score
-       plan progress.
+       IMPORTANT:
+
+       StudyMindScore.planProgress is the
+       canonical plan progress.
+
+       Goals does not calculate a competing
+       plan score.
     */
 
     const planPct =
         Number(
             state.metrics?.planProgress
-        ) || percent(
-            completed,
-            total
-        );
+        ) || 0;
 
 
     setText(
@@ -1974,16 +2264,20 @@ function renderSubjects() {
             subject => {
 
                 const topics =
-                    subject.topics
+                    Array.isArray(
+                        subject.topics
+                    )
 
-                        .map(
-                            normalizeTopic
-                        )
+                        ? subject.topics
+                            .map(
+                                normalizeTopic
+                            )
+                            .filter(
+                                topic =>
+                                    topic.name
+                            )
 
-                        .filter(
-                            topic =>
-                                topic.name
-                        );
+                        : [];
 
 
                 const completed =
@@ -2111,6 +2405,11 @@ function renderSharedScore() {
         state.metrics ||
         getSharedScoreData();
 
+
+    /*
+       These are READ-ONLY displays
+       of StudyMindScore.
+    */
 
     setText(
         "studyScore",
@@ -2279,6 +2578,10 @@ if (
 }
 
 
+window.goalsToggleTheme =
+    goalsToggleTheme;
+
+
 /* =========================================================
    MOBILE MENU
 ========================================================= */
@@ -2344,21 +2647,26 @@ function setupMobileMenu() {
 /* =========================================================
    REFRESH EVENTS
    ---------------------------------------------------------
-   Goals listens to the same events generated
-   by the timer/session/knowledge-check systems.
+   Goals listens for changes generated by:
+   - Timer
+   - Study Session
+   - Knowledge Check
+   - Plan creation/change
+   - Streak engine
+   - Score engine
+   - AI activity
+   - Study activity
 ========================================================= */
 
 const GOALS_REFRESH_EVENTS = [
 
     "studyMindScoreUpdated",
 
-    "studyMindStreakUpdated",
-
-    "studyMindTimerCompleted",
-
-    "studyMindStudyTimeUpdated",
-
     "studyMindKnowledgeCheckCompleted",
+
+    "studyMindKnowledgeCheckResultsUpdated",
+
+    "studyMindStreakUpdated",
 
     "studyMindPlanUpdated",
 
@@ -2366,7 +2674,21 @@ const GOALS_REFRESH_EVENTS = [
 
     "studyMindPlanChanged",
 
+    "studyMindProgressUpdated",
+
     "studyMindCompletedTopicsUpdated",
+
+    "studyMindTimerCompleted",
+
+    "studyMindTimerFinished",
+
+    "studyMindStudyActivity",
+
+    "studyMindStudyTimeUpdated",
+
+    "studyMindStudyDataUpdated",
+
+    "studyMindAIUsed",
 
     "studyMindAIUsageUpdated"
 
@@ -2411,13 +2733,17 @@ window.addEventListener(
 
             STORAGE.STUDY_HISTORY,
 
-            "studyMindDailyStudyTime",
+            STORAGE.DAILY_STUDY_TIME,
 
-            "studyMindStudySessions",
+            STORAGE.STUDY_SESSIONS,
 
-            "studyMindKnowledgeCheckResults",
+            STORAGE.KNOWLEDGE_RESULTS,
 
-            "studyMindCompletedQuestionTopics",
+            STORAGE.COMPLETED_QUESTION_TOPICS,
+
+            STORAGE.AI_COUNT,
+
+            STORAGE.AI_DATE,
 
             "studyMindStudyScore"
 
@@ -2451,23 +2777,29 @@ function refreshGoals() {
 
 
     /*
-       Completion data is only used for
-       compatibility/subject rendering.
+       Completion data is retained for
+       compatibility and subject display.
 
-       Score remains the canonical metric source.
+       StudyMindScore remains canonical.
     */
 
     loadCompletedTopics();
 
 
     /*
-       Pull everything from Score.
+       Pull all shared metrics from Score.
     */
 
     calculateState();
 
 
+    /*
+       Render the Goals interface.
+    */
+
     renderDate();
+
+    renderGreeting();
 
     renderHero();
 
@@ -2501,15 +2833,16 @@ function initializeGoals() {
 
 
     /*
-       This is only a UI refresh.
+       UI refresh only.
 
-       It does NOT create XP,
-       streaks, study sessions,
-       completed topics,
-       or score.
-
-       Therefore opening Goals cannot
-       accidentally award progress.
+       This does NOT create:
+       - XP
+       - streaks
+       - study sessions
+       - completed topics
+       - score
+       - knowledge checks
+       - AI usage
     */
 
     setInterval(
