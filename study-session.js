@@ -1,2331 +1,909 @@
-/* =========================================================
-   STUDYMIND AI — STUDY SESSION
-   COMPLETE SHARED-TIMER VERSION
-
-   Architecture:
-
-   Dashboard Timer
-          ↕
-   Study Timer
-          ↕
-   Study Session
-          ↓
-   window.StudyMindTimer
-          ↓
-   ONE shared timer
-          ↓
-   ONE completion event
-          ↓
-   streak activity
-          ↓
-   existing streak engine
-          ↓
-   Milo celebration
-          ↓
-   streak popup
-
-   IMPORTANT:
-   "Complete Session" remains completely separate.
-   It still controls topic completion and knowledge-check flow.
-
-   IMPORTANT:
-   This file DOES NOT create its own timer engine.
-   The authoritative timer is study-timer.js.
-   ========================================================= */
-
 "use strict";
 
-
 /* =========================================================
-   STORAGE
-   ========================================================= */
+   STUDYMIND AI — STUDY SESSION
+========================================================= */
 
-const SESSION_KEYS = {
+(function () {
 
-    PLAN:
-        "studyMindPlan",
+    const KEYS = {
+        PLAN: "studyMindPlan",
+        CURRENT_TOPIC: "studyMindCurrentTopic",
+        TOPIC_INDEX: "studyMindCurrentTopicIndex",
+        COMPLETED: "studyMindCompletedTopics",
+        QUESTION_DONE:
+            "studyMindCompletedQuestionTopics",
+        NOTES: "studyMindSessionNotes",
+        USERNAME: "studyMindUsername"
+    };
 
-    CURRENT_TOPIC:
-        "studyMindCurrentTopic",
+    let plan = null;
+    let currentTopic = null;
 
-    TOPIC_INDEX:
-        "studyMindCurrentTopicIndex",
+    /* =========================================================
+       HELPERS
+    ========================================================= */
 
-    DONE:
-        "studyMindCompletedTopics",
+    function readJSON(key, fallback) {
 
-    QUESTION_DONE:
-        "studyMindCompletedQuestionTopics",
+        try {
+            const value =
+                localStorage.getItem(key);
 
-    NOTES:
-        "studyMindSessionNotes",
+            return value
+                ? JSON.parse(value)
+                : fallback;
 
-    USERNAME:
-        "studyMindUsername",
-
-    /* Shared timer keys are kept here only for
-       reading/displaying the authoritative timer. */
-
-    TIMER_SECONDS:
-        "studyMindTimerSeconds",
-
-    TIMER_END:
-        "studyMindTimerEndTime",
-
-    TIMER_RUNNING:
-        "studyMindTimerRunning",
-
-    TIMER_SELECTED:
-        "studyMindSelectedTimerSeconds",
-
-    TIMER_COMPLETED_AT:
-        "studyMindLastTimerCompletedAt",
-
-    TIMER_CELEBRATED_AT:
-        "studyMindLastTimerCelebratedAt"
-
-};
-
-
-/* =========================================================
-   STATE
-   ========================================================= */
-
-let studyPlan = null;
-
-let currentTopic = null;
-
-let selectedTimerSeconds = 25 * 60;
-
-
-/*
- * Prevent duplicate DOM event listeners.
- */
-let timerBridgeInitialized = false;
-
-let timerPresetListenersInitialized = false;
-
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-function $(id) {
-
-    return document.getElementById(id);
-
-}
-
-
-function safeJSON(
-    key,
-    fallback = null
-) {
-
-    try {
-
-        const value =
-            localStorage.getItem(key);
-
-        if (!value) {
-
+        } catch {
             return fallback;
-
         }
-
-        return JSON.parse(value);
-
-    } catch {
-
-        return fallback;
-
     }
 
-}
-
-
-function saveJSON(
-    key,
-    value
-) {
-
-    try {
-
+    function writeJSON(key, value) {
         localStorage.setItem(
             key,
             JSON.stringify(value)
         );
-
-    } catch (error) {
-
-        console.warn(
-            "Storage error:",
-            error
-        );
-
     }
 
-}
-
-
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeSession
-);
-
-
-function initializeSession() {
-
-    loadStudyPlan();
-
-    determineCurrentTopic();
-
-    renderTopic();
-
-    loadNotes();
-
-    initializeTimer();
-
-    setupTimerControls();
-
-    setupChecklist();
-
-    setupButtons();
-
-    loadUser();
-
-}
-
-
-/* =========================================================
-   LOAD PLAN
-   ========================================================= */
-
-function loadStudyPlan() {
-
-    studyPlan =
-        safeJSON(
-            SESSION_KEYS.PLAN,
-            null
-        );
-
-}
-
-
-/* =========================================================
-   DETERMINE TOPIC
-   ========================================================= */
-
-function determineCurrentTopic() {
-
-    currentTopic = null;
-
-
-    if (!studyPlan) {
-
-        return;
-
+    function getTimer() {
+        return window.StudyMindTimer || null;
     }
 
+    function normalizeTopic(topic) {
 
-    /* -----------------------------------------------------
-       Explicit current topic
-    ----------------------------------------------------- */
+        if (!topic) return null;
 
-    const storedCurrent =
-        safeJSON(
-            SESSION_KEYS.CURRENT_TOPIC,
-            null
-        );
+        if (typeof topic === "string") {
 
+            return {
+                name: topic,
+                subject: "General",
+                difficulty: ""
+            };
+        }
 
-    if (
-        storedCurrent &&
-        typeof storedCurrent === "object"
-    ) {
+        return {
+            name:
+                topic.name ||
+                topic.topic ||
+                topic.title ||
+                "Study Topic",
 
-        currentTopic =
-            normalizeTopic(
-                storedCurrent
+            subject:
+                topic.subject ||
+                topic.subjectName ||
+                "General",
+
+            difficulty:
+                topic.difficulty || ""
+        };
+    }
+
+    /* =========================================================
+       PLAN
+    ========================================================= */
+
+    function loadPlan() {
+
+        plan =
+            readJSON(
+                KEYS.PLAN,
+                null
             );
 
-        return;
-
+        return plan;
     }
 
+    function getAllTopics() {
 
-    /* -----------------------------------------------------
-       Topic index
-    ----------------------------------------------------- */
+        if (!plan) return [];
 
-    let index =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TOPIC_INDEX
-            )
-        );
+        const topics = [];
 
+        if (Array.isArray(plan.subjects)) {
 
-    if (!Number.isFinite(index)) {
-
-        index = 0;
-
-    }
-
-
-    const allTopics =
-        getAllTopics();
-
-
-    if (allTopics.length) {
-
-        currentTopic =
-            normalizeTopic(
-                allTopics[
-                    Math.max(
-                        0,
-                        Math.min(
-                            index,
-                            allTopics.length - 1
-                        )
-                    )
-                ]
-            );
-
-    }
-
-}
-
-
-/* =========================================================
-   GET ALL TOPICS
-   ========================================================= */
-
-function getAllTopics() {
-
-    const result = [];
-
-
-    if (
-        Array.isArray(
-            studyPlan?.subjects
-        )
-    ) {
-
-        studyPlan.subjects.forEach(
-            subject => {
-
-                if (
-                    !subject ||
-                    typeof subject !== "object"
-                ) {
-
-                    return;
-
-                }
-
+            plan.subjects.forEach(subject => {
 
                 const subjectName =
-                    firstValue(
-                        subject.name,
-                        subject.subject,
-                        subject.title
-                    );
-
+                    subject.name ||
+                    subject.subject ||
+                    subject.title ||
+                    "General";
 
                 if (
-                    !Array.isArray(
+                    Array.isArray(
                         subject.topics
                     )
                 ) {
 
-                    return;
+                    subject.topics.forEach(
+                        topic => {
 
-                }
+                            const normalized =
+                                normalizeTopic(
+                                    topic
+                                );
 
+                            if (normalized) {
 
-                subject.topics.forEach(
-                    topic => {
+                                normalized.subject =
+                                    normalized.subject === "General"
+                                        ? subjectName
+                                        : normalized.subject;
 
-                        const normalized =
-                            normalizeTopic(
-                                topic,
-                                subjectName
-                            );
-
-
-                        if (normalized) {
-
-                            result.push(
-                                normalized
-                            );
-
+                                topics.push(
+                                    normalized
+                                );
+                            }
                         }
-
-                    }
-                );
-
-            }
-        );
-
-    }
-
-
-    if (
-        Array.isArray(
-            studyPlan?.topics
-        )
-    ) {
-
-        studyPlan.topics.forEach(
-            topic => {
-
-                const normalized =
-                    normalizeTopic(
-                        topic
                     );
-
-
-                if (normalized) {
-
-                    result.push(
-                        normalized
-                    );
-
                 }
-
-            }
-        );
-
-    }
-
-
-    return result;
-
-}
-
-
-/* =========================================================
-   NORMALIZE TOPIC
-   ========================================================= */
-
-function normalizeTopic(
-    topic,
-    fallbackSubject = ""
-) {
-
-    if (!topic) {
-
-        return null;
-
-    }
-
-
-    if (
-        typeof topic === "string"
-    ) {
-
-        return {
-
-            name:
-                topic,
-
-            subject:
-                fallbackSubject ||
-                "Study Topic"
-
-        };
-
-    }
-
-
-    if (
-        typeof topic === "object"
-    ) {
-
-        return {
-
-            name:
-                firstValue(
-                    topic.name,
-                    topic.title,
-                    topic.topic
-                ) ||
-                "Study Topic",
-
-            subject:
-                firstValue(
-                    topic.subject,
-                    topic.subjectName
-                ) ||
-                fallbackSubject ||
-                "Study Topic",
-
-            difficulty:
-                firstValue(
-                    topic.difficulty,
-                    topic.topicDifficulty
-                )
-
-        };
-
-    }
-
-
-    return null;
-
-}
-
-
-/* =========================================================
-   FIRST VALUE
-   ========================================================= */
-
-function firstValue(
-    ...values
-) {
-
-    for (const value of values) {
+            });
+        }
 
         if (
-            value !== undefined &&
-            value !== null &&
-            String(value).trim()
+            !topics.length &&
+            Array.isArray(plan.topics)
         ) {
 
-            return String(value).trim();
+            plan.topics.forEach(topic => {
 
+                const normalized =
+                    normalizeTopic(topic);
+
+                if (normalized) {
+                    topics.push(normalized);
+                }
+            });
         }
 
+        return topics;
     }
 
-
-    return "";
-
-}
-
-
-/* =========================================================
-   RENDER TOPIC
-   ========================================================= */
-
-function renderTopic() {
-
-    const title =
-        $("sessionTitle");
-
-    const subtitle =
-        $("sessionSubtitle");
-
-    const topicName =
-        $("topicName");
-
-    const subjectName =
-        $("subjectName");
-
-
-    if (!currentTopic) {
-
-        if (title) {
-
-            title.textContent =
-                "No Active Study Topic";
-
-        }
-
-
-        if (subtitle) {
-
-            subtitle.textContent =
-                "Return to your dashboard and start a study session.";
-
-        }
-
-
-        if (topicName) {
-
-            topicName.textContent =
-                "No topic selected";
-
-        }
-
-
-        if (subjectName) {
-
-            subjectName.textContent =
-                "StudyMind";
-
-        }
-
-
-        return;
-
-    }
-
-
-    if (title) {
-
-        title.textContent =
-            `Study ${currentTopic.name}`;
-
-    }
-
-
-    if (subtitle) {
-
-        subtitle.textContent =
-            `Focus on ${currentTopic.name} and build real understanding.`;
-
-    }
-
-
-    if (topicName) {
-
-        topicName.textContent =
-            currentTopic.name;
-
-    }
-
-
-    if (subjectName) {
-
-        subjectName.textContent =
-            currentTopic.subject;
-
-    }
-
-
-    if ($("infoSubject")) {
-
-        $("infoSubject").textContent =
-            currentTopic.subject || "—";
-
-    }
-
-
-    if ($("infoTopic")) {
-
-        $("infoTopic").textContent =
-            currentTopic.name || "—";
-
-    }
-
-
-    const exam =
-        firstValue(
-            studyPlan?.examType,
-            studyPlan?.exam,
-            studyPlan?.examName,
-            studyPlan?.testType
-        );
-
-
-    if ($("infoExam")) {
-
-        $("infoExam").textContent =
-            exam || "—";
-
-    }
-
-
-    const topics =
-        getAllTopics();
-
-
-    const index =
-        topics.findIndex(
-            topic =>
-                topic.name ===
-                    currentTopic.name &&
-                topic.subject ===
-                    currentTopic.subject
-        );
-
-
-    const safeIndex =
-        index >= 0
-            ? index
-            : 0;
-
-
-    if ($("topicNumber")) {
-
-        $("topicNumber").textContent =
-            String(
-                safeIndex + 1
+    /* =========================================================
+       CURRENT TOPIC
+    ========================================================= */
+
+    function determineCurrentTopic() {
+
+        const stored =
+            readJSON(
+                KEYS.CURRENT_TOPIC,
+                null
             );
 
-    }
+        if (stored && stored.name) {
+            return normalizeTopic(stored);
+        }
 
+        const topics =
+            getAllTopics();
 
-    const percent =
-        topics.length
-            ? Math.round(
-                (
-                    (safeIndex + 1) /
-                    topics.length
-                ) * 100
+        if (!topics.length) {
+            return {
+                name: "Study Session",
+                subject:
+                    plan?.subjectNames?.[0] ||
+                    "General"
+            };
+        }
+
+        const index =
+            Number(
+                localStorage.getItem(
+                    KEYS.TOPIC_INDEX
+                ) || 0
+            );
+
+        return topics[
+            Math.max(
+                0,
+                Math.min(
+                    index,
+                    topics.length - 1
+                )
             )
-            : 0;
-
-
-    if ($("progressPercent")) {
-
-        $("progressPercent").textContent =
-            `${percent}%`;
-
+        ];
     }
 
+    /* =========================================================
+       COMPLETION
+    ========================================================= */
 
-    if ($("topicProgress")) {
+    function getCompletedTopics() {
 
-        $("topicProgress").style.width =
-            `${percent}%`;
-
+        return readJSON(
+            KEYS.COMPLETED,
+            []
+        );
     }
 
-}
+    function topicKey(topic) {
 
-
-/* =========================================================
-   NOTES
-   ========================================================= */
-
-function getNotesKey() {
-
-    if (!currentTopic) {
-
-        return SESSION_KEYS.NOTES;
-
+        return `${topic.subject}::${topic.name}`;
     }
 
+    function isTopicCompleted(topic) {
 
-    return (
-        `${SESSION_KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`
-    );
+        const key =
+            topicKey(topic);
 
-}
+        return getCompletedTopics()
+            .some(item => {
 
+                if (
+                    typeof item ===
+                    "string"
+                ) {
+                    return (
+                        item === key ||
+                        item === topic.name
+                    );
+                }
 
-function loadNotes() {
+                if (
+                    item &&
+                    typeof item ===
+                    "object"
+                ) {
 
-    const notes =
-        localStorage.getItem(
-            getNotesKey()
-        ) || "";
+                    return (
+                        item.key === key ||
+                        (
+                            item.subject ===
+                                topic.subject &&
+                            item.topic ===
+                                topic.name
+                        )
+                    );
+                }
 
+                return false;
+            });
+    }
 
-    const textarea =
-        $("sessionNotes");
+    function getCompletedCount() {
 
+        const topics =
+            getAllTopics();
 
-    if (textarea) {
+        return topics.filter(
+            isTopicCompleted
+        ).length;
+    }
+
+    /* =========================================================
+       RENDER TOPIC
+    ========================================================= */
+
+    function renderTopic() {
+
+        if (!currentTopic) {
+            return;
+        }
+
+        const topics =
+            getAllTopics();
+
+        const currentIndex =
+            Math.max(
+                0,
+                topics.findIndex(
+                    topic =>
+                        topic.name ===
+                            currentTopic.name &&
+                        topic.subject ===
+                            currentTopic.subject
+                )
+            );
+
+        const completed =
+            getCompletedCount();
+
+        const total =
+            topics.length;
+
+        const progress =
+            total
+                ? Math.round(
+                    (
+                        completed /
+                        total
+                    ) * 100
+                )
+                : 0;
+
+        setText(
+            "topicName",
+            currentTopic.name
+        );
+
+        setText(
+            "subjectName",
+            currentTopic.subject
+        );
+
+        setText(
+            "topicNumber",
+            `Topic ${currentIndex + 1} of ${total || 1}`
+        );
+
+        setText(
+            "progressPercent",
+            `${progress}%`
+        );
+
+        const bar =
+            document.getElementById(
+                "topicProgress"
+            );
+
+        if (bar) {
+            bar.style.width =
+                `${progress}%`;
+        }
+    }
+
+    /* =========================================================
+       NOTES
+    ========================================================= */
+
+    function notesKey() {
+
+        return `${KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`;
+    }
+
+    function loadNotes() {
+
+        const textarea =
+            document.getElementById(
+                "sessionNotes"
+            );
+
+        if (!textarea || !currentTopic) {
+            return;
+        }
 
         textarea.value =
-            notes;
-
-
-        textarea.addEventListener(
-            "input",
-            saveNotes
-        );
-
-    }
-
-}
-
-
-function saveNotes() {
-
-    const textarea =
-        $("sessionNotes");
-
-
-    if (!textarea) {
-
-        return;
-
-    }
-
-
-    localStorage.setItem(
-        getNotesKey(),
-        textarea.value
-    );
-
-
-    const status =
-        $("notesStatus");
-
-
-    if (status) {
-
-        status.textContent =
-            "Saved just now";
-
-
-        clearTimeout(
-            saveNotes.timeout
-        );
-
-
-        saveNotes.timeout =
-            setTimeout(
-                () => {
-
-                    status.textContent =
-                        "Saved locally";
-
-                },
-                1500
-            );
-
-    }
-
-}
-
-
-/* =========================================================
-   SHARED TIMER BRIDGE
-   =========================================================
-
-   IMPORTANT:
-
-   There is NO timer loop here.
-
-   There is NO finishSharedTimer() here.
-
-   There is NO second streak celebration here.
-
-   StudyMindTimer owns all of that.
-
-   This page only:
-   - displays the shared timer
-   - starts/pauses/resets the shared timer
-   - reacts to shared timer changes
-   ========================================================= */
-
-function initializeTimer() {
-
-    const storedSelected =
-        Number(
             localStorage.getItem(
-                SESSION_KEYS.TIMER_SELECTED
-            )
-        );
-
-
-    if (
-        Number.isFinite(storedSelected) &&
-        storedSelected > 0
-    ) {
-
-        selectedTimerSeconds =
-            storedSelected;
-
-    } else {
-
-        selectedTimerSeconds =
-            25 * 60;
-
-        localStorage.setItem(
-            SESSION_KEYS.TIMER_SELECTED,
-            String(
-                selectedTimerSeconds
-            )
-        );
-
+                notesKey()
+            ) || "";
     }
 
+    function saveNotes() {
 
-    /*
-     * If the authoritative timer engine has already loaded,
-     * initialize it and immediately render its state.
-     */
-
-    connectToSharedTimer();
-
-
-    /*
-     * Cross-page synchronization.
-
-     * "storage" catches changes from other browser tabs/pages.
-     * "studyMindTimerChanged" catches same-page changes.
-     * "studyMindTimerCompleted" catches the ONE completion event.
-     */
-
-    window.addEventListener(
-        "storage",
-        handleTimerStorage
-    );
-
-
-    window.addEventListener(
-        "studyMindTimerChanged",
-        refreshTimerFromSharedEngine
-    );
-
-
-    window.addEventListener(
-        "studyMindTimerCompleted",
-        refreshTimerFromSharedEngine
-    );
-
-
-    window.addEventListener(
-        "studyMindStreakUpdated",
-        refreshTimerFromSharedEngine
-    );
-
-}
-
-
-/* =========================================================
-   CONNECT TO AUTHORITATIVE TIMER
-   ========================================================= */
-
-function connectToSharedTimer() {
-
-    if (
-        timerBridgeInitialized
-    ) {
-
-        refreshTimerFromSharedEngine();
-
-        return true;
-
-    }
-
-
-    if (
-        !window.StudyMindTimer
-    ) {
-
-        /*
-         * study-timer.js may appear after this script.
-         * Give it a moment to initialize instead of creating
-         * another timer engine.
-         */
-
-        setTimeout(
-            connectToSharedTimer,
-            100
-        );
-
-        return false;
-
-    }
-
-
-    timerBridgeInitialized =
-        true;
-
-
-    /*
-     * Let the authoritative engine initialize itself.
-     */
-
-    if (
-        typeof window.StudyMindTimer.initialize ===
-            "function"
-    ) {
-
-        try {
-
-            window.StudyMindTimer.initialize();
-
-        } catch (error) {
-
-            console.warn(
-                "StudyMindTimer initialization warning:",
-                error
+        const textarea =
+            document.getElementById(
+                "sessionNotes"
             );
 
+        if (!textarea || !currentTopic) {
+            return;
         }
 
-    }
-
-
-    refreshTimerFromSharedEngine();
-
-
-    return true;
-
-}
-
-
-/* =========================================================
-   TIMER CONTROLS
-   ========================================================= */
-
-function setupTimerControls() {
-
-    setupTimerPresets();
-
-
-    $("timerStart")
-        ?.addEventListener(
-            "click",
-            toggleTimer
+        localStorage.setItem(
+            notesKey(),
+            textarea.value
         );
 
+        const status =
+            document.getElementById(
+                "notesStatus"
+            );
 
-    $("timerReset")
-        ?.addEventListener(
-            "click",
-            resetTimer
-        );
+        if (status) {
+            status.textContent =
+                "Saved ✓";
 
-}
-
-
-/* =========================================================
-   TIMER PRESETS
-   ========================================================= */
-
-function setupTimerPresets() {
-
-    if (
-        timerPresetListenersInitialized
-    ) {
-
-        return;
-
+            setTimeout(() => {
+                status.textContent = "";
+            }, 1500);
+        }
     }
 
+    /* =========================================================
+       TIMER DISPLAY
+    ========================================================= */
 
-    timerPresetListenersInitialized =
-        true;
+    function updateTimerUI() {
 
+        const timer =
+            getTimer();
 
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
+        if (!timer) {
+            return;
+        }
+
+        const state =
+            timer.getState();
+
+        const display =
+            document.getElementById(
+                "timerDisplay"
+            );
+
+        const stateText =
+            document.getElementById(
+                "timerState"
+            );
+
+        if (display) {
+
+            const seconds =
+                Math.max(
+                    0,
+                    state.seconds
+                );
+
+            const minutes =
+                Math.floor(
+                    seconds / 60
+                );
+
+            const secs =
+                seconds % 60;
+
+            display.textContent =
+                `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+
+        if (stateText) {
+
+            stateText.textContent =
+                state.running
+                    ? "Studying"
+                    : "Ready";
+        }
+    }
+
+    /* =========================================================
+       TIMER CONTROLS
+    ========================================================= */
+
+    function setupTimerControls() {
+
+        const timer =
+            getTimer();
+
+        if (!timer) {
+            console.error(
+                "StudyMind: Shared timer was not loaded."
+            );
+            return;
+        }
+
+        document
+            .querySelectorAll(
+                ".timer-preset"
+            )
+            .forEach(button => {
 
                 button.addEventListener(
                     "click",
                     () => {
 
-                        const minutes =
+                        if (
+                            timer.getState()
+                                .running
+                        ) {
+                            return;
+                        }
+
+                        timer.selectDuration(
                             Number(
                                 button.dataset.minutes
-                            );
-
-
-                        if (
-                            !Number.isFinite(
-                                minutes
-                            ) ||
-                            minutes <= 0
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        selectedTimerSeconds =
-                            minutes * 60;
-
-
-                        localStorage.setItem(
-                            SESSION_KEYS.TIMER_SELECTED,
-                            String(
-                                selectedTimerSeconds
-                            )
+                            ) * 60
                         );
 
-
-                        document
-                            .querySelectorAll(
-                                ".timer-preset"
-                            )
-                            .forEach(
-                                item =>
-                                    item.classList.remove(
-                                        "active"
-                                    )
-                            );
-
-
-                        button.classList.add(
-                            "active"
-                        );
-
-
-                        const running =
-                            localStorage.getItem(
-                                SESSION_KEYS.TIMER_RUNNING
-                            ) === "true";
-
-
-                        /*
-                         * Never alter the remaining time of
-                         * a running session.
-                         */
-
-                        if (!running) {
-
-                            localStorage.setItem(
-                                SESSION_KEYS.TIMER_SECONDS,
-                                String(
-                                    selectedTimerSeconds
-                                )
-                            );
-
-
-                            localStorage.removeItem(
-                                SESSION_KEYS.TIMER_END
-                            );
-
-
-                            refreshTimerFromSharedEngine();
-
-                        }
-
+                        updateTimerUI();
                     }
                 );
-
-            }
-        );
-
-
-    /*
-     * Restore active preset.
-     */
-
-    const selectedMinutes =
-        Math.round(
-            selectedTimerSeconds / 60
-        );
-
-
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
-
-                const minutes =
-                    Number(
-                        button.dataset.minutes
-                    );
-
-
-                if (
-                    minutes ===
-                    selectedMinutes
-                ) {
-
-                    button.classList.add(
-                        "active"
-                    );
-
-                }
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   TOGGLE TIMER
-   ========================================================= */
-
-function toggleTimer() {
-
-    connectToSharedTimer();
-
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    if (!timer) {
-
-        console.warn(
-            "StudyMindTimer is not loaded."
-        );
-
-        return;
-
-    }
-
-
-    let running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
-
-
-    /*
-     * Prefer the authoritative engine state when available.
-     */
-
-    if (
-        typeof timer.getState ===
-            "function"
-    ) {
-
-        try {
-
-            const state =
-                timer.getState();
-
-
-            if (
-                state &&
-                typeof state.running ===
-                    "boolean"
-            ) {
-
-                running =
-                    state.running;
-
-            }
-
-        } catch {}
-
-    }
-
-
-    if (running) {
-
-        pauseSharedTimer();
-
-    } else {
-
-        startSharedTimer();
-
-    }
-
-}
-
-
-/* =========================================================
-   START SHARED TIMER
-   ========================================================= */
-
-function startSharedTimer() {
-
-    connectToSharedTimer();
-
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    if (
-        !timer ||
-        typeof timer.start !==
-            "function"
-    ) {
-
-        console.warn(
-            "StudyMindTimer.start() is unavailable."
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        /*
-         * The authoritative timer decides whether this is
-         * a resumed timer or a new timer.
-         */
-
-        timer.start();
-
-    } catch (error) {
-
-        console.warn(
-            "Could not start shared timer:",
-            error
-        );
-
-    }
-
-
-    refreshTimerFromSharedEngine();
-
-}
-
-
-/* =========================================================
-   PAUSE SHARED TIMER
-   ========================================================= */
-
-function pauseSharedTimer() {
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    if (
-        !timer ||
-        typeof timer.pause !==
-            "function"
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        timer.pause();
-
-    } catch (error) {
-
-        console.warn(
-            "Could not pause shared timer:",
-            error
-        );
-
-    }
-
-
-    refreshTimerFromSharedEngine();
-
-}
-
-
-/* =========================================================
-   RESET SHARED TIMER
-   ========================================================= */
-
-function resetTimer() {
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    if (
-        !timer ||
-        typeof timer.reset !==
-            "function"
-    ) {
-
-        /*
-         * Small fallback for display state only.
-         * This does NOT create another timer engine.
-         */
-
-        localStorage.setItem(
-            SESSION_KEYS.TIMER_SECONDS,
-            String(
-                selectedTimerSeconds
-            )
-        );
-
-
-        localStorage.setItem(
-            SESSION_KEYS.TIMER_RUNNING,
-            "false"
-        );
-
-
-        localStorage.removeItem(
-            SESSION_KEYS.TIMER_END
-        );
-
-
-        refreshTimerFromSharedEngine();
-
-        return;
-
-    }
-
-
-    try {
-
-        timer.reset();
-
-    } catch (error) {
-
-        console.warn(
-            "Could not reset shared timer:",
-            error
-        );
-
-    }
-
-
-    refreshTimerFromSharedEngine();
-
-}
-
-
-/* =========================================================
-   REFRESH FROM AUTHORITATIVE TIMER
-   ========================================================= */
-
-function refreshTimerFromSharedEngine() {
-
-    let seconds =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_SECONDS
-            )
-        );
-
-
-    let running =
-        localStorage.getItem(
-            SESSION_KEYS.TIMER_RUNNING
-        ) === "true";
-
-
-    const timer =
-        window.StudyMindTimer;
-
-
-    /*
-     * If the authoritative engine exposes getState(),
-     * use it as the source of truth.
-     */
-
-    if (
-        timer &&
-        typeof timer.getState ===
-            "function"
-    ) {
-
-        try {
-
-            const state =
-                timer.getState();
-
-
-            if (state) {
-
-                if (
-                    Number.isFinite(
-                        Number(
-                            state.seconds
-                        )
-                    )
-                ) {
-
-                    seconds =
-                        Number(
-                            state.seconds
-                        );
-
-                }
-
-
-                if (
-                    typeof state.running ===
-                        "boolean"
-                ) {
-
-                    running =
-                        state.running;
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Could not read StudyMindTimer state:",
-                error
+            });
+
+        const start =
+            document.getElementById(
+                "timerStart"
             );
 
-        }
+        if (start) {
 
-    }
-
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds < 0
-    ) {
-
-        seconds =
-            selectedTimerSeconds;
-
-    }
-
-
-    updateTimerDisplay(
-        seconds,
-        running
-    );
-
-
-    updateTimerButtons(
-        running
-    );
-
-
-    /*
-     * If the selected duration changed elsewhere,
-     * mirror it here.
-     */
-
-    const selected =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_SELECTED
-            )
-        );
-
-
-    if (
-        Number.isFinite(selected) &&
-        selected > 0
-    ) {
-
-        selectedTimerSeconds =
-            selected;
-
-    }
-
-
-    updateActivePreset();
-
-}
-
-
-/* =========================================================
-   STORAGE SYNC
-   ========================================================= */
-
-function handleTimerStorage(
-    event
-) {
-
-    if (
-        !event
-    ) {
-
-        return;
-
-    }
-
-
-    const relevantKeys = [
-
-        SESSION_KEYS.TIMER_SECONDS,
-
-        SESSION_KEYS.TIMER_END,
-
-        SESSION_KEYS.TIMER_RUNNING,
-
-        SESSION_KEYS.TIMER_SELECTED,
-
-        SESSION_KEYS.TIMER_COMPLETED_AT,
-
-        SESSION_KEYS.TIMER_CELEBRATED_AT
-
-    ];
-
-
-    if (
-        relevantKeys.includes(
-            event.key
-        )
-    ) {
-
-        refreshTimerFromSharedEngine();
-
-    }
-
-}
-
-
-/* =========================================================
-   TIMER DISPLAY
-   ========================================================= */
-
-function updateTimerDisplay(
-    seconds,
-    running = null
-) {
-
-    seconds =
-        Math.max(
-            0,
-            Number(seconds) || 0
-        );
-
-
-    const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
-
-    const secs =
-        seconds % 60;
-
-
-    const display =
-        $("timerDisplay");
-
-
-    if (display) {
-
-        display.textContent =
-            `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-
-    }
-
-
-    if (
-        running === null
-    ) {
-
-        running =
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_RUNNING
-            ) === "true";
-
-    }
-
-
-    const state =
-        $("timerState");
-
-
-    if (state) {
-
-        if (running) {
-
-            state.textContent =
-                "Stay focused — you're in the zone.";
-
-        } else if (seconds === 0) {
-
-            state.textContent =
-                "Focus session complete 🎉";
-
-        } else {
-
-            state.textContent =
-                "Ready to begin";
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   BUTTON STATE
-   ========================================================= */
-
-function updateTimerButtons(
-    running = null
-) {
-
-    const button =
-        $("timerStart");
-
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    if (
-        running === null
-    ) {
-
-        running =
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_RUNNING
-            ) === "true";
-
-    }
-
-
-    button.textContent =
-        running
-            ? "Ⅱ Pause"
-            : "▶ Start";
-
-}
-
-
-/* =========================================================
-   ACTIVE PRESET
-   ========================================================= */
-
-function updateActivePreset() {
-
-    const selected =
-        Number(
-            localStorage.getItem(
-                SESSION_KEYS.TIMER_SELECTED
-            )
-        );
-
-
-    if (
-        !Number.isFinite(selected) ||
-        selected <= 0
-    ) {
-
-        return;
-
-    }
-
-
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
-
-                const minutes =
-                    Number(
-                        button.dataset.minutes
-                    );
-
-
-                button.classList.toggle(
-                    "active",
-                    minutes * 60 === selected
-                );
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   CHECKLIST
-   ========================================================= */
-
-function setupChecklist() {
-
-    const checks =
-        document.querySelectorAll(
-            ".checklist input"
-        );
-
-
-    checks.forEach(
-        checkbox => {
-
-            const key =
-                `studyMindSessionCheck_${checkbox.id}`;
-
-
-            checkbox.checked =
-                localStorage.getItem(
-                    key
-                ) === "true";
-
-
-            checkbox.addEventListener(
-                "change",
+            start.addEventListener(
+                "click",
                 () => {
 
-                    localStorage.setItem(
-                        key,
-                        checkbox.checked
-                            ? "true"
-                            : "false"
-                    );
+                    const state =
+                        timer.getState();
 
+                    if (state.running) {
+                        timer.pause();
+                    } else {
+                        timer.start();
+                    }
+
+                    updateTimerUI();
                 }
             );
-
         }
-    );
 
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-function setupButtons() {
-
-    $("knowledgeCheckButton")
-        ?.addEventListener(
-            "click",
-            startKnowledgeCheck
-        );
-
-
-    /*
-     * IMPORTANT:
-     * This remains completely separate from timer completion.
-     */
-
-    $("completeSessionButton")
-        ?.addEventListener(
-            "click",
-            completeSession
-        );
-
-
-    $("logoutButton")
-        ?.addEventListener(
-            "click",
-            logout
-        );
-
-}
-
-
-/* =========================================================
-   KNOWLEDGE CHECK
-   ========================================================= */
-
-function startKnowledgeCheck() {
-
-    if (!currentTopic) {
-
-        return;
-
-    }
-
-
-    localStorage.setItem(
-        "studyMindKnowledgeCheckTopic",
-        JSON.stringify(
-            currentTopic
-        )
-    );
-
-
-    localStorage.setItem(
-        "studyMindCurrentTopicIndex",
-        String(
-            getCurrentTopicIndex()
-        )
-    );
-
-
-    window.location.href =
-        "knowledge-check.html";
-
-}
-
-
-/* =========================================================
-   CURRENT INDEX
-   ========================================================= */
-
-function getCurrentTopicIndex() {
-
-    const topics =
-        getAllTopics();
-
-
-    if (!currentTopic) {
-
-        return 0;
-
-    }
-
-
-    const index =
-        topics.findIndex(
-            topic =>
-                topic.name ===
-                    currentTopic.name &&
-                topic.subject ===
-                    currentTopic.subject
-        );
-
-
-    return index >= 0
-        ? index
-        : 0;
-
-}
-
-
-/* =========================================================
-   COMPLETE SESSION
-   =========================================================
-
-   IMPORTANT:
-
-   This is NOT timer completion.
-
-   The student explicitly clicking
-   "Complete Session" still records the topic.
-
-   Knowledge-check flow remains untouched.
-   ========================================================= */
-
-function completeSession() {
-
-    if (!currentTopic) {
-
-        return;
-
-    }
-
-
-    const topicKey =
-        `${currentTopic.subject}::${currentTopic.name}`;
-
-
-    /* -----------------------------------------------------
-       LOAD COMPLETED TOPICS
-    ----------------------------------------------------- */
-
-    let completed =
-        safeJSON(
-            SESSION_KEYS.DONE,
-            []
-        );
-
-
-    if (!Array.isArray(completed)) {
-
-        completed = [];
-
-    }
-
-
-    /*
-     * Use subject + topic rather than topic name alone.
-     */
-
-    if (!completed.includes(topicKey)) {
-
-        completed.push(topicKey);
-
-    }
-
-
-    saveJSON(
-        SESSION_KEYS.DONE,
-        completed
-    );
-
-
-    /* -----------------------------------------------------
-       QUESTION-CHECK COMPLETION
-    ----------------------------------------------------- */
-
-    const questionDone =
-        $("questionCheck")?.checked;
-
-
-    if (questionDone) {
-
-        let qCompleted =
-            safeJSON(
-                SESSION_KEYS.QUESTION_DONE,
-                []
+        const reset =
+            document.getElementById(
+                "timerReset"
             );
 
+        if (reset) {
 
-        if (!Array.isArray(qCompleted)) {
+            reset.addEventListener(
+                "click",
+                () => {
 
-            qCompleted = [];
-
+                    timer.reset();
+                    updateTimerUI();
+                }
+            );
         }
 
-
-        if (!qCompleted.includes(topicKey)) {
-
-            qCompleted.push(topicKey);
-
-        }
-
-
-        saveJSON(
-            SESSION_KEYS.QUESTION_DONE,
-            qCompleted
+        window.addEventListener(
+            "studyMindTimerChanged",
+            updateTimerUI
         );
 
+        window.addEventListener(
+            "studyMindStudyTimeUpdated",
+            updateTimerUI
+        );
+
+        setInterval(
+            updateTimerUI,
+            1000
+        );
     }
 
+    /* =========================================================
+       CHECKLIST
+    ========================================================= */
 
-    /* -----------------------------------------------------
-       CHECK ENTIRE PLAN
-    ----------------------------------------------------- */
+    function setupChecklist() {
 
-    const allTopics =
-        getAllTopics();
+        document
+            .querySelectorAll(
+                "#understandCheck, #notesCheck, #recallCheck, #questionCheck"
+            )
+            .forEach(checkbox => {
 
+                checkbox.addEventListener(
+                    "change",
+                    () => {
 
-    const completedSet =
-        new Set(
+                        if (
+                            currentTopic
+                        ) {
+
+                            const key =
+                                `studyMindChecklist_${currentTopic.subject}_${currentTopic.name}`;
+
+                            const data =
+                                readJSON(
+                                    key,
+                                    {}
+                                );
+
+                            data[
+                                checkbox.id
+                            ] =
+                                checkbox.checked;
+
+                            writeJSON(
+                                key,
+                                data
+                            );
+                        }
+                    }
+                );
+            });
+    }
+
+    /* =========================================================
+       KNOWLEDGE CHECK
+    ========================================================= */
+
+    function startKnowledgeCheck() {
+
+        if (!currentTopic) {
+            return;
+        }
+
+        writeJSON(
+            "studyMindKnowledgeCheckTopic",
+            currentTopic
+        );
+
+        window.location.href =
+            "knowledge-check.html";
+    }
+
+    /* =========================================================
+       COMPLETE SESSION
+       IMPORTANT:
+       This remains separate from timer completion.
+    ========================================================= */
+
+    function completeSession() {
+
+        if (!currentTopic) {
+            return;
+        }
+
+        const key =
+            topicKey(currentTopic);
+
+        const completed =
+            getCompletedTopics();
+
+        if (!completed.includes(key)) {
+            completed.push(key);
+        }
+
+        writeJSON(
+            KEYS.COMPLETED,
             completed
         );
 
+        renderTopic();
 
-    const completedCount =
-        allTopics.filter(
-            topic => {
-
-                const key =
-                    `${topic.subject}::${topic.name}`;
-
-
-                return completedSet.has(
-                    key
-                );
-
-            }
-        ).length;
-
-
-    const totalTopics =
-        allTopics.length;
-
-
-    const progress =
-        totalTopics
-            ? Math.round(
-                (
-                    completedCount /
-                    totalTopics
-                ) * 100
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressUpdated"
             )
-            : 0;
+        );
 
-
-    console.log(
-        "StudyMind completion:",
-        {
-            completedCount,
-            totalTopics,
-            progress
+        /*
+         * Check whether the entire day's
+         * required study has now been completed.
+         */
+        if (
+            window.StudyMindStreak &&
+            typeof window.StudyMindStreak.checkTodayCompletion ===
+                "function"
+        ) {
+            setTimeout(
+                () => {
+                    window.StudyMindStreak
+                        .checkTodayCompletion();
+                },
+                100
+            );
         }
-    );
 
+        /*
+         * Refresh Score.
+         */
+        if (
+            window.StudyMindScore &&
+            typeof window.StudyMindScore.refresh ===
+                "function"
+        ) {
+            window.StudyMindScore.refresh();
+        }
 
-    /* -----------------------------------------------------
-       FULL PLAN / STUDY DAY COMPLETE
-    ----------------------------------------------------- */
+        /*
+         * Check Rewards.
+         */
+        if (
+            window.StudyMindRewards &&
+            typeof window.StudyMindRewards.check ===
+                "function"
+        ) {
+            setTimeout(
+                () => {
+                    window.StudyMindRewards.check();
+                },
+                300
+            );
+        }
 
-    if (
-        totalTopics > 0 &&
-        completedCount >= totalTopics
-    ) {
+        const status =
+            document.getElementById(
+                "sessionStatus"
+            );
 
-        completeStudyDay();
+        if (status) {
+            status.textContent =
+                "Session completed ✓";
+        }
 
-    }
-
-
-    /* -----------------------------------------------------
-       SESSION COMPLETE
-    ----------------------------------------------------- */
-
-    updateSessionStatus(
-        progress >= 100
-            ? "All study topics completed! 🎉"
-            : `Topic completed ✓ ${progress}% overall progress`
-    );
-
-
-    /*
-     * Preserve existing behavior:
-     * return to dashboard.
-     */
-
-    setTimeout(
-        () => {
+        setTimeout(() => {
 
             window.location.href =
                 "dashboard.html";
 
-        },
-        800
-    );
-
-}
-
-
-/* =========================================================
-   COMPLETE STUDY DAY
-   ========================================================= */
-
-function completeStudyDay() {
-
-    const today =
-        getLocalDateKey();
-
-
-    let activity =
-        safeJSON(
-            "studyMindStreakActivity",
-            {}
-        );
-
-
-    if (
-        !activity ||
-        typeof activity !== "object" ||
-        Array.isArray(activity)
-    ) {
-
-        activity = {};
-
+        }, 800);
     }
 
+    /* =========================================================
+       USER
+    ========================================================= */
 
-    /*
-     * Same date remains one streak day.
-     */
+    async function loadUser() {
 
-    activity[today] = true;
-
-
-    saveJSON(
-        "studyMindStreakActivity",
-        activity
-    );
-
-
-    /*
-     * Existing streak engine.
-     */
-
-    if (
-        window.StudyMindStreak &&
-        typeof window.StudyMindStreak.recordStudyActivity ===
-            "function"
-    ) {
+        let username =
+            localStorage.getItem(
+                KEYS.USERNAME
+            );
 
         try {
 
-            window.StudyMindStreak.recordStudyActivity();
+            const client =
+                window.supabaseClient ||
+                window.studyMindSupabase;
+
+            if (client) {
+
+                const {
+                    data
+                } =
+                    await client.auth.getUser();
+
+                const user =
+                    data?.user;
+
+                const metadata =
+                    user?.user_metadata ||
+                    {};
+
+                /*
+                 * Explicit username is ALWAYS
+                 * preferred.
+                 */
+                username =
+                    metadata.username ||
+                    username ||
+                    metadata.display_name ||
+                    metadata.name ||
+                    (
+                        user?.email
+                            ? user.email
+                                .split("@")[0]
+                            : ""
+                    ) ||
+                    "Student";
+
+                localStorage.setItem(
+                    KEYS.USERNAME,
+                    username
+                );
+            }
 
         } catch (error) {
 
             console.warn(
-                "StudyMind streak update error:",
+                "StudyMind: Could not load user.",
                 error
             );
-
         }
 
+        username =
+            username || "Student";
+
+        setText(
+            "usernameDisplay",
+            username
+        );
+
+        const avatar =
+            document.getElementById(
+                "userAvatar"
+            );
+
+        if (avatar) {
+            avatar.textContent =
+                username
+                    .charAt(0)
+                    .toUpperCase();
+        }
     }
 
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
 
-    /*
-     * Existing congratulations flag.
-     */
+    function setupButtons() {
 
-    localStorage.setItem(
-        "studyMindCompletionCelebrationShown",
-        today
-    );
+        const knowledge =
+            document.getElementById(
+                "knowledgeCheckButton"
+            );
 
+        if (knowledge) {
+            knowledge.addEventListener(
+                "click",
+                startKnowledgeCheck
+            );
+        }
 
-    console.log(
-        "🎉 Study day completed:",
-        today
-    );
+        const complete =
+            document.getElementById(
+                "completeSessionButton"
+            );
 
-}
+        if (complete) {
+            complete.addEventListener(
+                "click",
+                completeSession
+            );
+        }
 
+        const notes =
+            document.getElementById(
+                "sessionNotes"
+            );
 
-/* =========================================================
-   LOCAL DATE KEY
-   ========================================================= */
+        if (notes) {
 
-function getLocalDateKey() {
+            let timeout;
 
-    const now =
-        new Date();
+            notes.addEventListener(
+                "input",
+                () => {
 
+                    clearTimeout(timeout);
 
-    const year =
-        now.getFullYear();
-
-
-    const month =
-        String(
-            now.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const day =
-        String(
-            now.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    return (
-        `${year}-${month}-${day}`
-    );
-
-}
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-function updateSessionStatus(
-    message
-) {
-
-    const status =
-        $("sessionStatus");
-
-
-    if (status) {
-
-        status.textContent =
-            message;
-
+                    timeout =
+                        setTimeout(
+                            saveNotes,
+                            500
+                        );
+                }
+            );
+        }
     }
 
-}
+    /* =========================================================
+       INITIALIZE
+    ========================================================= */
 
+    function initialize() {
 
-/* =========================================================
-   USER
-   ========================================================= */
+        loadPlan();
 
-async function loadUser() {
+        currentTopic =
+            determineCurrentTopic();
 
-    let name =
-        localStorage.getItem(
-            SESSION_KEYS.USERNAME
+        renderTopic();
+        loadNotes();
+        setupTimerControls();
+        setupChecklist();
+        setupButtons();
+        loadUser();
+        updateTimerUI();
+
+        window.addEventListener(
+            "studyMindProgressUpdated",
+            renderTopic
         );
 
-
-    try {
-
-        if (
-            window.supabaseClient &&
-            typeof window.supabaseClient.auth
-                ?.getUser ===
-                "function"
-        ) {
-
-            const {
-                data
-            } =
-                await window.supabaseClient.auth.getUser();
-
-
-            const user =
-                data?.user;
-
-
-            if (user) {
-
-                name =
-                    firstValue(
-                        user.user_metadata?.full_name,
-                        user.user_metadata?.name,
-                        user.user_metadata?.username,
-                        user.email?.split("@")[0],
-                        name,
-                        "Student"
-                    );
-
+        window.addEventListener(
+            "studyMindTimerCompleted",
+            () => {
+                updateTimerUI();
+                renderTopic();
             }
+        );
+    }
 
-        }
+    if (
+        document.readyState ===
+        "loading"
+    ) {
 
-    } catch (error) {
-
-        console.warn(
-            "Could not load user:",
-            error
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
         );
 
+    } else {
+        initialize();
     }
 
-
-    name =
-        name ||
-        "Student";
-
-
-    localStorage.setItem(
-        SESSION_KEYS.USERNAME,
-        name
-    );
-
-
-    if ($("usernameDisplay")) {
-
-        $("usernameDisplay").textContent =
-            name;
-
-    }
-
-
-    if ($("userAvatar")) {
-
-        $("userAvatar").textContent =
-            name
-                .charAt(0)
-                .toUpperCase();
-
-    }
-
-}
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-async function logout() {
-
-    try {
-
-        if (
-            window.supabaseClient &&
-            typeof window.supabaseClient.auth
-                ?.signOut ===
-                "function"
-        ) {
-
-            await window.supabaseClient.auth.signOut();
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Logout error:",
-            error
-        );
-
-    }
-
-
-    window.location.href =
-        "home.html";
-
-}
+})();
