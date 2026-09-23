@@ -1,120 +1,264 @@
+"use strict";
+
 /* =========================================
    STUDYMIND AI — SIGN UP
 ========================================= */
 
-const signupForm = document.getElementById("signupForm");
-const authMessage = document.getElementById("authMessage");
+const signupForm =
+    document.getElementById("signupForm");
+
+const authMessage =
+    document.getElementById("authMessage");
 
 if (signupForm) {
 
-    signupForm.addEventListener("submit", async function (event) {
+    signupForm.addEventListener(
+        "submit",
+        async function (event) {
 
-        event.preventDefault();
+            event.preventDefault();
 
-        const name =
-            document.getElementById("name").value.trim();
+            const name =
+                document
+                    .getElementById("name")
+                    ?.value
+                    .trim() || "";
 
-        const email =
-            document.getElementById("email").value.trim();
+            const email =
+                document
+                    .getElementById("email")
+                    ?.value
+                    .trim() || "";
 
-        const password =
-            document.getElementById("password").value;
+            const password =
+                document
+                    .getElementById("password")
+                    ?.value || "";
 
-        const confirmPassword =
-            document.getElementById("confirmPassword").value;
+            const confirmPassword =
+                document
+                    .getElementById(
+                        "confirmPassword"
+                    )
+                    ?.value || "";
 
+            /*
+             * Use the existing name field as the
+             * student's chosen username.
+             */
+            const username = name.trim();
 
-        /* ================================
-           VALIDATION
-        ================================= */
+            if (!username) {
 
-        if (password !== confirmPassword) {
+                showMessage(
+                    "Please choose a username.",
+                    true
+                );
 
-            authMessage.textContent =
-                "Passwords do not match.";
+                return;
+            }
 
-            authMessage.className =
-                "auth-message error";
+            if (
+                username.length < 3
+            ) {
 
-            return;
-        }
+                showMessage(
+                    "Your username must be at least 3 characters.",
+                    true
+                );
 
+                return;
+            }
 
-        if (password.length < 8) {
+            if (
+                username.length > 30
+            ) {
 
-            authMessage.textContent =
-                "Password must be at least 8 characters.";
+                showMessage(
+                    "Your username must be 30 characters or fewer.",
+                    true
+                );
 
-            authMessage.className =
-                "auth-message error";
+                return;
+            }
 
-            return;
-        }
+            if (!email) {
 
+                showMessage(
+                    "Please enter your email.",
+                    true
+                );
 
-        /* ================================
-           CREATE ACCOUNT
-        ================================= */
+                return;
+            }
 
-        authMessage.textContent =
-            "Creating your account...";
+            if (
+                password !==
+                confirmPassword
+            ) {
 
-        authMessage.className =
-            "auth-message";
+                showMessage(
+                    "Passwords do not match.",
+                    true
+                );
 
+                return;
+            }
 
-        const { data, error } =
-            await supabaseClient.auth.signUp({
+            if (
+                password.length < 8
+            ) {
 
-                email: email,
+                showMessage(
+                    "Password must be at least 8 characters.",
+                    true
+                );
 
-                password: password,
+                return;
+            }
 
-                options: {
-                    data: {
-                        name: name
-                    }
+            showMessage(
+                "Creating your account...",
+                false
+            );
+
+            try {
+
+                const client =
+                    window.supabaseClient ||
+                    window.studyMindSupabase;
+
+                if (!client) {
+                    throw new Error(
+                        "Supabase is not available."
+                    );
                 }
 
-            });
+                const {
+                    data,
+                    error
+                } =
+                    await client.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
 
+                                /*
+                                 * Canonical username.
+                                 */
+                                username,
 
-        /* ================================
-           ERROR
-        ================================= */
+                                /*
+                                 * Keep name for
+                                 * backward compatibility.
+                                 */
+                                name: username,
 
-        if (error) {
+                                display_name:
+                                    username
+                            }
+                        }
+                    });
 
-            console.error(error);
+                if (error) {
+                    throw error;
+                }
 
-            authMessage.textContent =
-                error.message;
+                /*
+                 * Store locally immediately.
+                 */
+                localStorage.setItem(
+                    "studyMindUsername",
+                    username
+                );
 
-            authMessage.className =
-                "auth-message error";
+                /*
+                 * Absolutely no initial XP,
+                 * streak, score or study time.
+                 */
+                localStorage.setItem(
+                    "studyMindXP",
+                    "0"
+                );
 
-            return;
+                localStorage.setItem(
+                    "studyMindTotalXP",
+                    "0"
+                );
+
+                localStorage.setItem(
+                    "studyMindStreak",
+                    "0"
+                );
+
+                localStorage.setItem(
+                    "studyMindStudyScore",
+                    "0"
+                );
+
+                localStorage.removeItem(
+                    "studyMindStreakActivity"
+                );
+
+                localStorage.removeItem(
+                    "studyMindCompletedTopics"
+                );
+
+                localStorage.removeItem(
+                    "studyMindStudySessions"
+                );
+
+                localStorage.removeItem(
+                    "studyMindDailyStudyTime"
+                );
+
+                showMessage(
+                    data?.session
+                        ? "Account created successfully!"
+                        : "Account created! Check your email to confirm your account.",
+                    false
+                );
+
+                setTimeout(
+                    () => {
+                        window.location.href =
+                            "home.html";
+                    },
+                    1200
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "StudyMind signup error:",
+                    error
+                );
+
+                showMessage(
+                    error?.message ||
+                    "Unable to create your account.",
+                    true
+                );
+            }
         }
+    );
+}
 
+function showMessage(
+    message,
+    isError
+) {
 
-        /* ================================
-           SUCCESS
-        ================================= */
+    if (!authMessage) {
+        return;
+    }
 
-        authMessage.textContent =
-            "Account created successfully!";
+    authMessage.textContent =
+        message;
 
-        authMessage.className =
-            "auth-message success";
-
-
-        setTimeout(() => {
-
-            window.location.href =
-                "home.html";
-
-        }, 1000);
-
-    });
-
+    authMessage.style.color =
+        isError
+            ? ""
+            : "";
 }
