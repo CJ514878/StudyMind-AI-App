@@ -1376,6 +1376,46 @@ function calculateState() {
         score;
 }
 
+/* =========================================================
+   SHARED STUDY SCORE
+========================================================= */
+
+function renderSharedScore() {
+
+    const score =
+        state.sharedScore ||
+        getSharedScoreData();
+
+
+    setText(
+        "studyScore",
+        score.total
+    );
+
+
+    setText(
+        "goalStudyScore",
+        score.total
+    );
+
+
+    setText(
+        "goalKnowledgeAverage",
+        `${score.knowledgeAverage}%`
+    );
+
+
+    setText(
+        "goalKnowledgeChecks",
+        score.knowledgeCheckCount
+    );
+
+
+    setText(
+        "goalPlanProgress",
+        `${score.planProgress}%`
+    );
+}
 
 /* =========================================================
    HERO
