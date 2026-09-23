@@ -3,7 +3,7 @@
 /* =========================================================
    STUDYMIND AI — STUDY SCORE ENGINE
    ---------------------------------------------------------
-   Score is SEPARATE from XP.
+   SINGLE SOURCE OF TRUTH FOR STUDY PERFORMANCE
 
    MAX SCORE = 100
 
@@ -12,7 +12,12 @@
    Consistency         20
    Plan progress       15
    AI learning         10
-   ---------------------------------------------------------
+
+   IMPORTANT:
+   SCORE IS SEPARATE FROM XP.
+
+   Creating a study plan does NOT increase score,
+   XP or streak by itself.
 ========================================================= */
 
 
@@ -23,11 +28,20 @@
 const SCORE_PLAN_KEY =
     "studyMindPlan";
 
+const SCORE_PLANS_KEY =
+    "studyMindPlans";
+
+const SCORE_ACTIVE_PLAN_KEY =
+    "studyMindActivePlanId";
+
 const SCORE_COMPLETED_TOPICS_KEY =
     "studyMindCompletedTopics";
 
 const SCORE_COMPLETED_QUESTIONS_KEY =
     "studyMindCompletedQuestionTopics";
+
+const SCORE_KNOWLEDGE_RESULTS_KEY =
+    "studyMindKnowledgeCheckResults";
 
 const SCORE_HISTORY_KEY =
     "studyMindStudyHistory";
@@ -67,39 +81,73 @@ const SCORE_BREAKDOWN_KEY =
    HELPERS
 ========================================================= */
 
-function scoreReadJSON(key, fallback) {
+function scoreReadJSON(key, fallback = null) {
 
     try {
 
-        const value =
-            JSON.parse(
-                localStorage.getItem(key) || "null"
-            );
+        const raw =
+            localStorage.getItem(key);
 
-        return value ?? fallback;
+        if (!raw) {
+            return fallback;
+        }
+
+        const parsed =
+            JSON.parse(raw);
+
+        return parsed ?? fallback;
 
     } catch (error) {
 
+        console.warn(
+            "StudyMind score storage error:",
+            key,
+            error
+        );
+
         return fallback;
-
     }
+}
 
+
+function scoreWriteJSON(key, value) {
+
+    try {
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind score save error:",
+            key,
+            error
+        );
+    }
 }
 
 
 function scoreGetArray(key) {
 
     const value =
-        scoreReadJSON(key, []);
+        scoreReadJSON(
+            key,
+            []
+        );
 
     return Array.isArray(value)
         ? value
         : [];
-
 }
 
 
-function scoreGetNumber(key, fallback = 0) {
+function scoreGetNumber(
+    key,
+    fallback = 0
+) {
 
     const value =
         Number(
@@ -109,25 +157,47 @@ function scoreGetNumber(key, fallback = 0) {
     return Number.isFinite(value)
         ? value
         : fallback;
-
 }
 
 
-function scoreTodayKey() {
+function scoreClamp(
+    value,
+    min,
+    max
+) {
 
-    const date =
-        new Date();
+    return Math.min(
+        max,
+        Math.max(
+            min,
+            value
+        )
+    );
+}
 
-    return [
-        date.getFullYear(),
+
+function scoreTodayKey(date = new Date()) {
+
+    const year =
+        date.getFullYear();
+
+    const month =
         String(
             date.getMonth() + 1
-        ).padStart(2, "0"),
+        ).padStart(
+            2,
+            "0"
+        );
+
+    const day =
         String(
             date.getDate()
-        ).padStart(2, "0")
-    ].join("-");
+        ).padStart(
+            2,
+            "0"
+        );
 
+    return `${year}-${month}-${day}`;
 }
 
 
@@ -139,39 +209,54 @@ function scoreParseDateKey(key) {
     ) {
 
         return null;
-
     }
+
 
     const parts =
         key
             .split("-")
             .map(Number);
 
+
     return new Date(
         parts[0],
         parts[1] - 1,
         parts[2]
     );
-
 }
 
 
-function scoreDaysBetween(a, b) {
+function scoreDaysBetween(
+    a,
+    b
+) {
 
     if (!a || !b) {
         return 0;
     }
 
+
     const milliseconds =
-        24 * 60 * 60 * 1000;
+        86400000;
+
 
     return Math.round(
         Math.abs(
             a.getTime() -
             b.getTime()
-        ) / milliseconds
+        ) /
+        milliseconds
     );
+}
 
+
+function scoreNormalizeText(value) {
+
+    return String(
+        value ?? ""
+    )
+        .trim()
+        .toLowerCase();
 }
 
 
@@ -181,11 +266,58 @@ function scoreDaysBetween(a, b) {
 
 function scoreGetPlan() {
 
-    return scoreReadJSON(
-        SCORE_PLAN_KEY,
-        null
-    );
+    let plan =
+        scoreReadJSON(
+            SCORE_PLAN_KEY,
+            null
+        );
 
+
+    const plans =
+        scoreReadJSON(
+            SCORE_PLANS_KEY,
+            null
+        );
+
+
+    const activeId =
+        localStorage.getItem(
+            SCORE_ACTIVE_PLAN_KEY
+        );
+
+
+    if (
+        Array.isArray(plans) &&
+        plans.length
+    ) {
+
+        let active =
+            null;
+
+
+        if (activeId) {
+
+            active =
+                plans.find(
+                    item =>
+                        String(item?.id) ===
+                        String(activeId)
+                );
+        }
+
+
+        if (!active) {
+            active = plans[0];
+        }
+
+
+        if (active) {
+            plan = active;
+        }
+    }
+
+
+    return plan;
 }
 
 
@@ -198,6 +330,7 @@ function scoreExtractPlanTopics(plan) {
     if (!plan) {
         return [];
     }
+
 
     const result = [];
 
@@ -213,8 +346,33 @@ function scoreExtractPlanTopics(plan) {
                 value.trim()
             );
 
+            return;
         }
 
+
+        if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            const name =
+                value.name ||
+                value.topic ||
+                value.topicName ||
+                value.title ||
+                value.text;
+
+
+            if (
+                typeof name === "string" &&
+                name.trim()
+            ) {
+
+                result.push(
+                    name.trim()
+                );
+            }
+        }
     }
 
 
@@ -225,39 +383,84 @@ function scoreExtractPlanTopics(plan) {
         }
 
 
-        if (Array.isArray(value)) {
+        if (typeof value === "string") {
 
-            value.forEach(item => {
-
-                if (
-                    typeof item === "string"
-                ) {
-
-                    addTopic(item);
-
-                    return;
-
-                }
-
-
-                if (
-                    item &&
-                    typeof item === "object"
-                ) {
-
-                    addTopic(
-                        item.topic ||
-                        item.topicName ||
-                        item.name ||
-                        item.title
-                    );
-
-                }
-
-            });
+            addTopic(value);
 
             return;
+        }
 
+
+        if (Array.isArray(value)) {
+
+            value.forEach(
+                item => {
+
+                    if (
+                        typeof item === "string"
+                    ) {
+
+                        addTopic(item);
+
+                        return;
+                    }
+
+
+                    if (
+                        item &&
+                        typeof item === "object"
+                    ) {
+
+                        /*
+                         * Subject object:
+                         *
+                         * {
+                         *   name: "Mathematics",
+                         *   topics: [...]
+                         * }
+                         */
+
+                        if (
+                            Array.isArray(
+                                item.topics
+                            )
+                        ) {
+
+                            collect(
+                                item.topics
+                            );
+                        }
+
+
+                        if (
+                            Array.isArray(
+                                item.topicList
+                            )
+                        ) {
+
+                            collect(
+                                item.topicList
+                            );
+                        }
+
+
+                        /*
+                         * Direct topic object.
+                         */
+
+                        if (
+                            item.topic ||
+                            item.topicName ||
+                            item.title
+                        ) {
+
+                            addTopic(item);
+                        }
+                    }
+                }
+            );
+
+            return;
         }
 
 
@@ -275,57 +478,29 @@ function scoreExtractPlanTopics(plan) {
 
                         if (
                             lower.includes("topic") ||
-                            lower.includes("topics")
+                            lower.includes("subject") ||
+                            lower.includes("schedule") ||
+                            lower.includes("timetable")
                         ) {
 
                             collect(child);
 
-                        }
-
-
-                        /*
-                         * Also support subject objects such as:
-                         *
-                         * {
-                         *   Mathematics: ["Algebra", "Geometry"]
-                         * }
-                         */
-
-                        if (
+                        } else if (
                             Array.isArray(child)
                         ) {
 
-                            child.forEach(item => {
+                            /*
+                             * Supports structures such as:
+                             *
+                             * Mathematics:
+                             *   ["Algebra", "Geometry"]
+                             */
 
-                                if (
-                                    typeof item === "string"
-                                ) {
-
-                                    addTopic(item);
-
-                                } else if (
-                                    item &&
-                                    typeof item === "object"
-                                ) {
-
-                                    addTopic(
-                                        item.topic ||
-                                        item.topicName ||
-                                        item.name ||
-                                        item.title
-                                    );
-
-                                }
-
-                            });
-
+                            collect(child);
                         }
-
                     }
                 );
-
         }
-
     }
 
 
@@ -339,10 +514,11 @@ function scoreExtractPlanTopics(plan) {
 
     return [
         ...new Set(
-            result.filter(Boolean)
+            result
+                .map(scoreNormalizeText)
+                .filter(Boolean)
         )
     ];
-
 }
 
 
@@ -350,12 +526,44 @@ function scoreExtractPlanTopics(plan) {
    COMPLETED TOPICS
 ========================================================= */
 
+function scoreGetCompletedTopicRecords() {
+
+    const raw =
+        scoreReadJSON(
+            SCORE_COMPLETED_TOPICS_KEY,
+            []
+        );
+
+
+    if (Array.isArray(raw)) {
+        return raw;
+    }
+
+
+    /*
+     * Compatibility with object-based storage.
+     */
+
+    if (
+        raw &&
+        typeof raw === "object"
+    ) {
+
+        return Object.values(raw)
+            .flat()
+            .filter(Boolean);
+    }
+
+
+    return [];
+}
+
+
 function scoreGetCompletedTopics() {
 
     const raw =
-        scoreGetArray(
-            SCORE_COMPLETED_TOPICS_KEY
-        );
+        scoreGetCompletedTopicRecords();
+
 
     return [
         ...new Set(
@@ -367,7 +575,6 @@ function scoreGetCompletedTopics() {
                     ) {
 
                         return item;
-
                     }
 
 
@@ -383,29 +590,61 @@ function scoreGetCompletedTopics() {
                             item.title ||
                             ""
                         );
-
                     }
 
-                    return "";
 
+                    return "";
                 })
+                .map(scoreNormalizeText)
                 .filter(Boolean)
         )
     ];
-
 }
 
 
 /* =========================================================
-   COMPLETED KNOWLEDGE CHECKS
+   COMPLETED KNOWLEDGE CHECK TOPICS
 ========================================================= */
 
 function scoreGetCompletedQuestions() {
 
     const raw =
-        scoreGetArray(
-            SCORE_COMPLETED_QUESTIONS_KEY
+        scoreReadJSON(
+            SCORE_COMPLETED_QUESTIONS_KEY,
+            []
         );
+
+
+    if (!Array.isArray(raw)) {
+
+        if (
+            raw &&
+            typeof raw === "object"
+        ) {
+
+            return [
+                ...new Set(
+                    Object.values(raw)
+                        .flat()
+                        .map(item =>
+                            typeof item === "string"
+                                ? item
+                                : item?.topic ||
+                                  item?.topicName ||
+                                  item?.name ||
+                                  item?.title ||
+                                  ""
+                        )
+                        .map(scoreNormalizeText)
+                        .filter(Boolean)
+                )
+            ];
+        }
+
+
+        return [];
+    }
+
 
     return [
         ...new Set(
@@ -417,7 +656,6 @@ function scoreGetCompletedQuestions() {
                     ) {
 
                         return item;
-
                     }
 
 
@@ -433,16 +671,237 @@ function scoreGetCompletedQuestions() {
                             item.title ||
                             ""
                         );
-
                     }
 
-                    return "";
 
+                    return "";
                 })
+                .map(scoreNormalizeText)
                 .filter(Boolean)
         )
     ];
+}
 
+
+/* =========================================================
+   KNOWLEDGE CHECK RESULTS
+   ---------------------------------------------------------
+   Shared source of truth for actual percentages.
+
+   Supported formats:
+
+   [
+       {
+           topic: "Algebra",
+           subject: "Mathematics",
+           score: 80,
+           percentage: 80,
+           passed: true,
+           date: "2026-09-23"
+       }
+   ]
+
+   OR:
+
+   {
+       "Mathematics::Algebra": {
+           score: 80
+       }
+   }
+========================================================= */
+
+function scoreGetKnowledgeResults() {
+
+    const raw =
+        scoreReadJSON(
+            SCORE_KNOWLEDGE_RESULTS_KEY,
+            []
+        );
+
+
+    let results = [];
+
+
+    if (Array.isArray(raw)) {
+
+        results = raw;
+
+    } else if (
+        raw &&
+        typeof raw === "object"
+    ) {
+
+        results =
+            Object.entries(raw)
+                .map(
+                    ([key, value]) => {
+
+                        if (
+                            value &&
+                            typeof value === "object"
+                        ) {
+
+                            return {
+                                ...value,
+                                key
+                            };
+                        }
+
+
+                        return {
+                            key,
+                            score: value
+                        };
+                    }
+                );
+    }
+
+
+    return results
+        .map(result => {
+
+            const percentage =
+                Number(
+                    result?.percentage ??
+                    result?.score ??
+                    result?.percent ??
+                    result?.result ??
+                    result?.accuracy
+                );
+
+
+            if (
+                !Number.isFinite(
+                    percentage
+                )
+            ) {
+
+                return null;
+            }
+
+
+            const safePercentage =
+                scoreClamp(
+                    percentage,
+                    0,
+                    100
+                );
+
+
+            return {
+
+                ...result,
+
+                percentage:
+                    safePercentage,
+
+                passed:
+                    result?.passed !== undefined
+                        ? Boolean(result.passed)
+                        : safePercentage >= 60
+            };
+        })
+        .filter(Boolean);
+}
+
+
+/* =========================================================
+   KNOWLEDGE PERFORMANCE
+========================================================= */
+
+function scoreGetKnowledgePerformance() {
+
+    const results =
+        scoreGetKnowledgeResults();
+
+
+    if (!results.length) {
+
+        return {
+
+            count: 0,
+
+            average: 0,
+
+            highest: 0,
+
+            lowest: 0,
+
+            passed: 0,
+
+            perfect: 0,
+
+            excellent: 0
+        };
+    }
+
+
+    const percentages =
+        results.map(
+            result =>
+                result.percentage
+        );
+
+
+    const total =
+        percentages.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        );
+
+
+    const average =
+        Math.round(
+            total /
+            percentages.length
+        );
+
+
+    const passed =
+        percentages.filter(
+            value =>
+                value >= 60
+        ).length;
+
+
+    const excellent =
+        percentages.filter(
+            value =>
+                value >= 80
+        ).length;
+
+
+    const perfect =
+        percentages.filter(
+            value =>
+                value >= 100
+        ).length;
+
+
+    return {
+
+        count:
+            percentages.length,
+
+        average,
+
+        highest:
+            Math.max(
+                ...percentages
+            ),
+
+        lowest:
+            Math.min(
+                ...percentages
+            ),
+
+        passed,
+
+        excellent,
+
+        perfect
+    };
 }
 
 
@@ -452,7 +911,7 @@ function scoreGetCompletedQuestions() {
 
 function scoreGetDailyStudyMinutes() {
 
-    const value =
+    const daily =
         scoreReadJSON(
             SCORE_DAILY_TIME_KEY,
             {}
@@ -460,49 +919,62 @@ function scoreGetDailyStudyMinutes() {
 
 
     if (
-        typeof value === "number"
+        typeof daily === "number"
     ) {
 
         return Math.max(
             0,
-            value
+            daily
         );
-
     }
 
 
     if (
-        !value ||
-        typeof value !== "object"
+        !daily ||
+        typeof daily !== "object" ||
+        Array.isArray(daily)
     ) {
 
         return 0;
-
     }
 
-
-    /*
-     * The timer stores daily time like:
-     *
-     * {
-     *   "2026-09-23": 42
-     * }
-     */
 
     const today =
         scoreTodayKey();
 
 
-    const todayValue =
+    const value =
         Number(
-            value[today] || 0
+            daily[today] || 0
         );
 
 
-    return Number.isFinite(todayValue)
-        ? Math.max(0, todayValue)
+    return Number.isFinite(value)
+        ? Math.max(0, value)
         : 0;
+}
 
+
+function scoreGetStudyHistoryObject() {
+
+    const history =
+        scoreReadJSON(
+            SCORE_HISTORY_KEY,
+            {}
+        );
+
+
+    if (
+        history &&
+        typeof history === "object" &&
+        !Array.isArray(history)
+    ) {
+
+        return history;
+    }
+
+
+    return {};
 }
 
 
@@ -523,6 +995,16 @@ function scoreGetTotalStudyMinutes() {
 
 
     if (
+        typeof daily === "number"
+    ) {
+
+        total +=
+            Math.max(
+                0,
+                daily
+            );
+
+    } else if (
         daily &&
         typeof daily === "object" &&
         !Array.isArray(daily)
@@ -531,94 +1013,201 @@ function scoreGetTotalStudyMinutes() {
         Object.values(daily)
             .forEach(value => {
 
+                if (
+                    typeof value === "object" &&
+                    value !== null
+                ) {
+
+                    value =
+                        value.minutes ??
+                        value.studyMinutes ??
+                        (
+                            Number(value.hours) *
+                            60
+                        );
+                }
+
+
                 const minutes =
                     Number(value);
+
 
                 if (
                     Number.isFinite(minutes)
                 ) {
 
-                    total += Math.max(
-                        0,
-                        minutes
-                    );
-
+                    total +=
+                        Math.max(
+                            0,
+                            minutes
+                        );
                 }
-
             });
-
     }
 
 
     /*
-     * Also inspect study sessions in case
-     * daily totals are missing.
+     * Study history may store hours/minutes by date.
      */
 
-    const sessions =
-        scoreGetArray(
-            SCORE_SESSIONS_KEY
-        );
+    const history =
+        scoreGetStudyHistoryObject();
 
 
-    sessions.forEach(session => {
+    Object.values(history)
+        .forEach(value => {
 
-        if (
-            !session ||
-            typeof session !== "object"
-        ) {
+            let minutes = 0;
 
-            return;
 
-        }
+            if (
+                typeof value === "number"
+            ) {
 
-        const minutes =
-            Number(
-                session.minutes ||
-                session.durationMinutes ||
-                session.studyMinutes ||
-                0
+                /*
+                 * StudyHistory is normally hours.
+                 */
+
+                minutes =
+                    value * 60;
+
+            } else if (
+                value &&
+                typeof value === "object"
+            ) {
+
+                if (
+                    value.minutes !== undefined
+                ) {
+
+                    minutes =
+                        Number(
+                            value.minutes
+                        );
+
+                } else if (
+                    value.studyMinutes !== undefined
+                ) {
+
+                    minutes =
+                        Number(
+                            value.studyMinutes
+                        );
+
+                } else if (
+                    value.hours !== undefined
+                ) {
+
+                    minutes =
+                        Number(
+                            value.hours
+                        ) * 60;
+                }
+            }
+
+
+            if (
+                Number.isFinite(minutes)
+            ) {
+
+                /*
+                 * Do not double count a history
+                 * source if daily data already exists.
+                 */
+
+                if (
+                    total === 0
+                ) {
+
+                    total +=
+                        Math.max(
+                            0,
+                            minutes
+                        );
+                }
+            }
+        });
+
+
+    /*
+     * Sessions are a fallback only.
+     */
+
+    if (total === 0) {
+
+        const sessions =
+            scoreGetArray(
+                SCORE_SESSIONS_KEY
             );
 
 
-        if (
-            Number.isFinite(minutes)
-        ) {
+        sessions.forEach(
+            session => {
 
-            total =
-                Math.max(
-                    total,
-                    0
-                );
+                if (
+                    !session ||
+                    typeof session !== "object"
+                ) {
 
-        }
+                    return;
+                }
 
-    });
+
+                const minutes =
+                    Number(
+                        session.minutes ??
+                        session.durationMinutes ??
+                        session.studyMinutes ??
+                        0
+                    );
+
+
+                if (
+                    Number.isFinite(minutes)
+                ) {
+
+                    total +=
+                        Math.max(
+                            0,
+                            minutes
+                        );
+                }
+            }
+        );
+    }
 
 
     return Math.max(
         0,
         total
     );
-
 }
 
 
 /* =========================================================
-   STUDY HISTORY
+   ACTIVITY HISTORY
 ========================================================= */
 
-function scoreGetStudyHistory() {
+function scoreGetStudyHistoryDates() {
+
+    const dates =
+        new Set();
+
 
     const history =
-        scoreGetArray(
-            SCORE_HISTORY_KEY
-        )
-        .filter(
-            value =>
-                typeof value === "string" &&
-                /^\d{4}-\d{2}-\d{2}$/.test(value)
-        );
+        scoreGetStudyHistoryObject();
+
+
+    Object.keys(history)
+        .forEach(date => {
+
+            if (
+                /^\d{4}-\d{2}-\d{2}$/.test(date)
+            ) {
+
+                dates.add(date);
+            }
+        });
 
 
     const lastStudy =
@@ -632,14 +1221,9 @@ function scoreGetStudyHistory() {
         /^\d{4}-\d{2}-\d{2}$/.test(lastStudy)
     ) {
 
-        history.push(lastStudy);
-
+        dates.add(lastStudy);
     }
 
-
-    /*
-     * Also use streak activity.
-     */
 
     const activity =
         scoreReadJSON(
@@ -663,20 +1247,14 @@ function scoreGetStudyHistory() {
                         /^\d{4}-\d{2}-\d{2}$/.test(date)
                     ) {
 
-                        history.push(date);
-
+                        dates.add(date);
                     }
-
                 }
             );
-
     }
 
 
-    return [
-        ...new Set(history)
-    ];
-
+    return dates;
 }
 
 
@@ -684,10 +1262,10 @@ function scoreGetStudyHistory() {
    STREAK
 ========================================================= */
 
-function scoreCalculateStreak(history) {
+function scoreCalculateStreak() {
 
     /*
-     * Prefer the real StudyMind streak engine.
+     * ALWAYS prefer the real StudyMind streak engine.
      */
 
     if (
@@ -696,7 +1274,7 @@ function scoreCalculateStreak(history) {
             .calculateCurrentStreak === "function"
     ) {
 
-        const realStreak =
+        const value =
             Number(
                 window.StudyMindStreak
                     .calculateCurrentStreak()
@@ -704,30 +1282,19 @@ function scoreCalculateStreak(history) {
 
 
         if (
-            Number.isFinite(realStreak)
+            Number.isFinite(value)
         ) {
 
             return Math.max(
                 0,
-                realStreak
+                value
             );
-
         }
-
-    }
-
-
-    /*
-     * Fallback.
-     */
-
-    if (!history.length) {
-        return 0;
     }
 
 
     const dates =
-        history
+        [...scoreGetStudyHistoryDates()]
             .map(scoreParseDateKey)
             .filter(Boolean)
             .sort(
@@ -748,19 +1315,14 @@ function scoreCalculateStreak(history) {
         );
 
 
-    const newest =
-        dates[0];
-
-
     if (
         scoreDaysBetween(
-            newest,
+            dates[0],
             today
         ) > 1
     ) {
 
         return 0;
-
     }
 
 
@@ -773,15 +1335,11 @@ function scoreCalculateStreak(history) {
         i++
     ) {
 
-        const difference =
+        if (
             scoreDaysBetween(
                 dates[i],
                 dates[i + 1]
-            );
-
-
-        if (
-            difference === 1
+            ) === 1
         ) {
 
             streak++;
@@ -789,14 +1347,11 @@ function scoreCalculateStreak(history) {
         } else {
 
             break;
-
         }
-
     }
 
 
     return streak;
-
 }
 
 
@@ -823,29 +1378,28 @@ function scoreCalculatePlanProgress(
     let completed = 0;
 
 
-    planTopics.forEach(topic => {
+    planTopics.forEach(
+        topic => {
 
-        const normalized =
-            topic
-                .trim()
-                .toLowerCase();
-
-
-        const found =
-            completedTopics.some(
-                completedTopic =>
-                    completedTopic
-                        .trim()
-                        .toLowerCase()
-                    === normalized
-            );
+            const normalized =
+                scoreNormalizeText(
+                    topic
+                );
 
 
-        if (found) {
-            completed++;
+            if (
+                completedTopics.some(
+                    completedTopic =>
+                        scoreNormalizeText(
+                            completedTopic
+                        ) === normalized
+                )
+            ) {
+
+                completed++;
+            }
         }
-
-    });
+    );
 
 
     return Math.round(
@@ -854,7 +1408,6 @@ function scoreCalculatePlanProgress(
             planTopics.length
         ) * 100
     );
-
 }
 
 
@@ -881,25 +1434,14 @@ function scoreGetAIUsage() {
         );
 
 
-    /*
-     * If the AI counter belongs to another day,
-     * treat today's usage as zero.
-     */
-
     if (
         storedDate &&
         storedDate !== today
     ) {
 
         aiQuestions = 0;
-
     }
 
-
-    /*
-     * Knowledge checks also represent
-     * AI-powered learning activity.
-     */
 
     const knowledgeUsage =
         scoreGetNumber(
@@ -909,6 +1451,7 @@ function scoreGetAIUsage() {
 
 
     return {
+
         aiQuestions:
             Math.max(
                 0,
@@ -930,14 +1473,12 @@ function scoreGetAIUsage() {
                 0,
                 knowledgeUsage
             )
-
     };
-
 }
 
 
 /* =========================================================
-   SCORE CALCULATION
+   MAIN SCORE CALCULATION
 ========================================================= */
 
 function calculateStudyScore() {
@@ -945,31 +1486,37 @@ function calculateStudyScore() {
     const plan =
         scoreGetPlan();
 
+
     const completedTopics =
         scoreGetCompletedTopics();
+
 
     const completedQuestions =
         scoreGetCompletedQuestions();
 
-    const history =
-        scoreGetStudyHistory();
+
+    const knowledge =
+        scoreGetKnowledgePerformance();
+
 
     const currentStreak =
-        scoreCalculateStreak(
-            history
-        );
+        scoreCalculateStreak();
+
 
     const todayMinutes =
         scoreGetDailyStudyMinutes();
 
+
     const totalMinutes =
         scoreGetTotalStudyMinutes();
+
 
     const planProgress =
         scoreCalculatePlanProgress(
             plan,
             completedTopics
         );
+
 
     const ai =
         scoreGetAIUsage();
@@ -978,9 +1525,7 @@ function calculateStudyScore() {
     /* -----------------------------------------------------
        1. STUDY TIME — 30 POINTS
 
-       60 minutes = 10
-       180 minutes = 20
-       300+ minutes = 30
+       300 total minutes = 30 points
     ----------------------------------------------------- */
 
     const studyTimeScore =
@@ -998,14 +1543,29 @@ function calculateStudyScore() {
     /* -----------------------------------------------------
        2. KNOWLEDGE CHECKS — 25 POINTS
 
-       5 completed checks = 25
+       IMPORTANT:
+
+       This now uses the student's ACTUAL
+       knowledge-check performance.
+
+       Example:
+
+       Average = 60%  → 15 / 25
+       Average = 80%  → 20 / 25
+       Average = 100% → 25 / 25
+
+       No completed checks → 0 / 25
     ----------------------------------------------------- */
 
     const questionScore =
-        Math.min(
-            25,
-            completedQuestions.length * 5
-        );
+        knowledge.count > 0
+            ? Math.round(
+                (
+                    knowledge.average /
+                    100
+                ) * 25
+            )
+            : 0;
 
 
     /* -----------------------------------------------------
@@ -1098,10 +1658,33 @@ function calculateStudyScore() {
             ai.aiQuestions,
 
         knowledgeUsage:
-            ai.knowledgeUsage
+            ai.knowledgeUsage,
 
+        /*
+         * Shared knowledge-check data.
+         */
+
+        knowledgeCheckCount:
+            knowledge.count,
+
+        knowledgeAverage:
+            knowledge.average,
+
+        knowledgeHighest:
+            knowledge.highest,
+
+        knowledgeLowest:
+            knowledge.lowest,
+
+        knowledgePassed:
+            knowledge.passed,
+
+        knowledgeExcellent:
+            knowledge.excellent,
+
+        knowledgePerfect:
+            knowledge.perfect
     };
-
 }
 
 
@@ -1126,9 +1709,7 @@ function getScoreStatus(score) {
 
             tip:
                 "Keep your study time, knowledge checks and consistency strong."
-
         };
-
     }
 
 
@@ -1147,9 +1728,7 @@ function getScoreStatus(score) {
 
             tip:
                 "Continue studying regularly and completing knowledge checks."
-
         };
-
     }
 
 
@@ -1167,10 +1746,8 @@ function getScoreStatus(score) {
                 "You're building momentum in your study journey.",
 
             tip:
-                "More study time and completed knowledge checks will raise your score."
-
+                "More study time and stronger knowledge-check results will raise your score."
         };
-
     }
 
 
@@ -1189,9 +1766,7 @@ function getScoreStatus(score) {
 
             tip:
                 "Keep studying consistently and work through your next topics."
-
         };
-
     }
 
 
@@ -1210,9 +1785,7 @@ function getScoreStatus(score) {
 
             tip:
                 "Complete your first study session and knowledge check."
-
         };
-
     }
 
 
@@ -1229,9 +1802,7 @@ function getScoreStatus(score) {
 
         tip:
             "Start your first study session."
-
     };
-
 }
 
 
@@ -1249,9 +1820,10 @@ function saveStudyScore(data) {
     );
 
 
-    localStorage.setItem(
+    scoreWriteJSON(
         SCORE_BREAKDOWN_KEY,
-        JSON.stringify({
+        {
+
             studyTime:
                 data.studyTimeScore,
 
@@ -1270,16 +1842,21 @@ function saveStudyScore(data) {
             total:
                 data.total,
 
+            knowledgeAverage:
+                data.knowledgeAverage,
+
+            knowledgeCheckCount:
+                data.knowledgeCheckCount,
+
             updatedAt:
                 Date.now()
-        })
+        }
     );
-
 }
 
 
 /* =========================================================
-   GAUGE
+   UI HELPERS
 ========================================================= */
 
 function updateGauge(score) {
@@ -1308,13 +1885,8 @@ function updateGauge(score) {
         "--score-progress",
         `${degrees}deg`
     );
-
 }
 
-
-/* =========================================================
-   PROGRESS BAR
-========================================================= */
 
 function updateBar(
     id,
@@ -1331,20 +1903,17 @@ function updateBar(
 
 
     const safe =
-        Math.max(
+        scoreClamp(
+            Number(
+                percentage
+            ) || 0,
             0,
-            Math.min(
-                100,
-                Number(
-                    percentage
-                ) || 0
-            )
+            100
         );
 
 
     bar.style.width =
         `${safe}%`;
-
 }
 
 
@@ -1357,17 +1926,29 @@ function updateAchievements(data) {
     const firstTopic =
         document.getElementById(
             "achievementFirstTopic"
+        ) ||
+        document.getElementById(
+            "achievementFirst"
         );
+
 
     const fiveTopics =
         document.getElementById(
             "achievementFiveTopics"
+        ) ||
+        document.getElementById(
+            "achievementFive"
         );
+
 
     const sevenDays =
         document.getElementById(
             "achievementSevenDays"
+        ) ||
+        document.getElementById(
+            "achievementSeven"
         );
+
 
     const highScore =
         document.getElementById(
@@ -1383,7 +1964,6 @@ function updateAchievements(data) {
         firstTopic.classList.add(
             "unlocked"
         );
-
     }
 
 
@@ -1395,7 +1975,6 @@ function updateAchievements(data) {
         fiveTopics.classList.add(
             "unlocked"
         );
-
     }
 
 
@@ -1407,7 +1986,6 @@ function updateAchievements(data) {
         sevenDays.classList.add(
             "unlocked"
         );
-
     }
 
 
@@ -1419,14 +1997,12 @@ function updateAchievements(data) {
         highScore.classList.add(
             "unlocked"
         );
-
     }
-
 }
 
 
 /* =========================================================
-   UPDATE UI
+   UPDATE SCORE UI
 ========================================================= */
 
 function updateScoreUI() {
@@ -1451,15 +2027,18 @@ function updateScoreUI() {
             "overallScore"
         );
 
+
     const title =
         document.getElementById(
             "scoreTitle"
         );
 
+
     const description =
         document.getElementById(
             "scoreDescription"
         );
+
 
     const statusElement =
         document.getElementById(
@@ -1468,34 +2047,26 @@ function updateScoreUI() {
 
 
     if (score) {
-
         score.textContent =
             data.total;
-
     }
 
 
     if (title) {
-
         title.textContent =
             status.title;
-
     }
 
 
     if (description) {
-
         description.textContent =
             status.description;
-
     }
 
 
     if (statusElement) {
-
         statusElement.textContent =
             status.status;
-
     }
 
 
@@ -1504,11 +2075,10 @@ function updateScoreUI() {
             "topicsCompleted"
         );
 
-    if (topicsCompleted) {
 
+    if (topicsCompleted) {
         topicsCompleted.textContent =
             data.completedTopics;
-
     }
 
 
@@ -1517,11 +2087,11 @@ function updateScoreUI() {
             "questionsCompleted"
         );
 
+
     if (questionsCompleted) {
 
         questionsCompleted.textContent =
             data.completedQuestions;
-
     }
 
 
@@ -1530,11 +2100,11 @@ function updateScoreUI() {
             "currentStreak"
         );
 
+
     if (currentStreak) {
 
         currentStreak.textContent =
             data.currentStreak;
-
     }
 
 
@@ -1543,11 +2113,41 @@ function updateScoreUI() {
             "planProgress"
         );
 
+
     if (planProgress) {
 
         planProgress.textContent =
             `${data.planProgress}%`;
+    }
 
+
+    /* -----------------------------------------------------
+       KNOWLEDGE PERFORMANCE
+    ----------------------------------------------------- */
+
+    const knowledgeAverage =
+        document.getElementById(
+            "knowledgeAverage"
+        );
+
+
+    if (knowledgeAverage) {
+
+        knowledgeAverage.textContent =
+            `${data.knowledgeAverage}%`;
+    }
+
+
+    const knowledgeCount =
+        document.getElementById(
+            "knowledgeCheckCount"
+        );
+
+
+    if (knowledgeCount) {
+
+        knowledgeCount.textContent =
+            data.knowledgeCheckCount;
     }
 
 
@@ -1560,16 +2160,16 @@ function updateScoreUI() {
             "topicScoreText"
         );
 
+
     /*
-     * Existing HTML calls this the topic score.
-     * We preserve that ID while displaying study-time score.
+     * Preserve the existing HTML ID.
+     * This represents the study-time component.
      */
 
     if (topicScoreText) {
 
         topicScoreText.textContent =
             `${data.studyTimeScore} / 30`;
-
     }
 
 
@@ -1578,11 +2178,11 @@ function updateScoreUI() {
             "questionScoreText"
         );
 
+
     if (questionScoreText) {
 
         questionScoreText.textContent =
             `${data.questionScore} / 25`;
-
     }
 
 
@@ -1591,11 +2191,11 @@ function updateScoreUI() {
             "streakScoreText"
         );
 
+
     if (streakScoreText) {
 
         streakScoreText.textContent =
             `${data.streakScore} / 20`;
-
     }
 
 
@@ -1604,29 +2204,24 @@ function updateScoreUI() {
             "planScoreText"
         );
 
+
     if (planScoreText) {
 
         planScoreText.textContent =
             `${data.planScore} / 15`;
-
     }
 
-
-    /*
-     * If the page has an AI score element,
-     * use it automatically.
-     */
 
     const aiScoreText =
         document.getElementById(
             "aiScoreText"
         );
 
+
     if (aiScoreText) {
 
         aiScoreText.textContent =
             `${data.aiScore} / 10`;
-
     }
 
 
@@ -1694,6 +2289,7 @@ function updateScoreUI() {
             "scoreTipTitle"
         );
 
+
     const tipText =
         document.getElementById(
             "scoreTipText"
@@ -1704,7 +2300,6 @@ function updateScoreUI() {
 
         tipTitle.textContent =
             status.title;
-
     }
 
 
@@ -1712,18 +2307,14 @@ function updateScoreUI() {
 
         tipText.textContent =
             status.tip;
-
     }
 
-
-    /*
-     * Optional live information elements.
-     */
 
     const studyMinutes =
         document.getElementById(
             "studyMinutes"
         );
+
 
     if (studyMinutes) {
 
@@ -1731,7 +2322,6 @@ function updateScoreUI() {
             Math.round(
                 data.totalMinutes
             );
-
     }
 
 
@@ -1740,13 +2330,13 @@ function updateScoreUI() {
             "todayStudyMinutes"
         );
 
+
     if (todayStudyMinutes) {
 
         todayStudyMinutes.textContent =
             Math.round(
                 data.todayMinutes
             );
-
     }
 
 
@@ -1755,152 +2345,12 @@ function updateScoreUI() {
             "aiUsage"
         );
 
+
     if (aiUsage) {
 
         aiUsage.textContent =
             data.aiQuestions;
-
     }
-
-}
-
-
-/* =========================================================
-   THEME
-========================================================= */
-
-function applyTheme() {
-
-    const theme =
-        localStorage.getItem(
-            "studyMindTheme"
-        );
-
-
-    if (
-        theme === "light"
-    ) {
-
-        document.body.classList.add(
-            "light-mode"
-        );
-
-    } else {
-
-        document.body.classList.remove(
-            "light-mode"
-        );
-
-    }
-
-
-    updateThemeButton();
-
-}
-
-
-function toggleTheme() {
-
-    const isLight =
-        document.body.classList.contains(
-            "light-mode"
-        );
-
-
-    if (isLight) {
-
-        document.body.classList.remove(
-            "light-mode"
-        );
-
-        localStorage.setItem(
-            "studyMindTheme",
-            "dark"
-        );
-
-    } else {
-
-        document.body.classList.add(
-            "light-mode"
-        );
-
-        localStorage.setItem(
-            "studyMindTheme",
-            "light"
-        );
-
-    }
-
-
-    updateThemeButton();
-
-}
-
-
-function updateThemeButton() {
-
-    const button =
-        document.getElementById(
-            "themeButton"
-        );
-
-
-    if (!button) {
-        return;
-    }
-
-
-    button.textContent =
-        document.body.classList.contains(
-            "light-mode"
-        )
-            ? "☀️"
-            : "🌙";
-
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logoutStudyMind() {
-
-    try {
-
-        if (
-            window.supabaseClient &&
-            window.supabaseClient.auth
-        ) {
-
-            await window.supabaseClient
-                .auth
-                .signOut();
-
-        } else if (
-            typeof supabase !== "undefined" &&
-            supabase?.auth
-        ) {
-
-            await supabase
-                .auth
-                .signOut();
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Logout warning:",
-            error
-        );
-
-    }
-
-
-    window.location.href =
-        "login.html";
-
 }
 
 
@@ -1930,8 +2380,26 @@ window.StudyMindScore = {
         scoreGetDailyStudyMinutes,
 
     getAIUsage:
-        scoreGetAIUsage
+        scoreGetAIUsage,
 
+    getKnowledgePerformance:
+        scoreGetKnowledgePerformance,
+
+    getKnowledgeResults:
+        scoreGetKnowledgeResults,
+
+    getCompletedTopics:
+        scoreGetCompletedTopics,
+
+    getCurrentStreak:
+        scoreCalculateStreak,
+
+    getPlanProgress:
+        () =>
+            scoreCalculatePlanProgress(
+                scoreGetPlan(),
+                scoreGetCompletedTopics()
+            )
 };
 
 
@@ -1940,11 +2408,6 @@ window.StudyMindScore = {
 ========================================================= */
 
 function refreshScoreSoon() {
-
-    /*
-     * Small delay lets timer/streak/knowledge-check
-     * code finish writing localStorage first.
-     */
 
     window.setTimeout(
         () => {
@@ -1959,17 +2422,13 @@ function refreshScoreSoon() {
                     "Study Score refresh error:",
                     error
                 );
-
             }
 
         },
         100
     );
-
 }
 
-
-/* Storage changes from other pages/tabs. */
 
 window.addEventListener(
     "storage",
@@ -1981,9 +2440,13 @@ window.addEventListener(
 
             SCORE_COMPLETED_QUESTIONS_KEY,
 
+            SCORE_KNOWLEDGE_RESULTS_KEY,
+
             SCORE_DAILY_TIME_KEY,
 
             SCORE_SESSIONS_KEY,
+
+            SCORE_HISTORY_KEY,
 
             SCORE_AI_COUNT_KEY,
 
@@ -1995,7 +2458,11 @@ window.addEventListener(
 
             SCORE_ACTIVITY_KEY,
 
-            SCORE_PLAN_KEY
+            SCORE_PLAN_KEY,
+
+            SCORE_PLANS_KEY,
+
+            SCORE_ACTIVE_PLAN_KEY
 
         ];
 
@@ -2007,9 +2474,7 @@ window.addEventListener(
         ) {
 
             refreshScoreSoon();
-
         }
-
     }
 );
 
@@ -2034,7 +2499,6 @@ window.addEventListener(
             eventName,
             refreshScoreSoon
         );
-
     }
 );
 
@@ -2047,8 +2511,6 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-        applyTheme();
-
         updateScoreUI();
 
     }
@@ -2059,9 +2521,67 @@ document.addEventListener(
    GLOBALS
 ========================================================= */
 
-window.toggleTheme =
-    toggleTheme;
+window.toggleScoreTheme =
+    function () {
+
+        const current =
+            localStorage.getItem(
+                "studyMindTheme"
+            );
+
+
+        const next =
+            current === "light"
+                ? "dark"
+                : "light";
+
+
+        localStorage.setItem(
+            "studyMindTheme",
+            next
+        );
+
+
+        document.body.classList.toggle(
+            "light-mode",
+            next === "light"
+        );
+    };
+
 
 window.logoutStudyMind =
-    logoutStudyMind;
+    async function () {
 
+        try {
+
+            if (
+                window.supabaseClient &&
+                window.supabaseClient.auth
+            ) {
+
+                await window.supabaseClient
+                    .auth
+                    .signOut();
+
+            } else if (
+                typeof supabase !== "undefined" &&
+                supabase?.auth
+            ) {
+
+                await supabase
+                    .auth
+                    .signOut();
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Logout warning:",
+                error
+            );
+        }
+
+
+        window.location.href =
+            "login.html";
+    };
