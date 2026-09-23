@@ -5,6 +5,52 @@
 
 "use strict";
 
+/* =========================================================
+   SHARED STUDY SCORE DATA
+   ---------------------------------------------------------
+   Goals does NOT calculate Study Score itself.
+
+   StudyMindScore is the single source of truth.
+========================================================= */
+
+function getSharedScoreData() {
+
+    if (
+        window.StudyMindScore &&
+        typeof window.StudyMindScore.calculate === "function"
+    ) {
+
+        return window.StudyMindScore.calculate();
+    }
+
+
+    return {
+
+        total: 0,
+
+        studyTimeScore: 0,
+
+        questionScore: 0,
+
+        streakScore: 0,
+
+        planScore: 0,
+
+        aiScore: 0,
+
+        completedTopics: 0,
+
+        completedQuestions: 0,
+
+        currentStreak: 0,
+
+        planProgress: 0,
+
+        knowledgeCheckCount: 0,
+
+        knowledgeAverage: 0
+    };
+}
 
 /* =========================================================
    STORAGE
