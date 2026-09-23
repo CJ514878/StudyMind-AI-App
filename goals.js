@@ -1,56 +1,23 @@
 /* =========================================================
    STUDYMIND AI — GOALS
-   COMPLETE FRONTEND
+   SINGLE-SOURCE-OF-TRUTH FRONTEND
+   ---------------------------------------------------------
+   Goals does NOT create its own scoring/data system.
+
+   StudyMindScore is the single source of truth for:
+   - Completed topics
+   - Study time
+   - Streak
+   - Best streak
+   - Plan progress
+   - Knowledge-check performance
+   - AI learning activity
+
+   Goals only converts those metrics into goal progress.
 ========================================================= */
 
 "use strict";
 
-/* =========================================================
-   SHARED STUDY SCORE DATA
-   ---------------------------------------------------------
-   Goals does NOT calculate Study Score itself.
-
-   StudyMindScore is the single source of truth.
-========================================================= */
-
-function getSharedScoreData() {
-
-    if (
-        window.StudyMindScore &&
-        typeof window.StudyMindScore.calculate === "function"
-    ) {
-
-        return window.StudyMindScore.calculate();
-    }
-
-
-    return {
-
-        total: 0,
-
-        studyTimeScore: 0,
-
-        questionScore: 0,
-
-        streakScore: 0,
-
-        planScore: 0,
-
-        aiScore: 0,
-
-        completedTopics: 0,
-
-        completedQuestions: 0,
-
-        currentStreak: 0,
-
-        planProgress: 0,
-
-        knowledgeCheckCount: 0,
-
-        knowledgeAverage: 0
-    };
-}
 
 /* =========================================================
    STORAGE
@@ -61,19 +28,20 @@ const STORAGE = {
     PLAN: "studyMindPlan",
 
     PLANS: "studyMindPlans",
+
     ACTIVE_PLAN: "studyMindActivePlanId",
 
     COMPLETED: "studyMindCompletedTopics",
 
     STREAK_ACTIVITY: "studyMindStreakActivity",
 
-    TIMER_SECONDS: "studyMindTimerSeconds",
-    TIMER_END: "studyMindTimerEndTime",
-    TIMER_RUNNING: "studyMindTimerRunning",
+    STUDY_HISTORY: "studyMindStudyHistory",
 
     USER: "studyMindUser",
 
-    THEME: "studyMindTheme"
+    THEME: "studyMindTheme",
+
+    DARK_MODE: "studyMindDarkMode"
 };
 
 
@@ -85,9 +53,9 @@ let state = {
 
     plan: null,
 
-    completedTopics: [],
+    metrics: null,
 
-    streakActivity: {},
+    completedTopics: [],
 
     today: new Date(),
 
@@ -107,7 +75,13 @@ let state = {
 
     currentStreak: 0,
 
-    bestStreak: 0
+    bestStreak: 0,
+
+    sharedScore: 0,
+
+    knowledgeAverage: 0,
+
+    knowledgeCheckCount: 0
 };
 
 
@@ -119,41 +93,43 @@ function readJSON(key, fallback = null) {
 
     try {
 
-        const value = localStorage.getItem(key);
+        const value =
+            localStorage.getItem(key);
 
-        if (!value) return fallback;
+        if (!value) {
+
+            return fallback;
+        }
 
         return JSON.parse(value);
 
     } catch (error) {
 
-        console.warn("StudyMind storage error:", key, error);
+        console.warn(
+            "StudyMind Goals storage error:",
+            key,
+            error
+        );
 
         return fallback;
     }
 }
 
 
-function writeJSON(key, value) {
-
-    try {
-
-        localStorage.setItem(key, JSON.stringify(value));
-
-    } catch (error) {
-
-        console.warn("Unable to save:", key, error);
-    }
-}
-
-
 function todayKey(date = new Date()) {
 
-    const y = date.getFullYear();
+    const y =
+        date.getFullYear();
 
-    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const m =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
 
-    const d = String(date.getDate()).padStart(2, "0");
+    const d =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
 
     return `${y}-${m}-${d}`;
 }
@@ -161,185 +137,135 @@ function todayKey(date = new Date()) {
 
 function startOfDay(date) {
 
-    const result = new Date(date);
+    const result =
+        new Date(date);
 
-    result.setHours(0, 0, 0, 0);
+    result.setHours(
+        0,
+        0,
+        0,
+        0
+    );
 
     return result;
 }
 
 
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-
 function clamp(number, min, max) {
 
-    return Math.min(Math.max(number, min), max);
+    return Math.min(
+        Math.max(
+            Number(number) || 0,
+            min
+        ),
+        max
+    );
 }
 
 
 function percent(value, target) {
 
-    if (!target || target <= 0) return 0;
+    if (
+        !target ||
+        Number(target) <= 0
+    ) {
+
+        return 0;
+    }
 
     return Math.round(
-        clamp((value / target) * 100, 0, 100)
+        clamp(
+            (
+                Number(value) /
+                Number(target)
+            ) * 100,
+            0,
+            100
+        )
     );
 }
 
 
 function formatHours(hours) {
 
-    const value = Number(hours) || 0;
+    const value =
+        Number(hours) || 0;
+
 
     if (value < 1) {
 
         return `${Math.round(value * 60)}m`;
     }
 
+
     if (Number.isInteger(value)) {
 
         return `${value}h`;
     }
 
+
     return `${value.toFixed(1)}h`;
 }
 
 
-/* =========================================================
-   DATE
-========================================================= */
+function escapeHTML(value) {
 
-function renderDate() {
+    return String(value ?? "")
 
-    const dateElement =
-        document.getElementById("todayDate");
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
 
-    const rangeElement =
-        document.getElementById("weekRange");
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
 
-    if (dateElement) {
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
 
-        dateElement.textContent =
-            new Intl.DateTimeFormat(
-                undefined,
-                {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric"
-                }
-            ).format(state.today);
-    }
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
 
-    if (rangeElement) {
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+}
 
-        const start = getWeekStart(state.today);
 
-        const end = new Date(start);
+function setText(id, value) {
 
-        end.setDate(end.getDate() + 6);
+    const element =
+        document.getElementById(id);
 
-        const formatter =
-            new Intl.DateTimeFormat(
-                undefined,
-                {
-                    month: "short",
-                    day: "numeric"
-                }
-            );
+    if (element) {
 
-        rangeElement.textContent =
-            `${formatter.format(start)} – ${formatter.format(end)}`;
+        element.textContent =
+            value;
     }
 }
 
 
-function getWeekStart(date) {
+function setWidth(id, value) {
 
-    const result = startOfDay(date);
+    const element =
+        document.getElementById(id);
 
-    const day = result.getDay();
-
-    const difference = day === 0 ? -6 : 1 - day;
-
-    result.setDate(result.getDate() + difference);
-
-    return result;
-}
+    if (!element) return;
 
 
-/* =========================================================
-   GREETING
-========================================================= */
-
-function renderGreeting() {
-
-    const hour = new Date().getHours();
-
-    let greeting = "Good morning";
-
-    if (hour >= 12 && hour < 18) {
-
-        greeting = "Good afternoon";
-
-    } else if (hour >= 18) {
-
-        greeting = "Good evening";
-    }
-
-    const greetingElement =
-        document.getElementById("greeting");
-
-    if (greetingElement) {
-
-        greetingElement.textContent = greeting;
-    }
-
-
-    let name = "";
-
-    const user =
-        readJSON(STORAGE.USER, null);
-
-    if (user) {
-
-        name =
-            user.name ||
-            user.fullName ||
-            user.username ||
-            "";
-    }
-
-
-    if (!name) {
-
-        const possibleUser =
-            localStorage.getItem("studyMindUserName") ||
-            localStorage.getItem("username");
-
-        if (possibleUser) {
-
-            name = possibleUser;
-        }
-    }
-
-
-    const nameElement =
-        document.getElementById("userName");
-
-    if (nameElement && name) {
-
-        nameElement.textContent =
-            `, ${name}`;
-    }
+    element.style.width =
+        `${clamp(
+            value,
+            0,
+            100
+        )}%`;
 }
 
 
@@ -349,47 +275,69 @@ function renderGreeting() {
 
 function loadPlan() {
 
-    let plan = readJSON(STORAGE.PLAN, null);
+    let plan =
+        readJSON(
+            STORAGE.PLAN,
+            null
+        );
 
 
     /*
-       New multi-plan system.
-       If an active plan exists, prefer it.
+       Multi-plan system.
+
+       Always prefer the active plan.
     */
 
     const plans =
-        readJSON(STORAGE.PLANS, null);
+        readJSON(
+            STORAGE.PLANS,
+            null
+        );
+
 
     const activeId =
-        localStorage.getItem(STORAGE.ACTIVE_PLAN);
+        localStorage.getItem(
+            STORAGE.ACTIVE_PLAN
+        );
 
 
-    if (Array.isArray(plans) && plans.length) {
+    if (
+        Array.isArray(plans) &&
+        plans.length
+    ) {
 
-        let active = null;
+        let activePlan = null;
+
 
         if (activeId) {
 
-            active =
+            activePlan =
                 plans.find(
                     item =>
-                        String(item.id) === String(activeId)
+                        String(item.id) ===
+                        String(activeId)
                 );
         }
 
-        if (!active) {
 
-            active = plans[0];
+        if (!activePlan) {
+
+            activePlan =
+                plans[0];
         }
 
-        if (active) {
 
-            plan = active;
+        if (activePlan) {
+
+            plan =
+                activePlan;
         }
     }
 
 
-    state.plan = plan;
+    state.plan =
+        plan;
+
 
     return plan;
 }
@@ -404,17 +352,26 @@ function normalizeTopic(topic) {
     if (typeof topic === "string") {
 
         return {
+
             name: topic,
+
             id: topic
+
         };
     }
 
 
-    if (!topic || typeof topic !== "object") {
+    if (
+        !topic ||
+        typeof topic !== "object"
+    ) {
 
         return {
+
             name: "",
+
             id: ""
+
         };
     }
 
@@ -434,73 +391,96 @@ function normalizeTopic(topic) {
 
 
     return {
+
         name: String(name),
+
         id: String(id)
+
     };
 }
 
 
 function getPlanSubjects() {
 
-    const plan = state.plan;
+    const plan =
+        state.plan;
 
-    if (!plan) return [];
 
+    if (!plan) {
 
-    /*
-       Main format:
-       subjects: [
-           {
-               name: "Mathematics",
-               topics: [...]
-           }
-       ]
-    */
-
-    if (Array.isArray(plan.subjects)) {
-
-        return plan.subjects.map(subject => {
-
-            if (typeof subject === "string") {
-
-                return {
-                    name: subject,
-                    topics: []
-                };
-            }
-
-            return {
-                ...subject,
-
-                name:
-                    subject.name ||
-                    subject.subject ||
-                    subject.title ||
-                    "Subject",
-
-                topics:
-                    Array.isArray(subject.topics)
-                        ? subject.topics
-                        : []
-            };
-
-        });
+        return [];
     }
 
 
     /*
-       Compatibility with subjectNames
+       Standard StudyMind format.
     */
 
-    if (Array.isArray(plan.subjectNames)) {
+    if (
+        Array.isArray(plan.subjects)
+    ) {
 
-        return plan.subjectNames.map(name => ({
+        return plan.subjects.map(
+            subject => {
 
-            name: String(name),
+                if (
+                    typeof subject ===
+                    "string"
+                ) {
 
-            topics: []
+                    return {
 
-        }));
+                        name: subject,
+
+                        topics: []
+
+                    };
+                }
+
+
+                return {
+
+                    ...subject,
+
+                    name:
+                        subject.name ||
+                        subject.subject ||
+                        subject.title ||
+                        "Subject",
+
+                    topics:
+                        Array.isArray(
+                            subject.topics
+                        )
+                            ? subject.topics
+                            : []
+
+                };
+
+            }
+        );
+    }
+
+
+    /*
+       Compatibility format.
+    */
+
+    if (
+        Array.isArray(
+            plan.subjectNames
+        )
+    ) {
+
+        return plan.subjectNames.map(
+            name => ({
+
+                name: String(name),
+
+                topics: []
+
+            })
+        );
     }
 
 
@@ -510,61 +490,94 @@ function getPlanSubjects() {
 
 function getAllPlanTopics() {
 
-    const subjects = getPlanSubjects();
+    const subjects =
+        getPlanSubjects();
+
 
     const result = [];
 
 
-    subjects.forEach(subject => {
+    subjects.forEach(
+        subject => {
 
-        subject.topics.forEach(topic => {
+            subject.topics.forEach(
+                topic => {
 
-            const normalized =
-                normalizeTopic(topic);
+                    const normalized =
+                        normalizeTopic(
+                            topic
+                        );
 
-            if (!normalized.name) return;
 
-            result.push({
+                    if (
+                        !normalized.name
+                    ) {
 
-                ...normalized,
+                        return;
+                    }
 
-                subject:
-                    subject.name
 
-            });
+                    result.push({
 
-        });
+                        ...normalized,
 
-    });
+                        subject:
+                            subject.name
+
+                    });
+
+                }
+            );
+
+        }
+    );
 
 
     /*
-       Compatibility with flat topics array.
+       Compatibility with flat topics.
     */
 
     if (
         !result.length &&
-        Array.isArray(state.plan?.topics)
+        Array.isArray(
+            state.plan?.topics
+        )
     ) {
 
-        state.plan.topics.forEach(topic => {
+        state.plan.topics.forEach(
+            topic => {
 
-            const normalized =
-                normalizeTopic(topic);
+                const normalized =
+                    normalizeTopic(
+                        topic
+                    );
 
-            if (!normalized.name) return;
 
-            result.push({
+                if (
+                    !normalized.name
+                ) {
 
-                ...normalized,
+                    return;
+                }
 
-                subject:
-                    topic.subject ||
-                    "General"
 
-            });
+                result.push({
 
-        });
+                    ...normalized,
+
+                    subject:
+                        typeof topic ===
+                        "object"
+                            ? (
+                                topic.subject ||
+                                "General"
+                            )
+                            : "General"
+
+                });
+
+            }
+        );
     }
 
 
@@ -573,18 +586,27 @@ function getAllPlanTopics() {
 
 
 /* =========================================================
-   COMPLETION DATA
+   COMPLETED TOPICS
+   ---------------------------------------------------------
+   Goals reads the same completion data as Score.
 ========================================================= */
 
 function loadCompletedTopics() {
 
     const stored =
-        readJSON(STORAGE.COMPLETED, []);
+        readJSON(
+            STORAGE.COMPLETED,
+            []
+        );
 
 
-    if (Array.isArray(stored)) {
+    if (
+        Array.isArray(stored)
+    ) {
 
-        state.completedTopics = stored;
+        state.completedTopics =
+            stored;
+
         return;
     }
 
@@ -595,489 +617,560 @@ function loadCompletedTopics() {
     ) {
 
         state.completedTopics =
-            Object.values(stored).flat();
+            Object.values(
+                stored
+            ).flat();
 
         return;
     }
 
 
-    state.completedTopics = [];
+    state.completedTopics =
+        [];
 }
 
 
 function topicIsCompleted(topic) {
 
-    const name =
-        typeof topic === "string"
-            ? topic
-            : topic.name || topic.title || topic.topic || "";
-
-    const id =
-        typeof topic === "string"
-            ? topic
-            : topic.id || topic.topicId || name;
+    const normalized =
+        normalizeTopic(topic);
 
 
-    return state.completedTopics.some(item => {
-
-        if (typeof item === "string") {
-
-            return (
-                item === name ||
-                item === id
-            );
-        }
-
-
-        if (!item || typeof item !== "object") {
-
-            return false;
-        }
-
-
-        return (
-            item.id === id ||
-            item.topicId === id ||
-            item.name === name ||
-            item.topic === name ||
-            item.title === name
-        );
-    });
-}
-
-
-/* =========================================================
-   STREAK ACTIVITY
-========================================================= */
-
-function loadStreakActivity() {
-
-    const stored =
-        readJSON(
-            STORAGE.STREAK_ACTIVITY,
-            {}
-        );
-
-
-    /*
-       Preferred format:
-
-       {
-           "2026-09-12": true,
-           "2026-09-13": true
-       }
-    */
-
-    if (
-        stored &&
-        typeof stored === "object" &&
-        !Array.isArray(stored)
-    ) {
-
-        state.streakActivity = stored;
-
-        return;
-    }
-
-
-    /*
-       Compatibility with an array of dates.
-    */
-
-    if (Array.isArray(stored)) {
-
-        const activity = {};
-
-        stored.forEach(item => {
-
-            if (typeof item === "string") {
-
-                activity[item] = true;
-            }
+    return state.completedTopics.some(
+        item => {
 
             if (
-                item &&
-                typeof item === "object"
+                typeof item ===
+                "string"
             ) {
 
-                const date =
-                    item.date ||
-                    item.day ||
-                    item.completedDate;
+                return (
+                    item ===
+                    normalized.name ||
 
-                if (date) {
-
-                    activity[
-                        String(date).slice(0, 10)
-                    ] = true;
-                }
-            }
-        });
-
-
-        state.streakActivity = activity;
-
-        return;
-    }
-
-
-    state.streakActivity = {};
-}
-
-
-function getActivityDates() {
-
-    const dates =
-        new Set();
-
-    Object.entries(state.streakActivity)
-        .forEach(([date, value]) => {
-
-            if (!value) return;
-
-            dates.add(
-                String(date).slice(0, 10)
-            );
-        });
-
-
-    /*
-       Some older implementations stored
-       completion objects.
-    */
-
-    state.completedTopics.forEach(item => {
-
-        if (!item || typeof item !== "object") {
-            return;
-        }
-
-        const date =
-            item.date ||
-            item.completedAt ||
-            item.completedDate;
-
-        if (date) {
-
-            dates.add(
-                String(date).slice(0, 10)
-            );
-        }
-    });
-
-
-    return dates;
-}
-
-
-/* =========================================================
-   STREAK CALCULATION
-========================================================= */
-
-function calculateStreaks() {
-
-    const dates =
-        getActivityDates();
-
-
-    /*
-       IMPORTANT:
-       No activity = 0.
-
-       Having a plan does NOT create a streak.
-    */
-
-    if (!dates.size) {
-
-        state.currentStreak = 0;
-        state.bestStreak = 0;
-
-        return;
-    }
-
-
-    const sorted =
-        [...dates]
-            .map(date => new Date(`${date}T00:00:00`))
-            .sort((a, b) => a - b);
-
-
-    let best = 0;
-    let run = 0;
-    let previous = null;
-
-
-    sorted.forEach(date => {
-
-        if (!previous) {
-
-            run = 1;
-
-        } else {
-
-            const difference =
-                Math.round(
-                    (
-                        date - previous
-                    ) /
-                    86400000
+                    item ===
+                    normalized.id
                 );
-
-            if (difference === 1) {
-
-                run++;
-
-            } else {
-
-                run = 1;
             }
-        }
 
 
-        best =
-            Math.max(best, run);
+            if (
+                !item ||
+                typeof item !==
+                "object"
+            ) {
 
-        previous = date;
-    });
+                return false;
+            }
 
-
-    state.bestStreak = best;
-
-
-    /*
-       Current streak only exists if the most
-       recent activity was today or yesterday.
-    */
-
-    const today =
-        startOfDay(state.today);
-
-
-    const latest =
-        sorted[sorted.length - 1];
-
-
-    const daysSinceLatest =
-        Math.round(
-            (
-                today - latest
-            ) /
-            86400000
-        );
-
-
-    if (daysSinceLatest > 1) {
-
-        state.currentStreak = 0;
-
-        return;
-    }
-
-
-    let current = 1;
-
-
-    for (
-        let i = sorted.length - 1;
-        i > 0;
-        i--
-    ) {
-
-        const difference =
-            Math.round(
-                (
-                    sorted[i] -
-                    sorted[i - 1]
-                ) /
-                86400000
-            );
-
-
-        if (difference === 1) {
-
-            current++;
-
-        } else {
-
-            break;
-        }
-    }
-
-
-    state.currentStreak = current;
-}
-
-
-/* =========================================================
-   STUDY TIME
-========================================================= */
-
-function getTodayStudyHours() {
-
-    const key =
-        todayKey();
-
-
-    /*
-       Preferred optional history format.
-    */
-
-    const history =
-        readJSON(
-            "studyMindStudyHistory",
-            {}
-        );
-
-
-    if (
-        history &&
-        typeof history === "object" &&
-        !Array.isArray(history)
-    ) {
-
-        const today =
-            history[key];
-
-        if (typeof today === "number") {
-
-            return today;
-        }
-
-
-        if (
-            today &&
-            typeof today === "object"
-        ) {
 
             return (
-                Number(
-                    today.hours ||
-                    today.studyHours ||
-                    today.minutes / 60
-                ) || 0
+
+                item.id ===
+                normalized.id ||
+
+                item.topicId ===
+                normalized.id ||
+
+                item.name ===
+                normalized.name ||
+
+                item.topic ===
+                normalized.name ||
+
+                item.title ===
+                normalized.name
+
             );
         }
-    }
-
-
-    /*
-       If no history exists, derive time from
-       completed topic records where possible.
-    */
-
-    let minutes = 0;
-
-
-    state.completedTopics.forEach(item => {
-
-        if (!item || typeof item !== "object") {
-            return;
-        }
-
-
-        const date =
-            item.date ||
-            item.completedAt ||
-            item.completedDate;
-
-
-        if (
-            date &&
-            String(date).slice(0, 10) !== key
-        ) {
-
-            return;
-        }
-
-
-        minutes +=
-            Number(
-                item.minutes ||
-                item.durationMinutes ||
-                0
-            ) || 0;
-    });
-
-
-    return minutes / 60;
+    );
 }
 
 
-function getWeeklyStudyHours() {
+/* =========================================================
+   SHARED SCORE ENGINE
+========================================================= */
 
-    const history =
-        readJSON(
-            "studyMindStudyHistory",
-            {}
+function getSharedScoreData() {
+
+    /*
+       StudyMindScore MUST be the source of truth.
+
+       getMetrics() is preferred because it exposes
+       all shared study data.
+
+       calculate() remains as a compatibility fallback.
+    */
+
+    if (
+        window.StudyMindScore &&
+        typeof
+        window.StudyMindScore.getMetrics ===
+        "function"
+    ) {
+
+        return (
+            window.StudyMindScore.getMetrics()
         );
+    }
 
 
-    let total = 0;
+    if (
+        window.StudyMindScore &&
+        typeof
+        window.StudyMindScore.calculate ===
+        "function"
+    ) {
 
-    const start =
-        getWeekStart(state.today);
-
-
-    for (let i = 0; i < 7; i++) {
-
-        const date =
-            new Date(start);
-
-        date.setDate(
-            start.getDate() + i
-        );
+        const score =
+            window.StudyMindScore.calculate();
 
 
-        const key =
-            todayKey(date);
+        return {
 
-
-        const item =
-            history?.[key];
-
-
-        if (typeof item === "number") {
-
-            total += item;
-
-        } else if (
-            item &&
-            typeof item === "object"
-        ) {
-
-            total +=
+            total:
                 Number(
-                    item.hours ||
-                    item.studyHours ||
-                    item.minutes / 60
-                ) || 0;
-        }
+                    score.total
+                ) || 0,
+
+            completedTopics:
+                Number(
+                    score.completedTopics
+                ) || 0,
+
+            totalTopics:
+                Number(
+                    score.totalTopics
+                ) || 0,
+
+            todayCompletedTopics:
+                Number(
+                    score.todayCompletedTopics
+                ) || 0,
+
+            weeklyCompletedTopics:
+                Number(
+                    score.weeklyCompletedTopics
+                ) || 0,
+
+            todayMinutes:
+                Number(
+                    score.todayMinutes
+                ) || 0,
+
+            weeklyMinutes:
+                Number(
+                    score.weeklyMinutes
+                ) || 0,
+
+            currentStreak:
+                Number(
+                    score.currentStreak
+                ) || 0,
+
+            bestStreak:
+                Number(
+                    score.bestStreak
+                ) || 0,
+
+            planProgress:
+                Number(
+                    score.planProgress
+                ) || 0,
+
+            knowledgeCheckCount:
+                Number(
+                    score.knowledgeCheckCount
+                ) || 0,
+
+            knowledgeAverage:
+                Number(
+                    score.knowledgeAverage
+                ) || 0
+
+        };
     }
 
 
     /*
-       Include today's locally calculated
-       time if history does not contain it.
+       Score engine has not loaded yet.
+
+       Do NOT create a second scoring system here.
     */
 
-    const today =
-        todayKey();
+    return {
+
+        total: 0,
+
+        completedTopics: 0,
+
+        totalTopics: 0,
+
+        todayCompletedTopics: 0,
+
+        weeklyCompletedTopics: 0,
+
+        todayMinutes: 0,
+
+        weeklyMinutes: 0,
+
+        currentStreak: 0,
+
+        bestStreak: 0,
+
+        planProgress: 0,
+
+        knowledgeCheckCount: 0,
+
+        knowledgeAverage: 0
+
+    };
+}
+
+
+/* =========================================================
+   UPDATE STATE FROM SCORE ENGINE
+========================================================= */
+
+function calculateState() {
+
+    /*
+       Get the SINGLE shared metrics object.
+    */
+
+    const metrics =
+        getSharedScoreData();
+
+
+    state.metrics =
+        metrics;
+
+
+    /*
+       Plan/topic information.
+
+       Prefer Score's canonical values.
+    */
+
+    const localPlanTopics =
+        getAllPlanTopics();
+
+
+    state.totalTopics =
+        Number(
+            metrics.totalTopics
+        );
 
 
     if (
-        !history ||
-        !Object.prototype.hasOwnProperty.call(
-            history,
-            today
-        )
+        !state.totalTopics &&
+        localPlanTopics.length
     ) {
 
-        total +=
-            getTodayStudyHours();
+        /*
+           This is only a compatibility fallback
+           for an older Score engine.
+        */
+
+        state.totalTopics =
+            localPlanTopics.length;
     }
 
 
-    return total;
+    state.completedTotal =
+        Number(
+            metrics.completedTopics
+        );
+
+
+    if (
+        !state.completedTotal &&
+        state.completedTopics.length
+    ) {
+
+        /*
+           Compatibility fallback only.
+        */
+
+        state.completedTotal =
+            localPlanTopics.filter(
+                topicIsCompleted
+            ).length;
+    }
+
+
+    /*
+       TODAY
+    */
+
+    state.todayCompleted =
+        Number(
+            metrics.todayCompletedTopics
+        ) || 0;
+
+
+    state.todayHours =
+        (
+            Number(
+                metrics.todayMinutes
+            ) || 0
+        ) / 60;
+
+
+    /*
+       WEEK
+    */
+
+    state.weeklyHours =
+        (
+            Number(
+                metrics.weeklyMinutes
+            ) || 0
+        ) / 60;
+
+
+    state.weeklyTopics =
+        Number(
+            metrics.weeklyCompletedTopics
+        ) || 0;
+
+
+    state.weeklyDays =
+        Number(
+            metrics.weeklyActiveDays
+        ) || 0;
+
+
+    /*
+       STREAK
+
+       These values come directly from Score.
+    */
+
+    state.currentStreak =
+        Number(
+            metrics.currentStreak
+        ) || 0;
+
+
+    state.bestStreak =
+        Number(
+            metrics.bestStreak
+        ) || 0;
+
+
+    /*
+       SCORE
+    */
+
+    state.sharedScore =
+        Number(
+            metrics.total
+        ) || 0;
+
+
+    /*
+       KNOWLEDGE CHECKS
+    */
+
+    state.knowledgeAverage =
+        Number(
+            metrics.knowledgeAverage
+        ) || 0;
+
+
+    state.knowledgeCheckCount =
+        Number(
+            metrics.knowledgeCheckCount
+        ) || 0;
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+function getWeekStart(date) {
+
+    const result =
+        startOfDay(date);
+
+
+    const day =
+        result.getDay();
+
+
+    const difference =
+        day === 0
+            ? -6
+            : 1 - day;
+
+
+    result.setDate(
+        result.getDate() +
+        difference
+    );
+
+
+    return result;
+}
+
+
+function renderDate() {
+
+    const dateElement =
+        document.getElementById(
+            "todayDate"
+        );
+
+
+    const rangeElement =
+        document.getElementById(
+            "weekRange"
+        );
+
+
+    if (dateElement) {
+
+        dateElement.textContent =
+            new Intl.DateTimeFormat(
+                undefined,
+                {
+
+                    weekday: "short",
+
+                    month: "short",
+
+                    day: "numeric"
+
+                }
+            ).format(
+                state.today
+            );
+    }
+
+
+    if (rangeElement) {
+
+        const start =
+            getWeekStart(
+                state.today
+            );
+
+
+        const end =
+            new Date(start);
+
+
+        end.setDate(
+            end.getDate() + 6
+        );
+
+
+        const formatter =
+            new Intl.DateTimeFormat(
+                undefined,
+                {
+
+                    month: "short",
+
+                    day: "numeric"
+
+                }
+            );
+
+
+        rangeElement.textContent =
+            `${formatter.format(start)} – ${formatter.format(end)}`;
+    }
+}
+
+
+/* =========================================================
+   GREETING
+========================================================= */
+
+function renderGreeting() {
+
+    const hour =
+        new Date().getHours();
+
+
+    let greeting =
+        "Good morning";
+
+
+    if (
+        hour >= 12 &&
+        hour < 18
+    ) {
+
+        greeting =
+            "Good afternoon";
+
+    } else if (
+        hour >= 18
+    ) {
+
+        greeting =
+            "Good evening";
+    }
+
+
+    setText(
+        "greeting",
+        greeting
+    );
+
+
+    let name =
+        "";
+
+
+    const user =
+        readJSON(
+            STORAGE.USER,
+            null
+        );
+
+
+    if (user) {
+
+        name =
+            user.name ||
+            user.fullName ||
+            user.username ||
+            "";
+    }
+
+
+    if (!name) {
+
+        name =
+            localStorage.getItem(
+                "studyMindUserName"
+            ) ||
+            localStorage.getItem(
+                "username"
+            ) ||
+            "";
+    }
+
+
+    const nameElement =
+        document.getElementById(
+            "userName"
+        );
+
+
+    if (
+        nameElement &&
+        name
+    ) {
+
+        nameElement.textContent =
+            `, ${name}`;
+    }
 }
 
 
@@ -1101,20 +1194,13 @@ function getDailyHoursTarget() {
         );
 
 
-    return value > 0 ? value : 2;
+    return value > 0
+        ? value
+        : 2;
 }
 
 
 function getDailyTopicTarget() {
-
-    const topics =
-        getAllPlanTopics();
-
-
-    /*
-       If plan explicitly provides a target,
-       respect it.
-    */
 
     const explicit =
         Number(
@@ -1126,11 +1212,20 @@ function getDailyTopicTarget() {
 
     if (explicit > 0) {
 
-        return Math.round(explicit);
+        return Math.round(
+            explicit
+        );
     }
 
 
-    if (!topics.length) return 0;
+    const topics =
+        state.totalTopics;
+
+
+    if (!topics) {
+
+        return 0;
+    }
 
 
     const days =
@@ -1144,278 +1239,31 @@ function getDailyTopicTarget() {
 
         return Math.max(
             1,
-            Math.ceil(topics.length / days)
+            Math.ceil(
+                topics / days
+            )
         );
     }
 
 
     return Math.max(
         1,
-        Math.min(3, topics.length)
+        Math.min(
+            3,
+            topics
+        )
     );
 }
 
 
 function getWeeklyHoursTarget() {
 
-    return getDailyHoursTarget() * 7;
-}
-
-
-/* =========================================================
-   TODAY TOPICS
-========================================================= */
-
-function getTodayCompletedTopics() {
-
-    const today =
-        todayKey();
-
-
-    /*
-       First use explicit completion dates.
-    */
-
-    const dated =
-        state.completedTopics.filter(item => {
-
-            if (
-                !item ||
-                typeof item !== "object"
-            ) {
-
-                return false;
-            }
-
-
-            const date =
-                item.date ||
-                item.completedAt ||
-                item.completedDate;
-
-
-            return (
-                date &&
-                String(date).slice(0, 10) === today
-            );
-        });
-
-
-    if (dated.length) {
-
-        return dated.length;
-    }
-
-
-    /*
-       If streak activity says today was active
-       but individual completion dates aren't
-       stored, don't falsely claim topic count.
-    */
-
-    return 0;
-}
-
-
-function getWeeklyCompletedTopics() {
-
-    const start =
-        getWeekStart(state.today);
-
-
-    const end =
-        new Date(start);
-
-    end.setDate(
-        end.getDate() + 7
-    );
-
-
-    const dated =
-        state.completedTopics.filter(item => {
-
-            if (
-                !item ||
-                typeof item !== "object"
-            ) {
-
-                return false;
-            }
-
-
-            const date =
-                item.date ||
-                item.completedAt ||
-                item.completedDate;
-
-
-            if (!date) return false;
-
-
-            const d =
-                startOfDay(
-                    new Date(date)
-                );
-
-
-            return (
-                d >= start &&
-                d < end
-            );
-        });
-
-
-    return dated.length;
-}
-
-
-/* =========================================================
-   WEEKLY ACTIVE DAYS
-========================================================= */
-
-function getWeeklyActiveDays() {
-
-    const dates =
-        getActivityDates();
-
-    const start =
-        getWeekStart(state.today);
-
-
-    let count = 0;
-
-
-    for (let i = 0; i < 7; i++) {
-
-        const date =
-            new Date(start);
-
-        date.setDate(
-            start.getDate() + i
-        );
-
-
-        if (
-            dates.has(
-                todayKey(date)
-            )
-        ) {
-
-            count++;
-        }
-    }
-
-
-    return count;
-}
-
-
-/* =========================================================
-   UPDATE STATE
-========================================================= */
-
-function calculateState() {
-
-    const topics =
-        getAllPlanTopics();
-
-
-    state.totalTopics =
-        topics.length;
-
-
-    state.completedTotal =
-        topics.filter(
-            topicIsCompleted
-        ).length;
-
-
-    state.todayCompleted =
-        getTodayCompletedTopics();
-
-
-    state.todayHours =
-        getTodayStudyHours();
-
-
-    state.weeklyHours =
-        getWeeklyStudyHours();
-
-
-    state.weeklyTopics =
-        getWeeklyCompletedTopics();
-
-
-    state.weeklyDays =
-        getWeeklyActiveDays();
-
-
-    /*
-     * IMPORTANT:
-     *
-     * These values now come from the SAME
-     * StudyMindScore engine used by score.html.
-     */
-
-    const score =
-        getSharedScoreData();
-
-
-    state.currentStreak =
-        score.currentStreak;
-
-
-    state.bestStreak =
-        Math.max(
-            state.bestStreak,
-            score.currentStreak
-        );
-
-
-    state.sharedScore =
-        score;
-}
-
-/* =========================================================
-   SHARED STUDY SCORE
-========================================================= */
-
-function renderSharedScore() {
-
-    const score =
-        state.sharedScore ||
-        getSharedScoreData();
-
-
-    setText(
-        "studyScore",
-        score.total
-    );
-
-
-    setText(
-        "goalStudyScore",
-        score.total
-    );
-
-
-    setText(
-        "goalKnowledgeAverage",
-        `${score.knowledgeAverage}%`
-    );
-
-
-    setText(
-        "goalKnowledgeChecks",
-        score.knowledgeCheckCount
-    );
-
-
-    setText(
-        "goalPlanProgress",
-        `${score.planProgress}%`
+    return (
+        getDailyHoursTarget() *
+        7
     );
 }
+
 
 /* =========================================================
    HERO
@@ -1425,6 +1273,7 @@ function renderHero() {
 
     const targetHours =
         getDailyHoursTarget();
+
 
     const targetTopics =
         getDailyTopicTarget();
@@ -1461,17 +1310,10 @@ function renderHero() {
         );
 
 
-    const percentElement =
-        document.getElementById(
-            "overallPercent"
-        );
-
-
-    if (percentElement) {
-
-        percentElement.textContent =
-            `${overall}%`;
-    }
+    setText(
+        "overallPercent",
+        `${overall}%`
+    );
 
 
     const ring =
@@ -1527,7 +1369,7 @@ function renderHero() {
 
 
 /* =========================================================
-   TODAY CARDS
+   TODAY GOALS
 ========================================================= */
 
 function renderTodayGoals() {
@@ -1563,13 +1405,17 @@ function renderTodayGoals() {
 
     setText(
         "todayHours",
-        formatHours(state.todayHours)
+        formatHours(
+            state.todayHours
+        )
     );
 
 
     setText(
         "targetHours",
-        formatHours(targetHours)
+        formatHours(
+            targetHours
+        )
     );
 
 
@@ -1635,7 +1481,9 @@ function renderTodayGoals() {
 
     if (timeMessage) {
 
-        if (timePct >= 100) {
+        if (
+            timePct >= 100
+        ) {
 
             timeMessage.textContent =
                 "Daily study-time goal completed.";
@@ -1645,11 +1493,15 @@ function renderTodayGoals() {
             const remaining =
                 Math.max(
                     0,
-                    targetHours - state.todayHours
+                    targetHours -
+                    state.todayHours
                 );
 
+
             timeMessage.textContent =
-                `${formatHours(remaining)} remaining today.`;
+                `${formatHours(
+                    remaining
+                )} remaining today.`;
         }
     }
 
@@ -1672,15 +1524,18 @@ function renderTodayGoals() {
 
         } else {
 
+            const remaining =
+                Math.max(
+                    0,
+                    targetTopics -
+                    state.todayCompleted
+                );
+
+
             topicMessage.textContent =
                 targetTopics > 0
-                    ? `${Math.max(
-                        0,
-                        targetTopics -
-                        state.todayCompleted
-                    )} more topic${
-                        targetTopics -
-                        state.todayCompleted === 1
+                    ? `${remaining} more topic${
+                        remaining === 1
                             ? ""
                             : "s"
                     } to go.`
@@ -1697,21 +1552,30 @@ function renderTodayGoals() {
 
     if (streakMessage) {
 
-        if (state.currentStreak === 0) {
+        if (
+            state.currentStreak === 0
+        ) {
 
             streakMessage.textContent =
-                "Complete a topic today to start your streak.";
+                "Complete a study session today to start your streak.";
 
-        } else if (state.currentStreak >= 7) {
+        } else if (
+            state.currentStreak >= 7
+        ) {
 
             streakMessage.textContent =
                 "Amazing consistency. You've reached a 7-day streak.";
 
         } else {
 
+            const remaining =
+                7 -
+                state.currentStreak;
+
+
             streakMessage.textContent =
-                `${7 - state.currentStreak} more day${
-                    7 - state.currentStreak === 1
+                `${remaining} more day${
+                    remaining === 1
                         ? ""
                         : "s"
                 } toward a 7-day streak.`;
@@ -1737,12 +1601,16 @@ function renderTodayGoals() {
             );
 
 
-        if (overall >= 100) {
+        if (
+            overall >= 100
+        ) {
 
             status.textContent =
                 "✓ Goals complete";
 
-        } else if (overall >= 60) {
+        } else if (
+            overall >= 60
+        ) {
 
             status.textContent =
                 "Good progress";
@@ -1757,7 +1625,7 @@ function renderTodayGoals() {
 
 
 /* =========================================================
-   WEEKLY
+   WEEKLY GOALS
 ========================================================= */
 
 function renderWeekly() {
@@ -1782,7 +1650,8 @@ function renderWeekly() {
 
     const estimatedWeeklyTopics =
         Math.max(
-            getDailyTopicTarget() * 7,
+            getDailyTopicTarget() *
+            7,
             1
         );
 
@@ -1806,7 +1675,9 @@ function renderWeekly() {
 
     setText(
         "weeklyTargetHours",
-        formatHours(weeklyTarget)
+        formatHours(
+            weeklyTarget
+        )
     );
 
 
@@ -1854,7 +1725,9 @@ function renderWeekly() {
 
     if (hoursMessage) {
 
-        if (hoursPct >= 100) {
+        if (
+            hoursPct >= 100
+        ) {
 
             hoursMessage.textContent =
                 "You've reached your weekly study-hour goal.";
@@ -1901,19 +1774,29 @@ function renderPlan() {
         state.plan;
 
 
-    if (!plan) {
-
+    const emptyPlan =
         document.getElementById(
             "emptyPlan"
-        ).hidden = false;
+        );
+
+
+    if (!plan) {
+
+        if (emptyPlan) {
+
+            emptyPlan.hidden =
+                false;
+        }
 
         return;
     }
 
 
-    document.getElementById(
-        "emptyPlan"
-    ).hidden = true;
+    if (emptyPlan) {
+
+        emptyPlan.hidden =
+            true;
+    }
 
 
     const curriculum =
@@ -1959,7 +1842,8 @@ function renderPlan() {
     );
 
 
-    const descriptionParts = [];
+    const descriptionParts =
+        [];
 
 
     if (curriculum) {
@@ -1970,7 +1854,11 @@ function renderPlan() {
     }
 
 
-    if (examType && examType !== "No exam selected") {
+    if (
+        examType &&
+        examType !==
+        "No exam selected"
+    ) {
 
         descriptionParts.push(
             examType
@@ -1980,8 +1868,11 @@ function renderPlan() {
 
     setText(
         "planDescription",
+
         descriptionParts.length
-            ? descriptionParts.join(" • ")
+            ? descriptionParts.join(
+                " • "
+            )
             : "Your current StudyMind plan."
     );
 
@@ -1994,8 +1885,15 @@ function renderPlan() {
         state.completedTotal;
 
 
+    /*
+       Prefer the canonical Score
+       plan progress.
+    */
+
     const planPct =
-        percent(
+        Number(
+            state.metrics?.planProgress
+        ) || percent(
             completed,
             total
         );
@@ -2048,16 +1946,23 @@ function renderSubjects() {
     if (!subjects.length) {
 
         container.innerHTML = `
+
             <div class="subject-card">
+
                 <div class="subject-top">
+
                     <span class="subject-name">
                         No subjects yet
                     </span>
+
                 </div>
+
                 <div class="subject-count">
                     Create a study plan to track subjects.
                 </div>
+
             </div>
+
         `;
 
         return;
@@ -2065,61 +1970,78 @@ function renderSubjects() {
 
 
     container.innerHTML =
-        subjects.map(subject => {
+        subjects.map(
+            subject => {
 
-            const topics =
-                subject.topics
-                    .map(normalizeTopic)
-                    .filter(topic => topic.name);
+                const topics =
+                    subject.topics
 
+                        .map(
+                            normalizeTopic
+                        )
 
-            const completed =
-                topics.filter(
-                    topicIsCompleted
-                ).length;
-
-
-            const pct =
-                percent(
-                    completed,
-                    topics.length
-                );
+                        .filter(
+                            topic =>
+                                topic.name
+                        );
 
 
-            return `
-                <div class="subject-card">
+                const completed =
+                    topics.filter(
+                        topicIsCompleted
+                    ).length;
 
-                    <div class="subject-top">
 
-                        <span class="subject-name">
-                            ${escapeHTML(subject.name)}
-                        </span>
+                const pct =
+                    percent(
+                        completed,
+                        topics.length
+                    );
 
-                        <span class="subject-percent">
-                            ${pct}%
-                        </span>
+
+                return `
+
+                    <div class="subject-card">
+
+                        <div class="subject-top">
+
+                            <span class="subject-name">
+                                ${escapeHTML(
+                                    subject.name
+                                )}
+                            </span>
+
+                            <span class="subject-percent">
+                                ${pct}%
+                            </span>
+
+                        </div>
+
+
+                        <div class="subject-count">
+
+                            ${completed}
+                            of
+                            ${topics.length}
+                            topics completed
+
+                        </div>
+
+
+                        <div class="subject-progress">
+
+                            <div
+                                style="width:${pct}%"
+                            ></div>
+
+                        </div>
 
                     </div>
 
-                    <div class="subject-count">
-                        ${completed}
-                        of
-                        ${topics.length}
-                        topics completed
-                    </div>
+                `;
 
-                    <div class="subject-progress">
-
-                        <div
-                            style="width:${pct}%"
-                        ></div>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
@@ -2158,10 +2080,15 @@ function renderAchievements() {
 }
 
 
-function toggleAchievement(id, unlocked) {
+function toggleAchievement(
+    id,
+    unlocked
+) {
 
     const element =
-        document.getElementById(id);
+        document.getElementById(
+            id
+        );
 
 
     if (!element) return;
@@ -2169,44 +2096,60 @@ function toggleAchievement(id, unlocked) {
 
     element.classList.toggle(
         "unlocked",
-        unlocked
+        Boolean(unlocked)
     );
 }
 
 
 /* =========================================================
-   DOM HELPERS
+   SHARED SCORE DISPLAY
 ========================================================= */
 
-function setText(id, value) {
+function renderSharedScore() {
 
-    const element =
-        document.getElementById(id);
-
-
-    if (element) {
-
-        element.textContent =
-            value;
-    }
-}
+    const metrics =
+        state.metrics ||
+        getSharedScoreData();
 
 
-function setWidth(id, percentage) {
+    setText(
+        "studyScore",
+        Number(
+            metrics.total
+        ) || 0
+    );
 
-    const element =
-        document.getElementById(id);
+
+    setText(
+        "goalStudyScore",
+        Number(
+            metrics.total
+        ) || 0
+    );
 
 
-    if (element) {
+    setText(
+        "goalKnowledgeAverage",
+        `${Number(
+            metrics.knowledgeAverage
+        ) || 0}%`
+    );
 
-        element.style.width =
-            `${clamp(
-                Number(percentage) || 0,
-                0,
-                100
-            )}%`;
-    }
+
+    setText(
+        "goalKnowledgeChecks",
+        Number(
+            metrics.knowledgeCheckCount
+        ) || 0
+    );
+
+
+    setText(
+        "goalPlanProgress",
+        `${Number(
+            metrics.planProgress
+        ) || 0}%`
+    );
 }
 
 
@@ -2238,14 +2181,9 @@ function loadTheme() {
     }
 
 
-    /*
-       Compatibility with common StudyMind
-       theme storage.
-    */
-
     const oldTheme =
         localStorage.getItem(
-            "studyMindDarkMode"
+            STORAGE.DARK_MODE
         );
 
 
@@ -2254,7 +2192,15 @@ function loadTheme() {
         oldTheme === "dark"
     ) {
 
-        document.body.classList.add("dark");
+        document.body.classList.add(
+            "dark"
+        );
+
+    } else {
+
+        document.body.classList.remove(
+            "dark"
+        );
     }
 
 
@@ -2274,35 +2220,62 @@ function updateThemeButton() {
 
 
     icon.textContent =
-        document.body.classList.contains("dark")
+        document.body.classList.contains(
+            "dark"
+        )
             ? "☀"
             : "☾";
 }
 
 
-function toggleTheme() {
+/*
+   Named differently internally so Goals
+   doesn't fight with another page's
+   global toggleTheme().
+*/
+
+function goalsToggleTheme() {
 
     const dark =
-        document.body.classList.toggle("dark");
+        document.body.classList.toggle(
+            "dark"
+        );
 
 
     localStorage.setItem(
         STORAGE.THEME,
-        dark ? "dark" : "light"
+        dark
+            ? "dark"
+            : "light"
     );
 
 
-    /*
-       Keep compatibility with other pages.
-    */
-
     localStorage.setItem(
-        "studyMindDarkMode",
+        STORAGE.DARK_MODE,
         String(dark)
     );
 
 
     updateThemeButton();
+}
+
+
+/*
+   Preserve existing HTML such as:
+
+   onclick="toggleTheme()"
+
+   without overwriting another StudyMind
+   theme function if one already exists.
+*/
+
+if (
+    typeof window.toggleTheme !==
+    "function"
+) {
+
+    window.toggleTheme =
+        goalsToggleTheme;
 }
 
 
@@ -2324,7 +2297,13 @@ function setupMobileMenu() {
         );
 
 
-    if (!button || !sidebar) return;
+    if (
+        !button ||
+        !sidebar
+    ) {
+
+        return;
+    }
 
 
     button.addEventListener(
@@ -2334,29 +2313,84 @@ function setupMobileMenu() {
             sidebar.classList.toggle(
                 "open"
             );
+
         }
     );
 
 
     document
-        .querySelectorAll(".nav-item")
-        .forEach(link => {
+        .querySelectorAll(
+            ".nav-item"
+        )
+        .forEach(
+            link => {
 
-            link.addEventListener(
-                "click",
-                () => {
+                link.addEventListener(
+                    "click",
+                    () => {
 
-                    sidebar.classList.remove(
-                        "open"
-                    );
-                }
-            );
-        });
+                        sidebar.classList.remove(
+                            "open"
+                        );
+
+                    }
+                );
+
+            }
+        );
 }
 
 
 /* =========================================================
-   STORAGE CHANGE LISTENER
+   REFRESH EVENTS
+   ---------------------------------------------------------
+   Goals listens to the same events generated
+   by the timer/session/knowledge-check systems.
+========================================================= */
+
+const GOALS_REFRESH_EVENTS = [
+
+    "studyMindScoreUpdated",
+
+    "studyMindStreakUpdated",
+
+    "studyMindTimerCompleted",
+
+    "studyMindStudyTimeUpdated",
+
+    "studyMindKnowledgeCheckCompleted",
+
+    "studyMindPlanUpdated",
+
+    "studyMindPlanCreated",
+
+    "studyMindPlanChanged",
+
+    "studyMindCompletedTopicsUpdated",
+
+    "studyMindAIUsageUpdated"
+
+];
+
+
+GOALS_REFRESH_EVENTS.forEach(
+    eventName => {
+
+        window.addEventListener(
+            eventName,
+            () => {
+
+                refreshGoals();
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   STORAGE LISTENER
 ========================================================= */
 
 window.addEventListener(
@@ -2366,11 +2400,27 @@ window.addEventListener(
         const relevantKeys = [
 
             STORAGE.PLAN,
+
             STORAGE.PLANS,
+
             STORAGE.ACTIVE_PLAN,
+
             STORAGE.COMPLETED,
+
             STORAGE.STREAK_ACTIVITY,
-            "studyMindStudyHistory"
+
+            STORAGE.STUDY_HISTORY,
+
+            "studyMindDailyStudyTime",
+
+            "studyMindStudySessions",
+
+            "studyMindKnowledgeCheckResults",
+
+            "studyMindCompletedQuestionTopics",
+
+            "studyMindStudyScore"
+
         ];
 
 
@@ -2382,6 +2432,7 @@ window.addEventListener(
 
             refreshGoals();
         }
+
     }
 );
 
@@ -2392,13 +2443,31 @@ window.addEventListener(
 
 function refreshGoals() {
 
+    /*
+       Always reload the active plan.
+    */
+
     loadPlan();
+
+
+    /*
+       Completion data is only used for
+       compatibility/subject rendering.
+
+       Score remains the canonical metric source.
+    */
 
     loadCompletedTopics();
 
-    loadStreakActivity();
+
+    /*
+       Pull everything from Score.
+    */
 
     calculateState();
+
+
+    renderDate();
 
     renderHero();
 
@@ -2411,6 +2480,8 @@ function refreshGoals() {
     renderSubjects();
 
     renderAchievements();
+
+    renderSharedScore();
 }
 
 
@@ -2424,17 +2495,21 @@ function initializeGoals() {
 
     renderGreeting();
 
-    renderDate();
-
     setupMobileMenu();
 
     refreshGoals();
 
 
     /*
-       Refresh periodically so the page notices
-       timer/session progress without requiring
-       a full page reload.
+       This is only a UI refresh.
+
+       It does NOT create XP,
+       streaks, study sessions,
+       completed topics,
+       or score.
+
+       Therefore opening Goals cannot
+       accidentally award progress.
     */
 
     setInterval(
@@ -2444,8 +2519,13 @@ function initializeGoals() {
 }
 
 
+/* =========================================================
+   START
+========================================================= */
+
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
@@ -2456,5 +2536,5 @@ if (
 } else {
 
     initializeGoals();
-}
 
+}
