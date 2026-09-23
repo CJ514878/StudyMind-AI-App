@@ -1350,7 +1350,30 @@ function calculateState() {
         getWeeklyActiveDays();
 
 
-    calculateStreaks();
+    /*
+     * IMPORTANT:
+     *
+     * These values now come from the SAME
+     * StudyMindScore engine used by score.html.
+     */
+
+    const score =
+        getSharedScoreData();
+
+
+    state.currentStreak =
+        score.currentStreak;
+
+
+    state.bestStreak =
+        Math.max(
+            state.bestStreak,
+            score.currentStreak
+        );
+
+
+    state.sharedScore =
+        score;
 }
 
 
