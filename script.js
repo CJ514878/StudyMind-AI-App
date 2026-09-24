@@ -4478,9 +4478,7 @@ async function generateStudyPlan(event) {
 function normalizePlan(plan) {
 
     const topics =
-        Array.isArray(
-            plan.topics
-        )
+        Array.isArray(plan.topics)
             ? plan.topics
             : state.selections.map(
                 (item, index) => ({
@@ -4514,9 +4512,7 @@ function normalizePlan(plan) {
 
     const subjects =
         plan.subjects &&
-        Array.isArray(
-            plan.subjects
-        )
+        Array.isArray(plan.subjects)
             ? plan.subjects
             : unique(
                 topics.map(
@@ -4526,6 +4522,10 @@ function normalizePlan(plan) {
             );
 
 
+    /*
+     * Every NEW plan starts completely clean.
+     */
+
     return {
 
         id:
@@ -4533,7 +4533,7 @@ function normalizePlan(plan) {
             generateID(),
 
         version:
-            3,
+            4,
 
         curriculum:
             plan.curriculum ||
@@ -4547,8 +4547,9 @@ function normalizePlan(plan) {
         topics,
 
         exams:
-            plan.exams ||
-            collectExams(),
+            Array.isArray(plan.exams)
+                ? plan.exams
+                : collectExams(),
 
         studyHours:
             Number(
@@ -4605,45 +4606,65 @@ function normalizePlan(plan) {
             plan.createdAt ||
             new Date().toISOString(),
 
+        /*
+         * IMPORTANT:
+         *
+         * These values belong to THIS PLAN.
+         */
+
         progress: {
 
-            completedTopics:
-                Number(
-                    plan.progress
-                        ?.completedTopics ||
-                    0
-                ),
+            xp: 0,
 
-            totalTopics:
-                topics.length,
+            streak: 0,
 
-            studyMinutes:
-                Number(
-                    plan.progress
-                        ?.studyMinutes ||
-                    0
-                ),
+            longestStreak: 0,
 
-            sessions:
-                Number(
-                    plan.progress
-                        ?.sessions ||
-                    0
-                )
+            studyScore: 0,
+
+            studyMinutes: 0,
+
+            sessions: 0,
+
+            completedTopics: [],
+
+            completedQuestionTopics: [],
+
+            knowledgeCheckResults: [],
+
+            streakActivity: {},
+
+            studyHistory: {},
+
+            studySessions: [],
+
+            rewardsUnlocked: [],
+
+            rewardNotifications: [],
+
+            rewardXP: 0,
+
+            currentTopicIndex: 0,
+
+            currentTopic: "",
+
+            xpEvents: {}
 
         },
 
-        streak:
-            Number(
-                plan.streak ||
-                0
-            ),
+        /*
+         * Legacy compatibility fields.
+         */
 
-        studyScore:
-            Number(
-                plan.studyScore ||
-                0
-            )
+        xp: 0,
+
+        streak: 0,
+
+        studyScore: 0,
+
+        completedTopics: [],
+
+        completedQuestionTopics: []
 
     };
 
