@@ -4,7 +4,6 @@
 
 <head>
 
-
 <meta charset="UTF-8">
 
 <meta
@@ -22,13 +21,11 @@
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
 </head>
 
 <body>
 
 <aside class="sidebar">
-
 
 <div class="brand">
     StudyMind <span>AI</span>
@@ -127,8 +124,8 @@
 
 </div>
 
-
 </aside>
+
 
 <main class="dashboard">
 
@@ -159,11 +156,13 @@
     <div class="header-right">
 
         <div class="xp-pill">
+
             <span>⚡</span>
 
             <strong id="headerXP">
                 0 XP
             </strong>
+
         </div>
 
 
@@ -634,19 +633,73 @@
 
     </article>
 
+
+</section>
+
+
+<!-- =====================================================
+     MY STUDY PLANS
+====================================================== -->
+
+<section class="my-study-plans-section">
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-eyebrow">
+                YOUR PLANS
+            </span>
+
+            <h2>
+                My Study Plans
+            </h2>
+
+            <p>
+                Keep each study plan's progress separate
+                and switch between them whenever you want.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="myStudyPlans"
+        class="my-study-plans-grid"
+    >
+
+        <div class="study-plan-card">
+
+            <p>
+                Loading your study plans...
+            </p>
+
+        </div>
+
+    </div>
+
 </section>
 
 
 </main>
 
+
 <!-- =========================================================
      STUDYMIND SHARED SERVICES
 ========================================================= -->
 
-<!-- Shared Supabase client -->
+<!-- Supabase -->
 <script src="supabase.js"></script>
 
-<!-- Shared timer engine — MUST load before dashboard.js -->
+<!-- Active-plan progress engine -->
+<script src="study-progress.js"></script>
+
+<!-- My Study Plans -->
+<script src="my-study-plans.js"></script>
+
+<!-- Shared timer engine -->
 <script src="study-timer.js"></script>
 
 <!-- Streak engine -->
@@ -657,6 +710,7 @@
 
 <!-- Dashboard controller -->
 <script src="dashboard.js"></script>
+
 
 </body>
 
