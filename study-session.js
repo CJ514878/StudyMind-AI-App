@@ -2,23 +2,30 @@
 
 /* =========================================================
    STUDYMIND AI — STUDY SESSION
+   Shared progress + shared timer architecture
 ========================================================= */
 
 (function () {
 
     const KEYS = {
         PLAN: "studyMindPlan",
+        PLANS: "studyMindPlans",
+        ACTIVE_PLAN: "studyMindActivePlanId",
+
         CURRENT_TOPIC: "studyMindCurrentTopic",
         TOPIC_INDEX: "studyMindCurrentTopicIndex",
+
         COMPLETED: "studyMindCompletedTopics",
-        QUESTION_DONE:
-            "studyMindCompletedQuestionTopics",
+        QUESTION_DONE: "studyMindCompletedQuestionTopics",
+
         NOTES: "studyMindSessionNotes",
+
         USERNAME: "studyMindUsername"
     };
 
     let plan = null;
     let currentTopic = null;
+    let initialized = false;
 
     /* =========================================================
        HELPERS
@@ -27,6 +34,7 @@
     function readJSON(key, fallback) {
 
         try {
+
             const value =
                 localStorage.getItem(key);
 
@@ -35,24 +43,148 @@
                 : fallback;
 
         } catch {
+
             return fallback;
         }
     }
 
     function writeJSON(key, value) {
+
         localStorage.setItem(
             key,
             JSON.stringify(value)
         );
     }
 
+    function setText(id, value) {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.textContent =
+                value ?? "";
+        }
+    }
+
     function getTimer() {
+
         return window.StudyMindTimer || null;
     }
 
+    /* =========================================================
+       PLAN / PROGRESS SYSTEM
+    ========================================================= */
+
+    function getProgressSystem() {
+
+        return window.StudyMindPlanProgress || null;
+    }
+
+    function getActivePlan() {
+
+        const progress =
+            getProgressSystem();
+
+        if (
+            progress &&
+            typeof progress.getActivePlan === "function"
+        ) {
+
+            const active =
+                progress.getActivePlan();
+
+            if (active) {
+                return active;
+            }
+        }
+
+        const activePlanId =
+            localStorage.getItem(
+                KEYS.ACTIVE_PLAN
+            );
+
+        const plans =
+            readJSON(
+                KEYS.PLANS,
+                []
+            );
+
+        if (
+            activePlanId &&
+            Array.isArray(plans)
+        ) {
+
+            const found =
+                plans.find(
+                    item =>
+                        item &&
+                        String(item.id) ===
+                            String(activePlanId)
+                );
+
+            if (found) {
+                return found;
+            }
+        }
+
+        return readJSON(
+            KEYS.PLAN,
+            null
+        );
+    }
+
+    function refreshPlanReference() {
+
+        const active =
+            getActivePlan();
+
+        if (active) {
+            plan = active;
+        }
+
+        return plan;
+    }
+
+    function syncProgress() {
+
+        const progress =
+            getProgressSystem();
+
+        if (
+            progress &&
+            typeof progress.syncGlobalProgressToPlan ===
+                "function"
+        ) {
+
+            progress.syncGlobalProgressToPlan();
+        }
+    }
+
+    function saveProgressToActivePlan() {
+
+        const progress =
+            getProgressSystem();
+
+        if (
+            progress &&
+            typeof progress.saveActivePlan ===
+                "function"
+        ) {
+
+            progress.saveActivePlan(plan);
+        }
+    }
+
+    /* =========================================================
+       TOPIC NORMALIZATION
+    ========================================================= */
+
     function normalizeTopic(topic) {
 
-        if (!topic) return null;
+        if (!topic) {
+            return null;
+        }
 
         if (typeof topic === "string") {
 
@@ -64,6 +196,7 @@
         }
 
         return {
+
             name:
                 topic.name ||
                 topic.topic ||
@@ -76,7 +209,8 @@
                 "General",
 
             difficulty:
-                topic.difficulty || ""
+                topic.difficulty ||
+                ""
         };
     }
 
@@ -86,24 +220,84 @@
 
     function loadPlan() {
 
-        plan =
-            readJSON(
-                KEYS.PLAN,
-                null
+        refreshPlanReference();
+
+        if (!plan) {
+            console.warn(
+                "StudyMind: No active study plan found."
             );
+            return null;
+        }
+
+        /*
+         * Make sure the progress object exists.
+         */
+        if (
+            !plan.progress ||
+            typeof plan.progress !== "object"
+        ) {
+
+            plan.progress = {
+                completedTopics: [],
+                completedQuestionTopics: [],
+                studyScore:
+                    Number(plan.studyScore) || 0,
+                currentTopicIndex:
+                    Number(plan.currentTopicIndex) || 0
+            };
+        }
+
+        if (
+            !Array.isArray(
+                plan.progress.completedTopics
+            )
+        ) {
+
+            plan.progress.completedTopics = [];
+        }
+
+        if (
+            !Array.isArray(
+                plan.progress.completedQuestionTopics
+            )
+        ) {
+
+            plan.progress.completedQuestionTopics = [];
+        }
+
+        if (
+            !Number.isFinite(
+                Number(
+                    plan.progress.currentTopicIndex
+                )
+            )
+        ) {
+
+            plan.progress.currentTopicIndex = 0;
+        }
 
         return plan;
     }
 
     function getAllTopics() {
 
-        if (!plan) return [];
+        if (!plan) {
+            return [];
+        }
 
         const topics = [];
 
+        /*
+         * Normal generated plan:
+         * subjects -> topics
+         */
         if (Array.isArray(plan.subjects)) {
 
             plan.subjects.forEach(subject => {
+
+                if (!subject) {
+                    return;
+                }
 
                 const subjectName =
                     subject.name ||
@@ -117,31 +311,35 @@
                     )
                 ) {
 
-                    subject.topics.forEach(
-                        topic => {
+                    subject.topics.forEach(topic => {
 
-                            const normalized =
-                                normalizeTopic(
-                                    topic
-                                );
+                        const normalized =
+                            normalizeTopic(topic);
 
-                            if (normalized) {
-
-                                normalized.subject =
-                                    normalized.subject === "General"
-                                        ? subjectName
-                                        : normalized.subject;
-
-                                topics.push(
-                                    normalized
-                                );
-                            }
+                        if (!normalized) {
+                            return;
                         }
-                    );
+
+                        if (
+                            normalized.subject ===
+                            "General"
+                        ) {
+
+                            normalized.subject =
+                                subjectName;
+                        }
+
+                        topics.push(
+                            normalized
+                        );
+                    });
                 }
             });
         }
 
+        /*
+         * Fallback flat topic structure.
+         */
         if (
             !topics.length &&
             Array.isArray(plan.topics)
@@ -153,7 +351,10 @@
                     normalizeTopic(topic);
 
                 if (normalized) {
-                    topics.push(normalized);
+
+                    topics.push(
+                        normalized
+                    );
                 }
             });
         }
@@ -165,46 +366,130 @@
        CURRENT TOPIC
     ========================================================= */
 
+    function topicBelongsToPlan(topic) {
+
+        if (!topic) {
+            return false;
+        }
+
+        const topics =
+            getAllTopics();
+
+        return topics.some(item => {
+
+            return (
+                item.name === topic.name &&
+                item.subject === topic.subject
+            );
+        });
+    }
+
     function determineCurrentTopic() {
 
+        const topics =
+            getAllTopics();
+
+        if (!topics.length) {
+
+            return {
+                name: "Study Session",
+                subject:
+                    plan?.subjectNames?.[0] ||
+                    "General",
+                difficulty: ""
+            };
+        }
+
+        /*
+         * First use an explicitly selected topic.
+         */
         const stored =
             readJSON(
                 KEYS.CURRENT_TOPIC,
                 null
             );
 
-        if (stored && stored.name) {
-            return normalizeTopic(stored);
+        if (
+            stored &&
+            stored.name
+        ) {
+
+            const normalized =
+                normalizeTopic(stored);
+
+            /*
+             * Do not allow an old topic from a
+             * previous study plan to leak into
+             * the new plan.
+             */
+            if (
+                normalized &&
+                topicBelongsToPlan(normalized)
+            ) {
+
+                return normalized;
+            }
         }
 
-        const topics =
-            getAllTopics();
+        /*
+         * Otherwise use the active plan's
+         * saved topic index.
+         */
+        const progressIndex =
+            Number(
+                plan?.progress?.currentTopicIndex
+            );
 
-        if (!topics.length) {
-            return {
-                name: "Study Session",
-                subject:
-                    plan?.subjectNames?.[0] ||
-                    "General"
-            };
-        }
-
-        const index =
+        const storedIndex =
             Number(
                 localStorage.getItem(
                     KEYS.TOPIC_INDEX
-                ) || 0
+                )
             );
 
-        return topics[
+        let index = 0;
+
+        if (
+            Number.isFinite(progressIndex) &&
+            progressIndex >= 0
+        ) {
+
+            index = progressIndex;
+
+        } else if (
+            Number.isFinite(storedIndex) &&
+            storedIndex >= 0
+        ) {
+
+            index = storedIndex;
+        }
+
+        index =
             Math.max(
                 0,
                 Math.min(
                     index,
                     topics.length - 1
                 )
-            )
-        ];
+            );
+
+        const topic =
+            topics[index];
+
+        if (topic) {
+
+            writeJSON(
+                KEYS.CURRENT_TOPIC,
+                topic
+            );
+
+            localStorage.setItem(
+                KEYS.TOPIC_INDEX,
+                String(index)
+            );
+        }
+
+        return topic;
     }
 
     /* =========================================================
@@ -213,54 +498,80 @@
 
     function getCompletedTopics() {
 
-        return readJSON(
-            KEYS.COMPLETED,
-            []
-        );
+        /*
+         * Global compatibility key remains the
+         * live source for existing pages.
+         */
+        const completed =
+            readJSON(
+                KEYS.COMPLETED,
+                []
+            );
+
+        return Array.isArray(completed)
+            ? completed
+            : [];
     }
 
     function topicKey(topic) {
 
-        return `${topic.subject}::${topic.name}`;
+        if (!topic) {
+            return "";
+        }
+
+        return (
+            `${topic.subject}::${topic.name}`
+        );
     }
 
     function isTopicCompleted(topic) {
 
+        if (!topic) {
+            return false;
+        }
+
         const key =
             topicKey(topic);
 
-        return getCompletedTopics()
-            .some(item => {
+        const completed =
+            getCompletedTopics();
 
-                if (
-                    typeof item ===
-                    "string"
-                ) {
-                    return (
-                        item === key ||
-                        item === topic.name
-                    );
-                }
+        return completed.some(item => {
 
-                if (
-                    item &&
-                    typeof item ===
-                    "object"
-                ) {
+            if (
+                typeof item ===
+                "string"
+            ) {
 
-                    return (
-                        item.key === key ||
+                return (
+                    item === key ||
+                    item === topic.name
+                );
+            }
+
+            if (
+                item &&
+                typeof item ===
+                "object"
+            ) {
+
+                return (
+                    item.key === key ||
+                    (
+                        item.subject ===
+                            topic.subject &&
                         (
-                            item.subject ===
-                                topic.subject &&
                             item.topic ===
+                                topic.name ||
+                            item.name ===
                                 topic.name
                         )
-                    );
-                }
+                    )
+                );
+            }
 
-                return false;
-            });
+            return false;
+        });
     }
 
     function getCompletedCount() {
@@ -269,12 +580,24 @@
             getAllTopics();
 
         return topics.filter(
-            isTopicCompleted
+            topic =>
+                isTopicCompleted(topic)
         ).length;
     }
 
+    function getRemainingCount() {
+
+        const total =
+            getAllTopics().length;
+
+        return Math.max(
+            0,
+            total - getCompletedCount()
+        );
+    }
+
     /* =========================================================
-       RENDER TOPIC
+       RENDER TOPIC / PROGRESS
     ========================================================= */
 
     function renderTopic() {
@@ -286,17 +609,18 @@
         const topics =
             getAllTopics();
 
-        const currentIndex =
-            Math.max(
-                0,
-                topics.findIndex(
-                    topic =>
-                        topic.name ===
-                            currentTopic.name &&
-                        topic.subject ===
-                            currentTopic.subject
-                )
+        let currentIndex =
+            topics.findIndex(
+                topic =>
+                    topic.name ===
+                        currentTopic.name &&
+                    topic.subject ===
+                        currentTopic.subject
             );
+
+        if (currentIndex < 0) {
+            currentIndex = 0;
+        }
 
         const completed =
             getCompletedCount();
@@ -305,12 +629,15 @@
             topics.length;
 
         const progress =
-            total
-                ? Math.round(
-                    (
-                        completed /
-                        total
-                    ) * 100
+            total > 0
+                ? Math.min(
+                    100,
+                    Math.round(
+                        (
+                            completed /
+                            total
+                        ) * 100
+                    )
                 )
                 : 0;
 
@@ -340,9 +667,46 @@
             );
 
         if (bar) {
+
             bar.style.width =
                 `${progress}%`;
         }
+
+        /*
+         * Keep plan progress synchronized.
+         */
+        if (plan) {
+
+            if (
+                !plan.progress ||
+                typeof plan.progress !== "object"
+            ) {
+
+                plan.progress = {};
+            }
+
+            plan.progress.currentTopicIndex =
+                currentIndex;
+
+            localStorage.setItem(
+                KEYS.TOPIC_INDEX,
+                String(currentIndex)
+            );
+        }
+
+        /*
+         * Optional status elements if present
+         * in a future version of the page.
+         */
+        setText(
+            "completedTopics",
+            String(completed)
+        );
+
+        setText(
+            "topicsRemaining",
+            String(getRemainingCount())
+        );
     }
 
     /* =========================================================
@@ -351,7 +715,15 @@
 
     function notesKey() {
 
-        return `${KEYS.NOTES}_${currentTopic.subject}_${currentTopic.name}`;
+        if (!currentTopic) {
+            return KEYS.NOTES;
+        }
+
+        return (
+            `${KEYS.NOTES}_` +
+            `${currentTopic.subject}_` +
+            `${currentTopic.name}`
+        );
     }
 
     function loadNotes() {
@@ -361,7 +733,10 @@
                 "sessionNotes"
             );
 
-        if (!textarea || !currentTopic) {
+        if (
+            !textarea ||
+            !currentTopic
+        ) {
             return;
         }
 
@@ -378,7 +753,10 @@
                 "sessionNotes"
             );
 
-        if (!textarea || !currentTopic) {
+        if (
+            !textarea ||
+            !currentTopic
+        ) {
             return;
         }
 
@@ -393,13 +771,110 @@
             );
 
         if (status) {
+
             status.textContent =
                 "Saved ✓";
 
             setTimeout(() => {
-                status.textContent = "";
+
+                status.textContent =
+                    "";
+
             }, 1500);
         }
+    }
+
+    /* =========================================================
+       CHECKLIST
+    ========================================================= */
+
+    function checklistKey() {
+
+        if (!currentTopic) {
+            return null;
+        }
+
+        return (
+            `studyMindChecklist_` +
+            `${currentTopic.subject}_` +
+            `${currentTopic.name}`
+        );
+    }
+
+    function loadChecklist() {
+
+        const key =
+            checklistKey();
+
+        if (!key) {
+            return;
+        }
+
+        const data =
+            readJSON(
+                key,
+                {}
+            );
+
+        [
+            "understandCheck",
+            "notesCheck",
+            "recallCheck",
+            "questionCheck"
+        ].forEach(id => {
+
+            const checkbox =
+                document.getElementById(id);
+
+            if (checkbox) {
+
+                checkbox.checked =
+                    Boolean(
+                        data[id]
+                    );
+            }
+        });
+    }
+
+    function setupChecklist() {
+
+        document
+            .querySelectorAll(
+                "#understandCheck, #notesCheck, #recallCheck, #questionCheck"
+            )
+            .forEach(checkbox => {
+
+                checkbox.addEventListener(
+                    "change",
+                    () => {
+
+                        const key =
+                            checklistKey();
+
+                        if (!key) {
+                            return;
+                        }
+
+                        const data =
+                            readJSON(
+                                key,
+                                {}
+                            );
+
+                        data[
+                            checkbox.id
+                        ] =
+                            checkbox.checked;
+
+                        writeJSON(
+                            key,
+                            data
+                        );
+                    }
+                );
+            });
+
+        loadChecklist();
     }
 
     /* =========================================================
@@ -412,11 +887,21 @@
             getTimer();
 
         if (!timer) {
+
+            setText(
+                "timerState",
+                "Ready"
+            );
+
             return;
         }
 
         const state =
             timer.getState();
+
+        if (!state) {
+            return;
+        }
 
         const display =
             document.getElementById(
@@ -428,12 +913,19 @@
                 "timerState"
             );
 
+        const startButton =
+            document.getElementById(
+                "timerStart"
+            );
+
         if (display) {
 
             const seconds =
                 Math.max(
                     0,
-                    state.seconds
+                    Number(
+                        state.seconds
+                    ) || 0
                 );
 
             const minutes =
@@ -450,10 +942,32 @@
 
         if (stateText) {
 
-            stateText.textContent =
+            if (state.running) {
+
+                stateText.textContent =
+                    "Studying";
+
+            } else if (
+                Number(state.seconds) <
+                Number(state.selectedSeconds)
+            ) {
+
+                stateText.textContent =
+                    "Paused";
+
+            } else {
+
+                stateText.textContent =
+                    "Ready";
+            }
+        }
+
+        if (startButton) {
+
+            startButton.textContent =
                 state.running
-                    ? "Studying"
-                    : "Ready";
+                    ? "Pause"
+                    : "Start";
         }
     }
 
@@ -467,12 +981,52 @@
             getTimer();
 
         if (!timer) {
-            console.error(
-                "StudyMind: Shared timer was not loaded."
+
+            console.warn(
+                "StudyMind: Shared timer not available yet."
             );
+
+            /*
+             * study-timer.js should already be loaded,
+             * but retry in case script initialization
+             * finishes a moment later.
+             */
+            setTimeout(
+                () => {
+
+                    if (
+                        window.StudyMindTimer &&
+                        !window.__studySessionTimerReady
+                    ) {
+
+                        setupTimerControls();
+                        updateTimerUI();
+                    }
+
+                },
+                300
+            );
+
             return;
         }
 
+        if (
+            window.__studySessionTimerControlsReady
+        ) {
+
+            updateTimerUI();
+            return;
+        }
+
+        window.__studySessionTimerControlsReady =
+            true;
+
+        window.__studySessionTimerReady =
+            true;
+
+        /*
+         * Duration buttons
+         */
         document
             .querySelectorAll(
                 ".timer-preset"
@@ -483,24 +1037,48 @@
                     "click",
                     () => {
 
+                        const state =
+                            timer.getState();
+
                         if (
-                            timer.getState()
-                                .running
+                            state &&
+                            state.running
                         ) {
                             return;
                         }
 
-                        timer.selectDuration(
+                        const minutes =
                             Number(
                                 button.dataset.minutes
-                            ) * 60
-                        );
+                            );
+
+                        if (
+                            !Number.isFinite(
+                                minutes
+                            ) ||
+                            minutes <= 0
+                        ) {
+                            return;
+                        }
+
+                        if (
+                            typeof timer.selectDuration ===
+                            "function"
+                        ) {
+
+                            timer.selectDuration(
+                                minutes * 60
+                            );
+                        }
 
                         updateTimerUI();
                     }
                 );
             });
 
+        /*
+         * Start / pause
+         */
         const start =
             document.getElementById(
                 "timerStart"
@@ -515,10 +1093,28 @@
                     const state =
                         timer.getState();
 
-                    if (state.running) {
-                        timer.pause();
+                    if (
+                        state &&
+                        state.running
+                    ) {
+
+                        if (
+                            typeof timer.pause ===
+                            "function"
+                        ) {
+
+                            timer.pause();
+                        }
+
                     } else {
-                        timer.start();
+
+                        if (
+                            typeof timer.start ===
+                            "function"
+                        ) {
+
+                            timer.start();
+                        }
                     }
 
                     updateTimerUI();
@@ -526,6 +1122,9 @@
             );
         }
 
+        /*
+         * Reset
+         */
         const reset =
             document.getElementById(
                 "timerReset"
@@ -537,12 +1136,22 @@
                 "click",
                 () => {
 
-                    timer.reset();
+                    if (
+                        typeof timer.reset ===
+                        "function"
+                    ) {
+
+                        timer.reset();
+                    }
+
                     updateTimerUI();
                 }
             );
         }
 
+        /*
+         * The shared timer is the source of truth.
+         */
         window.addEventListener(
             "studyMindTimerChanged",
             updateTimerUI
@@ -553,54 +1162,30 @@
             updateTimerUI
         );
 
+        window.addEventListener(
+            "studyMindTimerCompleted",
+            () => {
+
+                updateTimerUI();
+                renderTopic();
+
+                /*
+                 * Timer completion is handled by the
+                 * shared timer. We deliberately DO NOT
+                 * mark the topic complete here.
+                 */
+                syncProgress();
+            }
+        );
+
+        /*
+         * Keep the display alive even if another
+         * component doesn't dispatch an event.
+         */
         setInterval(
             updateTimerUI,
             1000
         );
-    }
-
-    /* =========================================================
-       CHECKLIST
-    ========================================================= */
-
-    function setupChecklist() {
-
-        document
-            .querySelectorAll(
-                "#understandCheck, #notesCheck, #recallCheck, #questionCheck"
-            )
-            .forEach(checkbox => {
-
-                checkbox.addEventListener(
-                    "change",
-                    () => {
-
-                        if (
-                            currentTopic
-                        ) {
-
-                            const key =
-                                `studyMindChecklist_${currentTopic.subject}_${currentTopic.name}`;
-
-                            const data =
-                                readJSON(
-                                    key,
-                                    {}
-                                );
-
-                            data[
-                                checkbox.id
-                            ] =
-                                checkbox.checked;
-
-                            writeJSON(
-                                key,
-                                data
-                            );
-                        }
-                    }
-                );
-            });
     }
 
     /* =========================================================
@@ -613,10 +1198,45 @@
             return;
         }
 
+        /*
+         * Save the exact topic so knowledge-check.html
+         * knows what the student is testing.
+         */
         writeJSON(
             "studyMindKnowledgeCheckTopic",
             currentTopic
         );
+
+        /*
+         * Keep the topic index synchronized.
+         */
+        const topics =
+            getAllTopics();
+
+        const index =
+            topics.findIndex(
+                topic =>
+                    topic.name ===
+                        currentTopic.name &&
+                    topic.subject ===
+                        currentTopic.subject
+            );
+
+        if (index >= 0) {
+
+            localStorage.setItem(
+                KEYS.TOPIC_INDEX,
+                String(index)
+            );
+
+            if (plan?.progress) {
+
+                plan.progress.currentTopicIndex =
+                    index;
+
+                saveProgressToActivePlan();
+            }
+        }
 
         window.location.href =
             "knowledge-check.html";
@@ -625,7 +1245,11 @@
     /* =========================================================
        COMPLETE SESSION
        IMPORTANT:
-       This remains separate from timer completion.
+       This is NOT timer completion.
+
+       It only marks the current topic as completed.
+       The shared timer separately handles study-time
+       tracking and timer-based streak activity.
     ========================================================= */
 
     function completeSession() {
@@ -637,66 +1261,100 @@
         const key =
             topicKey(currentTopic);
 
-        const completed =
+        let completed =
             getCompletedTopics();
 
-        if (!completed.includes(key)) {
-            completed.push(key);
+        if (!Array.isArray(completed)) {
+            completed = [];
         }
 
-        writeJSON(
-            KEYS.COMPLETED,
-            completed
-        );
+        /*
+         * Prevent duplicate completion.
+         */
+        if (!completed.includes(key)) {
+
+            completed.push(key);
+
+            writeJSON(
+                KEYS.COMPLETED,
+                completed
+            );
+        }
+
+        /*
+         * Update the active plan's progress.
+         */
+        refreshPlanReference();
+
+        if (plan) {
+
+            if (
+                !plan.progress ||
+                typeof plan.progress !== "object"
+            ) {
+
+                plan.progress = {};
+            }
+
+            plan.progress.completedTopics =
+                [...completed];
+
+            plan.completedTopics =
+                [...completed];
+
+            saveProgressToActivePlan();
+        }
 
         renderTopic();
 
         window.dispatchEvent(
             new CustomEvent(
-                "studyMindProgressUpdated"
+                "studyMindProgressUpdated",
+                {
+                    detail: {
+                        subject:
+                            currentTopic.subject,
+                        topic:
+                            currentTopic.name,
+                        key,
+                        completedCount:
+                            getCompletedCount(),
+                        remaining:
+                            getRemainingCount()
+                    }
+                }
             )
         );
 
         /*
-         * Check whether the entire day's
-         * required study has now been completed.
-         */
-        if (
-            window.StudyMindStreak &&
-            typeof window.StudyMindStreak.checkTodayCompletion ===
-                "function"
-        ) {
-            setTimeout(
-                () => {
-                    window.StudyMindStreak
-                        .checkTodayCompletion();
-                },
-                100
-            );
-        }
-
-        /*
-         * Refresh Score.
+         * Refresh Study Score.
+         *
+         * Score is based on actual study data,
+         * not simply on clicking Complete Session.
          */
         if (
             window.StudyMindScore &&
             typeof window.StudyMindScore.refresh ===
                 "function"
         ) {
+
             window.StudyMindScore.refresh();
         }
 
         /*
-         * Check Rewards.
+         * Check the achievement/reward system.
          */
         if (
             window.StudyMindRewards &&
             typeof window.StudyMindRewards.check ===
                 "function"
         ) {
+
             setTimeout(
                 () => {
+
                     window.StudyMindRewards.check();
+
                 },
                 300
             );
@@ -708,10 +1366,68 @@
             );
 
         if (status) {
+
             status.textContent =
                 "Session completed ✓";
         }
 
+        /*
+         * Move the saved topic pointer forward
+         * to the next topic.
+         */
+        const topics =
+            getAllTopics();
+
+        const currentIndex =
+            topics.findIndex(
+                topic =>
+                    topic.name ===
+                        currentTopic.name &&
+                    topic.subject ===
+                        currentTopic.subject
+            );
+
+        if (
+            currentIndex >= 0 &&
+            currentIndex <
+                topics.length - 1
+        ) {
+
+            const nextIndex =
+                currentIndex + 1;
+
+            localStorage.setItem(
+                KEYS.TOPIC_INDEX,
+                String(nextIndex)
+            );
+
+            if (plan?.progress) {
+
+                plan.progress.currentTopicIndex =
+                    nextIndex;
+
+                saveProgressToActivePlan();
+            }
+
+            /*
+             * Clear the old explicitly selected
+             * topic so the next page can use the
+             * new pointer.
+             */
+            localStorage.removeItem(
+                KEYS.CURRENT_TOPIC
+            );
+        }
+
+        /*
+         * Do NOT:
+         * - award XP here
+         * - award streak here
+         * - complete the timer here
+         *
+         * Those systems have their own sources
+         * of truth.
+         */
         setTimeout(() => {
 
             window.location.href =
@@ -726,10 +1442,14 @@
 
     async function loadUser() {
 
+        /*
+         * The chosen username is the canonical
+         * local display name.
+         */
         let username =
             localStorage.getItem(
                 KEYS.USERNAME
-            );
+            ) || "";
 
         try {
 
@@ -740,38 +1460,46 @@
             if (client) {
 
                 const {
-                    data
+                    data,
+                    error
                 } =
                     await client.auth.getUser();
 
-                const user =
-                    data?.user;
+                if (!error) {
 
-                const metadata =
-                    user?.user_metadata ||
-                    {};
+                    const user =
+                        data?.user;
 
-                /*
-                 * Explicit username is ALWAYS
-                 * preferred.
-                 */
-                username =
-                    metadata.username ||
-                    username ||
-                    metadata.display_name ||
-                    metadata.name ||
-                    (
-                        user?.email
-                            ? user.email
-                                .split("@")[0]
-                            : ""
-                    ) ||
-                    "Student";
+                    const metadata =
+                        user?.user_metadata ||
+                        {};
 
-                localStorage.setItem(
-                    KEYS.USERNAME,
-                    username
-                );
+                    /*
+                     * IMPORTANT:
+                     * username comes first.
+                     *
+                     * This keeps the same chosen
+                     * username across Study Session,
+                     * Dashboard and Leaderboard.
+                     */
+                    username =
+                        metadata.username ||
+                        username ||
+                        metadata.display_name ||
+                        metadata.name ||
+                        (
+                            user?.email
+                                ? user.email
+                                    .split("@")[0]
+                                : ""
+                        ) ||
+                        "Student";
+
+                    localStorage.setItem(
+                        KEYS.USERNAME,
+                        username
+                    );
+                }
             }
 
         } catch (error) {
@@ -783,7 +1511,8 @@
         }
 
         username =
-            username || "Student";
+            username ||
+            "Student";
 
         setText(
             "usernameDisplay",
@@ -796,6 +1525,7 @@
             );
 
         if (avatar) {
+
             avatar.textContent =
                 username
                     .charAt(0)
@@ -815,6 +1545,7 @@
             );
 
         if (knowledge) {
+
             knowledge.addEventListener(
                 "click",
                 startKnowledgeCheck
@@ -827,6 +1558,7 @@
             );
 
         if (complete) {
+
             complete.addEventListener(
                 "click",
                 completeSession
@@ -840,13 +1572,15 @@
 
         if (notes) {
 
-            let timeout;
+            let timeout = null;
 
             notes.addEventListener(
                 "input",
                 () => {
 
-                    clearTimeout(timeout);
+                    clearTimeout(
+                        timeout
+                    );
 
                     timeout =
                         setTimeout(
@@ -859,10 +1593,118 @@
     }
 
     /* =========================================================
+       PROGRESS EVENTS
+    ========================================================= */
+
+    function setupProgressListeners() {
+
+        window.addEventListener(
+            "studyMindProgressUpdated",
+            () => {
+
+                refreshPlanReference();
+
+                /*
+                 * Pull the current compatibility
+                 * progress into the active plan.
+                 */
+                syncProgress();
+
+                renderTopic();
+            }
+        );
+
+        window.addEventListener(
+            "studyMindPlanCreated",
+            () => {
+
+                loadPlan();
+
+                currentTopic =
+                    determineCurrentTopic();
+
+                renderTopic();
+                loadNotes();
+                loadChecklist();
+                updateTimerUI();
+            }
+        );
+
+        window.addEventListener(
+            "studyMindActivePlanChanged",
+            () => {
+
+                loadPlan();
+
+                currentTopic =
+                    determineCurrentTopic();
+
+                renderTopic();
+                loadNotes();
+                loadChecklist();
+                updateTimerUI();
+            }
+        );
+
+        window.addEventListener(
+            "storage",
+            event => {
+
+                if (
+                    event.key ===
+                        KEYS.COMPLETED ||
+                    event.key ===
+                        KEYS.CURRENT_TOPIC ||
+                    event.key ===
+                        KEYS.TOPIC_INDEX ||
+                    event.key ===
+                        KEYS.ACTIVE_PLAN
+                ) {
+
+                    loadPlan();
+
+                    currentTopic =
+                        determineCurrentTopic();
+
+                    renderTopic();
+                    loadNotes();
+                    loadChecklist();
+                    updateTimerUI();
+                }
+            }
+        );
+    }
+
+    /* =========================================================
        INITIALIZE
     ========================================================= */
 
     function initialize() {
+
+        if (initialized) {
+            return;
+        }
+
+        initialized = true;
+
+        loadPlan();
+
+        /*
+         * If the shared progress bridge is present,
+         * make sure compatibility keys represent
+         * this active plan before determining the topic.
+         */
+        const progress =
+            getProgressSystem();
+
+        if (
+            progress &&
+            typeof progress.loadActivePlanProgress ===
+                "function"
+        ) {
+
+            progress.loadActivePlanProgress();
+        }
 
         loadPlan();
 
@@ -871,22 +1713,43 @@
 
         renderTopic();
         loadNotes();
+        loadChecklist();
+
         setupTimerControls();
         setupChecklist();
         setupButtons();
+        setupProgressListeners();
+
         loadUser();
+
         updateTimerUI();
 
-        window.addEventListener(
-            "studyMindProgressUpdated",
-            renderTopic
+        /*
+         * Keep progress synchronized periodically,
+         * but only while this page is open.
+         */
+        setInterval(
+            () => {
+
+                syncProgress();
+                renderTopic();
+                updateTimerUI();
+
+            },
+            1000
         );
 
-        window.addEventListener(
-            "studyMindTimerCompleted",
-            () => {
-                updateTimerUI();
-                renderTopic();
+        console.log(
+            "StudyMind: Study Session initialized.",
+            {
+                planId:
+                    plan?.id || null,
+                topic:
+                    currentTopic,
+                completed:
+                    getCompletedCount(),
+                remaining:
+                    getRemainingCount()
             }
         );
     }
@@ -903,6 +1766,7 @@
         );
 
     } else {
+
         initialize();
     }
 
