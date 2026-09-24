@@ -4687,11 +4687,11 @@ function savePlan(plan) {
         );
 
         return false;
+
     }
 
 
     let plans = [];
-
 
     try {
 
@@ -4721,8 +4721,8 @@ function savePlan(plan) {
         plans.findIndex(
             item =>
                 item &&
-                item.id ===
-                plan.id
+                String(item.id) ===
+                String(plan.id)
         );
 
 
@@ -4731,55 +4731,55 @@ function savePlan(plan) {
 
 
     /* =====================================================
-       ACCOUNT-WIDE VALUES
-
-       These NEVER get reset when creating a new plan.
+       NEW PLAN
     ===================================================== */
 
-    const currentXP =
-        Number(
-            localStorage.getItem(
-                "studyMindXP"
-            )
-        ) || 0;
-
-
-    const currentTotalXP =
-        Number(
-            localStorage.getItem(
-                "studyMindTotalXP"
-            )
-        ) || currentXP;
-
-
-    const currentStreak =
-        Number(
-            localStorage.getItem(
-                "studyMindStreak"
-            )
-        ) || 0;
-
-
-    const currentLongestStreak =
-        Number(
-            localStorage.getItem(
-                "studyMindLongestStreak"
-            )
-        ) || 0;
-
-
-    /* =====================================================
-       PLAN-SPECIFIC PROGRESS
-    ===================================================== */
-
-    if (
-        isNewPlan
-    ) {
+    if (isNewPlan) {
 
         /*
-         * A brand-new plan starts with zero
-         * progress of its own.
+         * Absolutely NO old plan progress is copied.
          */
+
+        plan.progress = {
+
+            xp: 0,
+
+            streak: 0,
+
+            longestStreak: 0,
+
+            studyScore: 0,
+
+            studyMinutes: 0,
+
+            sessions: 0,
+
+            completedTopics: [],
+
+            completedQuestionTopics: [],
+
+            knowledgeCheckResults: [],
+
+            streakActivity: {},
+
+            studyHistory: {},
+
+            studySessions: [],
+
+            rewardsUnlocked: [],
+
+            rewardNotifications: [],
+
+            rewardXP: 0,
+
+            currentTopicIndex: 0,
+
+            currentTopic: "",
+
+            xpEvents: {}
+
+        };
+
 
         plan.xp = 0;
 
@@ -4791,37 +4791,23 @@ function savePlan(plan) {
 
         plan.completedQuestionTopics = [];
 
+    }
 
-        /*
-         * IMPORTANT:
-         *
-         * Progress is now stored INSIDE the plan.
-         */
 
-        plan.progress = {
+    /* =====================================================
+       EXISTING PLAN
+    ===================================================== */
 
-            completedTopics: [],
-
-            completedQuestionTopics: [],
-
-            studyScore: 0,
-
-            currentTopicIndex: 0
-
-        };
-
-    } else {
-
-        /*
-         * Existing plan:
-         *
-         * Preserve everything that belongs to
-         * that specific plan.
-         */
+    else {
 
         const oldPlan =
             plans[existingIndex];
 
+
+        /*
+         * If this is an existing plan update,
+         * preserve THAT PLAN'S progress.
+         */
 
         if (
             oldPlan &&
@@ -4831,99 +4817,106 @@ function savePlan(plan) {
             plan.progress =
                 oldPlan.progress;
 
-        } else {
+        }
+
+
+        if (
+            !plan.progress ||
+            typeof plan.progress !== "object"
+        ) {
 
             plan.progress = {
 
-                completedTopics:
-                    Array.isArray(
-                        plan.completedTopics
-                    )
-                        ? plan.completedTopics
-                        : [],
+                xp: 0,
 
-                completedQuestionTopics:
-                    Array.isArray(
-                        plan.completedQuestionTopics
-                    )
-                        ? plan.completedQuestionTopics
-                        : [],
+                streak: 0,
 
-                studyScore:
-                    Number(
-                        plan.studyScore
-                    ) || 0,
+                longestStreak: 0,
 
-                currentTopicIndex:
-                    Number(
-                        plan.currentTopicIndex
-                    ) || 0
+                studyScore: 0,
+
+                studyMinutes: 0,
+
+                sessions: 0,
+
+                completedTopics: [],
+
+                completedQuestionTopics: [],
+
+                knowledgeCheckResults: [],
+
+                streakActivity: {},
+
+                studyHistory: {},
+
+                studySessions: [],
+
+                rewardsUnlocked: [],
+
+                rewardNotifications: [],
+
+                rewardXP: 0,
+
+                currentTopicIndex: 0,
+
+                currentTopic: "",
+
+                xpEvents: {}
 
             };
 
         }
 
-
-        /*
-         * Keep the compatibility fields synchronized
-         * with the plan's own progress.
-         */
-
-        plan.completedTopics =
-            Array.isArray(
-                plan.progress.completedTopics
-            )
-                ? plan.progress.completedTopics
-                : [];
-
-
-        plan.completedQuestionTopics =
-            Array.isArray(
-                plan.progress.completedQuestionTopics
-            )
-                ? plan.progress.completedQuestionTopics
-                : [];
-
-
-        plan.studyScore =
-            Number(
-                plan.progress.studyScore
-            ) || 0;
-
     }
 
 
     /* =====================================================
-       PRIMARY STORAGE
+       COMPATIBILITY FIELDS
     ===================================================== */
 
-    localStorage.setItem(
-        "studyMindPlan",
-        JSON.stringify(
-            plan
+    plan.xp =
+        Number(
+            plan.progress.xp
+        ) || 0;
+
+
+    plan.streak =
+        Number(
+            plan.progress.streak
+        ) || 0;
+
+
+    plan.studyScore =
+        Number(
+            plan.progress.studyScore
+        ) || 0;
+
+
+    plan.completedTopics =
+        Array.isArray(
+            plan.progress.completedTopics
         )
-    );
+            ? [
+                ...plan.progress.completedTopics
+            ]
+            : [];
+
+
+    plan.completedQuestionTopics =
+        Array.isArray(
+            plan.progress.completedQuestionTopics
+        )
+            ? [
+                ...plan.progress.completedQuestionTopics
+            ]
+            : [];
 
 
     /* =====================================================
-       COMPATIBILITY STORAGE
+       SAVE
     ===================================================== */
 
-    localStorage.setItem(
-        "studyData",
-        JSON.stringify(
-            plan
-        )
-    );
-
-
-    /* =====================================================
-       MULTI-PLAN STORAGE
-    ===================================================== */
-
-    if (
-        existingIndex >= 0
-    ) {
+    if (existingIndex >= 0) {
 
         plans[
             existingIndex
@@ -4946,68 +4939,45 @@ function savePlan(plan) {
     );
 
 
+    localStorage.setItem(
+        "studyMindPlan",
+        JSON.stringify(
+            plan
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyData",
+        JSON.stringify(
+            plan
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindActivePlanId",
+        String(
+            plan.id
+        )
+    );
+
+
     /* =====================================================
-       MAKE THIS THE ACTIVE PLAN
+       NEW PLAN = CLEAN TEMPORARY STATE
     ===================================================== */
 
-    if (
-        plan.id
-    ) {
-
-        localStorage.setItem(
-            "studyMindActivePlanId",
-            String(
-                plan.id
-            )
-        );
-
-    }
-
-
-    /* =====================================================
-       NEW PLAN INITIALIZATION
-    ===================================================== */
-
-    if (
-        isNewPlan
-    ) {
-
-        /*
-         * IMPORTANT:
-         *
-         * We DO NOT reset:
-         *
-         * studyMindXP
-         * studyMindTotalXP
-         * studyMindStreak
-         * studyMindLongestStreak
-         * studyMindStreakActivity
-         * studyMindStudySessions
-         * studyMindDailyStudyTime
-         * studyMindXPEvents
-         *
-         * Those belong to the student account.
-         */
-
-
-        /*
-         * Remove the previous plan's temporary
-         * current-topic state.
-         */
+    if (isNewPlan) {
 
         localStorage.removeItem(
             "studyMindCurrentTopic"
         );
 
-        localStorage.removeItem(
-            "studyMindCurrentTopicIndex"
+        localStorage.setItem(
+            "studyMindCurrentTopicIndex",
+            "0"
         );
 
-
-        /*
-         * Stop any timer belonging to the
-         * previous plan.
-         */
 
         localStorage.removeItem(
             "studyMindTimerEndTime"
@@ -5019,17 +4989,13 @@ function savePlan(plan) {
         );
 
 
-        /*
-         * Preserve the student's selected
-         * timer duration.
-         */
-
         const selectedTimer =
             Number(
                 localStorage.getItem(
                     "studyMindSelectedTimerSeconds"
                 )
-            ) || (25 * 60);
+            ) ||
+            25 * 60;
 
 
         localStorage.setItem(
@@ -5039,10 +5005,6 @@ function savePlan(plan) {
             )
         );
 
-
-        /*
-         * Reset timer-specific temporary state.
-         */
 
         localStorage.removeItem(
             "studyMindTimerSessionStart"
@@ -5057,67 +5019,23 @@ function savePlan(plan) {
         );
 
 
-        /* =================================================
-           NOTIFY OPEN STUDYMIND PAGES
-        ================================================= */
+        /*
+         * Tell the progress engine that this is
+         * a completely fresh plan.
+         */
 
         window.dispatchEvent(
             new CustomEvent(
                 "studyMindPlanCreated",
                 {
                     detail: {
+
                         planId:
-                            plan.id ||
-                            null,
+                            plan.id,
 
                         newPlan:
                             true
-                    }
-                }
-            )
-        );
 
-
-        /*
-         * IMPORTANT:
-         *
-         * Send the REAL account XP,
-         * not zero.
-         */
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "studyMindXPUpdated",
-                {
-                    detail: {
-                        amount: 0,
-
-                        total:
-                            currentXP,
-
-                        reason:
-                            "new-study-plan"
-                    }
-                }
-            )
-        );
-
-
-        /*
-         * Send the REAL account streak,
-         * not zero.
-         */
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "studyMindStreakUpdated",
-                {
-                    detail: {
-                        streak:
-                            currentStreak,
-
-                        reason:
-                            "new-study-plan"
                     }
                 }
             )
@@ -5126,77 +5044,27 @@ function savePlan(plan) {
     }
 
 
-    /* =====================================================
-       KEEP ACCOUNT VALUES INTACT
-    ===================================================== */
-
-    /*
-     * These writes are intentionally restoring the
-     * values that existed before the plan was created.
-     *
-     * This protects against older code elsewhere
-     * accidentally initializing them during savePlan().
-     */
-
-    localStorage.setItem(
-        "studyMindXP",
-        String(
-            currentXP
-        )
-    );
-
-
-    localStorage.setItem(
-        "studyMindTotalXP",
-        String(
-            currentTotalXP
-        )
-    );
-
-
-    localStorage.setItem(
-        "studyMindStreak",
-        String(
-            currentStreak
-        )
-    );
-
-
-    localStorage.setItem(
-        "studyMindLongestStreak",
-        String(
-            currentLongestStreak
-        )
-    );
-
-
-    /* =====================================================
-       LOG
-    ===================================================== */
-
     console.log(
-        "StudyMind plan saved:",
+        "StudyMind: Plan saved",
         {
             id:
-                plan.id ||
-                null,
+                plan.id,
 
             newPlan:
                 isNewPlan,
 
-            activePlanId:
-                localStorage.getItem(
-                    "studyMindActivePlanId"
-                ),
+            xp:
+                plan.progress.xp,
 
-            accountXP:
-                currentXP,
+            streak:
+                plan.progress.streak,
 
-            accountStreak:
-                currentStreak,
+            score:
+                plan.progress.studyScore,
 
-            planProgress:
-                plan.progress
+            completedTopics:
+                plan.progress.completedTopics.length
+
         }
     );
 
@@ -5204,7 +5072,6 @@ function savePlan(plan) {
     return true;
 
 }
-
 
 /* =========================================================
    SEARCH
