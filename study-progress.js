@@ -2,68 +2,95 @@
 
 /* =========================================================
    STUDYMIND AI — PLAN PROGRESS ENGINE
+   ---------------------------------------------------------
+   Plan-specific:
+   - XP
+   - streak
+   - study score
+   - completed topics
+   - knowledge checks
+   - study minutes
+   - sessions
+   - rewards
+   - reward XP
+   - streak activity
+   - current topic
 
-   PURPOSE:
-   - Keeps each study plan's topic progress separate.
-   - Keeps XP/streak/study history account-wide.
-   - Maintains compatibility with older files that still
-     read/write studyMindCompletedTopics.
-   - Prevents creating a new plan from inheriting the
-     previous plan's completed topics.
+   Account-wide:
+   - username
+   - game identity
+   - premium status
 ========================================================= */
 
 (function () {
 
-    const PLAN_KEY =
-        "studyMindPlan";
+    const KEYS = {
 
-    const PLANS_KEY =
-        "studyMindPlans";
+        PLAN: "studyMindPlan",
+        PLANS: "studyMindPlans",
+        ACTIVE_PLAN: "studyMindActivePlanId",
 
-    const ACTIVE_PLAN_KEY =
-        "studyMindActivePlanId";
+        XP: "studyMindXP",
+        TOTAL_XP: "studyMindTotalXP",
 
-    const DONE_KEY =
-        "studyMindCompletedTopics";
+        STREAK: "studyMindStreak",
+        LONGEST_STREAK: "studyMindLongestStreak",
+        STREAK_ACTIVITY: "studyMindStreakActivity",
 
-    const QUESTION_DONE_KEY =
-        "studyMindCompletedQuestionTopics";
+        SCORE: "studyMindStudyScore",
 
-    const SCORE_KEY =
-        "studyMindStudyScore";
+        COMPLETED_TOPICS:
+            "studyMindCompletedTopics",
 
-    const INDEX_KEY =
-        "studyMindCurrentTopicIndex";
+        COMPLETED_QUESTIONS:
+            "studyMindCompletedQuestionTopics",
 
-    let lastKnownPlanId = null;
+        KNOWLEDGE_RESULTS:
+            "studyMindKnowledgeCheckResults",
 
-    let lastDoneJSON = "";
+        STUDY_MINUTES:
+            "studyMindDailyStudyTime",
 
-    let lastQuestionDoneJSON = "";
+        STUDY_HISTORY:
+            "studyMindStudyHistory",
 
-    let lastScore = null;
+        STUDY_SESSIONS:
+            "studyMindStudySessions",
 
-    let lastIndex = null;
+        CURRENT_TOPIC:
+            "studyMindCurrentTopic",
+
+        CURRENT_TOPIC_INDEX:
+            "studyMindCurrentTopicIndex",
+
+        REWARDS_UNLOCKED:
+            "studyMindRewardsUnlocked",
+
+        REWARD_NOTIFICATIONS:
+            "studyMindRewardNotifications",
+
+        REWARD_XP:
+            "studyMindRewardXP",
+
+        XP_EVENTS:
+            "studyMindXPEvents"
+    };
 
 
     /* =====================================================
-       BASIC STORAGE
+       BASIC HELPERS
     ===================================================== */
 
     function readJSON(key, fallback) {
 
         try {
 
-            const value =
+            const raw =
                 localStorage.getItem(key);
 
-            if (!value) {
+            if (!raw) return fallback;
 
-                return fallback;
-
-            }
-
-            return JSON.parse(value);
+            return JSON.parse(raw);
 
         } catch {
 
@@ -76,19 +103,71 @@
 
     function writeJSON(key, value) {
 
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
+        try {
+
+            localStorage.setItem(
+                key,
+                JSON.stringify(value)
+            );
+
+        } catch (error) {
+
+            console.error(
+                "StudyMind progress save error:",
+                error
+            );
+
+        }
 
     }
 
+
+    function numberValue(key, fallback = 0) {
+
+        const value =
+            Number(
+                localStorage.getItem(key)
+            );
+
+        return Number.isFinite(value)
+            ? value
+            : fallback;
+
+    }
+
+
+    function todayKey() {
+
+        const date =
+            new Date();
+
+        const year =
+            date.getFullYear();
+
+        const month =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                date.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    /* =====================================================
+       PLAN STORAGE
+    ===================================================== */
 
     function getPlans() {
 
         const plans =
             readJSON(
-                PLANS_KEY,
+                KEYS.PLANS,
                 []
             );
 
@@ -102,7 +181,7 @@
     function getActivePlanId() {
 
         return localStorage.getItem(
-            ACTIVE_PLAN_KEY
+            KEYS.ACTIVE_PLAN
         );
 
     }
@@ -110,19 +189,15 @@
 
     function getActivePlan() {
 
-        const activeId =
-            getActivePlanId();
-
         const plans =
             getPlans();
 
+        const activeId =
+            getActivePlanId();
 
-        if (
-            activeId &&
-            plans.length
-        ) {
+        if (activeId) {
 
-            const found =
+            const active =
                 plans.find(
                     plan =>
                         plan &&
@@ -130,23 +205,77 @@
                         String(activeId)
                 );
 
-            if (found) {
+            if (active) {
 
-                return found;
+                return ensurePlanProgress(
+                    active
+                );
 
             }
 
         }
 
 
-        const fallback =
+        const legacy =
             readJSON(
-                PLAN_KEY,
+                KEYS.PLAN,
                 null
             );
 
+        if (!legacy) return null;
 
-        return fallback;
+        return ensurePlanProgress(
+            legacy
+        );
+
+    }
+
+
+    /* =====================================================
+       CREATE CLEAN PROGRESS OBJECT
+    ===================================================== */
+
+    function createEmptyProgress() {
+
+        return {
+
+            xp: 0,
+
+            streak: 0,
+
+            longestStreak: 0,
+
+            studyScore: 0,
+
+            studyMinutes: 0,
+
+            sessions: 0,
+
+            completedTopics: [],
+
+            completedQuestionTopics: [],
+
+            knowledgeCheckResults: [],
+
+            streakActivity: {},
+
+            studyHistory: {},
+
+            studySessions: [],
+
+            rewardsUnlocked: [],
+
+            rewardNotifications: [],
+
+            rewardXP: 0,
+
+            currentTopicIndex: 0,
+
+            currentTopic: "",
+
+            xpEvents: {}
+
+        };
 
     }
 
@@ -155,7 +284,7 @@
        NORMALIZE PLAN PROGRESS
     ===================================================== */
 
-    function ensureProgress(plan) {
+    function ensurePlanProgress(plan) {
 
         if (
             !plan ||
@@ -172,9 +301,32 @@
             typeof plan.progress !== "object"
         ) {
 
-            plan.progress = {};
+            plan.progress =
+                createEmptyProgress();
 
         }
+
+
+        const defaults =
+            createEmptyProgress();
+
+
+        Object.keys(defaults)
+            .forEach(key => {
+
+                if (
+                    plan.progress[key] ===
+                    undefined ||
+                    plan.progress[key] ===
+                    null
+                ) {
+
+                    plan.progress[key] =
+                        defaults[key];
+
+                }
+
+            });
 
 
         if (
@@ -184,11 +336,7 @@
         ) {
 
             plan.progress.completedTopics =
-                Array.isArray(
-                    plan.completedTopics
-                )
-                    ? plan.completedTopics
-                    : [];
+                [];
 
         }
 
@@ -200,45 +348,190 @@
         ) {
 
             plan.progress.completedQuestionTopics =
-                Array.isArray(
-                    plan.completedQuestionTopics
-                )
-                    ? plan.completedQuestionTopics
-                    : [];
+                [];
 
         }
 
 
         if (
-            !Number.isFinite(
-                Number(
-                    plan.progress.studyScore
-                )
+            !Array.isArray(
+                plan.progress.knowledgeCheckResults
             )
         ) {
 
-            plan.progress.studyScore =
-                Number(
-                    plan.studyScore
-                ) || 0;
+            plan.progress.knowledgeCheckResults =
+                [];
 
         }
 
 
         if (
-            !Number.isFinite(
+            !Array.isArray(
+                plan.progress.studySessions
+            )
+        ) {
+
+            plan.progress.studySessions =
+                [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                plan.progress.rewardsUnlocked
+            )
+        ) {
+
+            plan.progress.rewardsUnlocked =
+                [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                plan.progress.rewardNotifications
+            )
+        ) {
+
+            plan.progress.rewardNotifications =
+                [];
+
+        }
+
+
+        if (
+            !plan.progress.streakActivity ||
+            typeof plan.progress.streakActivity !==
+                "object"
+        ) {
+
+            plan.progress.streakActivity =
+                {};
+
+        }
+
+
+        if (
+            !plan.progress.studyHistory ||
+            typeof plan.progress.studyHistory !==
+                "object"
+        ) {
+
+            plan.progress.studyHistory =
+                {};
+
+        }
+
+
+        if (
+            !plan.progress.xpEvents ||
+            typeof plan.progress.xpEvents !==
+                "object"
+        ) {
+
+            plan.progress.xpEvents =
+                {};
+
+        }
+
+
+        plan.progress.xp =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.xp
+                ) || 0
+            );
+
+
+        plan.progress.streak =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.streak
+                ) || 0
+            );
+
+
+        plan.progress.longestStreak =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.longestStreak
+                ) || 0
+            );
+
+
+        plan.progress.studyScore =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    Number(
+                        plan.progress.studyScore
+                    ) || 0
+                )
+            );
+
+
+        plan.progress.studyMinutes =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.studyMinutes
+                ) || 0
+            );
+
+
+        plan.progress.sessions =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.sessions
+                ) || 0
+            );
+
+
+        plan.progress.rewardXP =
+            Math.max(
+                0,
+                Number(
+                    plan.progress.rewardXP
+                ) || 0
+            );
+
+
+        plan.progress.currentTopicIndex =
+            Math.max(
+                0,
                 Number(
                     plan.progress.currentTopicIndex
-                )
-            )
-        ) {
+                ) || 0
+            );
 
-            plan.progress.currentTopicIndex =
-                Number(
-                    plan.currentTopicIndex
-                ) || 0;
 
-        }
+        /* Compatibility fields */
+
+        plan.completedTopics =
+            [
+                ...plan.progress.completedTopics
+            ];
+
+        plan.completedQuestionTopics =
+            [
+                ...plan.progress.completedQuestionTopics
+            ];
+
+        plan.studyScore =
+            plan.progress.studyScore;
+
+        plan.xp =
+            plan.progress.xp;
+
+        plan.streak =
+            plan.progress.streak;
 
 
         return plan;
@@ -247,60 +540,27 @@
 
 
     /* =====================================================
-       SAVE ACTIVE PLAN
+       SAVE PLAN
     ===================================================== */
 
-    function saveActivePlan(plan) {
+    function savePlan(plan) {
 
         if (
             !plan ||
             typeof plan !== "object"
         ) {
 
-            return;
+            return false;
 
         }
 
 
-        ensureProgress(plan);
+        ensurePlanProgress(plan);
 
 
-        /*
-         * Keep compatibility fields synchronized.
-         */
-
-        plan.completedTopics =
-            [
-                ...plan.progress.completedTopics
-            ];
-
-
-        plan.completedQuestionTopics =
-            [
-                ...plan.progress.completedQuestionTopics
-            ];
-
-
-        plan.studyScore =
-            Number(
-                plan.progress.studyScore
-            ) || 0;
-
-
-        plan.currentTopicIndex =
-            Number(
-                plan.progress.currentTopicIndex
-            ) || 0;
-
-
-        localStorage.setItem(
-            PLAN_KEY,
-            JSON.stringify(plan)
-        );
-
-
-        const plans =
+        let plans =
             getPlans();
+
 
         const index =
             plans.findIndex(
@@ -316,7 +576,7 @@
             plans[index] =
                 plan;
 
-        } else if (plan.id) {
+        } else {
 
             plans.push(plan);
 
@@ -324,318 +584,793 @@
 
 
         localStorage.setItem(
-            PLANS_KEY,
+            KEYS.PLANS,
             JSON.stringify(plans)
         );
+
+
+        localStorage.setItem(
+            KEYS.PLAN,
+            JSON.stringify(plan)
+        );
+
+
+        localStorage.setItem(
+            "studyData",
+            JSON.stringify(plan)
+        );
+
+
+        if (plan.id) {
+
+            localStorage.setItem(
+                KEYS.ACTIVE_PLAN,
+                String(plan.id)
+            );
+
+        }
+
+
+        return true;
 
     }
 
 
     /* =====================================================
-       LOAD PLAN PROGRESS INTO COMPATIBILITY KEYS
+       LOAD ACTIVE PLAN INTO COMPATIBILITY KEYS
     ===================================================== */
 
     function loadActivePlanProgress() {
 
         const plan =
-            ensureProgress(
-                getActivePlan()
+            getActivePlan();
+
+        if (!plan) return null;
+
+
+        ensurePlanProgress(plan);
+
+
+        /*
+         * IMPORTANT:
+         *
+         * These global-looking keys are now merely
+         * compatibility mirrors of the ACTIVE plan.
+         */
+
+        localStorage.setItem(
+            KEYS.XP,
+            String(
+                plan.progress.xp
+            )
+        );
+
+
+        localStorage.setItem(
+            KEYS.STREAK,
+            String(
+                plan.progress.streak
+            )
+        );
+
+
+        localStorage.setItem(
+            KEYS.LONGEST_STREAK,
+            String(
+                plan.progress.longestStreak
+            )
+        );
+
+
+        localStorage.setItem(
+            KEYS.SCORE,
+            String(
+                plan.progress.studyScore
+            )
+        );
+
+
+        writeJSON(
+            KEYS.COMPLETED_TOPICS,
+            plan.progress.completedTopics
+        );
+
+
+        writeJSON(
+            KEYS.COMPLETED_QUESTIONS,
+            plan.progress.completedQuestionTopics
+        );
+
+
+        writeJSON(
+            KEYS.KNOWLEDGE_RESULTS,
+            plan.progress.knowledgeCheckResults
+        );
+
+
+        writeJSON(
+            KEYS.STREAK_ACTIVITY,
+            plan.progress.streakActivity
+        );
+
+
+        writeJSON(
+            KEYS.STUDY_HISTORY,
+            plan.progress.studyHistory
+        );
+
+
+        writeJSON(
+            KEYS.STUDY_SESSIONS,
+            plan.progress.studySessions
+        );
+
+
+        writeJSON(
+            KEYS.REWARDS_UNLOCKED,
+            plan.progress.rewardsUnlocked
+        );
+
+
+        writeJSON(
+            KEYS.REWARD_NOTIFICATIONS,
+            plan.progress.rewardNotifications
+        );
+
+
+        localStorage.setItem(
+            KEYS.REWARD_XP,
+            String(
+                plan.progress.rewardXP
+            )
+        );
+
+
+        writeJSON(
+            KEYS.XP_EVENTS,
+            plan.progress.xpEvents
+        );
+
+
+        localStorage.setItem(
+            KEYS.CURRENT_TOPIC_INDEX,
+            String(
+                plan.progress.currentTopicIndex
+            )
+        );
+
+
+        if (
+            plan.progress.currentTopic
+        ) {
+
+            localStorage.setItem(
+                KEYS.CURRENT_TOPIC,
+                plan.progress.currentTopic
             );
 
+        } else {
 
-        if (!plan) {
-
-            return;
+            localStorage.removeItem(
+                KEYS.CURRENT_TOPIC
+            );
 
         }
 
 
         /*
-         * If this is a newly created plan, its progress
-         * object is authoritative.
+         * Save normalized version back to the plan.
          */
 
-        const done =
-            Array.isArray(
-                plan.progress.completedTopics
+        savePlan(plan);
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressLoaded",
+                {
+                    detail: {
+                        planId:
+                            plan.id || null
+                    }
+                }
             )
-                ? plan.progress.completedTopics
-                : [];
+        );
 
 
-        const questionDone =
-            Array.isArray(
-                plan.progress.completedQuestionTopics
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressUpdated",
+                {
+                    detail: {
+                        planId:
+                            plan.id || null
+                    }
+                }
             )
-                ? plan.progress.completedQuestionTopics
-                : [];
-
-
-        const score =
-            Number(
-                plan.progress.studyScore
-            ) || 0;
-
-
-        const index =
-            Number(
-                plan.progress.currentTopicIndex
-            ) || 0;
-
-
-        writeJSON(
-            DONE_KEY,
-            done
         );
 
 
-        writeJSON(
-            QUESTION_DONE_KEY,
-            questionDone
-        );
-
-
-        localStorage.setItem(
-            SCORE_KEY,
-            String(score)
-        );
-
-
-        localStorage.setItem(
-            INDEX_KEY,
-            String(index)
-        );
-
-
-        lastKnownPlanId =
-            plan.id
-                ? String(plan.id)
-                : null;
-
-
-        lastDoneJSON =
-            JSON.stringify(done);
-
-
-        lastQuestionDoneJSON =
-            JSON.stringify(questionDone);
-
-
-        lastScore =
-            score;
-
-
-        lastIndex =
-            index;
+        return plan;
 
     }
 
 
     /* =====================================================
-       SAVE COMPATIBILITY PROGRESS BACK INTO ACTIVE PLAN
+       SAVE COMPATIBILITY KEYS BACK INTO ACTIVE PLAN
     ===================================================== */
 
     function syncGlobalProgressToPlan() {
 
         const plan =
-            ensureProgress(
-                getActivePlan()
+            getActivePlan();
+
+        if (!plan) return null;
+
+
+        ensurePlanProgress(plan);
+
+
+        plan.progress.xp =
+            numberValue(
+                KEYS.XP,
+                plan.progress.xp
             );
 
 
-        if (!plan) {
-
-            return;
-
-        }
-
-
-        const currentPlanId =
-            plan.id
-                ? String(plan.id)
-                : null;
-
-
-        /*
-         * If the active plan changed, load its progress
-         * instead of copying the old plan into it.
-         */
-
-        if (
-            currentPlanId !==
-            lastKnownPlanId
-        ) {
-
-            loadActivePlanProgress();
-
-            return;
-
-        }
-
-
-        const done =
-            readJSON(
-                DONE_KEY,
-                []
+        plan.progress.streak =
+            numberValue(
+                KEYS.STREAK,
+                plan.progress.streak
             );
 
 
-        const questionDone =
-            readJSON(
-                QUESTION_DONE_KEY,
-                []
-            );
-
-
-        const score =
-            Number(
-                localStorage.getItem(
-                    SCORE_KEY
+        plan.progress.longestStreak =
+            Math.max(
+                plan.progress.longestStreak,
+                numberValue(
+                    KEYS.LONGEST_STREAK,
+                    0
                 )
-            ) || 0;
+            );
 
 
-        const index =
-            Number(
-                localStorage.getItem(
-                    INDEX_KEY
+        plan.progress.studyScore =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    numberValue(
+                        KEYS.SCORE,
+                        plan.progress.studyScore
+                    )
                 )
-            ) || 0;
-
-
-        const doneJSON =
-            JSON.stringify(
-                Array.isArray(done)
-                    ? done
-                    : []
             );
 
 
-        const questionDoneJSON =
-            JSON.stringify(
-                Array.isArray(questionDone)
-                    ? questionDone
-                    : []
+        plan.progress.completedTopics =
+            readJSON(
+                KEYS.COMPLETED_TOPICS,
+                plan.progress.completedTopics
             );
 
 
-        /*
-         * Only write when something actually changed.
-         */
-
-        if (
-            doneJSON !==
-            lastDoneJSON
-        ) {
-
-            plan.progress.completedTopics =
-                Array.isArray(done)
-                    ? [...done]
-                    : [];
-
-
-            lastDoneJSON =
-                doneJSON;
-
-        }
-
-
-        if (
-            questionDoneJSON !==
-            lastQuestionDoneJSON
-        ) {
-
-            plan.progress.completedQuestionTopics =
-                Array.isArray(questionDone)
-                    ? [...questionDone]
-                    : [];
-
-
-            lastQuestionDoneJSON =
-                questionDoneJSON;
-
-        }
-
-
-        if (
-            score !==
-            lastScore
-        ) {
-
-            plan.progress.studyScore =
-                score;
-
-
-            lastScore =
-                score;
-
-        }
-
-
-        if (
-            index !==
-            lastIndex
-        ) {
-
-            plan.progress.currentTopicIndex =
-                index;
-
-
-            lastIndex =
-                index;
-
-        }
-
-
-        /*
-         * Save only if something changed.
-         */
-
-        if (
-            doneJSON !==
-                JSON.stringify(
-                    plan.completedTopics || []
-                ) ||
-            questionDoneJSON !==
-                JSON.stringify(
-                    plan.completedQuestionTopics || []
-                ) ||
-            Number(
-                plan.studyScore
-            ) !== score ||
-            Number(
-                plan.currentTopicIndex
-            ) !== index
-        ) {
-
-            saveActivePlan(
-                plan
+        plan.progress.completedQuestionTopics =
+            readJSON(
+                KEYS.COMPLETED_QUESTIONS,
+                plan.progress.completedQuestionTopics
             );
 
-        }
+
+        plan.progress.knowledgeCheckResults =
+            readJSON(
+                KEYS.KNOWLEDGE_RESULTS,
+                plan.progress.knowledgeCheckResults
+            );
+
+
+        plan.progress.streakActivity =
+            readJSON(
+                KEYS.STREAK_ACTIVITY,
+                plan.progress.streakActivity
+            );
+
+
+        plan.progress.studyHistory =
+            readJSON(
+                KEYS.STUDY_HISTORY,
+                plan.progress.studyHistory
+            );
+
+
+        plan.progress.studySessions =
+            readJSON(
+                KEYS.STUDY_SESSIONS,
+                plan.progress.studySessions
+            );
+
+
+        plan.progress.rewardsUnlocked =
+            readJSON(
+                KEYS.REWARDS_UNLOCKED,
+                plan.progress.rewardsUnlocked
+            );
+
+
+        plan.progress.rewardNotifications =
+            readJSON(
+                KEYS.REWARD_NOTIFICATIONS,
+                plan.progress.rewardNotifications
+            );
+
+
+        plan.progress.rewardXP =
+            numberValue(
+                KEYS.REWARD_XP,
+                plan.progress.rewardXP
+            );
+
+
+        plan.progress.xpEvents =
+            readJSON(
+                KEYS.XP_EVENTS,
+                plan.progress.xpEvents
+            );
+
+
+        plan.progress.currentTopicIndex =
+            numberValue(
+                KEYS.CURRENT_TOPIC_INDEX,
+                plan.progress.currentTopicIndex
+            );
+
+
+        plan.progress.currentTopic =
+            localStorage.getItem(
+                KEYS.CURRENT_TOPIC
+            ) || "";
+
+
+        ensurePlanProgress(plan);
+
+        savePlan(plan);
+
+
+        return plan;
 
     }
 
 
     /* =====================================================
-       NEW PLAN EVENT
+       CREATE NEW PLAN PROGRESS
+    ===================================================== */
+
+    function initializeNewPlan(plan) {
+
+        if (!plan) return null;
+
+
+        plan.progress =
+            createEmptyProgress();
+
+
+        /*
+         * Legacy compatibility fields.
+         */
+
+        plan.xp = 0;
+
+        plan.streak = 0;
+
+        plan.studyScore = 0;
+
+        plan.completedTopics = [];
+
+        plan.completedQuestionTopics = [];
+
+
+        savePlan(plan);
+
+
+        /*
+         * This is intentionally a CLEAN PLAN.
+         */
+
+        localStorage.setItem(
+            KEYS.XP,
+            "0"
+        );
+
+        localStorage.setItem(
+            KEYS.STREAK,
+            "0"
+        );
+
+        localStorage.setItem(
+            KEYS.LONGEST_STREAK,
+            "0"
+        );
+
+        localStorage.setItem(
+            KEYS.SCORE,
+            "0"
+        );
+
+
+        writeJSON(
+            KEYS.COMPLETED_TOPICS,
+            []
+        );
+
+        writeJSON(
+            KEYS.COMPLETED_QUESTIONS,
+            []
+        );
+
+        writeJSON(
+            KEYS.KNOWLEDGE_RESULTS,
+            []
+        );
+
+        writeJSON(
+            KEYS.STREAK_ACTIVITY,
+            {}
+        );
+
+        writeJSON(
+            KEYS.STUDY_HISTORY,
+            {}
+        );
+
+        writeJSON(
+            KEYS.STUDY_SESSIONS,
+            []
+        );
+
+        writeJSON(
+            KEYS.REWARDS_UNLOCKED,
+            []
+        );
+
+        writeJSON(
+            KEYS.REWARD_NOTIFICATIONS,
+            []
+        );
+
+        localStorage.setItem(
+            KEYS.REWARD_XP,
+            "0"
+        );
+
+        writeJSON(
+            KEYS.XP_EVENTS,
+            {}
+        );
+
+
+        localStorage.removeItem(
+            KEYS.CURRENT_TOPIC
+        );
+
+        localStorage.setItem(
+            KEYS.CURRENT_TOPIC_INDEX,
+            "0"
+        );
+
+
+        /*
+         * Do not allow a previous plan's timer to
+         * continue into the new plan.
+         */
+
+        localStorage.removeItem(
+            "studyMindTimerEndTime"
+        );
+
+        localStorage.setItem(
+            "studyMindTimerRunning",
+            "false"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerSessionStart"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerAwardedMinute"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerSessionBaseMinutes"
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindPlanCreated",
+                {
+                    detail: {
+                        planId:
+                            plan.id || null,
+
+                        newPlan:
+                            true
+                    }
+                }
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindActivePlanChanged",
+                {
+                    detail: {
+                        planId:
+                            plan.id || null
+                    }
+                }
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressUpdated",
+                {
+                    detail: {
+                        planId:
+                            plan.id || null,
+
+                        fresh:
+                            true
+                    }
+                }
+            )
+        );
+
+
+        return plan;
+
+    }
+
+
+    /* =====================================================
+       SWITCH PLAN
+    ===================================================== */
+
+    function switchPlan(planId) {
+
+        if (!planId) return null;
+
+
+        const plans =
+            getPlans();
+
+
+        const plan =
+            plans.find(
+                item =>
+                    item &&
+                    String(item.id) ===
+                    String(planId)
+            );
+
+
+        if (!plan) {
+
+            console.error(
+                "StudyMind: Plan not found:",
+                planId
+            );
+
+            return null;
+
+        }
+
+
+        localStorage.setItem(
+            KEYS.ACTIVE_PLAN,
+            String(plan.id)
+        );
+
+
+        ensurePlanProgress(plan);
+
+        savePlan(plan);
+
+        loadActivePlanProgress();
+
+
+        /*
+         * Stop a timer from another plan.
+         */
+
+        localStorage.removeItem(
+            "studyMindTimerEndTime"
+        );
+
+        localStorage.setItem(
+            "studyMindTimerRunning",
+            "false"
+        );
+
+
+        localStorage.removeItem(
+            "studyMindTimerSessionStart"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerAwardedMinute"
+        );
+
+        localStorage.removeItem(
+            "studyMindTimerSessionBaseMinutes"
+        );
+
+
+        const selectedTimer =
+            Number(
+                localStorage.getItem(
+                    "studyMindSelectedTimerSeconds"
+                )
+            ) || 25 * 60;
+
+
+        localStorage.setItem(
+            "studyMindTimerSeconds",
+            String(
+                selectedTimer
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindActivePlanChanged",
+                {
+                    detail: {
+                        planId:
+                            plan.id
+                    }
+                }
+            )
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindProgressUpdated",
+                {
+                    detail: {
+                        planId:
+                            plan.id
+                    }
+                }
+            )
+        );
+
+
+        return plan;
+
+    }
+
+
+    /* =====================================================
+       GET CURRENT PLAN PROGRESS
+    ===================================================== */
+
+    function getProgress() {
+
+        const plan =
+            getActivePlan();
+
+        if (!plan) return null;
+
+        ensurePlanProgress(plan);
+
+        return plan.progress;
+
+    }
+
+
+    /* =====================================================
+       LIST PLANS
+    ===================================================== */
+
+    function getAllPlans() {
+
+        return getPlans()
+            .map(
+                plan =>
+                    ensurePlanProgress(plan)
+            )
+            .filter(Boolean);
+
+    }
+
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    function initialize() {
+
+        const plans =
+            getPlans();
+
+
+        if (!plans.length) {
+
+            return;
+
+        }
+
+
+        const activeId =
+            getActivePlanId();
+
+
+        let active =
+            plans.find(
+                plan =>
+                    plan &&
+                    String(plan.id) ===
+                    String(activeId)
+            );
+
+
+        if (!active) {
+
+            active =
+                plans[0];
+
+            localStorage.setItem(
+                KEYS.ACTIVE_PLAN,
+                String(
+                    active.id
+                )
+            );
+
+        }
+
+
+        ensurePlanProgress(active);
+
+        savePlan(active);
+
+        loadActivePlanProgress();
+
+
+        /*
+         * Keep compatibility storage synchronized.
+         * This is intentionally slower than the timer loop.
+         */
+
+        setInterval(
+            () => {
+
+                syncGlobalProgressToPlan();
+
+            },
+            1000
+        );
+
+    }
+
+
+    /* =====================================================
+       EVENTS
     ===================================================== */
 
     window.addEventListener(
         "studyMindPlanCreated",
-        function (event) {
+        event => {
 
             const planId =
                 event?.detail?.planId;
 
-
-            if (!planId) {
-
-                loadActivePlanProgress();
-
-                return;
-
-            }
+            if (!planId) return;
 
 
             const plans =
@@ -651,110 +1386,23 @@
                 );
 
 
-            if (!plan) {
-
-                return;
-
-            }
+            if (!plan) return;
 
 
             /*
-             * A genuinely new plan ALWAYS begins with
-             * zero progress.
+             * A plan creation event means this is
+             * a completely fresh academic plan.
              */
 
-            plan.progress = {
-
-                completedTopics: [],
-
-                completedQuestionTopics: [],
-
-                studyScore: 0,
-
-                currentTopicIndex: 0
-
-            };
-
-
-            plan.completedTopics = [];
-
-            plan.completedQuestionTopics = [];
-
-            plan.studyScore = 0;
-
-            plan.currentTopicIndex = 0;
-
-
-            saveActivePlan(
-                plan
-            );
-
-
-            /*
-             * Now replace the compatibility values with
-             * the new plan's empty progress.
-             */
-
-            writeJSON(
-                DONE_KEY,
-                []
-            );
-
-
-            writeJSON(
-                QUESTION_DONE_KEY,
-                []
-            );
-
-
-            localStorage.setItem(
-                SCORE_KEY,
-                "0"
-            );
-
-
-            localStorage.setItem(
-                INDEX_KEY,
-                "0"
-            );
-
-
-            lastKnownPlanId =
-                String(planId);
-
-
-            lastDoneJSON =
-                "[]";
-
-
-            lastQuestionDoneJSON =
-                "[]";
-
-
-            lastScore =
-                0;
-
-
-            lastIndex =
-                0;
-
-
-            console.log(
-                "StudyMind plan progress initialized:",
-                planId
-            );
+            initializeNewPlan(plan);
 
         }
     );
 
 
-    /* =====================================================
-       ACTIVE PLAN CHANGED
-    ===================================================== */
-
     window.addEventListener(
         "studyMindActivePlanChanged",
-        function () {
+        () => {
 
             loadActivePlanProgress();
 
@@ -764,11 +1412,11 @@
 
     window.addEventListener(
         "storage",
-        function (event) {
+        event => {
 
             if (
                 event.key ===
-                ACTIVE_PLAN_KEY
+                KEYS.ACTIVE_PLAN
             ) {
 
                 loadActivePlanProgress();
@@ -785,39 +1433,34 @@
 
     window.StudyMindPlanProgress = {
 
+        getPlans:
+            getAllPlans,
+
         getActivePlan,
 
-        ensureProgress,
+        getActivePlanId,
+
+        getProgress,
+
+        ensureProgress:
+            ensurePlanProgress,
+
+        createEmptyProgress,
+
+        initializeNewPlan,
+
+        switchPlan,
 
         loadActivePlanProgress,
 
         syncGlobalProgressToPlan,
 
-        saveActivePlan
+        saveActivePlan:
+            savePlan,
+
+        todayKey
 
     };
-
-
-    /* =====================================================
-       INITIALIZE
-    ===================================================== */
-
-    function initialize() {
-
-        loadActivePlanProgress();
-
-
-        /*
-         * Existing pages still use the old global keys.
-         * Synchronize them back into the active plan.
-         */
-
-        setInterval(
-            syncGlobalProgressToPlan,
-            500
-        );
-
-    }
 
 
     if (
