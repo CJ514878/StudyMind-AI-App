@@ -32,43 +32,27 @@
     ========================================================= */
 
     function readJSON(key, fallback) {
-
         try {
-
-            const value =
-                localStorage.getItem(key);
-
-            return value
-                ? JSON.parse(value)
-                : fallback;
-
+            const value = localStorage.getItem(key);
+            return value ? JSON.parse(value) : fallback;
         } catch {
-
             return fallback;
         }
     }
 
     function writeJSON(key, value) {
-
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
+        localStorage.setItem(key, JSON.stringify(value));
     }
 
     function setText(id, value) {
-
-        const element =
-            document.getElementById(id);
+        const element = document.getElementById(id);
 
         if (element) {
-            element.textContent =
-                value ?? "";
+            element.textContent = value ?? "";
         }
     }
 
     function getTimer() {
-
         return window.StudyMindTimer || null;
     }
 
@@ -77,22 +61,18 @@
     ========================================================= */
 
     function getProgressSystem() {
-
         return window.StudyMindPlanProgress || null;
     }
 
     function getActivePlan() {
 
-        const progress =
-            getProgressSystem();
+        const progress = getProgressSystem();
 
         if (
             progress &&
             typeof progress.getActivePlan === "function"
         ) {
-
-            const active =
-                progress.getActivePlan();
+            const active = progress.getActivePlan();
 
             if (active) {
                 return active;
@@ -100,27 +80,21 @@
         }
 
         const activePlanId =
-            localStorage.getItem(
-                KEYS.ACTIVE_PLAN
-            );
+            localStorage.getItem(KEYS.ACTIVE_PLAN);
 
         const plans =
-            readJSON(
-                KEYS.PLANS,
-                []
-            );
+            readJSON(KEYS.PLANS, []);
 
         if (
             activePlanId &&
             Array.isArray(plans)
         ) {
-
             const found =
                 plans.find(
                     item =>
                         item &&
                         String(item.id) ===
-                            String(activePlanId)
+                        String(activePlanId)
                 );
 
             if (found) {
@@ -128,16 +102,12 @@
             }
         }
 
-        return readJSON(
-            KEYS.PLAN,
-            null
-        );
+        return readJSON(KEYS.PLAN, null);
     }
 
     function refreshPlanReference() {
 
-        const active =
-            getActivePlan();
+        const active = getActivePlan();
 
         if (active) {
             plan = active;
@@ -148,30 +118,26 @@
 
     function syncProgress() {
 
-        const progress =
-            getProgressSystem();
+        const progress = getProgressSystem();
 
         if (
             progress &&
             typeof progress.syncGlobalProgressToPlan ===
-                "function"
+            "function"
         ) {
-
             progress.syncGlobalProgressToPlan();
         }
     }
 
     function saveProgressToActivePlan() {
 
-        const progress =
-            getProgressSystem();
+        const progress = getProgressSystem();
 
         if (
             progress &&
             typeof progress.saveActivePlan ===
-                "function"
+            "function"
         ) {
-
             progress.saveActivePlan(plan);
         }
     }
@@ -187,7 +153,6 @@
         }
 
         if (typeof topic === "string") {
-
             return {
                 name: topic,
                 subject: "General",
@@ -196,7 +161,6 @@
         }
 
         return {
-
             name:
                 topic.name ||
                 topic.topic ||
@@ -229,14 +193,10 @@
             return null;
         }
 
-        /*
-         * Make sure the progress object exists.
-         */
         if (
             !plan.progress ||
             typeof plan.progress !== "object"
         ) {
-
             plan.progress = {
                 completedTopics: [],
                 completedQuestionTopics: [],
@@ -252,7 +212,6 @@
                 plan.progress.completedTopics
             )
         ) {
-
             plan.progress.completedTopics = [];
         }
 
@@ -261,7 +220,6 @@
                 plan.progress.completedQuestionTopics
             )
         ) {
-
             plan.progress.completedQuestionTopics = [];
         }
 
@@ -272,7 +230,6 @@
                 )
             )
         ) {
-
             plan.progress.currentTopicIndex = 0;
         }
 
@@ -287,10 +244,6 @@
 
         const topics = [];
 
-        /*
-         * Normal generated plan:
-         * subjects -> topics
-         */
         if (Array.isArray(plan.subjects)) {
 
             plan.subjects.forEach(subject => {
@@ -324,22 +277,16 @@
                             normalized.subject ===
                             "General"
                         ) {
-
                             normalized.subject =
                                 subjectName;
                         }
 
-                        topics.push(
-                            normalized
-                        );
+                        topics.push(normalized);
                     });
                 }
             });
         }
 
-        /*
-         * Fallback flat topic structure.
-         */
         if (
             !topics.length &&
             Array.isArray(plan.topics)
@@ -351,10 +298,7 @@
                     normalizeTopic(topic);
 
                 if (normalized) {
-
-                    topics.push(
-                        normalized
-                    );
+                    topics.push(normalized);
                 }
             });
         }
@@ -372,10 +316,7 @@
             return false;
         }
 
-        const topics =
-            getAllTopics();
-
-        return topics.some(item => {
+        return getAllTopics().some(item => {
 
             return (
                 item.name === topic.name &&
@@ -386,8 +327,7 @@
 
     function determineCurrentTopic() {
 
-        const topics =
-            getAllTopics();
+        const topics = getAllTopics();
 
         if (!topics.length) {
 
@@ -400,9 +340,6 @@
             };
         }
 
-        /*
-         * First use an explicitly selected topic.
-         */
         const stored =
             readJSON(
                 KEYS.CURRENT_TOPIC,
@@ -418,23 +355,17 @@
                 normalizeTopic(stored);
 
             /*
-             * Do not allow an old topic from a
-             * previous study plan to leak into
-             * the new plan.
+             * Prevent a topic from an old plan
+             * appearing in the new plan.
              */
             if (
                 normalized &&
                 topicBelongsToPlan(normalized)
             ) {
-
                 return normalized;
             }
         }
 
-        /*
-         * Otherwise use the active plan's
-         * saved topic index.
-         */
         const progressIndex =
             Number(
                 plan?.progress?.currentTopicIndex
@@ -453,14 +384,12 @@
             Number.isFinite(progressIndex) &&
             progressIndex >= 0
         ) {
-
             index = progressIndex;
 
         } else if (
             Number.isFinite(storedIndex) &&
             storedIndex >= 0
         ) {
-
             index = storedIndex;
         }
 
@@ -473,8 +402,7 @@
                 )
             );
 
-        const topic =
-            topics[index];
+        const topic = topics[index];
 
         if (topic) {
 
@@ -498,10 +426,6 @@
 
     function getCompletedTopics() {
 
-        /*
-         * Global compatibility key remains the
-         * live source for existing pages.
-         */
         const completed =
             readJSON(
                 KEYS.COMPLETED,
@@ -530,18 +454,12 @@
             return false;
         }
 
-        const key =
-            topicKey(topic);
-
-        const completed =
-            getCompletedTopics();
+        const key = topicKey(topic);
+        const completed = getCompletedTopics();
 
         return completed.some(item => {
 
-            if (
-                typeof item ===
-                "string"
-            ) {
+            if (typeof item === "string") {
 
                 return (
                     item === key ||
@@ -551,20 +469,19 @@
 
             if (
                 item &&
-                typeof item ===
-                "object"
+                typeof item === "object"
             ) {
 
                 return (
                     item.key === key ||
                     (
                         item.subject ===
-                            topic.subject &&
+                        topic.subject &&
                         (
                             item.topic ===
-                                topic.name ||
+                            topic.name ||
                             item.name ===
-                                topic.name
+                            topic.name
                         )
                     )
                 );
@@ -576,8 +493,7 @@
 
     function getCompletedCount() {
 
-        const topics =
-            getAllTopics();
+        const topics = getAllTopics();
 
         return topics.filter(
             topic =>
@@ -606,16 +522,15 @@
             return;
         }
 
-        const topics =
-            getAllTopics();
+        const topics = getAllTopics();
 
         let currentIndex =
             topics.findIndex(
                 topic =>
                     topic.name ===
-                        currentTopic.name &&
+                    currentTopic.name &&
                     topic.subject ===
-                        currentTopic.subject
+                    currentTopic.subject
             );
 
         if (currentIndex < 0) {
@@ -667,21 +582,16 @@
             );
 
         if (bar) {
-
             bar.style.width =
                 `${progress}%`;
         }
 
-        /*
-         * Keep plan progress synchronized.
-         */
         if (plan) {
 
             if (
                 !plan.progress ||
                 typeof plan.progress !== "object"
             ) {
-
                 plan.progress = {};
             }
 
@@ -695,8 +605,8 @@
         }
 
         /*
-         * Optional status elements if present
-         * in a future version of the page.
+         * These are optional. If the HTML has them,
+         * they will update automatically.
          */
         setText(
             "completedTopics",
@@ -829,9 +739,7 @@
             if (checkbox) {
 
                 checkbox.checked =
-                    Boolean(
-                        data[id]
-                    );
+                    Boolean(data[id]);
             }
         });
     }
@@ -861,9 +769,7 @@
                                 {}
                             );
 
-                        data[
-                            checkbox.id
-                        ] =
+                        data[checkbox.id] =
                             checkbox.checked;
 
                         writeJSON(
@@ -878,13 +784,18 @@
     }
 
     /* =========================================================
-       TIMER DISPLAY
+       TIMER DISPLAY ONLY
+       
+       IMPORTANT:
+       study-timer.js owns ALL timer controls.
+       This file only reads and displays timer state.
+
+       This prevents duplicate click handlers.
     ========================================================= */
 
     function updateTimerUI() {
 
-        const timer =
-            getTimer();
+        const timer = getTimer();
 
         if (!timer) {
 
@@ -896,8 +807,7 @@
             return;
         }
 
-        const state =
-            timer.getState();
+        const state = timer.getState();
 
         if (!state) {
             return;
@@ -913,19 +823,15 @@
                 "timerState"
             );
 
-        const startButton =
-            document.getElementById(
-                "timerStart"
-            );
-
+        /*
+         * Timer display
+         */
         if (display) {
 
             const seconds =
                 Math.max(
                     0,
-                    Number(
-                        state.seconds
-                    ) || 0
+                    Number(state.seconds) || 0
                 );
 
             const minutes =
@@ -940,6 +846,9 @@
                 `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
         }
 
+        /*
+         * Timer state
+         */
         if (stateText) {
 
             if (state.running) {
@@ -962,196 +871,31 @@
             }
         }
 
-        if (startButton) {
-
-            startButton.textContent =
-                state.running
-                    ? "Pause"
-                    : "Start";
-        }
+        /*
+         * The shared timer itself owns the button
+         * behavior and text. We intentionally do
+         * NOT add another click handler here.
+         */
     }
 
     /* =========================================================
-       TIMER CONTROLS
+       TIMER EVENTS
     ========================================================= */
 
-    function setupTimerControls() {
-
-        const timer =
-            getTimer();
-
-        if (!timer) {
-
-            console.warn(
-                "StudyMind: Shared timer not available yet."
-            );
-
-            /*
-             * study-timer.js should already be loaded,
-             * but retry in case script initialization
-             * finishes a moment later.
-             */
-            setTimeout(
-                () => {
-
-                    if (
-                        window.StudyMindTimer &&
-                        !window.__studySessionTimerReady
-                    ) {
-
-                        setupTimerControls();
-                        updateTimerUI();
-                    }
-
-                },
-                300
-            );
-
-            return;
-        }
-
-        if (
-            window.__studySessionTimerControlsReady
-        ) {
-
-            updateTimerUI();
-            return;
-        }
-
-        window.__studySessionTimerControlsReady =
-            true;
-
-        window.__studySessionTimerReady =
-            true;
+    function setupTimerDisplay() {
 
         /*
-         * Duration buttons
-         */
-        document
-            .querySelectorAll(
-                ".timer-preset"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const state =
-                            timer.getState();
-
-                        if (
-                            state &&
-                            state.running
-                        ) {
-                            return;
-                        }
-
-                        const minutes =
-                            Number(
-                                button.dataset.minutes
-                            );
-
-                        if (
-                            !Number.isFinite(
-                                minutes
-                            ) ||
-                            minutes <= 0
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            typeof timer.selectDuration ===
-                            "function"
-                        ) {
-
-                            timer.selectDuration(
-                                minutes * 60
-                            );
-                        }
-
-                        updateTimerUI();
-                    }
-                );
-            });
-
-        /*
-         * Start / pause
-         */
-        const start =
-            document.getElementById(
-                "timerStart"
-            );
-
-        if (start) {
-
-            start.addEventListener(
-                "click",
-                () => {
-
-                    const state =
-                        timer.getState();
-
-                    if (
-                        state &&
-                        state.running
-                    ) {
-
-                        if (
-                            typeof timer.pause ===
-                            "function"
-                        ) {
-
-                            timer.pause();
-                        }
-
-                    } else {
-
-                        if (
-                            typeof timer.start ===
-                            "function"
-                        ) {
-
-                            timer.start();
-                        }
-                    }
-
-                    updateTimerUI();
-                }
-            );
-        }
-
-        /*
+         * study-timer.js is the sole owner of:
+         *
+         * Start
+         * Pause
          * Reset
+         * 25 / 45 / 60 minute presets
+         * Timer completion
+         *
+         * This page only listens for state changes.
          */
-        const reset =
-            document.getElementById(
-                "timerReset"
-            );
 
-        if (reset) {
-
-            reset.addEventListener(
-                "click",
-                () => {
-
-                    if (
-                        typeof timer.reset ===
-                        "function"
-                    ) {
-
-                        timer.reset();
-                    }
-
-                    updateTimerUI();
-                }
-            );
-        }
-
-        /*
-         * The shared timer is the source of truth.
-         */
         window.addEventListener(
             "studyMindTimerChanged",
             updateTimerUI
@@ -1167,25 +911,30 @@
             () => {
 
                 updateTimerUI();
-                renderTopic();
 
                 /*
-                 * Timer completion is handled by the
-                 * shared timer. We deliberately DO NOT
-                 * mark the topic complete here.
+                 * Timer completion does NOT complete
+                 * the topic.
+                 *
+                 * It is handled independently by
+                 * the shared timer.
                  */
+                refreshPlanReference();
                 syncProgress();
+                renderTopic();
             }
         );
 
         /*
-         * Keep the display alive even if another
-         * component doesn't dispatch an event.
+         * Small display refresh only.
+         * No timer controls are created here.
          */
         setInterval(
             updateTimerUI,
-            1000
+            500
         );
+
+        updateTimerUI();
     }
 
     /* =========================================================
@@ -1198,18 +947,11 @@
             return;
         }
 
-        /*
-         * Save the exact topic so knowledge-check.html
-         * knows what the student is testing.
-         */
         writeJSON(
             "studyMindKnowledgeCheckTopic",
             currentTopic
         );
 
-        /*
-         * Keep the topic index synchronized.
-         */
         const topics =
             getAllTopics();
 
@@ -1217,9 +959,9 @@
             topics.findIndex(
                 topic =>
                     topic.name ===
-                        currentTopic.name &&
+                    currentTopic.name &&
                     topic.subject ===
-                        currentTopic.subject
+                    currentTopic.subject
             );
 
         if (index >= 0) {
@@ -1244,12 +986,16 @@
 
     /* =========================================================
        COMPLETE SESSION
+       
        IMPORTANT:
-       This is NOT timer completion.
-
-       It only marks the current topic as completed.
-       The shared timer separately handles study-time
-       tracking and timer-based streak activity.
+       This is separate from timer completion.
+       
+       It ONLY marks the topic completed.
+       It does NOT:
+       - award timer XP
+       - award timer minutes
+       - create a timer session
+       - create a streak day
     ========================================================= */
 
     function completeSession() {
@@ -1269,9 +1015,44 @@
         }
 
         /*
-         * Prevent duplicate completion.
+         * Check all supported completion formats
+         * before adding the topic.
          */
-        if (!completed.includes(key)) {
+        const alreadyCompleted =
+            completed.some(item => {
+
+                if (typeof item === "string") {
+
+                    return (
+                        item === key ||
+                        item === currentTopic.name
+                    );
+                }
+
+                if (
+                    item &&
+                    typeof item === "object"
+                ) {
+
+                    return (
+                        item.key === key ||
+                        (
+                            item.subject ===
+                            currentTopic.subject &&
+                            (
+                                item.topic ===
+                                currentTopic.name ||
+                                item.name ===
+                                currentTopic.name
+                            )
+                        )
+                    );
+                }
+
+                return false;
+            });
+
+        if (!alreadyCompleted) {
 
             completed.push(key);
 
@@ -1282,7 +1063,7 @@
         }
 
         /*
-         * Update the active plan's progress.
+         * Synchronize active plan progress.
          */
         refreshPlanReference();
 
@@ -1292,7 +1073,6 @@
                 !plan.progress ||
                 typeof plan.progress !== "object"
             ) {
-
                 plan.progress = {};
             }
 
@@ -1314,11 +1094,15 @@
                     detail: {
                         subject:
                             currentTopic.subject,
+
                         topic:
                             currentTopic.name,
+
                         key,
+
                         completedCount:
                             getCompletedCount(),
+
                         remaining:
                             getRemainingCount()
                     }
@@ -1327,27 +1111,25 @@
         );
 
         /*
-         * Refresh Study Score.
-         *
-         * Score is based on actual study data,
-         * not simply on clicking Complete Session.
+         * Study Score uses the actual stored
+         * performance metrics.
          */
         if (
             window.StudyMindScore &&
             typeof window.StudyMindScore.refresh ===
-                "function"
+            "function"
         ) {
 
             window.StudyMindScore.refresh();
         }
 
         /*
-         * Check the achievement/reward system.
+         * Check achievements.
          */
         if (
             window.StudyMindRewards &&
             typeof window.StudyMindRewards.check ===
-                "function"
+            "function"
         ) {
 
             setTimeout(
@@ -1372,8 +1154,7 @@
         }
 
         /*
-         * Move the saved topic pointer forward
-         * to the next topic.
+         * Move the topic pointer forward.
          */
         const topics =
             getAllTopics();
@@ -1382,15 +1163,15 @@
             topics.findIndex(
                 topic =>
                     topic.name ===
-                        currentTopic.name &&
+                    currentTopic.name &&
                     topic.subject ===
-                        currentTopic.subject
+                    currentTopic.subject
             );
 
         if (
             currentIndex >= 0 &&
             currentIndex <
-                topics.length - 1
+            topics.length - 1
         ) {
 
             const nextIndex =
@@ -1409,24 +1190,13 @@
                 saveProgressToActivePlan();
             }
 
-            /*
-             * Clear the old explicitly selected
-             * topic so the next page can use the
-             * new pointer.
-             */
             localStorage.removeItem(
                 KEYS.CURRENT_TOPIC
             );
         }
 
         /*
-         * Do NOT:
-         * - award XP here
-         * - award streak here
-         * - complete the timer here
-         *
-         * Those systems have their own sources
-         * of truth.
+         * Deliberately no XP/streak/timer handling here.
          */
         setTimeout(() => {
 
@@ -1443,8 +1213,7 @@
     async function loadUser() {
 
         /*
-         * The chosen username is the canonical
-         * local display name.
+         * Local chosen username is preferred.
          */
         let username =
             localStorage.getItem(
@@ -1475,16 +1244,12 @@
                         {};
 
                     /*
-                     * IMPORTANT:
-                     * username comes first.
-                     *
-                     * This keeps the same chosen
-                     * username across Study Session,
-                     * Dashboard and Leaderboard.
+                     * Account username is preferred
+                     * when available.
                      */
                     username =
-                        metadata.username ||
                         username ||
+                        metadata.username ||
                         metadata.display_name ||
                         metadata.name ||
                         (
@@ -1578,9 +1343,7 @@
                 "input",
                 () => {
 
-                    clearTimeout(
-                        timeout
-                    );
+                    clearTimeout(timeout);
 
                     timeout =
                         setTimeout(
@@ -1603,12 +1366,10 @@
             () => {
 
                 refreshPlanReference();
-
-                /*
-                 * Pull the current compatibility
-                 * progress into the active plan.
-                 */
                 syncProgress();
+
+                currentTopic =
+                    determineCurrentTopic();
 
                 renderTopic();
             }
@@ -1652,13 +1413,13 @@
 
                 if (
                     event.key ===
-                        KEYS.COMPLETED ||
+                    KEYS.COMPLETED ||
                     event.key ===
-                        KEYS.CURRENT_TOPIC ||
+                    KEYS.CURRENT_TOPIC ||
                     event.key ===
-                        KEYS.TOPIC_INDEX ||
+                    KEYS.TOPIC_INDEX ||
                     event.key ===
-                        KEYS.ACTIVE_PLAN
+                    KEYS.ACTIVE_PLAN
                 ) {
 
                     loadPlan();
@@ -1690,9 +1451,7 @@
         loadPlan();
 
         /*
-         * If the shared progress bridge is present,
-         * make sure compatibility keys represent
-         * this active plan before determining the topic.
+         * Load progress belonging to the active plan.
          */
         const progress =
             getProgressSystem();
@@ -1700,9 +1459,8 @@
         if (
             progress &&
             typeof progress.loadActivePlanProgress ===
-                "function"
+            "function"
         ) {
-
             progress.loadActivePlanProgress();
         }
 
@@ -1715,7 +1473,14 @@
         loadNotes();
         loadChecklist();
 
-        setupTimerControls();
+        /*
+         * IMPORTANT:
+         * No timer click handlers here.
+         *
+         * study-timer.js owns the timer controls.
+         */
+        setupTimerDisplay();
+
         setupChecklist();
         setupButtons();
         setupProgressListeners();
@@ -1725,13 +1490,16 @@
         updateTimerUI();
 
         /*
-         * Keep progress synchronized periodically,
-         * but only while this page is open.
+         * Keep progress and display synchronized
+         * while this page is open.
          */
         setInterval(
             () => {
 
                 syncProgress();
+
+                refreshPlanReference();
+
                 renderTopic();
                 updateTimerUI();
 
@@ -1744,10 +1512,13 @@
             {
                 planId:
                     plan?.id || null,
+
                 topic:
                     currentTopic,
+
                 completed:
                     getCompletedCount(),
+
                 remaining:
                     getRemainingCount()
             }
