@@ -5908,22 +5908,7 @@ function savePlan(plan) {
            NOTIFY THE REST OF STUDYMIND
         ================================================= */
 
-        window.dispatchEvent(
-            new CustomEvent(
-                "studyMindPlanCreated",
-                {
-                    detail: {
-
-                        planId:
-                            plan.id,
-
-                        newPlan:
-                            true
-
-                    }
-                }
-            )
-        );
+       
 
     }
 
