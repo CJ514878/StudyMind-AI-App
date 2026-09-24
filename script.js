@@ -4654,7 +4654,6 @@ function normalizePlan(plan) {
    SAVE PLAN
 ========================================================= */
 
-
 function savePlan(plan) {
 
     if (
@@ -4667,7 +4666,6 @@ function savePlan(plan) {
         );
 
         return false;
-
     }
 
 
@@ -4682,7 +4680,6 @@ function savePlan(plan) {
                     "studyMindPlans"
                 ) || "[]"
             );
-
 
         if (
             !Array.isArray(plans)
@@ -4713,12 +4710,55 @@ function savePlan(plan) {
 
 
     /* =====================================================
-       NEW PLAN = NO PROGRESS
+       ACCOUNT-WIDE VALUES
+
+       These NEVER get reset when creating a new plan.
+    ===================================================== */
+
+    const currentXP =
+        Number(
+            localStorage.getItem(
+                "studyMindXP"
+            )
+        ) || 0;
+
+
+    const currentTotalXP =
+        Number(
+            localStorage.getItem(
+                "studyMindTotalXP"
+            )
+        ) || currentXP;
+
+
+    const currentStreak =
+        Number(
+            localStorage.getItem(
+                "studyMindStreak"
+            )
+        ) || 0;
+
+
+    const currentLongestStreak =
+        Number(
+            localStorage.getItem(
+                "studyMindLongestStreak"
+            )
+        ) || 0;
+
+
+    /* =====================================================
+       PLAN-SPECIFIC PROGRESS
     ===================================================== */
 
     if (
         isNewPlan
     ) {
+
+        /*
+         * A brand-new plan starts with zero
+         * progress of its own.
+         */
 
         plan.xp = 0;
 
@@ -4729,6 +4769,105 @@ function savePlan(plan) {
         plan.completedTopics = [];
 
         plan.completedQuestionTopics = [];
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Progress is now stored INSIDE the plan.
+         */
+
+        plan.progress = {
+
+            completedTopics: [],
+
+            completedQuestionTopics: [],
+
+            studyScore: 0,
+
+            currentTopicIndex: 0
+
+        };
+
+    } else {
+
+        /*
+         * Existing plan:
+         *
+         * Preserve everything that belongs to
+         * that specific plan.
+         */
+
+        const oldPlan =
+            plans[existingIndex];
+
+
+        if (
+            oldPlan &&
+            oldPlan.progress
+        ) {
+
+            plan.progress =
+                oldPlan.progress;
+
+        } else {
+
+            plan.progress = {
+
+                completedTopics:
+                    Array.isArray(
+                        plan.completedTopics
+                    )
+                        ? plan.completedTopics
+                        : [],
+
+                completedQuestionTopics:
+                    Array.isArray(
+                        plan.completedQuestionTopics
+                    )
+                        ? plan.completedQuestionTopics
+                        : [],
+
+                studyScore:
+                    Number(
+                        plan.studyScore
+                    ) || 0,
+
+                currentTopicIndex:
+                    Number(
+                        plan.currentTopicIndex
+                    ) || 0
+
+            };
+
+        }
+
+
+        /*
+         * Keep the compatibility fields synchronized
+         * with the plan's own progress.
+         */
+
+        plan.completedTopics =
+            Array.isArray(
+                plan.progress.completedTopics
+            )
+                ? plan.progress.completedTopics
+                : [];
+
+
+        plan.completedQuestionTopics =
+            Array.isArray(
+                plan.progress.completedQuestionTopics
+            )
+                ? plan.progress.completedQuestionTopics
+                : [];
+
+
+        plan.studyScore =
+            Number(
+                plan.progress.studyScore
+            ) || 0;
 
     }
 
@@ -4786,6 +4925,10 @@ function savePlan(plan) {
     );
 
 
+    /* =====================================================
+       MAKE THIS THE ACTIVE PLAN
+    ===================================================== */
+
     if (
         plan.id
     ) {
@@ -4801,43 +4944,34 @@ function savePlan(plan) {
 
 
     /* =====================================================
-       RESET PROGRESS ONLY FOR A NEW PLAN
+       NEW PLAN INITIALIZATION
     ===================================================== */
 
     if (
         isNewPlan
     ) {
 
-        localStorage.setItem(
-            "studyMindXP",
-            "0"
-        );
-
-
-        localStorage.setItem(
-            "studyMindTotalXP",
-            "0"
-        );
-
-
-        localStorage.setItem(
-            "studyMindStreak",
-            "0"
-        );
-
-
-        localStorage.setItem(
-            "studyMindLongestStreak",
-            "0"
-        );
-
-
-              /*
-         * NEW PLAN RESET
+        /*
+         * IMPORTANT:
          *
-         * Reset only the progress that belongs to the
-         * newly created plan. Do NOT erase the student's
-         * account-wide study history, XP, streak, or score.
+         * We DO NOT reset:
+         *
+         * studyMindXP
+         * studyMindTotalXP
+         * studyMindStreak
+         * studyMindLongestStreak
+         * studyMindStreakActivity
+         * studyMindStudySessions
+         * studyMindDailyStudyTime
+         * studyMindXPEvents
+         *
+         * Those belong to the student account.
+         */
+
+
+        /*
+         * Remove the previous plan's temporary
+         * current-topic state.
          */
 
         localStorage.removeItem(
@@ -4850,7 +4984,8 @@ function savePlan(plan) {
 
 
         /*
-         * Stop any timer from the previous plan.
+         * Stop any timer belonging to the
+         * previous plan.
          */
 
         localStorage.removeItem(
@@ -4864,8 +4999,8 @@ function savePlan(plan) {
 
 
         /*
-         * Keep the student's selected timer duration.
-         * Default to 25 minutes only if none exists.
+         * Preserve the student's selected
+         * timer duration.
          */
 
         const selectedTimer =
@@ -4878,27 +5013,14 @@ function savePlan(plan) {
 
         localStorage.setItem(
             "studyMindTimerSeconds",
-            String(selectedTimer)
+            String(
+                selectedTimer
+            )
         );
 
 
         /*
-         * Reset the NEW PLAN'S topic progress.
-         */
-
-        localStorage.setItem(
-            "studyMindCompletedTopics",
-            "[]"
-        );
-
-        localStorage.setItem(
-            "studyMindCompletedQuestionTopics",
-            "[]"
-        );
-
-
-        /*
-         * Reset the timer's temporary session state.
+         * Reset timer-specific temporary state.
          */
 
         localStorage.removeItem(
@@ -4914,27 +5036,8 @@ function savePlan(plan) {
         );
 
 
-        /*
-         * IMPORTANT:
-         *
-         * DO NOT REMOVE:
-         *
-         * studyMindXP
-         * studyMindTotalXP
-         * studyMindStreak
-         * studyMindLongestStreak
-         * studyMindLastCompletedPlanDate
-         * studyMindStreakActivity
-         * studyMindStudySessions
-         * studyMindDailyStudyTime
-         * studyMindXPEvents
-         *
-         * Those belong to the student's account/history.
-         */
-
-
         /* =================================================
-           TELL ALL OPEN STUDYMIND PAGES
+           NOTIFY OPEN STUDYMIND PAGES
         ================================================= */
 
         window.dispatchEvent(
@@ -4944,12 +5047,22 @@ function savePlan(plan) {
                     detail: {
                         planId:
                             plan.id ||
-                            null
+                            null,
+
+                        newPlan:
+                            true
                     }
                 }
             )
         );
 
+
+        /*
+         * IMPORTANT:
+         *
+         * Send the REAL account XP,
+         * not zero.
+         */
 
         window.dispatchEvent(
             new CustomEvent(
@@ -4957,7 +5070,10 @@ function savePlan(plan) {
                 {
                     detail: {
                         amount: 0,
-                        total: 0,
+
+                        total:
+                            currentXP,
+
                         reason:
                             "new-study-plan"
                     }
@@ -4966,12 +5082,19 @@ function savePlan(plan) {
         );
 
 
+        /*
+         * Send the REAL account streak,
+         * not zero.
+         */
+
         window.dispatchEvent(
             new CustomEvent(
                 "studyMindStreakUpdated",
                 {
                     detail: {
-                        streak: 0,
+                        streak:
+                            currentStreak,
+
                         reason:
                             "new-study-plan"
                     }
@@ -4981,6 +5104,54 @@ function savePlan(plan) {
 
     }
 
+
+    /* =====================================================
+       KEEP ACCOUNT VALUES INTACT
+    ===================================================== */
+
+    /*
+     * These writes are intentionally restoring the
+     * values that existed before the plan was created.
+     *
+     * This protects against older code elsewhere
+     * accidentally initializing them during savePlan().
+     */
+
+    localStorage.setItem(
+        "studyMindXP",
+        String(
+            currentXP
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindTotalXP",
+        String(
+            currentTotalXP
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindStreak",
+        String(
+            currentStreak
+        )
+    );
+
+
+    localStorage.setItem(
+        "studyMindLongestStreak",
+        String(
+            currentLongestStreak
+        )
+    );
+
+
+    /* =====================================================
+       LOG
+    ===================================================== */
 
     console.log(
         "StudyMind plan saved:",
@@ -4992,19 +5163,19 @@ function savePlan(plan) {
             newPlan:
                 isNewPlan,
 
-            xp:
-                isNewPlan
-                    ? 0
-                    : localStorage.getItem(
-                        "studyMindXP"
-                    ),
+            activePlanId:
+                localStorage.getItem(
+                    "studyMindActivePlanId"
+                ),
 
-            streak:
-                isNewPlan
-                    ? 0
-                    : localStorage.getItem(
-                        "studyMindStreak"
-                    )
+            accountXP:
+                currentXP,
+
+            accountStreak:
+                currentStreak,
+
+            planProgress:
+                plan.progress
         }
     );
 
@@ -5012,7 +5183,6 @@ function savePlan(plan) {
     return true;
 
 }
-
 
 
 /* =========================================================
