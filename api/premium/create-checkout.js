@@ -3,9 +3,9 @@
    PAYSTACK + FLUTTERWAVE + STRIPE
    ========================================================= */
 
-const crypto =
-    require("crypto");
+"use strict";
 
+const crypto = require("crypto");
 
 const SUPABASE_URL =
     process.env.SUPABASE_URL;
@@ -16,115 +16,100 @@ const SERVICE_ROLE_KEY =
 const ANON_KEY =
     process.env.SUPABASE_ANON_KEY;
 
-
 const PREMIUM_AMOUNT_NGN =
-    Number(
-        process.env.PREMIUM_AMOUNT_NGN
-    );
-
+    Number(process.env.PREMIUM_AMOUNT_NGN);
 
 const PREMIUM_AMOUNT_USD =
-    Number(
-        process.env.PREMIUM_AMOUNT_USD
-    );
+    Number(process.env.PREMIUM_AMOUNT_USD);
 
 
 /* =========================================================
-   HELPERS
+   RESPONSE
    ========================================================= */
 
-function send(
-    res,
-    status,
-    data
-) {
-
-    return res
-        .status(status)
-        .json(data);
-
+function send(res, status, data) {
+    return res.status(status).json(data);
 }
 
 
-async function getUser(
-    token
-) {
+/* =========================================================
+   GET USER
+   ========================================================= */
 
-    const response =
-        await fetch(
-            `${SUPABASE_URL}/auth/v1/user`,
-            {
-                headers: {
-                    "Authorization":
-                        `Bearer ${token}`,
+async function getUser(token) {
 
-                    "apikey":
-                        ANON_KEY
-                }
+    const response = await fetch(
+        `${SUPABASE_URL}/auth/v1/user`,
+        {
+            method: "GET",
+
+            headers: {
+                "Authorization":
+                    `Bearer ${token}`,
+
+                "apikey":
+                    ANON_KEY
             }
-        );
-
+        }
+    );
 
     if (!response.ok) {
-
         return null;
-
     }
 
-
     return await response.json();
-
 }
 
 
-async function insertPendingPayment(
-    record
-) {
+/* =========================================================
+   INSERT PENDING PAYMENT
+   ========================================================= */
 
-    const response =
-        await fetch(
-            `${SUPABASE_URL}/rest/v1/premium_subscriptions`,
-            {
-                method: "POST",
+async function insertPendingPayment(record) {
 
-                headers: {
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/premium_subscriptions`,
+        {
+            method: "POST",
 
-                    "apikey":
-                        SERVICE_ROLE_KEY,
+            headers: {
+                "apikey":
+                    SERVICE_ROLE_KEY,
 
-                    "Authorization":
-                        `Bearer ${SERVICE_ROLE_KEY}`,
+                "Authorization":
+                    `Bearer ${SERVICE_ROLE_KEY}`,
 
-                    "Content-Type":
-                        "application/json",
+                "Content-Type":
+                    "application/json",
 
-                    "Prefer":
-                        "return=representation"
-                },
+                "Prefer":
+                    "return=representation"
+            },
 
-                body:
-                    JSON.stringify(
-                        record
-                    )
-            }
-        );
-
+            body:
+                JSON.stringify(record)
+        }
+    );
 
     if (!response.ok) {
 
         const errorText =
             await response.text();
 
-
-        throw new Error(
-            `Could not create Premium payment record: ${errorText}`
+        console.error(
+            "Premium subscription insert failed:",
+            errorText
         );
 
+        throw new Error(
+            "Could not create Premium payment record."
+        );
     }
 
+    const rows =
+        await response.json();
 
-    return await response.json();
-
+    return rows?.[0] || null;
 }
 
 
@@ -132,36 +117,22 @@ async function insertPendingPayment(
    PAYSTACK
    ========================================================= */
 
-async function createPaystackCheckout(
-    user
-) {
+async function createPaystackCheckout(user) {
 
-    if (
-        !process.env.PAYSTACK_SECRET_KEY
-    ) {
-
+    if (!process.env.PAYSTACK_SECRET_KEY) {
         throw new Error(
             "Paystack Secret Key is not configured."
         );
-
     }
-
 
     if (
         !PREMIUM_AMOUNT_NGN ||
         PREMIUM_AMOUNT_NGN <= 0
     ) {
-
         throw new Error(
             "PREMIUM_AMOUNT_NGN has not been configured."
         );
-
     }
-
-
-    const email =
-        user.email;
-
 
     const response =
         await fetch(
@@ -170,7 +141,6 @@ async function createPaystackCheckout(
                 method: "POST",
 
                 headers: {
-
                     "Authorization":
                         `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
 
@@ -181,12 +151,12 @@ async function createPaystackCheckout(
                 body:
                     JSON.stringify({
 
-                        email,
+                        email:
+                            user.email,
 
                         amount:
                             Math.round(
-                                PREMIUM_AMOUNT_NGN *
-                                100
+                                PREMIUM_AMOUNT_NGN * 100
                             ),
 
                         currency:
@@ -199,24 +169,21 @@ async function createPaystackCheckout(
             }
         );
 
-
     const data =
         await response.json();
-
 
     if (
         !response.ok ||
         !data?.status ||
-        !data?.data?.authorization_url
+        !data?.data?.authorization_url ||
+        !data?.data?.reference
     ) {
 
         throw new Error(
             data?.message ||
             "Paystack could not create checkout."
         );
-
     }
-
 
     await insertPendingPayment({
 
@@ -243,14 +210,10 @@ async function createPaystackCheckout(
 
     });
 
-
     return {
-
         checkoutUrl:
             data.data.authorization_url
-
     };
-
 }
 
 
@@ -258,36 +221,27 @@ async function createPaystackCheckout(
    FLUTTERWAVE
    ========================================================= */
 
-async function createFlutterwaveCheckout(
-    user
-) {
+async function createFlutterwaveCheckout(user) {
 
-    if (
-        !process.env.FLW_SECRET_KEY
-    ) {
-
+    if (!process.env.FLW_SECRET_KEY) {
         throw new Error(
             "Flutterwave Secret Key is not configured."
         );
-
     }
-
 
     if (
         !PREMIUM_AMOUNT_NGN ||
         PREMIUM_AMOUNT_NGN <= 0
     ) {
-
         throw new Error(
             "PREMIUM_AMOUNT_NGN has not been configured."
         );
-
     }
 
-
     const txRef =
-        `STUDYMIND_PREMIUM_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
-
+        `STUDYMIND_PREMIUM_${Date.now()}_${crypto
+            .randomBytes(6)
+            .toString("hex")}`;
 
     const response =
         await fetch(
@@ -296,7 +250,6 @@ async function createFlutterwaveCheckout(
                 method: "POST",
 
                 headers: {
-
                     "Authorization":
                         `Bearer ${process.env.FLW_SECRET_KEY}`,
 
@@ -320,10 +273,8 @@ async function createFlutterwaveCheckout(
                             `${getBaseUrl()}/premium-success.html?provider=flutterwave`,
 
                         customer: {
-
                             email:
                                 user.email
-
                         },
 
                         customizations: {
@@ -336,17 +287,14 @@ async function createFlutterwaveCheckout(
 
                             logo:
                                 `${getBaseUrl()}/favicon.ico`
-
                         }
 
                     })
             }
         );
 
-
     const data =
         await response.json();
-
 
     if (
         !response.ok ||
@@ -358,9 +306,18 @@ async function createFlutterwaveCheckout(
             data?.message ||
             "Flutterwave could not create checkout."
         );
-
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * We store Flutterwave's tx_ref.
+     * The success page will receive transaction_id
+     * and send that transaction ID to verify.js.
+     *
+     * verify.js then confirms that the returned
+     * transaction's tx_ref matches this record.
+     */
 
     await insertPendingPayment({
 
@@ -387,14 +344,10 @@ async function createFlutterwaveCheckout(
 
     });
 
-
     return {
-
         checkoutUrl:
             data.data.link
-
     };
-
 }
 
 
@@ -402,86 +355,66 @@ async function createFlutterwaveCheckout(
    STRIPE
    ========================================================= */
 
-async function createStripeCheckout(
-    user
-) {
+async function createStripeCheckout(user) {
 
-    if (
-        !process.env.STRIPE_SECRET_KEY
-    ) {
-
+    if (!process.env.STRIPE_SECRET_KEY) {
         throw new Error(
             "Stripe Secret Key is not configured."
         );
-
     }
-
 
     if (
         !PREMIUM_AMOUNT_USD ||
         PREMIUM_AMOUNT_USD <= 0
     ) {
-
         throw new Error(
             "PREMIUM_AMOUNT_USD has not been configured."
         );
-
     }
-
 
     const successUrl =
         `${getBaseUrl()}/premium-success.html?provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
 
-
     const cancelUrl =
         `${getBaseUrl()}/home.html`;
 
-
     const body =
         new URLSearchParams();
-
 
     body.append(
         "mode",
         "payment"
     );
 
-
     body.append(
         "success_url",
         successUrl
     );
-
 
     body.append(
         "cancel_url",
         cancelUrl
     );
 
-
     body.append(
         "customer_email",
         user.email
     );
-
 
     body.append(
         "line_items[0][price_data][currency]",
         "usd"
     );
 
-
     body.append(
         "line_items[0][price_data][product_data][name]",
         "StudyMind AI Premium"
     );
 
-
     body.append(
         "line_items[0][price_data][product_data][description]",
         "Unlimited AI tools, knowledge checks and Game Mode."
     );
-
 
     body.append(
         "line_items[0][price_data][unit_amount]",
@@ -492,12 +425,10 @@ async function createStripeCheckout(
         )
     );
 
-
     body.append(
         "line_items[0][quantity]",
         "1"
     );
-
 
     const response =
         await fetch(
@@ -506,24 +437,19 @@ async function createStripeCheckout(
                 method: "POST",
 
                 headers: {
-
                     "Authorization":
                         `Bearer ${process.env.STRIPE_SECRET_KEY}`,
 
                     "Content-Type":
                         "application/x-www-form-urlencoded"
-
                 },
 
                 body
-
             }
         );
 
-
     const data =
         await response.json();
-
 
     if (
         !response.ok ||
@@ -535,9 +461,7 @@ async function createStripeCheckout(
             data?.error?.message ||
             "Stripe could not create checkout."
         );
-
     }
-
 
     await insertPendingPayment({
 
@@ -564,14 +488,10 @@ async function createStripeCheckout(
 
     });
 
-
     return {
-
         checkoutUrl:
             data.url
-
     };
-
 }
 
 
@@ -584,27 +504,19 @@ function getBaseUrl() {
     const productionUrl =
         process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
-
     if (productionUrl) {
 
         return productionUrl.startsWith("http")
             ? productionUrl
             : `https://${productionUrl}`;
-
     }
 
-
-    if (
-        process.env.VERCEL_URL
-    ) {
+    if (process.env.VERCEL_URL) {
 
         return `https://${process.env.VERCEL_URL}`;
-
     }
 
-
     return "http://localhost:3000";
-
 }
 
 
@@ -613,14 +525,9 @@ function getBaseUrl() {
    ========================================================= */
 
 module.exports =
-    async function handler(
-        req,
-        res
-    ) {
+    async function handler(req, res) {
 
-        if (
-            req.method !== "POST"
-        ) {
+        if (req.method !== "POST") {
 
             return send(
                 res,
@@ -630,9 +537,7 @@ module.exports =
                         "Method not allowed."
                 }
             );
-
         }
-
 
         if (
             !SUPABASE_URL ||
@@ -648,14 +553,11 @@ module.exports =
                         "Supabase environment variables are missing."
                 }
             );
-
         }
-
 
         const authorization =
             req.headers.authorization ||
             "";
-
 
         if (
             !authorization.startsWith(
@@ -671,27 +573,19 @@ module.exports =
                         "You must be logged in to purchase Premium."
                 }
             );
-
         }
-
 
         const token =
             authorization
                 .slice(7)
                 .trim();
 
-
         try {
 
             const user =
-                await getUser(
-                    token
-                );
+                await getUser(token);
 
-
-            if (
-                !user?.id
-            ) {
+            if (!user?.id) {
 
                 return send(
                     res,
@@ -701,17 +595,20 @@ module.exports =
                             "Invalid login session."
                     }
                 );
-
             }
 
-
             /*
-             * Check if Premium is already active.
+             * Check whether Premium is already active.
              */
 
             const existingResponse =
                 await fetch(
-                    `${SUPABASE_URL}/rest/v1/premium_subscriptions?user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&is_premium=eq.true&select=id&limit=1`,
+                    `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
+                    `?user_id=eq.${encodeURIComponent(user.id)}` +
+                    `&status=eq.active` +
+                    `&is_premium=eq.true` +
+                    `&select=id` +
+                    `&limit=1`,
                     {
                         headers: {
 
@@ -720,15 +617,19 @@ module.exports =
 
                             "Authorization":
                                 `Bearer ${SERVICE_ROLE_KEY}`
-
                         }
                     }
                 );
 
+            if (!existingResponse.ok) {
+
+                throw new Error(
+                    "Could not check existing Premium status."
+                );
+            }
 
             const existing =
                 await existingResponse.json();
-
 
             if (
                 Array.isArray(existing) &&
@@ -743,9 +644,7 @@ module.exports =
                             "This account already has Premium."
                     }
                 );
-
             }
-
 
             const provider =
                 String(
@@ -755,15 +654,12 @@ module.exports =
                 .toLowerCase()
                 .trim();
 
-
             if (
                 ![
                     "paystack",
                     "flutterwave",
                     "stripe"
-                ].includes(
-                    provider
-                )
+                ].includes(provider)
             ) {
 
                 return send(
@@ -774,12 +670,9 @@ module.exports =
                             "Invalid payment provider."
                     }
                 );
-
             }
 
-
             let checkout;
-
 
             if (
                 provider ===
@@ -790,11 +683,9 @@ module.exports =
                     await createPaystackCheckout(
                         user
                     );
-
             }
 
-
-            if (
+            else if (
                 provider ===
                 "flutterwave"
             ) {
@@ -803,22 +694,15 @@ module.exports =
                     await createFlutterwaveCheckout(
                         user
                     );
-
             }
 
-
-            if (
-                provider ===
-                "stripe"
-            ) {
+            else {
 
                 checkout =
                     await createStripeCheckout(
                         user
                     );
-
             }
-
 
             return send(
                 res,
@@ -833,7 +717,6 @@ module.exports =
                 error
             );
 
-
             return send(
                 res,
                 500,
@@ -843,7 +726,5 @@ module.exports =
                         "Could not create Premium checkout."
                 }
             );
-
         }
-
     };
