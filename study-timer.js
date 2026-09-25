@@ -2892,8 +2892,9 @@
 
         getTodayXP,
 
-        recordStreakActivity,
-
+        recordStreakActivity:
+    recordStudyActivity,
+       
         render,
 
         renderStats,
