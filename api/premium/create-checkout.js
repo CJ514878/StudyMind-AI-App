@@ -373,7 +373,7 @@ async function createStripeCheckout(user) {
     }
 
     const successUrl =
-    `${getBaseUrl()}/premium/premium-success.html?provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
+    `${getBaseUrl()}/premium-success.html?provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
 
     const cancelUrl =
         `${getBaseUrl()}/home.html`;
