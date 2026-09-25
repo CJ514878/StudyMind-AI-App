@@ -270,7 +270,7 @@ async function createFlutterwaveCheckout(user) {
                             "NGN",
 
                         redirect_url:
-    `${getBaseUrl()}/premium/premium-success.html?provider=flutterwave`,
+    `${getBaseUrl()}/premium-success.html?provider=flutterwave`,
 
                         customer: {
                             email:
