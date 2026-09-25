@@ -1,19 +1,57 @@
 "use strict";
 
 /* =========================================================
-   STUDYMIND AI — INTEGRATED STREAK ENGINE
-   Milo + Streak + XP + Daily Completion
+   STUDYMIND AI — ACCOUNT-WIDE STREAK ENGINE
+   ---------------------------------------------------------
+   Streak is GLOBAL to the account.
+
+   Study plans may have separate progress, XP, study time,
+   completed topics, etc.
+
+   BUT:
+
+       studyMindStreak
+       studyMindLongestStreak
+       studyMindStreakActivity
+
+   remain account-wide.
+
+   Milo celebration/loss systems are handled separately by:
+
+       milo-celebrating.js
+       milo-streak-loss.js
+       streak-celebration.js
+
+   This file ONLY manages the streak engine and events.
 ========================================================= */
 
+
 const STREAK_KEYS = {
-    COMPLETED: "studyMindCompletedTopics",
-    ACTIVITY: "studyMindStreakActivity",
-    CURRENT: "studyMindStreak",
-    BEST: "studyMindLongestStreak",
-    LAST_COMPLETED: "studyMindLastCompletedPlanDate",
-    PLAN: "studyMindPlan",
-    XP: "studyMindXP",
-    USERNAME: "studyMindUsername"
+
+    COMPLETED:
+        "studyMindCompletedTopics",
+
+    ACTIVITY:
+        "studyMindStreakActivity",
+
+    CURRENT:
+        "studyMindStreak",
+
+    BEST:
+        "studyMindLongestStreak",
+
+    LAST_COMPLETED:
+        "studyMindLastCompletedPlanDate",
+
+    PLAN:
+        "studyMindPlan",
+
+    XP:
+        "studyMindXP",
+
+    USERNAME:
+        "studyMindUsername"
+
 };
 
 
@@ -30,21 +68,34 @@ document.addEventListener(
 function initStreak() {
 
     /*
-       IMPORTANT:
-       Normalize old streak activity formats before
-       anything tries to calculate the streak.
+       Normalize old activity data first.
     */
 
     migrateActivityFormat();
 
+
+    /*
+       Synchronize the streak.
+
+       This also detects whether the streak increased
+       or was lost since the last known value.
+    */
+
     syncStreakFromActivity();
+
 
     renderEverything();
 
+
     loadUser();
+
 
     setupLogout();
 
+
+    /*
+       Cross-page/localStorage synchronization.
+    */
 
     window.addEventListener(
         "storage",
@@ -72,11 +123,40 @@ function initStreak() {
 
     /*
        Same-page updates.
+
+       Ignore our own streak update event here.
+       We still refresh the display when another system
+       changes streak activity.
     */
 
     window.addEventListener(
         "studyMindStreakUpdated",
-        () => {
+        event => {
+
+            const detail =
+                event && event.detail
+                    ? event.detail
+                    : {};
+
+
+            /*
+               Dedicated event already came from this engine.
+
+               We don't need to create another increase/loss
+               event here.
+            */
+
+            if (
+                detail.source ===
+                "streak-engine"
+            ) {
+
+                renderEverything();
+
+                return;
+
+            }
+
 
             syncStreakFromActivity();
 
@@ -87,9 +167,9 @@ function initStreak() {
 
 
     /*
-       Keep the UI synchronized with changes made
-       by the shared timer, dashboard, study session,
-       or another page.
+       Keep the streak UI synchronized.
+
+       This is intentionally lightweight.
     */
 
     setInterval(
@@ -122,11 +202,13 @@ function readJSON(
         const value =
             localStorage.getItem(key);
 
+
         if (!value) {
 
             return fallback;
 
         }
+
 
         return JSON.parse(value);
 
@@ -172,33 +254,6 @@ function writeJSON(
 
 /* =========================================================
    ACTIVITY FORMAT MIGRATION
-=========================================================
-
-   Older StudyMind versions stored streak activity in
-   several different formats.
-
-   Supported examples:
-
-   1. Object:
-      {
-          "2026-09-17": true,
-          "2026-09-18": true
-      }
-
-   2. Array of date strings:
-      [
-          "2026-09-17",
-          "2026-09-18"
-      ]
-
-   3. Array of objects:
-      [
-          { date: "2026-09-17" },
-          { completedAt: "2026-09-18T12:00:00.000Z" }
-      ]
-
-   This function converts all supported formats into
-   the current canonical object format.
 ========================================================= */
 
 function migrateActivityFormat() {
@@ -208,10 +263,6 @@ function migrateActivityFormat() {
             STREAK_KEYS.ACTIVITY
         );
 
-
-    /*
-       Nothing to migrate.
-    */
 
     if (!raw) {
 
@@ -235,12 +286,15 @@ function migrateActivityFormat() {
             error
         );
 
+
         const empty = {};
+
 
         writeJSON(
             STREAK_KEYS.ACTIVITY,
             empty
         );
+
 
         return empty;
 
@@ -250,13 +304,9 @@ function migrateActivityFormat() {
     const activity = {};
 
 
-    /* -----------------------------------------------------
-       CURRENT FORMAT
-
-       {
-           "2026-09-17": true
-       }
-    ----------------------------------------------------- */
+    /*
+       CURRENT OBJECT FORMAT
+    */
 
     if (
         parsed &&
@@ -292,9 +342,9 @@ function migrateActivityFormat() {
     }
 
 
-    /* -----------------------------------------------------
+    /*
        ARRAY FORMAT
-    ----------------------------------------------------- */
+    */
 
     if (
         Array.isArray(parsed)
@@ -302,10 +352,6 @@ function migrateActivityFormat() {
 
         parsed.forEach(
             item => {
-
-                /*
-                   Simple date string.
-                */
 
                 if (
                     typeof item === "string"
@@ -323,14 +369,11 @@ function migrateActivityFormat() {
 
                     }
 
+
                     return;
 
                 }
 
-
-                /*
-                   Object format.
-                */
 
                 if (
                     item &&
@@ -374,13 +417,6 @@ function migrateActivityFormat() {
     }
 
 
-    /*
-       Only rewrite storage if the normalized result
-       differs from what was originally stored.
-
-       This prevents unnecessary storage events.
-    */
-
     const normalized =
         JSON.stringify(activity);
 
@@ -413,15 +449,18 @@ function todayKey(
     const year =
         date.getFullYear();
 
+
     const month =
         String(
             date.getMonth() + 1
         ).padStart(2, "0");
 
+
     const day =
         String(
             date.getDate()
         ).padStart(2, "0");
+
 
     return `${year}-${month}-${day}`;
 
@@ -441,12 +480,14 @@ function dateFromKey(
 
     }
 
+
     const [
         year,
         month,
         day
     ] =
         key.split("-").map(Number);
+
 
     return new Date(
         year,
@@ -465,6 +506,7 @@ function addDays(
     const result =
         new Date(date);
 
+
     result.setHours(
         0,
         0,
@@ -472,9 +514,11 @@ function addDays(
         0
     );
 
+
     result.setDate(
         result.getDate() + amount
     );
+
 
     return result;
 
@@ -525,13 +569,6 @@ function getCompletedTopics() {
 ========================================================= */
 
 function getActivity() {
-
-    /*
-       Always normalize through the migration layer.
-
-       This guarantees the rest of the streak engine
-       works with one consistent format.
-    */
 
     return migrateActivityFormat();
 
@@ -594,8 +631,8 @@ function calculateCurrentStreak(
 
 
     /*
-       If today isn't complete yet,
-       yesterday can still keep the streak alive.
+       If today hasn't been completed yet,
+       yesterday may still keep the streak alive.
     */
 
     if (
@@ -621,6 +658,7 @@ function calculateCurrentStreak(
     ) {
 
         streak++;
+
 
         currentDate =
             addDays(
@@ -671,6 +709,7 @@ function calculateLongestStreak(
             dateFromKey(
                 days[i - 1]
             );
+
 
         const currentDate =
             dateFromKey(
@@ -727,6 +766,167 @@ function calculateLongestStreak(
 
 
 /* =========================================================
+   STREAK EVENT HELPERS
+========================================================= */
+
+function dispatchStreakIncrease(
+    previousStreak,
+    currentStreak
+) {
+
+    if (
+        currentStreak <= previousStreak
+    ) {
+
+        return;
+
+    }
+
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakIncreased",
+            {
+                detail: {
+
+                    previousStreak,
+
+                    streak:
+                        currentStreak,
+
+                    currentStreak,
+
+                    source:
+                        "streak-engine"
+
+                }
+            }
+        )
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   STREAK LOSS
+--------------------------------------------------------- */
+
+function dispatchStreakLoss(
+    previousStreak,
+    currentStreak
+) {
+
+    if (
+        previousStreak <= 0 ||
+        currentStreak >= previousStreak
+    ) {
+
+        return;
+
+    }
+
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakLost",
+            {
+                detail: {
+
+                    previousStreak,
+
+                    oldStreak:
+                        previousStreak,
+
+                    streak:
+                        currentStreak,
+
+                    currentStreak,
+
+                    source:
+                        "streak-engine"
+
+                }
+            }
+        )
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   GENERAL STREAK UPDATE
+--------------------------------------------------------- */
+
+function dispatchStreakUpdated(
+    date,
+    stats
+) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakUpdated",
+            {
+                detail: {
+
+                    date,
+
+                    streak:
+                        stats.current,
+
+                    currentStreak:
+                        stats.current,
+
+                    longestStreak:
+                        stats.best,
+
+                    source:
+                        "streak-engine"
+
+                }
+            }
+        )
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   STUDY DAY COMPLETED
+--------------------------------------------------------- */
+
+function dispatchStudyDayCompleted(
+    streak
+) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStudyDayCompleted",
+            {
+                detail: {
+
+                    streak,
+
+                    currentStreak:
+                        streak,
+
+                    dayCompleted:
+                        true,
+
+                    studyDayCompleted:
+                        true,
+
+                    source:
+                        "study-day-complete"
+
+                }
+            }
+        )
+    );
+
+}
+
+
+/* =========================================================
    SYNC CURRENT STREAK
 ========================================================= */
 
@@ -736,7 +936,7 @@ function syncStreakFromActivity() {
         getActivity();
 
 
-    const current =
+    const calculatedCurrent =
         calculateCurrentStreak(
             activity
         );
@@ -748,12 +948,53 @@ function syncStreakFromActivity() {
         );
 
 
+    const storedCurrent =
+        Number(
+            localStorage.getItem(
+                STREAK_KEYS.CURRENT
+            ) || 0
+        );
+
+
     const storedBest =
         Number(
             localStorage.getItem(
                 STREAK_KEYS.BEST
             ) || 0
         );
+
+
+    /*
+       IMPORTANT:
+
+       Detect transitions BEFORE overwriting the stored
+       current streak.
+    */
+
+    if (
+        calculatedCurrent >
+        storedCurrent
+    ) {
+
+        dispatchStreakIncrease(
+            storedCurrent,
+            calculatedCurrent
+        );
+
+    }
+
+
+    if (
+        calculatedCurrent <
+        storedCurrent
+    ) {
+
+        dispatchStreakLoss(
+            storedCurrent,
+            calculatedCurrent
+        );
+
+    }
 
 
     const best =
@@ -765,7 +1006,7 @@ function syncStreakFromActivity() {
 
     localStorage.setItem(
         STREAK_KEYS.CURRENT,
-        String(current)
+        String(calculatedCurrent)
     );
 
 
@@ -776,8 +1017,12 @@ function syncStreakFromActivity() {
 
 
     return {
-        current,
+
+        current:
+            calculatedCurrent,
+
         best
+
     };
 
 }
@@ -846,12 +1091,17 @@ function getAllPlanTopics() {
                         if (name) {
 
                             topics.push({
+
                                 subject:
                                     subject.name ||
                                     subject.subject ||
                                     "",
+
                                 topic:
-                                    String(name).trim()
+                                    String(
+                                        name
+                                    ).trim()
+
                             });
 
                         }
@@ -882,10 +1132,14 @@ function getAllPlanTopics() {
                 ) {
 
                     topics.push({
+
                         subject: "",
+
                         topic:
                             topic.trim()
+
                     });
+
 
                     return;
 
@@ -902,11 +1156,16 @@ function getAllPlanTopics() {
                 if (name) {
 
                     topics.push({
+
                         subject:
                             topic.subject ||
                             "",
+
                         topic:
-                            String(name).trim()
+                            String(
+                                name
+                            ).trim()
+
                     });
 
                 }
@@ -945,11 +1204,6 @@ function topicMatchesCompleted(
     }
 
 
-    /*
-       Compatibility with older versions
-       which stored only the topic name.
-    */
-
     if (
         completed.includes(topic)
     ) {
@@ -958,10 +1212,6 @@ function topicMatchesCompleted(
 
     }
 
-
-    /*
-       Also support topic objects.
-    */
 
     return completed.some(
         item => {
@@ -1060,7 +1310,7 @@ function getTodaysRequiredTopics() {
 
 
     /*
-       If a schedule exists, use it.
+       Scheduled day.
     */
 
     if (day) {
@@ -1112,8 +1362,11 @@ function getTodaysRequiredTopics() {
                     if (topic) {
 
                         topics.push({
+
                             subject,
+
                             topic
+
                         });
 
                     }
@@ -1130,10 +1383,7 @@ function getTodaysRequiredTopics() {
 
 
     /*
-       If there is no schedule, fall back
-       to the plan's topics.
-
-       This keeps older StudyMind plans working.
+       Older plans without schedules.
     */
 
     return getAllPlanTopics();
@@ -1186,6 +1436,7 @@ function getTodayProgressData() {
 
 
     return {
+
         completed:
             completedCount,
 
@@ -1201,6 +1452,7 @@ function getTodayProgressData() {
 
         completedTopics:
             completedToday
+
     };
 
 }
@@ -1242,7 +1494,9 @@ function checkTodayCompletion() {
 
 
     /*
-       Already awarded today.
+       Already completed today.
+
+       Do NOT fire another celebration.
     */
 
     if (
@@ -1262,7 +1516,7 @@ function checkTodayCompletion() {
 
 
 /* =========================================================
-   RECORD COMPLETED DAY
+   RECORD COMPLETED STUDY DAY
 ========================================================= */
 
 function recordCompletedStudyDay() {
@@ -1276,7 +1530,9 @@ function recordCompletedStudyDay() {
 
 
     /*
-       Never double-award a day.
+       Already recorded.
+
+       Do not award XP or trigger celebrations again.
     */
 
     if (
@@ -1288,12 +1544,18 @@ function recordCompletedStudyDay() {
             today
         );
 
+
         syncStreakFromActivity();
+
 
         return false;
 
     }
 
+
+    /*
+       Mark today as completed.
+    */
 
     activity[today] = true;
 
@@ -1309,6 +1571,22 @@ function recordCompletedStudyDay() {
         today
     );
 
+
+    /*
+       Capture the old streak BEFORE syncing.
+    */
+
+    const previousStreak =
+        Number(
+            localStorage.getItem(
+                STREAK_KEYS.CURRENT
+            ) || 0
+        );
+
+
+    /*
+       Calculate the new streak.
+    */
 
     const stats =
         syncStreakFromActivity();
@@ -1371,58 +1649,48 @@ function recordCompletedStudyDay() {
 
 
     /*
-       Tell Milo.
+       -----------------------------------------------------
+       STREAK INCREASE
+       -----------------------------------------------------
 
-       Keep the existing streak celebration API.
+       syncStreakFromActivity() already dispatches the
+       dedicated increase event.
+
+       This extra condition is only here for debugging.
     */
 
     if (
-        window.Milo &&
-        typeof window.Milo.celebrateStreak === "function"
+        stats.current >
+        previousStreak
     ) {
 
-        setTimeout(
-            () => {
-
-                try {
-
-                    window.Milo.celebrateStreak(
-                        stats.current
-                    );
-
-                } catch (error) {
-
-                    console.warn(
-                        "Milo streak celebration failed:",
-                        error
-                    );
-
-                }
-
-            },
-            250
+        console.log(
+            `StudyMind streak increased: ${previousStreak} → ${stats.current}`
         );
 
     }
 
 
     /*
-       Tell dashboard/streak page/etc.
+       -----------------------------------------------------
+       STUDY DAY COMPLETED
+       -----------------------------------------------------
+
+       This triggers the calendar celebration.
     */
 
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakUpdated",
-            {
-                detail: {
-                    date: today,
-                    currentStreak:
-                        stats.current,
-                    longestStreak:
-                        stats.best
-                }
-            }
-        )
+    dispatchStudyDayCompleted(
+        stats.current
+    );
+
+
+    /*
+       General update event for the rest of StudyMind.
+    */
+
+    dispatchStreakUpdated(
+        today,
+        stats
     );
 
 
@@ -1465,10 +1733,14 @@ function awardXPOnce(
 
 
     events[eventId] = {
+
         amount,
+
         reason,
+
         date:
             new Date().toISOString()
+
     };
 
 
@@ -1505,9 +1777,14 @@ function awardXPOnce(
             "studyMindXPUpdated",
             {
                 detail: {
+
                     amount,
-                    total: newXP,
+
+                    total:
+                        newXP,
+
                     reason
+
                 }
             }
         )
@@ -1779,6 +2056,7 @@ function renderMessages(
     let message =
         "Complete today's study work to start your streak.";
 
+
     let hero =
         "Every completed study day moves you forward.";
 
@@ -1789,6 +2067,7 @@ function renderMessages(
 
         message =
             "Great start! 🔥 Come back tomorrow.";
+
 
         hero =
             "You've started your streak. Keep it going!";
@@ -1802,6 +2081,7 @@ function renderMessages(
 
         message =
             `${streak} consecutive study days. Keep going! 🔥`;
+
 
         hero =
             `You're on a ${streak}-day streak!`;
@@ -2356,15 +2636,14 @@ window.StudyMindStreak = {
 function recordStudyActivity() {
 
     /*
-       IMPORTANT:
+       Starting or running a timer does NOT automatically
+       complete the day's required study plan.
 
-       This preserves the existing StudyMind rule:
-       merely starting a timer does not automatically
-       mean the day's required study plan is complete.
+       The actual study-day completion is still determined
+       by today's required topics.
 
-       The shared timer can still notify the streak
-       system, but completion of the actual plan is
-       handled here.
+       When all required topics are completed,
+       checkTodayCompletion() records the study day.
     */
 
     return checkTodayCompletion();
