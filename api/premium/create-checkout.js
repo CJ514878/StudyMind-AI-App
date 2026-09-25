@@ -163,7 +163,7 @@ async function createPaystackCheckout(user) {
                             "NGN",
 
                         callback_url:
-    `${getBaseUrl()}/premium/premium-success.html?provider=paystack`
+    `${getBaseUrl()}/premium-success.html?provider=paystack`
 
                     })
             }
