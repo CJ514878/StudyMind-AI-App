@@ -36,15 +36,6 @@ function send(res, status, data) {
 
 async function getUser(token) {
 
-    if (
-        !SUPABASE_URL ||
-        !ANON_KEY
-    ) {
-        throw new Error(
-            "Supabase authentication configuration is missing."
-        );
-    }
-
     const response = await fetch(
         `${SUPABASE_URL}/auth/v1/user`,
         {
@@ -69,28 +60,24 @@ async function getUser(token) {
 
 
 /* =========================================================
-   GET PAYMENT RECORD
+   GET PAYMENT RECORD BY ID
    ========================================================= */
 
-async function getPaymentRecord(
+async function getPaymentById(
     userId,
-    provider,
-    reference
+    paymentId
 ) {
 
     const url =
         `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
-        `?user_id=eq.${encodeURIComponent(userId)}` +
-        `&provider=eq.${encodeURIComponent(provider)}` +
-        `&provider_reference=eq.${encodeURIComponent(reference)}` +
+        `?id=eq.${encodeURIComponent(paymentId)}` +
+        `&user_id=eq.${encodeURIComponent(userId)}` +
         `&select=*` +
         `&limit=1`;
 
     const response = await fetch(
         url,
         {
-            method: "GET",
-
             headers: {
                 "apikey":
                     SERVICE_ROLE_KEY,
@@ -119,9 +106,60 @@ async function getPaymentRecord(
     const rows =
         await response.json();
 
-    return Array.isArray(rows)
-        ? rows[0] || null
-        : null;
+    return rows?.[0] || null;
+}
+
+
+/* =========================================================
+   FIND PAYMENT BY PROVIDER REFERENCE
+   ========================================================= */
+
+async function getPaymentRecord(
+    userId,
+    provider,
+    reference
+) {
+
+    const url =
+        `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
+        `?user_id=eq.${encodeURIComponent(userId)}` +
+        `&provider=eq.${encodeURIComponent(provider)}` +
+        `&provider_reference=eq.${encodeURIComponent(reference)}` +
+        `&select=*` +
+        `&limit=1`;
+
+    const response = await fetch(
+        url,
+        {
+            headers: {
+                "apikey":
+                    SERVICE_ROLE_KEY,
+
+                "Authorization":
+                    `Bearer ${SERVICE_ROLE_KEY}`
+            }
+        }
+    );
+
+    if (!response.ok) {
+
+        const errorText =
+            await response.text();
+
+        console.error(
+            "Premium payment lookup failed:",
+            errorText
+        );
+
+        throw new Error(
+            "Could not find the Premium payment."
+        );
+    }
+
+    const rows =
+        await response.json();
+
+    return rows?.[0] || null;
 }
 
 
@@ -156,6 +194,7 @@ async function updatePayment(
             body:
                 JSON.stringify({
                     ...values,
+
                     updated_at:
                         new Date().toISOString()
                 })
@@ -246,11 +285,6 @@ async function verifyFlutterwave(
         );
     }
 
-    /*
-     * Flutterwave's current verification endpoint
-     * expects the transaction ID.
-     */
-
     const response =
         await fetch(
             `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`,
@@ -333,7 +367,7 @@ async function verifyStripe(
 
 
 /* =========================================================
-   VERIFY PAYMENT DETAILS
+   VALIDATE PAYMENT
    ========================================================= */
 
 function validatePayment(
@@ -345,6 +379,7 @@ function validatePayment(
 ) {
 
     if (!payment) {
+
         return {
             valid: false,
             reason:
@@ -353,9 +388,9 @@ function validatePayment(
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        PAYSTACK
-       ----------------------------------------------------- */
+       ===================================================== */
 
     if (provider === "paystack") {
 
@@ -363,6 +398,7 @@ function validatePayment(
             payment.status !==
             "success"
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -371,20 +407,17 @@ function validatePayment(
         }
 
         if (
-            payment.currency !==
+            String(payment.currency)
+                .toUpperCase() !==
             expectedCurrency
         ) {
+
             return {
                 valid: false,
                 reason:
                     "Payment currency does not match."
             };
         }
-
-        /*
-         * Paystack amount is returned in
-         * the currency's subunit.
-         */
 
         const expectedSubunit =
             Math.round(
@@ -395,6 +428,7 @@ function validatePayment(
             Number(payment.amount) <
             expectedSubunit
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -408,6 +442,7 @@ function validatePayment(
             payment.customer.email.toLowerCase() !==
                 userEmail.toLowerCase()
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -421,9 +456,9 @@ function validatePayment(
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        FLUTTERWAVE
-       ----------------------------------------------------- */
+       ===================================================== */
 
     if (provider === "flutterwave") {
 
@@ -431,6 +466,7 @@ function validatePayment(
             payment.status !==
             "successful"
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -439,9 +475,11 @@ function validatePayment(
         }
 
         if (
-            payment.currency !==
+            String(payment.currency)
+                .toUpperCase() !==
             expectedCurrency
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -453,6 +491,7 @@ function validatePayment(
             Number(payment.amount) <
             Number(expectedAmount)
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -466,6 +505,7 @@ function validatePayment(
             payment.customer.email.toLowerCase() !==
                 userEmail.toLowerCase()
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -479,9 +519,9 @@ function validatePayment(
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        STRIPE
-       ----------------------------------------------------- */
+       ===================================================== */
 
     if (provider === "stripe") {
 
@@ -489,6 +529,7 @@ function validatePayment(
             payment.payment_status !==
             "paid"
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -502,11 +543,10 @@ function validatePayment(
             );
 
         if (
-            Number(
-                payment.amount_total
-            ) <
+            Number(payment.amount_total) <
             expectedSubunit
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -515,9 +555,11 @@ function validatePayment(
         }
 
         if (
-            payment.currency?.toUpperCase() !==
+            String(payment.currency)
+                .toUpperCase() !==
             expectedCurrency
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -531,6 +573,7 @@ function validatePayment(
             payment.customer_details.email.toLowerCase() !==
                 userEmail.toLowerCase()
         ) {
+
             return {
                 valid: false,
                 reason:
@@ -576,6 +619,10 @@ module.exports =
         }
 
 
+        /* =================================================
+           CHECK ENVIRONMENT
+           ================================================= */
+
         if (
             !SUPABASE_URL ||
             !SERVICE_ROLE_KEY ||
@@ -594,10 +641,13 @@ module.exports =
         }
 
 
+        /* =================================================
+           AUTHENTICATION
+           ================================================= */
+
         const authorization =
             req.headers.authorization ||
             "";
-
 
         if (
             !authorization.startsWith(
@@ -639,13 +689,12 @@ module.exports =
 
         try {
 
-            /* -------------------------------------------------
-               AUTHENTICATE USER
-               ------------------------------------------------- */
+            /* =================================================
+               GET AUTHENTICATED USER
+               ================================================= */
 
             const user =
                 await getUser(token);
-
 
             if (!user?.id) {
 
@@ -661,9 +710,9 @@ module.exports =
             }
 
 
-            /* -------------------------------------------------
+            /* =================================================
                READ REQUEST
-               ------------------------------------------------- */
+               ================================================= */
 
             const provider =
                 String(
@@ -677,7 +726,21 @@ module.exports =
             const reference =
                 String(
                     req.body?.reference ||
+                    ""
+                )
+                .trim();
+
+
+            const transactionId =
+                String(
                     req.body?.transaction_id ||
+                    ""
+                )
+                .trim();
+
+
+            const sessionId =
+                String(
                     req.body?.session_id ||
                     ""
                 )
@@ -689,9 +752,7 @@ module.exports =
                     "paystack",
                     "flutterwave",
                     "stripe"
-                ].includes(
-                    provider
-                )
+                ].includes(provider)
             ) {
 
                 return send(
@@ -706,40 +767,182 @@ module.exports =
             }
 
 
-            if (!reference) {
+            /* =================================================
+               FIND ORIGINAL PAYMENT
+               ================================================= */
 
-                return send(
-                    res,
-                    400,
-                    {
-                        success: false,
-                        error:
-                            "Payment reference is required."
-                    }
-                );
-            }
-
-
-            /* -------------------------------------------------
-               FIND OUR ORIGINAL PAYMENT RECORD
-               ------------------------------------------------- */
-
-            let payment =
-                await getPaymentRecord(
-                    user.id,
-                    provider,
-                    reference
-                );
+            let payment = null;
 
 
             /*
-             * Stripe and Flutterwave redirects may provide
-             * identifiers in a form different from the
-             * original provider_reference.
+             * PAYSTACK
              *
-             * We deliberately do not allow a user to activate
-             * an arbitrary payment belonging to another user.
+             * The Paystack reference returned after checkout
+             * is the same reference stored in our database.
              */
+
+            if (
+                provider ===
+                "paystack"
+            ) {
+
+                if (!reference) {
+
+                    return send(
+                        res,
+                        400,
+                        {
+                            success: false,
+                            error:
+                                "Paystack payment reference is required."
+                        }
+                    );
+                }
+
+                payment =
+                    await getPaymentRecord(
+                        user.id,
+                        "paystack",
+                        reference
+                    );
+            }
+
+
+            /*
+             * STRIPE
+             *
+             * The Stripe Checkout Session ID is stored as
+             * provider_reference.
+             */
+
+            if (
+                provider ===
+                "stripe"
+            ) {
+
+                if (!sessionId) {
+
+                    return send(
+                        res,
+                        400,
+                        {
+                            success: false,
+                            error:
+                                "Stripe session ID is required."
+                        }
+                    );
+                }
+
+                payment =
+                    await getPaymentRecord(
+                        user.id,
+                        "stripe",
+                        sessionId
+                    );
+            }
+
+
+            /*
+             * FLUTTERWAVE
+             *
+             * Flutterwave gives us BOTH:
+             *
+             *   transaction_id
+             *   tx_ref
+             *
+             * Our database stores tx_ref.
+             *
+             * Therefore we search by tx_ref first.
+             */
+
+            if (
+                provider ===
+                "flutterwave"
+            ) {
+
+                const flutterwaveTxRef =
+                    String(
+                        req.body?.tx_ref ||
+                        reference ||
+                        ""
+                    ).trim();
+
+
+                if (
+                    !transactionId &&
+                    !flutterwaveTxRef
+                ) {
+
+                    return send(
+                        res,
+                        400,
+                        {
+                            success: false,
+                            error:
+                                "Flutterwave transaction information is required."
+                        }
+                    );
+                }
+
+
+                if (
+                    flutterwaveTxRef
+                ) {
+
+                    payment =
+                        await getPaymentRecord(
+                            user.id,
+                            "flutterwave",
+                            flutterwaveTxRef
+                        );
+                }
+
+
+                /*
+                 * If tx_ref was not supplied, we cannot safely
+                 * connect transaction_id to our pending record
+                 * without querying the provider first.
+                 *
+                 * We therefore use transaction_id to retrieve
+                 * the real Flutterwave transaction below and then
+                 * match its tx_ref against our database.
+                 */
+
+                if (
+                    !payment &&
+                    transactionId
+                ) {
+
+                    const verified =
+                        await verifyFlutterwave(
+                            transactionId
+                        );
+
+
+                    if (
+                        !verified?.tx_ref
+                    ) {
+
+                        return send(
+                            res,
+                            400,
+                            {
+                                success: false,
+                                error:
+                                    "Flutterwave transaction reference was not returned."
+                            }
+                        );
+                    }
+
+
+                    payment =
+                        await getPaymentRecord(
+                            user.id,
+                            "flutterwave",
+                            verified.tx_ref
+                        );
+                }
+            }
 
 
             if (!payment) {
@@ -756,9 +959,9 @@ module.exports =
             }
 
 
-            /* -------------------------------------------------
-               ALREADY ACTIVATED
-               ------------------------------------------------- */
+            /* =================================================
+               ALREADY ACTIVE
+               ================================================= */
 
             if (
                 payment.status === "active" &&
@@ -777,9 +980,9 @@ module.exports =
             }
 
 
-            /* -------------------------------------------------
+            /* =================================================
                EXPECTED PAYMENT DETAILS
-               ------------------------------------------------- */
+               ================================================= */
 
             const expectedAmount =
                 Number(
@@ -796,9 +999,9 @@ module.exports =
             let verifiedPayment;
 
 
-            /* -------------------------------------------------
-               PROVIDER VERIFICATION
-               ------------------------------------------------- */
+            /* =================================================
+               VERIFY WITH PAYMENT PROVIDER
+               ================================================= */
 
             if (
                 provider ===
@@ -809,7 +1012,6 @@ module.exports =
                     await verifyPaystack(
                         payment.provider_reference
                     );
-
             }
 
 
@@ -818,53 +1020,23 @@ module.exports =
                 "flutterwave"
             ) {
 
-                /*
-                 * Flutterwave's current API verifies
-                 * using transaction ID.
-                 *
-                 * The checkout currently stores tx_ref,
-                 * so first resolve the transaction using
-                 * the tx_ref.
-                 */
+                if (!transactionId) {
 
-                const lookupResponse =
-                    await fetch(
-                        `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
-                        `?id=eq.${encodeURIComponent(payment.id)}` +
-                        `&select=provider_reference` +
-                        `&limit=1`,
+                    return send(
+                        res,
+                        400,
                         {
-                            headers: {
-                                "apikey":
-                                    SERVICE_ROLE_KEY,
-
-                                "Authorization":
-                                    `Bearer ${SERVICE_ROLE_KEY}`
-                            }
+                            success: false,
+                            error:
+                                "Flutterwave transaction ID is required."
                         }
-                    );
-
-                if (!lookupResponse.ok) {
-
-                    throw new Error(
-                        "Could not retrieve Flutterwave payment reference."
                     );
                 }
 
-                /*
-                 * Flutterwave redirects provide the transaction
-                 * ID. Therefore the frontend should send that
-                 * transaction ID as the reference.
-                 *
-                 * We require it to match the transaction returned
-                 * by Flutterwave against our original tx_ref.
-                 */
-
                 verifiedPayment =
                     await verifyFlutterwave(
-                        reference
+                        transactionId
                     );
-
             }
 
 
@@ -877,13 +1049,12 @@ module.exports =
                     await verifyStripe(
                         payment.provider_reference
                     );
-
             }
 
 
-            /* -------------------------------------------------
+            /* =================================================
                VALIDATE PAYMENT
-               ------------------------------------------------- */
+               ================================================= */
 
             const validation =
                 validatePayment(
@@ -897,6 +1068,10 @@ module.exports =
 
             if (!validation.valid) {
 
+                /*
+                 * Do not activate Premium.
+                 */
+
                 await updatePayment(
                     payment.id,
                     {
@@ -907,7 +1082,6 @@ module.exports =
                             false
                     }
                 );
-
 
                 return send(
                     res,
@@ -922,9 +1096,9 @@ module.exports =
             }
 
 
-            /* -------------------------------------------------
-               ADDITIONAL REFERENCE VALIDATION
-               ------------------------------------------------- */
+            /* =================================================
+               ADDITIONAL REFERENCE CHECKS
+               ================================================= */
 
             if (
                 provider ===
@@ -942,11 +1116,10 @@ module.exports =
                         {
                             success: false,
                             error:
-                                "Payment reference mismatch."
+                                "Paystack payment reference mismatch."
                         }
                     );
                 }
-
             }
 
 
@@ -970,7 +1143,6 @@ module.exports =
                         }
                     );
                 }
-
             }
 
 
@@ -994,13 +1166,12 @@ module.exports =
                         }
                     );
                 }
-
             }
 
 
-            /* -------------------------------------------------
+            /* =================================================
                ACTIVATE PREMIUM
-               ------------------------------------------------- */
+               ================================================= */
 
             const activated =
                 await updatePayment(
@@ -1026,17 +1197,20 @@ module.exports =
             }
 
 
-            /* -------------------------------------------------
+            /* =================================================
                SUCCESS
-               ------------------------------------------------- */
+               ================================================= */
 
             return send(
                 res,
                 200,
                 {
                     success: true,
+
                     premium: true,
+
                     provider,
+
                     subscriptionId:
                         activated.id
                 }
@@ -1049,18 +1223,18 @@ module.exports =
                 error
             );
 
-
             return send(
                 res,
                 500,
                 {
                     success: false,
+
                     premium: false,
+
                     error:
                         error.message ||
                         "Premium verification failed."
                 }
             );
         }
-
     };
