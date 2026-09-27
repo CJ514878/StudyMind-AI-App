@@ -3049,16 +3049,15 @@ else {
                 user.user_metadata || {};
 
 
-            const displayName =
-                metadata.username ||
-                metadata.full_name ||
-                metadata.name ||
-                metadata.display_name ||
-                (
-                    user.email
-                        ? user.email.split("@")[0]
-                        : "StudyMind Student"
-                );
+         const displayName =
+    String(
+        metadata.username ||
+        metadata.name ||
+        metadata.display_name ||
+        metadata.full_name ||
+        user.email?.split("@")[0] ||
+        "StudyMind Student"
+    ).trim() || "StudyMind Student";
 
 
             /* -------------------------------------------------
