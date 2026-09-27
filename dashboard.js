@@ -509,65 +509,124 @@ function syncLocalStats() {
 ========================================================= */
 
 async function loadUser() {
+
     let username =
         localStorage.getItem("studyMindUsername") ||
         "Student";
 
+
     if (supabaseClient) {
+
         try {
-            const { data } =
+
+            const { data, error } =
                 await supabaseClient.auth.getUser();
 
-            const user = data?.user;
+
+            if (error) {
+                throw error;
+            }
+
+
+            const user =
+                data?.user;
+
 
             if (user) {
+
                 const metadata =
                     user.user_metadata || {};
 
-                username = String(
-                    metadata.username ||
-                    metadata.name ||
-                    metadata.display_name ||
-                    metadata.full_name ||
-                    user.email?.split("@")[0] ||
-                    username ||
-                    "Student"
-                ).trim();
+
+                /*
+                 * Supabase username is the canonical source.
+                 *
+                 * Settings updates:
+                 *   username
+                 *   name
+                 *   display_name
+                 *   full_name
+                 *
+                 * We deliberately check username first.
+                 */
+                username =
+                    String(
+                        metadata.username ||
+                        metadata.display_name ||
+                        metadata.name ||
+                        metadata.full_name ||
+                        localStorage.getItem(
+                            "studyMindUsername"
+                        ) ||
+                        user.email?.split("@")[0] ||
+                        "Student"
+                    ).trim();
+
 
                 if (!username) {
                     username = "Student";
                 }
 
+
+                /*
+                 * Keep localStorage synchronized with
+                 * the authenticated user's username.
+                 */
                 localStorage.setItem(
                     "studyMindUsername",
                     username
                 );
+
             }
 
         } catch (error) {
+
             console.warn(
                 "StudyMind user loading failed:",
                 error
             );
+
         }
+
     }
 
+
+    /*
+     * Dashboard username.
+     */
     const element =
-        document.getElementById("username");
+        document.getElementById(
+            "username"
+        );
+
 
     if (element) {
-        element.textContent = username;
+
+        element.textContent =
+            username;
+
     }
 
+
+    /*
+     * Dashboard avatar.
+     */
     const avatar =
-        document.getElementById("avatar");
+        document.getElementById(
+            "avatar"
+        );
+
 
     if (avatar) {
-        avatar.textContent =
-            username.charAt(0).toUpperCase();
-    }
-}
 
+        avatar.textContent =
+            username
+                .charAt(0)
+                .toUpperCase();
+
+    }
+
+}
 
 /* =========================================================
    STATS
