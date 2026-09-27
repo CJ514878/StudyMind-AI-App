@@ -697,91 +697,127 @@ function syncLocalStats() {
 
 async function loadUser() {
 
+    /*
+     * IMPORTANT:
+     *
+     * Settings is responsible for changing the username.
+     *
+     * localStorage "studyMindUsername" is the immediate
+     * shared username cache used across StudyMind pages.
+     *
+     * Dashboard MUST NOT overwrite it with stale Supabase
+     * metadata.
+     */
+
     let username =
-        localStorage.getItem(
+        String(
+            localStorage.getItem(
+                USERNAME_KEY
+            ) || ""
+        ).trim();
+
+
+    /*
+     * If Settings has already saved a username,
+     * use it immediately.
+     */
+    if (!username) {
+
+        username = "Student";
+
+    }
+
+
+    /*
+     * Update Dashboard immediately.
+     */
+    updateDashboardUsername(
+        username
+    );
+
+
+    /*
+     * Supabase is only used as a FALLBACK when there is
+     * no locally saved username.
+     *
+     * It is deliberately NOT allowed to overwrite an
+     * existing local username.
+     */
+    if (
+        !localStorage.getItem(
             USERNAME_KEY
-        ) ||
-        "Student";
+        )
+    ) {
+
+        const client =
+            window.supabaseClient ||
+            window.studyMindSupabase ||
+            null;
 
 
-    if (supabaseClient) {
+        if (client) {
 
-        try {
+            try {
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient.auth.getUser();
-
-
-            if (error) {
-                throw error;
-            }
+                const {
+                    data,
+                    error
+                } =
+                    await client.auth.getUser();
 
 
-            const user =
-                data?.user;
-
-
-            if (user) {
-
-                const metadata =
-                    user.user_metadata ||
-                    {};
-
-
-                /*
-                 * Supabase Auth is the canonical source.
-                 *
-                 * Priority:
-                 *
-                 * username
-                 * display_name
-                 * name
-                 * full_name
-                 * localStorage
-                 * email prefix
-                 */
-                username =
-                    String(
-                        metadata.username ||
-                        metadata.display_name ||
-                        metadata.name ||
-                        metadata.full_name ||
-                        localStorage.getItem(
-                            USERNAME_KEY
-                        ) ||
-                        user.email?.split("@")[0] ||
-                        "Student"
-                    ).trim();
-
-
-                if (!username) {
-
-                    username =
-                        "Student";
-
+                if (error) {
+                    throw error;
                 }
 
 
-                /*
-                 * Keep localStorage synchronized with
-                 * the authenticated user's username.
-                 */
-                localStorage.setItem(
-                    USERNAME_KEY,
-                    username
+                const user =
+                    data?.user;
+
+
+                if (user) {
+
+                    const metadata =
+                        user.user_metadata ||
+                        {};
+
+
+                    const supabaseUsername =
+                        String(
+                            metadata.username ||
+                            metadata.display_name ||
+                            metadata.name ||
+                            metadata.full_name ||
+                            user.email?.split("@")[0] ||
+                            "Student"
+                        ).trim();
+
+
+                    if (
+                        supabaseUsername
+                    ) {
+
+                        username =
+                            supabaseUsername;
+
+
+                        localStorage.setItem(
+                            USERNAME_KEY,
+                            username
+                        );
+
+                    }
+
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "StudyMind user loading failed:",
+                    error
                 );
 
             }
-
-        } catch (error) {
-
-            console.warn(
-                "StudyMind user loading failed:",
-                error
-            );
 
         }
 
@@ -789,7 +825,40 @@ async function loadUser() {
 
 
     /*
-     * Dashboard username.
+     * Final Dashboard update.
+     */
+    updateDashboardUsername(
+        username
+    );
+
+}
+
+
+/* =========================================================
+   UPDATE DASHBOARD USERNAME
+========================================================= */
+
+function updateDashboardUsername(
+    username
+) {
+
+    username =
+        String(
+            username ||
+            "Student"
+        ).trim();
+
+
+    if (!username) {
+
+        username =
+            "Student";
+
+    }
+
+
+    /*
+     * Username.
      */
     const element =
         document.getElementById(
@@ -806,7 +875,7 @@ async function loadUser() {
 
 
     /*
-     * Dashboard avatar.
+     * Avatar.
      */
     const avatar =
         document.getElementById(
@@ -823,8 +892,13 @@ async function loadUser() {
 
     }
 
-}
 
+    console.log(
+        "StudyMind Dashboard username:",
+        username
+    );
+
+}
 
 /* =========================================================
    STATS
