@@ -691,21 +691,136 @@ const $ = id => document.getElementById(id);
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-    loadStats();
+        /*
+         * Load the canonical username before
+         * initializing the Game Mode interface.
+         */
 
-    loadPlanDefaults();
+        await syncGameModeUsername();
 
-    setupCurriculumEvents();
 
-    updateBattleLimit();
+        loadStats();
 
-    if (window.lucide) {
-        lucide.createIcons();
+        loadPlanDefaults();
+
+        setupCurriculumEvents();
+
+        updateBattleLimit();
+
+
+        /*
+         * Same-page username synchronization.
+         *
+         * This fires when Settings changes the
+         * username while this page is still open.
+         */
+
+        window.addEventListener(
+            "studyMindUsernameChanged",
+            event => {
+
+                const username =
+                    String(
+                        event.detail?.username ||
+                        localStorage.getItem(
+                            STORAGE.USERNAME
+                        ) ||
+                        "Student"
+                    ).trim();
+
+
+                if (!username) {
+                    return;
+                }
+
+
+                localStorage.setItem(
+                    STORAGE.USERNAME,
+                    username
+                );
+
+
+                const playerName =
+                    $("playerName");
+
+
+                if (playerName) {
+
+                    playerName.textContent =
+                        username;
+
+                }
+
+
+                console.log(
+                    "StudyMind Game Mode: username changed:",
+                    username
+                );
+
+            }
+        );
+
+
+        /*
+         * Cross-tab synchronization.
+         *
+         * CustomEvent does not cross browser tabs,
+         * but the storage event does.
+         */
+
+        window.addEventListener(
+            "storage",
+            event => {
+
+                if (
+                    event.key !==
+                    STORAGE.USERNAME
+                ) {
+
+                    return;
+
+                }
+
+
+                const username =
+                    String(
+                        event.newValue ||
+                        "Student"
+                    ).trim() ||
+                    "Student";
+
+
+                const playerName =
+                    $("playerName");
+
+
+                if (playerName) {
+
+                    playerName.textContent =
+                        username;
+
+                }
+
+
+                console.log(
+                    "StudyMind Game Mode: username synchronized from another tab:",
+                    username
+                );
+
+            }
+        );
+
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
     }
-
-});
+);
 
 
 /* =========================================================
