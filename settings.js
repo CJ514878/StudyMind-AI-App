@@ -1,543 +1,978 @@
 "use strict";
 
 /* =========================================================
-   STUDYMIND AI — SETTINGS
+STUDYMIND AI — SETTINGS
+USERNAME = SUPABASE SOURCE OF TRUTH
 ========================================================= */
 
 const SETTINGS = {
 
-    NAME:
-        "studyMindUsername",
 
-    THEME:
-        "studyMindTheme",
+NAME:
+    "studyMindUsername",
 
-    TIMER:
-        "studyMindDefaultTimer",
+THEME:
+    "studyMindTheme",
 
-    DIFFICULTY:
-        "studyMindDifficulty",
+TIMER:
+    "studyMindDefaultTimer",
 
-    SMART_PLANNING:
-        "studyMindSmartPlanning",
+DIFFICULTY:
+    "studyMindDifficulty",
 
-    NOTIFICATIONS:
-        "studyMindNotifications",
+SMART_PLANNING:
+    "studyMindSmartPlanning",
 
-    AI_STYLE:
-        "studyMindAIStyle",
+NOTIFICATIONS:
+    "studyMindNotifications",
 
-    SUGGESTIONS:
-        "studyMindSuggestions"
+AI_STYLE:
+    "studyMindAIStyle",
+
+SUGGESTIONS:
+    "studyMindSuggestions"
+
+
 };
 
 /* =========================================================
-   HELPERS
+HELPERS
 ========================================================= */
 
 function settingsClient() {
 
-    return (
-        window.supabaseClient ||
-        window.studyMindSupabase ||
-        null
-    );
-}
 
-function getCanonicalUsername() {
+return (
+    window.supabaseClient ||
+    window.studyMindSupabase ||
+    null
+);
 
-    return (
-        localStorage.getItem(
-            SETTINGS.NAME
-        ) ||
-        "Student"
-    );
-}
 
-function setCanonicalUsername(
-    username
-) {
-
-    username =
-        String(username || "")
-            .trim();
-
-    if (!username) {
-        username = "Student";
-    }
-
-    localStorage.setItem(
-        SETTINGS.NAME,
-        username
-    );
-
-    document
-        .querySelectorAll(
-            "#usernameDisplay, #username, #userName"
-        )
-        .forEach(element => {
-            element.textContent =
-                username;
-        });
-
-    document
-        .querySelectorAll(
-            "#userAvatar, #avatar"
-        )
-        .forEach(element => {
-            element.textContent =
-                username
-                    .charAt(0)
-                    .toUpperCase();
-        });
-
-    return username;
 }
 
 /* =========================================================
-   LOAD USER
+LOCAL USERNAME
+========================================================= */
+
+function getCanonicalUsername() {
+
+
+return (
+    localStorage.getItem(
+        SETTINGS.NAME
+    ) ||
+    "Student"
+);
+
+
+}
+
+function setCanonicalUsername(
+username
+) {
+
+
+username =
+    String(username || "")
+        .trim();
+
+if (!username) {
+    username = "Student";
+}
+
+localStorage.setItem(
+    SETTINGS.NAME,
+    username
+);
+
+document
+    .querySelectorAll(
+        "#usernameDisplay, #username, #userName"
+    )
+    .forEach(element => {
+
+        element.textContent =
+            username;
+
+    });
+
+document
+    .querySelectorAll(
+        "#userAvatar, #avatar"
+    )
+    .forEach(element => {
+
+        element.textContent =
+            username
+                .charAt(0)
+                .toUpperCase();
+
+    });
+
+return username;
+
+
+}
+
+/* =========================================================
+SYNC LEADERBOARD USERNAME
+-------------------------
+
+Updates the existing authenticated player's
+game_leaderboard.display_name.
+
+This keeps an already-existing leaderboard row
+synchronized when the username changes.
+========================================================= */
+
+async function syncLeaderboardUsername(
+username,
+user
+) {
+
+
+const client =
+    settingsClient();
+
+if (!client || !user) {
+    return {
+        success: false,
+        reason: "No Supabase client or user."
+    };
+}
+
+username =
+    String(username || "")
+        .trim();
+
+if (!username) {
+    return {
+        success: false,
+        reason: "Username is empty."
+    };
+}
+
+
+try {
+
+    /*
+     * The leaderboard row belongs to the
+     * authenticated Supabase user.
+     *
+     * Your leaderboard table uses user_id
+     * to associate the row with the account.
+     */
+
+    const {
+        data,
+        error
+    } =
+        await client
+            .from("game_leaderboard")
+            .update({
+                display_name:
+                    username
+            })
+            .eq(
+                "user_id",
+                user.id
+            )
+            .select();
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    console.log(
+        "StudyMind leaderboard username synchronized.",
+        {
+            userId:
+                user.id,
+
+            displayName:
+                username,
+
+            rowsUpdated:
+                Array.isArray(data)
+                    ? data.length
+                    : 0
+        }
+    );
+
+
+    return {
+        success: true,
+        data
+    };
+
+} catch (error) {
+
+    /*
+     * The Auth username has already been saved.
+     *
+     * If the leaderboard update fails because the
+     * leaderboard row does not exist yet, Game Mode
+     * will create/update it the next time a battle
+     * result is recorded.
+     */
+
+    console.warn(
+        "StudyMind leaderboard username synchronization failed:",
+        error
+    );
+
+
+    return {
+        success: false,
+        error
+    };
+}
+
+
+}
+
+/* =========================================================
+LOAD USER
 ========================================================= */
 
 async function loadSettingsUser() {
 
-    let username =
-        localStorage.getItem(
-            SETTINGS.NAME
+
+let username =
+    localStorage.getItem(
+        SETTINGS.NAME
+    );
+
+
+try {
+
+    const client =
+        settingsClient();
+
+
+    if (client) {
+
+        const {
+            data
+        } =
+            await client.auth.getUser();
+
+
+        const user =
+            data?.user;
+
+
+        const metadata =
+            user?.user_metadata ||
+            {};
+
+
+        /*
+         * Supabase username is the SOURCE OF TRUTH.
+         *
+         * LocalStorage is only the local cache.
+         */
+
+        username =
+            metadata.username ||
+            metadata.display_name ||
+            metadata.name ||
+            metadata.full_name ||
+            username ||
+            (
+                user?.email
+                    ? user.email
+                        .split("@")[0]
+                    : ""
+            ) ||
+            "Student";
+
+
+        username =
+            String(username)
+                .trim() ||
+            "Student";
+
+
+        /*
+         * Keep local cache synchronized.
+         */
+
+        localStorage.setItem(
+            SETTINGS.NAME,
+            username
         );
 
-    try {
-
-        const client =
-            settingsClient();
-
-        if (client) {
-
-            const {
-                data
-            } =
-                await client.auth.getUser();
-
-            const user =
-                data?.user;
-
-            const metadata =
-                user?.user_metadata ||
-                {};
-
-            /*
-             * Username is deliberately FIRST.
-             */
-            username =
-                metadata.username ||
-                username ||
-                metadata.display_name ||
-                metadata.name ||
-                (
-                    user?.email
-                        ? user.email
-                            .split("@")[0]
-                        : ""
-                ) ||
-                "Student";
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind settings user load failed:",
-            error
-        );
     }
 
-    setCanonicalUsername(
-        username
+} catch (error) {
+
+    console.warn(
+        "StudyMind settings user load failed:",
+        error
     );
+
+}
+
+
+setCanonicalUsername(
+    username
+);
+
+
 }
 
 /* =========================================================
-   PROFILE
+PROFILE
 ========================================================= */
 
 function setupProfile() {
 
-    const input =
-        document.getElementById(
-            "displayName"
-        );
 
-    const saveButton =
-        document.getElementById(
-            "saveProfile"
-        );
+const input =
+    document.getElementById(
+        "displayName"
+    );
 
-    if (!input || !saveButton) {
-        return;
-    }
 
-    input.value =
-        getCanonicalUsername();
+const saveButton =
+    document.getElementById(
+        "saveProfile"
+    );
 
-    saveButton.addEventListener(
-        "click",
-        async () => {
 
-            const username =
-                input.value.trim();
+if (!input || !saveButton) {
+    return;
+}
 
-            if (
-                username.length < 3
-            ) {
 
-                showSettingsToast(
-                    "Username must be at least 3 characters."
-                );
+input.value =
+    getCanonicalUsername();
 
-                return;
+
+saveButton.addEventListener(
+    "click",
+    async () => {
+
+        const username =
+            input.value.trim();
+
+
+        /* -------------------------------------------------
+           VALIDATION
+        ------------------------------------------------- */
+
+        if (
+            username.length < 3
+        ) {
+
+            showSettingsToast(
+                "Username must be at least 3 characters."
+            );
+
+            return;
+        }
+
+
+        if (
+            username.length > 30
+        ) {
+
+            showSettingsToast(
+                "Username must be 30 characters or fewer."
+            );
+
+            return;
+        }
+
+
+        /*
+         * Prevent double-clicks while saving.
+         */
+
+        saveButton.disabled = true;
+
+
+        let authSaved =
+            false;
+
+        let leaderboardSaved =
+            false;
+
+
+        try {
+
+            const client =
+                settingsClient();
+
+
+            /* =================================================
+               SUPABASE USER
+            ================================================= */
+
+            let user =
+                null;
+
+
+            if (client) {
+
+                const {
+                    data,
+                    error
+                } =
+                    await client.auth.getUser();
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                user =
+                    data?.user ||
+                    null;
+
+
+                /*
+                 * Save username to Supabase Auth metadata.
+                 */
+
+                if (user) {
+
+                    const {
+                        error:
+                            updateError
+                    } =
+                        await client.auth.updateUser({
+                            data: {
+
+                                username,
+
+                                name:
+                                    username,
+
+                                display_name:
+                                    username
+
+                            }
+                        });
+
+
+                    if (updateError) {
+                        throw updateError;
+                    }
+
+
+                    authSaved = true;
+
+
+                    /*
+                     * Update existing leaderboard row.
+                     */
+
+                    const leaderboardResult =
+                        await syncLeaderboardUsername(
+                            username,
+                            user
+                        );
+
+
+                    leaderboardSaved =
+                        leaderboardResult.success;
+
+                }
+
             }
 
-            if (
-                username.length > 30
-            ) {
 
-                showSettingsToast(
-                    "Username must be 30 characters or fewer."
-                );
+            /* =================================================
+               LOCAL CANONICAL USERNAME
+            ================================================= */
 
-                return;
-            }
-
-            /*
-             * Local canonical value.
-             */
             setCanonicalUsername(
                 username
             );
 
+
             /*
-             * Persist to Supabase metadata
-             * when authenticated.
+             * Keep the settings input synchronized.
              */
-            try {
 
-                const client =
-                    settingsClient();
+            input.value =
+                username;
 
-                if (client) {
 
-                    const {
-                        error
-                    } =
-                        await client.auth.updateUser({
-                            data: {
-                                username,
-                                name: username,
-                                display_name:
-                                    username
-                            }
-                        });
+            /* =================================================
+               CROSS-PAGE EVENT
+            ================================================= */
 
-                    if (error) {
-                        throw error;
-                    }
-                }
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindUsernameChanged",
+                    {
+                        detail: {
 
-                showSettingsToast(
-                    "Username saved successfully."
-                );
+                            username,
 
-                window.dispatchEvent(
-                    new CustomEvent(
-                        "studyMindUsernameChanged",
-                        {
-                            detail: {
-                                username
-                            }
+                            authSaved,
+
+                            leaderboardSaved
+
                         }
-                    )
-                );
+                    }
+                )
+            );
 
-            } catch (error) {
 
-                console.error(
-                    error
-                );
+            /*
+             * Tell other StudyMind components that the
+             * profile has changed.
+             */
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindProfileUpdated",
+                    {
+                        detail: {
+
+                            username,
+
+                            authSaved,
+
+                            leaderboardSaved
+
+                        }
+                    }
+                )
+            );
+
+
+            /* =================================================
+               USER MESSAGE
+            ================================================= */
+
+            if (
+                authSaved &&
+                leaderboardSaved
+            ) {
 
                 showSettingsToast(
-                    "Username saved locally, but could not be synced to your account."
+                    "Username updated everywhere."
                 );
+
             }
+
+            else if (
+                authSaved
+            ) {
+
+                /*
+                 * Auth is updated even if an existing
+                 * leaderboard row wasn't found.
+                 *
+                 * The next Game Mode result will use
+                 * the new username automatically.
+                 */
+
+                showSettingsToast(
+                    "Username updated successfully."
+                );
+
+            }
+
+            else {
+
+                showSettingsToast(
+                    "Username saved locally."
+                );
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "StudyMind username update failed:",
+                error
+            );
+
+
+            /*
+             * Do NOT pretend the Supabase account was
+             * updated if the request failed.
+             *
+             * Keep the local value so the interface
+             * remains usable.
+             */
+
+            setCanonicalUsername(
+                username
+            );
+
+
+            showSettingsToast(
+                "Username saved locally, but could not be synced to your account."
+            );
+
+        } finally {
+
+            saveButton.disabled =
+                false;
+
         }
-    );
+
+    }
+);
+
+
 }
 
 /* =========================================================
-   THEME
+THEME
 ========================================================= */
 
 function loadTheme() {
 
-    const theme =
-        localStorage.getItem(
-            SETTINGS.THEME
-        ) || "dark";
 
-    document.documentElement
-        .setAttribute(
-            "data-theme",
-            theme
-        );
+const theme =
+    localStorage.getItem(
+        SETTINGS.THEME
+    ) || "dark";
+
+
+document.documentElement
+    .setAttribute(
+        "data-theme",
+        theme
+    );
+
+
 }
 
 function setupTheme() {
 
-    document
-        .querySelectorAll(
-            "[data-theme]"
-        )
-        .forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+document
+    .querySelectorAll(
+        "[data-theme]"
+    )
+    .forEach(button => {
 
-                    const theme =
-                        button.dataset.theme;
+        button.addEventListener(
+            "click",
+            () => {
 
-                    if (!theme) return;
+                const theme =
+                    button.dataset.theme;
 
-                    localStorage.setItem(
-                        SETTINGS.THEME,
+
+                if (!theme) {
+                    return;
+                }
+
+
+                localStorage.setItem(
+                    SETTINGS.THEME,
+                    theme
+                );
+
+
+                document.documentElement
+                    .setAttribute(
+                        "data-theme",
                         theme
                     );
 
-                    document.documentElement
-                        .setAttribute(
-                            "data-theme",
-                            theme
-                        );
-                }
-            );
-        });
+            }
+        );
+
+    });
+
+
 }
 
 /* =========================================================
-   TOAST
+TOAST
 ========================================================= */
 
 function showSettingsToast(
-    message
+message
 ) {
 
-    const toast =
-        document.getElementById(
-            "settingsToast"
-        ) ||
-        document.getElementById(
-            "toast"
+
+const toast =
+    document.getElementById(
+        "settingsToast"
+    ) ||
+    document.getElementById(
+        "toast"
+    );
+
+
+if (!toast) {
+    return;
+}
+
+
+toast.textContent =
+    message;
+
+
+toast.classList.add(
+    "show"
+);
+
+
+setTimeout(
+    () => {
+
+        toast.classList.remove(
+            "show"
         );
 
-    if (!toast) {
-        return;
-    }
+    },
+    2500
+);
 
-    toast.textContent =
-        message;
 
-    toast.classList.add(
-        "show"
-    );
-
-    setTimeout(
-        () => {
-            toast.classList.remove(
-                "show"
-            );
-        },
-        2500
-    );
 }
 
 /* =========================================================
-   LOGOUT
+LOGOUT
 ========================================================= */
 
 function setupLogout() {
 
-    document
-        .querySelectorAll(
-            "#logout, [data-logout]"
-        )
-        .forEach(button => {
 
-            button.addEventListener(
-                "click",
-                async event => {
+document
+    .querySelectorAll(
+        "#logout, [data-logout]"
+    )
+    .forEach(button => {
 
-                    event.preventDefault();
+        button.addEventListener(
+            "click",
+            async event => {
 
-                    try {
+                event.preventDefault();
 
-                        const client =
-                            settingsClient();
 
-                        if (client) {
-                            await client.auth.signOut();
-                        }
+                try {
 
-                    } catch (error) {
-                        console.warn(
-                            error
-                        );
+                    const client =
+                        settingsClient();
+
+
+                    if (client) {
+
+                        await client.auth.signOut();
+
                     }
 
-                    window.location.href =
-                        "home.html";
+                } catch (error) {
+
+                    console.warn(
+                        error
+                    );
+
                 }
-            );
-        });
+
+
+                window.location.href =
+                    "home.html";
+
+            }
+        );
+
+    });
+
+
 }
 
 /* =========================================================
-   RESET STUDY DATA
-   IMPORTANT:
-   USERNAME + PREMIUM ARE PRESERVED.
+RESET STUDY DATA
+IMPORTANT:
+USERNAME + PREMIUM ARE PRESERVED.
 ========================================================= */
 
 function resetStudyData() {
 
-    const confirmed =
-        window.confirm(
-            "This will reset your study progress. Your username and Premium status will remain. Continue?"
-        );
 
-    if (!confirmed) {
-        return;
-    }
+const confirmed =
+    window.confirm(
+        "This will reset your study progress. Your username and Premium status will remain. Continue?"
+    );
 
-    const username =
-        localStorage.getItem(
-            SETTINGS.NAME
-        );
 
-    const premium =
-        localStorage.getItem(
-            "studyMindPremium"
-        );
+if (!confirmed) {
+    return;
+}
 
-    Object.keys(localStorage)
-        .filter(
-            key =>
-                key.startsWith(
-                    "studyMind"
-                )
-        )
-        .forEach(key => {
 
-            if (
-                key !==
-                    SETTINGS.NAME &&
-                key !==
-                    "studyMindPremium"
-            ) {
-                localStorage.removeItem(
-                    key
-                );
-            }
-        });
+const username =
+    localStorage.getItem(
+        SETTINGS.NAME
+    );
+
+
+const premium =
+    localStorage.getItem(
+        "studyMindPremium"
+    );
+
+
+Object.keys(localStorage)
+    .filter(
+        key =>
+            key.startsWith(
+                "studyMind"
+            )
+    )
+    .forEach(key => {
+
+        if (
+            key !==
+                SETTINGS.NAME &&
+            key !==
+                "studyMindPremium"
+        ) {
+
+            localStorage.removeItem(
+                key
+            );
+
+        }
+
+    });
+
+
+localStorage.setItem(
+    SETTINGS.NAME,
+    username || "Student"
+);
+
+
+if (premium !== null) {
 
     localStorage.setItem(
-        SETTINGS.NAME,
-        username || "Student"
+        "studyMindPremium",
+        premium
     );
 
-    if (premium !== null) {
+}
 
-        localStorage.setItem(
-            "studyMindPremium",
-            premium
-        );
-    }
 
-    /*
-     * Explicit zero-state.
-     */
-    localStorage.setItem(
-        "studyMindXP",
-        "0"
-    );
+/*
+ * Explicit zero-state.
+ */
 
-    localStorage.setItem(
-        "studyMindTotalXP",
-        "0"
-    );
+localStorage.setItem(
+    "studyMindXP",
+    "0"
+);
 
-    localStorage.setItem(
-        "studyMindStreak",
-        "0"
-    );
 
-    localStorage.setItem(
-        "studyMindStudyScore",
-        "0"
-    );
+localStorage.setItem(
+    "studyMindTotalXP",
+    "0"
+);
 
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindProgressUpdated"
-        )
-    );
 
-    showSettingsToast(
-        "Study progress reset."
-    );
+localStorage.setItem(
+    "studyMindStreak",
+    "0"
+);
 
-    setTimeout(
-        () => {
-            window.location.reload();
-        },
-        800
-    );
+
+localStorage.setItem(
+    "studyMindStudyScore",
+    "0"
+);
+
+
+window.dispatchEvent(
+    new CustomEvent(
+        "studyMindProgressUpdated"
+    )
+);
+
+
+showSettingsToast(
+    "Study progress reset."
+);
+
+
+setTimeout(
+    () => {
+
+        window.location.reload();
+
+    },
+    800
+);
+
+
 }
 
 /* =========================================================
-   INITIALIZE
+INITIALIZE
 ========================================================= */
 
 document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+"DOMContentLoaded",
+() => {
 
-        loadTheme();
-        loadSettingsUser();
-        setupProfile();
-        setupTheme();
-        setupLogout();
 
-        const reset =
-            document.getElementById(
-                "resetStudyData"
-            );
+    loadTheme();
 
-        if (reset) {
-            reset.addEventListener(
-                "click",
-                resetStudyData
-            );
-        }
+    loadSettingsUser();
+
+    setupProfile();
+
+    setupTheme();
+
+    setupLogout();
+
+
+    const reset =
+        document.getElementById(
+            "resetStudyData"
+        );
+
+
+    if (reset) {
+
+        reset.addEventListener(
+            "click",
+            resetStudyData
+        );
+
     }
+
+}
+
+
 );
 
 /* =========================================================
-   PUBLIC
+PUBLIC
 ========================================================= */
 
 window.StudyMindSettings = {
 
-    getUsername:
-        getCanonicalUsername,
 
-    setUsername:
-        setCanonicalUsername,
+getUsername:
+    getCanonicalUsername,
 
-    resetStudyData
+setUsername:
+    setCanonicalUsername,
+
+resetStudyData,
+
+syncLeaderboardUsername
+
+
 };
