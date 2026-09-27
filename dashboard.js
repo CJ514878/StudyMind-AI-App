@@ -52,6 +52,9 @@ const COMPLETED_TOPICS_KEY =
 const LAST_COMPLETED_KEY =
     "studyMindLastCompletedPlanDate";
 
+const USERNAME_KEY =
+    "studyMindUsername";
+
 
 /* =========================================================
    SHARED TIMER KEYS
@@ -179,6 +182,68 @@ document.addEventListener(
             "storage",
             event => {
 
+                /* -----------------------------------------
+                   USERNAME
+                ----------------------------------------- */
+
+                if (
+                    event.key ===
+                    USERNAME_KEY
+                ) {
+
+                    const username =
+                        String(
+                            event.newValue ||
+                            "Student"
+                        ).trim();
+
+
+                    if (username) {
+
+                        const usernameElement =
+                            document.getElementById(
+                                "username"
+                            );
+
+
+                        if (usernameElement) {
+
+                            usernameElement.textContent =
+                                username;
+
+                        }
+
+
+                        const avatar =
+                            document.getElementById(
+                                "avatar"
+                            );
+
+
+                        if (avatar) {
+
+                            avatar.textContent =
+                                username
+                                    .charAt(0)
+                                    .toUpperCase();
+
+                        }
+
+
+                        console.log(
+                            "StudyMind Dashboard: username synchronized from localStorage:",
+                            username
+                        );
+
+                    }
+
+                }
+
+
+                /* -----------------------------------------
+                   COMPLETED TOPICS
+                ----------------------------------------- */
+
                 if (
                     event.key ===
                     COMPLETED_TOPICS_KEY
@@ -204,6 +269,10 @@ document.addEventListener(
 
                 }
 
+
+                /* -----------------------------------------
+                   STUDY PLAN
+                ----------------------------------------- */
 
                 if (
                     event.key ===
@@ -231,6 +300,10 @@ document.addEventListener(
                 }
 
 
+                /* -----------------------------------------
+                   XP
+                ----------------------------------------- */
+
                 if (
                     event.key ===
                     XP_KEY
@@ -246,6 +319,10 @@ document.addEventListener(
 
                 }
 
+
+                /* -----------------------------------------
+                   STREAK
+                ----------------------------------------- */
 
                 if (
                     event.key ===
@@ -330,6 +407,7 @@ document.addEventListener(
             }
         );
 
+
         /* =================================================
            USERNAME SYNCHRONIZATION
         ================================================= */
@@ -342,7 +420,7 @@ document.addEventListener(
                     String(
                         event.detail?.username ||
                         localStorage.getItem(
-                            "studyMindUsername"
+                            USERNAME_KEY
                         ) ||
                         "Student"
                     ).trim();
@@ -357,7 +435,7 @@ document.addEventListener(
                  * Keep local username synchronized.
                  */
                 localStorage.setItem(
-                    "studyMindUsername",
+                    USERNAME_KEY,
                     username
                 );
 
@@ -405,6 +483,7 @@ document.addEventListener(
 
             }
         );
+
 
         /* =================================================
            SHARED TIMER UI EVENT
@@ -516,6 +595,39 @@ document.addEventListener(
 
 
 /* =========================================================
+   USERNAME REFRESH WHEN DASHBOARD BECOMES VISIBLE
+========================================================= */
+
+document.addEventListener(
+    "visibilitychange",
+    async () => {
+
+        if (
+            document.visibilityState !==
+            "visible"
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await loadUser();
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind Dashboard: username refresh failed:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
    SYNCHRONIZE LOCAL STATS
 ========================================================= */
 
@@ -586,7 +698,9 @@ function syncLocalStats() {
 async function loadUser() {
 
     let username =
-        localStorage.getItem("studyMindUsername") ||
+        localStorage.getItem(
+            USERNAME_KEY
+        ) ||
         "Student";
 
 
@@ -594,7 +708,10 @@ async function loadUser() {
 
         try {
 
-            const { data, error } =
+            const {
+                data,
+                error
+            } =
                 await supabaseClient.auth.getUser();
 
 
@@ -610,19 +727,21 @@ async function loadUser() {
             if (user) {
 
                 const metadata =
-                    user.user_metadata || {};
+                    user.user_metadata ||
+                    {};
 
 
                 /*
-                 * Supabase username is the canonical source.
+                 * Supabase Auth is the canonical source.
                  *
-                 * Settings updates:
-                 *   username
-                 *   name
-                 *   display_name
-                 *   full_name
+                 * Priority:
                  *
-                 * We deliberately check username first.
+                 * username
+                 * display_name
+                 * name
+                 * full_name
+                 * localStorage
+                 * email prefix
                  */
                 username =
                     String(
@@ -631,7 +750,7 @@ async function loadUser() {
                         metadata.name ||
                         metadata.full_name ||
                         localStorage.getItem(
-                            "studyMindUsername"
+                            USERNAME_KEY
                         ) ||
                         user.email?.split("@")[0] ||
                         "Student"
@@ -639,7 +758,10 @@ async function loadUser() {
 
 
                 if (!username) {
-                    username = "Student";
+
+                    username =
+                        "Student";
+
                 }
 
 
@@ -648,7 +770,7 @@ async function loadUser() {
                  * the authenticated user's username.
                  */
                 localStorage.setItem(
-                    "studyMindUsername",
+                    USERNAME_KEY,
                     username
                 );
 
@@ -702,6 +824,7 @@ async function loadUser() {
     }
 
 }
+
 
 /* =========================================================
    STATS
