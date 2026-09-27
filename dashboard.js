@@ -330,6 +330,81 @@ document.addEventListener(
             }
         );
 
+        /* =================================================
+           USERNAME SYNCHRONIZATION
+        ================================================= */
+
+        window.addEventListener(
+            "studyMindUsernameChanged",
+            event => {
+
+                const username =
+                    String(
+                        event.detail?.username ||
+                        localStorage.getItem(
+                            "studyMindUsername"
+                        ) ||
+                        "Student"
+                    ).trim();
+
+
+                if (!username) {
+                    return;
+                }
+
+
+                /*
+                 * Keep local username synchronized.
+                 */
+                localStorage.setItem(
+                    "studyMindUsername",
+                    username
+                );
+
+
+                /*
+                 * Update Dashboard username immediately.
+                 */
+                const usernameElement =
+                    document.getElementById(
+                        "username"
+                    );
+
+
+                if (usernameElement) {
+
+                    usernameElement.textContent =
+                        username;
+
+                }
+
+
+                /*
+                 * Update Dashboard avatar immediately.
+                 */
+                const avatar =
+                    document.getElementById(
+                        "avatar"
+                    );
+
+
+                if (avatar) {
+
+                    avatar.textContent =
+                        username
+                            .charAt(0)
+                            .toUpperCase();
+
+                }
+
+
+                console.log(
+                    "StudyMind Dashboard: username updated:",
+                    username
+                );
+
+            }
+        );
 
         /* =================================================
            SHARED TIMER UI EVENT
