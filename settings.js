@@ -1,978 +1,1027 @@
 "use strict";
 
 /* =========================================================
-STUDYMIND AI — SETTINGS
-USERNAME = SUPABASE SOURCE OF TRUTH
-========================================================= */
+   STUDYMIND AI — SETTINGS
+   USERNAME = SUPABASE SOURCE OF TRUTH
+   ========================================================= */
 
 const SETTINGS = {
 
+    NAME:
+        "studyMindUsername",
 
-NAME:
-    "studyMindUsername",
+    THEME:
+        "studyMindTheme",
 
-THEME:
-    "studyMindTheme",
+    TIMER:
+        "studyMindDefaultTimer",
 
-TIMER:
-    "studyMindDefaultTimer",
+    DIFFICULTY:
+        "studyMindDifficulty",
 
-DIFFICULTY:
-    "studyMindDifficulty",
+    SMART_PLANNING:
+        "studyMindSmartPlanning",
 
-SMART_PLANNING:
-    "studyMindSmartPlanning",
+    NOTIFICATIONS:
+        "studyMindNotifications",
 
-NOTIFICATIONS:
-    "studyMindNotifications",
+    AI_STYLE:
+        "studyMindAIStyle",
 
-AI_STYLE:
-    "studyMindAIStyle",
-
-SUGGESTIONS:
-    "studyMindSuggestions"
-
+    SUGGESTIONS:
+        "studyMindSuggestions"
 
 };
 
+
 /* =========================================================
-HELPERS
-========================================================= */
+   HELPERS
+   ========================================================= */
 
 function settingsClient() {
 
-
-return (
-    window.supabaseClient ||
-    window.studyMindSupabase ||
-    null
-);
-
+    return (
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        null
+    );
 
 }
 
+
 /* =========================================================
-LOCAL USERNAME
-========================================================= */
+   GET CANONICAL USERNAME
+   ========================================================= */
 
 function getCanonicalUsername() {
 
-
-return (
-    localStorage.getItem(
-        SETTINGS.NAME
-    ) ||
-    "Student"
-);
-
+    return (
+        localStorage.getItem(
+            SETTINGS.NAME
+        ) ||
+        "Student"
+    );
 
 }
 
-function setCanonicalUsername(
-username
-) {
-
-
-username =
-    String(username || "")
-        .trim();
-
-if (!username) {
-    username = "Student";
-}
-
-localStorage.setItem(
-    SETTINGS.NAME,
-    username
-);
-
-document
-    .querySelectorAll(
-        "#usernameDisplay, #username, #userName"
-    )
-    .forEach(element => {
-
-        element.textContent =
-            username;
-
-    });
-
-document
-    .querySelectorAll(
-        "#userAvatar, #avatar"
-    )
-    .forEach(element => {
-
-        element.textContent =
-            username
-                .charAt(0)
-                .toUpperCase();
-
-    });
-
-return username;
-
-
-}
 
 /* =========================================================
-SYNC LEADERBOARD USERNAME
--------------------------
+   SET CANONICAL USERNAME
+   ========================================================= */
 
-Updates the existing authenticated player's
-game_leaderboard.display_name.
-
-This keeps an already-existing leaderboard row
-synchronized when the username changes.
-========================================================= */
-
-async function syncLeaderboardUsername(
-username,
-user
+function setCanonicalUsername(
+    username
 ) {
 
+    username =
+        String(username || "")
+            .trim();
 
-const client =
-    settingsClient();
-
-if (!client || !user) {
-    return {
-        success: false,
-        reason: "No Supabase client or user."
-    };
-}
-
-username =
-    String(username || "")
-        .trim();
-
-if (!username) {
-    return {
-        success: false,
-        reason: "Username is empty."
-    };
-}
-
-
-try {
-
-    /*
-     * The leaderboard row belongs to the
-     * authenticated Supabase user.
-     *
-     * Your leaderboard table uses user_id
-     * to associate the row with the account.
-     */
-
-    const {
-        data,
-        error
-    } =
-        await client
-            .from("game_leaderboard")
-            .update({
-                display_name:
-                    username
-            })
-            .eq(
-                "user_id",
-                user.id
-            )
-            .select();
-
-
-    if (error) {
-        throw error;
+    if (!username) {
+        username = "Student";
     }
 
 
-    console.log(
-        "StudyMind leaderboard username synchronized.",
-        {
-            userId:
-                user.id,
+    /* -------------------------------------------------------
+       LOCAL STORAGE
+    ------------------------------------------------------- */
 
-            displayName:
-                username,
-
-            rowsUpdated:
-                Array.isArray(data)
-                    ? data.length
-                    : 0
-        }
+    localStorage.setItem(
+        SETTINGS.NAME,
+        username
     );
 
 
-    return {
-        success: true,
-        data
-    };
+    /* -------------------------------------------------------
+       UPDATE CURRENT PAGE
+    ------------------------------------------------------- */
 
-} catch (error) {
+    document
+        .querySelectorAll(
+            "#usernameDisplay, #username, #userName"
+        )
+        .forEach(element => {
 
-    /*
-     * The Auth username has already been saved.
-     *
-     * If the leaderboard update fails because the
-     * leaderboard row does not exist yet, Game Mode
-     * will create/update it the next time a battle
-     * result is recorded.
-     */
+            element.textContent =
+                username;
 
-    console.warn(
-        "StudyMind leaderboard username synchronization failed:",
-        error
-    );
+        });
 
 
-    return {
-        success: false,
-        error
-    };
+    document
+        .querySelectorAll(
+            "#userAvatar, #avatar"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                username
+                    .charAt(0)
+                    .toUpperCase();
+
+        });
+
+
+    return username;
+
 }
 
-
-}
 
 /* =========================================================
-LOAD USER
-========================================================= */
+   SYNC LEADERBOARD USERNAME
+   ---------------------------------------------------------
+   Updates the authenticated user's existing
+   game_leaderboard row.
 
-async function loadSettingsUser() {
+   IMPORTANT:
+   game_leaderboard.user_id must contain the
+   Supabase Auth user's UUID.
+   ========================================================= */
 
-
-let username =
-    localStorage.getItem(
-        SETTINGS.NAME
-    );
-
-
-try {
+async function syncLeaderboardUsername(
+    username,
+    user
+) {
 
     const client =
         settingsClient();
 
 
-    if (client) {
+    if (!client || !user) {
 
-        const {
-            data
-        } =
-            await client.auth.getUser();
-
-
-        const user =
-            data?.user;
-
-
-        const metadata =
-            user?.user_metadata ||
-            {};
-
-
-        /*
-         * Supabase username is the SOURCE OF TRUTH.
-         *
-         * LocalStorage is only the local cache.
-         */
-
-        username =
-            metadata.username ||
-            metadata.display_name ||
-            metadata.name ||
-            metadata.full_name ||
-            username ||
-            (
-                user?.email
-                    ? user.email
-                        .split("@")[0]
-                    : ""
-            ) ||
-            "Student";
-
-
-        username =
-            String(username)
-                .trim() ||
-            "Student";
-
-
-        /*
-         * Keep local cache synchronized.
-         */
-
-        localStorage.setItem(
-            SETTINGS.NAME,
-            username
-        );
+        return {
+            success: false,
+            reason:
+                "No Supabase client or authenticated user."
+        };
 
     }
 
-} catch (error) {
 
-    console.warn(
-        "StudyMind settings user load failed:",
-        error
-    );
-
-}
+    username =
+        String(username || "")
+            .trim();
 
 
-setCanonicalUsername(
-    username
-);
+    if (!username) {
+
+        return {
+            success: false,
+            reason:
+                "Username is empty."
+        };
+
+    }
 
 
-}
+    try {
 
-/* =========================================================
-PROFILE
-========================================================= */
-
-function setupProfile() {
-
-
-const input =
-    document.getElementById(
-        "displayName"
-    );
-
-
-const saveButton =
-    document.getElementById(
-        "saveProfile"
-    );
-
-
-if (!input || !saveButton) {
-    return;
-}
+        const {
+            data,
+            error
+        } =
+            await client
+                .from(
+                    "game_leaderboard"
+                )
+                .update({
+                    display_name:
+                        username
+                })
+                .eq(
+                    "user_id",
+                    user.id
+                )
+                .select();
 
 
-input.value =
-    getCanonicalUsername();
-
-
-saveButton.addEventListener(
-    "click",
-    async () => {
-
-        const username =
-            input.value.trim();
-
-
-        /* -------------------------------------------------
-           VALIDATION
-        ------------------------------------------------- */
-
-        if (
-            username.length < 3
-        ) {
-
-            showSettingsToast(
-                "Username must be at least 3 characters."
-            );
-
-            return;
+        if (error) {
+            throw error;
         }
 
 
-        if (
-            username.length > 30
-        ) {
+        console.log(
+            "StudyMind: leaderboard username synchronized.",
+            {
+                userId:
+                    user.id,
 
-            showSettingsToast(
-                "Username must be 30 characters or fewer."
-            );
+                username,
 
-            return;
-        }
+                rowsUpdated:
+                    Array.isArray(data)
+                        ? data.length
+                        : 0
+            }
+        );
 
+
+        return {
+
+            success: true,
+
+            data
+
+        };
+
+    }
+
+    catch (error) {
 
         /*
-         * Prevent double-clicks while saving.
+         * This does NOT undo the Auth username change.
+         *
+         * If the leaderboard row does not exist yet,
+         * Game Mode will use the new username when it
+         * creates/updates the player's result.
          */
 
-        saveButton.disabled = true;
+        console.warn(
+            "StudyMind: could not synchronize leaderboard username:",
+            error
+        );
 
 
-        let authSaved =
-            false;
+        return {
 
-        let leaderboardSaved =
-            false;
+            success: false,
+
+            error
+
+        };
+
+    }
+
+}
 
 
-        try {
+/* =========================================================
+   LOAD USER
+   ========================================================= */
 
-            const client =
-                settingsClient();
+async function loadSettingsUser() {
+
+    let username =
+        localStorage.getItem(
+            SETTINGS.NAME
+        );
 
 
-            /* =================================================
-               SUPABASE USER
-            ================================================= */
+    try {
 
-            let user =
+        const client =
+            settingsClient();
+
+
+        if (client) {
+
+            const {
+                data,
+                error
+            } =
+                await client.auth.getUser();
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            const user =
+                data?.user ||
                 null;
 
 
-            if (client) {
-
-                const {
-                    data,
-                    error
-                } =
-                    await client.auth.getUser();
+            const metadata =
+                user?.user_metadata ||
+                {};
 
 
-                if (error) {
-                    throw error;
-                }
+            /*
+             * SUPABASE AUTH IS THE SOURCE OF TRUTH.
+             *
+             * Priority:
+             *
+             * username
+             * display_name
+             * name
+             * full_name
+             * localStorage
+             * email prefix
+             */
+
+            username =
+                metadata.username ||
+                metadata.display_name ||
+                metadata.name ||
+                metadata.full_name ||
+                username ||
+                (
+                    user?.email
+                        ? user.email
+                            .split("@")[0]
+                        : ""
+                ) ||
+                "Student";
 
 
-                user =
-                    data?.user ||
+            username =
+                String(username)
+                    .trim() ||
+                "Student";
+
+
+            /*
+             * Keep local cache synchronized.
+             */
+
+            localStorage.setItem(
+                SETTINGS.NAME,
+                username
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "StudyMind settings user load failed:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Update the current Settings page.
+     */
+
+    setCanonicalUsername(
+        username
+    );
+
+
+    return username;
+
+}
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+function setupProfile() {
+
+    const input =
+        document.getElementById(
+            "displayName"
+        );
+
+
+    const saveButton =
+        document.getElementById(
+            "saveProfile"
+        );
+
+
+    if (!input || !saveButton) {
+        return;
+    }
+
+
+    input.value =
+        getCanonicalUsername();
+
+
+    saveButton.addEventListener(
+        "click",
+        async () => {
+
+            const username =
+                input.value.trim();
+
+
+            /* ------------------------------------------------
+               VALIDATION
+            ------------------------------------------------ */
+
+            if (
+                username.length < 3
+            ) {
+
+                showSettingsToast(
+                    "Username must be at least 3 characters."
+                );
+
+                return;
+            }
+
+
+            if (
+                username.length > 30
+            ) {
+
+                showSettingsToast(
+                    "Username must be 30 characters or fewer."
+                );
+
+                return;
+            }
+
+
+            /*
+             * Prevent double-clicks.
+             */
+
+            saveButton.disabled =
+                true;
+
+
+            let authSaved =
+                false;
+
+            let leaderboardSaved =
+                false;
+
+
+            try {
+
+                const client =
+                    settingsClient();
+
+
+                let user =
                     null;
 
 
-                /*
-                 * Save username to Supabase Auth metadata.
-                 */
+                /* ==========================================
+                   SUPABASE AUTH
+                   ========================================== */
 
-                if (user) {
+                if (client) {
 
                     const {
-                        error:
-                            updateError
+                        data,
+                        error
                     } =
-                        await client.auth.updateUser({
-                            data: {
+                        await client.auth.getUser();
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    user =
+                        data?.user ||
+                        null;
+
+
+                    if (user) {
+
+                        /*
+                         * Save ALL common username fields.
+                         *
+                         * username = canonical field
+                         * display_name/name/full_name =
+                         * compatibility with existing code.
+                         */
+
+                        const {
+                            data:
+                                updateData,
+                            error:
+                                updateError
+                        } =
+                            await client.auth.updateUser({
+
+                                data: {
+
+                                    username,
+
+                                    name:
+                                        username,
+
+                                    display_name:
+                                        username,
+
+                                    full_name:
+                                        username
+
+                                }
+
+                            });
+
+
+                        if (updateError) {
+                            throw updateError;
+                        }
+
+
+                        authSaved =
+                            true;
+
+
+                        /*
+                         * Use the returned user when available.
+                         */
+
+                        user =
+                            updateData?.user ||
+                            user;
+
+
+                        /* ==================================
+                           LEADERBOARD
+                           ================================== */
+
+                        const leaderboardResult =
+                            await syncLeaderboardUsername(
+                                username,
+                                user
+                            );
+
+
+                        leaderboardSaved =
+                            leaderboardResult.success;
+
+                    }
+
+                }
+
+
+                /* ==========================================
+                   LOCAL CANONICAL USERNAME
+                   ========================================== */
+
+                setCanonicalUsername(
+                    username
+                );
+
+
+                input.value =
+                    username;
+
+
+                /* ==========================================
+                   SAME-PAGE USERNAME EVENT
+                   ========================================== */
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "studyMindUsernameChanged",
+                        {
+                            detail: {
 
                                 username,
 
-                                name:
-                                    username,
+                                authSaved,
 
-                                display_name:
-                                    username
+                                leaderboardSaved
 
                             }
-                        });
+                        }
+                    )
+                );
 
 
-                    if (updateError) {
-                        throw updateError;
-                    }
+                /* ==========================================
+                   PROFILE EVENT
+                   ========================================== */
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "studyMindProfileUpdated",
+                        {
+                            detail: {
+
+                                username,
+
+                                authSaved,
+
+                                leaderboardSaved
+
+                            }
+                        }
+                    )
+                );
 
 
-                    authSaved = true;
+                /* ==========================================
+                   USER MESSAGE
+                   ========================================== */
 
+                if (
+                    authSaved &&
+                    leaderboardSaved
+                ) {
 
-                    /*
-                     * Update existing leaderboard row.
-                     */
+                    showSettingsToast(
+                        "Username updated everywhere."
+                    );
 
-                    const leaderboardResult =
-                        await syncLeaderboardUsername(
-                            username,
-                            user
-                        );
+                }
 
+                else if (
+                    authSaved
+                ) {
 
-                    leaderboardSaved =
-                        leaderboardResult.success;
+                    showSettingsToast(
+                        "Username updated successfully."
+                    );
+
+                }
+
+                else {
+
+                    showSettingsToast(
+                        "Username saved locally."
+                    );
 
                 }
 
             }
 
+            catch (error) {
 
-            /* =================================================
-               LOCAL CANONICAL USERNAME
-            ================================================= */
-
-            setCanonicalUsername(
-                username
-            );
-
-
-            /*
-             * Keep the settings input synchronized.
-             */
-
-            input.value =
-                username;
-
-
-            /* =================================================
-               CROSS-PAGE EVENT
-            ================================================= */
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "studyMindUsernameChanged",
-                    {
-                        detail: {
-
-                            username,
-
-                            authSaved,
-
-                            leaderboardSaved
-
-                        }
-                    }
-                )
-            );
-
-
-            /*
-             * Tell other StudyMind components that the
-             * profile has changed.
-             */
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "studyMindProfileUpdated",
-                    {
-                        detail: {
-
-                            username,
-
-                            authSaved,
-
-                            leaderboardSaved
-
-                        }
-                    }
-                )
-            );
-
-
-            /* =================================================
-               USER MESSAGE
-            ================================================= */
-
-            if (
-                authSaved &&
-                leaderboardSaved
-            ) {
-
-                showSettingsToast(
-                    "Username updated everywhere."
+                console.error(
+                    "StudyMind username update failed:",
+                    error
                 );
 
-            }
-
-            else if (
-                authSaved
-            ) {
 
                 /*
-                 * Auth is updated even if an existing
-                 * leaderboard row wasn't found.
-                 *
-                 * The next Game Mode result will use
-                 * the new username automatically.
+                 * Keep the interface usable even if
+                 * Supabase fails.
                  */
 
+                setCanonicalUsername(
+                    username
+                );
+
+
+                input.value =
+                    username;
+
+
                 showSettingsToast(
-                    "Username updated successfully."
+                    "Username saved locally, but could not be synced to your account."
                 );
 
             }
 
-            else {
+            finally {
 
-                showSettingsToast(
-                    "Username saved locally."
-                );
+                saveButton.disabled =
+                    false;
 
             }
-
-
-        } catch (error) {
-
-            console.error(
-                "StudyMind username update failed:",
-                error
-            );
-
-
-            /*
-             * Do NOT pretend the Supabase account was
-             * updated if the request failed.
-             *
-             * Keep the local value so the interface
-             * remains usable.
-             */
-
-            setCanonicalUsername(
-                username
-            );
-
-
-            showSettingsToast(
-                "Username saved locally, but could not be synced to your account."
-            );
-
-        } finally {
-
-            saveButton.disabled =
-                false;
 
         }
-
-    }
-);
-
+    );
 
 }
 
+
 /* =========================================================
-THEME
-========================================================= */
+   THEME
+   ========================================================= */
 
 function loadTheme() {
 
+    const theme =
+        localStorage.getItem(
+            SETTINGS.THEME
+        ) ||
+        "dark";
 
-const theme =
-    localStorage.getItem(
-        SETTINGS.THEME
-    ) || "dark";
 
-
-document.documentElement
-    .setAttribute(
-        "data-theme",
-        theme
-    );
-
+    document.documentElement
+        .setAttribute(
+            "data-theme",
+            theme
+        );
 
 }
+
 
 function setupTheme() {
 
+    document
+        .querySelectorAll(
+            "[data-theme]"
+        )
+        .forEach(button => {
 
-document
-    .querySelectorAll(
-        "[data-theme]"
-    )
-    .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
 
-        button.addEventListener(
-            "click",
-            () => {
-
-                const theme =
-                    button.dataset.theme;
-
-
-                if (!theme) {
-                    return;
-                }
+                    const theme =
+                        button.dataset.theme;
 
 
-                localStorage.setItem(
-                    SETTINGS.THEME,
-                    theme
-                );
+                    if (!theme) {
+                        return;
+                    }
 
 
-                document.documentElement
-                    .setAttribute(
-                        "data-theme",
+                    localStorage.setItem(
+                        SETTINGS.THEME,
                         theme
                     );
 
-            }
-        );
 
-    });
+                    document.documentElement
+                        .setAttribute(
+                            "data-theme",
+                            theme
+                        );
 
+                }
+            );
+
+        });
 
 }
 
+
 /* =========================================================
-TOAST
-========================================================= */
+   TOAST
+   ========================================================= */
 
 function showSettingsToast(
-message
+    message
 ) {
 
+    const toast =
+        document.getElementById(
+            "settingsToast"
+        ) ||
+        document.getElementById(
+            "toast"
+        );
 
-const toast =
-    document.getElementById(
-        "settingsToast"
-    ) ||
-    document.getElementById(
-        "toast"
+
+    if (!toast) {
+        return;
+    }
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
     );
 
 
-if (!toast) {
-    return;
-}
+    setTimeout(
+        () => {
 
+            toast.classList.remove(
+                "show"
+            );
 
-toast.textContent =
-    message;
-
-
-toast.classList.add(
-    "show"
-);
-
-
-setTimeout(
-    () => {
-
-        toast.classList.remove(
-            "show"
-        );
-
-    },
-    2500
-);
-
+        },
+        2500
+    );
 
 }
+
 
 /* =========================================================
-LOGOUT
-========================================================= */
+   LOGOUT
+   ========================================================= */
 
 function setupLogout() {
 
+    document
+        .querySelectorAll(
+            "#logout, [data-logout]"
+        )
+        .forEach(button => {
 
-document
-    .querySelectorAll(
-        "#logout, [data-logout]"
-    )
-    .forEach(button => {
+            button.addEventListener(
+                "click",
+                async event => {
 
-        button.addEventListener(
-            "click",
-            async event => {
-
-                event.preventDefault();
-
-
-                try {
-
-                    const client =
-                        settingsClient();
+                    event.preventDefault();
 
 
-                    if (client) {
+                    try {
 
-                        await client.auth.signOut();
+                        const client =
+                            settingsClient();
+
+
+                        if (client) {
+
+                            await client.auth.signOut();
+
+                        }
 
                     }
 
-                } catch (error) {
+                    catch (error) {
 
-                    console.warn(
-                        error
-                    );
+                        console.warn(
+                            error
+                        );
+
+                    }
+
+
+                    window.location.href =
+                        "home.html";
 
                 }
+            );
 
-
-                window.location.href =
-                    "home.html";
-
-            }
-        );
-
-    });
-
+        });
 
 }
 
+
 /* =========================================================
-RESET STUDY DATA
-IMPORTANT:
-USERNAME + PREMIUM ARE PRESERVED.
-========================================================= */
+   RESET STUDY DATA
+   IMPORTANT:
+   USERNAME + PREMIUM ARE PRESERVED.
+   ========================================================= */
 
 function resetStudyData() {
 
-
-const confirmed =
-    window.confirm(
-        "This will reset your study progress. Your username and Premium status will remain. Continue?"
-    );
-
-
-if (!confirmed) {
-    return;
-}
-
-
-const username =
-    localStorage.getItem(
-        SETTINGS.NAME
-    );
-
-
-const premium =
-    localStorage.getItem(
-        "studyMindPremium"
-    );
-
-
-Object.keys(localStorage)
-    .filter(
-        key =>
-            key.startsWith(
-                "studyMind"
-            )
-    )
-    .forEach(key => {
-
-        if (
-            key !==
-                SETTINGS.NAME &&
-            key !==
-                "studyMindPremium"
-        ) {
-
-            localStorage.removeItem(
-                key
-            );
-
-        }
-
-    });
-
-
-localStorage.setItem(
-    SETTINGS.NAME,
-    username || "Student"
-);
-
-
-if (premium !== null) {
-
-    localStorage.setItem(
-        "studyMindPremium",
-        premium
-    );
-
-}
-
-
-/*
- * Explicit zero-state.
- */
-
-localStorage.setItem(
-    "studyMindXP",
-    "0"
-);
-
-
-localStorage.setItem(
-    "studyMindTotalXP",
-    "0"
-);
-
-
-localStorage.setItem(
-    "studyMindStreak",
-    "0"
-);
-
-
-localStorage.setItem(
-    "studyMindStudyScore",
-    "0"
-);
-
-
-window.dispatchEvent(
-    new CustomEvent(
-        "studyMindProgressUpdated"
-    )
-);
-
-
-showSettingsToast(
-    "Study progress reset."
-);
-
-
-setTimeout(
-    () => {
-
-        window.location.reload();
-
-    },
-    800
-);
-
-
-}
-
-/* =========================================================
-INITIALIZE
-========================================================= */
-
-document.addEventListener(
-"DOMContentLoaded",
-() => {
-
-
-    loadTheme();
-
-    loadSettingsUser();
-
-    setupProfile();
-
-    setupTheme();
-
-    setupLogout();
-
-
-    const reset =
-        document.getElementById(
-            "resetStudyData"
+    const confirmed =
+        window.confirm(
+            "This will reset your study progress. Your username and Premium status will remain. Continue?"
         );
 
 
-    if (reset) {
+    if (!confirmed) {
+        return;
+    }
 
-        reset.addEventListener(
-            "click",
-            resetStudyData
+
+    const username =
+        localStorage.getItem(
+            SETTINGS.NAME
+        );
+
+
+    const premium =
+        localStorage.getItem(
+            "studyMindPremium"
+        );
+
+
+    Object.keys(localStorage)
+        .filter(
+            key =>
+                key.startsWith(
+                    "studyMind"
+                )
+        )
+        .forEach(key => {
+
+            if (
+                key !==
+                    SETTINGS.NAME &&
+                key !==
+                    "studyMindPremium"
+            ) {
+
+                localStorage.removeItem(
+                    key
+                );
+
+            }
+
+        });
+
+
+    localStorage.setItem(
+        SETTINGS.NAME,
+        username || "Student"
+    );
+
+
+    if (premium !== null) {
+
+        localStorage.setItem(
+            "studyMindPremium",
+            premium
         );
 
     }
 
+
+    /* -------------------------------------------------------
+       EXPLICIT ZERO STATE
+       ------------------------------------------------------- */
+
+    localStorage.setItem(
+        "studyMindXP",
+        "0"
+    );
+
+
+    localStorage.setItem(
+        "studyMindTotalXP",
+        "0"
+    );
+
+
+    localStorage.setItem(
+        "studyMindStreak",
+        "0"
+    );
+
+
+    localStorage.setItem(
+        "studyMindStudyScore",
+        "0"
+    );
+
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindProgressUpdated"
+        )
+    );
+
+
+    showSettingsToast(
+        "Study progress reset."
+    );
+
+
+    setTimeout(
+        () => {
+
+            window.location.reload();
+
+        },
+        800
+    );
+
 }
 
 
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        loadTheme();
+
+        loadSettingsUser();
+
+        setupProfile();
+
+        setupTheme();
+
+        setupLogout();
+
+
+        const reset =
+            document.getElementById(
+                "resetStudyData"
+            );
+
+
+        if (reset) {
+
+            reset.addEventListener(
+                "click",
+                resetStudyData
+            );
+
+        }
+
+    }
 );
 
+
 /* =========================================================
-PUBLIC
-========================================================= */
+   PUBLIC API
+   ========================================================= */
 
 window.StudyMindSettings = {
 
+    getUsername:
+        getCanonicalUsername,
 
-getUsername:
-    getCanonicalUsername,
+    setUsername:
+        setCanonicalUsername,
 
-setUsername:
-    setCanonicalUsername,
+    resetStudyData,
 
-resetStudyData,
-
-syncLeaderboardUsername
-
+    syncLeaderboardUsername
 
 };
