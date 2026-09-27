@@ -3168,19 +3168,56 @@ else {
                GET DISPLAY NAME
             ------------------------------------------------- */
 
-            const metadata =
-                user.user_metadata || {};
+         const metadata =
+    user.user_metadata ||
+    {};
 
 
-         const displayName =
+/*
+ * Supabase Auth username is the source of truth.
+ */
+
+const displayName =
     String(
         metadata.username ||
-        metadata.name ||
         metadata.display_name ||
+        metadata.name ||
         metadata.full_name ||
+        localStorage.getItem(
+            STORAGE.USERNAME
+        ) ||
         user.email?.split("@")[0] ||
         "StudyMind Student"
-    ).trim() || "StudyMind Student";
+    ).trim() ||
+    "StudyMind Student";
+
+
+/*
+ * Keep Game Mode's local username synchronized
+ * with the authenticated account.
+ */
+
+localStorage.setItem(
+    STORAGE.USERNAME,
+    displayName
+);
+
+
+/*
+ * Update the visible player name if the element
+ * exists.
+ */
+
+const playerName =
+    $("playerName");
+
+
+if (playerName) {
+
+    playerName.textContent =
+        displayName;
+
+}
 
 
             /* -------------------------------------------------
