@@ -509,96 +509,63 @@ function syncLocalStats() {
 ========================================================= */
 
 async function loadUser() {
-
     let username =
-        localStorage.getItem(
-            "studyMindUsername"
-        ) ||
+        localStorage.getItem("studyMindUsername") ||
         "Student";
 
-
     if (supabaseClient) {
-
         try {
+            const { data } =
+                await supabaseClient.auth.getUser();
 
-            const {
-                data
-            } =
-                await supabaseClient
-                    .auth
-                    .getUser();
-
-
-            const user =
-                data?.user;
-
+            const user = data?.user;
 
             if (user) {
+                const metadata =
+                    user.user_metadata || {};
 
-                username =
-                    user.user_metadata
-                        ?.username ||
+                username = String(
+                    metadata.username ||
+                    metadata.name ||
+                    metadata.display_name ||
+                    metadata.full_name ||
+                    user.email?.split("@")[0] ||
+                    username ||
+                    "Student"
+                ).trim();
 
-                    user.user_metadata
-                        ?.full_name ||
-
-                    user.user_metadata
-                        ?.name ||
-
-                    user.email
-                        ?.split("@")[0] ||
-
-                    username;
-
+                if (!username) {
+                    username = "Student";
+                }
 
                 localStorage.setItem(
                     "studyMindUsername",
                     username
                 );
-
             }
 
         } catch (error) {
-
             console.warn(
                 "StudyMind user loading failed:",
                 error
             );
-
         }
-
     }
-
 
     const element =
-        document.getElementById(
-            "username"
-        );
-
+        document.getElementById("username");
 
     if (element) {
-
-        element.textContent =
-            username;
-
+        element.textContent = username;
     }
-
 
     const avatar =
-        document.getElementById(
-            "avatar"
-        );
-
+        document.getElementById("avatar");
 
     if (avatar) {
-
         avatar.textContent =
-            username
-                .charAt(0)
-                .toUpperCase();
-
+            username.charAt(0).toUpperCase();
     }
-
 }
 
 
