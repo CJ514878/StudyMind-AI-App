@@ -3431,7 +3431,8 @@ window.StudyMindDashboard = {
 
     resetSharedTimer,
 
-    selectSharedTimerDuration
+    selectSharedTimerDuration,
+
+    loadUser
 
 };
-
