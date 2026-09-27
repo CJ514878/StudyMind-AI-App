@@ -1643,9 +1643,9 @@ async function startComputerBattle() {
 
         incrementBattleCount();
 
-        showBattleScreen();
+        await showBattleScreen();
 
-        renderBattleQuestion();
+renderBattleQuestion();
 
     } catch (error) {
 
