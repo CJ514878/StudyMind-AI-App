@@ -23,7 +23,23 @@
    ✗ Create timer streaks
    ✗ Create timer sessions
 
-   All timer completion work belongs to study-timer.js.
+   USERNAME ARCHITECTURE
+   ---------------------------------------------------------
+   Supabase Auth user_metadata.username
+        ↓
+   PERMANENT SOURCE OF TRUTH
+        ↓
+   localStorage studyMindUsername
+        ↓
+   Dashboard / Game Mode / other pages
+
+   This means the username follows the user across:
+   ✓ devices
+   ✓ browsers
+   ✓ sessions
+
+   The username changes only when the user changes it
+   in Settings.
 ========================================================= */
 
 
@@ -122,6 +138,15 @@ document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
+        /*
+         * IMPORTANT:
+         *
+         * loadUser() checks Supabase FIRST.
+         *
+         * This prevents an old localStorage username
+         * from overwriting the permanent username stored
+         * in the user's Supabase account.
+         */
         await loadUser();
 
 
@@ -200,34 +225,9 @@ document.addEventListener(
 
                     if (username) {
 
-                        const usernameElement =
-                            document.getElementById(
-                                "username"
-                            );
-
-
-                        if (usernameElement) {
-
-                            usernameElement.textContent =
-                                username;
-
-                        }
-
-
-                        const avatar =
-                            document.getElementById(
-                                "avatar"
-                            );
-
-
-                        if (avatar) {
-
-                            avatar.textContent =
-                                username
-                                    .charAt(0)
-                                    .toUpperCase();
-
-                        }
+                        updateDashboardUsername(
+                            username
+                        );
 
 
                         console.log(
@@ -432,7 +432,7 @@ document.addEventListener(
 
 
                 /*
-                 * Keep local username synchronized.
+                 * Keep local cache synchronized.
                  */
                 localStorage.setItem(
                     USERNAME_KEY,
@@ -441,45 +441,49 @@ document.addEventListener(
 
 
                 /*
-                 * Update Dashboard username immediately.
+                 * Update Dashboard immediately.
                  */
-                const usernameElement =
-                    document.getElementById(
-                        "username"
-                    );
-
-
-                if (usernameElement) {
-
-                    usernameElement.textContent =
-                        username;
-
-                }
-
-
-                /*
-                 * Update Dashboard avatar immediately.
-                 */
-                const avatar =
-                    document.getElementById(
-                        "avatar"
-                    );
-
-
-                if (avatar) {
-
-                    avatar.textContent =
-                        username
-                            .charAt(0)
-                            .toUpperCase();
-
-                }
+                updateDashboardUsername(
+                    username
+                );
 
 
                 console.log(
-                    "StudyMind Dashboard: username updated:",
+                    "StudyMind Dashboard: username changed:",
                     username
                 );
+
+            }
+        );
+
+
+        /* =================================================
+           PROFILE UPDATE EVENT
+        ================================================= */
+
+        window.addEventListener(
+            "studyMindProfileUpdated",
+            async () => {
+
+                /*
+                 * Settings may have just changed the
+                 * Supabase username.
+                 *
+                 * Re-read Supabase so the permanent
+                 * account value becomes authoritative.
+                 */
+                try {
+
+                    await loadUser();
+
+                } catch (error) {
+
+                    console.warn(
+                        "StudyMind Dashboard: profile refresh failed:",
+                        error
+                    );
+
+                }
 
             }
         );
@@ -612,6 +616,14 @@ document.addEventListener(
 
         try {
 
+            /*
+             * Re-read Supabase every time the page
+             * becomes visible.
+             *
+             * This allows a username changed on another
+             * device/browser to appear when this page
+             * becomes active again.
+             */
             await loadUser();
 
         } catch (error) {
@@ -692,7 +704,7 @@ function syncLocalStats() {
 
 
 /* =========================================================
-   USER
+   USER — PERMANENT CROSS-DEVICE VERSION
 ========================================================= */
 
 async function loadUser() {
@@ -700,16 +712,177 @@ async function loadUser() {
     /*
      * IMPORTANT:
      *
-     * Settings is responsible for changing the username.
+     * Supabase Auth is the PERMANENT source of truth.
      *
-     * localStorage "studyMindUsername" is the immediate
-     * shared username cache used across StudyMind pages.
+     * localStorage is only a local cache.
      *
-     * Dashboard MUST NOT overwrite it with stale Supabase
-     * metadata.
+     * NEVER do:
+     *
+     * localStorage → overwrite Supabase
+     *
+     * The correct direction is:
+     *
+     * Supabase
+     *    ↓
+     * localStorage cache
+     *    ↓
+     * Dashboard UI
+     *
+     * This is what makes the username persistent
+     * across devices.
      */
 
-    let username =
+    let username = "";
+
+
+    const client =
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        null;
+
+
+    /* =====================================================
+       1. GET THE AUTHENTICATED SUPABASE USER
+    ===================================================== */
+
+    if (client) {
+
+        try {
+
+            const {
+                data,
+                error
+            } =
+                await client.auth.getUser();
+
+
+            if (error) {
+
+                throw error;
+
+            }
+
+
+            const user =
+                data?.user;
+
+
+            if (user) {
+
+                const metadata =
+                    user.user_metadata ||
+                    {};
+
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * Settings saves all of these:
+                 *
+                 * username
+                 * name
+                 * display_name
+                 * full_name
+                 *
+                 * username is preferred.
+                 */
+                username =
+                    String(
+                        metadata.username ||
+                        metadata.display_name ||
+                        metadata.name ||
+                        metadata.full_name ||
+                        ""
+                    ).trim();
+
+
+                /*
+                 * If Supabase contains the username,
+                 * it is authoritative.
+                 */
+                if (username) {
+
+                    localStorage.setItem(
+                        USERNAME_KEY,
+                        username
+                    );
+
+
+                    updateDashboardUsername(
+                        username
+                    );
+
+
+                    console.log(
+                        "StudyMind Dashboard: permanent username loaded from Supabase:",
+                        username
+                    );
+
+
+                    return username;
+
+                }
+
+
+                /*
+                 * If metadata has no username yet,
+                 * use the email only as an initial fallback.
+                 *
+                 * This fallback is then cached locally.
+                 */
+                const emailUsername =
+                    String(
+                        user.email?.split("@")[0] ||
+                        ""
+                    ).trim();
+
+
+                if (emailUsername) {
+
+                    username =
+                        emailUsername;
+
+
+                    localStorage.setItem(
+                        USERNAME_KEY,
+                        username
+                    );
+
+
+                    updateDashboardUsername(
+                        username
+                    );
+
+
+                    console.log(
+                        "StudyMind Dashboard: initial username created from account email:",
+                        username
+                    );
+
+
+                    return username;
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind Dashboard: Supabase username lookup failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       2. LOCAL CACHE FALLBACK
+    ===================================================== */
+
+    username =
         String(
             localStorage.getItem(
                 USERNAME_KEY
@@ -717,119 +890,24 @@ async function loadUser() {
         ).trim();
 
 
-    /*
-     * If Settings has already saved a username,
-     * use it immediately.
-     */
     if (!username) {
 
-        username = "Student";
+        username =
+            "Student";
 
     }
 
 
-    /*
-     * Update Dashboard immediately.
-     */
+    /* =====================================================
+       3. UPDATE DASHBOARD
+    ===================================================== */
+
     updateDashboardUsername(
         username
     );
 
 
-    /*
-     * Supabase is only used as a FALLBACK when there is
-     * no locally saved username.
-     *
-     * It is deliberately NOT allowed to overwrite an
-     * existing local username.
-     */
-    if (
-        !localStorage.getItem(
-            USERNAME_KEY
-        )
-    ) {
-
-        const client =
-            window.supabaseClient ||
-            window.studyMindSupabase ||
-            null;
-
-
-        if (client) {
-
-            try {
-
-                const {
-                    data,
-                    error
-                } =
-                    await client.auth.getUser();
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                const user =
-                    data?.user;
-
-
-                if (user) {
-
-                    const metadata =
-                        user.user_metadata ||
-                        {};
-
-
-                    const supabaseUsername =
-                        String(
-                            metadata.username ||
-                            metadata.display_name ||
-                            metadata.name ||
-                            metadata.full_name ||
-                            user.email?.split("@")[0] ||
-                            "Student"
-                        ).trim();
-
-
-                    if (
-                        supabaseUsername
-                    ) {
-
-                        username =
-                            supabaseUsername;
-
-
-                        localStorage.setItem(
-                            USERNAME_KEY,
-                            username
-                        );
-
-                    }
-
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "StudyMind user loading failed:",
-                    error
-                );
-
-            }
-
-        }
-
-    }
-
-
-    /*
-     * Final Dashboard update.
-     */
-    updateDashboardUsername(
-        username
-    );
+    return username;
 
 }
 
@@ -899,6 +977,7 @@ function updateDashboardUsername(
     );
 
 }
+
 
 /* =========================================================
    STATS
