@@ -1943,7 +1943,7 @@ function hideBattleLoading() {
    SHOW BATTLE
 ========================================================= */
 
-function showBattleScreen() {
+async function showBattleScreen() {
 
     $("setupScreen").style.display =
         "none";
@@ -1955,22 +1955,30 @@ function showBattleScreen() {
         "block";
 
 
+    /*
+     * Make absolutely sure the battle uses the
+     * current Supabase username.
+     */
+
     const name =
-        getUsername();
+        await syncGameModeUsername();
+
 
     $("playerName")
-        .textContent = name;
+        .textContent =
+            name;
+
 
     $("questionSubject")
         .textContent =
             battleState.subject;
+
 
     $("questionTopic")
         .textContent =
             battleState.topic;
 
 }
-
 
 /* =========================================================
    RENDER QUESTION
