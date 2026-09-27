@@ -3259,6 +3259,9 @@ function getHistory() {
 
 /* =========================================================
    USERNAME
+   ---------------------------------------------------------
+   SUPABASE AUTH = SOURCE OF TRUTH
+   localStorage = LOCAL CACHE
 ========================================================= */
 
 function getUsername() {
@@ -3270,7 +3273,7 @@ function getUsername() {
 
 
     if (saved) {
-        return saved;
+        return String(saved).trim() || "Student";
     }
 
 
@@ -3289,7 +3292,23 @@ function getUsername() {
             plan.username
         ) {
 
-            return plan.username;
+            const planUsername =
+                String(
+                    plan.username
+                ).trim();
+
+
+            if (planUsername) {
+
+                localStorage.setItem(
+                    STORAGE.USERNAME,
+                    planUsername
+                );
+
+
+                return planUsername;
+
+            }
 
         }
 
@@ -3297,6 +3316,120 @@ function getUsername() {
 
 
     return "Student";
+
+}
+
+/* =========================================================
+   LOAD CANONICAL USERNAME FROM SUPABASE
+   ---------------------------------------------------------
+   Supabase Auth metadata is the source of truth.
+
+   This keeps Game Mode synchronized with Settings,
+   Dashboard and the leaderboard.
+========================================================= */
+
+async function syncGameModeUsername() {
+
+    if (!gameSupabase) {
+
+        return getUsername();
+
+    }
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await gameSupabase.auth.getUser();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        const user =
+            data?.user;
+
+
+        if (!user) {
+
+            return getUsername();
+
+        }
+
+
+        const metadata =
+            user.user_metadata ||
+            {};
+
+
+        const username =
+            String(
+                metadata.username ||
+                metadata.display_name ||
+                metadata.name ||
+                metadata.full_name ||
+                localStorage.getItem(
+                    STORAGE.USERNAME
+                ) ||
+                user.email?.split("@")[0] ||
+                "Student"
+            ).trim() ||
+            "Student";
+
+
+        /*
+         * Keep local cache synchronized.
+         */
+
+        localStorage.setItem(
+            STORAGE.USERNAME,
+            username
+        );
+
+
+        /*
+         * Update Game Mode player name
+         * immediately if the battle UI exists.
+         */
+
+        const playerName =
+            $("playerName");
+
+
+        if (playerName) {
+
+            playerName.textContent =
+                username;
+
+        }
+
+
+        console.log(
+            "StudyMind Game Mode username synchronized:",
+            username
+        );
+
+
+        return username;
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "StudyMind Game Mode username sync failed:",
+            error
+        );
+
+
+        return getUsername();
+
+    }
 
 }
 
