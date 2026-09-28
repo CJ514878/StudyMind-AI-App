@@ -3,52 +3,54 @@
 /* =========================================================
    STUDYMIND AI — LEADERBOARD
    CONNECTED TO GAME_LEADERBOARD
+
+   USERNAME AUTHORITY
+   ---------------------------------------------------------
+   Supabase Auth:
+       user.user_metadata.username
+
+   This is the ONLY canonical username.
+
+   The following are NOT allowed to override it:
+       - name
+       - display_name
+       - full_name
+       - email
+       - localStorage
+       - study plan username
+
+   game_leaderboard.display_name is treated as the
+   leaderboard's synchronized display/cache value.
 ========================================================= */
 
 
 /* =========================================================
-   SUPABASE
-========================================================= */
-
-const SUPABASE_URL =
-    "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
-
-/* =========================================================
-   TEMPORARY DEBUG
+   DEBUG VERSION
 ========================================================= */
 
 console.log(
-    "STUDYMIND LEADERBOARD VERSION: 2026-09-14-FIX-1"
-);
-
-console.log(
-    "SUPABASE URL:",
-    SUPABASE_URL
-);
-
-console.log(
-    "SUPABASE KEY PREFIX:",
-    SUPABASE_KEY.substring(0, 25)
+    "STUDYMIND LEADERBOARD VERSION: 2026-09-28-SUPABASE-USERNAME-FIX"
 );
 
 
 /* =========================================================
-   SUPABASE CLIENT
+   SHARED SUPABASE CLIENT
 ========================================================= */
 
-const supabaseClient =
-    window.supabase?.createClient
-        ? window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        )
-        : null;
+const leaderboardSupabase =
+    window.studyMindSupabase ||
+    window.gameSupabase ||
+    window.supabaseClient ||
+    null;
 
 
+if (!leaderboardSupabase) {
+
+    console.error(
+        "StudyMind Leaderboard: Shared Supabase client unavailable."
+    );
+
+}
 
 
 /* =========================================================
@@ -56,7 +58,10 @@ const supabaseClient =
 ========================================================= */
 
 let allStudents = [];
+
 let currentUserId = null;
+
+let currentUsername = "";
 
 
 /* =========================================================
@@ -64,7 +69,9 @@ let currentUserId = null;
 ========================================================= */
 
 function $(id) {
+
     return document.getElementById(id);
+
 }
 
 
@@ -72,23 +79,31 @@ function $(id) {
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-    loadTheme();
+        loadTheme();
 
-    setupTheme();
+        setupTheme();
 
-    setupSearch();
+        setupSearch();
 
-    setupRefresh();
+        setupRefresh();
 
-    setupLogout();
+        setupLogout();
 
-    await loadCurrentUser();
+        /*
+         * IMPORTANT:
+         * Get the authenticated Supabase username BEFORE
+         * loading the leaderboard.
+         */
+        await loadCurrentUser();
 
-    await loadLeaderboard();
+        await loadLeaderboard();
 
-});
+    }
+);
 
 
 /* =========================================================
@@ -97,13 +112,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function loadCurrentUser() {
 
-    if (!supabaseClient) {
+    if (!leaderboardSupabase) {
 
         console.error(
-            "Supabase client could not be initialized."
+            "StudyMind Leaderboard: Supabase client unavailable."
         );
 
         return;
+
     }
 
 
@@ -112,11 +128,14 @@ async function loadCurrentUser() {
         const {
             data,
             error
-        } = await supabaseClient.auth.getUser();
+        } =
+            await leaderboardSupabase.auth.getUser();
 
 
         if (error) {
+
             throw error;
+
         }
 
 
@@ -127,10 +146,15 @@ async function loadCurrentUser() {
         if (!user) {
 
             console.warn(
-                "No authenticated StudyMind user found."
+                "StudyMind Leaderboard: No authenticated user."
             );
 
+            currentUserId = null;
+
+            currentUsername = "";
+
             return;
+
         }
 
 
@@ -142,13 +166,103 @@ async function loadCurrentUser() {
             user.user_metadata || {};
 
 
+        /*
+         * =====================================================
+         * CANONICAL USERNAME
+         * =====================================================
+         *
+         * ONLY user_metadata.username is authoritative.
+         *
+         * DO NOT fall back to:
+         *   metadata.name
+         *   metadata.display_name
+         *   metadata.full_name
+         *   email
+         *   localStorage
+         */
+
+        currentUsername =
+            String(
+                metadata.username || ""
+            ).trim();
+
+
+        if (!currentUsername) {
+
+            console.warn(
+                "StudyMind Leaderboard: Authenticated user has no canonical username."
+            );
+
+            currentUsername =
+                "Student";
+
+        }
+
+
+        /*
+         * Display current user's Auth username.
+         */
+
+        if ($("currentUsername")) {
+
+            $("currentUsername").textContent =
+                currentUsername;
+
+        }
+
+
+        if ($("userAvatar")) {
+
+            $("userAvatar").textContent =
+                getInitials(
+                    currentUsername
+                );
+
+        }
+
+
+        console.log(
+            "StudyMind Leaderboard: Supabase-authoritative username:",
+            currentUsername
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not load current Supabase user:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LISTEN FOR USERNAME CHANGES
+========================================================= */
+
+window.addEventListener(
+    "studyMindUsernameChanged",
+    async event => {
+
+        /*
+         * Settings.js sends the newly saved canonical
+         * Supabase username through this event.
+         */
+
         const username =
-            metadata.username ||
-            metadata.full_name ||
-            metadata.name ||
-            metadata.display_name ||
-            user.email?.split("@")[0] ||
-            "Student";
+            String(
+                event.detail?.username || ""
+            ).trim();
+
+
+        if (!username) return;
+
+
+        currentUsername =
+            username;
 
 
         if ($("currentUsername")) {
@@ -167,14 +281,75 @@ async function loadCurrentUser() {
         }
 
 
-    } catch (error) {
+        /*
+         * Reload Auth user so Supabase remains the
+         * source of truth.
+         */
 
-        console.error(
-            "Could not load current user:",
-            error
-        );
+        await loadCurrentUser();
+
+        await loadLeaderboard();
 
     }
+);
+
+
+/* =========================================================
+   SUPABASE AUTH STATE LISTENER
+========================================================= */
+
+if (leaderboardSupabase) {
+
+    leaderboardSupabase.auth.onAuthStateChange(
+        async (event, session) => {
+
+            if (
+                event === "SIGNED_IN" ||
+                event === "USER_UPDATED"
+            ) {
+
+                const user =
+                    session?.user;
+
+
+                if (user) {
+
+                    currentUserId =
+                        user.id;
+
+
+                    currentUsername =
+                        String(
+                            user.user_metadata?.username || ""
+                        ).trim();
+
+
+                    if ($("currentUsername")) {
+
+                        $("currentUsername").textContent =
+                            currentUsername || "Student";
+
+                    }
+
+
+                    if ($("userAvatar")) {
+
+                        $("userAvatar").textContent =
+                            getInitials(
+                                currentUsername || "Student"
+                            );
+
+                    }
+
+
+                    await loadLeaderboard();
+
+                }
+
+            }
+
+        }
+    );
 
 }
 
@@ -202,100 +377,155 @@ async function loadLeaderboard() {
     }
 
 
-    if (!supabaseClient) {
+    if (!leaderboardSupabase) {
 
         showError(
             "Supabase could not be initialized."
         );
 
         return;
+
     }
 
 
     try {
 
         /*
-         * IMPORTANT:
-         * The leaderboard is stored in game_leaderboard.
+         * The leaderboard data itself comes from
+         * game_leaderboard.
          *
-         * We deliberately do NOT query profiles here.
+         * display_name is the synchronized database
+         * value written by the Game Mode RPC.
          */
 
         const {
             data,
             error
-        } = await supabaseClient
-            .from("game_leaderboard")
-            .select(`
-                user_id,
-                display_name,
-                battle_points,
-                wins,
-                losses,
-                draws
-            `)
-            .order("battle_points", {
-                ascending: false
-            })
-            .order("wins", {
-                ascending: false
-            })
-            .order("display_name", {
-                ascending: true
-            });
+        } =
+            await leaderboardSupabase
+                .from("game_leaderboard")
+                .select(`
+                    user_id,
+                    display_name,
+                    battle_points,
+                    wins,
+                    losses,
+                    draws
+                `)
+                .order(
+                    "battle_points",
+                    {
+                        ascending: false
+                    }
+                )
+                .order(
+                    "wins",
+                    {
+                        ascending: false
+                    }
+                )
+                .order(
+                    "display_name",
+                    {
+                        ascending: true
+                    }
+                );
 
 
         if (error) {
+
             throw error;
+
         }
 
 
         /*
-         * Convert the database structure into the structure
-         * already expected by the leaderboard UI.
+         * Convert database rows into the structure
+         * expected by the existing UI.
          */
 
         allStudents =
             Array.isArray(data)
-                ? data.map(student => ({
-                    id: student.user_id,
+                ? data.map(
+                    student => ({
 
-                    username:
-                        student.display_name ||
-                        "Student",
+                        id:
+                            student.user_id,
 
-                    battle_points:
-                        Number(
-                            student.battle_points || 0
-                        ),
+                        username:
+                            String(
+                                student.display_name ||
+                                "Student"
+                            ).trim() ||
+                            "Student",
 
-                    wins:
-                        Number(
-                            student.wins || 0
-                        ),
+                        battle_points:
+                            Number(
+                                student.battle_points || 0
+                            ),
 
-                    losses:
-                        Number(
-                            student.losses || 0
-                        ),
+                        wins:
+                            Number(
+                                student.wins || 0
+                            ),
 
-                    draws:
-                        Number(
-                            student.draws || 0
-                        ),
+                        losses:
+                            Number(
+                                student.losses || 0
+                            ),
 
-                    battles_played:
-                        Number(
-                            student.wins || 0
-                        ) +
-                        Number(
-                            student.losses || 0
-                        ) +
-                        Number(
-                            student.draws || 0
-                        )
-                }))
+                        draws:
+                            Number(
+                                student.draws || 0
+                            ),
+
+                        battles_played:
+                            Number(
+                                student.wins || 0
+                            ) +
+                            Number(
+                                student.losses || 0
+                            ) +
+                            Number(
+                                student.draws || 0
+                            )
+
+                    })
+                )
                 : [];
+
+
+        /*
+         * =====================================================
+         * KEEP CURRENT USER'S DISPLAY NAME IN SYNC
+         * =====================================================
+         *
+         * The current user's Auth username is authoritative.
+         *
+         * If the leaderboard table still contains an older
+         * display_name, the current user's visible identity
+         * should still use the Auth username.
+         */
+
+        if (currentUserId && currentUsername) {
+
+            const currentStudentIndex =
+                allStudents.findIndex(
+                    student =>
+                        student.id === currentUserId
+                );
+
+
+            if (currentStudentIndex !== -1) {
+
+                allStudents[
+                    currentStudentIndex
+                ].username =
+                    currentUsername;
+
+            }
+
+        }
 
 
         updateTopThree(
@@ -395,18 +625,31 @@ function setPodium(
     if (!student) {
 
         if ($(nameId)) {
-            $(nameId).textContent = "—";
+
+            $(nameId).textContent =
+                "—";
+
         }
+
 
         if ($(pointsId)) {
-            $(pointsId).textContent = "0";
+
+            $(pointsId).textContent =
+                "0";
+
         }
+
 
         if ($(avatarId)) {
-            $(avatarId).textContent = "?";
+
+            $(avatarId).textContent =
+                "?";
+
         }
 
+
         return;
+
     }
 
 
@@ -436,7 +679,9 @@ function setPodium(
     if ($(avatarId)) {
 
         $(avatarId).textContent =
-            getInitials(username);
+            getInitials(
+                username
+            );
 
     }
 
@@ -465,19 +710,21 @@ function renderLeaderboard(students) {
 
 
     const filtered =
-        students.filter(student => {
+        students.filter(
+            student => {
 
-            const username =
-                String(
-                    student.username || ""
-                ).toLowerCase();
+                const username =
+                    String(
+                        student.username || ""
+                    ).toLowerCase();
 
 
-            return username.includes(
-                query
-            );
+                return username.includes(
+                    query
+                );
 
-        });
+            }
+        );
 
 
     if ($("studentCount")) {
@@ -496,11 +743,14 @@ function renderLeaderboard(students) {
 
         body.innerHTML = "";
 
+
         $("emptyState")
             ?.classList
             .remove("hidden");
 
+
         return;
+
     }
 
 
@@ -511,131 +761,129 @@ function renderLeaderboard(students) {
 
     body.innerHTML =
         filtered
-            .map(student => {
+            .map(
+                student => {
 
-                /*
-                 * Rank is based on the FULL leaderboard,
-                 * not the filtered search results.
-                 */
+                    /*
+                     * Rank is based on the complete
+                     * leaderboard, not search results.
+                     */
 
-                const actualRank =
-                    students.indexOf(student) + 1;
-
-
-                const username =
-                    student.username ||
-                    "Student";
+                    const actualRank =
+                        students.indexOf(
+                            student
+                        ) + 1;
 
 
-                const current =
-                    student.id === currentUserId
-                        ? "current-user"
-                        : "";
+                    const username =
+                        student.username ||
+                        "Student";
 
 
-                let rankDisplay =
-                    `<span class="rank-number">
-                        #${actualRank}
-                    </span>`;
+                    const current =
+                        student.id === currentUserId
+                            ? "current-user"
+                            : "";
 
 
-                if (actualRank === 1) {
-
-                    rankDisplay =
-                        `<span class="rank-medal">
-                            🥇
+                    let rankDisplay =
+                        `<span class="rank-number">
+                            #${actualRank}
                         </span>`;
 
-                }
+
+                    if (actualRank === 1) {
+
+                        rankDisplay =
+                            `<span class="rank-medal">
+                                🥇
+                            </span>`;
+
+                    }
 
 
-                if (actualRank === 2) {
+                    if (actualRank === 2) {
 
-                    rankDisplay =
-                        `<span class="rank-medal">
-                            🥈
-                        </span>`;
+                        rankDisplay =
+                            `<span class="rank-medal">
+                                🥈
+                            </span>`;
 
-                }
-
-
-                if (actualRank === 3) {
-
-                    rankDisplay =
-                        `<span class="rank-medal">
-                            🥉
-                        </span>`;
-
-                }
+                    }
 
 
-                return `
-                    <tr class="${current}">
+                    if (actualRank === 3) {
 
-                        <td>
-                            ${rankDisplay}
-                        </td>
+                        rankDisplay =
+                            `<span class="rank-medal">
+                                🥉
+                            </span>`;
+
+                    }
 
 
-                        <td>
-                            <div class="student-cell">
+                    return `
+                        <tr class="${current}">
 
-                                <div class="student-small-avatar">
-                                    ${escapeHTML(
-                                        getInitials(
+                            <td>
+                                ${rankDisplay}
+                            </td>
+
+                            <td>
+                                <div class="student-cell">
+
+                                    <div class="student-small-avatar">
+                                        ${escapeHTML(
+                                            getInitials(
+                                                username
+                                            )
+                                        )}
+                                    </div>
+
+                                    <span class="student-name">
+                                        ${escapeHTML(
                                             username
-                                        )
-                                    )}
+                                        )}
+                                    </span>
+
                                 </div>
+                            </td>
 
-                                <span class="student-name">
-                                    ${escapeHTML(
-                                        username
-                                    )}
-                                </span>
+                            <td class="points-cell">
+                                ${formatNumber(
+                                    student.battle_points
+                                )}
+                            </td>
 
-                            </div>
-                        </td>
+                            <td>
+                                ${formatNumber(
+                                    student.wins
+                                )}
+                            </td>
 
+                            <td>
+                                ${formatNumber(
+                                    student.losses
+                                )}
+                            </td>
 
-                        <td class="points-cell">
-                            ${formatNumber(
-                                student.battle_points
-                            )}
-                        </td>
+                            <td>
+                                ${formatNumber(
+                                    student.draws
+                                )}
+                            </td>
 
+                            <td>
+                                ${formatNumber(
+                                    student.battles_played
+                                )}
+                            </td>
 
-                        <td>
-                            ${formatNumber(
-                                student.wins
-                            )}
-                        </td>
+                        </tr>
+                    `;
 
-
-                        <td>
-                            ${formatNumber(
-                                student.losses
-                            )}
-                        </td>
-
-
-                        <td>
-                            ${formatNumber(
-                                student.draws
-                            )}
-                        </td>
-
-
-                        <td>
-                            ${formatNumber(
-                                student.battles_played
-                            )}
-                        </td>
-
-                    </tr>
-                `;
-
-            })
+                }
+            )
             .join("");
 
 }
@@ -650,11 +898,14 @@ function updateYourRanking(students) {
     if (!currentUserId) {
 
         if ($("yourRank")) {
+
             $("yourRank").textContent =
                 "Unranked";
+
         }
 
         return;
+
     }
 
 
@@ -668,21 +919,31 @@ function updateYourRanking(students) {
     if (index === -1) {
 
         if ($("yourRank")) {
+
             $("yourRank").textContent =
                 "Unranked";
+
         }
+
 
         if ($("yourPoints")) {
+
             $("yourPoints").textContent =
                 "0";
+
         }
+
 
         if ($("yourWins")) {
+
             $("yourWins").textContent =
                 "0";
+
         }
 
+
         return;
+
     }
 
 
@@ -865,9 +1126,11 @@ function setupLogout() {
 
             try {
 
-                if (supabaseClient) {
+                if (leaderboardSupabase) {
 
-                    await supabaseClient.auth.signOut();
+                    await leaderboardSupabase
+                        .auth
+                        .signOut();
 
                 }
 
@@ -908,14 +1171,18 @@ function formatNumber(value) {
 function getInitials(name) {
 
     const words =
-        String(name || "Student")
+        String(
+            name || "Student"
+        )
             .trim()
             .split(/\s+/)
             .filter(Boolean);
 
 
     if (!words.length) {
+
         return "S";
+
     }
 
 
@@ -939,22 +1206,27 @@ function getInitials(name) {
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -981,13 +1253,16 @@ function showToast(message) {
     );
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        toast.classList.remove(
-            "show"
-        );
+            toast.classList.remove(
+                "show"
+            );
 
-    }, 2500);
+        },
+        2500
+    );
 
 }
 
