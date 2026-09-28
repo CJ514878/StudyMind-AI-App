@@ -17,95 +17,103 @@
 
         :root {
             /* =====================================================
-               LIGHT MODE — LIGHTER GOLD
+               LIGHT MODE
                ===================================================== */
 
-            --bg: #faf8f1;
+            --bg: #fcfaf3;
             --bg-soft: #fffdf7;
 
-            --card: rgba(255, 255, 255, 0.9);
+            --card: rgba(255, 255, 255, 0.94);
             --card-solid: #ffffff;
 
-            --card-border: rgba(166, 111, 8, 0.16);
+            --card-border: rgba(184, 132, 18, 0.18);
 
             --text: #1d1a12;
             --muted: #716b5d;
 
-            --gold: #d6a329;
-            --gold-light: #fff4c7;
-            --gold-mid: #e8b93f;
-            --gold-dark: #a66f08;
+            /* GOLD PALETTE */
+            --gold: #d5a52a;
+            --gold-light: #fff1b8;
+            --gold-mid: #e8bc45;
+            --gold-dark: #9a6505;
 
             --gold-gradient:
                 linear-gradient(
                     135deg,
-                    var(--gold-light) 0%,
-                    var(--gold-mid) 50%,
-                    var(--gold-dark) 100%
+                    #fff1b8 0%,
+                    #e8bc45 52%,
+                    #9a6505 100%
                 );
 
             --gold-gradient-soft:
                 linear-gradient(
                     135deg,
-                    rgba(255, 244, 199, 0.82),
-                    rgba(232, 185, 63, 0.18),
-                    rgba(166, 111, 8, 0.08)
+                    rgba(255, 241, 184, 0.82),
+                    rgba(232, 188, 69, 0.18),
+                    rgba(154, 101, 5, 0.07)
                 );
 
             --green: #42b982;
-            --blue: #4f8df7;
-            --danger: #e45c5c;
+            --danger: #d84f4f;
+
+            /* IMPORTANT:
+               No blue is used anywhere on this page. */
+            --blue: var(--gold);
 
             --shadow:
                 0 20px 60px rgba(92, 63, 8, 0.10);
 
             --premium-shadow:
-                0 18px 55px rgba(166, 111, 8, 0.18);
+                0 18px 55px rgba(154, 101, 5, 0.18);
         }
 
 
         /* =========================================================
-           DARK MODE — DEEPER / RICHER GOLD
+           DARK MODE
+           DEEPER / RICHER GOLD
            ========================================================= */
 
         body.dark {
-            --bg: #070b16;
-            --bg-soft: #0d1324;
+            --bg: #070b12;
+            --bg-soft: #0d121c;
 
-            --card: rgba(17, 24, 43, 0.88);
-            --card-solid: #11182b;
+            --card: rgba(18, 20, 25, 0.92);
+            --card-solid: #121419;
 
             --card-border: rgba(255, 255, 255, 0.09);
 
-            --text: #f8fafc;
-            --muted: #a8b1c5;
+            --text: #faf8f1;
+            --muted: #aaa696;
 
-            --gold: #c99528;
-            --gold-light: #e5bd5b;
-            --gold-mid: #b78320;
-            --gold-dark: #6d4708;
+            /* RICH GOLD */
+            --gold: #d3a438;
+            --gold-light: #f0cb68;
+            --gold-mid: #b98522;
+            --gold-dark: #704807;
 
             --gold-gradient:
                 linear-gradient(
                     135deg,
-                    var(--gold-light) 0%,
-                    var(--gold-mid) 50%,
-                    var(--gold-dark) 100%
+                    #f0cb68 0%,
+                    #b98522 52%,
+                    #704807 100%
                 );
 
             --gold-gradient-soft:
                 linear-gradient(
                     135deg,
-                    rgba(229, 189, 91, 0.14),
-                    rgba(183, 131, 32, 0.09),
-                    rgba(109, 71, 8, 0.12)
+                    rgba(240, 203, 104, 0.15),
+                    rgba(185, 133, 34, 0.10),
+                    rgba(112, 72, 7, 0.14)
                 );
 
             --shadow:
-                0 20px 60px rgba(0, 0, 0, 0.35);
+                0 20px 60px rgba(0, 0, 0, 0.38);
 
             --premium-shadow:
-                0 18px 55px rgba(109, 71, 8, 0.28);
+                0 18px 55px rgba(112, 72, 7, 0.30);
+
+            --blue: var(--gold);
         }
 
 
@@ -142,12 +150,12 @@
             background:
                 radial-gradient(
                     circle at 15% 10%,
-                    rgba(232, 185, 63, 0.12),
+                    rgba(232, 188, 69, 0.13),
                     transparent 32%
                 ),
                 radial-gradient(
                     circle at 85% 15%,
-                    rgba(166, 111, 8, 0.08),
+                    rgba(154, 101, 5, 0.09),
                     transparent 30%
                 ),
                 var(--bg);
@@ -155,6 +163,22 @@
             transition:
                 background 0.3s ease,
                 color 0.3s ease;
+        }
+
+
+        body.dark {
+            background:
+                radial-gradient(
+                    circle at 15% 10%,
+                    rgba(211, 164, 56, 0.09),
+                    transparent 32%
+                ),
+                radial-gradient(
+                    circle at 85% 15%,
+                    rgba(112, 72, 7, 0.12),
+                    transparent 30%
+                ),
+                var(--bg);
         }
 
 
@@ -170,7 +194,17 @@
             background:
                 radial-gradient(
                     circle at 50% 0%,
-                    rgba(232, 185, 63, 0.06),
+                    rgba(232, 188, 69, 0.06),
+                    transparent 40%
+                );
+        }
+
+
+        body.dark::before {
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(211, 164, 56, 0.05),
                     transparent 40%
                 );
         }
@@ -184,6 +218,25 @@
         a {
             color: inherit;
             text-decoration: none;
+        }
+
+
+        /* =========================================================
+           FORCE PREMIUM PAGE AWAY FROM BLUE
+           ========================================================= */
+
+        .premium-page,
+        .premium-page * {
+            --accent-color: var(--gold);
+            --accent-color-light: var(--gold-light);
+            --accent-color-dark: var(--gold-dark);
+        }
+
+
+        .premium-page button,
+        .premium-page a {
+            -webkit-tap-highlight-color:
+                rgba(213, 165, 42, 0.18);
         }
 
 
@@ -241,7 +294,7 @@
 
             box-shadow:
                 0 8px 24px
-                rgba(166, 111, 8, 0.22);
+                rgba(154, 101, 5, 0.22);
         }
 
 
@@ -305,15 +358,15 @@
 
             border:
                 1px solid
-                rgba(166, 111, 8, 0.34);
+                rgba(154, 101, 5, 0.34);
 
             border-radius: 999px;
 
             background:
                 linear-gradient(
                     135deg,
-                    rgba(255, 244, 199, 0.8),
-                    rgba(232, 185, 63, 0.12)
+                    rgba(255, 241, 184, 0.8),
+                    rgba(232, 188, 69, 0.12)
                 );
 
             color: var(--gold-dark);
@@ -329,13 +382,13 @@
             color: var(--gold-light);
 
             border-color:
-                rgba(183, 131, 32, 0.38);
+                rgba(185, 133, 34, 0.42);
 
             background:
                 linear-gradient(
                     135deg,
-                    rgba(229, 189, 91, 0.11),
-                    rgba(109, 71, 8, 0.13)
+                    rgba(240, 203, 104, 0.12),
+                    rgba(112, 72, 7, 0.14)
                 );
         }
 
@@ -392,7 +445,7 @@
 
             border:
                 1px solid
-                rgba(166, 111, 8, 0.28);
+                rgba(154, 101, 5, 0.30);
 
             border-radius: 18px;
 
@@ -440,7 +493,7 @@
 
         .plan.premium {
             border-color:
-                rgba(166, 111, 8, 0.45);
+                rgba(154, 101, 5, 0.48);
 
             box-shadow:
                 var(--premium-shadow);
@@ -449,7 +502,7 @@
 
         body.dark .plan.premium {
             border-color:
-                rgba(183, 131, 32, 0.48);
+                rgba(185, 133, 34, 0.52);
         }
 
 
@@ -474,7 +527,7 @@
 
             box-shadow:
                 0 8px 20px
-                rgba(166, 111, 8, 0.20);
+                rgba(154, 101, 5, 0.22);
         }
 
 
@@ -581,20 +634,31 @@
 
             box-shadow:
                 0 12px 28px
-                rgba(166, 111, 8, 0.20);
+                rgba(154, 101, 5, 0.22);
 
             transition:
                 transform 0.2s ease,
-                box-shadow 0.2s ease;
+                box-shadow 0.2s ease,
+                filter 0.2s ease;
         }
 
 
         .premium-button:hover {
             transform: translateY(-2px);
 
+            filter: brightness(1.03);
+
             box-shadow:
                 0 16px 34px
-                rgba(166, 111, 8, 0.28);
+                rgba(154, 101, 5, 0.30);
+        }
+
+
+        .premium-button:focus-visible {
+            outline: 3px solid
+                rgba(232, 188, 69, 0.42);
+
+            outline-offset: 3px;
         }
 
 
@@ -665,7 +729,7 @@
             transform: translateY(-3px);
 
             border-color:
-                rgba(166, 111, 8, 0.32);
+                rgba(154, 101, 5, 0.35);
 
             background:
                 var(--gold-gradient-soft);
@@ -793,14 +857,25 @@
 
             border:
                 1px solid
-                rgba(166, 111, 8, 0.30);
+                rgba(154, 101, 5, 0.32);
 
             border-radius: 28px;
 
             background:
                 radial-gradient(
                     circle at 50% 0%,
-                    rgba(232, 185, 63, 0.16),
+                    rgba(232, 188, 69, 0.17),
+                    transparent 55%
+                ),
+                var(--card);
+        }
+
+
+        body.dark .bottom-cta {
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(211, 164, 56, 0.12),
                     transparent 55%
                 ),
                 var(--card);
@@ -851,7 +926,7 @@
             padding: 20px;
 
             background:
-                rgba(5, 8, 15, 0.72);
+                rgba(5, 8, 15, 0.76);
 
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -872,7 +947,7 @@
 
             border:
                 1px solid
-                rgba(166, 111, 8, 0.38);
+                rgba(154, 101, 5, 0.42);
 
             border-radius: 24px;
 
@@ -880,7 +955,7 @@
 
             box-shadow:
                 0 30px 90px
-                rgba(0, 0, 0, 0.35);
+                rgba(0, 0, 0, 0.38);
         }
 
 
@@ -945,7 +1020,7 @@
 
             box-shadow:
                 0 12px 28px
-                rgba(166, 111, 8, 0.22);
+                rgba(154, 101, 5, 0.24);
         }
 
 
@@ -1067,10 +1142,18 @@
             transform: translateY(-1px);
 
             border-color:
-                rgba(166, 111, 8, 0.42);
+                rgba(154, 101, 5, 0.45);
 
             background:
                 var(--gold-gradient-soft);
+        }
+
+
+        .premium-payment-button:focus-visible {
+            outline: 3px solid
+                rgba(232, 188, 69, 0.35);
+
+            outline-offset: 2px;
         }
 
 
@@ -1144,6 +1227,18 @@
             font-weight: 900;
 
             cursor: pointer;
+
+            box-shadow:
+                0 12px 28px
+                rgba(154, 101, 5, 0.20);
+        }
+
+
+        .premium-modal-primary:focus-visible {
+            outline: 3px solid
+                rgba(232, 188, 69, 0.42);
+
+            outline-offset: 3px;
         }
 
 
@@ -1296,8 +1391,6 @@
 
         <section class="plans">
 
-            <!-- FREE -->
-
             <div class="plan">
 
                 <div class="plan-name">
@@ -1318,32 +1411,20 @@
 
                 <ul class="plan-list">
 
-                    <li>
-                        AI assistance
-                    </li>
+                    <li>AI assistance</li>
 
-                    <li>
-                        Knowledge checks
-                    </li>
+                    <li>Knowledge checks</li>
 
-                    <li>
-                        Game Mode
-                    </li>
+                    <li>Game Mode</li>
 
-                    <li>
-                        Study planning
-                    </li>
+                    <li>Study planning</li>
 
-                    <li>
-                        Progress tracking
-                    </li>
+                    <li>Progress tracking</li>
 
                 </ul>
 
             </div>
 
-
-            <!-- PREMIUM -->
 
             <div class="plan premium">
 
@@ -1370,9 +1451,7 @@
 
                 <ul class="plan-list">
 
-                    <li>
-                        Unlimited AI assistance
-                    </li>
+                    <li>Unlimited AI assistance</li>
 
                     <li>
                         5–60 question knowledge checks
@@ -1382,25 +1461,15 @@
                         Unlimited Game Mode battles
                     </li>
 
-                    <li>
-                        Premium 1v1
-                    </li>
+                    <li>Premium 1v1</li>
 
-                    <li>
-                        Tournament access
-                    </li>
+                    <li>Tournament access</li>
 
-                    <li>
-                        Premium gold experience
-                    </li>
+                    <li>Premium gold experience</li>
 
-                    <li>
-                        Priority access
-                    </li>
+                    <li>Priority access</li>
 
-                    <li>
-                        Full experience
-                    </li>
+                    <li>Full experience</li>
 
                 </ul>
 
@@ -1441,13 +1510,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        🤖
-                    </div>
+                    <div class="benefit-icon">🤖</div>
 
-                    <h3>
-                        Unlimited AI
-                    </h3>
+                    <h3>Unlimited AI</h3>
 
                     <p>
                         Get unlimited access to
@@ -1459,13 +1524,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        🧠
-                    </div>
+                    <div class="benefit-icon">🧠</div>
 
-                    <h3>
-                        Bigger Knowledge Checks
-                    </h3>
+                    <h3>Bigger Knowledge Checks</h3>
 
                     <p>
                         Challenge yourself with
@@ -1477,13 +1538,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        🎮
-                    </div>
+                    <div class="benefit-icon">🎮</div>
 
-                    <h3>
-                        Unlimited Battles
-                    </h3>
+                    <h3>Unlimited Battles</h3>
 
                     <p>
                         Keep playing Game Mode
@@ -1495,13 +1552,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        ⚔️
-                    </div>
+                    <div class="benefit-icon">⚔️</div>
 
-                    <h3>
-                        1v1
-                    </h3>
+                    <h3>1v1</h3>
 
                     <p>
                         Access the premium
@@ -1513,13 +1566,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        🏆
-                    </div>
+                    <div class="benefit-icon">🏆</div>
 
-                    <h3>
-                        Tournaments
-                    </h3>
+                    <h3>Tournaments</h3>
 
                     <p>
                         Take part in premium
@@ -1531,13 +1580,9 @@
 
                 <div class="benefit">
 
-                    <div class="benefit-icon">
-                        👑
-                    </div>
+                    <div class="benefit-icon">👑</div>
 
-                    <h3>
-                        Premium Experience
-                    </h3>
+                    <h3>Premium Experience</h3>
 
                     <p>
                         Enjoy the gold Premium
@@ -1559,9 +1604,7 @@
 
             <div class="section-heading">
 
-                <h2>
-                    Free vs Premium
-                </h2>
+                <h2>Free vs Premium</h2>
 
                 <p>
                     See what changes when you unlock Premium.
@@ -1576,13 +1619,9 @@
                     class="comparison-row comparison-header"
                 >
 
-                    <div>
-                        Feature
-                    </div>
+                    <div>Feature</div>
 
-                    <div>
-                        Free
-                    </div>
+                    <div>Free</div>
 
                     <div class="comparison-premium">
                         Premium
@@ -1593,13 +1632,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        AI assistance
-                    </div>
+                    <div>AI assistance</div>
 
-                    <div>
-                        Limited
-                    </div>
+                    <div>Limited</div>
 
                     <div class="comparison-premium comparison-check">
                         Unlimited
@@ -1610,13 +1645,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        Knowledge checks
-                    </div>
+                    <div>Knowledge checks</div>
 
-                    <div>
-                        5 questions
-                    </div>
+                    <div>5 questions</div>
 
                     <div class="comparison-premium comparison-check">
                         5–60 questions
@@ -1627,13 +1658,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        Game Mode
-                    </div>
+                    <div>Game Mode</div>
 
-                    <div>
-                        Limited
-                    </div>
+                    <div>Limited</div>
 
                     <div class="comparison-premium comparison-check">
                         Unlimited
@@ -1644,13 +1671,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        1v1
-                    </div>
+                    <div>1v1</div>
 
-                    <div>
-                        —
-                    </div>
+                    <div>—</div>
 
                     <div class="comparison-premium comparison-check">
                         ✓
@@ -1661,13 +1684,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        Tournaments
-                    </div>
+                    <div>Tournaments</div>
 
-                    <div>
-                        —
-                    </div>
+                    <div>—</div>
 
                     <div class="comparison-premium comparison-check">
                         ✓
@@ -1678,13 +1697,9 @@
 
                 <div class="comparison-row">
 
-                    <div>
-                        Premium experience
-                    </div>
+                    <div>Premium experience</div>
 
-                    <div>
-                        —
-                    </div>
+                    <div>—</div>
 
                     <div class="comparison-premium comparison-check">
                         ✓
@@ -1737,10 +1752,6 @@
 
 
     <script>
-        /* =====================================================
-           STUDYMIND AI — PREMIUM SUPABASE
-           Existing functionality preserved.
-           ===================================================== */
 
         const SUPABASE_URL =
             "https://bicnrbqqvucgpbwudmit.supabase.co";
@@ -1765,6 +1776,7 @@
             }
 
         }
+
     </script>
 
 
@@ -1773,6 +1785,7 @@
          ========================================================= -->
 
     <script>
+
         (function syncPremiumPageTheme() {
 
             "use strict";
@@ -1796,11 +1809,6 @@
 
                 }
 
-
-                /*
-                 * Preserve the existing dark appearance
-                 * when no StudyMind theme has been selected.
-                 */
 
                 const isDark =
                     theme === "dark" ||
@@ -1832,11 +1840,6 @@
             }
 
 
-            /*
-             * If another StudyMind tab changes
-             * the theme, update this page visually.
-             */
-
             window.addEventListener(
                 "storage",
                 event => {
@@ -1854,6 +1857,7 @@
             );
 
         })();
+
     </script>
 
 
@@ -1865,10 +1869,6 @@
 
 
     <script>
-        /* =====================================================
-           PREMIUM PAGE BUTTONS
-           Existing Premium system remains authoritative.
-           ===================================================== */
 
         document.addEventListener(
             "DOMContentLoaded",
@@ -1904,6 +1904,7 @@
 
             }
         );
+
     </script>
 
 
@@ -1912,16 +1913,6 @@
          ========================================================= -->
 
     <script>
-        /* =====================================================
-           STUDYMIND AI — ADMIN PREMIUM APP ACCESS
-
-           Admin:
-           studymindaiofficial@gmail.com
-
-           This does NOT change normal Premium purchasing.
-           It only provides the existing admin route to
-           premium-app.html.
-           ===================================================== */
 
         (function initialiseAdminPremiumAccess() {
 
@@ -1988,11 +1979,6 @@
                     }
 
 
-                    /*
-                     * Normal users continue through
-                     * the normal Premium system.
-                     */
-
                     if (
                         typeof window.openPremiumOffer ===
                         "function"
@@ -2019,23 +2005,9 @@
             }
 
 
-            /*
-             * Expose the existing admin route globally.
-             */
-
             window.openGoldenPremiumApp =
                 openGoldenPremiumApp;
 
-
-            /*
-             * Admin-only shortcut:
-             *
-             * If an element anywhere on the Premium page
-             * uses data-golden-premium-admin, it will open
-             * premium-app.html for the admin account.
-             *
-             * No existing Premium button is changed here.
-             */
 
             document.addEventListener(
                 "DOMContentLoaded",
@@ -2060,6 +2032,7 @@
             );
 
         })();
+
     </script>
 
 </body>
