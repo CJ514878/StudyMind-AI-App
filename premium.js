@@ -1,11 +1,10 @@
+"use strict";
+
 /* =========================================================
    STUDYMIND AI — PREMIUM SYSTEM
    ========================================================= */
 
 (function () {
-
-    "use strict";
-
 
     /* =====================================================
        STORAGE
@@ -32,12 +31,16 @@
        ===================================================== */
 
     function isPremium() {
+
         return premiumStatus === true;
+
     }
 
 
     function isStudyMindPremium() {
+
         return premiumStatus === true;
+
     }
 
 
@@ -75,6 +78,160 @@
 
 
     /* =====================================================
+       PREMIUM PAGE HELPERS
+       ===================================================== */
+
+    function getPremiumPage() {
+
+        return document.getElementById(
+            "premiumPage"
+        );
+
+    }
+
+
+    function isPremiumPageDark() {
+
+        const page =
+            getPremiumPage();
+
+        if (!page) {
+
+            return false;
+
+        }
+
+        return page.classList.contains(
+            "premium-dark"
+        );
+
+    }
+
+
+    function applyPremiumModalTheme() {
+
+        const modal =
+            document.getElementById(
+                "studyMindPremiumModal"
+            );
+
+        if (!modal) {
+
+            return;
+
+        }
+
+
+        const page =
+            getPremiumPage();
+
+
+        /*
+         * Mark the dynamically generated modal as
+         * belonging to the Premium system.
+         */
+
+        modal.classList.add(
+            "premium-modal-root"
+        );
+
+
+        /*
+         * Keep the modal synchronized with the
+         * Premium page's light/dark state.
+         */
+
+        modal.classList.toggle(
+            "premium-dark",
+            isPremiumPageDark()
+        );
+
+
+        /*
+         * Copy the Premium CSS variables from
+         * .premium-page onto the modal root.
+         *
+         * This allows premium.js to remain compatible
+         * with the namespaced premium.html.
+         */
+
+        if (!page) {
+
+            return;
+
+        }
+
+
+        const computedStyle =
+            window.getComputedStyle(
+                page
+            );
+
+
+        const variables = [
+
+            "--premium-bg",
+
+            "--premium-bg-soft",
+
+            "--premium-card",
+
+            "--premium-card-solid",
+
+            "--premium-card-border",
+
+            "--premium-text",
+
+            "--premium-muted",
+
+            "--premium-gold",
+
+            "--premium-gold-light",
+
+            "--premium-gold-mid",
+
+            "--premium-gold-dark",
+
+            "--premium-gold-gradient",
+
+            "--premium-gold-gradient-soft",
+
+            "--premium-green",
+
+            "--premium-danger",
+
+            "--premium-shadow",
+
+            "--premium-premium-shadow"
+
+        ];
+
+
+        variables.forEach(
+            variable => {
+
+                const value =
+                    computedStyle.getPropertyValue(
+                        variable
+                    );
+
+
+                if (value) {
+
+                    modal.style.setProperty(
+                        variable,
+                        value
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
        APPLY PREMIUM THEME
        ===================================================== */
 
@@ -83,6 +240,10 @@
         const enabled =
             premiumStatus === true;
 
+
+        /*
+         * Preserve the existing global Premium classes.
+         */
 
         document.documentElement.classList.toggle(
             "study-mind-premium",
@@ -100,7 +261,47 @@
         }
 
 
+        /*
+         * Update the Premium page if it exists.
+         */
+
+        const premiumPage =
+            getPremiumPage();
+
+
+        if (premiumPage) {
+
+            /*
+             * The page itself always uses its gold
+             * Premium styling. Premium status controls
+             * the UI state, not whether the page becomes
+             * blue or another color.
+             */
+
+            premiumPage.classList.toggle(
+                "premium-active",
+                enabled
+            );
+
+            premiumPage.classList.toggle(
+                "premium-dark",
+                premiumPage.classList.contains(
+                    "premium-dark"
+                )
+            );
+
+        }
+
+
         updatePremiumUI();
+
+
+        /*
+         * Make sure an already-open dynamic modal
+         * receives the current Premium theme.
+         */
+
+        applyPremiumModalTheme();
 
     }
 
@@ -126,6 +327,17 @@
                         "👑 Premium Active";
 
                     button.classList.add(
+                        "premium-active"
+                    );
+
+                } else {
+
+                    /*
+                     * Do not overwrite the original
+                     * button text while the user is Free.
+                     */
+
+                    button.classList.remove(
                         "premium-active"
                     );
 
@@ -180,7 +392,9 @@
                 typeof window.supabaseClient ===
                 "undefined"
             ) {
+
                 return null;
+
             }
 
 
@@ -231,10 +445,9 @@
     async function loadStudyMindPremium() {
 
         /*
-         * Immediately restore the visual state
-         * from the local cache.
+         * Restore cached status immediately.
          *
-         * This is ONLY a visual cache.
+         * This is only a temporary visual cache.
          * The server remains the source of truth.
          */
 
@@ -253,7 +466,9 @@
 
             premiumStatus = false;
 
-            saveCachedPremiumStatus(false);
+            saveCachedPremiumStatus(
+                false
+            );
 
             applyPremiumTheme();
 
@@ -320,17 +535,23 @@
 
 
             /*
-             * Never grant Premium because
-             * the status request failed.
+             * Never grant Premium when the
+             * server verification fails.
              */
 
             premiumStatus = false;
 
-            saveCachedPremiumStatus(false);
+
+            saveCachedPremiumStatus(
+                false
+            );
+
 
             applyPremiumTheme();
 
+
             premiumLoaded = true;
+
 
             return false;
 
@@ -383,8 +604,14 @@
             "studyMindPremiumModal";
 
 
+        /*
+         * These classes allow the Premium HTML
+         * stylesheet to recognize the dynamically
+         * generated modal.
+         */
+
         overlay.className =
-            "study-mind-premium-overlay";
+            "study-mind-premium-overlay premium-modal-root";
 
 
         overlay.innerHTML = `
@@ -432,32 +659,43 @@
 
                     <div>
                         <span>✓</span>
-                        <strong>Unlimited AI tools</strong>
+
+                        <strong>
+                            Unlimited AI tools
+                        </strong>
                     </div>
+
 
                     <div>
                         <span>✓</span>
+
                         <strong>
                             5–60 question knowledge checks
                         </strong>
                     </div>
 
+
                     <div>
                         <span>✓</span>
+
                         <strong>
                             Unlimited Game Mode battles
                         </strong>
                     </div>
 
+
                     <div>
                         <span>✓</span>
+
                         <strong>
                             Premium 1v1 access
                         </strong>
                     </div>
 
+
                     <div>
                         <span>✓</span>
+
                         <strong>
                             Premium gold experience
                         </strong>
@@ -478,13 +716,23 @@
                         class="premium-payment-button"
                         data-provider="paystack"
                     >
-                        <span>🇳🇬</span>
+
                         <span>
-                            <strong>Paystack</strong>
+                            🇳🇬
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Paystack
+                            </strong>
+
                             <small>
                                 Nigerian payment
                             </small>
+
                         </span>
+
                     </button>
 
 
@@ -493,13 +741,23 @@
                         class="premium-payment-button"
                         data-provider="flutterwave"
                     >
-                        <span>💳</span>
+
                         <span>
-                            <strong>Flutterwave</strong>
+                            💳
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Flutterwave
+                            </strong>
+
                             <small>
                                 Card & local payment
                             </small>
+
                         </span>
+
                     </button>
 
 
@@ -508,13 +766,23 @@
                         class="premium-payment-button"
                         data-provider="stripe"
                     >
-                        <span>🌎</span>
+
                         <span>
-                            <strong>Stripe</strong>
+                            🌎
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Stripe
+                            </strong>
+
                             <small>
                                 International payment
                             </small>
+
                         </span>
+
                     </button>
 
                 </div>
@@ -539,6 +807,13 @@
         document.body.appendChild(
             overlay
         );
+
+
+        /*
+         * Apply Premium variables immediately.
+         */
+
+        applyPremiumModalTheme();
 
 
         const closeButton =
@@ -593,6 +868,16 @@
 
                 }
             );
+
+
+        /*
+         * Reapply after the browser has inserted
+         * the modal into the document.
+         */
+
+        requestAnimationFrame(
+            applyPremiumModalTheme
+        );
 
     }
 
@@ -751,17 +1036,22 @@
 
 
         overlay.className =
-            "study-mind-premium-overlay";
+            "study-mind-premium-overlay premium-modal-root";
 
 
         overlay.innerHTML = `
 
-            <div class="study-mind-premium-modal">
+            <div
+                class="study-mind-premium-modal"
+                role="dialog"
+                aria-modal="true"
+            >
 
                 <button
                     type="button"
                     class="premium-modal-close"
                     id="premiumActiveClose"
+                    aria-label="Close"
                 >
                     ×
                 </button>
@@ -790,15 +1080,25 @@
 
                 <div class="premium-active-list">
 
-                    <div>✓ Unlimited AI</div>
+                    <div>
+                        ✓ Unlimited AI
+                    </div>
 
-                    <div>✓ 5–60 question knowledge checks</div>
+                    <div>
+                        ✓ 5–60 question knowledge checks
+                    </div>
 
-                    <div>✓ Unlimited Game Mode</div>
+                    <div>
+                        ✓ Unlimited Game Mode
+                    </div>
 
-                    <div>✓ Premium 1v1 access</div>
+                    <div>
+                        ✓ Premium 1v1 access
+                    </div>
 
-                    <div>✓ Gold Premium experience</div>
+                    <div>
+                        ✓ Gold Premium experience
+                    </div>
 
                 </div>
 
@@ -821,6 +1121,9 @@
         );
 
 
+        applyPremiumModalTheme();
+
+
         document
             .getElementById(
                 "premiumActiveClose"
@@ -839,6 +1142,11 @@
                 "click",
                 closePremiumModal
             );
+
+
+        requestAnimationFrame(
+            applyPremiumModalTheme
+        );
 
     }
 
@@ -883,7 +1191,7 @@
     function initialisePremium() {
 
         /*
-         * Apply cached theme immediately.
+         * Restore cached Premium state first.
          */
 
         premiumStatus =
@@ -894,7 +1202,8 @@
 
 
         /*
-         * Then verify against the server.
+         * Verify the real Premium status
+         * against Supabase/server immediately.
          */
 
         setTimeout(
@@ -947,6 +1256,14 @@
 
     window.getStudyMindPremiumStatus =
         () => premiumStatus;
+
+
+    /*
+     * Optional public helper for the Premium page.
+     */
+
+    window.applyStudyMindPremiumModalTheme =
+        applyPremiumModalTheme;
 
 
     /* =====================================================
