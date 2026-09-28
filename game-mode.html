@@ -34,21 +34,36 @@
         <div class="battle-nav-links">
 
             <button onclick="openHome()">Home</button>
-            <button onclick="openDashboard()">Dashboard</button>
-            <button onclick="openStudyStreak()">Study Streak</button>
-            <button onclick="openSummarizer()">Summarizer</button>
+
+            <button onclick="openDashboard()">
+                Dashboard
+            </button>
+
+            <button onclick="openStudyStreak()">
+                Study Streak
+            </button>
+
+            <button onclick="openSummarizer()">
+                Summarizer
+            </button>
 
             <button class="active">
                 <i data-lucide="swords"></i>
                 Game Mode
             </button>
 
-            <button onclick="openPremium()" class="premium-nav">
+            <button
+                onclick="openPremium()"
+                class="premium-nav"
+            >
                 <i data-lucide="sparkles"></i>
                 Premium
             </button>
 
-            <button onclick="logoutStudyMind()" class="logout-button">
+            <button
+                onclick="logoutStudyMind()"
+                class="logout-button"
+            >
                 Logout
             </button>
 
@@ -63,7 +78,9 @@
 
     <main class="battle-main">
 
-        <!-- HERO -->
+        <!-- =========================
+             HERO
+        ========================== -->
 
         <section class="battle-hero">
 
@@ -133,12 +150,18 @@
              BATTLE SETUP
         ========================== -->
 
-        <section id="setupScreen" class="battle-card setup-card">
+        <section
+            id="setupScreen"
+            class="battle-card setup-card"
+        >
 
             <div class="section-title">
 
                 <div>
-                    <span class="section-label">BATTLE SETUP</span>
+
+                    <span class="section-label">
+                        BATTLE SETUP
+                    </span>
 
                     <h2>
                         Choose your battlefield
@@ -148,6 +171,7 @@
                         StudyMind AI will build the battle around your
                         selected curriculum.
                     </p>
+
                 </div>
 
                 <div class="ai-status">
@@ -173,6 +197,7 @@
                         <i data-lucide="book-open"></i>
 
                         <select id="curriculumSelect">
+
                             <option value="">
                                 Select curriculum
                             </option>
@@ -224,7 +249,10 @@
 
                         <i data-lucide="graduation-cap"></i>
 
-                        <select id="subjectSelect" disabled>
+                        <select
+                            id="subjectSelect"
+                            disabled
+                        >
 
                             <option value="">
                                 Select a curriculum first
@@ -249,7 +277,10 @@
 
                         <i data-lucide="layers"></i>
 
-                        <select id="topicSelect" disabled>
+                        <select
+                            id="topicSelect"
+                            disabled
+                        >
 
                             <option value="">
                                 Select a subject first
@@ -377,12 +408,25 @@
                     </div>
 
                     <div>
+
                         <strong>
-                            <span id="battlesUsed">0</span> /
-                            <span id="battleLimit">5</span>
+
+                            <span id="battlesUsed">
+                                0
+                            </span>
+
+                            /
+
+                            <span id="battleLimit">
+                                5
+                            </span>
+
                         </strong>
 
-                        <span>free battles used</span>
+                        <span>
+                            free battles used
+                        </span>
+
                     </div>
 
                 </div>
@@ -428,8 +472,25 @@
                     </div>
 
                     <div>
-                        <span>You</span>
-                        <strong id="playerName">Player</strong>
+
+                        <span>
+                            You
+                        </span>
+
+                        <!--
+                            This value is populated from:
+
+                            Supabase Auth
+                            user_metadata.username
+
+                            It is NOT populated from
+                            localStorage as the source of truth.
+                        -->
+
+                        <strong id="playerName">
+                            Student
+                        </strong>
+
                     </div>
 
                 </div>
@@ -447,7 +508,9 @@
                             15
                         </strong>
 
-                        <span>sec</span>
+                        <span>
+                            sec
+                        </span>
 
                     </div>
 
@@ -461,8 +524,15 @@
                     </div>
 
                     <div>
-                        <span>Opponent</span>
-                        <strong>StudyMind AI</strong>
+
+                        <span>
+                            Opponent
+                        </span>
+
+                        <strong>
+                            StudyMind AI
+                        </strong>
+
                     </div>
 
                 </div>
@@ -476,7 +546,9 @@
 
                 <div class="score-side">
 
-                    <span>Your Score</span>
+                    <span>
+                        Your Score
+                    </span>
 
                     <strong id="playerScore">
                         0
@@ -485,12 +557,16 @@
                 </div>
 
                 <div class="score-middle">
-                    <span>VS</span>
+                    <span>
+                        VS
+                    </span>
                 </div>
 
                 <div class="score-side">
 
-                    <span>AI Score</span>
+                    <span>
+                        AI Score
+                    </span>
 
                     <strong id="aiScore">
                         0
@@ -541,8 +617,10 @@
                 ></div>
 
 
-                <div class="question-feedback" id="questionFeedback">
-                </div>
+                <div
+                    class="question-feedback"
+                    id="questionFeedback"
+                ></div>
 
             </div>
 
@@ -556,6 +634,7 @@
                     <i data-lucide="flame"></i>
 
                     <div>
+
                         <strong id="comboCount">
                             0
                         </strong>
@@ -563,6 +642,7 @@
                         <span>
                             combo
                         </span>
+
                     </div>
 
                 </div>
@@ -570,7 +650,9 @@
 
                 <div class="live-performance">
 
-                    <span>Accuracy</span>
+                    <span>
+                        Accuracy
+                    </span>
 
                     <strong id="liveAccuracy">
                         0%
@@ -585,8 +667,11 @@
                     onclick="nextBattleQuestion()"
                     style="display:none;"
                 >
+
                     Next Question
+
                     <i data-lucide="arrow-right"></i>
+
                 </button>
 
             </div>
@@ -604,7 +689,10 @@
             style="display:none;"
         >
 
-            <div class="result-icon" id="resultIcon">
+            <div
+                class="result-icon"
+                id="resultIcon"
+            >
                 🏆
             </div>
 
@@ -624,10 +712,15 @@
             <div class="final-score">
 
                 <div>
-                    <span>Your Score</span>
+
+                    <span>
+                        Your Score
+                    </span>
+
                     <strong id="finalPlayerScore">
                         0
                     </strong>
+
                 </div>
 
                 <div class="final-vs">
@@ -635,10 +728,15 @@
                 </div>
 
                 <div>
-                    <span>AI Score</span>
+
+                    <span>
+                        AI Score
+                    </span>
+
                     <strong id="finalAIScore">
                         0
                     </strong>
+
                 </div>
 
             </div>
@@ -647,31 +745,51 @@
             <div class="performance-grid">
 
                 <div>
-                    <span>Accuracy</span>
+
+                    <span>
+                        Accuracy
+                    </span>
+
                     <strong id="finalAccuracy">
                         0%
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>Correct</span>
+
+                    <span>
+                        Correct
+                    </span>
+
                     <strong id="finalCorrect">
                         0/10
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>Best Combo</span>
+
+                    <span>
+                        Best Combo
+                    </span>
+
                     <strong id="finalCombo">
                         0
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>Performance</span>
+
+                    <span>
+                        Performance
+                    </span>
+
                     <strong id="finalRating">
                         —
                     </strong>
+
                 </div>
 
             </div>
@@ -701,28 +819,63 @@
             <div class="reward-breakdown">
 
                 <div>
-                    <span>Correct answers</span>
-                    <strong id="correctXP">+0</strong>
+
+                    <span>
+                        Correct answers
+                    </span>
+
+                    <strong id="correctXP">
+                        +0
+                    </strong>
+
                 </div>
 
                 <div>
-                    <span>Speed bonus</span>
-                    <strong id="speedXP">+0</strong>
+
+                    <span>
+                        Speed bonus
+                    </span>
+
+                    <strong id="speedXP">
+                        +0
+                    </strong>
+
                 </div>
 
                 <div>
-                    <span>Combo bonus</span>
-                    <strong id="comboXP">+0</strong>
+
+                    <span>
+                        Combo bonus
+                    </span>
+
+                    <strong id="comboXP">
+                        +0
+                    </strong>
+
                 </div>
 
                 <div>
-                    <span>Victory bonus</span>
-                    <strong id="winXP">+0</strong>
+
+                    <span>
+                        Victory bonus
+                    </span>
+
+                    <strong id="winXP">
+                        +0
+                    </strong>
+
                 </div>
 
                 <div>
-                    <span>Difficulty bonus</span>
-                    <strong id="difficultyXP">+0</strong>
+
+                    <span>
+                        Difficulty bonus
+                    </span>
+
+                    <strong id="difficultyXP">
+                        +0
+                    </strong>
+
                 </div>
 
             </div>
@@ -741,8 +894,11 @@
                     class="start-button"
                     onclick="playAgain()"
                 >
+
                     Battle Again
+
                     <i data-lucide="rotate-cw"></i>
+
                 </button>
 
             </div>
@@ -783,20 +939,34 @@
 </div>
 
 
-<!-- =========================
-     SCRIPTS
-========================== -->
+<!-- =====================================================
+     SUPABASE
+====================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="supabase.js"></script>
 
+
+<!-- =====================================================
+     GAME MODE
+====================================================== -->
+
 <script src="game-mode.js"></script>
 
+
+<!-- =====================================================
+     LUCIDE INITIALIZATION
+====================================================== -->
+
 <script>
-    if (window.lucide) {
-        lucide.createIcons();
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+    });
 </script>
 
 </body>
