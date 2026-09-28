@@ -2,7 +2,27 @@
 
 /* =========================================================
    STUDYMIND AI — SETTINGS
-   USERNAME = SUPABASE SOURCE OF TRUTH
+   SUPABASE AUTHORITATIVE USERNAME SYSTEM
+
+   IMPORTANT
+   ---------------------------------------------------------
+   Supabase Auth user_metadata.username is the ONLY
+   authoritative username.
+
+   Compatibility fields:
+   - name
+   - display_name
+   - full_name
+
+   are kept synchronized with username, but are NEVER
+   allowed to override username.
+
+   localStorage is only a local cache.
+   ========================================================= */
+
+
+/* =========================================================
+   SETTINGS KEYS
    ========================================================= */
 
 const SETTINGS = {
@@ -35,7 +55,7 @@ const SETTINGS = {
 
 
 /* =========================================================
-   HELPERS
+   SUPABASE CLIENT
    ========================================================= */
 
 function settingsClient() {
@@ -50,51 +70,84 @@ function settingsClient() {
 
 
 /* =========================================================
-   GET CANONICAL USERNAME
+   NORMALIZE USERNAME
    ========================================================= */
 
-function getCanonicalUsername() {
+function normalizeUsername(username) {
 
-    return (
+    username =
+        String(username || "")
+            .trim();
+
+    return username || "Student";
+
+}
+
+
+/* =========================================================
+   GET LOCAL CACHED USERNAME
+   ---------------------------------------------------------
+   This is ONLY a fallback for offline/UI situations.
+   ========================================================= */
+
+function getCachedUsername() {
+
+    return normalizeUsername(
         localStorage.getItem(
             SETTINGS.NAME
-        ) ||
-        "Student"
+        )
     );
 
 }
 
 
 /* =========================================================
-   SET CANONICAL USERNAME
+   SET LOCAL CACHE
    ========================================================= */
 
-function setCanonicalUsername(
-    username
-) {
+function cacheUsername(username) {
 
     username =
-        String(username || "")
-            .trim();
-
-    if (!username) {
-        username = "Student";
-    }
-
-
-    /* -------------------------------------------------------
-       LOCAL STORAGE
-    ------------------------------------------------------- */
+        normalizeUsername(username);
 
     localStorage.setItem(
         SETTINGS.NAME,
         username
     );
 
+    return username;
 
-    /* -------------------------------------------------------
-       UPDATE CURRENT PAGE
-    ------------------------------------------------------- */
+}
+
+
+/* =========================================================
+   GET CANONICAL USERNAME
+   ---------------------------------------------------------
+   IMPORTANT:
+   This function does NOT use:
+   - name
+   - display_name
+   - full_name
+
+   Those fields are compatibility fields only.
+   ========================================================= */
+
+function getCanonicalUsername() {
+
+    return getCachedUsername();
+
+}
+
+
+/* =========================================================
+   UPDATE CURRENT PAGE
+   ========================================================= */
+
+function updateUsernameUI(username) {
+
+    username =
+        normalizeUsername(username);
+
 
     document
         .querySelectorAll(
@@ -122,20 +175,203 @@ function setCanonicalUsername(
         });
 
 
+    document
+        .querySelectorAll(
+            "[data-username]"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                username;
+
+        });
+
+}
+
+
+/* =========================================================
+   SET CANONICAL USERNAME
+   ---------------------------------------------------------
+   This updates the local cache/UI.
+
+   Supabase persistence is handled separately by
+   saveUsernameToSupabase().
+   ========================================================= */
+
+function setCanonicalUsername(username) {
+
+    username =
+        normalizeUsername(username);
+
+
+    cacheUsername(
+        username
+    );
+
+
+    updateUsernameUI(
+        username
+    );
+
+
     return username;
 
 }
 
 
 /* =========================================================
-   SYNC LEADERBOARD USERNAME
-   ---------------------------------------------------------
-   Updates the authenticated user's existing
-   game_leaderboard row.
+   SAVE USERNAME TO SUPABASE AUTH
+   ========================================================= */
 
-   IMPORTANT:
-   game_leaderboard.user_id must contain the
-   Supabase Auth user's UUID.
+async function saveUsernameToSupabase(
+    username,
+    existingUser = null
+) {
+
+    const client =
+        settingsClient();
+
+
+    if (!client) {
+
+        throw new Error(
+            "Supabase client is not available."
+        );
+
+    }
+
+
+    username =
+        normalizeUsername(username);
+
+
+    let user =
+        existingUser;
+
+
+    /* -------------------------------------------------------
+       GET AUTHENTICATED USER
+       ------------------------------------------------------- */
+
+    if (!user) {
+
+        const {
+            data,
+            error
+        } =
+            await client.auth.getUser();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        user =
+            data?.user ||
+            null;
+
+    }
+
+
+    if (!user) {
+
+        throw new Error(
+            "No authenticated Supabase user."
+        );
+
+    }
+
+
+    /* -------------------------------------------------------
+       UPDATE AUTH METADATA
+       -------------------------------------------------------
+
+       username = AUTHORITATIVE
+
+       The other fields exist only for compatibility with
+       older StudyMind code.
+       ------------------------------------------------------- */
+
+    const {
+        data,
+        error
+    } =
+        await client.auth.updateUser({
+
+            data: {
+
+                username,
+
+                name:
+                    username,
+
+                display_name:
+                    username,
+
+                full_name:
+                    username
+
+            }
+
+        });
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    const updatedUser =
+        data?.user ||
+        user;
+
+
+    /* -------------------------------------------------------
+       VERIFY THE SAVED VALUE
+       ------------------------------------------------------- */
+
+    const savedUsername =
+        normalizeUsername(
+            updatedUser
+                ?.user_metadata
+                ?.username
+        );
+
+
+    if (
+        savedUsername !==
+        username
+    ) {
+
+        throw new Error(
+            "Supabase did not return the expected username."
+        );
+
+    }
+
+
+    console.log(
+        "StudyMind: Supabase username saved:",
+        savedUsername
+    );
+
+
+    return {
+
+        user:
+            updatedUser,
+
+        username:
+            savedUsername
+
+    };
+
+}
+
+
+/* =========================================================
+   SYNC LEADERBOARD USERNAME
    ========================================================= */
 
 async function syncLeaderboardUsername(
@@ -150,28 +386,19 @@ async function syncLeaderboardUsername(
     if (!client || !user) {
 
         return {
+
             success: false,
+
             reason:
                 "No Supabase client or authenticated user."
+
         };
 
     }
 
 
     username =
-        String(username || "")
-            .trim();
-
-
-    if (!username) {
-
-        return {
-            success: false,
-            reason:
-                "Username is empty."
-        };
-
-    }
+        normalizeUsername(username);
 
 
     try {
@@ -185,8 +412,10 @@ async function syncLeaderboardUsername(
                     "game_leaderboard"
                 )
                 .update({
+
                     display_name:
                         username
+
                 })
                 .eq(
                     "user_id",
@@ -203,6 +432,7 @@ async function syncLeaderboardUsername(
         console.log(
             "StudyMind: leaderboard username synchronized.",
             {
+
                 userId:
                     user.id,
 
@@ -212,6 +442,7 @@ async function syncLeaderboardUsername(
                     Array.isArray(data)
                         ? data.length
                         : 0
+
             }
         );
 
@@ -228,16 +459,8 @@ async function syncLeaderboardUsername(
 
     catch (error) {
 
-        /*
-         * This does NOT undo the Auth username change.
-         *
-         * If the leaderboard row does not exist yet,
-         * Game Mode will use the new username when it
-         * creates/updates the player's result.
-         */
-
         console.warn(
-            "StudyMind: could not synchronize leaderboard username:",
+            "StudyMind: leaderboard username synchronization failed:",
             error
         );
 
@@ -256,24 +479,47 @@ async function syncLeaderboardUsername(
 
 
 /* =========================================================
-   LOAD USER
+   LOAD AUTHENTICATED USER
+   ---------------------------------------------------------
+   CRITICAL:
+   ONLY user_metadata.username is accepted as the
+   authoritative Supabase username.
+
+   We deliberately DO NOT do:
+
+   metadata.name
+   metadata.display_name
+   metadata.full_name
+
+   because that is what caused the old
+   "Ronaldo Cristiano" value to return.
    ========================================================= */
 
 async function loadSettingsUser() {
 
+    const client =
+        settingsClient();
+
+
     let username =
-        localStorage.getItem(
-            SETTINGS.NAME
-        );
+        null;
 
 
     try {
 
-        const client =
-            settingsClient();
+        if (!client) {
+
+            console.warn(
+                "StudyMind: Supabase client unavailable while loading username."
+            );
 
 
-        if (client) {
+            username =
+                getCachedUsername();
+
+        }
+
+        else {
 
             const {
                 data,
@@ -297,48 +543,89 @@ async function loadSettingsUser() {
                 {};
 
 
-            /*
-             * SUPABASE AUTH IS THE SOURCE OF TRUTH.
-             *
-             * Priority:
-             *
-             * username
-             * display_name
-             * name
-             * full_name
-             * localStorage
-             * email prefix
-             */
+            /* ==============================================
+               ONLY AUTHORITATIVE FIELD
+               ============================================== */
 
             username =
-                metadata.username ||
-                metadata.display_name ||
-                metadata.name ||
-                metadata.full_name ||
-                username ||
-                (
-                    user?.email
-                        ? user.email
-                            .split("@")[0]
-                        : ""
-                ) ||
-                "Student";
+                String(
+                    metadata.username ||
+                    ""
+                ).trim();
 
 
-            username =
-                String(username)
-                    .trim() ||
-                "Student";
+            /* ==============================================
+               IMPORTANT
+
+               If username doesn't exist yet, DO NOT revive
+               metadata.name / display_name / full_name.
+
+               We migrate the existing name ONCE into the
+               canonical username field.
+
+               This is needed for your current account because
+               it currently has:
+
+               name: "Ronaldo Cristiano"
+
+               but no username.
+               ============================================== */
+
+            if (!username) {
+
+                const migrationUsername =
+                    String(
+                        metadata.name ||
+                        metadata.display_name ||
+                        metadata.full_name ||
+                        ""
+                    ).trim();
 
 
-            /*
-             * Keep local cache synchronized.
-             */
+                if (migrationUsername) {
 
-            localStorage.setItem(
-                SETTINGS.NAME,
-                username
-            );
+                    console.log(
+                        "StudyMind: migrating existing Supabase name into canonical username:",
+                        migrationUsername
+                    );
+
+
+                    const result =
+                        await saveUsernameToSupabase(
+                            migrationUsername,
+                            user
+                        );
+
+
+                    username =
+                        result.username;
+
+                }
+
+            }
+
+
+            /* ==============================================
+               LAST RESORT
+
+               Only use local cache if Supabase contains
+               absolutely no usable username.
+               ============================================== */
+
+            if (!username) {
+
+                username =
+                    getCachedUsername();
+
+            }
+
+
+            if (!username) {
+
+                username =
+                    "Student";
+
+            }
 
         }
 
@@ -351,14 +638,31 @@ async function loadSettingsUser() {
             error
         );
 
+
+        username =
+            getCachedUsername();
+
     }
 
 
-    /*
-     * Update the current Settings page.
-     */
+    username =
+        normalizeUsername(
+            username
+        );
 
-    setCanonicalUsername(
+
+    cacheUsername(
+        username
+    );
+
+
+    updateUsernameUI(
+        username
+    );
+
+
+    console.log(
+        "StudyMind Settings: canonical username:",
         username
     );
 
@@ -400,12 +704,14 @@ function setupProfile() {
         async () => {
 
             const username =
-                input.value.trim();
+                normalizeUsername(
+                    input.value
+                );
 
 
             /* ------------------------------------------------
                VALIDATION
-            ------------------------------------------------ */
+               ------------------------------------------------ */
 
             if (
                 username.length < 3
@@ -416,6 +722,7 @@ function setupProfile() {
                 );
 
                 return;
+
             }
 
 
@@ -428,12 +735,9 @@ function setupProfile() {
                 );
 
                 return;
+
             }
 
-
-            /*
-             * Prevent double-clicks.
-             */
 
             saveButton.disabled =
                 true;
@@ -452,169 +756,172 @@ function setupProfile() {
                     settingsClient();
 
 
-                let user =
-                    null;
+                if (!client) {
 
-
-                /* ==========================================
-                   SUPABASE AUTH
-                   ========================================== */
-
-                if (client) {
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await client.auth.getUser();
-
-
-                    if (error) {
-                        throw error;
-                    }
-
-
-                    user =
-                        data?.user ||
-                        null;
-
-
-                    if (user) {
-
-                        /*
-                         * Save ALL common username fields.
-                         *
-                         * username = canonical field
-                         * display_name/name/full_name =
-                         * compatibility with existing code.
-                         */
-
-                        const {
-                            data:
-                                updateData,
-                            error:
-                                updateError
-                        } =
-                            await client.auth.updateUser({
-
-                                data: {
-
-                                    username,
-
-                                    name:
-                                        username,
-
-                                    display_name:
-                                        username,
-
-                                    full_name:
-                                        username
-
-                                }
-
-                            });
-
-
-                        if (updateError) {
-                            throw updateError;
-                        }
-
-
-                        authSaved =
-                            true;
-
-
-                        /*
-                         * Use the returned user when available.
-                         */
-
-                        user =
-                            updateData?.user ||
-                            user;
-
-
-                        /* ==================================
-                           LEADERBOARD
-                           ================================== */
-
-                        const leaderboardResult =
-                            await syncLeaderboardUsername(
-                                username,
-                                user
-                            );
-
-
-                        leaderboardSaved =
-                            leaderboardResult.success;
-
-                    }
+                    throw new Error(
+                        "Supabase client is not available."
+                    );
 
                 }
 
 
                 /* ==========================================
-                   LOCAL CANONICAL USERNAME
+                   GET CURRENT AUTH USER
+                   ========================================== */
+
+                const {
+                    data,
+                    error
+                } =
+                    await client.auth.getUser();
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                let user =
+                    data?.user ||
+                    null;
+
+
+                if (!user) {
+
+                    throw new Error(
+                        "No authenticated user found."
+                    );
+
+                }
+
+
+                /* ==========================================
+                   SAVE AUTHORITATIVE USERNAME
+                   ========================================== */
+
+                const result =
+                    await saveUsernameToSupabase(
+                        username,
+                        user
+                    );
+
+
+                user =
+                    result.user;
+
+
+                const savedUsername =
+                    result.username;
+
+
+                authSaved =
+                    true;
+
+
+                /* ==========================================
+                   UPDATE LOCAL CACHE/UI ONLY AFTER SUPABASE
+                   SUCCESS
                    ========================================== */
 
                 setCanonicalUsername(
-                    username
+                    savedUsername
                 );
 
 
                 input.value =
-                    username;
+                    savedUsername;
 
 
                 /* ==========================================
-                   SAME-PAGE USERNAME EVENT
+                   LEADERBOARD
+                   ========================================== */
+
+                const leaderboardResult =
+                    await syncLeaderboardUsername(
+                        savedUsername,
+                        user
+                    );
+
+
+                leaderboardSaved =
+                    leaderboardResult.success;
+
+
+                /* ==========================================
+                   USERNAME CHANGE EVENT
                    ========================================== */
 
                 window.dispatchEvent(
                     new CustomEvent(
                         "studyMindUsernameChanged",
                         {
+
                             detail: {
 
-                                username,
+                                username:
+                                    savedUsername,
 
-                                authSaved,
+                                authSaved:
+                                    true,
 
                                 leaderboardSaved
 
                             }
+
                         }
                     )
                 );
 
 
                 /* ==========================================
-                   PROFILE EVENT
+                   PROFILE UPDATED EVENT
                    ========================================== */
 
                 window.dispatchEvent(
                     new CustomEvent(
                         "studyMindProfileUpdated",
                         {
+
                             detail: {
 
-                                username,
+                                username:
+                                    savedUsername,
 
-                                authSaved,
+                                authSaved:
+                                    true,
 
                                 leaderboardSaved
 
                             }
+
                         }
                     )
                 );
 
 
                 /* ==========================================
-                   USER MESSAGE
+                   BROADCAST TO OTHER OPEN STUDYMIND TABS
+                   ========================================== */
+
+                try {
+
+                    localStorage.setItem(
+                        "studyMindUsernameChangedAt",
+                        String(
+                            Date.now()
+                        )
+                    );
+
+                }
+
+                catch (_) {}
+
+
+                /* ==========================================
+                   MESSAGE
                    ========================================== */
 
                 if (
-                    authSaved &&
                     leaderboardSaved
                 ) {
 
@@ -624,20 +931,10 @@ function setupProfile() {
 
                 }
 
-                else if (
-                    authSaved
-                ) {
-
-                    showSettingsToast(
-                        "Username updated successfully."
-                    );
-
-                }
-
                 else {
 
                     showSettingsToast(
-                        "Username saved locally."
+                        "Username updated successfully."
                     );
 
                 }
@@ -653,21 +950,16 @@ function setupProfile() {
 
 
                 /*
-                 * Keep the interface usable even if
-                 * Supabase fails.
+                 * IMPORTANT:
+                 *
+                 * Do NOT pretend the username was saved
+                 * locally when Supabase failed.
+                 *
+                 * The old username remains authoritative.
                  */
 
-                setCanonicalUsername(
-                    username
-                );
-
-
-                input.value =
-                    username;
-
-
                 showSettingsToast(
-                    "Username saved locally, but could not be synced to your account."
+                    "Could not update username. Please try again."
                 );
 
             }
@@ -829,6 +1121,7 @@ function setupLogout() {
                     catch (error) {
 
                         console.warn(
+                            "StudyMind logout failed:",
                             error
                         );
 
@@ -848,7 +1141,7 @@ function setupLogout() {
 
 /* =========================================================
    RESET STUDY DATA
-   IMPORTANT:
+   ---------------------------------------------------------
    USERNAME + PREMIUM ARE PRESERVED.
    ========================================================= */
 
@@ -866,9 +1159,7 @@ function resetStudyData() {
 
 
     const username =
-        localStorage.getItem(
-            SETTINGS.NAME
-        );
+        getCanonicalUsername();
 
 
     const premium =
@@ -887,10 +1178,8 @@ function resetStudyData() {
         .forEach(key => {
 
             if (
-                key !==
-                    SETTINGS.NAME &&
-                key !==
-                    "studyMindPremium"
+                key !== SETTINGS.NAME &&
+                key !== "studyMindPremium"
             ) {
 
                 localStorage.removeItem(
@@ -902,9 +1191,8 @@ function resetStudyData() {
         });
 
 
-    localStorage.setItem(
-        SETTINGS.NAME,
-        username || "Student"
+    cacheUsername(
+        username
     );
 
 
@@ -976,11 +1264,11 @@ function resetStudyData() {
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    async () => {
 
         loadTheme();
 
-        loadSettingsUser();
+        await loadSettingsUser();
 
         setupProfile();
 
@@ -1020,8 +1308,15 @@ window.StudyMindSettings = {
     setUsername:
         setCanonicalUsername,
 
+    loadUsername:
+        loadSettingsUser,
+
+    saveUsername:
+        saveUsernameToSupabase,
+
     resetStudyData,
 
     syncLeaderboardUsername
 
 };
+
