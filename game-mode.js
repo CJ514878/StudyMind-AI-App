@@ -3,6 +3,18 @@
 /* =========================================================
    STUDYMIND AI — COMPUTER BATTLE
    AI POWERED BATTLE ENGINE
+
+   USERNAME ARCHITECTURE
+   ---------------------------------------------------------
+   Supabase Auth:
+       user.user_metadata.username
+
+   = SINGLE SOURCE OF TRUTH
+
+   localStorage:
+       studyMindUsername
+
+   = LOCAL CACHE ONLY
 ========================================================= */
 
 
@@ -67,6 +79,7 @@ const STORAGE = {
 
 };
 
+
 /* =========================================================
    SUPABASE — SHARED STUDYMIND CLIENT
 ========================================================= */
@@ -74,8 +87,8 @@ const STORAGE = {
 const gameSupabase =
     window.studyMindSupabase ||
     window.gameSupabase ||
+    window.supabaseClient ||
     null;
-
 
 
 /* =========================================================
@@ -125,15 +138,6 @@ let battleState = {
 
 /* =========================================================
    CURRICULUM DATABASE
-=========================================================
-
-   The battle first attempts to use the application's shared
-   curriculum database.
-
-   If that database exists, it is preferred.
-
-   This means Home, Dashboard and Game Mode can use the same
-   curriculum data without maintaining separate lists.
 ========================================================= */
 
 const FALLBACK_CURRICULUMS = {
@@ -684,7 +688,8 @@ const FALLBACK_CURRICULUMS = {
    DOM
 ========================================================= */
 
-const $ = id => document.getElementById(id);
+const $ = id =>
+    document.getElementById(id);
 
 
 /* =========================================================
@@ -696,8 +701,8 @@ document.addEventListener(
     async () => {
 
         /*
-         * Load the canonical username before
-         * initializing the Game Mode interface.
+         * Load the canonical Supabase username
+         * before initializing Game Mode.
          */
 
         await syncGameModeUsername();
@@ -715,8 +720,8 @@ document.addEventListener(
         /*
          * Same-page username synchronization.
          *
-         * This fires when Settings changes the
-         * username while this page is still open.
+         * Settings dispatches this event after
+         * successfully changing the Supabase username.
          */
 
         window.addEventListener(
@@ -725,11 +730,7 @@ document.addEventListener(
 
                 const username =
                     String(
-                        event.detail?.username ||
-                        localStorage.getItem(
-                            STORAGE.USERNAME
-                        ) ||
-                        "Student"
+                        event.detail?.username || ""
                     ).trim();
 
 
@@ -737,6 +738,11 @@ document.addEventListener(
                     return;
                 }
 
+
+                /*
+                 * Supabase already owns the value.
+                 * localStorage is only updated as cache.
+                 */
 
                 localStorage.setItem(
                     STORAGE.USERNAME,
@@ -757,7 +763,7 @@ document.addEventListener(
 
 
                 console.log(
-                    "StudyMind Game Mode: username changed:",
+                    "StudyMind Game Mode: username changed from Supabase:",
                     username
                 );
 
@@ -766,10 +772,10 @@ document.addEventListener(
 
 
         /*
-         * Cross-tab synchronization.
+         * Cross-tab cache synchronization.
          *
-         * CustomEvent does not cross browser tabs,
-         * but the storage event does.
+         * The storage event does not establish authority.
+         * It only updates the current tab's display.
          */
 
         window.addEventListener(
@@ -788,10 +794,13 @@ document.addEventListener(
 
                 const username =
                     String(
-                        event.newValue ||
-                        "Student"
-                    ).trim() ||
-                    "Student";
+                        event.newValue || ""
+                    ).trim();
+
+
+                if (!username) {
+                    return;
+                }
 
 
                 const playerName =
@@ -807,7 +816,7 @@ document.addEventListener(
 
 
                 console.log(
-                    "StudyMind Game Mode: username synchronized from another tab:",
+                    "StudyMind Game Mode: cached username synchronized:",
                     username
                 );
 
@@ -816,7 +825,9 @@ document.addEventListener(
 
 
         if (window.lucide) {
+
             lucide.createIcons();
+
         }
 
     }
@@ -845,6 +856,7 @@ function getSharedCurriculumData() {
 
     ];
 
+
     for (const name of possibleNames) {
 
         if (
@@ -858,6 +870,7 @@ function getSharedCurriculumData() {
 
     }
 
+
     return null;
 
 }
@@ -869,16 +882,24 @@ function getSharedCurriculumData() {
 
 function getCurriculumData(curriculum) {
 
-    const shared = getSharedCurriculumData();
+    const shared =
+        getSharedCurriculumData();
+
 
     if (shared) {
 
         const direct =
             shared[curriculum];
 
+
         if (direct) {
-            return normalizeCurriculum(direct);
+
+            return normalizeCurriculum(
+                direct
+            );
+
         }
+
 
         const matchingKey =
             Object.keys(shared).find(
@@ -887,13 +908,17 @@ function getCurriculumData(curriculum) {
                     curriculum.toLowerCase()
             );
 
+
         if (matchingKey) {
+
             return normalizeCurriculum(
                 shared[matchingKey]
             );
+
         }
 
     }
+
 
     return normalizeCurriculum(
         FALLBACK_CURRICULUMS[curriculum] || {}
@@ -910,9 +935,16 @@ function normalizeCurriculum(data) {
 
     const result = {};
 
-    if (!data || typeof data !== "object") {
+
+    if (
+        !data ||
+        typeof data !== "object"
+    ) {
+
         return result;
+
     }
+
 
     Object.entries(data).forEach(
         ([subject, value]) => {
@@ -937,6 +969,7 @@ function normalizeCurriculum(data) {
                     value.contents ||
                     [];
 
+
                 if (Array.isArray(topics)) {
 
                     result[subject] =
@@ -947,8 +980,11 @@ function normalizeCurriculum(data) {
                                     typeof item ===
                                     "string"
                                 ) {
+
                                     return item;
+
                                 }
+
 
                                 return (
                                     item.name ||
@@ -966,6 +1002,7 @@ function normalizeCurriculum(data) {
 
         }
     );
+
 
     return result;
 
@@ -1073,6 +1110,7 @@ function populateSubjects() {
     const curriculum =
         $("curriculumSelect").value;
 
+
     subject.innerHTML = "";
 
     topic.innerHTML =
@@ -1094,7 +1132,10 @@ function populateSubjects() {
 
 
     const data =
-        getCurriculumData(curriculum);
+        getCurriculumData(
+            curriculum
+        );
+
 
     const subjects =
         Object.keys(data)
@@ -1127,10 +1168,17 @@ function populateSubjects() {
         const option =
             document.createElement("option");
 
-        option.value = name;
-        option.textContent = name;
 
-        subject.appendChild(option);
+        option.value =
+            name;
+
+        option.textContent =
+            name;
+
+
+        subject.appendChild(
+            option
+        );
 
     });
 
@@ -1152,11 +1200,15 @@ function populateTopics() {
     const topic =
         $("topicSelect");
 
+
     topic.innerHTML =
         `<option value="">Select topic</option>`;
 
 
-    if (!curriculum || !subject) {
+    if (
+        !curriculum ||
+        !subject
+    ) {
 
         topic.disabled = true;
 
@@ -1166,7 +1218,10 @@ function populateTopics() {
 
 
     const data =
-        getCurriculumData(curriculum);
+        getCurriculumData(
+            curriculum
+        );
+
 
     const topics =
         data[subject] || [];
@@ -1179,13 +1234,21 @@ function populateTopics() {
     topics.forEach(name => {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
-        option.value = name;
 
-        option.textContent = name;
+        option.value =
+            name;
 
-        topic.appendChild(option);
+        option.textContent =
+            name;
+
+
+        topic.appendChild(
+            option
+        );
 
     });
 
@@ -1193,8 +1256,11 @@ function populateTopics() {
     const search =
         $("topicSearch");
 
+
     if (search) {
+
         search.value = "";
+
     }
 
 }
@@ -1207,34 +1273,43 @@ function populateTopics() {
 function filterTopics() {
 
     const query =
-        $("topicSearch").value
+        $("topicSearch")
+            .value
             .trim()
             .toLowerCase();
 
+
     const select =
         $("topicSelect");
+
 
     if (!select) {
         return;
     }
 
-    Array.from(select.options)
-        .forEach(option => {
+
+    Array.from(
+        select.options
+    ).forEach(
+        option => {
 
             if (!option.value) {
                 return;
             }
+
 
             const match =
                 option.textContent
                     .toLowerCase()
                     .includes(query);
 
+
             option.hidden =
                 query.length > 0 &&
                 !match;
 
-        });
+        }
+    );
 
 }
 
@@ -1247,6 +1322,7 @@ function loadPlanDefaults() {
 
     let plan = null;
 
+
     try {
 
         const raw =
@@ -1254,8 +1330,12 @@ function loadPlanDefaults() {
                 STORAGE.PLAN
             );
 
+
         if (raw) {
-            plan = JSON.parse(raw);
+
+            plan =
+                JSON.parse(raw);
+
         }
 
     } catch (_) {}
@@ -1272,10 +1352,12 @@ function loadPlanDefaults() {
                     )
                 );
 
+
             const active =
                 localStorage.getItem(
                     STORAGE.ACTIVE_PLAN
                 );
+
 
             if (
                 Array.isArray(plans) &&
@@ -1315,14 +1397,23 @@ function loadPlanDefaults() {
         const select =
             $("curriculumSelect");
 
+
+        if (!select) {
+            return;
+        }
+
+
         const option =
             Array.from(
                 select.options
             ).find(
                 o =>
                     o.value.toLowerCase() ===
-                    String(curriculum).toLowerCase()
+                    String(
+                        curriculum
+                    ).toLowerCase()
             );
+
 
         if (option) {
 
@@ -1346,6 +1437,7 @@ function updateAIInsight() {
 
     const output =
         $("aiInsightText");
+
 
     if (!output) {
         return;
@@ -1409,18 +1501,25 @@ function isPremium() {
             STORAGE.PREMIUM
         );
 
+
     if (
         cached === "true" ||
         cached === "1"
     ) {
+
         return true;
+
     }
+
 
     if (
         window.premiumStatus === true
     ) {
+
         return true;
+
     }
+
 
     if (
         typeof window.isStudyMindPremium ===
@@ -1436,6 +1535,7 @@ function isPremium() {
         } catch (_) {}
 
     }
+
 
     return false;
 
@@ -1473,12 +1573,15 @@ function updateBattleLimit() {
     const premium =
         isPremium();
 
+
     if ($("battlesUsed")) {
 
         $("battlesUsed")
-            .textContent = count;
+            .textContent =
+                count;
 
     }
+
 
     if ($("battleLimit")) {
 
@@ -1499,9 +1602,11 @@ function updateBattleLimit() {
 
 async function startComputerBattle() {
 
-    if (!isPremium() &&
+    if (
+        !isPremium() &&
         getBattleCount() >=
-        BATTLE_CONFIG.FREE_BATTLES) {
+        BATTLE_CONFIG.FREE_BATTLES
+    ) {
 
         openPremium();
 
@@ -1638,23 +1743,36 @@ async function startComputerBattle() {
                     0,
                     BATTLE_CONFIG.QUESTIONS
                 )
-                .map(normalizeQuestion);
+                .map(
+                    normalizeQuestion
+                );
 
+
+        /*
+         * Count the battle when the AI battle
+         * has actually been generated.
+         */
 
         incrementBattleCount();
 
+
         await showBattleScreen();
 
-renderBattleQuestion();
 
-    } catch (error) {
+        renderBattleQuestion();
+
+    }
+
+    catch (error) {
 
         console.error(
             "Computer Battle:",
             error
         );
 
+
         hideBattleLoading();
+
 
         showBattleMessage(
             "The AI could not create this battle. Please try again."
@@ -1671,17 +1789,6 @@ renderBattleQuestion();
 
 async function generateBattleQuestions(payload) {
 
-    /*
-       IMPORTANT:
-
-       The API receives the exact curriculum,
-       subject and topic.
-
-       This prevents the previous problem where the
-       Computer Battle could default to Mathematics.
-    */
-
-
     const response =
         await fetch(
             "/api/generate-questions",
@@ -1696,7 +1803,8 @@ async function generateBattleQuestions(payload) {
 
                 body: JSON.stringify({
 
-                    mode: "computer-battle",
+                    mode:
+                        "computer-battle",
 
                     curriculum:
                         payload.curriculum,
@@ -1785,7 +1893,9 @@ function normalizeQuestion(question) {
     ) {
 
         options =
-            Object.values(options || {});
+            Object.values(
+                options || {}
+            );
 
     }
 
@@ -1798,8 +1908,11 @@ function normalizeQuestion(question) {
                     typeof option ===
                     "string"
                 ) {
+
                     return option;
+
                 }
+
 
                 return (
                     option.text ||
@@ -1815,18 +1928,24 @@ function normalizeQuestion(question) {
     let correct =
         question.correctAnswer;
 
-    if (
-        correct === undefined
-    ) {
-        correct =
-            question.answer;
-    }
 
     if (
         correct === undefined
     ) {
+
+        correct =
+            question.answer;
+
+    }
+
+
+    if (
+        correct === undefined
+    ) {
+
         correct =
             question.correct;
+
     }
 
 
@@ -1848,7 +1967,9 @@ function normalizeQuestion(question) {
                 letter.charCodeAt(0) -
                 65;
 
-        } else {
+        }
+
+        else {
 
             const index =
                 options.findIndex(
@@ -1861,8 +1982,12 @@ function normalizeQuestion(question) {
                             .trim()
                 );
 
+
             if (index >= 0) {
-                correct = index;
+
+                correct =
+                    index;
+
             }
 
         }
@@ -1876,7 +2001,8 @@ function normalizeQuestion(question) {
 
     return {
 
-        question: text,
+        question:
+            text,
 
         options,
 
@@ -1908,13 +2034,25 @@ function showBattleLoading() {
     const button =
         $("startBattleButton");
 
+
     if (button) {
 
-        button.disabled = true;
+        button.disabled =
+            true;
 
-        button.querySelector("span")
-            .textContent =
+
+        const span =
+            button.querySelector(
+                "span"
+            );
+
+
+        if (span) {
+
+            span.textContent =
                 "AI is preparing...";
+
+        }
 
     }
 
@@ -1926,13 +2064,25 @@ function hideBattleLoading() {
     const button =
         $("startBattleButton");
 
+
     if (button) {
 
-        button.disabled = false;
+        button.disabled =
+            false;
 
-        button.querySelector("span")
-            .textContent =
+
+        const span =
+            button.querySelector(
+                "span"
+            );
+
+
+        if (span) {
+
+            span.textContent =
                 "Start Battle";
+
+        }
 
     }
 
@@ -1956,17 +2106,24 @@ async function showBattleScreen() {
 
 
     /*
-     * Make absolutely sure the battle uses the
-     * current Supabase username.
+     * Always refresh the username from
+     * Supabase Auth before displaying it.
      */
 
     const name =
         await syncGameModeUsername();
 
 
-    $("playerName")
-        .textContent =
+    const playerName =
+        $("playerName");
+
+
+    if (playerName) {
+
+        playerName.textContent =
             name;
+
+    }
 
 
     $("questionSubject")
@@ -1979,6 +2136,7 @@ async function showBattleScreen() {
             battleState.topic;
 
 }
+
 
 /* =========================================================
    RENDER QUESTION
@@ -1994,6 +2152,7 @@ function renderBattleQuestion() {
     const index =
         battleState.currentQuestion;
 
+
     const question =
         battleState.questions[index];
 
@@ -2007,10 +2166,13 @@ function renderBattleQuestion() {
     }
 
 
-    battleState.locked = false;
+    battleState.locked =
+        false;
+
 
     battleState.timeLeft =
         BATTLE_CONFIG.TIME_PER_QUESTION;
+
 
     battleState.questionStart =
         Date.now();
@@ -2042,7 +2204,8 @@ function renderBattleQuestion() {
 
 
     $("questionFeedback")
-        .textContent = "";
+        .textContent =
+            "";
 
 
     $("nextQuestionButton")
@@ -2054,7 +2217,9 @@ function renderBattleQuestion() {
         question
     );
 
+
     updateBattleUI();
+
 
     startTimer();
 
@@ -2070,7 +2235,9 @@ function renderAnswers(question) {
     const container =
         $("answerOptions");
 
-    container.innerHTML = "";
+
+    container.innerHTML =
+        "";
 
 
     question.options.forEach(
@@ -2081,16 +2248,21 @@ function renderAnswers(question) {
                     "button"
                 );
 
+
             button.type =
                 "button";
+
 
             button.className =
                 "answer-option";
 
+
             button.innerHTML = `
 
                 <span class="answer-letter">
-                    ${String.fromCharCode(65 + index)}
+                    ${String.fromCharCode(
+                        65 + index
+                    )}
                 </span>
 
                 <span class="answer-text">
@@ -2129,34 +2301,39 @@ function startTimer() {
 
 
     battleState.timer =
-        setInterval(() => {
+        setInterval(
+            () => {
 
-            battleState.timeLeft--;
+                battleState.timeLeft--;
 
-            $("questionTimer")
-                .textContent =
-                    Math.max(
-                        0,
-                        battleState.timeLeft
+
+                $("questionTimer")
+                    .textContent =
+                        Math.max(
+                            0,
+                            battleState.timeLeft
+                        );
+
+
+                if (
+                    battleState.timeLeft <=
+                    0
+                ) {
+
+                    clearInterval(
+                        battleState.timer
                     );
 
 
-            if (
-                battleState.timeLeft <=
-                0
-            ) {
+                    answerQuestion(
+                        -1
+                    );
 
-                clearInterval(
-                    battleState.timer
-                );
+                }
 
-                answerQuestion(
-                    -1
-                );
-
-            }
-
-        }, 1000);
+            },
+            1000
+        );
 
 }
 
@@ -2169,12 +2346,18 @@ function answerQuestion(
     selectedIndex
 ) {
 
-    if (battleState.locked) {
+    if (
+        battleState.locked
+    ) {
+
         return;
+
     }
 
 
-    battleState.locked = true;
+    battleState.locked =
+        true;
+
 
     clearInterval(
         battleState.timer
@@ -2203,6 +2386,7 @@ function answerQuestion(
     battleState.totalTime +=
         responseTime;
 
+
     battleState.answered++;
 
 
@@ -2217,34 +2401,46 @@ function answerQuestion(
         );
 
 
-  buttons.forEach(
-    (button, index) => {
+    buttons.forEach(
+        (button, index) => {
 
-        button.disabled = true;
+            button.disabled =
+                true;
 
-        /* Always highlight the correct answer */
-        if (
-            index === question.correctAnswer
-        ) {
-            button.classList.add("correct");
+
+            if (
+                index ===
+                question.correctAnswer
+            ) {
+
+                button.classList.add(
+                    "correct"
+                );
+
+            }
+
+
+            if (
+                index === selectedIndex &&
+                !correct
+            ) {
+
+                button.classList.add(
+                    "incorrect"
+                );
+
+            }
+
         }
+    );
 
-        /* Highlight the player's wrong answer */
-        if (
-            index === selectedIndex &&
-            !correct
-        ) {
-            button.classList.add("incorrect");
-        }
-
-    }
-);
 
     if (correct) {
 
         battleState.correct++;
 
         battleState.combo++;
+
 
         battleState.bestCombo =
             Math.max(
@@ -2262,18 +2458,15 @@ function answerQuestion(
         battleState.playerScore +=
             points;
 
-    } else {
+    }
 
-        battleState.combo = 0;
+    else {
+
+        battleState.combo =
+            0;
 
     }
 
-
-    /*
-       AI opponent makes its own decision.
-
-       Difficulty controls how often the AI answers correctly.
-    */
 
     const aiCorrect =
         aiOpponentAnswer();
@@ -2316,10 +2509,6 @@ function calculateQuestionPoints(
         BATTLE_CONFIG.BASE_XP;
 
 
-    /*
-       Faster answer = larger reward.
-    */
-
     const speedRatio =
         Math.max(
             0,
@@ -2337,10 +2526,6 @@ function calculateQuestionPoints(
     );
 
 
-    /*
-       Combo bonus.
-    */
-
     if (
         battleState.combo >= 2
     ) {
@@ -2355,20 +2540,25 @@ function calculateQuestionPoints(
     }
 
 
-    /*
-       Difficulty bonus.
-    */
-
     const difficulty =
         battleState.difficulty;
 
 
-    if (difficulty === "medium") {
+    if (
+        difficulty === "medium"
+    ) {
+
         points += 5;
+
     }
 
-    if (difficulty === "hard") {
+
+    if (
+        difficulty === "hard"
+    ) {
+
         points += 15;
+
     }
 
 
@@ -2405,7 +2595,8 @@ function aiOpponentAnswer() {
         difficulty === "easy"
     ) {
 
-        probability = 0.58;
+        probability =
+            0.58;
 
     }
 
@@ -2413,7 +2604,8 @@ function aiOpponentAnswer() {
         difficulty === "hard"
     ) {
 
-        probability = 0.88;
+        probability =
+            0.88;
 
     }
 
@@ -2421,21 +2613,19 @@ function aiOpponentAnswer() {
         difficulty === "medium"
     ) {
 
-        probability = 0.72;
+        probability =
+            0.72;
 
     }
 
     else {
 
-        /*
-           Adaptive AI scales with player performance.
-        */
-
         const accuracy =
             battleState.answered === 0
                 ? 0
-                : battleState.correct /
-                  battleState.answered;
+                :
+                battleState.correct /
+                battleState.answered;
 
 
         probability =
@@ -2451,8 +2641,10 @@ function aiOpponentAnswer() {
     }
 
 
-    return Math.random() <
-        probability;
+    return (
+        Math.random() <
+        probability
+    );
 
 }
 
@@ -2478,19 +2670,23 @@ function showAnswerFeedback(
             <span class="feedback-good">
                 ✓ Correct!
             </span>
+
             <span>
                 ${responseTime.toFixed(1)}s
                 · AI ${aiCorrect ? "also scored" : "missed it"}
             </span>
             `;
 
-    } else {
+    }
+
+    else {
 
         feedback.innerHTML =
             `
             <span class="feedback-bad">
                 ✕ Not quite
             </span>
+
             <span>
                 Correct answer:
                 ${
@@ -2532,9 +2728,11 @@ function updateBattleUI() {
         .textContent =
             battleState.playerScore;
 
+
     $("aiScore")
         .textContent =
             battleState.aiScore;
+
 
     $("comboCount")
         .textContent =
@@ -2587,6 +2785,7 @@ async function finishBattle() {
 
     const player =
         battleState.playerScore;
+
 
     const ai =
         battleState.aiScore;
@@ -2664,10 +2863,9 @@ async function finishBattle() {
 
 
     /*
-       IMPORTANT:
-       Wait for the local + Supabase save before
-       showing the final result.
-    */
+     * Wait for local + Supabase save before
+     * showing final results.
+     */
 
     await saveBattleResult();
 
@@ -2691,7 +2889,9 @@ function calculateFinalXP(
         BATTLE_CONFIG.BASE_XP;
 
 
-    let speedXP = 0;
+    let speedXP =
+        0;
+
 
     if (
         battleState.answered
@@ -2722,16 +2922,22 @@ function calculateFinalXP(
         BATTLE_CONFIG.COMBO_BONUS;
 
 
-    let winXP = 0;
+    let winXP =
+        0;
 
-    if (result === "win") {
+
+    if (
+        result === "win"
+    ) {
 
         winXP =
             BATTLE_CONFIG.VICTORY_BONUS;
 
     }
 
-    else if (result === "draw") {
+    else if (
+        result === "draw"
+    ) {
 
         winXP =
             BATTLE_CONFIG.DRAW_BONUS;
@@ -2746,23 +2952,28 @@ function calculateFinalXP(
     }
 
 
-    let difficultyXP = 0;
+    let difficultyXP =
+        0;
+
 
     if (
         battleState.difficulty ===
         "medium"
     ) {
 
-        difficultyXP = 20;
+        difficultyXP =
+            20;
 
     }
+
 
     if (
         battleState.difficulty ===
         "hard"
     ) {
 
-        difficultyXP = 40;
+        difficultyXP =
+            40;
 
     }
 
@@ -2774,10 +2985,6 @@ function calculateFinalXP(
         winXP +
         difficultyXP;
 
-
-    /*
-       Store breakdown for result screen.
-    */
 
     battleState.xpBreakdown = {
 
@@ -2809,6 +3016,7 @@ function renderResults() {
         .style.display =
             "none";
 
+
     $("resultScreen")
         .style.display =
             "block";
@@ -2822,17 +3030,21 @@ function renderResults() {
         .textContent =
             result.playerScore;
 
+
     $("finalAIScore")
         .textContent =
             result.aiScore;
+
 
     $("finalAccuracy")
         .textContent =
             `${result.accuracy}%`;
 
+
     $("finalCorrect")
         .textContent =
             `${result.correct}/${BATTLE_CONFIG.QUESTIONS}`;
+
 
     $("finalCombo")
         .textContent =
@@ -2848,20 +3060,40 @@ function renderResults() {
         "Keep improving";
 
 
-    if (result.accuracy >= 90) {
-        rating = "Elite";
+    if (
+        result.accuracy >= 90
+    ) {
+
+        rating =
+            "Elite";
+
     }
 
-    else if (result.accuracy >= 80) {
-        rating = "Excellent";
+    else if (
+        result.accuracy >= 80
+    ) {
+
+        rating =
+            "Excellent";
+
     }
 
-    else if (result.accuracy >= 70) {
-        rating = "Strong";
+    else if (
+        result.accuracy >= 70
+    ) {
+
+        rating =
+            "Strong";
+
     }
 
-    else if (result.accuracy >= 60) {
-        rating = "Good";
+    else if (
+        result.accuracy >= 60
+    ) {
+
+        rating =
+            "Good";
+
     }
 
 
@@ -2878,17 +3110,21 @@ function renderResults() {
             .textContent =
                 `+${battleState.xpBreakdown.correctXP}`;
 
+
         $("speedXP")
             .textContent =
                 `+${battleState.xpBreakdown.speedXP}`;
+
 
         $("comboXP")
             .textContent =
                 `+${battleState.xpBreakdown.comboXP}`;
 
+
         $("winXP")
             .textContent =
                 `+${battleState.xpBreakdown.winXP}`;
+
 
         $("difficultyXP")
             .textContent =
@@ -2897,15 +3133,19 @@ function renderResults() {
     }
 
 
-    if (result.result === "win") {
+    if (
+        result.result === "win"
+    ) {
 
         $("resultIcon")
             .textContent =
                 "🏆";
 
+
         $("resultTitle")
             .textContent =
                 "Victory!";
+
 
         $("resultSubtitle")
             .textContent =
@@ -2921,9 +3161,11 @@ function renderResults() {
             .textContent =
                 "⚡";
 
+
         $("resultTitle")
             .textContent =
                 "Draw!";
+
 
         $("resultSubtitle")
             .textContent =
@@ -2937,9 +3179,11 @@ function renderResults() {
             .textContent =
                 "🧠";
 
+
         $("resultTitle")
             .textContent =
                 "Good battle!";
+
 
         $("resultSubtitle")
             .textContent =
@@ -2963,6 +3207,7 @@ async function saveBattleResult() {
     const result =
         battleState.results;
 
+
     if (!result) {
         return;
     }
@@ -2979,7 +3224,10 @@ async function saveBattleResult() {
             ) || 0
         );
 
-    xp += result.xp;
+
+    xp +=
+        result.xp;
+
 
     localStorage.setItem(
         STORAGE.XP,
@@ -2998,7 +3246,10 @@ async function saveBattleResult() {
             ) || 0
         );
 
-    points += result.xp;
+
+    points +=
+        result.xp;
+
 
     localStorage.setItem(
         STORAGE.BATTLE_POINTS,
@@ -3017,12 +3268,14 @@ async function saveBattleResult() {
             ) || 0
         );
 
+
     const losses =
         Number(
             localStorage.getItem(
                 STORAGE.LOSSES
             ) || 0
         );
+
 
     const draws =
         Number(
@@ -3038,7 +3291,9 @@ async function saveBattleResult() {
 
         localStorage.setItem(
             STORAGE.WINS,
-            String(wins + 1)
+            String(
+                wins + 1
+            )
         );
 
     }
@@ -3049,7 +3304,9 @@ async function saveBattleResult() {
 
         localStorage.setItem(
             STORAGE.LOSSES,
-            String(losses + 1)
+            String(
+                losses + 1
+            )
         );
 
     }
@@ -3058,7 +3315,9 @@ async function saveBattleResult() {
 
         localStorage.setItem(
             STORAGE.DRAWS,
-            String(draws + 1)
+            String(
+                draws + 1
+            )
         );
 
     }
@@ -3070,6 +3329,7 @@ async function saveBattleResult() {
 
     const history =
         getHistory();
+
 
     history.unshift({
 
@@ -3115,183 +3375,201 @@ async function saveBattleResult() {
     localStorage.setItem(
         STORAGE.HISTORY,
         JSON.stringify(
-            history.slice(0, 100)
+            history.slice(
+                0,
+                100
+            )
         )
     );
 
 
-  /* =====================================================
-   GLOBAL SUPABASE LEADERBOARD
-===================================================== */
+    /* =====================================================
+       GLOBAL SUPABASE LEADERBOARD
+       -----------------------------------------------------
+       Supabase Auth username is authoritative.
+    ===================================================== */
 
-if (!gameSupabase) {
-
-    console.error(
-        "StudyMind: Shared Supabase client is unavailable."
-    );
-
-}
-
-else {
-
-    try {
-
-        /* -------------------------------------------------
-           GET CURRENT AUTHENTICATED USER
-        ------------------------------------------------- */
-
-        const {
-            data: {
-                user
-            },
-            error: userError
-        } =
-            await gameSupabase.auth.getUser();
-
-
-        if (userError) {
-            throw userError;
-        }
-
-
-        if (!user) {
-
-            console.warn(
-                "StudyMind: No authenticated user. Global leaderboard was not updated."
-            );
-
-        }
-
-        else {
-
-            /* -------------------------------------------------
-               GET DISPLAY NAME
-            ------------------------------------------------- */
-
-         const metadata =
-    user.user_metadata ||
-    {};
-
-
-/*
- * Supabase Auth username is the source of truth.
- */
-
-const displayName =
-    String(
-        metadata.username ||
-        metadata.display_name ||
-        metadata.name ||
-        metadata.full_name ||
-        localStorage.getItem(
-            STORAGE.USERNAME
-        ) ||
-        user.email?.split("@")[0] ||
-        "StudyMind Student"
-    ).trim() ||
-    "StudyMind Student";
-
-
-/*
- * Keep Game Mode's local username synchronized
- * with the authenticated account.
- */
-
-localStorage.setItem(
-    STORAGE.USERNAME,
-    displayName
-);
-
-
-/*
- * Update the visible player name if the element
- * exists.
- */
-
-const playerName =
-    $("playerName");
-
-
-if (playerName) {
-
-    playerName.textContent =
-        displayName;
-
-}
-
-
-            /* -------------------------------------------------
-               RECORD RESULT IN SUPABASE
-            ------------------------------------------------- */
-
-            const {
-                error
-            } =
-                await gameSupabase.rpc(
-                    "record_game_result",
-                    {
-
-                        p_display_name:
-                            String(displayName),
-
-                        p_points:
-                            Number(
-                                result.xp || 0
-                            ),
-
-                        p_result:
-                            String(
-                                result.result
-                            )
-
-                    }
-                );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            console.log(
-                "StudyMind global leaderboard updated.",
-                {
-
-                    userId:
-                        user.id,
-
-                    username:
-                        displayName,
-
-                    result:
-                        result.result,
-
-                    points:
-                        result.xp
-
-                }
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        /*
-           Local result has already been saved.
-           Therefore the battle itself does not fail if
-           the global leaderboard temporarily fails.
-        */
+    if (!gameSupabase) {
 
         console.error(
-            "StudyMind global leaderboard update failed:",
-            error
+            "StudyMind: Shared Supabase client is unavailable."
         );
 
     }
 
-}
+    else {
+
+        try {
+
+            /* -------------------------------------------------
+               GET CURRENT AUTHENTICATED USER
+            ------------------------------------------------- */
+
+            const {
+                data,
+                error: userError
+            } =
+                await gameSupabase.auth.getUser();
+
+
+            if (userError) {
+                throw userError;
+            }
+
+
+            const user =
+                data?.user;
+
+
+            if (!user) {
+
+                console.warn(
+                    "StudyMind: No authenticated user. Global leaderboard was not updated."
+                );
+
+            }
+
+            else {
+
+                /* ---------------------------------------------
+                   SUPABASE AUTH USERNAME
+                   ONLY user_metadata.username is accepted.
+                --------------------------------------------- */
+
+                const metadata =
+                    user.user_metadata || {};
+
+
+                const displayName =
+                    String(
+                        metadata.username || ""
+                    ).trim();
+
+
+                /*
+                 * Never fall back to:
+                 *
+                 * metadata.name
+                 * metadata.display_name
+                 * metadata.full_name
+                 * localStorage
+                 * email
+                 *
+                 * for the global leaderboard identity.
+                 */
+
+                if (!displayName) {
+
+                    console.warn(
+                        "StudyMind: Authenticated user has no canonical Supabase username. Global leaderboard was not updated."
+                    );
+
+                }
+
+                else {
+
+                    /*
+                     * Local cache only.
+                     */
+
+                    localStorage.setItem(
+                        STORAGE.USERNAME,
+                        displayName
+                    );
+
+
+                    /*
+                     * Update visible Game Mode username.
+                     */
+
+                    const playerName =
+                        $("playerName");
+
+
+                    if (playerName) {
+
+                        playerName.textContent =
+                            displayName;
+
+                    }
+
+
+                    /* -----------------------------------------
+                       RECORD RESULT IN SUPABASE
+                    ----------------------------------------- */
+
+                    const {
+                        error
+                    } =
+                        await gameSupabase.rpc(
+                            "record_game_result",
+                            {
+
+                                p_display_name:
+                                    displayName,
+
+                                p_points:
+                                    Number(
+                                        result.xp || 0
+                                    ),
+
+                                p_result:
+                                    String(
+                                        result.result
+                                    )
+
+                            }
+                        );
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    console.log(
+                        "StudyMind global leaderboard updated.",
+                        {
+
+                            userId:
+                                user.id,
+
+                            username:
+                                displayName,
+
+                            result:
+                                result.result,
+
+                            points:
+                                result.xp
+
+                        }
+                    );
+
+                }
+
+            }
+
+        }
+
+        catch (error) {
+
+            /*
+             * Local result has already been saved.
+             * Therefore a leaderboard failure does not
+             * invalidate the completed battle.
+             */
+
+            console.error(
+                "StudyMind global leaderboard update failed:",
+                error
+            );
+
+        }
+
+    }
+
+
     /* =====================================================
        NOTIFY STUDYMIND
     ===================================================== */
@@ -3301,15 +3579,16 @@ if (playerName) {
             "studyMindXPChanged",
             {
                 detail: {
+
                     amount:
                         result.xp
+
                 }
             }
         )
     );
 
 }
-
 
 
 /* =========================================================
@@ -3338,14 +3617,31 @@ function loadStats() {
         getBattleCount();
 
 
-    $("heroXP").textContent =
-        xp;
+    if ($("heroXP")) {
 
-    $("heroWins").textContent =
-        wins;
+        $("heroXP")
+            .textContent =
+                xp;
 
-    $("heroBattles").textContent =
-        battles;
+    }
+
+
+    if ($("heroWins")) {
+
+        $("heroWins")
+            .textContent =
+                wins;
+
+    }
+
+
+    if ($("heroBattles")) {
+
+        $("heroBattles")
+            .textContent =
+                battles;
+
+    }
 
 
     updateBattleLimit();
@@ -3385,6 +3681,9 @@ function incrementBattleCount() {
         String(count)
     );
 
+
+    updateBattleLimit();
+
 }
 
 
@@ -3408,7 +3707,9 @@ function getHistory() {
             ? value
             : [];
 
-    } catch (_) {
+    }
+
+    catch (_) {
 
         return [];
 
@@ -3421,76 +3722,51 @@ function getHistory() {
    USERNAME
    ---------------------------------------------------------
    SUPABASE AUTH = SOURCE OF TRUTH
-   localStorage = LOCAL CACHE
+   localStorage = LOCAL CACHE ONLY
 ========================================================= */
 
 function getUsername() {
 
-    const saved =
+    const cached =
         localStorage.getItem(
             STORAGE.USERNAME
         );
 
 
-    if (saved) {
-        return String(saved).trim() || "Student";
-    }
-
-
-    try {
-
-        const plan =
-            JSON.parse(
-                localStorage.getItem(
-                    STORAGE.PLAN
-                )
-            );
-
-
-        if (
-            plan &&
-            plan.username
-        ) {
-
-            const planUsername =
-                String(
-                    plan.username
-                ).trim();
-
-
-            if (planUsername) {
-
-                localStorage.setItem(
-                    STORAGE.USERNAME,
-                    planUsername
-                );
-
-
-                return planUsername;
-
-            }
-
-        }
-
-    } catch (_) {}
-
-
-    return "Student";
+    return (
+        String(
+            cached || ""
+        ).trim() ||
+        "Student"
+    );
 
 }
+
 
 /* =========================================================
    LOAD CANONICAL USERNAME FROM SUPABASE
    ---------------------------------------------------------
-   Supabase Auth metadata is the source of truth.
+   ONLY:
 
-   This keeps Game Mode synchronized with Settings,
-   Dashboard and the leaderboard.
+       user.user_metadata.username
+
+   is authoritative.
+
+   No name/display_name/full_name fallback.
 ========================================================= */
 
 async function syncGameModeUsername() {
 
+    /*
+     * Supabase is the source of truth.
+     */
+
     if (!gameSupabase) {
+
+        console.warn(
+            "StudyMind Game Mode: Supabase client unavailable; using cached username."
+        );
+
 
         return getUsername();
 
@@ -3523,27 +3799,40 @@ async function syncGameModeUsername() {
 
 
         const metadata =
-            user.user_metadata ||
-            {};
-
-
-        const username =
-            String(
-                metadata.username ||
-                metadata.display_name ||
-                metadata.name ||
-                metadata.full_name ||
-                localStorage.getItem(
-                    STORAGE.USERNAME
-                ) ||
-                user.email?.split("@")[0] ||
-                "Student"
-            ).trim() ||
-            "Student";
+            user.user_metadata || {};
 
 
         /*
-         * Keep local cache synchronized.
+         * IMPORTANT:
+         *
+         * ONLY username.
+         */
+
+        const username =
+            String(
+                metadata.username || ""
+            ).trim();
+
+
+        /*
+         * Supabase account has not yet
+         * established a canonical username.
+         */
+
+        if (!username) {
+
+            console.warn(
+                "StudyMind Game Mode: Supabase user has no canonical username yet."
+            );
+
+
+            return getUsername();
+
+        }
+
+
+        /*
+         * Update local cache from Supabase.
          */
 
         localStorage.setItem(
@@ -3553,8 +3842,7 @@ async function syncGameModeUsername() {
 
 
         /*
-         * Update Game Mode player name
-         * immediately if the battle UI exists.
+         * Update visible player name.
          */
 
         const playerName =
@@ -3570,7 +3858,7 @@ async function syncGameModeUsername() {
 
 
         console.log(
-            "StudyMind Game Mode username synchronized:",
+            "StudyMind Game Mode: Supabase-authoritative username:",
             username
         );
 
@@ -3586,6 +3874,12 @@ async function syncGameModeUsername() {
             error
         );
 
+
+        /*
+         * Supabase request failed.
+         *
+         * Use the last known local cache only.
+         */
 
         return getUsername();
 
@@ -3651,9 +3945,11 @@ function playAgain() {
         .style.display =
             "none";
 
+
     $("setupScreen")
         .style.display =
             "block";
+
 
     updateBattleLimit();
 
@@ -3669,6 +3965,7 @@ function toggleGameTheme() {
     document.body.classList.toggle(
         "light-mode"
     );
+
 
     localStorage.setItem(
         "studyMindTheme",
@@ -3699,7 +3996,9 @@ async function logoutStudyMind() {
 
         }
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "StudyMind logout failed:",
@@ -3708,6 +4007,10 @@ async function logoutStudyMind() {
 
     }
 
+
+    /*
+     * Username cache should not survive logout.
+     */
 
     localStorage.removeItem(
         STORAGE.USERNAME
@@ -3731,6 +4034,7 @@ function showBattleMessage(
     const insight =
         $("aiInsightText");
 
+
     if (insight) {
 
         insight.textContent =
@@ -3742,13 +4046,16 @@ function showBattleMessage(
     const setup =
         $("setupScreen");
 
+
     if (setup) {
 
         setup.classList.remove(
             "shake-card"
         );
 
+
         void setup.offsetWidth;
+
 
         setup.classList.add(
             "shake-card"
@@ -3766,22 +4073,27 @@ function showBattleMessage(
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
