@@ -1059,6 +1059,10 @@ function renderStats() {
         getStudyProgress();
 
 
+    const todayMinutes =
+        getTodayStudyMinutes();
+
+
     setText(
         "totalXP",
         xp
@@ -1083,6 +1087,9 @@ function renderStats() {
     );
 
 
+    /*
+     * Study Progress is now TIME based.
+     */
     setText(
         "studyProgress",
         `${progress}%`
@@ -1095,12 +1102,67 @@ function renderStats() {
     );
 
 
+    /*
+     * Optional elements if your Dashboard HTML
+     * contains them.
+     */
+    setText(
+        "todayStudyTime",
+        formatStudyMinutes(
+            todayMinutes
+        )
+    );
+
+
+    setText(
+        "studyMinutes",
+        formatStudyMinutes(
+            todayMinutes
+        )
+    );
+
+
     setText(
         "streakMessage",
         streak > 0
             ? "Keep your learning momentum."
-            : "Complete all required study work for today to start your streak."
+            : "Start studying today to build your streak."
     );
+
+}
+/* =========================================================
+   FORMAT STUDY MINUTES
+========================================================= */
+
+function formatStudyMinutes(minutes) {
+
+    minutes =
+        Math.max(
+            0,
+            Math.floor(
+                Number(minutes) || 0
+            )
+        );
+
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+
+    const remainingMinutes =
+        minutes % 60;
+
+
+    if (hours > 0) {
+
+        return `${hours}h ${remainingMinutes}m`;
+
+    }
+
+
+    return `${remainingMinutes} min`;
 
 }
 
