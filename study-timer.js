@@ -9,13 +9,29 @@
    - study-session.html
    - dashboard.html
 
-   IMPORTANT:
+   IMPORTANT
+   ---------------------------------------------------------
    Timer completion:
    - records actual study time
    - awards gradual XP
    - records streak activity
    - triggers Milo celebration
    - DOES NOT complete a topic
+
+   STUDY-TIME ARCHITECTURE
+   ---------------------------------------------------------
+   Completed study time is stored in:
+   - studyMindStudySessions
+   - studyMindDailyStudyTime
+   - studyMindStudyHistory
+
+   Active timer time is NOT permanently added to those
+   completed-time stores.
+
+   Study Score reads the active timer directly and adds
+   the live elapsed time to completed time.
+
+   This prevents double-counting.
 ========================================================= */
 
 (function () {
@@ -39,45 +55,83 @@
         STREAK_ACTIVITY: "studyMindStreakActivity",
 
         SESSION_START: "studyMindTimerSessionStart",
-        SESSION_BASE: "studyMindTimerSessionBaseMinutes",
-        AWARDED_MINUTE: "studyMindTimerAwardedMinute",
 
-        LAST_COMPLETED: "studyMindLastTimerCompletedAt",
-        LAST_CELEBRATED: "studyMindLastTimerCelebratedAt",
+        /*
+         * Canonical timer base key.
+         */
+        SESSION_BASE_SECONDS:
+            "studyMindTimerBaseSeconds",
+
+        /*
+         * Legacy key kept for compatibility with
+         * older StudyMind versions.
+         */
+        SESSION_BASE_LEGACY:
+            "studyMindTimerSessionBaseMinutes",
+
+        AWARDED_MINUTE:
+            "studyMindTimerAwardedMinute",
+
+        LAST_COMPLETED:
+            "studyMindLastTimerCompletedAt",
+
+        LAST_CELEBRATED:
+            "studyMindLastTimerCelebratedAt",
 
         COMPLETED_TIMER_SESSIONS:
             "studyMindCompletedTimerSessions"
     };
 
     const PRESETS = [25, 45, 60];
-    const DEFAULT_SECONDS = 25 * 60;
+
+    const DEFAULT_SECONDS =
+        25 * 60;
 
     let state = {
-        seconds: DEFAULT_SECONDS,
-        selectedSeconds: DEFAULT_SECONDS,
-        running: false,
-        endTime: null,
 
-        interval: null,
-        initialized: false,
+        seconds:
+            DEFAULT_SECONDS,
 
-        completionLocked: false,
+        selectedSeconds:
+            DEFAULT_SECONDS,
 
-        sessionStart: null,
-        baseSeconds: DEFAULT_SECONDS,
+        running:
+            false,
 
-        awardedMinute: 0,
-        lastPersistedLiveMinute: -1
+        endTime:
+            null,
+
+        interval:
+            null,
+
+        initialized:
+            false,
+
+        completionLocked:
+            false,
+
+        sessionStart:
+            null,
+
+        baseSeconds:
+            DEFAULT_SECONDS,
+
+        awardedMinute:
+            0,
+
+        lastPersistedLiveMinute:
+            -1
     };
+
 
     /* =========================================================
        DATE
-       Uses local date, not UTC.
     ========================================================= */
 
     function todayKey() {
 
-        const now = new Date();
+        const now =
+            new Date();
 
         const year =
             now.getFullYear();
@@ -94,6 +148,7 @@
 
         return `${year}-${month}-${day}`;
     }
+
 
     /* =========================================================
        HELPERS
@@ -119,16 +174,29 @@
         }
     }
 
+
     function writeJSON(
         key,
         value
     ) {
 
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
+        try {
+
+            localStorage.setItem(
+                key,
+                JSON.stringify(value)
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind Timer: failed to save",
+                key,
+                error
+            );
+        }
     }
+
 
     function number(
         key,
@@ -145,6 +213,7 @@
             : fallback;
     }
 
+
     function dispatch(
         name,
         detail = {}
@@ -160,6 +229,7 @@
         );
     }
 
+
     function setText(
         id,
         value
@@ -169,10 +239,14 @@
             document.getElementById(id);
 
         if (element) {
+
             element.textContent =
-                String(value ?? "");
+                String(
+                    value ?? ""
+                );
         }
     }
+
 
     function formatTime(
         seconds
@@ -203,6 +277,7 @@
         );
     }
 
+
     /* =========================================================
        ACTIVE PLAN
     ========================================================= */
@@ -222,9 +297,11 @@
                     .getActivePlan();
 
             if (active) {
+
                 return active;
             }
         }
+
 
         const activePlanId =
             localStorage.getItem(
@@ -236,6 +313,7 @@
                 "studyMindPlans",
                 []
             );
+
 
         if (
             activePlanId &&
@@ -251,15 +329,18 @@
                 );
 
             if (active) {
+
                 return active;
             }
         }
+
 
         return readJSON(
             "studyMindPlan",
             null
         );
     }
+
 
     /* =========================================================
        TOPICS
@@ -271,10 +352,13 @@
             getPlan();
 
         if (!plan) {
+
             return [];
         }
 
+
         const topics = [];
+
 
         if (
             Array.isArray(
@@ -286,8 +370,10 @@
                 subject => {
 
                     if (!subject) {
+
                         return;
                     }
+
 
                     const subjectName =
                         subject.name ||
@@ -295,12 +381,14 @@
                         subject.title ||
                         "General";
 
+
                     const subjectTopics =
                         Array.isArray(
                             subject.topics
                         )
                             ? subject.topics
                             : [];
+
 
                     subjectTopics.forEach(
                         topic => {
@@ -313,14 +401,19 @@
                                       topic.topic ||
                                       topic.title;
 
+
                             if (!name) {
+
                                 return;
                             }
+
 
                             topics.push({
 
                                 name:
-                                    String(name),
+                                    String(
+                                        name
+                                    ),
 
                                 subject:
                                     String(
@@ -340,6 +433,7 @@
             );
         }
 
+
         if (
             !topics.length &&
             Array.isArray(
@@ -358,14 +452,19 @@
                               topic.topic ||
                               topic.title;
 
+
                     if (!name) {
+
                         return;
                     }
+
 
                     topics.push({
 
                         name:
-                            String(name),
+                            String(
+                                name
+                            ),
 
                         subject:
                             typeof topic ===
@@ -388,8 +487,10 @@
             );
         }
 
+
         return topics;
     }
+
 
     function getCompletedTopics() {
 
@@ -399,21 +500,27 @@
                 []
             );
 
-        return Array.isArray(completed)
+        return Array.isArray(
+            completed
+        )
             ? completed
             : [];
     }
+
 
     function isCompleted(
         topic
     ) {
 
         if (!topic) {
+
             return false;
         }
 
+
         const exact =
             `${topic.subject}::${topic.name}`;
+
 
         return getCompletedTopics().some(
             item => {
@@ -428,6 +535,7 @@
                         item === topic.name
                     );
                 }
+
 
                 if (
                     item &&
@@ -450,19 +558,23 @@
                     );
                 }
 
+
                 return false;
             }
         );
     }
+
 
     function getCurrentTopic() {
 
         const topics =
             getAllTopics();
 
+
         if (!topics.length) {
 
             return {
+
                 name:
                     "Study Session",
 
@@ -471,11 +583,13 @@
             };
         }
 
+
         const stored =
             readJSON(
                 KEYS.CURRENT_TOPIC,
                 null
             );
+
 
         /*
          * Never use a stored topic if it belongs
@@ -498,10 +612,13 @@
                             )
                 );
 
+
             if (matches) {
+
                 return matches;
             }
         }
+
 
         const savedIndex =
             Number(
@@ -509,6 +626,7 @@
                     KEYS.CURRENT_TOPIC_INDEX
                 )
             );
+
 
         const index =
             Number.isFinite(
@@ -523,17 +641,22 @@
                 )
                 : 0;
 
+
         return topics[index];
     }
+
 
     function findRecommendedTopic() {
 
         const topics =
             getAllTopics();
 
+
         if (!topics.length) {
+
             return null;
         }
+
 
         return (
             topics.find(
@@ -544,11 +667,26 @@
         );
     }
 
+
     /* =========================================================
        TIME
     ========================================================= */
 
     function getElapsedSeconds() {
+
+        /*
+         * Only active running time is considered
+         * "live" time.
+
+         * Completed time is stored separately.
+         */
+        if (
+            !state.running
+        ) {
+
+            return 0;
+        }
+
 
         return Math.max(
             0,
@@ -557,6 +695,7 @@
         );
     }
 
+
     function getLiveMinutes() {
 
         return Math.floor(
@@ -564,6 +703,7 @@
             60
         );
     }
+
 
     /* =========================================================
        PERSISTENCE
@@ -583,6 +723,7 @@
             )
         );
 
+
         localStorage.setItem(
             KEYS.SELECTED,
             String(
@@ -590,12 +731,14 @@
             )
         );
 
+
         localStorage.setItem(
             KEYS.RUNNING,
             state.running
                 ? "true"
                 : "false"
         );
+
 
         if (
             state.running &&
@@ -616,6 +759,7 @@
             );
         }
 
+
         if (
             state.sessionStart
         ) {
@@ -634,12 +778,31 @@
             );
         }
 
+
+        /*
+         * Canonical Score key.
+         */
         localStorage.setItem(
-            KEYS.SESSION_BASE,
+            KEYS.SESSION_BASE_SECONDS,
             String(
                 state.baseSeconds
             )
         );
+
+
+        /*
+         * Legacy compatibility key.
+         *
+         * Older StudyMind code may still read
+         * this key as minutes.
+         */
+        localStorage.setItem(
+            KEYS.SESSION_BASE_LEGACY,
+            String(
+                state.baseSeconds
+            )
+        );
+
 
         localStorage.setItem(
             KEYS.AWARDED_MINUTE,
@@ -648,6 +811,7 @@
             )
         );
     }
+
 
     /* =========================================================
        LOAD STATE
@@ -662,6 +826,7 @@
                 )
             );
 
+
         const savedSeconds =
             Number(
                 localStorage.getItem(
@@ -669,10 +834,12 @@
                 )
             );
 
+
         const savedRunning =
             localStorage.getItem(
                 KEYS.RUNNING
             ) === "true";
+
 
         const savedEnd =
             Number(
@@ -681,12 +848,34 @@
                 )
             );
 
-        const savedBase =
+
+        /*
+         * Prefer the canonical seconds key.
+         */
+        let savedBase =
             Number(
                 localStorage.getItem(
-                    KEYS.SESSION_BASE
+                    KEYS.SESSION_BASE_SECONDS
                 )
             );
+
+
+        /*
+         * Fall back to the old key.
+         */
+        if (
+            !Number.isFinite(savedBase) ||
+            savedBase <= 0
+        ) {
+
+            savedBase =
+                Number(
+                    localStorage.getItem(
+                        KEYS.SESSION_BASE_LEGACY
+                    )
+                );
+        }
+
 
         const savedStart =
             Number(
@@ -695,6 +884,7 @@
                 )
             );
 
+
         const savedAwarded =
             Number(
                 localStorage.getItem(
@@ -702,12 +892,14 @@
                 )
             );
 
+
         state.selectedSeconds =
             PRESETS.includes(
                 selected / 60
             )
                 ? selected
                 : DEFAULT_SECONDS;
+
 
         state.baseSeconds =
             Number.isFinite(
@@ -717,6 +909,7 @@
                 ? savedBase
                 : state.selectedSeconds;
 
+
         state.awardedMinute =
             Number.isFinite(
                 savedAwarded
@@ -724,6 +917,7 @@
             savedAwarded >= 0
                 ? savedAwarded
                 : 0;
+
 
         state.sessionStart =
             Number.isFinite(
@@ -733,11 +927,13 @@
                 ? savedStart
                 : null;
 
+
         state.lastPersistedLiveMinute =
             state.awardedMinute;
 
+
         /*
-         * Rebuild running timer from endTime.
+         * Rebuild a running timer from endTime.
          */
         if (
             savedRunning &&
@@ -751,6 +947,7 @@
                         Date.now()
                     ) / 1000
                 );
+
 
             if (
                 remaining > 0
@@ -768,6 +965,7 @@
                 return;
             }
 
+
             /*
              * Timer finished while the page
              * was closed.
@@ -781,18 +979,24 @@
             state.endTime =
                 null;
 
-            persist();
 
+            /*
+             * Do not call finishTimer while the state
+             * still looks like an active session.
+             * finishTimer will safely record the session.
+             */
             finishTimer();
 
             return;
         }
+
 
         state.running =
             false;
 
         state.endTime =
             null;
+
 
         state.seconds =
             Number.isFinite(
@@ -801,6 +1005,7 @@
             savedSeconds >= 0
                 ? savedSeconds
                 : state.selectedSeconds;
+
 
         /*
          * A completely fresh timer has no
@@ -825,6 +1030,7 @@
         }
     }
 
+
     /* =========================================================
        XP
     ========================================================= */
@@ -836,6 +1042,7 @@
             0
         );
     }
+
 
     function awardXP(
         amount,
@@ -850,15 +1057,20 @@
                 )
             );
 
+
         if (!amount) {
+
             return;
         }
+
 
         const oldXP =
             getXP();
 
+
         const newXP =
             oldXP + amount;
+
 
         const oldTotal =
             number(
@@ -866,10 +1078,14 @@
                 oldXP
             );
 
+
         localStorage.setItem(
             KEYS.XP,
-            String(newXP)
+            String(
+                newXP
+            )
         );
+
 
         localStorage.setItem(
             KEYS.TOTAL_XP,
@@ -877,6 +1093,7 @@
                 oldTotal + amount
             )
         );
+
 
         dispatch(
             "studyMindXPUpdated",
@@ -888,6 +1105,7 @@
             }
         );
 
+
         dispatch(
             "studyMindXPChanged",
             {
@@ -898,6 +1116,7 @@
             }
         );
 
+
         dispatch(
             "studyMindProgressUpdated",
             {
@@ -907,45 +1126,54 @@
         );
     }
 
+
     function awardLiveXP() {
 
-        if (!state.running) {
+        if (
+            !state.running
+        ) {
+
             return;
         }
 
+
         const liveMinutes =
             getLiveMinutes();
+
 
         if (
             liveMinutes <=
             state.awardedMinute
         ) {
+
             return;
         }
+
 
         const difference =
             liveMinutes -
             state.awardedMinute;
 
+
         state.awardedMinute =
             liveMinutes;
+
 
         awardXP(
             difference,
             "timer-minute"
         );
 
+
         persist();
     }
 
+
     /* =========================================================
-       STUDY TIME
+       STUDY SESSIONS
     ========================================================= */
 
-    function getCompletedTodayMinutes() {
-
-        const today =
-            todayKey();
+    function getAllSessions() {
 
         const sessions =
             readJSON(
@@ -953,41 +1181,142 @@
                 []
             );
 
-        if (
-            !Array.isArray(
-                sessions
-            )
-        ) {
-            return 0;
-        }
 
-        return sessions.reduce(
-            (
-                total,
-                session
-            ) => {
+        return Array.isArray(
+            sessions
+        )
+            ? sessions
+            : [];
+    }
+
+
+    function getCompletedTodayMinutes() {
+
+        const today =
+            todayKey();
+
+
+        return getAllSessions()
+            .reduce(
+                (
+                    total,
+                    session
+                ) => {
+
+                    if (
+                        !session ||
+                        session.date !==
+                        today
+                    ) {
+
+                        return total;
+                    }
+
+
+                    return (
+                        total +
+                        Math.max(
+                            0,
+                            Number(
+                                session.minutes
+                            ) || 0
+                        )
+                    );
+
+                },
+                0
+            );
+    }
+
+
+    /* =========================================================
+       PERSIST COMPLETED STUDY TIME
+       ========================================================= */
+
+    function syncCompletedStudyTime() {
+
+        const sessions =
+            getAllSessions();
+
+
+        const totals = {};
+
+
+        sessions.forEach(
+            session => {
 
                 if (
                     !session ||
-                    session.date !==
-                    today
+                    !session.date
                 ) {
-                    return total;
+
+                    return;
                 }
 
-                return (
-                    total +
-                    (
+
+                const minutes =
+                    Math.max(
+                        0,
                         Number(
                             session.minutes
                         ) || 0
-                    )
-                );
+                    );
 
-            },
-            0
+
+                totals[session.date] =
+                    (
+                        totals[session.date] ||
+                        0
+                    ) + minutes;
+            }
         );
+
+
+        /*
+         * DAILY TIME
+         *
+         * Only completed study time is stored.
+         * Active timer time is calculated live by
+         * StudyMindScore.
+         */
+        writeJSON(
+            KEYS.DAILY_TIME,
+            totals
+        );
+
+
+        /*
+         * STUDY HISTORY
+         *
+         * Store minutes explicitly to avoid
+         * the old hours/minutes ambiguity.
+         */
+        const history = {};
+
+
+        Object.keys(
+            totals
+        ).forEach(
+            date => {
+
+                history[date] = {
+
+                    minutes:
+                        totals[date]
+                };
+            }
+        );
+
+
+        writeJSON(
+            KEYS.STUDY_HISTORY,
+            history
+        );
+
+
+        return totals;
     }
+
 
     function updateDailyLiveTime(
         force = false
@@ -996,10 +1325,19 @@
         const liveMinutes =
             getLiveMinutes();
 
+
         /*
-         * Don't repeatedly write the same
-         * minute to localStorage.
+         * Persist only completed time.
+         *
+         * The active/live minutes are intentionally
+         * NOT written into DAILY_TIME or HISTORY.
+         * Study Score adds them directly from the
+         * shared timer state.
          */
+        const completedMinutes =
+            getCompletedTodayMinutes();
+
+
         if (
             !force &&
             liveMinutes ===
@@ -1009,58 +1347,55 @@
             dispatch(
                 "studyMindStudyTimeUpdated",
                 {
+
                     todayMinutes:
-                        getCompletedTodayMinutes() +
+                        completedMinutes +
                         liveMinutes,
 
-                    liveMinutes
+                    completedMinutes,
+
+                    liveMinutes,
+
+                    date:
+                        todayKey()
                 }
             );
 
             return;
         }
 
-        const today =
-            todayKey();
 
-        const daily =
-            readJSON(
-                KEYS.DAILY_TIME,
-                {}
-            );
+        const totals =
+            syncCompletedStudyTime();
 
-        const safeDaily =
-            daily &&
-            typeof daily ===
-            "object"
-                ? daily
-                : {};
-
-        const completedMinutes =
-            getCompletedTodayMinutes();
-
-        safeDaily[today] =
-            completedMinutes +
-            liveMinutes;
-
-        writeJSON(
-            KEYS.DAILY_TIME,
-            safeDaily
-        );
 
         state.lastPersistedLiveMinute =
             liveMinutes;
 
+
         dispatch(
             "studyMindStudyTimeUpdated",
             {
-                todayMinutes:
-                    safeDaily[today],
 
-                liveMinutes
+                todayMinutes:
+                    (
+                        totals[todayKey()] ||
+                        0
+                    ) +
+                    liveMinutes,
+
+                completedMinutes:
+                    totals[todayKey()] ||
+                    0,
+
+                liveMinutes,
+
+                date:
+                    todayKey()
             }
         );
     }
+
 
     /* =========================================================
        STREAK
@@ -1071,11 +1406,13 @@
         const today =
             todayKey();
 
+
         const existing =
             readJSON(
                 KEYS.STREAK_ACTIVITY,
                 {}
             );
+
 
         const activity =
             existing &&
@@ -1084,17 +1421,16 @@
                 ? existing
                 : {};
 
-        /*
-         * Timer completion is a genuine
-         * study activity day.
-         */
+
         activity[today] =
             true;
+
 
         writeJSON(
             KEYS.STREAK_ACTIVITY,
             activity
         );
+
 
         /*
          * Dedicated streak engine remains
@@ -1112,9 +1448,11 @@
                 .recordStudyActivity();
         }
 
+
         dispatch(
             "studyMindStreakUpdated",
             {
+
                 date:
                     today,
 
@@ -1123,6 +1461,7 @@
             }
         );
     }
+
 
     /* =========================================================
        RECORD COMPLETED TIMER SESSION
@@ -1136,30 +1475,26 @@
                 60
             );
 
+
         if (
             minutes <= 0
         ) {
+
             return null;
         }
+
 
         const today =
             todayKey();
 
-        const existing =
-            readJSON(
-                KEYS.STUDY_SESSIONS,
-                []
-            );
 
         const sessions =
-            Array.isArray(
-                existing
-            )
-                ? existing
-                : [];
+            getAllSessions();
+
 
         const topic =
             getCurrentTopic();
+
 
         const session = {
 
@@ -1177,8 +1512,7 @@
                     : new Date().toISOString(),
 
             completedAt:
-                new Date()
-                    .toISOString(),
+                new Date().toISOString(),
 
             minutes,
 
@@ -1197,20 +1531,24 @@
                 "shared-timer"
         };
 
+
         sessions.push(
             session
         );
+
 
         writeJSON(
             KEYS.STUDY_SESSIONS,
             sessions
         );
 
+
         const count =
             number(
                 KEYS.COMPLETED_TIMER_SESSIONS,
                 0
             );
+
 
         localStorage.setItem(
             KEYS.COMPLETED_TIMER_SESSIONS,
@@ -1219,25 +1557,35 @@
             )
         );
 
+
         /*
-         * Force the daily value to include
-         * the completed session.
+         * Rebuild completed daily/history data
+         * AFTER the session has been added.
+
+         * No live time is stored here.
          */
-        updateDailyLiveTime(true);
+        syncCompletedStudyTime();
+
 
         dispatch(
             "studyMindSessionRecorded",
             {
+
                 minutes,
+
                 xp:
                     minutes,
+
                 topic,
+
                 session
             }
         );
 
+
         return session;
     }
+
 
     /* =========================================================
        SCORE
@@ -1257,14 +1605,23 @@
                 .refresh();
         }
 
+
         dispatch(
             "studyMindStudyDataUpdated",
             {
+
                 minutes:
-                    getTodayMinutes()
+                    getTodayMinutes(),
+
+                liveMinutes:
+                    getLiveMinutes(),
+
+                completedMinutes:
+                    getCompletedTodayMinutes()
             }
         );
     }
+
 
     /* =========================================================
        REWARDS
@@ -1292,6 +1649,7 @@
         }
     }
 
+
     /* =========================================================
        MILO
     ========================================================= */
@@ -1303,10 +1661,14 @@
         const timestamp =
             Date.now();
 
+
         localStorage.setItem(
             KEYS.LAST_COMPLETED,
-            String(timestamp)
+            String(
+                timestamp
+            )
         );
+
 
         const lastCelebrated =
             Number(
@@ -1315,25 +1677,27 @@
                 )
             ) || 0;
 
-        /*
-         * Prevent duplicate celebrations
-         * from multiple pages listening to
-         * the same shared timer event.
-         */
+
         if (
             timestamp -
             lastCelebrated <
             2000
         ) {
+
             return;
         }
 
+
         localStorage.setItem(
             KEYS.LAST_CELEBRATED,
-            String(timestamp)
+            String(
+                timestamp
+            )
         );
 
+
         let streak = 0;
+
 
         if (
             window.StudyMindStreak &&
@@ -1349,6 +1713,7 @@
                         .calculateCurrentStreak()
                 ) || 0;
         }
+
 
         if (
             window.Milo &&
@@ -1389,8 +1754,10 @@
                 );
         }
 
+
         return streak;
     }
+
 
     /* =========================================================
        COMPLETION MODAL
@@ -1406,32 +1773,40 @@
                 "completionModal"
             );
 
+
         if (!modal) {
+
             return;
         }
+
 
         setText(
             "earnedMinutes",
             `${minutes} min`
         );
 
+
         setText(
             "earnedXP",
             `+${xp} XP`
         );
+
 
         setText(
             "completionMessage",
             `Amazing work! You studied for ${minutes} minutes and your progress has been recorded.`
         );
 
+
         modal.classList.add(
             "active"
         );
 
+
         modal.style.display =
             "flex";
     }
+
 
     function closeCompletionModal() {
 
@@ -1440,17 +1815,22 @@
                 "completionModal"
             );
 
+
         if (!modal) {
+
             return;
         }
+
 
         modal.classList.remove(
             "active"
         );
 
+
         modal.style.display =
             "none";
     }
+
 
     /* =========================================================
        FINISH
@@ -1461,28 +1841,28 @@
         if (
             state.completionLocked
         ) {
+
             return;
         }
+
 
         state.completionLocked =
             true;
 
+
         stopInterval();
 
-        state.seconds =
-            0;
 
-        state.running =
-            false;
-
-        state.endTime =
-            null;
-
+        /*
+         * Capture the duration BEFORE resetting
+         * the active timer state.
+         */
         const durationMinutes =
             Math.floor(
                 state.baseSeconds /
                 60
             );
+
 
         /*
          * Award the final minute if the
@@ -1497,8 +1877,10 @@
                 durationMinutes -
                 state.awardedMinute;
 
+
             state.awardedMinute =
                 durationMinutes;
+
 
             awardXP(
                 difference,
@@ -1506,30 +1888,54 @@
             );
         }
 
+
+        /*
+         * Stop the active timer BEFORE writing
+         * study-time totals.
+
+         * This is the key fix preventing the
+         * completed session from being counted
+         * once as a session and once as live time.
+         */
+        state.seconds =
+            0;
+
+        state.running =
+            false;
+
+        state.endTime =
+            null;
+
+
         if (
             durationMinutes > 0
         ) {
 
             /*
-             * 1. Record the completed
-             *    timer session.
+             * 1. Record the completed timer
+             *    session.
              */
             recordStudySession();
 
+
             /*
-             * 2. Record today's study activity.
+             * 2. Record today's genuine study
+             *    activity.
              */
             recordStudyActivity();
 
+
             /*
-             * 3. Refresh score.
+             * 3. Refresh Study Score.
              */
             refreshScore();
+
 
             /*
              * 4. Check rewards.
              */
             refreshRewards();
+
 
             /*
              * 5. Celebrate with Milo.
@@ -1539,18 +1945,20 @@
                     durationMinutes
                 );
 
+
             /*
-             * 6. Show completion modal
-             *    when available.
+             * 6. Completion modal.
              */
             showCompletionModal(
                 durationMinutes,
                 durationMinutes
             );
 
+
             dispatch(
                 "studyMindTimerCompleted",
                 {
+
                     minutes:
                         durationMinutes,
 
@@ -1566,30 +1974,64 @@
             );
         }
 
+
         /*
-         * Keep timer state persistent.
+         * IMPORTANT:
+         *
+         * The session is now completed.
+         * Clear active-session metadata so
+         * Score cannot treat the completed
+         * session as live time.
          */
+        state.sessionStart =
+            null;
+
+        state.baseSeconds =
+            state.selectedSeconds;
+
+        state.awardedMinute =
+            0;
+
+        state.lastPersistedLiveMinute =
+            -1;
+
+
         persist();
+
+
+        /*
+         * Ensure completed daily/history data
+         * is synchronized after completion.
+         */
+        syncCompletedStudyTime();
+
 
         render();
         renderStats();
         renderHistory();
+
 
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
 
+
         dispatch(
             "studyMindStudyTimeUpdated",
             {
+
                 todayMinutes:
                     getTodayMinutes(),
+
+                completedMinutes:
+                    getCompletedTodayMinutes(),
 
                 liveMinutes:
                     0
             }
         );
+
 
         /*
          * Allow a future timer session.
@@ -1604,6 +2046,7 @@
             1000
         );
     }
+
 
     /* =========================================================
        INTERVAL
@@ -1624,9 +2067,11 @@
         }
     }
 
+
     function startInterval() {
 
         stopInterval();
+
 
         state.interval =
             setInterval(
@@ -1635,14 +2080,17 @@
             );
     }
 
+
     function updateRemaining() {
 
         if (
             !state.running ||
             !state.endTime
         ) {
+
             return;
         }
+
 
         const remaining =
             Math.max(
@@ -1655,18 +2103,26 @@
                 )
             );
 
+
         state.seconds =
             remaining;
+
 
         /*
          * Gradual XP.
          */
         awardLiveXP();
 
+
         /*
          * Gradual study-time update.
+
+         * Completed storage remains clean.
+         * Live time is exposed through the event
+         * and StudyMindScore.
          */
         updateDailyLiveTime();
+
 
         /*
          * UI update.
@@ -1674,10 +2130,12 @@
         render();
         renderStats();
 
+
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
+
 
         if (
             remaining <= 0
@@ -1686,6 +2144,7 @@
             finishTimer();
         }
     }
+
 
     /* =========================================================
        START
@@ -1696,11 +2155,13 @@
         if (
             state.running
         ) {
+
             return;
         }
 
+
         /*
-         * If timer is at zero, start a fresh
+         * If timer is at zero, begin a fresh
          * session using the selected duration.
          */
         if (
@@ -1742,8 +2203,10 @@
                 -1;
         }
 
+
         state.running =
             true;
+
 
         state.endTime =
             Date.now() +
@@ -1752,21 +2215,48 @@
                 1000
             );
 
+
         state.completionLocked =
             false;
 
+
         persist();
+
 
         startInterval();
 
+
+        /*
+         * Immediately notify all consumers.
+         */
+        updateDailyLiveTime(
+            true
+        );
+
+
+        if (
+            window.StudyMindScore &&
+            typeof
+                window.StudyMindScore
+                    .refresh ===
+                "function"
+        ) {
+
+            window.StudyMindScore
+                .refresh();
+        }
+
+
         render();
         renderStats();
+
 
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
     }
+
 
     /* =========================================================
        PAUSE
@@ -1777,49 +2267,77 @@
         if (
             !state.running
         ) {
+
             return;
         }
 
+
         /*
-         * Capture current remaining time
-         * before pausing.
+         * Capture the current remaining
+         * time before pausing.
          */
         updateRemaining();
+
 
         if (
             state.completionLocked
         ) {
+
             return;
         }
+
 
         state.running =
             false;
 
+
         state.endTime =
             null;
 
+
         /*
-         * DO NOT clear:
-         *
-         * sessionStart
-         * baseSeconds
-         * awardedMinute
-         *
-         * Resume therefore continues the
-         * same study session.
+         * Keep sessionStart/baseSeconds/
+         * awardedMinute so resume continues
+         * the same session.
          */
         persist();
 
+
         stopInterval();
+
+
+        /*
+         * Live time is no longer counted as
+         * active Score time while paused.
+         */
+        updateDailyLiveTime(
+            true
+        );
+
+
+        if (
+            window.StudyMindScore &&
+            typeof
+                window.StudyMindScore
+                    .refresh ===
+                "function"
+        ) {
+
+            window.StudyMindScore
+                .refresh();
+        }
+
 
         render();
         renderStats();
+
 
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
     }
+
 
     /* =========================================================
        RESET
@@ -1828,6 +2346,7 @@
     function resetTimer() {
 
         stopInterval();
+
 
         state.running =
             false;
@@ -1853,16 +2372,38 @@
         state.completionLocked =
             false;
 
+
         persist();
+
+
+        updateDailyLiveTime(
+            true
+        );
+
+
+        if (
+            window.StudyMindScore &&
+            typeof
+                window.StudyMindScore
+                    .refresh ===
+                "function"
+        ) {
+
+            window.StudyMindScore
+                .refresh();
+        }
+
 
         render();
         renderStats();
+
 
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
     }
+
 
     /* =========================================================
        SELECT DURATION
@@ -1875,6 +2416,7 @@
         seconds =
             Number(seconds);
 
+
         if (
             !PRESETS.includes(
                 seconds / 60
@@ -1884,12 +2426,14 @@
             return false;
         }
 
+
         if (
             state.running
         ) {
 
             return false;
         }
+
 
         state.selectedSeconds =
             seconds;
@@ -1912,18 +2456,23 @@
         state.completionLocked =
             false;
 
+
         persist();
+
 
         render();
         renderStats();
+
 
         dispatch(
             "studyMindTimerChanged",
             getState()
         );
 
+
         return true;
     }
+
 
     /* =========================================================
        RECOMMENDED SESSION
@@ -1934,6 +2483,7 @@
         const topic =
             findRecommendedTopic();
 
+
         if (!topic) {
 
             alert(
@@ -1943,16 +2493,19 @@
             return false;
         }
 
+
         /*
-         * Save the recommended topic.
+         * Save recommended topic.
          */
         writeJSON(
             KEYS.CURRENT_TOPIC,
             topic
         );
 
+
         const topics =
             getAllTopics();
+
 
         const index =
             topics.findIndex(
@@ -1962,6 +2515,7 @@
                     item.subject ===
                         topic.subject
             );
+
 
         if (
             index >= 0
@@ -1973,11 +2527,13 @@
             );
         }
 
+
         /*
-         * Always begin the recommended
-         * session at 25 minutes.
+         * Always begin recommended
+         * sessions at 25 minutes.
          */
         stopInterval();
+
 
         state.running =
             false;
@@ -2006,27 +2562,35 @@
         state.completionLocked =
             false;
 
+
         persist();
 
+
         /*
-         * Actually start the session.
+         * Actually start.
          */
         startTimer();
+
 
         render();
         renderStats();
 
+
         dispatch(
             "studyMindRecommendedSessionStarted",
             {
+
                 topic,
+
                 minutes:
                     25
             }
         );
 
+
         return true;
     }
+
 
     /* =========================================================
        TODAY'S DATA
@@ -2037,78 +2601,53 @@
         const today =
             todayKey();
 
-        const sessions =
-            readJSON(
-                KEYS.STUDY_SESSIONS,
-                []
+
+        return getAllSessions()
+            .filter(
+                session =>
+                    session &&
+                    session.date ===
+                    today
             );
-
-        if (
-            !Array.isArray(
-                sessions
-            )
-        ) {
-
-            return [];
-        }
-
-        return sessions.filter(
-            session =>
-                session &&
-                session.date ===
-                today
-        );
     }
+
 
     function getTodayMinutes() {
 
         const completed =
-            getTodaySessions()
-                .reduce(
-                    (
-                        total,
-                        session
-                    ) => {
+            getCompletedTodayMinutes();
 
-                        return (
-                            total +
-                            (
-                                Number(
-                                    session.minutes
-                                ) || 0
-                            )
-                        );
 
-                    },
-                    0
-                );
-
+        /*
+         * Active running time is added only
+         * while the timer is actually running.
+         */
         return (
             completed +
             getLiveMinutes()
         );
     }
 
+
     function getTodaySessionCount() {
 
         const completed =
-            getTodaySessions().length;
+            getTodaySessions()
+                .length;
 
-        /*
-         * The active session counts immediately.
-         * The student doesn't need to wait one minute
-         * before seeing "1 session".
-         */
+
         const active =
             state.running
                 ? 1
                 : 0;
+
 
         return (
             completed +
             active
         );
     }
+
 
     function getTodayXP() {
 
@@ -2133,11 +2672,13 @@
                     0
                 );
 
+
         return (
             completed +
             getLiveMinutes()
         );
     }
+
 
     function renderStats() {
 
@@ -2146,16 +2687,19 @@
             `${getTodayMinutes()} min`
         );
 
+
         setText(
             "todaySessions",
             getTodaySessionCount()
         );
+
 
         setText(
             "todayXP",
             `${getTodayXP()} XP`
         );
     }
+
 
     /* =========================================================
        HISTORY
@@ -2168,25 +2712,22 @@
                 "sessionHistory"
             );
 
+
         const count =
             document.getElementById(
                 "historyCount"
             );
 
+
         if (!container) {
+
             return;
         }
 
-        const existing =
-            readJSON(
-                KEYS.STUDY_SESSIONS,
-                []
-            );
 
         const sessions =
-            Array.isArray(existing)
-                ? existing
-                : [];
+            getAllSessions();
+
 
         if (count) {
 
@@ -2197,6 +2738,7 @@
                         : "s"
                 }`;
         }
+
 
         if (
             !sessions.length
@@ -2211,6 +2753,7 @@
 
             return;
         }
+
 
         container.innerHTML =
             sessions
@@ -2262,6 +2805,7 @@
                 .join("");
     }
 
+
     function escapeHTML(
         value
     ) {
@@ -2291,6 +2835,7 @@
             );
     }
 
+
     /* =========================================================
        RENDER
     ========================================================= */
@@ -2302,6 +2847,7 @@
                 state.seconds
             );
 
+
         /*
          * Study Timer page.
          */
@@ -2310,6 +2856,7 @@
             value
         );
 
+
         /*
          * Dashboard timer.
          */
@@ -2317,6 +2864,7 @@
             "dashboardTimerDisplay",
             value
         );
+
 
         setText(
             "sessionStatus",
@@ -2330,6 +2878,7 @@
                 )
         );
 
+
         setText(
             "timerState",
             state.running
@@ -2342,6 +2891,7 @@
                 )
         );
 
+
         setText(
             "dashboardTimerStatus",
             state.running
@@ -2349,10 +2899,12 @@
                 : "Ready to study"
         );
 
+
         setText(
             "elapsedText",
             `${getLiveMinutes()} min studied`
         );
+
 
         setText(
             "remainingText",
@@ -2360,6 +2912,7 @@
                 state.seconds / 60
             )} min remaining`
         );
+
 
         const progress =
             state.baseSeconds > 0
@@ -2372,10 +2925,12 @@
                 ) * 100
                 : 0;
 
+
         const fill =
             document.getElementById(
                 "timerProgress"
             );
+
 
         if (fill) {
 
@@ -2389,10 +2944,7 @@
                 )}%`;
         }
 
-        /*
-         * All three possible Start buttons
-         * are updated here.
-         */
+
         [
             "startPauseTimer",
             "dashboardTimerStart",
@@ -2405,9 +2957,12 @@
                         id
                     );
 
+
                 if (!button) {
+
                     return;
                 }
+
 
                 button.textContent =
                     state.running
@@ -2421,17 +2976,17 @@
             }
         );
 
-        /*
-         * All reset buttons remain enabled.
-         */
+
         const topic =
             getCurrentTopic();
+
 
         setText(
             "currentSubject",
             topic?.subject ||
             "Study Session"
         );
+
 
         setText(
             "currentTopic",
@@ -2440,11 +2995,9 @@
         );
     }
 
+
     /* =========================================================
        CONTROLS
-       
-       THIS IS THE ONLY PLACE TIMER CONTROLS
-       ARE REGISTERED.
     ========================================================= */
 
     function bindOnce(
@@ -2453,8 +3006,10 @@
     ) {
 
         if (!element) {
+
             return;
         }
+
 
         if (
             element.dataset
@@ -2465,9 +3020,11 @@
             return;
         }
 
+
         element.dataset
             .studyMindTimerBound =
             "true";
+
 
         element.addEventListener(
             "click",
@@ -2475,13 +3032,8 @@
         );
     }
 
-    function setupControls() {
 
-        /*
-         * -----------------------------------------
-         * START / PAUSE
-         * -----------------------------------------
-         */
+    function setupControls() {
 
         [
             "startPauseTimer",
@@ -2494,6 +3046,7 @@
                     document.getElementById(
                         id
                     );
+
 
                 bindOnce(
                     button,
@@ -2514,11 +3067,6 @@
             }
         );
 
-        /*
-         * -----------------------------------------
-         * RESET
-         * -----------------------------------------
-         */
 
         [
             "resetTimer",
@@ -2532,6 +3080,7 @@
                         id
                     );
 
+
                 bindOnce(
                     button,
                     resetTimer
@@ -2539,11 +3088,6 @@
             }
         );
 
-        /*
-         * -----------------------------------------
-         * 25 / 45 / 60 PRESETS
-         * -----------------------------------------
-         */
 
         document
             .querySelectorAll(
@@ -2562,6 +3106,7 @@
                                         .minutes
                                 );
 
+
                             if (
                                 Number.isFinite(
                                     minutes
@@ -2577,11 +3122,13 @@
                                 return;
                             }
 
+
                             const seconds =
                                 Number(
                                     button.dataset
                                         .duration
                                 );
+
 
                             if (
                                 Number.isFinite(
@@ -2599,11 +3146,6 @@
                 }
             );
 
-        /*
-         * -----------------------------------------
-         * RECOMMENDED SESSION
-         * -----------------------------------------
-         */
 
         bindOnce(
             document.getElementById(
@@ -2612,11 +3154,6 @@
             useRecommendedSession
         );
 
-        /*
-         * -----------------------------------------
-         * COMPLETION MODAL
-         * -----------------------------------------
-         */
 
         bindOnce(
             document.getElementById(
@@ -2625,12 +3162,10 @@
             closeCompletionModal
         );
 
-        /*
-         * -----------------------------------------
-         * CROSS-PAGE TIMER SYNC
-         * -----------------------------------------
-         */
 
+        /*
+         * Shared timer events.
+         */
         window.addEventListener(
             "studyMindTimerChanged",
             () => {
@@ -2641,6 +3176,7 @@
             }
         );
 
+
         window.addEventListener(
             "studyMindStudyTimeUpdated",
             () => {
@@ -2650,6 +3186,7 @@
 
             }
         );
+
 
         window.addEventListener(
             "studyMindTimerCompleted",
@@ -2662,10 +3199,10 @@
             }
         );
 
+
         /*
-         * Plan creation should refresh
-         * recommendation/topic information,
-         * but MUST NOT award XP or streak.
+         * Plan creation refreshes topic/recommendation
+         * information but does NOT award XP/streak.
          */
         window.addEventListener(
             "studyMindPlanCreated",
@@ -2678,9 +3215,9 @@
             }
         );
 
+
         /*
-         * If another tab changes the shared timer,
-         * synchronize the display.
+         * Cross-tab synchronization.
          */
         window.addEventListener(
             "storage",
@@ -2693,16 +3230,15 @@
                         KEYS.END_TIME,
                         KEYS.SELECTED,
                         KEYS.CURRENT_TOPIC,
-                        KEYS.CURRENT_TOPIC_INDEX
+                        KEYS.CURRENT_TOPIC_INDEX,
+                        KEYS.STUDY_SESSIONS,
+                        KEYS.DAILY_TIME,
+                        KEYS.STUDY_HISTORY
                     ].includes(
                         event.key
                     )
                 ) {
 
-                    /*
-                     * Only reload state when another
-                     * context has changed localStorage.
-                     */
                     loadState();
 
                     render();
@@ -2713,6 +3249,7 @@
         );
     }
 
+
     /* =========================================================
        RECOMMENDATION
     ========================================================= */
@@ -2722,6 +3259,7 @@
         const topic =
             findRecommendedTopic();
 
+
         if (!topic) {
 
             setText(
@@ -2729,13 +3267,16 @@
                 "No study plan"
             );
 
+
             setText(
                 "recommendedTopic",
                 "Create a study plan first"
             );
 
+
             return;
         }
+
 
         setText(
             "recommendedSubject",
@@ -2743,12 +3284,14 @@
             "Study"
         );
 
+
         setText(
             "recommendedTopic",
             topic.name ||
             "Study Session"
         );
     }
+
 
     /* =========================================================
        STATE
@@ -2790,6 +3333,7 @@
         };
     }
 
+
     /* =========================================================
        INITIALIZE
     ========================================================= */
@@ -2799,20 +3343,35 @@
         if (
             state.initialized
         ) {
+
             return;
         }
+
 
         state.initialized =
             true;
 
+
         loadState();
 
+
+        /*
+         * Rebuild completed-time stores once when
+         * the timer initializes. This also repairs
+         * old data where Daily Time may have contained
+         * live minutes.
+         */
+        syncCompletedStudyTime();
+
+
         setupControls();
+
 
         render();
         renderStats();
         renderHistory();
         renderRecommendation();
+
 
         if (
             state.running
@@ -2821,12 +3380,9 @@
             startInterval();
         }
 
+
         /*
-         * One lightweight synchronization loop.
-         *
-         * The actual timer is always calculated
-         * from endTime, so browser throttling does
-         * not make the countdown inaccurate.
+         * Lightweight synchronization loop.
          */
         setInterval(
             () => {
@@ -2842,11 +3398,13 @@
             1000
         );
 
+
         console.log(
             "StudyMind AI: Shared timer initialized.",
             getState()
         );
     }
+
 
     /* =========================================================
        PUBLIC API
@@ -2893,8 +3451,8 @@
         getTodayXP,
 
         recordStreakActivity:
-    recordStudyActivity,
-       
+            recordStudyActivity,
+
         render,
 
         renderStats,
@@ -2914,6 +3472,7 @@
                 );
             }
     };
+
 
     /* =========================================================
        START
@@ -2938,3 +3497,4 @@
     }
 
 })();
+
