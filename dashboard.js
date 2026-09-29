@@ -1,5 +1,72 @@
 "use strict";
+/* =========================================================
+   STUDYMIND AI — PREMIUM THEME SYNC
+   Makes the Dashboard respond to the Premium state
+========================================================= */
 
+(function syncDashboardPremiumTheme() {
+
+    function applyPremiumThemeToDashboard() {
+
+        let premium = false;
+
+        try {
+            if (typeof window.isStudyMindPremium === "function") {
+                premium = !!window.isStudyMindPremium();
+            } else {
+                premium =
+                    localStorage.getItem("studyMindPremium") === "true";
+            }
+        } catch (error) {
+            premium =
+                localStorage.getItem("studyMindPremium") === "true";
+        }
+
+        document.documentElement.classList.toggle(
+            "study-mind-premium",
+            premium
+        );
+
+        if (document.body) {
+            document.body.classList.toggle(
+                "study-mind-premium",
+                premium
+            );
+        }
+
+        console.log(
+            "StudyMind Premium Dashboard Theme:",
+            premium ? "GOLD" : "BLUE"
+        );
+    }
+
+    /* Apply immediately */
+    applyPremiumThemeToDashboard();
+
+    /* Apply again once the page is fully loaded */
+    window.addEventListener("load", applyPremiumThemeToDashboard);
+
+    /* Premium status changed */
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        applyPremiumThemeToDashboard
+    );
+
+    document.addEventListener(
+        "studyMindPremiumChanged",
+        applyPremiumThemeToDashboard
+    );
+
+    /* Another tab/window changes Premium */
+    window.addEventListener("storage", function (event) {
+
+        if (event.key === "studyMindPremium") {
+            applyPremiumThemeToDashboard();
+        }
+
+    });
+
+})();
 /* =========================================================
    STUDYMIND AI — DASHBOARD
    SHARED TIMER ARCHITECTURE
