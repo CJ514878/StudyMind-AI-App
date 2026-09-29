@@ -1,8 +1,35 @@
+/* =========================================================
+   STUDYMIND AI — DASHBOARD
+   COMPLETE THEME-AWARE CSS
+
+   FREE:
+   Blue theme
+
+   PREMIUM:
+   Gold theme
+
+   Premium state is detected from:
+   localStorage.studyMindPremium
+
+   The JavaScript does NOT need to be changed for this
+   theme system to work.
+========================================================= */
+
 * {
     box-sizing: border-box;
 }
 
+
+/* =========================================================
+   THEME VARIABLES
+========================================================= */
+
 :root {
+
+    /* -----------------------------------------
+       BASE / FREE THEME
+    ----------------------------------------- */
+
     --bg: #070d18;
     --sidebar: #0a1220;
     --card: #0e1929;
@@ -12,44 +39,153 @@
     --muted: #8e9caf;
 
     --blue: #3b82f6;
-    --blue-soft: rgba(59,130,246,.13);
+    --blue-light: #60a5fa;
+    --blue-dark: #2563eb;
 
-    --border: rgba(255,255,255,.08);
+    --accent: #3b82f6;
+    --accent-light: #60a5fa;
+    --accent-dark: #2563eb;
+
+    --accent-soft: rgba(59, 130, 246, .13);
+    --accent-glow: rgba(59, 130, 246, .18);
+
+    --border: rgba(255, 255, 255, .08);
+
+    --success: #22c55e;
+    --warning: #fbbf24;
+    --danger: #ef4444;
+
+    --premium-gold: #f5c451;
+    --premium-gold-light: #ffe29a;
+    --premium-gold-dark: #c99622;
+
 }
 
+
+/* =========================================================
+   PREMIUM THEME
+
+   Your existing Premium system stores:
+   studyMindPremium
+
+   Supported values:
+   true
+   "true"
+   1
+   "1"
+========================================================= */
+
+html.premium,
+body.premium,
+body[data-premium="true"],
+html[data-premium="true"] {
+
+    --accent: #d9a72e;
+    --accent-light: #f5c451;
+    --accent-dark: #b8861f;
+
+    --blue: #d9a72e;
+    --blue-light: #f5c451;
+    --blue-dark: #b8861f;
+
+    --accent-soft: rgba(217, 167, 46, .14);
+    --accent-glow: rgba(245, 196, 81, .20);
+
+}
+
+
+/* =========================================================
+   PREMIUM DETECTION FALLBACK
+
+   This class can also be applied directly to the body
+   by the Premium JavaScript.
+
+   These selectors intentionally cover multiple possible
+   implementations.
+========================================================= */
+
+body.premium-active,
+body.is-premium,
+html.premium-active,
+html.is-premium {
+
+    --accent: #d9a72e;
+    --accent-light: #f5c451;
+    --accent-dark: #b8861f;
+
+    --blue: #d9a72e;
+    --blue-light: #f5c451;
+    --blue-dark: #b8861f;
+
+    --accent-soft: rgba(217, 167, 46, .14);
+    --accent-glow: rgba(245, 196, 81, .20);
+
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
 body {
+
     margin: 0;
 
     font-family:
         Inter,
         system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
         sans-serif;
 
     background:
         radial-gradient(
             circle at 70% 0%,
-            rgba(59,130,246,.09),
+            var(--accent-glow),
             transparent 30%
         ),
         var(--bg);
 
     color: var(--text);
+
+    min-height: 100vh;
+
+    transition:
+        background .3s ease,
+        color .3s ease;
+
 }
+
+
+/* =========================================================
+   LINKS / BUTTONS
+========================================================= */
 
 a {
+
     color: inherit;
+
     text-decoration: none;
+
 }
+
 
 button {
+
     font: inherit;
+
     cursor: pointer;
+
 }
 
 
-/* SIDEBAR */
+/* =========================================================
+   SIDEBAR
+========================================================= */
 
 .sidebar {
+
     position: fixed;
 
     left: 0;
@@ -58,39 +194,71 @@ button {
 
     width: 245px;
 
-    padding: 27px 17px;
+    padding:
+        27px 17px;
 
     background:
-        rgba(10,18,32,.96);
+        rgba(10, 18, 32, .96);
 
     border-right:
         1px solid var(--border);
 
     display: flex;
+
     flex-direction: column;
+
+    z-index: 100;
+
+    transition:
+        border-color .3s ease,
+        background .3s ease;
+
 }
 
+
+/* =========================================================
+   BRAND
+========================================================= */
+
 .brand {
+
     padding:
         0 13px 30px;
 
-    font-size: 1.2rem;
-    font-weight: 900;
+    font-size:
+        1.2rem;
+
+    font-weight:
+        900;
+
 }
+
 
 .brand span {
+
     color:
-        #60a5fa;
+        var(--accent-light);
+
 }
 
+
+/* =========================================================
+   SIDEBAR NAVIGATION
+========================================================= */
+
 .sidebar nav {
+
     display: grid;
+
     gap: 5px;
+
 }
+
 
 .sidebar nav a,
 .sidebar-bottom a,
 .sidebar-bottom button {
+
     display: flex;
 
     align-items: center;
@@ -100,161 +268,270 @@ button {
     padding:
         11px 13px;
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
-    color: var(--muted);
+    color:
+        var(--muted);
 
-    background: transparent;
+    background:
+        transparent;
 
-    border: 0;
+    border:
+        0;
 
-    text-align: left;
+    text-align:
+        left;
 
-    transition: .2s;
+    transition:
+        background .2s ease,
+        color .2s ease,
+        box-shadow .2s ease;
+
 }
+
 
 .sidebar nav a:hover,
-.sidebar nav a.active {
+.sidebar nav a.active,
+.sidebar-bottom a:hover,
+.sidebar-bottom button:hover {
+
     background:
-        var(--blue-soft);
+        var(--accent-soft);
 
-    color: white;
+    color:
+        white;
+
 }
+
 
 .sidebar nav a.active {
+
     box-shadow:
-        inset 3px 0
-        var(--blue);
+        inset 3px 0 var(--accent);
+
 }
+
 
 .sidebar-bottom {
-    margin-top: auto;
 
-    display: grid;
-    gap: 4px;
+    margin-top:
+        auto;
+
+    display:
+        grid;
+
+    gap:
+        4px;
 
     border-top:
         1px solid var(--border);
 
-    padding-top: 15px;
+    padding-top:
+        15px;
+
 }
 
 
-/* MAIN */
+/* =========================================================
+   MAIN DASHBOARD
+========================================================= */
 
 .dashboard {
-    margin-left: 245px;
+
+    margin-left:
+        245px;
 
     padding:
         38px 4vw 70px;
 
-    max-width: 1550px;
+    max-width:
+        1550px;
+
 }
 
 
-/* HEADER */
+/* =========================================================
+   HEADER
+========================================================= */
 
 .dashboard-header {
-    display: flex;
 
-    align-items: center;
+    display:
+        flex;
 
-    justify-content: space-between;
+    align-items:
+        center;
 
-    gap: 30px;
+    justify-content:
+        space-between;
 
-    margin-bottom: 35px;
+    gap:
+        30px;
+
+    margin-bottom:
+        35px;
+
 }
+
 
 .welcome-label,
 .panel-label {
+
     color:
-        #60a5fa;
+        var(--accent-light);
 
-    font-size: .68rem;
+    font-size:
+        .68rem;
 
-    font-weight: 850;
+    font-weight:
+        850;
 
-    letter-spacing: .15em;
+    letter-spacing:
+        .15em;
+
 }
 
+
 .dashboard-header h1 {
+
     margin:
         7px 0;
 
     font-size:
-        clamp(2rem,4vw,3rem);
+        clamp(2rem, 4vw, 3rem);
 
     letter-spacing:
         -.05em;
+
 }
+
 
 .dashboard-header h1 span {
+
     color:
-        #60a5fa;
+        var(--accent-light);
+
 }
+
 
 .dashboard-header p {
-    color: var(--muted);
+
+    color:
+        var(--muted);
+
 }
 
+
 .header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        10px;
+
 }
+
+
+/* =========================================================
+   XP / STREAK PILLS
+========================================================= */
 
 .xp-pill,
 .streak-pill {
+
     padding:
         9px 13px;
 
     border:
         1px solid var(--border);
 
-    border-radius: 11px;
+    border-radius:
+        11px;
 
     background:
-        rgba(255,255,255,.035);
+        rgba(255, 255, 255, .035);
 
-    font-size: .85rem;
+    font-size:
+        .85rem;
+
+    transition:
+        border-color .3s ease,
+        background .3s ease;
+
 }
 
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
 .avatar {
-    width: 42px;
-    height: 42px;
 
-    display: grid;
-    place-items: center;
+    width:
+        42px;
 
-    border-radius: 50%;
+    height:
+        42px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        50%;
 
     background:
         linear-gradient(
             135deg,
-            #2563eb,
-            #7c3aed
+            var(--accent-dark),
+            var(--accent-light)
         );
 
-    font-weight: 900;
+    color:
+        #ffffff;
+
+    font-weight:
+        900;
+
+    box-shadow:
+        0 0 0 1px
+        rgba(255, 255, 255, .08);
+
 }
 
 
-/* STATS */
+/* =========================================================
+   STATS
+========================================================= */
 
 .stats-grid {
-    display: grid;
+
+    display:
+        grid;
 
     grid-template-columns:
-        repeat(4,1fr);
+        repeat(4, 1fr);
 
-    gap: 14px;
+    gap:
+        14px;
 
-    margin-bottom: 15px;
+    margin-bottom:
+        15px;
+
 }
 
+
 .stat-card {
-    padding: 21px;
+
+    padding:
+        21px;
 
     background:
         var(--card);
@@ -262,509 +539,773 @@ button {
     border:
         1px solid var(--border);
 
-    border-radius: 15px;
+    border-radius:
+        15px;
+
+    transition:
+        transform .2s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+
 }
+
+
+.stat-card:hover {
+
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(255, 255, 255, .14);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, .15);
+
+}
+
 
 .stat-card > span {
-    display: block;
 
-    color: var(--muted);
+    display:
+        block;
 
-    font-size: .77rem;
+    color:
+        var(--muted);
 
-    margin-bottom: 7px;
+    font-size:
+        .77rem;
+
+    margin-bottom:
+        7px;
+
 }
+
 
 .stat-card strong {
-    display: block;
 
-    font-size: 1.7rem;
+    display:
+        block;
+
+    font-size:
+        1.7rem;
+
 }
+
 
 .stat-card small {
-    color: var(--muted);
+
+    color:
+        var(--muted);
+
 }
+
+
+/* =========================================================
+   PROGRESS BARS
+========================================================= */
 
 .progress,
 .level-progress {
-    height: 6px;
 
-    margin-top: 13px;
+    height:
+        6px;
 
-    overflow: hidden;
+    margin-top:
+        13px;
 
-    border-radius: 20px;
+    overflow:
+        hidden;
+
+    border-radius:
+        20px;
 
     background:
-        rgba(255,255,255,.07);
+        rgba(255, 255, 255, .07);
+
 }
+
 
 .progress span,
 .level-progress span {
-    display: block;
 
-    height: 100%;
+    display:
+        block;
 
-    width: 0;
+    height:
+        100%;
+
+    width:
+        0;
 
     background:
         linear-gradient(
             90deg,
-            #2563eb,
-            #60a5fa
+            var(--accent-dark),
+            var(--accent-light)
         );
+
+    box-shadow:
+        0 0 10px
+        var(--accent-glow);
+
+    transition:
+        width .35s ease;
+
 }
 
 
-/* PANELS */
+/* =========================================================
+   DASHBOARD PANELS
+========================================================= */
 
 .dashboard-grid {
-    display: grid;
+
+    display:
+        grid;
 
     grid-template-columns:
-        repeat(2,1fr);
+        repeat(2, 1fr);
 
-    gap: 15px;
+    gap:
+        15px;
+
 }
 
+
 .panel {
-    padding: 24px;
+
+    padding:
+        24px;
 
     border:
         1px solid var(--border);
 
-    border-radius: 17px;
+    border-radius:
+        17px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(15,27,45,.98),
-            rgba(10,19,32,.98)
+            rgba(15, 27, 45, .98),
+            rgba(10, 19, 32, .98)
         );
 
-    min-height: 190px;
+    min-height:
+        190px;
+
+    transition:
+        border-color .3s ease,
+        box-shadow .3s ease;
+
 }
+
+
+.panel:hover {
+
+    border-color:
+        rgba(255, 255, 255, .12);
+
+}
+
 
 .today-panel {
+
     grid-column:
         span 2;
+
 }
+
 
 .panel-heading {
-    display: flex;
 
-    justify-content: space-between;
+    display:
+        flex;
 
-    align-items: center;
+    justify-content:
+        space-between;
 
-    gap: 20px;
+    align-items:
+        center;
 
-    margin-bottom: 20px;
+    gap:
+        20px;
+
+    margin-bottom:
+        20px;
+
 }
+
 
 .panel h2 {
-    margin-top: 5px;
 
-    font-size: 1.25rem;
+    margin-top:
+        5px;
+
+    font-size:
+        1.25rem;
+
 }
+
 
 .text-link {
-    color:
-        #60a5fa;
 
-    font-size: .8rem;
+    color:
+        var(--accent-light);
+
+    font-size:
+        .8rem;
+
 }
 
 
-/* TODAY SESSIONS */
+/* =========================================================
+   TODAY'S SESSIONS
+========================================================= */
 
 .study-session {
-    display: grid;
+
+    display:
+        grid;
 
     grid-template-columns:
         75px 1fr auto;
 
-    align-items: center;
+    align-items:
+        center;
 
-    gap: 17px;
+    gap:
+        17px;
 
-    padding: 16px;
+    padding:
+        16px;
 
-    margin-bottom: 9px;
+    margin-bottom:
+        9px;
 
     border:
         1px solid var(--border);
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
     background:
-        rgba(255,255,255,.025);
+        rgba(255, 255, 255, .025);
+
+    transition:
+        border-color .2s ease,
+        background .2s ease;
+
 }
+
+
+.study-session:hover {
+
+    border-color:
+        var(--accent-glow);
+
+    background:
+        var(--accent-soft);
+
+}
+
 
 .session-time {
+
     color:
-        #60a5fa;
+        var(--accent-light);
 
-    font-size: .78rem;
+    font-size:
+        .78rem;
 
-    font-weight: 800;
+    font-weight:
+        800;
+
 }
+
 
 .session-type {
-    color: var(--muted);
 
-    font-size: .72rem;
+    color:
+        var(--muted);
 
-    margin-top: 3px;
+    font-size:
+        .72rem;
+
+    margin-top:
+        3px;
+
 }
 
+
 .session-action {
+
     padding:
         8px 13px;
 
-    border: 0;
+    border:
+        0;
 
-    border-radius: 9px;
+    border-radius:
+        9px;
 
     background:
-        var(--blue);
+        var(--accent);
 
-    color: white;
+    color:
+        #ffffff;
 
-    font-size: .75rem;
+    font-size:
+        .75rem;
 
-    font-weight: 800;
+    font-weight:
+        800;
+
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
 }
 
 
-/* AI */
+.session-action:hover {
+
+    background:
+        var(--accent-light);
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 5px 18px
+        var(--accent-glow);
+
+}
+
+
+/* =========================================================
+   AI PANEL
+========================================================= */
 
 .ai-panel {
-    position: relative;
 
-    overflow: hidden;
+    position:
+        relative;
+
+    overflow:
+        hidden;
 
     background:
         radial-gradient(
             circle at 80% 20%,
-            rgba(124,58,237,.18),
+            var(--accent-glow),
             transparent 45%
         ),
         var(--card);
+
 }
+
 
 .ai-icon {
-    width: 45px;
-    height: 45px;
 
-    display: grid;
-    place-items: center;
+    width:
+        45px;
 
-    margin-bottom: 15px;
+    height:
+        45px;
 
-    border-radius: 13px;
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    margin-bottom:
+        15px;
+
+    border-radius:
+        13px;
 
     background:
-        var(--blue-soft);
+        var(--accent-soft);
 
     color:
-        #60a5fa;
+        var(--accent-light);
+
 }
 
+
 .ai-panel p {
-    color: var(--muted);
+
+    color:
+        var(--muted);
 
     margin:
         15px 0 20px;
+
 }
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 .panel-button,
 .small-button {
-    border: 0;
 
-    border-radius: 9px;
+    border:
+        0;
+
+    border-radius:
+        9px;
 
     padding:
         9px 14px;
 
     background:
-        var(--blue);
+        var(--accent);
 
-    color: white;
+    color:
+        #ffffff;
 
-    font-weight: 750;
+    font-weight:
+        750;
 
-    font-size: .78rem;
+    font-size:
+        .78rem;
+
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
 }
 
 
-/* EXAMS */
+.panel-button:hover,
+.small-button:hover {
+
+    background:
+        var(--accent-light);
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 6px 18px
+        var(--accent-glow);
+
+}
+
+
+/* =========================================================
+   EXAMS
+========================================================= */
 
 .exam-item {
-    display: flex;
 
-    justify-content: space-between;
+    display:
+        flex;
+
+    justify-content:
+        space-between;
 
     padding:
         13px 0;
 
     border-bottom:
         1px solid var(--border);
+
 }
+
 
 .exam-item:last-child {
-    border-bottom: 0;
+
+    border-bottom:
+        0;
+
 }
+
 
 .exam-name {
-    font-weight: 700;
+
+    font-weight:
+        700;
+
 }
+
 
 .exam-date {
-    color:
-        #60a5fa;
 
-    font-size: .8rem;
+    color:
+        var(--accent-light);
+
+    font-size:
+        .8rem;
+
 }
 
 
-/* QUESTS */
+/* =========================================================
+   DAILY QUESTS
+========================================================= */
 
 .quest {
-    display: flex;
 
-    justify-content: space-between;
+    display:
+        flex;
 
-    align-items: center;
+    justify-content:
+        space-between;
 
-    gap: 10px;
+    align-items:
+        center;
 
-    padding: 12px 0;
+    gap:
+        10px;
+
+    padding:
+        12px 0;
 
     border-bottom:
         1px solid var(--border);
+
 }
+
 
 .quest:last-child {
-    border-bottom: 0;
+
+    border-bottom:
+        0;
+
 }
+
 
 .quest span {
-    color: var(--muted);
 
-    font-size: .8rem;
+    display:
+        block;
+
+    color:
+        var(--muted);
+
+    font-size:
+        .8rem;
+
 }
 
+
 .quest-xp {
+
     color:
         #fbbf24;
 
-    font-weight: 850;
+    font-weight:
+        850;
+
 }
 
 
-/* LEVEL */
+/* =========================================================
+   LEVEL
+========================================================= */
 
 .level-number {
-    font-size: 3.3rem;
 
-    font-weight: 900;
+    font-size:
+        3.3rem;
 
-    letter-spacing: -.06em;
+    font-weight:
+        900;
+
+    letter-spacing:
+        -.06em;
 
     color:
-        #60a5fa;
+        var(--accent-light);
+
 }
+
 
 .xp-panel p {
-    color: var(--muted);
 
-    font-size: .78rem;
+    color:
+        var(--muted);
 
-    margin-top: 8px;
+    font-size:
+        .78rem;
+
+    margin-top:
+        8px;
+
 }
 
 
-/* QUICK ACTIONS */
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
 
 .quick-actions {
-    display: grid;
+
+    display:
+        grid;
 
     grid-template-columns:
-        repeat(4,1fr);
+        repeat(4, 1fr);
 
-    gap: 9px;
+    gap:
+        9px;
+
 }
 
+
 .quick-actions a {
-    display: flex;
 
-    flex-direction: column;
+    display:
+        flex;
 
-    align-items: center;
+    flex-direction:
+        column;
 
-    justify-content: center;
+    align-items:
+        center;
 
-    gap: 8px;
+    justify-content:
+        center;
 
-    min-height: 80px;
+    gap:
+        8px;
+
+    min-height:
+        80px;
 
     border:
         1px solid var(--border);
 
-    border-radius: 11px;
+    border-radius:
+        11px;
 
     background:
-        rgba(255,255,255,.025);
+        rgba(255, 255, 255, .025);
 
-    color: #60a5fa;
+    color:
+        var(--accent-light);
 
-    font-size: 1.2rem;
+    font-size:
+        1.2rem;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
+
 }
+
+
+.quick-actions a:hover {
+
+    background:
+        var(--accent-soft);
+
+    border-color:
+        var(--accent-glow);
+
+    transform:
+        translateY(-2px);
+
+}
+
 
 .quick-actions span {
-    color: var(--muted);
 
-    font-size: .7rem;
-}
+    color:
+        var(--muted);
 
-
-/* RESPONSIVE */
-
-@media (max-width: 1100px) {
-
-    .sidebar {
-        width: 75px;
-    }
-
-    .brand {
-        font-size: 0;
-        text-align: center;
-    }
-
-    .brand::after {
-        content: "S";
-        font-size: 1.2rem;
-    }
-
-    .sidebar nav a,
-    .sidebar-bottom a,
-    .sidebar-bottom button {
-        justify-content: center;
-        font-size: 0;
-    }
-
-    .sidebar nav a span {
-        font-size: 1rem;
-    }
-
-    .dashboard {
-        margin-left: 75px;
-    }
-
-    .stats-grid {
-        grid-template-columns:
-            repeat(2,1fr);
-    }
+    font-size:
+        .7rem;
 
 }
 
-@media (max-width: 700px) {
 
-    .dashboard {
-        margin-left: 0;
-
-        padding: 25px 16px;
-    }
-
-    .sidebar {
-        display: none;
-    }
-
-    .dashboard-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .today-panel {
-        grid-column: auto;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .quick-actions {
-        grid-template-columns: 1fr 1fr;
-    }
-
-}
 /* =========================================================
    MY STUDY PLANS
 ========================================================= */
 
 .my-study-plans-section {
 
-    margin-top: 32px;
+    margin-top:
+        32px;
 
 }
 
 
 .section-heading {
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: flex-end;
+    align-items:
+        flex-end;
 
-    justify-content: space-between;
+    justify-content:
+        space-between;
 
-    gap: 24px;
+    gap:
+        24px;
 
-    margin-bottom: 20px;
+    margin-bottom:
+        20px;
 
 }
 
 
 .section-eyebrow {
 
-    display: block;
+    display:
+        block;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 800;
+    font-weight:
+        800;
 
-    letter-spacing: 0.12em;
+    letter-spacing:
+        .12em;
 
-    opacity: 0.65;
+    opacity:
+        .65;
 
-    margin-bottom: 6px;
+    margin-bottom:
+        6px;
 
 }
 
 
 .section-heading h2 {
 
-    margin: 0 0 6px;
+    margin:
+        0 0 6px;
 
 }
 
 
 .section-heading p {
 
-    margin: 0;
+    margin:
+        0;
 
-    opacity: 0.7;
+    opacity:
+        .7;
 
 }
 
 
 .my-study-plans-grid {
 
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         repeat(
@@ -775,40 +1316,38 @@ button {
             )
         );
 
-    gap: 18px;
+    gap:
+        18px;
 
 }
 
 
+/* =========================================================
+   STUDY PLAN CARD
+========================================================= */
+
 .study-plan-card {
 
-    position: relative;
+    position:
+        relative;
 
-    padding: 22px;
+    padding:
+        22px;
 
-    border-radius: 20px;
+    border-radius:
+        20px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.04
-        );
+        rgba(255, 255, 255, .04);
 
     border:
         1px solid
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
+        rgba(255, 255, 255, .08);
 
     transition:
-        transform 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
 
 }
 
@@ -819,12 +1358,11 @@ button {
         translateY(-3px);
 
     border-color:
-        rgba(
-            255,
-            255,
-            255,
-            0.18
-        );
+        rgba(255, 255, 255, .18);
+
+    box-shadow:
+        0 12px 35px
+        rgba(0, 0, 0, .16);
 
 }
 
@@ -832,66 +1370,54 @@ button {
 .study-plan-card.active {
 
     border-color:
-        rgba(
-            74,
-            144,
-            226,
-            0.7
-        );
+        var(--accent);
 
     box-shadow:
         0 10px 35px
-        rgba(
-            0,
-            0,
-            0,
-            0.16
-        );
+        var(--accent-glow);
 
 }
 
 
-.study-plan-card-header {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-start;
-
-    gap: 12px;
-
-    margin-bottom: 14px;
-
-}
-
+/* =========================================================
+   STUDY PLAN ICON
+========================================================= */
 
 .study-plan-icon {
 
-    width: 44px;
+    width:
+        44px;
 
-    height: 44px;
+    height:
+        44px;
 
-    border-radius: 14px;
+    border-radius:
+        14px;
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 
-    font-size: 22px;
+    font-size:
+        22px;
 
     background:
-        rgba(
-            74,
-            144,
-            226,
-            0.12
-        );
+        var(--accent-soft);
+
+    color:
+        var(--accent-light);
 
 }
 
+
+/* =========================================================
+   ACTIVE LABEL
+========================================================= */
 
 .study-plan-active {
 
@@ -908,12 +1434,34 @@ button {
         800;
 
     background:
-        rgba(
-            74,
-            144,
-            226,
-            0.14
-        );
+        var(--accent-soft);
+
+    color:
+        var(--accent-light);
+
+}
+
+
+/* =========================================================
+   STUDY PLAN HEADER
+========================================================= */
+
+.study-plan-card-header {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    gap:
+        12px;
+
+    margin-bottom:
+        14px;
 
 }
 
@@ -935,13 +1483,17 @@ button {
         0 0 18px;
 
     opacity:
-        0.68;
+        .68;
 
     font-size:
         13px;
 
 }
 
+
+/* =========================================================
+   STUDY PLAN PROGRESS
+========================================================= */
 
 .study-plan-progress {
 
@@ -980,12 +1532,7 @@ button {
         999px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
+        rgba(255, 255, 255, .08);
 
 }
 
@@ -1001,15 +1548,23 @@ button {
     background:
         linear-gradient(
             90deg,
-            #4a90e2,
-            #6ab0ff
+            var(--accent-dark),
+            var(--accent-light)
         );
 
+    box-shadow:
+        0 0 12px
+        var(--accent-glow);
+
     transition:
-        width 0.3s ease;
+        width .3s ease;
 
 }
 
+
+/* =========================================================
+   STUDY PLAN STATS
+========================================================= */
 
 .study-plan-stats {
 
@@ -1017,10 +1572,7 @@ button {
         grid;
 
     grid-template-columns:
-        repeat(
-            2,
-            1fr
-        );
+        repeat(2, 1fr);
 
     gap:
         10px;
@@ -1040,12 +1592,7 @@ button {
         12px;
 
     background:
-        rgba(
-            255,
-            255,
-            255,
-            0.035
-        );
+        rgba(255, 255, 255, .035);
 
 }
 
@@ -1073,10 +1620,14 @@ button {
         11px;
 
     opacity:
-        0.6;
+        .6;
 
 }
 
+
+/* =========================================================
+   STUDY PLAN ACTIONS
+========================================================= */
 
 .study-plan-actions {
 
@@ -1109,6 +1660,32 @@ button {
     font-weight:
         700;
 
+    background:
+        var(--accent);
+
+    color:
+        #ffffff;
+
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.study-plan-open:hover {
+
+    background:
+        var(--accent-light);
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 6px 18px
+        var(--accent-glow);
+
 }
 
 
@@ -1127,17 +1704,426 @@ button {
         11px;
 
     background:
-        rgba(
-            255,
-            70,
-            70,
-            0.1
-        );
+        rgba(255, 70, 70, .1);
+
+    color:
+        #ef4444;
+
+    transition:
+        background .2s ease,
+        transform .2s ease;
 
 }
 
 
+.study-plan-delete:hover {
+
+    background:
+        rgba(255, 70, 70, .18);
+
+    transform:
+        translateY(-1px);
+
+}
+
+
+/* =========================================================
+   LOADING / EMPTY STATES
+========================================================= */
+
+.loading {
+
+    color:
+        var(--muted);
+
+    text-align:
+        center;
+
+    padding:
+        30px 15px;
+
+}
+
+
+.loading a {
+
+    color:
+        var(--accent-light);
+
+    font-weight:
+        700;
+
+}
+
+
+/* =========================================================
+   COMPLETION POPUP
+========================================================= */
+
+#studyMindCompletionPopup {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        99999;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        20px;
+
+    background:
+        rgba(0, 0, 0, .72);
+
+    backdrop-filter:
+        blur(8px);
+
+}
+
+
+.completion-popup-inner {
+
+    width:
+        min(460px, 100%);
+
+    padding:
+        35px;
+
+    text-align:
+        center;
+
+    border:
+        1px solid
+        var(--accent-glow);
+
+    border-radius:
+        22px;
+
+    background:
+        var(--card);
+
+    box-shadow:
+        0 25px 80px
+        rgba(0, 0, 0, .4);
+
+}
+
+
+.completion-icon {
+
+    font-size:
+        3rem;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.completion-popup-inner h2 {
+
+    margin:
+        0 0 10px;
+
+}
+
+
+.completion-popup-inner p {
+
+    color:
+        var(--muted);
+
+    line-height:
+        1.6;
+
+}
+
+
+#closeCompletionPopup {
+
+    margin-top:
+        15px;
+
+    border:
+        0;
+
+    border-radius:
+        10px;
+
+    padding:
+        11px 18px;
+
+    background:
+        var(--accent);
+
+    color:
+        white;
+
+    font-weight:
+        800;
+
+}
+
+
+/* =========================================================
+   PREMIUM-SPECIFIC VISUAL ENHANCEMENT
+
+   Once Premium is active, the Dashboard gets a subtle
+   gold atmosphere without changing the layout.
+========================================================= */
+
+html.premium body,
+body.premium,
+body.premium-active,
+body.is-premium {
+
+    background:
+        radial-gradient(
+            circle at 70% 0%,
+            rgba(245, 196, 81, .13),
+            transparent 30%
+        ),
+        var(--bg);
+
+}
+
+
+/* Premium sidebar glow */
+
+html.premium .sidebar,
+body.premium .sidebar,
+body.premium-active .sidebar,
+body.is-premium .sidebar {
+
+    border-right-color:
+        rgba(245, 196, 81, .16);
+
+}
+
+
+/* Premium active navigation */
+
+html.premium .sidebar nav a.active,
+body.premium .sidebar nav a.active,
+body.premium-active .sidebar nav a.active,
+body.is-premium .sidebar nav a.active {
+
+    color:
+        #ffffff;
+
+    background:
+        rgba(245, 196, 81, .12);
+
+    box-shadow:
+        inset 3px 0 #f5c451,
+        0 0 18px rgba(245, 196, 81, .05);
+
+}
+
+
+/* Premium study-plan active card */
+
+html.premium .study-plan-card.active,
+body.premium .study-plan-card.active,
+body.premium-active .study-plan-card.active,
+body.is-premium .study-plan-card.active {
+
+    border-color:
+        rgba(245, 196, 81, .65);
+
+    box-shadow:
+        0 10px 35px
+        rgba(245, 196, 81, .10);
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .sidebar {
+
+        width:
+            75px;
+
+    }
+
+
+    .brand {
+
+        font-size:
+            0;
+
+        text-align:
+            center;
+
+    }
+
+
+    .brand::after {
+
+        content:
+            "S";
+
+        font-size:
+            1.2rem;
+
+        color:
+            var(--accent-light);
+
+    }
+
+
+    .sidebar nav a,
+    .sidebar-bottom a,
+    .sidebar-bottom button {
+
+        justify-content:
+            center;
+
+        font-size:
+            0;
+
+    }
+
+
+    .sidebar nav a span {
+
+        font-size:
+            1rem;
+
+    }
+
+
+    .dashboard {
+
+        margin-left:
+            75px;
+
+    }
+
+
+    .stats-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
 @media (max-width: 700px) {
+
+    .dashboard {
+
+        margin-left:
+            0;
+
+        padding:
+            25px 16px;
+
+    }
+
+
+    .sidebar {
+
+        display:
+            none;
+
+    }
+
+
+    .dashboard-header {
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+
+    }
+
+
+    .header-right {
+
+        width:
+            100%;
+
+        justify-content:
+            space-between;
+
+    }
+
+
+    .dashboard-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .today-panel {
+
+        grid-column:
+            auto;
+
+    }
+
+
+    .stats-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .quick-actions {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .study-session {
+
+        grid-template-columns:
+            1fr;
+
+        gap:
+            10px;
+
+    }
+
+
+    .session-action {
+
+        width:
+            100%;
+
+    }
+
 
     .section-heading {
 
@@ -1149,347 +2135,89 @@ button {
 
     }
 
-}
-/* =========================================================
-   STUDYMIND AI — GLOBAL PREMIUM GOLD THEME
-   ---------------------------------------------------------
-   FREE USER  = existing StudyMind blue theme
-   PREMIUM    = gold theme across the entire application
-   ========================================================= */
 
-html.study-mind-premium,
-body.study-mind-premium {
+    .study-plan-actions {
 
-    --primary-color: #d4a72c;
-    --primary: #d4a72c;
-    --accent-color: #e5bd4f;
-    --accent: #e5bd4f;
+        flex-direction:
+            row;
 
-    --primary-light: #f5df91;
-    --primary-dark: #9b6d08;
+    }
 
-    --brand-color: #d4a72c;
-    --brand-primary: #d4a72c;
-    --brand-secondary: #e5bd4f;
-
-    --button-color: #d4a72c;
-    --button-hover: #b98b18;
-
-    --link-color: #c49319;
-
-    --study-color: #d4a72c;
-    --focus-color: #d4a72c;
 }
 
 
 /* =========================================================
-   LIGHT PREMIUM
-   ========================================================= */
+   VERY SMALL MOBILE
+========================================================= */
 
-body.study-mind-premium {
+@media (max-width: 430px) {
 
-    background:
-        linear-gradient(
-            135deg,
-            #fffdf7 0%,
-            #faf5e8 50%,
-            #fffaf0 100%
-        );
+    .dashboard {
 
-    color: #211d14;
+        padding:
+            20px 12px 50px;
+
+    }
+
+
+    .stats-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .header-right {
+
+        flex-wrap:
+            wrap;
+
+    }
+
+
+    .xp-pill,
+    .streak-pill {
+
+        flex:
+            1;
+
+        text-align:
+            center;
+
+    }
+
+
+    .avatar {
+
+        flex-shrink:
+            0;
+
+    }
+
 }
 
 
 /* =========================================================
-   PREMIUM HEADER / NAVIGATION
-   ========================================================= */
+   REDUCED MOTION
+========================================================= */
 
-body.study-mind-premium header,
-body.study-mind-premium .header,
-body.study-mind-premium .navbar,
-body.study-mind-premium .topbar,
-body.study-mind-premium nav {
+@media (prefers-reduced-motion: reduce) {
 
-    border-color: rgba(212, 167, 44, 0.28);
+    *,
+    *::before,
+    *::after {
+
+        transition:
+            none !important;
+
+        animation:
+            none !important;
+
+        scroll-behavior:
+            auto !important;
+
+    }
+
 }
 
-
-body.study-mind-premium a {
-
-    color: #b78612;
-}
-
-
-body.study-mind-premium a:hover {
-
-    color: #8f6505;
-}
-
-
-/* =========================================================
-   PREMIUM BUTTONS
-   ========================================================= */
-
-body.study-mind-premium button,
-body.study-mind-premium .btn,
-body.study-mind-premium .button,
-body.study-mind-premium .primary-btn,
-body.study-mind-premium .primary-button {
-
-    --button-bg: #d4a72c;
-
-    border-color: #d4a72c;
-}
-
-
-body.study-mind-premium .primary-btn,
-body.study-mind-premium .primary-button,
-body.study-mind-premium button.primary,
-body.study-mind-premium .btn-primary {
-
-    background:
-        linear-gradient(
-            135deg,
-            #e5bd4f,
-            #c99620
-        );
-
-    color: #211a0b;
-
-    border-color: #c99620;
-
-    box-shadow:
-        0 6px 18px
-        rgba(160, 115, 10, 0.20);
-}
-
-
-body.study-mind-premium .primary-btn:hover,
-body.study-mind-premium .primary-button:hover,
-body.study-mind-premium button.primary:hover,
-body.study-mind-premium .btn-primary:hover {
-
-    background:
-        linear-gradient(
-            135deg,
-            #f0ca63,
-            #d4a72c
-        );
-
-    transform: translateY(-1px);
-}
-
-
-/* =========================================================
-   PREMIUM CARDS
-   ========================================================= */
-
-body.study-mind-premium .card,
-body.study-mind-premium .dashboard-card,
-body.study-mind-premium .stat-card,
-body.study-mind-premium .feature-card,
-body.study-mind-premium .study-card,
-body.study-mind-premium .panel,
-body.study-mind-premium .content-card {
-
-    border-color:
-        rgba(212, 167, 44, 0.25);
-
-    box-shadow:
-        0 8px 28px
-        rgba(130, 92, 8, 0.08);
-}
-
-
-/* =========================================================
-   PREMIUM ICONS / ACCENTS
-   ========================================================= */
-
-body.study-mind-premium .icon,
-body.study-mind-premium .card-icon,
-body.study-mind-premium .stat-icon,
-body.study-mind-premium .accent,
-body.study-mind-premium .highlight {
-
-    color: #c99620;
-}
-
-
-/* =========================================================
-   PREMIUM ACTIVE NAVIGATION
-   ========================================================= */
-
-body.study-mind-premium .active,
-body.study-mind-premium .nav-link.active,
-body.study-mind-premium .sidebar-link.active {
-
-    color: #a87406;
-
-    border-color:
-        rgba(212, 167, 44, 0.35);
-
-    background:
-        rgba(212, 167, 44, 0.10);
-}
-
-
-/* =========================================================
-   PREMIUM PROGRESS
-   ========================================================= */
-
-body.study-mind-premium progress::-webkit-progress-value {
-
-    background:
-        linear-gradient(
-            90deg,
-            #b98616,
-            #e5bd4f
-        );
-}
-
-
-body.study-mind-premium .progress-bar,
-body.study-mind-premium .progress-fill {
-
-    background:
-        linear-gradient(
-            90deg,
-            #b98616,
-            #e5bd4f
-        );
-}
-
-
-/* =========================================================
-   PREMIUM INPUTS / SELECTS
-   ========================================================= */
-
-body.study-mind-premium input:focus,
-body.study-mind-premium textarea:focus,
-body.study-mind-premium select:focus {
-
-    border-color: #d4a72c;
-
-    box-shadow:
-        0 0 0 3px
-        rgba(212, 167, 44, 0.14);
-}
-
-
-/* =========================================================
-   PREMIUM BADGES
-   ========================================================= */
-
-body.study-mind-premium .premium-badge,
-body.study-mind-premium .premium-label,
-body.study-mind-premium [data-premium-badge] {
-
-    background:
-        linear-gradient(
-            135deg,
-            #f0cf70,
-            #c99620
-        );
-
-    color: #251d0b;
-
-    border-color: #c99620;
-}
-
-
-/* =========================================================
-   PREMIUM TABLE / DIVIDERS
-   ========================================================= */
-
-body.study-mind-premium hr,
-body.study-mind-premium .divider {
-
-    border-color:
-        rgba(212, 167, 44, 0.20);
-}
-
-
-/* =========================================================
-   PREMIUM DARK MODE
-   ========================================================= */
-
-body.dark-mode.study-mind-premium,
-html.dark-mode.study-mind-premium body,
-body.study-mind-premium.dark-mode {
-
-    background:
-        linear-gradient(
-            135deg,
-            #11100d 0%,
-            #17150f 50%,
-            #0d0c0a 100%
-        );
-
-    color: #f8f1dc;
-}
-
-
-body.dark-mode.study-mind-premium .card,
-body.dark-mode.study-mind-premium .dashboard-card,
-body.dark-mode.study-mind-premium .stat-card,
-body.dark-mode.study-mind-premium .feature-card,
-body.dark-mode.study-mind-premium .study-card,
-body.dark-mode.study-mind-premium .panel,
-body.dark-mode.study-mind-premium .content-card {
-
-    background:
-        rgba(28, 25, 18, 0.96);
-
-    border-color:
-        rgba(229, 189, 79, 0.24);
-
-    box-shadow:
-        0 10px 30px
-        rgba(0, 0, 0, 0.30);
-}
-
-
-body.dark-mode.study-mind-premium a {
-
-    color: #e5bd4f;
-}
-
-
-body.dark-mode.study-mind-premium .active,
-body.dark-mode.study-mind-premium .nav-link.active,
-body.dark-mode.study-mind-premium .sidebar-link.active {
-
-    color: #f0ca63;
-
-    background:
-        rgba(229, 189, 79, 0.12);
-
-    border-color:
-        rgba(229, 189, 79, 0.25);
-}
-
-
-/* =========================================================
-   PREMIUM SCROLLBAR
-   ========================================================= */
-
-body.study-mind-premium::-webkit-scrollbar-thumb {
-
-    background:
-        linear-gradient(
-            #d4a72c,
-            #9b6d08
-        );
-}
-
-
-/* =========================================================
-   PREMIUM SELECTION
-   ========================================================= */
-
-body.study-mind-premium ::selection {
-
-    background: rgba(212, 167, 44, 0.30);
-
-    color: inherit;
-}
