@@ -230,14 +230,19 @@ document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        await loadUser();
+       loadUser().catch(error => {
+    console.warn(
+        "StudyMind Dashboard: background username loading failed:",
+        error
+    );
+});
 
 
-        studyPlan =
-            loadJSON(
-                PLAN_KEY,
-                null
-            );
+studyPlan =
+    loadJSON(
+        PLAN_KEY,
+        null
+    );
 
 
         syncLocalStats();
