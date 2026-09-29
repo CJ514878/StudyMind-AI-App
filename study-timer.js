@@ -4,68 +4,80 @@
    STUDYMIND AI — SHARED STUDY TIMER
    SINGLE SOURCE OF TRUTH
 
+   Timer owner:
+   ✓ Start / pause
+   ✓ Reset
+   ✓ Duration selection
+   ✓ Completion
+   ✓ Study-time recording
+   ✓ XP
+   ✓ Streak activity
+   ✓ Milo celebration
+
    Used by:
-   - study-timer.html
-   - study-session.html
-   - dashboard.html
+   ✓ study-timer.html
+   ✓ study-session.html
+   ✓ dashboard.html
 
    IMPORTANT
    ---------------------------------------------------------
-   Timer completion:
-   - records actual study time
-   - awards gradual XP
-   - records streak activity
-   - triggers Milo celebration
-   - DOES NOT complete a topic
+   dashboard.js MUST NOT control the timer directly.
+   It only reads window.StudyMindTimer and displays state.
 
-   STUDY-TIME ARCHITECTURE
-   ---------------------------------------------------------
-   Completed study time is stored in:
-   - studyMindStudySessions
-   - studyMindDailyStudyTime
-   - studyMindStudyHistory
-
-   Active timer time is NOT permanently added to those
-   completed-time stores.
-
-   Study Score reads the active timer directly and adds
-   the live elapsed time to completed time.
-
-   This prevents double-counting.
+   This prevents duplicate click handlers and competing
+   timer loops.
 ========================================================= */
 
 (function () {
 
+    /* =========================================================
+       KEYS
+    ========================================================= */
+
     const KEYS = {
-        SECONDS: "studyMindTimerSeconds",
-        END_TIME: "studyMindTimerEndTime",
-        RUNNING: "studyMindTimerRunning",
-        SELECTED: "studyMindSelectedTimerSeconds",
 
-        CURRENT_TOPIC: "studyMindCurrentTopic",
-        CURRENT_TOPIC_INDEX: "studyMindCurrentTopicIndex",
+        SECONDS:
+            "studyMindTimerSeconds",
 
-        STUDY_SESSIONS: "studyMindStudySessions",
-        DAILY_TIME: "studyMindDailyStudyTime",
-        STUDY_HISTORY: "studyMindStudyHistory",
+        END_TIME:
+            "studyMindTimerEndTime",
 
-        XP: "studyMindXP",
-        TOTAL_XP: "studyMindTotalXP",
+        RUNNING:
+            "studyMindTimerRunning",
 
-        STREAK_ACTIVITY: "studyMindStreakActivity",
+        SELECTED:
+            "studyMindSelectedTimerSeconds",
 
-        SESSION_START: "studyMindTimerSessionStart",
+        CURRENT_TOPIC:
+            "studyMindCurrentTopic",
 
-        /*
-         * Canonical timer base key.
-         */
+        CURRENT_TOPIC_INDEX:
+            "studyMindCurrentTopicIndex",
+
+        STUDY_SESSIONS:
+            "studyMindStudySessions",
+
+        DAILY_TIME:
+            "studyMindDailyStudyTime",
+
+        STUDY_HISTORY:
+            "studyMindStudyHistory",
+
+        XP:
+            "studyMindXP",
+
+        TOTAL_XP:
+            "studyMindTotalXP",
+
+        STREAK_ACTIVITY:
+            "studyMindStreakActivity",
+
+        SESSION_START:
+            "studyMindTimerSessionStart",
+
         SESSION_BASE_SECONDS:
             "studyMindTimerBaseSeconds",
 
-        /*
-         * Legacy key kept for compatibility with
-         * older StudyMind versions.
-         */
         SESSION_BASE_LEGACY:
             "studyMindTimerSessionBaseMinutes",
 
@@ -82,10 +94,24 @@
             "studyMindCompletedTimerSessions"
     };
 
-    const PRESETS = [25, 45, 60];
+
+    /* =========================================================
+       CONFIG
+    ========================================================= */
+
+    const PRESETS = [
+        25,
+        45,
+        60
+    ];
 
     const DEFAULT_SECONDS =
         25 * 60;
+
+
+    /* =========================================================
+       STATE
+    ========================================================= */
 
     let state = {
 
@@ -133,25 +159,22 @@
         const now =
             new Date();
 
-        const year =
-            now.getFullYear();
-
-        const month =
+        return (
+            now.getFullYear() +
+            "-" +
             String(
                 now.getMonth() + 1
-            ).padStart(2, "0");
-
-        const day =
+            ).padStart(2, "0") +
+            "-" +
             String(
                 now.getDate()
-            ).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
+            ).padStart(2, "0")
+        );
     }
 
 
     /* =========================================================
-       HELPERS
+       STORAGE HELPERS
     ========================================================= */
 
     function readJSON(
@@ -162,7 +185,9 @@
         try {
 
             const value =
-                localStorage.getItem(key);
+                localStorage.getItem(
+                    key
+                );
 
             return value
                 ? JSON.parse(value)
@@ -205,7 +230,9 @@
 
         const value =
             Number(
-                localStorage.getItem(key)
+                localStorage.getItem(
+                    key
+                )
             );
 
         return Number.isFinite(value)
@@ -236,7 +263,9 @@
     ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
         if (element) {
 
@@ -256,7 +285,9 @@
             Math.max(
                 0,
                 Math.floor(
-                    Number(seconds) || 0
+                    Number(
+                        seconds
+                    ) || 0
                 )
             );
 
@@ -279,7 +310,7 @@
 
 
     /* =========================================================
-       ACTIVE PLAN
+       PLAN
     ========================================================= */
 
     function getPlan() {
@@ -591,16 +622,12 @@
             );
 
 
-        /*
-         * Never use a stored topic if it belongs
-         * to an older/different study plan.
-         */
         if (
             stored &&
             stored.name
         ) {
 
-            const matches =
+            const match =
                 topics.find(
                     topic =>
                         topic.name ===
@@ -613,9 +640,9 @@
                 );
 
 
-            if (matches) {
+            if (match) {
 
-                return matches;
+                return match;
             }
         }
 
@@ -674,15 +701,7 @@
 
     function getElapsedSeconds() {
 
-        /*
-         * Only active running time is considered
-         * "live" time.
-
-         * Completed time is stored separately.
-         */
-        if (
-            !state.running
-        ) {
+        if (!state.running) {
 
             return 0;
         }
@@ -699,8 +718,7 @@
     function getLiveMinutes() {
 
         return Math.floor(
-            getElapsedSeconds() /
-            60
+            getElapsedSeconds() / 60
         );
     }
 
@@ -779,9 +797,6 @@
         }
 
 
-        /*
-         * Canonical Score key.
-         */
         localStorage.setItem(
             KEYS.SESSION_BASE_SECONDS,
             String(
@@ -791,10 +806,7 @@
 
 
         /*
-         * Legacy compatibility key.
-         *
-         * Older StudyMind code may still read
-         * this key as minutes.
+         * Kept for backwards compatibility.
          */
         localStorage.setItem(
             KEYS.SESSION_BASE_LEGACY,
@@ -849,9 +861,6 @@
             );
 
 
-        /*
-         * Prefer the canonical seconds key.
-         */
         let savedBase =
             Number(
                 localStorage.getItem(
@@ -860,9 +869,6 @@
             );
 
 
-        /*
-         * Fall back to the old key.
-         */
         if (
             !Number.isFinite(savedBase) ||
             savedBase <= 0
@@ -902,27 +908,21 @@
 
 
         state.baseSeconds =
-            Number.isFinite(
-                savedBase
-            ) &&
+            Number.isFinite(savedBase) &&
             savedBase > 0
                 ? savedBase
                 : state.selectedSeconds;
 
 
         state.awardedMinute =
-            Number.isFinite(
-                savedAwarded
-            ) &&
+            Number.isFinite(savedAwarded) &&
             savedAwarded >= 0
                 ? savedAwarded
                 : 0;
 
 
         state.sessionStart =
-            Number.isFinite(
-                savedStart
-            ) &&
+            Number.isFinite(savedStart) &&
             savedStart > 0
                 ? savedStart
                 : null;
@@ -932,9 +932,6 @@
             state.awardedMinute;
 
 
-        /*
-         * Rebuild a running timer from endTime.
-         */
         if (
             savedRunning &&
             savedEnd
@@ -967,8 +964,7 @@
 
 
             /*
-             * Timer finished while the page
-             * was closed.
+             * Timer finished while page was closed.
              */
             state.seconds =
                 0;
@@ -980,11 +976,6 @@
                 null;
 
 
-            /*
-             * Do not call finishTimer while the state
-             * still looks like an active session.
-             * finishTimer will safely record the session.
-             */
             finishTimer();
 
             return;
@@ -999,18 +990,12 @@
 
 
         state.seconds =
-            Number.isFinite(
-                savedSeconds
-            ) &&
+            Number.isFinite(savedSeconds) &&
             savedSeconds >= 0
                 ? savedSeconds
                 : state.selectedSeconds;
 
 
-        /*
-         * A completely fresh timer has no
-         * active session.
-         */
         if (
             state.seconds ===
             state.selectedSeconds
@@ -1081,9 +1066,7 @@
 
         localStorage.setItem(
             KEYS.XP,
-            String(
-                newXP
-            )
+            String(newXP)
         );
 
 
@@ -1129,9 +1112,7 @@
 
     function awardLiveXP() {
 
-        if (
-            !state.running
-        ) {
+        if (!state.running) {
 
             return;
         }
@@ -1181,12 +1162,23 @@
                 []
             );
 
-
-        return Array.isArray(
-            sessions
-        )
+        return Array.isArray(sessions)
             ? sessions
             : [];
+    }
+
+
+    function getTodaySessions() {
+
+        const today =
+            todayKey();
+
+        return getAllSessions()
+            .filter(
+                session =>
+                    session &&
+                    session.date === today
+            );
     }
 
 
@@ -1194,7 +1186,6 @@
 
         const today =
             todayKey();
-
 
         return getAllSessions()
             .reduce(
@@ -1205,8 +1196,7 @@
 
                     if (
                         !session ||
-                        session.date !==
-                        today
+                        session.date !== today
                     ) {
 
                         return total;
@@ -1228,10 +1218,6 @@
             );
     }
 
-
-    /* =========================================================
-       PERSIST COMPLETED STUDY TIME
-       ========================================================= */
 
     function syncCompletedStudyTime() {
 
@@ -1267,30 +1253,18 @@
                     (
                         totals[session.date] ||
                         0
-                    ) + minutes;
+                    ) +
+                    minutes;
             }
         );
 
 
-        /*
-         * DAILY TIME
-         *
-         * Only completed study time is stored.
-         * Active timer time is calculated live by
-         * StudyMindScore.
-         */
         writeJSON(
             KEYS.DAILY_TIME,
             totals
         );
 
 
-        /*
-         * STUDY HISTORY
-         *
-         * Store minutes explicitly to avoid
-         * the old hours/minutes ambiguity.
-         */
         const history = {};
 
 
@@ -1326,14 +1300,6 @@
             getLiveMinutes();
 
 
-        /*
-         * Persist only completed time.
-         *
-         * The active/live minutes are intentionally
-         * NOT written into DAILY_TIME or HISTORY.
-         * Study Score adds them directly from the
-         * shared timer state.
-         */
         const completedMinutes =
             getCompletedTodayMinutes();
 
@@ -1416,8 +1382,7 @@
 
         const activity =
             existing &&
-            typeof existing ===
-            "object"
+            typeof existing === "object"
                 ? existing
                 : {};
 
@@ -1432,10 +1397,6 @@
         );
 
 
-        /*
-         * Dedicated streak engine remains
-         * responsible for calculating streak.
-         */
         if (
             window.StudyMindStreak &&
             typeof
@@ -1464,21 +1425,18 @@
 
 
     /* =========================================================
-       RECORD COMPLETED TIMER SESSION
+       RECORD SESSION
     ========================================================= */
 
     function recordStudySession() {
 
         const minutes =
             Math.floor(
-                state.baseSeconds /
-                60
+                state.baseSeconds / 60
             );
 
 
-        if (
-            minutes <= 0
-        ) {
+        if (minutes <= 0) {
 
             return null;
         }
@@ -1558,12 +1516,6 @@
         );
 
 
-        /*
-         * Rebuild completed daily/history data
-         * AFTER the session has been added.
-
-         * No live time is stored here.
-         */
         syncCompletedStudyTime();
 
 
@@ -1596,13 +1548,11 @@
         if (
             window.StudyMindScore &&
             typeof
-                window.StudyMindScore
-                    .refresh ===
+                window.StudyMindScore.refresh ===
                 "function"
         ) {
 
-            window.StudyMindScore
-                .refresh();
+            window.StudyMindScore.refresh();
         }
 
 
@@ -1632,16 +1582,14 @@
         if (
             window.StudyMindRewards &&
             typeof
-                window.StudyMindRewards
-                    .check ===
+                window.StudyMindRewards.check ===
                 "function"
         ) {
 
             setTimeout(
                 () => {
 
-                    window.StudyMindRewards
-                        .check();
+                    window.StudyMindRewards.check();
 
                 },
                 250
@@ -1664,9 +1612,7 @@
 
         localStorage.setItem(
             KEYS.LAST_COMPLETED,
-            String(
-                timestamp
-            )
+            String(timestamp)
         );
 
 
@@ -1684,19 +1630,18 @@
             2000
         ) {
 
-            return;
+            return 0;
         }
 
 
         localStorage.setItem(
             KEYS.LAST_CELEBRATED,
-            String(
-                timestamp
-            )
+            String(timestamp)
         );
 
 
-        let streak = 0;
+        let streak =
+            0;
 
 
         if (
@@ -1748,10 +1693,9 @@
                 "function"
         ) {
 
-            window.Milo
-                .playSound(
-                    "woohoo"
-                );
+            window.Milo.playSound(
+                "woohoo"
+            );
         }
 
 
@@ -1853,21 +1797,12 @@
         stopInterval();
 
 
-        /*
-         * Capture the duration BEFORE resetting
-         * the active timer state.
-         */
         const durationMinutes =
             Math.floor(
-                state.baseSeconds /
-                60
+                state.baseSeconds / 60
             );
 
 
-        /*
-         * Award the final minute if the
-         * 250ms loop hasn't done it yet.
-         */
         if (
             durationMinutes >
             state.awardedMinute
@@ -1890,12 +1825,8 @@
 
 
         /*
-         * Stop the active timer BEFORE writing
-         * study-time totals.
-
-         * This is the key fix preventing the
-         * completed session from being counted
-         * once as a session and once as live time.
+         * Stop active timer BEFORE recording
+         * completed study time.
          */
         state.seconds =
             0;
@@ -1911,44 +1842,25 @@
             durationMinutes > 0
         ) {
 
-            /*
-             * 1. Record the completed timer
-             *    session.
-             */
-            recordStudySession();
+            const session =
+                recordStudySession();
 
 
-            /*
-             * 2. Record today's genuine study
-             *    activity.
-             */
             recordStudyActivity();
 
 
-            /*
-             * 3. Refresh Study Score.
-             */
             refreshScore();
 
 
-            /*
-             * 4. Check rewards.
-             */
             refreshRewards();
 
 
-            /*
-             * 5. Celebrate with Milo.
-             */
             const streak =
                 celebrateCompletion(
                     durationMinutes
                 );
 
 
-            /*
-             * 6. Completion modal.
-             */
             showCompletionModal(
                 durationMinutes,
                 durationMinutes
@@ -1968,6 +1880,8 @@
                     streak:
                         Number(streak) || 0,
 
+                    session,
+
                     timestamp:
                         Date.now()
                 }
@@ -1975,14 +1889,6 @@
         }
 
 
-        /*
-         * IMPORTANT:
-         *
-         * The session is now completed.
-         * Clear active-session metadata so
-         * Score cannot treat the completed
-         * session as live time.
-         */
         state.sessionStart =
             null;
 
@@ -1999,10 +1905,6 @@
         persist();
 
 
-        /*
-         * Ensure completed daily/history data
-         * is synchronized after completion.
-         */
         syncCompletedStudyTime();
 
 
@@ -2033,9 +1935,6 @@
         );
 
 
-        /*
-         * Allow a future timer session.
-         */
         setTimeout(
             () => {
 
@@ -2073,6 +1972,9 @@
         stopInterval();
 
 
+        /*
+         * ONE interval only.
+         */
         state.interval =
             setInterval(
                 updateRemaining,
@@ -2108,25 +2010,12 @@
             remaining;
 
 
-        /*
-         * Gradual XP.
-         */
         awardLiveXP();
 
 
-        /*
-         * Gradual study-time update.
-
-         * Completed storage remains clean.
-         * Live time is exposed through the event
-         * and StudyMindScore.
-         */
         updateDailyLiveTime();
 
 
-        /*
-         * UI update.
-         */
         render();
         renderStats();
 
@@ -2161,8 +2050,7 @@
 
 
         /*
-         * If timer is at zero, begin a fresh
-         * session using the selected duration.
+         * Starting from zero means a fresh session.
          */
         if (
             state.seconds <= 0
@@ -2188,19 +2076,46 @@
         ) {
 
             /*
-             * First start.
+             * First start of this session.
              */
             state.sessionStart =
                 Date.now();
 
+            /*
+             * IMPORTANT:
+             * Preserve the currently selected
+             * remaining duration.
+             */
             state.baseSeconds =
-                state.selectedSeconds;
+                state.seconds +
+                (
+                    state.selectedSeconds -
+                    state.seconds
+                );
+
+            /*
+             * If this is a fresh selected timer,
+             * base equals selected duration.
+             */
+            if (
+                state.seconds ===
+                state.selectedSeconds
+            ) {
+
+                state.baseSeconds =
+                    state.selectedSeconds;
+            }
 
             state.awardedMinute =
-                0;
+                Math.floor(
+                    (
+                        state.baseSeconds -
+                        state.seconds
+                    ) / 60
+                );
 
             state.lastPersistedLiveMinute =
-                -1;
+                state.awardedMinute;
         }
 
 
@@ -2226,25 +2141,12 @@
         startInterval();
 
 
-        /*
-         * Immediately notify all consumers.
-         */
         updateDailyLiveTime(
             true
         );
 
 
-        if (
-            window.StudyMindScore &&
-            typeof
-                window.StudyMindScore
-                    .refresh ===
-                "function"
-        ) {
-
-            window.StudyMindScore
-                .refresh();
-        }
+        refreshScore();
 
 
         render();
@@ -2253,6 +2155,12 @@
 
         dispatch(
             "studyMindTimerChanged",
+            getState()
+        );
+
+
+        console.log(
+            "StudyMind Timer: START",
             getState()
         );
     }
@@ -2273,8 +2181,7 @@
 
 
         /*
-         * Capture the current remaining
-         * time before pausing.
+         * Capture current remaining time.
          */
         updateRemaining();
 
@@ -2290,42 +2197,22 @@
         state.running =
             false;
 
-
         state.endTime =
             null;
 
 
-        /*
-         * Keep sessionStart/baseSeconds/
-         * awardedMinute so resume continues
-         * the same session.
-         */
         persist();
 
 
         stopInterval();
 
 
-        /*
-         * Live time is no longer counted as
-         * active Score time while paused.
-         */
         updateDailyLiveTime(
             true
         );
 
 
-        if (
-            window.StudyMindScore &&
-            typeof
-                window.StudyMindScore
-                    .refresh ===
-                "function"
-        ) {
-
-            window.StudyMindScore
-                .refresh();
-        }
+        refreshScore();
 
 
         render();
@@ -2334,6 +2221,12 @@
 
         dispatch(
             "studyMindTimerChanged",
+            getState()
+        );
+
+
+        console.log(
+            "StudyMind Timer: PAUSE",
             getState()
         );
     }
@@ -2381,17 +2274,7 @@
         );
 
 
-        if (
-            window.StudyMindScore &&
-            typeof
-                window.StudyMindScore
-                    .refresh ===
-                "function"
-        ) {
-
-            window.StudyMindScore
-                .refresh();
-        }
+        refreshScore();
 
 
         render();
@@ -2401,6 +2284,11 @@
         dispatch(
             "studyMindTimerChanged",
             getState()
+        );
+
+
+        console.log(
+            "StudyMind Timer: RESET"
         );
     }
 
@@ -2494,9 +2382,6 @@
         }
 
 
-        /*
-         * Save recommended topic.
-         */
         writeJSON(
             KEYS.CURRENT_TOPIC,
             topic
@@ -2510,16 +2395,12 @@
         const index =
             topics.findIndex(
                 item =>
-                    item.name ===
-                        topic.name &&
-                    item.subject ===
-                        topic.subject
+                    item.name === topic.name &&
+                    item.subject === topic.subject
             );
 
 
-        if (
-            index >= 0
-        ) {
+        if (index >= 0) {
 
             localStorage.setItem(
                 KEYS.CURRENT_TOPIC_INDEX,
@@ -2528,10 +2409,6 @@
         }
 
 
-        /*
-         * Always begin recommended
-         * sessions at 25 minutes.
-         */
         stopInterval();
 
 
@@ -2566,9 +2443,9 @@
         persist();
 
 
-        /*
-         * Actually start.
-         */
+        render();
+
+
         startTimer();
 
 
@@ -2596,34 +2473,10 @@
        TODAY'S DATA
     ========================================================= */
 
-    function getTodaySessions() {
-
-        const today =
-            todayKey();
-
-
-        return getAllSessions()
-            .filter(
-                session =>
-                    session &&
-                    session.date ===
-                    today
-            );
-    }
-
-
     function getTodayMinutes() {
 
-        const completed =
-            getCompletedTodayMinutes();
-
-
-        /*
-         * Active running time is added only
-         * while the timer is actually running.
-         */
         return (
-            completed +
+            getCompletedTodayMinutes() +
             getLiveMinutes()
         );
     }
@@ -2631,20 +2484,13 @@
 
     function getTodaySessionCount() {
 
-        const completed =
-            getTodaySessions()
-                .length;
-
-
-        const active =
-            state.running
-                ? 1
-                : 0;
-
-
         return (
-            completed +
-            active
+            getTodaySessions().length +
+            (
+                state.running
+                    ? 1
+                    : 0
+            )
         );
     }
 
@@ -2667,7 +2513,6 @@
                                 ) || 0
                             )
                         );
-
                     },
                     0
                 );
@@ -2705,6 +2550,36 @@
        HISTORY
     ========================================================= */
 
+    function escapeHTML(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
     function renderHistory() {
 
         const container =
@@ -2740,9 +2615,7 @@
         }
 
 
-        if (
-            !sessions.length
-        ) {
+        if (!sessions.length) {
 
             container.innerHTML =
                 `
@@ -2761,78 +2634,45 @@
                 .reverse()
                 .slice(0, 10)
                 .map(
-                    session => {
+                    session => `
+                        <div class="history-item">
 
-                        return `
-                            <div class="history-item">
+                            <div>
+                                <strong>
+                                    ${escapeHTML(
+                                        session.topic ||
+                                        "Study Session"
+                                    )}
+                                </strong>
 
-                                <div>
-                                    <strong>
-                                        ${escapeHTML(
-                                            session.topic ||
-                                            "Study Session"
-                                        )}
-                                    </strong>
-
-                                    <small>
-                                        ${escapeHTML(
-                                            session.subject ||
-                                            "General"
-                                        )}
-                                    </small>
-                                </div>
-
-                                <div>
-                                    <strong>
-                                        ${Number(
-                                            session.minutes ||
-                                            0
-                                        )} min
-                                    </strong>
-
-                                    <small>
-                                        +${Number(
-                                            session.xp ||
-                                            0
-                                        )} XP
-                                    </small>
-                                </div>
-
+                                <small>
+                                    ${escapeHTML(
+                                        session.subject ||
+                                        "General"
+                                    )}
+                                </small>
                             </div>
-                        `;
-                    }
+
+                            <div>
+                                <strong>
+                                    ${Number(
+                                        session.minutes ||
+                                        0
+                                    )} min
+                                </strong>
+
+                                <small>
+                                    +${Number(
+                                        session.xp ||
+                                        0
+                                    )} XP
+                                </small>
+                            </div>
+
+                        </div>
+                    `
                 )
                 .join("");
-    }
-
-
-    function escapeHTML(
-        value
-    ) {
-
-        return String(
-            value ?? ""
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
     }
 
 
@@ -2848,18 +2688,12 @@
             );
 
 
-        /*
-         * Study Timer page.
-         */
         setText(
             "timerDisplay",
             value
         );
 
 
-        /*
-         * Dashboard timer.
-         */
         setText(
             "dashboardTimerDisplay",
             value
@@ -2896,7 +2730,12 @@
             "dashboardTimerStatus",
             state.running
                 ? "Studying"
-                : "Ready to study"
+                : (
+                    state.seconds ===
+                    state.selectedSeconds
+                        ? "Ready to study"
+                        : "Paused"
+                )
         );
 
 
@@ -2945,6 +2784,10 @@
         }
 
 
+        /*
+         * Update button text WITHOUT attaching
+         * another click listener.
+         */
         [
             "startPauseTimer",
             "dashboardTimerStart",
@@ -2967,12 +2810,7 @@
                 button.textContent =
                     state.running
                         ? "Pause"
-                        : (
-                            id ===
-                            "timerStart"
-                                ? "Start"
-                                : "Start Timer"
-                        );
+                        : "Start Timer";
             }
         );
 
@@ -2997,7 +2835,7 @@
 
 
     /* =========================================================
-       CONTROLS
+       EVENT BINDING
     ========================================================= */
 
     function bindOnce(
@@ -3011,9 +2849,13 @@
         }
 
 
+        /*
+         * This prevents Dashboard.js and other
+         * initialization passes from creating
+         * duplicate timer controls.
+         */
         if (
-            element.dataset
-                .studyMindTimerBound ===
+            element.dataset.studyMindTimerBound ===
             "true"
         ) {
 
@@ -3021,8 +2863,7 @@
         }
 
 
-        element.dataset
-            .studyMindTimerBound =
+        element.dataset.studyMindTimerBound =
             "true";
 
 
@@ -3035,6 +2876,9 @@
 
     function setupControls() {
 
+        /*
+         * START / PAUSE
+         */
         [
             "startPauseTimer",
             "dashboardTimerStart",
@@ -3042,14 +2886,8 @@
         ].forEach(
             id => {
 
-                const button =
-                    document.getElementById(
-                        id
-                    );
-
-
                 bindOnce(
-                    button,
+                    document.getElementById(id),
                     () => {
 
                         if (
@@ -3068,6 +2906,9 @@
         );
 
 
+        /*
+         * RESET
+         */
         [
             "resetTimer",
             "dashboardTimerReset",
@@ -3075,20 +2916,17 @@
         ].forEach(
             id => {
 
-                const button =
-                    document.getElementById(
-                        id
-                    );
-
-
                 bindOnce(
-                    button,
+                    document.getElementById(id),
                     resetTimer
                 );
             }
         );
 
 
+        /*
+         * DURATION PRESETS
+         */
         document
             .querySelectorAll(
                 ".duration-button, .timer-preset"
@@ -3102,8 +2940,7 @@
 
                             const minutes =
                                 Number(
-                                    button.dataset
-                                        .minutes
+                                    button.dataset.minutes
                                 );
 
 
@@ -3115,8 +2952,7 @@
                             ) {
 
                                 selectDuration(
-                                    minutes *
-                                    60
+                                    minutes * 60
                                 );
 
                                 return;
@@ -3125,8 +2961,7 @@
 
                             const seconds =
                                 Number(
-                                    button.dataset
-                                        .duration
+                                    button.dataset.duration
                                 );
 
 
@@ -3147,6 +2982,9 @@
             );
 
 
+        /*
+         * RECOMMENDED SESSION
+         */
         bindOnce(
             document.getElementById(
                 "useRecommended"
@@ -3155,24 +2993,30 @@
         );
 
 
+        /*
+         * COMPLETION MODAL CLOSE
+         */
         bindOnce(
             document.getElementById(
                 "closeCompletion"
             ),
             closeCompletionModal
         );
+    }
 
 
-        /*
-         * Shared timer events.
-         */
+    /* =========================================================
+       EVENTS
+    ========================================================= */
+
+    function setupEvents() {
+
         window.addEventListener(
             "studyMindTimerChanged",
             () => {
 
                 render();
                 renderStats();
-
             }
         );
 
@@ -3183,7 +3027,6 @@
 
                 render();
                 renderStats();
-
             }
         );
 
@@ -3195,15 +3038,10 @@
                 render();
                 renderStats();
                 renderHistory();
-
             }
         );
 
 
-        /*
-         * Plan creation refreshes topic/recommendation
-         * information but does NOT award XP/streak.
-         */
         window.addEventListener(
             "studyMindPlanCreated",
             () => {
@@ -3211,7 +3049,6 @@
                 render();
                 renderStats();
                 renderRecommendation();
-
             }
         );
 
@@ -3239,11 +3076,21 @@
                     )
                 ) {
 
-                    loadState();
+                    /*
+                     * Do not reload state from
+                     * localStorage while this tab owns
+                     * the active timer.
+                     */
+                    if (
+                        !state.running
+                    ) {
 
-                    render();
-                    renderStats();
-                    renderRecommendation();
+                        loadState();
+
+                        render();
+                        renderStats();
+                        renderRecommendation();
+                    }
                 }
             }
         );
@@ -3251,7 +3098,7 @@
 
 
     /* =========================================================
-       RECOMMENDATION
+       RECOMMENDATION DISPLAY
     ========================================================= */
 
     function renderRecommendation() {
@@ -3355,16 +3202,16 @@
         loadState();
 
 
-        /*
-         * Rebuild completed-time stores once when
-         * the timer initializes. This also repairs
-         * old data where Daily Time may have contained
-         * live minutes.
-         */
         syncCompletedStudyTime();
 
 
+        /*
+         * Timer controls belong here.
+         */
         setupControls();
+
+
+        setupEvents();
 
 
         render();
@@ -3373,6 +3220,10 @@
         renderRecommendation();
 
 
+        /*
+         * Resume a timer that was running before
+         * the page was refreshed.
+         */
         if (
             state.running
         ) {
@@ -3382,21 +3233,11 @@
 
 
         /*
-         * Lightweight synchronization loop.
+         * NO SECOND TIMER INTERVAL.
+         *
+         * updateRemaining() is controlled solely
+         * by startInterval().
          */
-        setInterval(
-            () => {
-
-                if (
-                    state.running
-                ) {
-
-                    updateRemaining();
-                }
-
-            },
-            1000
-        );
 
 
         console.log(
@@ -3465,9 +3306,7 @@
                 return Math.max(
                     0,
                     Math.floor(
-                        Number(
-                            minutes
-                        ) || 0
+                        Number(minutes) || 0
                     )
                 );
             }
