@@ -1,4 +1,5 @@
 "use strict";
+
 /* =========================================================
    STUDYMIND AI — PREMIUM THEME SYNC
    Makes the Dashboard respond to the Premium state
@@ -11,62 +12,97 @@
         let premium = false;
 
         try {
-            if (typeof window.isStudyMindPremium === "function") {
-                premium = !!window.isStudyMindPremium();
-            } else {
+
+            if (
+                typeof window.isStudyMindPremium === "function"
+            ) {
+
                 premium =
-                    localStorage.getItem("studyMindPremium") === "true";
+                    !!window.isStudyMindPremium();
+
+            } else {
+
+                premium =
+                    localStorage.getItem(
+                        "studyMindPremium"
+                    ) === "true";
+
             }
+
         } catch (error) {
+
             premium =
-                localStorage.getItem("studyMindPremium") === "true";
+                localStorage.getItem(
+                    "studyMindPremium"
+                ) === "true";
+
         }
+
 
         document.documentElement.classList.toggle(
             "study-mind-premium",
             premium
         );
 
+
         if (document.body) {
+
             document.body.classList.toggle(
                 "study-mind-premium",
                 premium
             );
+
         }
+
 
         console.log(
             "StudyMind Premium Dashboard Theme:",
             premium ? "GOLD" : "BLUE"
         );
+
     }
 
-    /* Apply immediately */
+
     applyPremiumThemeToDashboard();
 
-    /* Apply again once the page is fully loaded */
-    window.addEventListener("load", applyPremiumThemeToDashboard);
 
-    /* Premium status changed */
+    window.addEventListener(
+        "load",
+        applyPremiumThemeToDashboard
+    );
+
+
     window.addEventListener(
         "studyMindPremiumChanged",
         applyPremiumThemeToDashboard
     );
+
 
     document.addEventListener(
         "studyMindPremiumChanged",
         applyPremiumThemeToDashboard
     );
 
-    /* Another tab/window changes Premium */
-    window.addEventListener("storage", function (event) {
 
-        if (event.key === "studyMindPremium") {
-            applyPremiumThemeToDashboard();
+    window.addEventListener(
+        "storage",
+        function (event) {
+
+            if (
+                event.key ===
+                "studyMindPremium"
+            ) {
+
+                applyPremiumThemeToDashboard();
+
+            }
+
         }
-
-    });
+    );
 
 })();
+
+
 /* =========================================================
    STUDYMIND AI — DASHBOARD
    SHARED TIMER ARCHITECTURE
@@ -82,6 +118,7 @@
    ✓ Starts / pauses / resets shared timer
    ✓ Changes shared duration
    ✓ Refreshes dashboard after timer completion
+   ✓ Displays live study progress
 
    dashboard.js DOES NOT:
    ✗ Run its own timer countdown
@@ -99,14 +136,6 @@
    localStorage studyMindUsername
         ↓
    Dashboard / Game Mode / other pages
-
-   This means the username follows the user across:
-   ✓ devices
-   ✓ browsers
-   ✓ sessions
-
-   The username changes only when the user changes it
-   in Settings.
 ========================================================= */
 
 
@@ -141,12 +170,6 @@ const USERNAME_KEY =
 
 /* =========================================================
    SHARED TIMER KEYS
-
-   These MUST remain identical across:
-
-   dashboard.js
-   study-timer.js
-   study-session.js
 ========================================================= */
 
 const TIMER_SECONDS_KEY =
@@ -172,12 +195,14 @@ let studyPlan =
         null
     );
 
+
 let xp =
     Number(
         localStorage.getItem(
             XP_KEY
         ) || 0
     );
+
 
 let streak =
     Number(
@@ -205,15 +230,6 @@ document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        /*
-         * IMPORTANT:
-         *
-         * loadUser() checks Supabase FIRST.
-         *
-         * This prevents an old localStorage username
-         * from overwriting the permanent username stored
-         * in the user's Supabase account.
-         */
         await loadUser();
 
 
@@ -227,12 +243,6 @@ document.addEventListener(
         syncLocalStats();
 
 
-        /*
-         * Ask streak.js to check whether today's
-         * scheduled study work has been completed.
-         *
-         * Dashboard does not increment streaks itself.
-         */
         checkStudyCompletion();
 
 
@@ -251,18 +261,9 @@ document.addEventListener(
         setupLogout();
 
 
-        /*
-         * Connect Dashboard controls to the
-         * authoritative shared timer.
-         */
         setupSharedDashboardTimer();
 
 
-        /*
-         * Start a display-only refresh loop.
-         *
-         * This does NOT run or complete the timer.
-         */
         startDashboardTimerRefresh();
 
 
@@ -274,9 +275,7 @@ document.addEventListener(
             "storage",
             event => {
 
-                /* -----------------------------------------
-                   USERNAME
-                ----------------------------------------- */
+                /* USERNAME */
 
                 if (
                     event.key ===
@@ -296,20 +295,12 @@ document.addEventListener(
                             username
                         );
 
-
-                        console.log(
-                            "StudyMind Dashboard: username synchronized from localStorage:",
-                            username
-                        );
-
                     }
 
                 }
 
 
-                /* -----------------------------------------
-                   COMPLETED TOPICS
-                ----------------------------------------- */
+                /* COMPLETED TOPICS */
 
                 if (
                     event.key ===
@@ -321,6 +312,7 @@ document.addEventListener(
                             PLAN_KEY,
                             null
                         );
+
 
                     checkStudyCompletion();
 
@@ -337,9 +329,7 @@ document.addEventListener(
                 }
 
 
-                /* -----------------------------------------
-                   STUDY PLAN
-                ----------------------------------------- */
+                /* STUDY PLAN */
 
                 if (
                     event.key ===
@@ -351,6 +341,7 @@ document.addEventListener(
                             PLAN_KEY,
                             null
                         );
+
 
                     checkStudyCompletion();
 
@@ -367,9 +358,7 @@ document.addEventListener(
                 }
 
 
-                /* -----------------------------------------
-                   XP
-                ----------------------------------------- */
+                /* XP */
 
                 if (
                     event.key ===
@@ -387,9 +376,7 @@ document.addEventListener(
                 }
 
 
-                /* -----------------------------------------
-                   STREAK
-                ----------------------------------------- */
+                /* STREAK */
 
                 if (
                     event.key ===
@@ -403,11 +390,8 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Shared timer changed in another page/tab.
-                 *
-                 * Dashboard only redraws.
-                 */
+                /* SHARED TIMER */
+
                 if (
                     [
                         TIMER_SECONDS_KEY,
@@ -420,6 +404,8 @@ document.addEventListener(
                 ) {
 
                     renderSharedDashboardTimer();
+
+                    renderStats();
 
                 }
 
@@ -466,17 +452,12 @@ document.addEventListener(
 
                 renderQuests();
 
-                console.log(
-                    "StudyMind Dashboard: XP updated.",
-                    event.detail || {}
-                );
-
             }
         );
 
 
         /* =================================================
-           USERNAME SYNCHRONIZATION
+           USERNAME EVENT
         ================================================= */
 
         window.addEventListener(
@@ -498,25 +479,13 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Keep local cache synchronized.
-                 */
                 localStorage.setItem(
                     USERNAME_KEY,
                     username
                 );
 
 
-                /*
-                 * Update Dashboard immediately.
-                 */
                 updateDashboardUsername(
-                    username
-                );
-
-
-                console.log(
-                    "StudyMind Dashboard: username changed:",
                     username
                 );
 
@@ -525,20 +494,13 @@ document.addEventListener(
 
 
         /* =================================================
-           PROFILE UPDATE EVENT
+           PROFILE UPDATE
         ================================================= */
 
         window.addEventListener(
             "studyMindProfileUpdated",
             async () => {
 
-                /*
-                 * Settings may have just changed the
-                 * Supabase username.
-                 *
-                 * Re-read Supabase so the permanent
-                 * account value becomes authoritative.
-                 */
                 try {
 
                     await loadUser();
@@ -566,26 +528,59 @@ document.addEventListener(
 
                 renderSharedDashboardTimer();
 
+                renderStats();
+
             }
         );
 
 
         /* =================================================
-           SHARED TIMER COMPLETION
-        =================================================
+           STUDY TIME EVENT
+        ================================================= */
 
-           study-timer.js has already handled:
+        window.addEventListener(
+            "studyMindStudyTimeUpdated",
+            () => {
 
-           ✓ timer completion
-           ✓ session recording
-           ✓ XP
-           ✓ streak activity
-           ✓ Milo
-           ✓ celebration
-           ✓ popup
+                renderStats();
 
-           Dashboard ONLY refreshes its UI.
-        */
+                renderQuests();
+
+            }
+        );
+
+
+        /* =================================================
+           STUDY DATA EVENT
+        ================================================= */
+
+        window.addEventListener(
+            "studyMindStudyDataUpdated",
+            () => {
+
+                renderStats();
+
+            }
+        );
+
+
+        /* =================================================
+           SCORE EVENT
+        ================================================= */
+
+        window.addEventListener(
+            "studyMindScoreUpdated",
+            () => {
+
+                renderStats();
+
+            }
+        );
+
+
+        /* =================================================
+           TIMER COMPLETION
+        ================================================= */
 
         window.addEventListener(
             "studyMindTimerCompleted",
@@ -656,9 +651,6 @@ document.addEventListener(
         }
 
 
-        /*
-         * Make sure the shared timer engine is available.
-         */
         ensureSharedTimerEngine();
 
     }
@@ -683,14 +675,6 @@ document.addEventListener(
 
         try {
 
-            /*
-             * Re-read Supabase every time the page
-             * becomes visible.
-             *
-             * This allows a username changed on another
-             * device/browser to appear when this page
-             * becomes active again.
-             */
             await loadUser();
 
         } catch (error) {
@@ -720,9 +704,6 @@ function syncLocalStats() {
         );
 
 
-    /*
-     * Streak engine is authoritative.
-     */
     if (
         window.StudyMindStreak &&
         typeof
@@ -746,6 +727,7 @@ function syncLocalStats() {
                 "StudyMind streak calculation failed:",
                 error
             );
+
 
             streak =
                 Number(
@@ -776,29 +758,6 @@ function syncLocalStats() {
 
 async function loadUser() {
 
-    /*
-     * IMPORTANT:
-     *
-     * Supabase Auth is the PERMANENT source of truth.
-     *
-     * localStorage is only a local cache.
-     *
-     * NEVER do:
-     *
-     * localStorage → overwrite Supabase
-     *
-     * The correct direction is:
-     *
-     * Supabase
-     *    ↓
-     * localStorage cache
-     *    ↓
-     * Dashboard UI
-     *
-     * This is what makes the username persistent
-     * across devices.
-     */
-
     let username = "";
 
 
@@ -807,10 +766,6 @@ async function loadUser() {
         window.studyMindSupabase ||
         null;
 
-
-    /* =====================================================
-       1. GET THE AUTHENTICATED SUPABASE USER
-    ===================================================== */
 
     if (client) {
 
@@ -824,9 +779,7 @@ async function loadUser() {
 
 
             if (error) {
-
                 throw error;
-
             }
 
 
@@ -841,18 +794,6 @@ async function loadUser() {
                     {};
 
 
-                /*
-                 * IMPORTANT:
-                 *
-                 * Settings saves all of these:
-                 *
-                 * username
-                 * name
-                 * display_name
-                 * full_name
-                 *
-                 * username is preferred.
-                 */
                 username =
                     String(
                         metadata.username ||
@@ -863,10 +804,6 @@ async function loadUser() {
                     ).trim();
 
 
-                /*
-                 * If Supabase contains the username,
-                 * it is authoritative.
-                 */
                 if (username) {
 
                     localStorage.setItem(
@@ -880,23 +817,11 @@ async function loadUser() {
                     );
 
 
-                    console.log(
-                        "StudyMind Dashboard: permanent username loaded from Supabase:",
-                        username
-                    );
-
-
                     return username;
 
                 }
 
 
-                /*
-                 * If metadata has no username yet,
-                 * use the email only as an initial fallback.
-                 *
-                 * This fallback is then cached locally.
-                 */
                 const emailUsername =
                     String(
                         user.email?.split("@")[0] ||
@@ -921,12 +846,6 @@ async function loadUser() {
                     );
 
 
-                    console.log(
-                        "StudyMind Dashboard: initial username created from account email:",
-                        username
-                    );
-
-
                     return username;
 
                 }
@@ -945,10 +864,6 @@ async function loadUser() {
     }
 
 
-    /* =====================================================
-       2. LOCAL CACHE FALLBACK
-    ===================================================== */
-
     username =
         String(
             localStorage.getItem(
@@ -964,10 +879,6 @@ async function loadUser() {
 
     }
 
-
-    /* =====================================================
-       3. UPDATE DASHBOARD
-    ===================================================== */
 
     updateDashboardUsername(
         username
@@ -1002,9 +913,6 @@ function updateDashboardUsername(
     }
 
 
-    /*
-     * Username.
-     */
     const element =
         document.getElementById(
             "username"
@@ -1019,9 +927,6 @@ function updateDashboardUsername(
     }
 
 
-    /*
-     * Avatar.
-     */
     const avatar =
         document.getElementById(
             "avatar"
@@ -1036,12 +941,6 @@ function updateDashboardUsername(
                 .toUpperCase();
 
     }
-
-
-    console.log(
-        "StudyMind Dashboard username:",
-        username
-    );
 
 }
 
@@ -1087,9 +986,6 @@ function renderStats() {
     );
 
 
-    /*
-     * Study Progress is now TIME based.
-     */
     setText(
         "studyProgress",
         `${progress}%`
@@ -1103,8 +999,8 @@ function renderStats() {
 
 
     /*
-     * Optional elements if your Dashboard HTML
-     * contains them.
+     * These IDs are optional.
+     * If they exist in the HTML, they will update.
      */
     setText(
         "todayStudyTime",
@@ -1130,11 +1026,145 @@ function renderStats() {
     );
 
 }
+
+
+/* =========================================================
+   GET TODAY'S STUDY MINUTES
+   ---------------------------------------------------------
+   StudyMindScore is the authoritative source.
+   The timer's live time is included by score.js.
+========================================================= */
+
+function getTodayStudyMinutes() {
+
+    try {
+
+        if (
+            window.StudyMindScore &&
+            typeof
+                window.StudyMindScore.getMetrics ===
+                "function"
+        ) {
+
+            const metrics =
+                window.StudyMindScore.getMetrics();
+
+
+            const minutes =
+                Number(
+                    metrics?.todayMinutes
+                );
+
+
+            if (
+                Number.isFinite(minutes)
+            ) {
+
+                return Math.max(
+                    0,
+                    minutes
+                );
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind Dashboard: Score metrics unavailable:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Fallback to persisted daily study time.
+     */
+    const dailyTime =
+        loadJSON(
+            "studyMindDailyStudyTime",
+            {}
+        );
+
+
+    const today =
+        getLocalDateKey();
+
+
+    return Math.max(
+        0,
+        Number(
+            dailyTime?.[today]?.minutes ??
+            dailyTime?.[today] ??
+            0
+        )
+    );
+
+}
+
+
+/* =========================================================
+   CALCULATE STUDY PROGRESS
+   ---------------------------------------------------------
+   Dashboard Study Progress is based on today's
+   study time compared with today's target.
+
+   Example with a 2-hour target:
+
+   0 min   = 0%
+   30 min  = 25%
+   60 min  = 50%
+   90 min  = 75%
+   120 min = 100%
+
+   It never exceeds 100%.
+========================================================= */
+
+function getStudyProgress() {
+
+    const todayMinutes =
+        getTodayStudyMinutes();
+
+
+    const targetHours =
+        Number(
+            studyPlan?.hoursPerDay ??
+            studyPlan?.studyHours ??
+            studyPlan?.dailyHours ??
+            studyPlan?.dailyStudyHours ??
+            2
+        );
+
+
+    const targetMinutes =
+        Math.max(
+            1,
+            targetHours * 60
+        );
+
+
+    return Math.round(
+        Math.min(
+            100,
+            (
+                todayMinutes /
+                targetMinutes
+            ) * 100
+        )
+    );
+
+}
+
+
 /* =========================================================
    FORMAT STUDY MINUTES
 ========================================================= */
 
-function formatStudyMinutes(minutes) {
+function formatStudyMinutes(
+    minutes
+) {
 
     minutes =
         Math.max(
@@ -1234,9 +1264,10 @@ function renderToday() {
 
         container.innerHTML = `
             <div class="loading">
-                ${isRest
-                    ? "Today is a planned recovery day."
-                    : "No session is scheduled today."
+                ${
+                    isRest
+                        ? "Today is a planned recovery day."
+                        : "No session is scheduled today."
                 }
             </div>
         `;
@@ -1518,11 +1549,6 @@ function ensureSharedTimerEngine() {
     }
 
 
-    /*
-     * Never create a second timer.
-     *
-     * Wait briefly for study-timer.js.
-     */
     let attempts = 0;
 
 
@@ -1541,7 +1567,7 @@ function ensureSharedTimerEngine() {
                     sharedEngine &&
                     typeof
                         sharedEngine.initialize ===
-                        "function"
+                    "function"
                 ) {
 
                     window.clearInterval(
@@ -1615,9 +1641,6 @@ function setupSharedDashboardTimer() {
     ensureSharedTimerEngine();
 
 
-    /*
-     * Duration presets.
-     */
     document
         .querySelectorAll(
             ".timer-preset"
@@ -1658,9 +1681,6 @@ function setupSharedDashboardTimer() {
         );
 
 
-    /*
-     * Start / pause.
-     */
     document
         .getElementById(
             "dashboardTimerStart"
@@ -1674,10 +1694,6 @@ function setupSharedDashboardTimer() {
 
 
                 if (!engine) {
-
-                    console.warn(
-                        "StudyMind timer engine is not loaded."
-                    );
 
                     ensureSharedTimerEngine();
 
@@ -1719,13 +1735,12 @@ function setupSharedDashboardTimer() {
 
                 renderSharedDashboardTimer();
 
+                renderStats();
+
             }
         );
 
 
-    /*
-     * Reset.
-     */
     document
         .getElementById(
             "dashboardTimerReset"
@@ -1750,6 +1765,8 @@ function setupSharedDashboardTimer() {
 
 
                 renderSharedDashboardTimer();
+
+                renderStats();
 
             }
         );
@@ -1786,10 +1803,6 @@ function selectSharedTimerDuration(
         getSharedTimerEngine();
 
 
-    /*
-     * Use the authoritative engine if it exposes
-     * a duration-selection method.
-     */
     if (
         engine &&
         typeof engine.selectDuration ===
@@ -1814,17 +1827,13 @@ function selectSharedTimerDuration(
 
         renderSharedDashboardTimer();
 
+        renderStats();
+
         return;
 
     }
 
 
-    /*
-     * Compatibility fallback.
-     *
-     * This only changes shared storage while the
-     * timer is stopped. It never creates a timer.
-     */
     if (
         isSharedTimerRunning()
     ) {
@@ -1897,11 +1906,6 @@ function getSharedTimerState() {
     }
 
 
-    /*
-     * Read-only compatibility fallback.
-     *
-     * This does NOT run or complete a timer.
-     */
     const running =
         localStorage.getItem(
             TIMER_RUNNING_KEY
@@ -2041,14 +2045,11 @@ function startSharedTimer() {
 
         renderSharedDashboardTimer();
 
+        renderStats();
+
         return true;
 
     }
-
-
-    console.warn(
-        "StudyMind timer engine is not available."
-    );
 
 
     ensureSharedTimerEngine();
@@ -2078,14 +2079,11 @@ function pauseSharedTimer() {
 
         renderSharedDashboardTimer();
 
+        renderStats();
+
         return true;
 
     }
-
-
-    console.warn(
-        "StudyMind timer engine is not available."
-    );
 
 
     return false;
@@ -2113,14 +2111,11 @@ function resetSharedTimer() {
 
         renderSharedDashboardTimer();
 
+        renderStats();
+
         return true;
 
     }
-
-
-    console.warn(
-        "StudyMind timer engine is not available."
-    );
 
 
     return false;
@@ -2223,18 +2218,6 @@ function renderSharedDashboardTimer() {
 
 /* =========================================================
    TIMER REFRESH LOOP
-=========================================================
-
-   DISPLAY ONLY.
-
-   It does NOT:
-   ✓ start timer
-   ✓ pause timer
-   ✓ complete timer
-   ✓ award XP
-   ✓ update streak
-
-   study-timer.js owns all of that.
 ========================================================= */
 
 let dashboardTimerRefreshStarted =
@@ -2261,8 +2244,23 @@ function startDashboardTimerRefresh() {
 
             renderSharedDashboardTimer();
 
+
+            /*
+             * IMPORTANT:
+             *
+             * Refresh Dashboard Study Progress
+             * while the shared timer is actively running.
+             */
+            if (
+                isSharedTimerRunning()
+            ) {
+
+                renderStats();
+
+            }
+
         },
-        250
+        1000
     );
 
 }
@@ -2355,29 +2353,8 @@ function updateTimerPresetButtons() {
 
 
 /* =========================================================
-   CROSS-PAGE TIMER UI EVENT
-========================================================= */
-
-function dispatchTimerChanged() {
-
-    window.dispatchEvent(
-        new Event(
-            "studyMindTimerChanged"
-        )
-    );
-
-}
-
-
-/* =========================================================
    DAILY STUDY TIME
-=========================================================
-
-   Kept only for compatibility with older
-   dashboard features.
-
-   Timer completion itself is owned by
-   study-timer.js.
+   Compatibility only.
 ========================================================= */
 
 function updateDailyStudyTime(
@@ -2432,9 +2409,6 @@ function getAllStudyTopics() {
     const topics = [];
 
 
-    /*
-     * SUBJECT → TOPICS
-     */
     if (
         Array.isArray(
             studyPlan.subjects
@@ -2536,9 +2510,6 @@ function getAllStudyTopics() {
     }
 
 
-    /*
-     * FLAT TOPICS
-     */
     if (
         Array.isArray(
             studyPlan.topics
@@ -2616,9 +2587,6 @@ function getAllStudyTopics() {
     }
 
 
-    /*
-     * Remove exact duplicates.
-     */
     const unique =
         new Map();
 
@@ -2841,178 +2809,6 @@ function isTopicCompleted(
 
 
 /* =========================================================
-   CALCULATE REAL STUDY-TIME PROGRESS
-   ---------------------------------------------------------
-   Dashboard Study Progress = today's study time
-   compared with the plan's daily study target.
-
-   StudyMindScore remains the authoritative source
-   for study-time metrics.
-========================================================= */
-
-function getStudyProgress() {
-
-    try {
-
-        if (
-            window.StudyMindScore &&
-            typeof window.StudyMindScore.getMetrics === "function"
-        ) {
-
-            const metrics =
-                window.StudyMindScore.getMetrics();
-
-            const todayMinutes =
-                Math.max(
-                    0,
-                    Number(
-                        metrics?.todayMinutes
-                    ) || 0
-                );
-
-            const targetHours =
-                Number(
-                    studyPlan?.hoursPerDay ??
-                    studyPlan?.studyHours ??
-                    studyPlan?.dailyHours ??
-                    studyPlan?.dailyStudyHours ??
-                    2
-                );
-
-            const targetMinutes =
-                Math.max(
-                    1,
-                    targetHours * 60
-                );
-
-            return Math.round(
-                Math.min(
-                    100,
-                    (
-                        todayMinutes /
-                        targetMinutes
-                    ) * 100
-                )
-            );
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind Dashboard: Study Score metrics unavailable:",
-            error
-        );
-
-    }
-
-
-    /*
-     * Compatibility fallback.
-     */
-    const dailyTime =
-        loadJSON(
-            "studyMindDailyStudyTime",
-            {}
-        );
-
-    const today =
-        getLocalDateKey();
-
-    const todayMinutes =
-        Math.max(
-            0,
-            Number(
-                dailyTime?.[today]?.minutes ??
-                dailyTime?.[today] ??
-                0
-            )
-        );
-
-    const targetHours =
-        Number(
-            studyPlan?.hoursPerDay ??
-            studyPlan?.studyHours ??
-            studyPlan?.dailyHours ??
-            studyPlan?.dailyStudyHours ??
-            2
-        );
-
-    const targetMinutes =
-        Math.max(
-            1,
-            targetHours * 60
-        );
-
-    return Math.round(
-        Math.min(
-            100,
-            (
-                todayMinutes /
-                targetMinutes
-            ) * 100
-        )
-    );
-
-}
-/* =========================================================
-   GET TODAY'S STUDY MINUTES
-========================================================= */
-
-function getTodayStudyMinutes() {
-
-    try {
-
-        if (
-            window.StudyMindScore &&
-            typeof window.StudyMindScore.getMetrics === "function"
-        ) {
-
-            const metrics =
-                window.StudyMindScore.getMetrics();
-
-            return Math.max(
-                0,
-                Number(
-                    metrics?.todayMinutes
-                ) || 0
-            );
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind Dashboard: unable to read today's study time:",
-            error
-        );
-
-    }
-
-
-    const dailyTime =
-        loadJSON(
-            "studyMindDailyStudyTime",
-            {}
-        );
-
-    const today =
-        getLocalDateKey();
-
-
-    return Math.max(
-        0,
-        Number(
-            dailyTime?.[today]?.minutes ??
-            dailyTime?.[today] ??
-            0
-        )
-    );
-
-}
-
-
-/* =========================================================
    GET TODAY'S REQUIRED TOPICS
 ========================================================= */
 
@@ -3142,10 +2938,6 @@ function checkStudyCompletion() {
         !window.StudyMindStreak
     ) {
 
-        console.warn(
-            "StudyMind streak engine is not available yet."
-        );
-
         return false;
 
     }
@@ -3157,10 +2949,6 @@ function checkStudyCompletion() {
                 .checkTodayCompletion !==
             "function"
     ) {
-
-        console.warn(
-            "StudyMind streak engine does not expose checkTodayCompletion()."
-        );
 
         return false;
 
@@ -3198,83 +2986,6 @@ function checkStudyCompletion() {
         return false;
 
     }
-
-}
-
-
-/* =========================================================
-   COMPLETION POPUP
-========================================================= */
-
-function showCompletionCelebration() {
-
-    if (
-        document.getElementById(
-            "studyMindCompletionPopup"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    const popup =
-        document.createElement(
-            "div"
-        );
-
-
-    popup.id =
-        "studyMindCompletionPopup";
-
-
-    popup.innerHTML = `
-
-        <div class="completion-popup-inner">
-
-            <div class="completion-icon">
-                🎉
-            </div>
-
-            <h2>
-                Congratulations!
-            </h2>
-
-            <p>
-                You completed today's required study work.
-                Your study streak has been updated.
-            </p>
-
-            <button
-                id="closeCompletionPopup"
-                type="button"
-            >
-                Continue Studying
-            </button>
-
-        </div>
-
-    `;
-
-
-    document.body.appendChild(
-        popup
-    );
-
-
-    document
-        .getElementById(
-            "closeCompletionPopup"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                popup.remove();
-
-            }
-        );
 
 }
 
@@ -3491,12 +3202,6 @@ function renderLevel() {
 
 /* =========================================================
    AWARD XP
-=========================================================
-
-   Kept for compatibility with other Dashboard features.
-
-   IMPORTANT:
-   study-timer.js handles timer XP.
 ========================================================= */
 
 function awardXP(
@@ -3870,9 +3575,7 @@ function loadJSON(
             );
 
 
-        if (
-            !value
-        ) {
+        if (!value) {
 
             return fallback;
 
@@ -4013,6 +3716,8 @@ window.StudyMindDashboard = {
 
     getStudyProgress,
 
+    getTodayStudyMinutes,
+
     getAllStudyTopics,
 
     getCompletedTopicSet,
@@ -4048,3 +3753,4 @@ window.StudyMindDashboard = {
     loadUser
 
 };
+
