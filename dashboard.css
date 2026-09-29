@@ -1150,3 +1150,346 @@ button {
     }
 
 }
+/* =========================================================
+   STUDYMIND AI — GLOBAL PREMIUM GOLD THEME
+   ---------------------------------------------------------
+   FREE USER  = existing StudyMind blue theme
+   PREMIUM    = gold theme across the entire application
+   ========================================================= */
+
+html.study-mind-premium,
+body.study-mind-premium {
+
+    --primary-color: #d4a72c;
+    --primary: #d4a72c;
+    --accent-color: #e5bd4f;
+    --accent: #e5bd4f;
+
+    --primary-light: #f5df91;
+    --primary-dark: #9b6d08;
+
+    --brand-color: #d4a72c;
+    --brand-primary: #d4a72c;
+    --brand-secondary: #e5bd4f;
+
+    --button-color: #d4a72c;
+    --button-hover: #b98b18;
+
+    --link-color: #c49319;
+
+    --study-color: #d4a72c;
+    --focus-color: #d4a72c;
+}
+
+
+/* =========================================================
+   LIGHT PREMIUM
+   ========================================================= */
+
+body.study-mind-premium {
+
+    background:
+        linear-gradient(
+            135deg,
+            #fffdf7 0%,
+            #faf5e8 50%,
+            #fffaf0 100%
+        );
+
+    color: #211d14;
+}
+
+
+/* =========================================================
+   PREMIUM HEADER / NAVIGATION
+   ========================================================= */
+
+body.study-mind-premium header,
+body.study-mind-premium .header,
+body.study-mind-premium .navbar,
+body.study-mind-premium .topbar,
+body.study-mind-premium nav {
+
+    border-color: rgba(212, 167, 44, 0.28);
+}
+
+
+body.study-mind-premium a {
+
+    color: #b78612;
+}
+
+
+body.study-mind-premium a:hover {
+
+    color: #8f6505;
+}
+
+
+/* =========================================================
+   PREMIUM BUTTONS
+   ========================================================= */
+
+body.study-mind-premium button,
+body.study-mind-premium .btn,
+body.study-mind-premium .button,
+body.study-mind-premium .primary-btn,
+body.study-mind-premium .primary-button {
+
+    --button-bg: #d4a72c;
+
+    border-color: #d4a72c;
+}
+
+
+body.study-mind-premium .primary-btn,
+body.study-mind-premium .primary-button,
+body.study-mind-premium button.primary,
+body.study-mind-premium .btn-primary {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e5bd4f,
+            #c99620
+        );
+
+    color: #211a0b;
+
+    border-color: #c99620;
+
+    box-shadow:
+        0 6px 18px
+        rgba(160, 115, 10, 0.20);
+}
+
+
+body.study-mind-premium .primary-btn:hover,
+body.study-mind-premium .primary-button:hover,
+body.study-mind-premium button.primary:hover,
+body.study-mind-premium .btn-primary:hover {
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0ca63,
+            #d4a72c
+        );
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   PREMIUM CARDS
+   ========================================================= */
+
+body.study-mind-premium .card,
+body.study-mind-premium .dashboard-card,
+body.study-mind-premium .stat-card,
+body.study-mind-premium .feature-card,
+body.study-mind-premium .study-card,
+body.study-mind-premium .panel,
+body.study-mind-premium .content-card {
+
+    border-color:
+        rgba(212, 167, 44, 0.25);
+
+    box-shadow:
+        0 8px 28px
+        rgba(130, 92, 8, 0.08);
+}
+
+
+/* =========================================================
+   PREMIUM ICONS / ACCENTS
+   ========================================================= */
+
+body.study-mind-premium .icon,
+body.study-mind-premium .card-icon,
+body.study-mind-premium .stat-icon,
+body.study-mind-premium .accent,
+body.study-mind-premium .highlight {
+
+    color: #c99620;
+}
+
+
+/* =========================================================
+   PREMIUM ACTIVE NAVIGATION
+   ========================================================= */
+
+body.study-mind-premium .active,
+body.study-mind-premium .nav-link.active,
+body.study-mind-premium .sidebar-link.active {
+
+    color: #a87406;
+
+    border-color:
+        rgba(212, 167, 44, 0.35);
+
+    background:
+        rgba(212, 167, 44, 0.10);
+}
+
+
+/* =========================================================
+   PREMIUM PROGRESS
+   ========================================================= */
+
+body.study-mind-premium progress::-webkit-progress-value {
+
+    background:
+        linear-gradient(
+            90deg,
+            #b98616,
+            #e5bd4f
+        );
+}
+
+
+body.study-mind-premium .progress-bar,
+body.study-mind-premium .progress-fill {
+
+    background:
+        linear-gradient(
+            90deg,
+            #b98616,
+            #e5bd4f
+        );
+}
+
+
+/* =========================================================
+   PREMIUM INPUTS / SELECTS
+   ========================================================= */
+
+body.study-mind-premium input:focus,
+body.study-mind-premium textarea:focus,
+body.study-mind-premium select:focus {
+
+    border-color: #d4a72c;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(212, 167, 44, 0.14);
+}
+
+
+/* =========================================================
+   PREMIUM BADGES
+   ========================================================= */
+
+body.study-mind-premium .premium-badge,
+body.study-mind-premium .premium-label,
+body.study-mind-premium [data-premium-badge] {
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0cf70,
+            #c99620
+        );
+
+    color: #251d0b;
+
+    border-color: #c99620;
+}
+
+
+/* =========================================================
+   PREMIUM TABLE / DIVIDERS
+   ========================================================= */
+
+body.study-mind-premium hr,
+body.study-mind-premium .divider {
+
+    border-color:
+        rgba(212, 167, 44, 0.20);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE
+   ========================================================= */
+
+body.dark-mode.study-mind-premium,
+html.dark-mode.study-mind-premium body,
+body.study-mind-premium.dark-mode {
+
+    background:
+        linear-gradient(
+            135deg,
+            #11100d 0%,
+            #17150f 50%,
+            #0d0c0a 100%
+        );
+
+    color: #f8f1dc;
+}
+
+
+body.dark-mode.study-mind-premium .card,
+body.dark-mode.study-mind-premium .dashboard-card,
+body.dark-mode.study-mind-premium .stat-card,
+body.dark-mode.study-mind-premium .feature-card,
+body.dark-mode.study-mind-premium .study-card,
+body.dark-mode.study-mind-premium .panel,
+body.dark-mode.study-mind-premium .content-card {
+
+    background:
+        rgba(28, 25, 18, 0.96);
+
+    border-color:
+        rgba(229, 189, 79, 0.24);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.30);
+}
+
+
+body.dark-mode.study-mind-premium a {
+
+    color: #e5bd4f;
+}
+
+
+body.dark-mode.study-mind-premium .active,
+body.dark-mode.study-mind-premium .nav-link.active,
+body.dark-mode.study-mind-premium .sidebar-link.active {
+
+    color: #f0ca63;
+
+    background:
+        rgba(229, 189, 79, 0.12);
+
+    border-color:
+        rgba(229, 189, 79, 0.25);
+}
+
+
+/* =========================================================
+   PREMIUM SCROLLBAR
+   ========================================================= */
+
+body.study-mind-premium::-webkit-scrollbar-thumb {
+
+    background:
+        linear-gradient(
+            #d4a72c,
+            #9b6d08
+        );
+}
+
+
+/* =========================================================
+   PREMIUM SELECTION
+   ========================================================= */
+
+body.study-mind-premium ::selection {
+
+    background: rgba(212, 167, 44, 0.30);
+
+    color: inherit;
+}
