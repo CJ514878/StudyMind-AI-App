@@ -2,6 +2,7 @@
 
 /* =========================================================
    STUDYMIND AI — PREMIUM SYSTEM
+   GOLD / NAMESPACED PREMIUM VERSION
    ========================================================= */
 
 (function () {
@@ -22,7 +23,6 @@
        ===================================================== */
 
     let premiumStatus = false;
-
     let premiumLoaded = false;
 
 
@@ -31,16 +31,12 @@
        ===================================================== */
 
     function isPremium() {
-
         return premiumStatus === true;
-
     }
 
 
     function isStudyMindPremium() {
-
         return premiumStatus === true;
-
     }
 
 
@@ -78,7 +74,7 @@
 
 
     /* =====================================================
-       PREMIUM PAGE HELPERS
+       PREMIUM PAGE
        ===================================================== */
 
     function getPremiumPage() {
@@ -96,9 +92,7 @@
             getPremiumPage();
 
         if (!page) {
-
             return false;
-
         }
 
         return page.classList.contains(
@@ -108,6 +102,173 @@
     }
 
 
+    /* =====================================================
+       GOLD PREMIUM VARIABLES
+       Force the Premium page to use its own palette.
+       ===================================================== */
+
+    function applyPremiumPageGoldTheme() {
+
+        const page =
+            getPremiumPage();
+
+        if (!page) {
+            return;
+        }
+
+        const dark =
+            isPremiumPageDark();
+
+        const root =
+            page.style;
+
+        if (dark) {
+
+            root.setProperty(
+                "--premium-bg",
+                "#070b12"
+            );
+
+            root.setProperty(
+                "--premium-bg-soft",
+                "#0d121c"
+            );
+
+            root.setProperty(
+                "--premium-card",
+                "rgba(18,20,25,.96)"
+            );
+
+            root.setProperty(
+                "--premium-card-solid",
+                "#121419"
+            );
+
+            root.setProperty(
+                "--premium-card-border",
+                "rgba(211,164,56,.24)"
+            );
+
+            root.setProperty(
+                "--premium-border",
+                "rgba(211,164,56,.24)"
+            );
+
+            root.setProperty(
+                "--premium-text",
+                "#faf8f1"
+            );
+
+            root.setProperty(
+                "--premium-muted",
+                "#aaa696"
+            );
+
+            root.setProperty(
+                "--premium-gold",
+                "#d3a438"
+            );
+
+            root.setProperty(
+                "--premium-gold-light",
+                "#f0cb68"
+            );
+
+            root.setProperty(
+                "--premium-gold-mid",
+                "#b98522"
+            );
+
+            root.setProperty(
+                "--premium-gold-dark",
+                "#704807"
+            );
+
+            root.setProperty(
+                "--premium-shadow",
+                "rgba(0,0,0,.45)"
+            );
+
+        } else {
+
+            root.setProperty(
+                "--premium-bg",
+                "#fcfaf3"
+            );
+
+            root.setProperty(
+                "--premium-bg-soft",
+                "#fffdf7"
+            );
+
+            root.setProperty(
+                "--premium-card",
+                "rgba(255,255,255,.96)"
+            );
+
+            root.setProperty(
+                "--premium-card-solid",
+                "#ffffff"
+            );
+
+            root.setProperty(
+                "--premium-card-border",
+                "rgba(184,132,18,.20)"
+            );
+
+            root.setProperty(
+                "--premium-border",
+                "rgba(184,132,18,.20)"
+            );
+
+            root.setProperty(
+                "--premium-text",
+                "#1d1a12"
+            );
+
+            root.setProperty(
+                "--premium-muted",
+                "#716b5d"
+            );
+
+            root.setProperty(
+                "--premium-gold",
+                "#d5a52a"
+            );
+
+            root.setProperty(
+                "--premium-gold-light",
+                "#fff1b8"
+            );
+
+            root.setProperty(
+                "--premium-gold-mid",
+                "#e8bc45"
+            );
+
+            root.setProperty(
+                "--premium-gold-dark",
+                "#9a6505"
+            );
+
+            root.setProperty(
+                "--premium-shadow",
+                "rgba(120,79,5,.14)"
+            );
+
+        }
+
+        page.classList.add(
+            "premium-gold-theme"
+        );
+
+    }
+
+
+    /* =====================================================
+       PREMIUM MODAL THEME
+       ===================================================== */
+
     function applyPremiumModalTheme() {
 
         const modal =
@@ -116,117 +277,79 @@
             );
 
         if (!modal) {
-
             return;
-
         }
-
 
         const page =
             getPremiumPage();
 
-
         /*
-         * Mark the dynamically generated modal as
-         * belonging to the Premium system.
+         * Keep modal inside Premium namespace.
          */
+
+        if (
+            page &&
+            modal.parentElement !== page
+        ) {
+
+            page.appendChild(modal);
+
+        }
 
         modal.classList.add(
             "premium-modal-root"
         );
-
-
-        /*
-         * Keep the modal synchronized with the
-         * Premium page's light/dark state.
-         */
 
         modal.classList.toggle(
             "premium-dark",
             isPremiumPageDark()
         );
 
-
         /*
-         * Copy the Premium CSS variables from
-         * .premium-page onto the modal root.
-         *
-         * This allows premium.js to remain compatible
-         * with the namespaced premium.html.
+         * Copy Premium variables to the
+         * dynamically generated modal.
          */
 
         if (!page) {
-
             return;
-
         }
 
-
         const computedStyle =
-            window.getComputedStyle(
-                page
-            );
-
+            window.getComputedStyle(page);
 
         const variables = [
-
             "--premium-bg",
-
             "--premium-bg-soft",
-
             "--premium-card",
-
             "--premium-card-solid",
-
             "--premium-card-border",
-
+            "--premium-border",
             "--premium-text",
-
             "--premium-muted",
-
             "--premium-gold",
-
             "--premium-gold-light",
-
             "--premium-gold-mid",
-
             "--premium-gold-dark",
-
-            "--premium-gold-gradient",
-
-            "--premium-gold-gradient-soft",
-
-            "--premium-green",
-
-            "--premium-danger",
-
-            "--premium-shadow",
-
-            "--premium-premium-shadow"
-
+            "--premium-shadow"
         ];
 
+        variables.forEach(variable => {
 
-        variables.forEach(
-            variable => {
+            const value =
+                computedStyle.getPropertyValue(
+                    variable
+                );
 
-                const value =
-                    computedStyle.getPropertyValue(
-                        variable
-                    );
+            if (value) {
 
-
-                if (value) {
-
-                    modal.style.setProperty(
-                        variable,
-                        value
-                    );
-
-                }
+                modal.style.setProperty(
+                    variable,
+                    value
+                );
 
             }
-        );
+
+        });
 
     }
 
@@ -237,19 +360,20 @@
 
     function applyPremiumTheme() {
 
+        /*
+         * Keep the existing global status classes for
+         * compatibility with other StudyMind pages.
+         *
+         * These DO NOT control the Premium page colors.
+         */
+
         const enabled =
             premiumStatus === true;
-
-
-        /*
-         * Preserve the existing global Premium classes.
-         */
 
         document.documentElement.classList.toggle(
             "study-mind-premium",
             enabled
         );
-
 
         if (document.body) {
 
@@ -261,45 +385,31 @@
         }
 
 
-        /*
-         * Update the Premium page if it exists.
-         */
-
         const premiumPage =
             getPremiumPage();
-
 
         if (premiumPage) {
 
             /*
-             * The page itself always uses its gold
-             * Premium styling. Premium status controls
-             * the UI state, not whether the page becomes
-             * blue or another color.
+             * Premium page is ALWAYS gold.
+             * Premium status only changes access/UI state.
              */
+
+            premiumPage.classList.add(
+                "premium-gold-theme"
+            );
 
             premiumPage.classList.toggle(
                 "premium-active",
                 enabled
             );
 
-            premiumPage.classList.toggle(
-                "premium-dark",
-                premiumPage.classList.contains(
-                    "premium-dark"
-                )
-            );
+            applyPremiumPageGoldTheme();
 
         }
 
 
         updatePremiumUI();
-
-
-        /*
-         * Make sure an already-open dynamic modal
-         * receives the current Premium theme.
-         */
 
         applyPremiumModalTheme();
 
@@ -312,57 +422,59 @@
 
     function updatePremiumUI() {
 
+        const page =
+            getPremiumPage();
+
         const buttons =
-            document.querySelectorAll(
-                "[data-premium-button]"
-            );
+            page
+                ? page.querySelectorAll(
+                    "[data-premium-button]"
+                )
+                : document.querySelectorAll(
+                    "[data-premium-button]"
+                );
 
 
-        buttons.forEach(
-            button => {
+        buttons.forEach(button => {
 
-                if (premiumStatus) {
+            if (premiumStatus) {
 
-                    button.textContent =
-                        "👑 Premium Active";
+                button.textContent =
+                    "👑 Premium Active";
 
-                    button.classList.add(
-                        "premium-active"
-                    );
+                button.classList.add(
+                    "premium-active"
+                );
 
-                } else {
+            } else {
 
-                    /*
-                     * Do not overwrite the original
-                     * button text while the user is Free.
-                     */
-
-                    button.classList.remove(
-                        "premium-active"
-                    );
-
-                }
+                button.classList.remove(
+                    "premium-active"
+                );
 
             }
-        );
+
+        });
 
 
         const badges =
-            document.querySelectorAll(
-                "[data-premium-badge]"
-            );
+            page
+                ? page.querySelectorAll(
+                    "[data-premium-badge]"
+                )
+                : document.querySelectorAll(
+                    "[data-premium-badge]"
+                );
 
 
-        badges.forEach(
-            badge => {
+        badges.forEach(badge => {
 
-                badge.textContent =
-                    premiumStatus
-                        ? "👑 PREMIUM"
-                        : "FREE";
+            badge.textContent =
+                premiumStatus
+                    ? "👑 PREMIUM"
+                    : "FREE";
 
-            }
-        );
+        });
 
 
         document.dispatchEvent(
@@ -396,7 +508,6 @@
                 return null;
 
             }
-
 
             const {
                 data,
@@ -445,18 +556,18 @@
     async function loadStudyMindPremium() {
 
         /*
-         * Restore cached status immediately.
-         *
-         * This is only a temporary visual cache.
-         * The server remains the source of truth.
+         * Restore cached state immediately.
          */
 
         premiumStatus =
             getCachedPremiumStatus();
 
-
         applyPremiumTheme();
 
+
+        /*
+         * Server remains authoritative.
+         */
 
         const token =
             await getAccessToken();
@@ -520,11 +631,10 @@
 
             applyPremiumTheme();
 
-
             premiumLoaded = true;
 
-
             return premiumStatus;
+
 
         } catch (error) {
 
@@ -535,23 +645,18 @@
 
 
             /*
-             * Never grant Premium when the
-             * server verification fails.
+             * Never grant Premium if verification fails.
              */
 
             premiumStatus = false;
-
 
             saveCachedPremiumStatus(
                 false
             );
 
-
             applyPremiumTheme();
 
-
             premiumLoaded = true;
-
 
             return false;
 
@@ -567,11 +672,8 @@
     async function waitForPremiumStatus() {
 
         if (premiumLoaded) {
-
             return premiumStatus;
-
         }
-
 
         return await loadStudyMindPremium();
 
@@ -603,12 +705,6 @@
         overlay.id =
             "studyMindPremiumModal";
 
-
-        /*
-         * These classes allow the Premium HTML
-         * stylesheet to recognize the dynamically
-         * generated modal.
-         */
 
         overlay.className =
             "study-mind-premium-overlay premium-modal-root";
@@ -659,43 +755,34 @@
 
                     <div>
                         <span>✓</span>
-
                         <strong>
                             Unlimited AI tools
                         </strong>
                     </div>
 
-
                     <div>
                         <span>✓</span>
-
                         <strong>
                             5–60 question knowledge checks
                         </strong>
                     </div>
 
-
                     <div>
                         <span>✓</span>
-
                         <strong>
                             Unlimited Game Mode battles
                         </strong>
                     </div>
 
-
                     <div>
                         <span>✓</span>
-
                         <strong>
                             Premium 1v1 access
                         </strong>
                     </div>
 
-
                     <div>
                         <span>✓</span>
-
                         <strong>
                             Premium gold experience
                         </strong>
@@ -716,13 +803,9 @@
                         class="premium-payment-button"
                         data-provider="paystack"
                     >
+                        <span>🇳🇬</span>
 
                         <span>
-                            🇳🇬
-                        </span>
-
-                        <span>
-
                             <strong>
                                 Paystack
                             </strong>
@@ -730,9 +813,7 @@
                             <small>
                                 Nigerian payment
                             </small>
-
                         </span>
-
                     </button>
 
 
@@ -741,13 +822,9 @@
                         class="premium-payment-button"
                         data-provider="flutterwave"
                     >
+                        <span>💳</span>
 
                         <span>
-                            💳
-                        </span>
-
-                        <span>
-
                             <strong>
                                 Flutterwave
                             </strong>
@@ -755,9 +832,7 @@
                             <small>
                                 Card & local payment
                             </small>
-
                         </span>
-
                     </button>
 
 
@@ -766,13 +841,9 @@
                         class="premium-payment-button"
                         data-provider="stripe"
                     >
+                        <span>🌎</span>
 
                         <span>
-                            🌎
-                        </span>
-
-                        <span>
-
                             <strong>
                                 Stripe
                             </strong>
@@ -780,9 +851,7 @@
                             <small>
                                 International payment
                             </small>
-
                         </span>
-
                     </button>
 
                 </div>
@@ -804,15 +873,33 @@
         `;
 
 
-        document.body.appendChild(
-            overlay
-        );
-
-
         /*
-         * Apply Premium variables immediately.
+         * IMPORTANT:
+         * Put the modal INSIDE #premiumPage.
+         * This prevents dashboard/global CSS from
+         * styling it as a blue component.
          */
 
+        const premiumPage =
+            getPremiumPage();
+
+
+        if (premiumPage) {
+
+            premiumPage.appendChild(
+                overlay
+            );
+
+        } else {
+
+            document.body.appendChild(
+                overlay
+            );
+
+        }
+
+
+        applyPremiumPageGoldTheme();
         applyPremiumModalTheme();
 
 
@@ -869,11 +956,6 @@
                 }
             );
 
-
-        /*
-         * Reapply after the browser has inserted
-         * the modal into the document.
-         */
 
         requestAnimationFrame(
             applyPremiumModalTheme
@@ -996,6 +1078,7 @@
             window.location.href =
                 data.checkoutUrl;
 
+
         } catch (error) {
 
             console.error(
@@ -1116,11 +1199,26 @@
         `;
 
 
-        document.body.appendChild(
-            overlay
-        );
+        const premiumPage =
+            getPremiumPage();
 
 
+        if (premiumPage) {
+
+            premiumPage.appendChild(
+                overlay
+            );
+
+        } else {
+
+            document.body.appendChild(
+                overlay
+            );
+
+        }
+
+
+        applyPremiumPageGoldTheme();
         applyPremiumModalTheme();
 
 
@@ -1185,13 +1283,116 @@
 
 
     /* =====================================================
+       THEME LISTENER
+       ===================================================== */
+
+    function watchPremiumTheme() {
+
+        window.addEventListener(
+            "storage",
+            event => {
+
+                if (
+                    event.key ===
+                    "studyMindTheme"
+                ) {
+
+                    const page =
+                        getPremiumPage();
+
+                    if (!page) {
+                        return;
+                    }
+
+                    let theme = null;
+
+                    try {
+
+                        theme =
+                            localStorage.getItem(
+                                "studyMindTheme"
+                            );
+
+                    } catch {
+
+                        theme = null;
+
+                    }
+
+
+                    const isDark =
+                        theme === "dark" ||
+                        theme === null;
+
+
+                    page.classList.toggle(
+                        "premium-dark",
+                        isDark
+                    );
+
+
+                    applyPremiumPageGoldTheme();
+                    applyPremiumModalTheme();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
        INITIALISE
        ===================================================== */
 
     function initialisePremium() {
 
         /*
-         * Restore cached Premium state first.
+         * Make sure the page receives its gold theme
+         * BEFORE Premium status is loaded.
+         */
+
+        const page =
+            getPremiumPage();
+
+
+        if (page) {
+
+            let theme = null;
+
+            try {
+
+                theme =
+                    localStorage.getItem(
+                        "studyMindTheme"
+                    );
+
+            } catch {
+
+                theme = null;
+
+            }
+
+
+            const isDark =
+                theme === "dark" ||
+                theme === null;
+
+
+            page.classList.toggle(
+                "premium-dark",
+                isDark
+            );
+
+
+            applyPremiumPageGoldTheme();
+
+        }
+
+
+        /*
+         * Restore cached Premium state.
          */
 
         premiumStatus =
@@ -1202,8 +1403,7 @@
 
 
         /*
-         * Verify the real Premium status
-         * against Supabase/server immediately.
+         * Verify against server.
          */
 
         setTimeout(
@@ -1214,6 +1414,9 @@
             },
             0
         );
+
+
+        watchPremiumTheme();
 
     }
 
@@ -1257,10 +1460,6 @@
     window.getStudyMindPremiumStatus =
         () => premiumStatus;
 
-
-    /*
-     * Optional public helper for the Premium page.
-     */
 
     window.applyStudyMindPremiumModalTheme =
         applyPremiumModalTheme;
