@@ -2779,40 +2779,172 @@ function isTopicCompleted(
 
 
 /* =========================================================
-   CALCULATE REAL TOPIC PROGRESS
+   CALCULATE REAL STUDY-TIME PROGRESS
+   ---------------------------------------------------------
+   Dashboard Study Progress = today's study time
+   compared with the plan's daily study target.
+
+   StudyMindScore remains the authoritative source
+   for study-time metrics.
 ========================================================= */
 
 function getStudyProgress() {
 
-    const topics =
-        getAllStudyTopics();
+    try {
 
+        if (
+            window.StudyMindScore &&
+            typeof window.StudyMindScore.getMetrics === "function"
+        ) {
 
-    if (!topics.length) {
-        return 0;
+            const metrics =
+                window.StudyMindScore.getMetrics();
+
+            const todayMinutes =
+                Math.max(
+                    0,
+                    Number(
+                        metrics?.todayMinutes
+                    ) || 0
+                );
+
+            const targetHours =
+                Number(
+                    studyPlan?.hoursPerDay ??
+                    studyPlan?.studyHours ??
+                    studyPlan?.dailyHours ??
+                    studyPlan?.dailyStudyHours ??
+                    2
+                );
+
+            const targetMinutes =
+                Math.max(
+                    1,
+                    targetHours * 60
+                );
+
+            return Math.round(
+                Math.min(
+                    100,
+                    (
+                        todayMinutes /
+                        targetMinutes
+                    ) * 100
+                )
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind Dashboard: Study Score metrics unavailable:",
+            error
+        );
+
     }
 
 
-    const completed =
-        getCompletedTopicSet();
+    /*
+     * Compatibility fallback.
+     */
+    const dailyTime =
+        loadJSON(
+            "studyMindDailyStudyTime",
+            {}
+        );
 
+    const today =
+        getLocalDateKey();
 
-    const completedCount =
-        topics.filter(
-            topic =>
-                isTopicCompleted(
-                    topic,
-                    completed
-                )
-        ).length;
+    const todayMinutes =
+        Math.max(
+            0,
+            Number(
+                dailyTime?.[today]?.minutes ??
+                dailyTime?.[today] ??
+                0
+            )
+        );
 
+    const targetHours =
+        Number(
+            studyPlan?.hoursPerDay ??
+            studyPlan?.studyHours ??
+            studyPlan?.dailyHours ??
+            studyPlan?.dailyStudyHours ??
+            2
+        );
+
+    const targetMinutes =
+        Math.max(
+            1,
+            targetHours * 60
+        );
 
     return Math.round(
-        (
-            completedCount /
-            topics.length
-        ) *
-        100
+        Math.min(
+            100,
+            (
+                todayMinutes /
+                targetMinutes
+            ) * 100
+        )
+    );
+
+}
+/* =========================================================
+   GET TODAY'S STUDY MINUTES
+========================================================= */
+
+function getTodayStudyMinutes() {
+
+    try {
+
+        if (
+            window.StudyMindScore &&
+            typeof window.StudyMindScore.getMetrics === "function"
+        ) {
+
+            const metrics =
+                window.StudyMindScore.getMetrics();
+
+            return Math.max(
+                0,
+                Number(
+                    metrics?.todayMinutes
+                ) || 0
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "StudyMind Dashboard: unable to read today's study time:",
+            error
+        );
+
+    }
+
+
+    const dailyTime =
+        loadJSON(
+            "studyMindDailyStudyTime",
+            {}
+        );
+
+    const today =
+        getLocalDateKey();
+
+
+    return Math.max(
+        0,
+        Number(
+            dailyTime?.[today]?.minutes ??
+            dailyTime?.[today] ??
+            0
+        )
     );
 
 }
