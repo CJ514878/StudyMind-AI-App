@@ -2039,132 +2039,101 @@
        START
     ========================================================= */
 
-    function startTimer() {
+   function startTimer() {
 
-        if (
-            state.running
-        ) {
-
-            return;
-        }
-
-
-        /*
-         * Starting from zero means a fresh session.
-         */
-        if (
-            state.seconds <= 0
-        ) {
-
-            state.seconds =
-                state.selectedSeconds;
-
-            state.baseSeconds =
-                state.selectedSeconds;
-
-            state.sessionStart =
-                Date.now();
-
-            state.awardedMinute =
-                0;
-
-            state.lastPersistedLiveMinute =
-                -1;
-
-        } else if (
-            !state.sessionStart
-        ) {
-
-            /*
-             * First start of this session.
-             */
-            state.sessionStart =
-                Date.now();
-
-            /*
-             * IMPORTANT:
-             * Preserve the currently selected
-             * remaining duration.
-             */
-            state.baseSeconds =
-                state.seconds +
-                (
-                    state.selectedSeconds -
-                    state.seconds
-                );
-
-            /*
-             * If this is a fresh selected timer,
-             * base equals selected duration.
-             */
-            if (
-                state.seconds ===
-                state.selectedSeconds
-            ) {
-
-                state.baseSeconds =
-                    state.selectedSeconds;
-            }
-
-            state.awardedMinute =
-                Math.floor(
-                    (
-                        state.baseSeconds -
-                        state.seconds
-                    ) / 60
-                );
-
-            state.lastPersistedLiveMinute =
-                state.awardedMinute;
-        }
-
-
-        state.running =
-            true;
-
-
-        state.endTime =
-            Date.now() +
-            (
-                state.seconds *
-                1000
-            );
-
-
-        state.completionLocked =
-            false;
-
-
-        persist();
-
-
-        startInterval();
-
-
-        updateDailyLiveTime(
-            true
-        );
-
-
-        refreshScore();
-
-
-        render();
-        renderStats();
-
-
-        dispatch(
-            "studyMindTimerChanged",
-            getState()
-        );
-
-
-        console.log(
-            "StudyMind Timer: START",
-            getState()
-        );
+    if (state.running) {
+        return;
     }
 
+    /*
+     * If timer reached zero, start a completely
+     * fresh session using the selected duration.
+     */
+    if (state.seconds <= 0) {
+
+        state.seconds =
+            state.selectedSeconds;
+
+        state.baseSeconds =
+            state.selectedSeconds;
+
+        state.sessionStart =
+            Date.now();
+
+        state.awardedMinute =
+            0;
+
+        state.lastPersistedLiveMinute =
+            -1;
+    }
+
+    /*
+     * Fresh timer that has never been started.
+     */
+    else if (!state.sessionStart) {
+
+        state.sessionStart =
+            Date.now();
+
+        /*
+         * The current remaining time is the amount
+         * we are starting from.
+         *
+         * For a fresh timer this equals selectedSeconds.
+         */
+        state.baseSeconds =
+            state.seconds;
+
+        state.awardedMinute =
+            0;
+
+        state.lastPersistedLiveMinute =
+            -1;
+    }
+
+    /*
+     * RESUME
+     *
+     * If sessionStart already exists, this is a
+     * paused timer. DO NOT reset seconds or baseSeconds.
+     *
+     * Simply continue from the remaining seconds.
+     */
+
+    state.running =
+        true;
+
+    state.endTime =
+        Date.now() +
+        (
+            state.seconds *
+            1000
+        );
+
+    state.completionLocked =
+        false;
+
+    persist();
+
+    startInterval();
+
+    updateDailyLiveTime(true);
+
+    refreshScore();
+
+    render();
+    renderStats();
+
+    dispatch(
+        "studyMindTimerChanged",
+        getState()
+    );
+
+    console.log(
+        "StudyMind Timer: START/RESUME",
+        getState()
+    );
+}
 
     /* =========================================================
        PAUSE
