@@ -21,19 +21,12 @@
    - XP
    - Streak
 
-   IMPORTANT:
-   - Timer progress is counted live.
-   - Knowledge checks use actual results.
-   - AI score uses actual AI activity.
-   - Plan progress uses the active plan.
-   - XP is NEVER used to calculate Study Score.
-
-   LIVE TIMER FIX:
-   - Uses the existing shared timer.
+   LIVE TIMER:
+   - Uses the existing shared StudyMind timer.
    - Does NOT create another timer.
-   - Refreshes the canonical metric every second.
-   - Broadcasts studyMindProgressUpdated while running.
-   - Dashboard.js does NOT need to be changed.
+   - Reads elapsed time every second.
+   - Updates canonical study metrics live.
+   - Broadcasts studyMindProgressUpdated.
 ========================================================= */
 
 
@@ -145,6 +138,7 @@ function scoreWriteJSON(key, value) {
             key,
             JSON.stringify(value)
         );
+
     } catch (error) {
         console.warn(
             "StudyMind score save error:",
@@ -1031,9 +1025,8 @@ function scoreGetKnowledgePerformance() {
 /* =========================================================
    LIVE TIMER
    ---------------------------------------------------------
-   IMPORTANT:
-   This reads the EXISTING shared StudyMind timer.
-   No timer is created here.
+   READS THE EXISTING SHARED TIMER.
+   NO NEW TIMER IS CREATED.
 ========================================================= */
 
 function scoreGetLiveTimerSeconds() {
@@ -1349,10 +1342,6 @@ function scoreGetSessionMinutesForDate(dateKey) {
 
 /* =========================================================
    CANONICAL DAILY STUDY METRIC
-   ---------------------------------------------------------
-   This is the value Dashboard/Goals can consume.
-
-   Persisted study time + currently running timer.
 ========================================================= */
 
 function scoreGetDailyStudyMinutes() {
@@ -1710,11 +1699,6 @@ function scoreGetTotalStudyMinutes() {
         );
 
 
-    /*
-     * Add the currently running timer.
-     * It has not yet been persisted as a session.
-     */
-
     total +=
         scoreGetLiveTimerMinutes();
 
@@ -1919,11 +1903,6 @@ function scoreGetActivityDates() {
         );
     }
 
-
-    /*
-     * A running timer becomes study activity after
-     * at least one minute.
-     */
 
     if (
         scoreGetLiveTimerSeconds() >= 60
@@ -2615,12 +2594,6 @@ function calculateStudyScore() {
         getStudyMetrics();
 
 
-    /*
-     * 1. STUDY TIME — 30 POINTS
-     *
-     * 300 total minutes = 30 points.
-     */
-
     const studyTimeScore =
         Math.min(
             30,
@@ -2633,10 +2606,6 @@ function calculateStudyScore() {
         );
 
 
-    /*
-     * 2. KNOWLEDGE CHECKS — 25 POINTS
-     */
-
     const questionScore =
         metrics.knowledgeCheckCount > 0
             ? Math.round(
@@ -2647,12 +2616,6 @@ function calculateStudyScore() {
             )
             : 0;
 
-
-    /*
-     * 3. CONSISTENCY — 20 POINTS
-     *
-     * 7-day streak = 20 points.
-     */
 
     const streakScore =
         Math.min(
@@ -2666,10 +2629,6 @@ function calculateStudyScore() {
         );
 
 
-    /*
-     * 4. PLAN PROGRESS — 15 POINTS
-     */
-
     const planScore =
         Math.round(
             (
@@ -2678,10 +2637,6 @@ function calculateStudyScore() {
             ) * 15
         );
 
-
-    /*
-     * 5. AI LEARNING — 10 POINTS
-     */
 
     const aiScore =
         Math.min(
@@ -3085,20 +3040,22 @@ function updateAchievements(data) {
 
 
 /* =========================================================
-   LIVE PROGRESS EVENT
+   LIVE PROGRESS BROADCAST
    ---------------------------------------------------------
-   THIS IS THE IMPORTANT FIX.
+   This is the bridge between the canonical Study Score
+   metric and Dashboard / Goals / Progress UI.
 
-   The existing one-second Score refresh calls this
-   function while the shared timer is running.
+   IMPORTANT:
+   The Study Score engine emits this event.
 
-   It broadcasts the current canonical metric so
-   Dashboard / Goals / Progress components can refresh
-   without Dashboard.js needing a new timer.
+   It does NOT listen to this event itself.
+   This prevents a refresh loop.
 ========================================================= */
 
 let lastBroadcastLiveSeconds = -1;
-let lastBroadcastTodayMinutes = -1;
+
+let lastBroadcastTodayMinutes =
+    -1;
 
 
 function emitLiveProgressUpdate(data = null) {
@@ -3117,20 +3074,29 @@ function emitLiveProgressUpdate(data = null) {
                 metrics.todayMinutes
             ) || 0;
 
+
+        const roundedTodaySeconds =
+            Math.round(
+                todayMinutes * 60
+            );
+
+
         /*
-         * Do not repeatedly broadcast the exact same
-         * value. The shared timer normally advances
-         * once per second.
+         * Only broadcast when the canonical
+         * value actually changes.
          */
 
         if (
             liveSeconds ===
                 lastBroadcastLiveSeconds &&
-            Math.round(todayMinutes * 60) ===
-                Math.round(lastBroadcastTodayMinutes * 60)
+            roundedTodaySeconds ===
+                Math.round(
+                    lastBroadcastTodayMinutes * 60
+                )
         ) {
             return;
         }
+
 
         lastBroadcastLiveSeconds =
             liveSeconds;
@@ -3159,22 +3125,35 @@ function emitLiveProgressUpdate(data = null) {
                             liveSeconds,
 
                         liveTimerMinutes:
-                            metrics.liveTimerMinutes,
+                            Number(
+                                metrics.liveTimerMinutes
+                            ) || 0,
 
                         todayMinutes:
                             todayMinutes,
 
                         weeklyMinutes:
-                            metrics.weeklyMinutes,
+                            Number(
+                                metrics.weeklyMinutes
+                            ) || 0,
 
                         totalMinutes:
-                            metrics.totalMinutes,
+                            Number(
+                                metrics.totalMinutes
+                            ) || 0,
 
                         studyMinutes:
                             todayMinutes,
 
                         score:
-                            calculateStudyScore().total,
+                            Number(
+                                calculateStudyScore().total
+                            ) || 0,
+
+                        studyTimeScore:
+                            Number(
+                                data?.studyTimeScore
+                            ) || 0,
 
                         timestamp:
                             Date.now()
@@ -3551,13 +3530,9 @@ function updateScoreUI(options = {}) {
     }
 
 
-    /*
-     * Only emit the live progress event when this
-     * refresh was caused by the running timer.
-     *
-     * This prevents normal score refreshes from
-     * pretending to be timer updates.
-     */
+    /* -----------------------------------------------------
+       LIVE PROGRESS
+    ----------------------------------------------------- */
 
     if (
         options.emitLiveProgress !== false &&
@@ -3652,7 +3627,7 @@ window.StudyMindScore = {
 
 
 /* =========================================================
-   AUTOMATIC REFRESH
+   NORMAL SCORE REFRESH
 ========================================================= */
 
 let scoreRefreshTimer =
@@ -3692,9 +3667,9 @@ function refreshScoreSoon() {
 /* =========================================================
    LIVE SCORE UPDATE
    ---------------------------------------------------------
-   USES ONE EXISTING SCORE REFRESH LOOP.
+   ONE existing one-second refresh loop.
 
-   It does NOT create a StudyMind timer.
+   NO StudyMind timer is created here.
 ========================================================= */
 
 let scoreLiveInterval =
@@ -3722,11 +3697,10 @@ function startScoreLiveRefresh() {
                         running
                     ) {
                         /*
-                         * This is the existing one-second
-                         * Score refresh.
-                         *
-                         * It now also broadcasts the
-                         * canonical live study metric.
+                         * Read the shared timer,
+                         * calculate canonical metrics,
+                         * update Score,
+                         * broadcast progress.
                          */
 
                         updateScoreUI({
@@ -3735,13 +3709,6 @@ function startScoreLiveRefresh() {
                         });
 
                     } else {
-                        /*
-                         * Timer stopped.
-                         *
-                         * Reset the broadcast state so
-                         * the next session starts cleanly.
-                         */
-
                         resetLiveProgressBroadcastState();
                     }
 
@@ -3826,6 +3793,14 @@ window.addEventListener(
 
 /* =========================================================
    STUDYMIND EVENTS
+   ---------------------------------------------------------
+   IMPORTANT:
+   studyMindProgressUpdated is intentionally NOT
+   included here.
+
+   This engine creates that event.
+   Listening to its own event would create a
+   refresh/broadcast loop.
 ========================================================= */
 
 [
@@ -3838,7 +3813,6 @@ window.addEventListener(
     "studyMindPlanCreated",
     "studyMindPlanUpdated",
     "studyMindPlanChanged",
-    "studyMindProgressUpdated",
     "studyMindAIUsed",
     "studyMindStudyActivity",
     "studyMindStudyDataUpdated",
@@ -3856,17 +3830,13 @@ window.addEventListener(
 
 /* =========================================================
    DIRECT TIMER EVENT SUPPORT
-   ---------------------------------------------------------
-   The shared timer can notify Score immediately.
-
-   The one-second loop still handles the live elapsed
-   time itself.
 ========================================================= */
 
 window.addEventListener(
     "studyMindTimerStarted",
     () => {
         resetLiveProgressBroadcastState();
+
         refreshScoreSoon();
     }
 );
@@ -3876,6 +3846,7 @@ window.addEventListener(
     "studyMindTimerResumed",
     () => {
         resetLiveProgressBroadcastState();
+
         refreshScoreSoon();
     }
 );
@@ -3893,6 +3864,7 @@ window.addEventListener(
     "studyMindTimerReset",
     () => {
         resetLiveProgressBroadcastState();
+
         refreshScoreSoon();
     }
 );
@@ -3983,4 +3955,3 @@ window.logoutStudyMind =
         window.location.href =
             "login.html";
     };
-
