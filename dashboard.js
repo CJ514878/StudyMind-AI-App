@@ -935,64 +935,152 @@ function updateDashboardUsername(
 
 function renderStats() {
 
-    syncLocalStats();
+syncLocalStats();
 
-    const progress =
-        getStudyProgress();
 
-    const todayMinutes =
-        getTodayStudyMinutes();
+/* =====================================================
+   CANONICAL LIVE STUDY METRICS
+===================================================== */
 
-    setText(
-        "totalXP",
-        xp
-    );
+const todayMinutes =
+    getTodayStudyMinutes();
 
-    setText(
-        "headerXP",
-        `${xp} XP`
-    );
 
-    setText(
-        "streak",
-        `${streak} days`
-    );
+const targetMinutes =
+    getDailyTargetMinutes();
 
-    setText(
-        "headerStreak",
-        streak
-    );
 
-    setText(
-        "studyProgress",
-        `${progress}%`
-    );
+const progress =
+    getStudyProgress();
 
-    setWidth(
-        "studyProgressBar",
-        progress
-    );
 
-    setText(
-        "todayStudyTime",
-        formatStudyMinutes(
-            todayMinutes
+/* =====================================================
+   BASIC DASHBOARD STATS
+===================================================== */
+
+setText(
+    "totalXP",
+    xp
+);
+
+
+setText(
+    "headerXP",
+    `${xp} XP`
+);
+
+
+setText(
+    "streak",
+    `${streak} days`
+);
+
+
+setText(
+    "headerStreak",
+    streak
+);
+
+
+/* =====================================================
+   STUDY PROGRESS
+===================================================== */
+
+setText(
+    "studyProgress",
+    `${progress}%`
+);
+
+
+setWidth(
+    "studyProgressBar",
+    progress
+);
+
+
+/* =====================================================
+   TODAY'S GOAL
+   -----------------------------------------------------
+   IMPORTANT:
+   This now uses the EXACT SAME live study-time
+   metric as Study Progress.
+
+   Example with a 2-hour target:
+
+   0 min  → 0 min
+   1 min  → 1 min
+   10 min → 10 min
+   22 min → 22 min
+   60 min → 60 min
+   120 min → 120 min
+===================================================== */
+
+setText(
+    "todayGoal",
+    formatStudyMinutes(
+        todayMinutes
+    )
+);
+
+
+/* =====================================================
+   TODAY'S GOAL PROGRESS BAR
+===================================================== */
+
+const goalPercentage =
+    targetMinutes > 0
+        ? Math.round(
+            Math.min(
+                100,
+                Math.max(
+                    0,
+                    (
+                        todayMinutes /
+                        targetMinutes
+                    ) * 100
+                )
+            )
         )
-    );
+        : 0;
 
-    setText(
-        "studyMinutes",
-        formatStudyMinutes(
-            todayMinutes
-        )
-    );
 
-    setText(
-        "streakMessage",
-        streak > 0
-            ? "Keep your learning momentum."
-            : "Start studying today to build your streak."
-    );
+setWidth(
+    "todayGoalProgress",
+    goalPercentage
+);
+
+
+/* =====================================================
+   OTHER STUDY-TIME DISPLAYS
+===================================================== */
+
+setText(
+    "todayStudyTime",
+    formatStudyMinutes(
+        todayMinutes
+    )
+);
+
+
+setText(
+    "studyMinutes",
+    formatStudyMinutes(
+        todayMinutes
+    )
+);
+
+
+/* =====================================================
+   STREAK MESSAGE
+===================================================== */
+
+setText(
+    "streakMessage",
+    streak > 0
+        ? "Keep your learning momentum."
+        : "Start studying today to build your streak."
+);
+
 
 }
 
