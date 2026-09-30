@@ -16,101 +16,148 @@
 
 <div class="app-shell">
 
-    <!-- =========================
-         SIDEBAR
-    ========================== -->
+    <!-- =====================================================
+         SIDEBAR — SAME NAVIGATION AS SUMMARIZER / SCHEDULE
+    ====================================================== -->
     <aside class="sidebar">
 
-        <div class="brand">
-            <div class="brand-mark">
-                <i data-lucide="brain"></i>
-            </div>
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">S</div>
 
             <div>
-                <div class="brand-name">StudyMind</div>
-                <div class="brand-ai">AI</div>
+                <strong>StudyMind AI</strong>
+                <span>AI Study Coach</span>
             </div>
+
         </div>
 
-        <nav class="side-nav">
 
-            <a href="dashboard.html">
-                <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
-            </a>
+        <nav class="sidebar-nav">
 
-            <a href="schedule.html">
-                <i data-lucide="calendar-clock"></i>
-                <span>Schedule</span>
-            </a>
+            <!-- WORKSPACE -->
+            <div class="nav-section">
 
-            <a href="calendar.html" class="active">
-                <i data-lucide="calendar-days"></i>
-                <span>Calendar</span>
-            </a>
+                <span>WORKSPACE</span>
 
-            <a href="ai-support.html">
-                <i data-lucide="sparkles"></i>
-                <span>AI Support</span>
-            </a>
+                <a href="dashboard.html">
+                    <span class="nav-icon">⌂</span>
+                    Dashboard
+                </a>
 
-            <a href="assistant.html">
-                <i data-lucide="message-circle"></i>
-                <span>AI Assistant</span>
-            </a>
+                <a href="schedule.html">
+                    <span class="nav-icon">◷</span>
+                    Schedule
+                </a>
 
-            <a href="summarizer.html">
-                <i data-lucide="file-text"></i>
-                <span>Summarizer</span>
-            </a>
+                <a href="calendar.html" class="active">
+                    <span class="nav-icon">▣</span>
+                    Calendar
+                </a>
 
-            <a href="streak.html">
-                <i data-lucide="flame"></i>
-                <span>Study Streak</span>
-            </a>
+            </div>
 
-            <a href="goals.html">
-                <i data-lucide="target"></i>
-                <span>Goals</span>
-            </a>
 
-            <a href="rewards.html">
-                <i data-lucide="trophy"></i>
-                <span>Rewards</span>
-            </a>
+            <!-- AI TOOLS -->
+            <div class="nav-section">
 
-            <a href="friends.html">
-                <i data-lucide="users"></i>
-                <span>Friends</span>
-            </a>
+                <span>AI TOOLS</span>
 
-            <a href="leaderboard.html">
-                <i data-lucide="bar-chart-3"></i>
-                <span>Leaderboard</span>
-            </a>
+                <a href="ai-support.html">
+                    <span class="nav-icon">✦</span>
+                    AI Support
+                </a>
 
-            <a href="game-mode.html">
-                <i data-lucide="gamepad-2"></i>
-                <span>Game Mode</span>
-            </a>
+                <a href="ai-assistant.html">
+                    <span class="nav-icon">◉</span>
+                    AI Assistant
+                </a>
+
+                <a href="summarizer.html">
+                    <span class="nav-icon">▤</span>
+                    Summarizer
+                </a>
+
+            </div>
+
+
+            <!-- PROGRESS -->
+            <div class="nav-section">
+
+                <span>PROGRESS</span>
+
+                <a href="streak.html">
+                    <span class="nav-icon">🔥</span>
+                    Study Streak
+                </a>
+
+                <a href="score.html">
+                    <span class="nav-icon">★</span>
+                    Study Score
+                </a>
+
+                <a href="goals.html">
+                    <span class="nav-icon">◎</span>
+                    Goals
+                </a>
+
+                <a href="rewards.html">
+                    <span class="nav-icon">◇</span>
+                    Rewards
+                </a>
+
+            </div>
+
+
+            <!-- COMMUNITY -->
+            <div class="nav-section">
+
+                <span>COMMUNITY</span>
+
+                <a href="leaderboard.html">
+                    <span class="nav-icon">♛</span>
+                    Leaderboard
+                </a>
+
+                <a href="friends.html">
+                    <span class="nav-icon">♧</span>
+                    Friends
+                </a>
+
+                <a href="game-mode.html">
+                    <span class="nav-icon">⚔</span>
+                    Game Mode
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+            <div class="nav-section">
+
+                <span>ACCOUNT</span>
+
+                <a href="premium.html" class="premium-link">
+                    <span class="nav-icon">◆</span>
+                    Premium
+                </a>
+
+            </div>
 
         </nav>
 
+
+        <!-- SIDEBAR BOTTOM -->
         <div class="sidebar-bottom">
 
-            <a href="premium.html" class="premium-link">
-                <i data-lucide="crown"></i>
-                <span>Premium</span>
+            <a href="feedback.html">
+                <span class="nav-icon">◌</span>
+                Feedback
             </a>
 
             <a href="settings.html">
-                <i data-lucide="settings"></i>
-                <span>Settings</span>
-            </a>
-
-            <a href="index.html">
-                <i data-lucide="home"></i>
-                <span>Home</span>
+                <span class="nav-icon">⚙</span>
+                Settings
             </a>
 
         </div>
@@ -118,10 +165,11 @@
     </aside>
 
 
-    <!-- =========================
-         MAIN
-    ========================== -->
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
     <main class="main-content">
+
 
         <!-- TOP BAR -->
         <header class="topbar">
@@ -131,12 +179,21 @@
             </div>
 
             <div>
-                <div class="page-eyebrow">YOUR STUDY PLAN</div>
-                <h1>Study Calendar</h1>
+
+                <div class="page-eyebrow">
+                    YOUR STUDY PLAN
+                </div>
+
+                <h1>
+                    Study Calendar
+                </h1>
+
                 <p id="calendarSubtitle">
                     Your AI-powered study timeline
                 </p>
+
             </div>
+
 
             <div class="top-actions">
 
@@ -144,18 +201,28 @@
                     class="icon-button"
                     id="todayButton"
                     title="Go to today">
+
                     <i data-lucide="calendar-check-2"></i>
+
                 </button>
+
 
                 <button
                     class="icon-button"
                     id="refreshCalendar"
                     title="Refresh calendar">
+
                     <i data-lucide="refresh-cw"></i>
+
                 </button>
 
-                <div class="avatar" id="userAvatar">
+
+                <div
+                    class="avatar"
+                    id="userAvatar">
+
                     S
+
                 </div>
 
             </div>
@@ -163,45 +230,67 @@
         </header>
 
 
-        <!-- =========================
+        <!-- =================================================
              AI STATUS
-        ========================== -->
+        ================================================== -->
         <section class="ai-banner">
 
             <div class="ai-banner-icon">
+
                 <i data-lucide="sparkles"></i>
+
             </div>
+
 
             <div class="ai-banner-content">
-                <strong>AI Study Planner</strong>
+
+                <strong>
+                    AI Study Planner
+                </strong>
 
                 <span id="aiStatusText">
-                    Your calendar is generated from your personalized study plan.
+                    Your calendar is generated from your personalized
+                    study plan.
                 </span>
+
             </div>
 
+
             <div class="ai-status-pill">
+
                 <span class="status-dot"></span>
+
                 AI Active
+
             </div>
 
         </section>
 
 
-        <!-- =========================
+        <!-- =================================================
              SUMMARY CARDS
-        ========================== -->
+        ================================================== -->
         <section class="calendar-stats">
+
 
             <div class="stat-card">
 
                 <div class="stat-icon study">
+
                     <i data-lucide="book-open"></i>
+
                 </div>
 
                 <div>
-                    <span>Study Days</span>
-                    <strong id="studyDaysCount">0</strong>
+
+                    <span>
+                        Study Days
+                    </span>
+
+                    <strong id="studyDaysCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -210,12 +299,21 @@
             <div class="stat-card">
 
                 <div class="stat-icon rest">
+
                     <i data-lucide="coffee"></i>
+
                 </div>
 
                 <div>
-                    <span>Rest Days</span>
-                    <strong id="restDaysCount">0</strong>
+
+                    <span>
+                        Rest Days
+                    </span>
+
+                    <strong id="restDaysCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -224,12 +322,21 @@
             <div class="stat-card">
 
                 <div class="stat-icon test">
+
                     <i data-lucide="clipboard-check"></i>
+
                 </div>
 
                 <div>
-                    <span>Test Days</span>
-                    <strong id="testDaysCount">0</strong>
+
+                    <span>
+                        Test Days
+                    </span>
+
+                    <strong id="testDaysCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -238,46 +345,70 @@
             <div class="stat-card">
 
                 <div class="stat-icon exam">
+
                     <i data-lucide="graduation-cap"></i>
+
                 </div>
 
                 <div>
-                    <span>Exams</span>
-                    <strong id="examDaysCount">0</strong>
+
+                    <span>
+                        Exams
+                    </span>
+
+                    <strong id="examDaysCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
 
+
         </section>
 
 
-        <!-- =========================
-             CALENDAR AREA
-        ========================== -->
+        <!-- =================================================
+             CALENDAR
+        ================================================== -->
         <section class="calendar-panel">
 
+
             <div class="calendar-toolbar">
+
 
                 <button
                     class="month-arrow"
                     id="previousMonth"
                     aria-label="Previous month">
+
                     <i data-lucide="chevron-left"></i>
+
                 </button>
 
+
                 <div class="month-heading">
-                    <h2 id="monthTitle">September 2026</h2>
+
+                    <h2 id="monthTitle">
+                        September 2026
+                    </h2>
+
                     <span id="monthDescription">
                         AI-generated study schedule
                     </span>
+
                 </div>
+
 
                 <button
                     class="month-arrow"
                     id="nextMonth"
                     aria-label="Next month">
+
                     <i data-lucide="chevron-right"></i>
+
                 </button>
+
 
             </div>
 
@@ -313,7 +444,7 @@
             </div>
 
 
-            <!-- CALENDAR -->
+            <!-- CALENDAR GRID -->
             <div class="calendar-wrapper">
 
                 <div class="calendar-weekdays">
@@ -328,6 +459,7 @@
 
                 </div>
 
+
                 <div
                     class="calendar-grid"
                     id="calendarGrid">
@@ -338,9 +470,9 @@
         </section>
 
 
-        <!-- =========================
+        <!-- =================================================
              SELECTED DAY
-        ========================== -->
+        ================================================== -->
         <section
             class="day-details"
             id="dayDetails">
@@ -348,10 +480,14 @@
             <div class="empty-day">
 
                 <div class="empty-day-icon">
+
                     <i data-lucide="calendar-search"></i>
+
                 </div>
 
-                <h3>Select a day</h3>
+                <h3>
+                    Select a day
+                </h3>
 
                 <p>
                     Select a date to see your AI-generated study plan.
@@ -362,40 +498,107 @@
         </section>
 
 
-        <!-- =========================
-             AI ADVICE
-        ========================== -->
+        <!-- =================================================
+             AI INSIGHT
+        ================================================== -->
         <section class="ai-insight">
 
             <div class="insight-icon">
+
                 <i data-lucide="brain-circuit"></i>
+
             </div>
+
 
             <div class="insight-content">
 
-                <span>AI Planning Insight</span>
+                <span>
+                    AI Planning Insight
+                </span>
 
                 <p id="aiInsight">
-                    StudyMind will automatically organize study, revision,
-                    testing and rest around your available time and exam dates.
+                    StudyMind will automatically organize study,
+                    revision, testing and rest around your available
+                    time and exam dates.
                 </p>
 
             </div>
 
         </section>
 
+
     </main>
 
 </div>
 
 
+<!-- =========================================================
+     CALENDAR JAVASCRIPT
+     PRESERVED
+========================================================== -->
 <script src="calendar.js"></script>
 
+
+<!-- =========================================================
+     PREMIUM THEME SYNC
+========================================================== -->
+<script>
+(function () {
+
+    "use strict";
+
+
+    function syncPremiumTheme() {
+
+        const isPremium =
+            localStorage.getItem("studyMindPremium") === "true";
+
+
+        document.documentElement.classList.toggle(
+            "study-mind-premium",
+            isPremium
+        );
+
+
+        if (document.body) {
+
+            document.body.classList.toggle(
+                "study-mind-premium",
+                isPremium
+            );
+
+        }
+
+    }
+
+
+    syncPremiumTheme();
+
+
+    window.addEventListener(
+        "storage",
+        syncPremiumTheme
+    );
+
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        syncPremiumTheme
+    );
+
+})();
+</script>
+
+
+<!-- =========================================================
+     LUCIDE ICONS
+========================================================== -->
 <script>
     if (window.lucide) {
         lucide.createIcons();
     }
 </script>
+
 
 </body>
 </html>
