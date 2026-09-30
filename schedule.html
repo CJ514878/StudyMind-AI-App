@@ -14,105 +14,610 @@
     <link rel="stylesheet" href="schedule.css">
 
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* =========================================================
+           STUDYMIND AI — SCHEDULE NAVIGATION
+           SUMMARIZER-STYLE SIDEBAR
+           ========================================================= */
+
+        .sidebar {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 250px !important;
+            padding: 24px 14px !important;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0b1322 0%,
+                    #080f1c 100%
+                ) !important;
+
+            border-right: 1px solid rgba(148,163,184,.13) !important;
+
+            display: flex !important;
+            flex-direction: column !important;
+
+            z-index: 1000 !important;
+            overflow: hidden !important;
+        }
+
+        /* BRAND */
+
+        .sidebar .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 4px 10px 25px;
+        }
+
+        .sidebar .brand-mark {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+
+            border-radius: 12px;
+
+            display: grid;
+            place-items: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #4f8cff,
+                    #8b5cf6
+                );
+
+            color: white;
+
+            font-weight: 900;
+            font-size: 18px;
+
+            box-shadow:
+                0 8px 25px rgba(79,140,255,.25);
+        }
+
+        .sidebar .sidebar-brand strong {
+            display: block;
+            color: #f8fafc;
+            font-size: 15px;
+        }
+
+        .sidebar .sidebar-brand span {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        /* NAV */
+
+        .sidebar .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+        }
+
+        .sidebar .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar .nav-section > span {
+            display: block;
+            padding: 0 12px 7px;
+
+            color: #475569;
+
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.3px;
+        }
+
+        .sidebar .sidebar-nav a,
+        .sidebar .sidebar-bottom a,
+        .sidebar .logout-button {
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+            gap: 11px;
+
+            padding: 10px 12px;
+            margin-bottom: 3px;
+
+            border: 0;
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: #94a3b8;
+            text-decoration: none;
+
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background .2s ease,
+                color .2s ease,
+                transform .2s ease;
+        }
+
+        .sidebar .sidebar-nav a:hover,
+        .sidebar .sidebar-bottom a:hover,
+        .sidebar .logout-button:hover {
+            color: white;
+            background: rgba(255,255,255,.055);
+            transform: translateX(2px);
+        }
+
+        .sidebar .sidebar-nav a.active {
+            color: white;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(79,140,255,.18),
+                    rgba(79,140,255,.07)
+                );
+
+            box-shadow:
+                inset 3px 0 0 #4f8cff;
+        }
+
+        .sidebar .nav-icon {
+            width: 20px;
+            min-width: 20px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .sidebar .premium-link {
+            color: #fbbf24 !important;
+        }
+
+        .sidebar .sidebar-bottom {
+            padding-top: 15px;
+            border-top: 1px solid rgba(148,163,184,.13);
+        }
+
+
+        /* =========================================================
+           MAIN CONTENT POSITION
+           ========================================================= */
+
+        .main-content {
+            margin-left: 250px !important;
+            min-height: 100vh;
+        }
+
+
+        /* =========================================================
+           PREMIUM GOLD THEME
+           Activates when the existing Premium system adds
+           .study-mind-premium to html or body.
+           ========================================================= */
+
+        html.study-mind-premium .sidebar,
+        body.study-mind-premium .sidebar {
+            background:
+                linear-gradient(
+                    180deg,
+                    #15120b 0%,
+                    #0d0d0b 100%
+                ) !important;
+
+            border-right-color:
+                rgba(245,184,61,.16) !important;
+        }
+
+        html.study-mind-premium .sidebar .brand-mark,
+        body.study-mind-premium .sidebar .brand-mark {
+            background:
+                linear-gradient(
+                    135deg,
+                    #f5b83d,
+                    #d99a18
+                ) !important;
+
+            color: #fff8df !important;
+
+            box-shadow:
+                0 8px 25px rgba(245,184,61,.28) !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-brand strong,
+        body.study-mind-premium .sidebar .sidebar-brand strong {
+            color: #fff8df !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-brand span,
+        body.study-mind-premium .sidebar .sidebar-brand span {
+            color: #9f8548 !important;
+        }
+
+        html.study-mind-premium .sidebar .nav-section > span,
+        body.study-mind-premium .sidebar .nav-section > span {
+            color: #9f8548 !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-nav a,
+        body.study-mind-premium .sidebar .sidebar-nav a {
+            color: #b9ad91 !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-nav a:hover,
+        body.study-mind-premium .sidebar .sidebar-nav a:hover {
+            color: #fff5d6 !important;
+            background: rgba(245,184,61,.07) !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-nav a.active,
+        body.study-mind-premium .sidebar .sidebar-nav a.active {
+            color: #fff7dc !important;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(245,184,61,.20),
+                    rgba(245,184,61,.055)
+                ) !important;
+
+            box-shadow:
+                inset 3px 0 0 #f5b83d,
+                0 0 18px rgba(245,184,61,.035) !important;
+        }
+
+        html.study-mind-premium .sidebar .premium-link,
+        body.study-mind-premium .sidebar .premium-link {
+            color: #ffd76a !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-bottom,
+        body.study-mind-premium .sidebar .sidebar-bottom {
+            border-top-color:
+                rgba(245,184,61,.16) !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-bottom a,
+        body.study-mind-premium .sidebar .sidebar-bottom a {
+            color: #b9ad91 !important;
+        }
+
+        html.study-mind-premium .sidebar .sidebar-bottom a:hover,
+        body.study-mind-premium .sidebar .sidebar-bottom a:hover {
+            color: #fff5d6 !important;
+            background: rgba(245,184,61,.07) !important;
+        }
+
+
+        /* =========================================================
+           SCHEDULE GOLD ACCENTS
+           ========================================================= */
+
+        html.study-mind-premium .main-content,
+        body.study-mind-premium .main-content {
+            --blue: #f5b83d;
+            --blue-bright: #ffd76a;
+            --purple: #d99a18;
+            --green: #e7b83f;
+            --orange: #f5c54d;
+        }
+
+        html.study-mind-premium .eyebrow,
+        body.study-mind-premium .eyebrow {
+            color: #d9a52e !important;
+        }
+
+        html.study-mind-premium .section-label,
+        body.study-mind-premium .section-label {
+            color: #d9a52e !important;
+        }
+
+        html.study-mind-premium .ai-banner,
+        body.study-mind-premium .ai-banner {
+            border-color: rgba(245,184,61,.22) !important;
+
+            box-shadow:
+                0 10px 35px rgba(245,184,61,.06) !important;
+        }
+
+        html.study-mind-premium .ai-banner-icon,
+        body.study-mind-premium .ai-banner-icon {
+            color: #ffd76a !important;
+
+            background: rgba(245,184,61,.10) !important;
+
+            border-color:
+                rgba(245,184,61,.18) !important;
+        }
+
+        html.study-mind-premium .ai-banner-content > span,
+        body.study-mind-premium .ai-banner-content > span {
+            color: #d9a52e !important;
+        }
+
+        html.study-mind-premium .ai-badge,
+        body.study-mind-premium .ai-badge {
+            color: #ffd76a !important;
+
+            background: rgba(245,184,61,.09) !important;
+
+            border-color:
+                rgba(245,184,61,.20) !important;
+        }
+
+        html.study-mind-premium .overview-card,
+        body.study-mind-premium .overview-card {
+            border-color: rgba(245,184,61,.12) !important;
+        }
+
+        html.study-mind-premium .overview-card:hover,
+        body.study-mind-premium .overview-card:hover {
+            border-color: rgba(245,184,61,.32) !important;
+
+            box-shadow:
+                0 12px 35px rgba(245,184,61,.07) !important;
+        }
+
+        html.study-mind-premium .overview-icon,
+        body.study-mind-premium .overview-icon {
+            background: rgba(245,184,61,.09) !important;
+            color: #ffd76a !important;
+        }
+
+        html.study-mind-premium .day-type,
+        body.study-mind-premium .day-type {
+            color: #ffd76a !important;
+
+            background: rgba(245,184,61,.09) !important;
+
+            border-color:
+                rgba(245,184,61,.20) !important;
+        }
+
+        html.study-mind-premium .filter-button.active,
+        body.study-mind-premium .filter-button.active {
+            color: #211806 !important;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f5b83d,
+                    #d99a18
+                ) !important;
+
+            border-color: #f5b83d !important;
+
+            box-shadow:
+                0 6px 18px rgba(245,184,61,.16) !important;
+        }
+
+        html.study-mind-premium .filter-button:hover,
+        body.study-mind-premium .filter-button:hover {
+            color: #ffd76a !important;
+            border-color: rgba(245,184,61,.35) !important;
+        }
+
+        html.study-mind-premium .schedule-insight,
+        body.study-mind-premium .schedule-insight {
+            border-color: rgba(245,184,61,.20) !important;
+
+            box-shadow:
+                0 10px 35px rgba(245,184,61,.05) !important;
+        }
+
+        html.study-mind-premium .insight-icon,
+        body.study-mind-premium .insight-icon {
+            color: #ffd76a !important;
+            background: rgba(245,184,61,.09) !important;
+        }
+
+        html.study-mind-premium .schedule-insight span,
+        body.study-mind-premium .schedule-insight span {
+            color: #d9a52e !important;
+        }
+
+        html.study-mind-premium .schedule-insight h3,
+        body.study-mind-premium .schedule-insight h3 {
+            color: #fff5d6 !important;
+        }
+
+
+        /* =========================================================
+           MOBILE
+           ========================================================= */
+
+        @media (max-width: 1100px) {
+
+            .sidebar {
+                width: 220px !important;
+            }
+
+            .main-content {
+                margin-left: 220px !important;
+            }
+        }
+
+        @media (max-width: 850px) {
+
+            .sidebar {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="app-shell">
 
-    <!-- SIDEBAR -->
+    <!-- =========================================================
+         SIDEBAR — SAME AS SUMMARIZER
+         ========================================================= -->
+
     <aside class="sidebar">
 
-        <div class="brand">
-            <div class="brand-icon">
-                <i data-lucide="brain"></i>
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">
+                S
             </div>
 
             <div>
-                <strong>StudyMind</strong>
-                <span>AI</span>
+                <strong>StudyMind AI</strong>
+                <span>AI Study Coach</span>
             </div>
+
         </div>
+
 
         <nav class="sidebar-nav">
 
-            <a href="dashboard.html">
-                <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
-            </a>
+            <!-- WORKSPACE -->
 
-            <a href="schedule.html" class="active">
-                <i data-lucide="calendar-clock"></i>
-                <span>Schedule</span>
-            </a>
+            <div class="nav-section">
 
-            <a href="calendar.html">
-                <i data-lucide="calendar-days"></i>
-                <span>Calendar</span>
-            </a>
+                <span>WORKSPACE</span>
 
-            <a href="ai-support.html">
-                <i data-lucide="bot"></i>
-                <span>AI Support</span>
-            </a>
+                <a href="dashboard.html">
+                    <span class="nav-icon">⌂</span>
+                    Dashboard
+                </a>
 
-            <a href="ai-assistant.html">
-                <i data-lucide="sparkles"></i>
-                <span>AI Assistant</span>
-            </a>
+                <a href="schedule.html" class="active">
+                    <span class="nav-icon">◷</span>
+                    Schedule
+                </a>
 
-            <a href="summarizer.html">
-                <i data-lucide="file-text"></i>
-                <span>Summarizer</span>
-            </a>
+                <a href="calendar.html">
+                    <span class="nav-icon">▣</span>
+                    Calendar
+                </a>
 
-            <a href="study-streak.html">
-                <i data-lucide="flame"></i>
-                <span>Study Streak</span>
-            </a>
+            </div>
 
-            <a href="goals.html">
-                <i data-lucide="target"></i>
-                <span>Goals</span>
-            </a>
 
-            <a href="rewards.html">
-                <i data-lucide="gift"></i>
-                <span>Rewards</span>
-            </a>
+            <!-- AI TOOLS -->
 
-            <a href="friends.html">
-                <i data-lucide="users"></i>
-                <span>Friends</span>
-            </a>
+            <div class="nav-section">
 
-            <a href="leaderboard.html">
-                <i data-lucide="trophy"></i>
-                <span>Leaderboard</span>
-            </a>
+                <span>AI TOOLS</span>
 
-            <a href="game-mode.html">
-                <i data-lucide="gamepad-2"></i>
-                <span>Game Mode</span>
-            </a>
+                <a href="ai-support.html">
+                    <span class="nav-icon">✦</span>
+                    AI Support
+                </a>
 
-            <a href="premium.html">
-                <i data-lucide="crown"></i>
-                <span>Premium</span>
-            </a>
+                <a href="ai-assistant.html">
+                    <span class="nav-icon">◉</span>
+                    AI Assistant
+                </a>
 
-            <a href="settings.html">
-                <i data-lucide="settings"></i>
-                <span>Settings</span>
-            </a>
+                <a href="summarizer.html">
+                    <span class="nav-icon">▤</span>
+                    Summarizer
+                </a>
+
+            </div>
+
+
+            <!-- PROGRESS -->
+
+            <div class="nav-section">
+
+                <span>PROGRESS</span>
+
+                <a href="streak.html">
+                    <span class="nav-icon">🔥</span>
+                    Study Streak
+                </a>
+
+                <a href="score.html">
+                    <span class="nav-icon">★</span>
+                    Study Score
+                </a>
+
+                <a href="goals.html">
+                    <span class="nav-icon">◎</span>
+                    Goals
+                </a>
+
+                <a href="rewards.html">
+                    <span class="nav-icon">◇</span>
+                    Rewards
+                </a>
+
+            </div>
+
+
+            <!-- COMMUNITY -->
+
+            <div class="nav-section">
+
+                <span>COMMUNITY</span>
+
+                <a href="leaderboard.html">
+                    <span class="nav-icon">♛</span>
+                    Leaderboard
+                </a>
+
+                <a href="friends.html">
+                    <span class="nav-icon">♧</span>
+                    Friends
+                </a>
+
+                <a href="game-mode.html">
+                    <span class="nav-icon">⚔</span>
+                    Game Mode
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+
+            <div class="nav-section">
+
+                <span>ACCOUNT</span>
+
+                <a href="premium.html" class="premium-link">
+                    <span class="nav-icon">◆</span>
+                    Premium
+                </a>
+
+            </div>
 
         </nav>
 
+
+        <!-- BOTTOM -->
+
         <div class="sidebar-bottom">
 
-            <a href="home.html" class="home-link">
-                <i data-lucide="home"></i>
-                <span>Home</span>
+            <a href="feedback.html">
+                <span class="nav-icon">◌</span>
+                Feedback
+            </a>
+
+            <a href="settings.html">
+                <span class="nav-icon">⚙</span>
+                Settings
             </a>
 
         </div>
@@ -120,14 +625,22 @@
     </aside>
 
 
-    <!-- MAIN -->
+    <!-- =========================================================
+         MAIN
+         ========================================================= -->
+
     <main class="main-content">
 
+
         <!-- TOP BAR -->
+
         <header class="topbar">
 
             <div>
-                <p class="eyebrow">AI STUDY PLANNER</p>
+
+                <p class="eyebrow">
+                    AI STUDY PLANNER
+                </p>
 
                 <h1 id="pageGreeting">
                     Your Study Schedule
@@ -137,17 +650,21 @@
                     Your schedule is organized around your goals,
                     available time, exams and progress.
                 </p>
+
             </div>
+
 
             <div class="topbar-actions">
 
                 <div class="ai-status">
+
                     <span class="status-dot"></span>
 
                     <div>
                         <strong>AI Planner</strong>
                         <small>Active</small>
                     </div>
+
                 </div>
 
             </div>
@@ -155,7 +672,10 @@
         </header>
 
 
-        <!-- AI BANNER -->
+        <!-- =====================================================
+             AI BANNER
+             ===================================================== -->
+
         <section class="ai-banner">
 
             <div class="ai-banner-icon">
@@ -164,7 +684,9 @@
 
             <div class="ai-banner-content">
 
-                <span>AI-OPTIMIZED SCHEDULE</span>
+                <span>
+                    AI-OPTIMIZED SCHEDULE
+                </span>
 
                 <h2 id="aiScheduleTitle">
                     Your schedule adapts to you
@@ -178,15 +700,22 @@
             </div>
 
             <div class="ai-badge">
+
                 <i data-lucide="brain"></i>
+
                 AI Powered
+
             </div>
 
         </section>
 
 
-        <!-- OVERVIEW -->
+        <!-- =====================================================
+             OVERVIEW
+             ===================================================== -->
+
         <section class="schedule-overview">
+
 
             <div class="overview-card">
 
@@ -195,8 +724,15 @@
                 </div>
 
                 <div>
-                    <span>Today's Sessions</span>
-                    <strong id="todaySessions">0</strong>
+
+                    <span>
+                        Today's Sessions
+                    </span>
+
+                    <strong id="todaySessions">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -209,8 +745,15 @@
                 </div>
 
                 <div>
-                    <span>Study Time</span>
-                    <strong id="todayHours">0h</strong>
+
+                    <span>
+                        Study Time
+                    </span>
+
+                    <strong id="todayHours">
+                        0h
+                    </strong>
+
                 </div>
 
             </div>
@@ -223,8 +766,15 @@
                 </div>
 
                 <div>
-                    <span>Completed</span>
-                    <strong id="todayCompleted">0%</strong>
+
+                    <span>
+                        Completed
+                    </span>
+
+                    <strong id="todayCompleted">
+                        0%
+                    </strong>
+
                 </div>
 
             </div>
@@ -237,8 +787,15 @@
                 </div>
 
                 <div>
-                    <span>Topics Remaining</span>
-                    <strong id="remainingTopics">0</strong>
+
+                    <span>
+                        Topics Remaining
+                    </span>
+
+                    <strong id="remainingTopics">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -246,17 +803,24 @@
         </section>
 
 
-        <!-- TODAY -->
+        <!-- =====================================================
+             TODAY
+             ===================================================== -->
+
         <section class="today-section">
 
             <div class="section-heading">
 
                 <div>
-                    <span class="section-label">TODAY</span>
+
+                    <span class="section-label">
+                        TODAY
+                    </span>
 
                     <h2 id="todayDate">
                         Today's Schedule
                     </h2>
+
                 </div>
 
                 <div id="todayType" class="day-type">
@@ -269,8 +833,13 @@
             <div id="todaySchedule" class="session-list">
 
                 <div class="loading-card">
+
                     <div class="loading-spinner"></div>
-                    <p>Loading your AI schedule...</p>
+
+                    <p>
+                        Loading your AI schedule...
+                    </p>
+
                 </div>
 
             </div>
@@ -278,18 +847,26 @@
         </section>
 
 
-        <!-- UPCOMING -->
+        <!-- =====================================================
+             UPCOMING
+             ===================================================== -->
+
         <section class="upcoming-section">
 
             <div class="section-heading">
 
                 <div>
-                    <span class="section-label">UPCOMING</span>
+
+                    <span class="section-label">
+                        UPCOMING
+                    </span>
 
                     <h2>
                         Your Next Sessions
                     </h2>
+
                 </div>
+
 
                 <div class="schedule-filter">
 
@@ -322,8 +899,13 @@
             <div id="upcomingSchedule" class="upcoming-list">
 
                 <div class="loading-card">
+
                     <div class="loading-spinner"></div>
-                    <p>Preparing upcoming sessions...</p>
+
+                    <p>
+                        Preparing upcoming sessions...
+                    </p>
+
                 </div>
 
             </div>
@@ -331,7 +913,10 @@
         </section>
 
 
-        <!-- AI INSIGHT -->
+        <!-- =====================================================
+             AI INSIGHT
+             ===================================================== -->
+
         <section class="schedule-insight">
 
             <div class="insight-icon">
@@ -340,7 +925,9 @@
 
             <div>
 
-                <span>AI STUDY INSIGHT</span>
+                <span>
+                    AI STUDY INSIGHT
+                </span>
 
                 <h3 id="aiInsightTitle">
                     Your schedule is personalized
@@ -355,15 +942,66 @@
 
         </section>
 
+
     </main>
 
 </div>
 
 
+<!-- =============================================================
+     SCHEDULE JAVASCRIPT
+     ============================================================= -->
+
 <script src="schedule.js"></script>
 
+
+<!-- =============================================================
+     PREMIUM THEME SYNC
+     Uses the existing StudyMind Premium state.
+     ============================================================= -->
+
 <script>
-    lucide.createIcons();
+(function () {
+    "use strict";
+
+    function syncPremiumTheme() {
+
+        const isPremium =
+            localStorage.getItem("studyMindPremium") === "true";
+
+        document.documentElement.classList.toggle(
+            "study-mind-premium",
+            isPremium
+        );
+
+        if (document.body) {
+            document.body.classList.toggle(
+                "study-mind-premium",
+                isPremium
+            );
+        }
+    }
+
+    syncPremiumTheme();
+
+    window.addEventListener(
+        "storage",
+        syncPremiumTheme
+    );
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        syncPremiumTheme
+    );
+
+})();
+</script>
+
+
+<script>
+    if (window.lucide) {
+        lucide.createIcons();
+    }
 </script>
 
 </body>
