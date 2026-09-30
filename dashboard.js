@@ -1631,155 +1631,54 @@ function ensureSharedTimerEngine() {
 ========================================================= */
 
 function setupSharedDashboardTimer() {
+    /*
+     * IMPORTANT:
+     * study-timer.js is the ONLY owner of timer controls.
+     *
+     * Dashboard must NOT add its own click handlers to:
+     * - dashboardTimerStart
+     * - dashboardTimerReset
+     * - timer presets
+     *
+     * Otherwise one click can trigger two handlers:
+     *   1. timer starts
+     *   2. dashboard immediately pauses it
+     *
+     * Dashboard only initializes the shared timer and displays it.
+     */
 
     const display =
-        document.getElementById(
-            "dashboardTimerDisplay"
-        );
-
+        document.getElementById("dashboardTimerDisplay");
 
     if (!display) {
+        console.warn(
+            "StudyMind Dashboard: dashboard timer display not found."
+        );
         return;
     }
 
+    const engine = getSharedTimerEngine();
 
-    ensureSharedTimerEngine();
-
-
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const duration =
-                            Number(
-                                button.dataset.duration
-                            );
-
-
-                        if (
-                            !Number.isFinite(
-                                duration
-                            ) ||
-                            duration <= 0
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        selectSharedTimerDuration(
-                            duration
-                        );
-
-                    }
-                );
-
-            }
+    if (!engine) {
+        console.warn(
+            "StudyMind Dashboard: shared timer engine unavailable."
         );
+        return;
+    }
 
+    /*
+     * Let study-timer.js initialize its own controls.
+     */
+    if (typeof engine.initialize === "function") {
+        engine.initialize();
+    }
 
-    document
-        .getElementById(
-            "dashboardTimerStart"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const engine =
-                    getSharedTimerEngine();
-
-
-                if (!engine) {
-
-                    ensureSharedTimerEngine();
-
-                    return;
-
-                }
-
-
-                const state =
-                    engine.getState();
-
-
-                if (
-                    state?.running
-                ) {
-
-                    if (
-                        typeof engine.pause ===
-                        "function"
-                    ) {
-
-                        engine.pause();
-
-                    }
-
-                } else {
-
-                    if (
-                        typeof engine.start ===
-                        "function"
-                    ) {
-
-                        engine.start();
-
-                    }
-
-                }
-
-
-                renderSharedDashboardTimer();
-
-                renderStats();
-
-            }
-        );
-
-
-    document
-        .getElementById(
-            "dashboardTimerReset"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const engine =
-                    getSharedTimerEngine();
-
-
-                if (
-                    engine &&
-                    typeof engine.reset ===
-                    "function"
-                ) {
-
-                    engine.reset();
-
-                }
-
-
-                renderSharedDashboardTimer();
-
-                renderStats();
-
-            }
-        );
-
-
+    /*
+     * Render the current shared timer state.
+     */
     renderSharedDashboardTimer();
-
 }
+
 
 
 /* =========================================================
