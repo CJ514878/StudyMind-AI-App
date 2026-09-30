@@ -1,12 +1,21 @@
 /* =========================================================
    STUDYMIND AI — PROFESSIONAL CALENDAR
+   SUMMARIZER-STYLE NAVIGATION + PREMIUM GOLD THEME
+========================================================= */
+
+
+/* =========================================================
+   BASE VARIABLES
 ========================================================= */
 
 :root {
+
     --calendar-bg: #080f1d;
     --calendar-panel: #101a2d;
     --calendar-panel-2: #121f35;
-    --calendar-border: rgba(148, 163, 184, 0.13);
+
+    --calendar-border:
+        rgba(148, 163, 184, 0.13);
 
     --calendar-text: #f8fafc;
     --calendar-muted: #8fa1bb;
@@ -20,6 +29,31 @@
 
 
 /* =========================================================
+   PREMIUM VARIABLES
+========================================================= */
+
+html.study-mind-premium,
+body.study-mind-premium {
+
+    --calendar-bg: #0d0d0b;
+    --calendar-panel: #15120b;
+    --calendar-panel-2: #1b170d;
+
+    --calendar-border:
+        rgba(245, 184, 61, 0.14);
+
+    --calendar-text: #fff8df;
+    --calendar-muted: #b9ad91;
+
+    --calendar-blue: #f5b83d;
+    --calendar-purple: #d99a18;
+    --calendar-green: #e7b83f;
+    --calendar-orange: #f5c54d;
+    --calendar-red: #d98d46;
+}
+
+
+/* =========================================================
    BASE
 ========================================================= */
 
@@ -27,8 +61,17 @@
     box-sizing: border-box;
 }
 
+
+html,
 body {
+    min-height: 100%;
+}
+
+
+body {
+
     margin: 0;
+
     background:
         radial-gradient(
             circle at 70% -10%,
@@ -37,7 +80,8 @@ body {
         ),
         var(--calendar-bg);
 
-    color: var(--calendar-text);
+    color:
+        var(--calendar-text);
 
     font-family:
         Inter,
@@ -51,63 +95,103 @@ body {
 
 
 /* =========================================================
+   PREMIUM BODY
+========================================================= */
+
+html.study-mind-premium body,
+body.study-mind-premium {
+
+    background:
+        radial-gradient(
+            circle at 80% 0%,
+            rgba(245, 184, 61, 0.045),
+            transparent 32%
+        ),
+        #0d0d0b !important;
+}
+
+
+/* =========================================================
    APP
 ========================================================= */
 
 .app-shell {
+
     display: flex;
+
     min-height: 100vh;
 }
 
 
 /* =========================================================
    SIDEBAR
+   SAME STYLE AS SUMMARIZER / SCHEDULE
 ========================================================= */
 
 .sidebar {
-    width: 250px;
-    min-width: 250px;
-
-    min-height: 100vh;
 
     position: fixed;
+
     left: 0;
     top: 0;
     bottom: 0;
 
-    display: flex;
-    flex-direction: column;
+    width: 250px;
+    min-width: 250px;
 
-    padding: 25px 16px;
+    padding:
+        24px 14px;
 
     background:
-        rgba(8, 15, 29, 0.96);
+        linear-gradient(
+            180deg,
+            #0b1322 0%,
+            #080f1c 100%
+        );
 
     border-right:
-        1px solid var(--calendar-border);
+        1px solid
+        rgba(148, 163, 184, 0.13);
 
-    z-index: 50;
+    display: flex;
+
+    flex-direction: column;
+
+    z-index: 1000;
+
+    overflow: hidden;
 }
 
 
-.brand {
+/* =========================================================
+   SIDEBAR BRAND
+========================================================= */
+
+.sidebar-brand {
+
     display: flex;
+
     align-items: center;
+
     gap: 11px;
 
     padding:
-        3px 9px 27px;
+        2px 9px 24px;
 }
 
 
-.brand-mark {
-    width: 40px;
-    height: 40px;
+.sidebar-brand .brand-mark {
+
+    width: 39px;
+    height: 39px;
 
     display: grid;
+
     place-items: center;
 
-    border-radius: 12px;
+    flex-shrink: 0;
+
+    border-radius: 11px;
 
     background:
         linear-gradient(
@@ -116,70 +200,171 @@ body {
             #4f46e5
         );
 
+    color: white;
+
+    font-size: 16px;
+    font-weight: 900;
+
     box-shadow:
         0 10px 30px
-        rgba(37, 99, 235, 0.28);
+        rgba(37, 99, 235, 0.25);
 }
 
 
-.brand-mark svg {
-    width: 22px;
-}
+.sidebar-brand strong {
 
+    display: block;
 
-.brand-name {
-    font-size: 17px;
+    color: #f8fafc;
+
+    font-size: 14px;
+
     font-weight: 800;
-    letter-spacing: -0.4px;
+
+    letter-spacing: -0.25px;
 }
 
 
-.brand-ai {
-    color: #60a5fa;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2px;
+.sidebar-brand span {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: #64748b;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.4px;
 }
 
 
-.side-nav {
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.sidebar-nav {
+
     display: flex;
+
     flex-direction: column;
-    gap: 4px;
+
+    gap: 18px;
+
+    overflow-y: auto;
+
+    scrollbar-width: none;
 }
 
 
-.side-nav a,
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+
+.nav-section {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.nav-section > span {
+
+    display: block;
+
+    padding:
+        0 10px 6px;
+
+    color: #52627a;
+
+    font-size: 8px;
+
+    font-weight: 900;
+
+    letter-spacing: 1.35px;
+}
+
+
+.sidebar-nav a,
 .sidebar-bottom a {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    min-height: 36px;
+
+    padding:
+        8px 10px;
+
+    border-radius: 9px;
+
     color: #8fa1bb;
+
     text-decoration: none;
 
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    font-size: 11px;
 
-    padding: 11px 12px;
-
-    border-radius: 10px;
-
-    font-size: 13px;
     font-weight: 600;
 
     transition:
-        0.2s ease;
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 
-.side-nav a:hover,
+.sidebar-nav a:hover,
 .sidebar-bottom a:hover {
-    color: white;
+
+    color: #f8fafc;
 
     background:
         rgba(59, 130, 246, 0.08);
 }
 
 
-.side-nav a.active {
+.nav-icon {
+
+    width: 20px;
+
+    display: inline-flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    flex-shrink: 0;
+
+    color: #71829a;
+
+    font-size: 14px;
+
+    line-height: 1;
+}
+
+
+.sidebar-nav a:hover .nav-icon,
+.sidebar-bottom a:hover .nav-icon {
+
+    color: #93b8f7;
+}
+
+
+/* =========================================================
+   ACTIVE NAVIGATION
+========================================================= */
+
+.sidebar-nav a.active {
+
     color: #ffffff;
 
     background:
@@ -195,30 +380,191 @@ body {
 
     box-shadow:
         inset 3px 0 0
-        var(--calendar-blue);
+        #3b82f6;
 }
 
 
-.side-nav svg,
-.sidebar-bottom svg {
-    width: 17px;
-    height: 17px;
+.sidebar-nav a.active .nav-icon {
+
+    color: #60a5fa;
 }
 
+
+/* =========================================================
+   PREMIUM NAV LINK
+========================================================= */
+
+.sidebar-nav .premium-link {
+
+    color: #f5c96a;
+}
+
+
+.sidebar-nav .premium-link .nav-icon {
+
+    color: #f5c96a;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
 
 .sidebar-bottom {
+
     margin-top: auto;
 
-    padding-top: 18px;
+    padding-top: 14px;
 
     border-top:
         1px solid
-        var(--calendar-border);
+        rgba(148, 163, 184, 0.10);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
 }
 
 
-.premium-link {
-    color: #f5c96a !important;
+/* =========================================================
+   PREMIUM SIDEBAR
+========================================================= */
+
+html.study-mind-premium .sidebar,
+body.study-mind-premium .sidebar {
+
+    background:
+        linear-gradient(
+            180deg,
+            #15120b 0%,
+            #0d0d0b 100%
+        ) !important;
+
+    border-right:
+        1px solid
+        rgba(245, 184, 61, 0.16) !important;
+}
+
+
+html.study-mind-premium .sidebar-brand .brand-mark,
+body.study-mind-premium .sidebar-brand .brand-mark {
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5b83d,
+            #b87816
+        );
+
+    color: #211708;
+
+    box-shadow:
+        0 10px 30px
+        rgba(245, 184, 61, 0.16);
+}
+
+
+html.study-mind-premium .sidebar-brand strong,
+body.study-mind-premium .sidebar-brand strong {
+
+    color: #fff8df;
+}
+
+
+html.study-mind-premium .sidebar-brand span,
+body.study-mind-premium .sidebar-brand span {
+
+    color: #8f815f;
+}
+
+
+html.study-mind-premium .nav-section > span,
+body.study-mind-premium .nav-section > span {
+
+    color: #806f4b;
+}
+
+
+html.study-mind-premium .sidebar-nav a,
+html.study-mind-premium .sidebar-bottom a,
+body.study-mind-premium .sidebar-nav a,
+body.study-mind-premium .sidebar-bottom a {
+
+    color: #a99b7d;
+}
+
+
+html.study-mind-premium .sidebar-nav a:hover,
+html.study-mind-premium .sidebar-bottom a:hover,
+body.study-mind-premium .sidebar-nav a:hover,
+body.study-mind-premium .sidebar-bottom a:hover {
+
+    color: #fff8df;
+
+    background:
+        rgba(245, 184, 61, 0.055);
+}
+
+
+html.study-mind-premium .sidebar-nav a:hover .nav-icon,
+html.study-mind-premium .sidebar-bottom a:hover .nav-icon,
+body.study-mind-premium .sidebar-nav a:hover .nav-icon,
+body.study-mind-premium .sidebar-bottom a:hover .nav-icon {
+
+    color: #f5c54d;
+}
+
+
+html.study-mind-premium .sidebar-nav a.active,
+body.study-mind-premium .sidebar-nav a.active {
+
+    color: #fff8df;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(245, 184, 61, 0.16),
+            rgba(245, 184, 61, 0.045)
+        );
+
+    border:
+        1px solid
+        rgba(245, 184, 61, 0.14);
+
+    box-shadow:
+        inset 3px 0 0
+        #f5b83d;
+}
+
+
+html.study-mind-premium .sidebar-nav a.active .nav-icon,
+body.study-mind-premium .sidebar-nav a.active .nav-icon {
+
+    color: #f5b83d;
+}
+
+
+html.study-mind-premium .sidebar-nav .premium-link,
+body.study-mind-premium .sidebar-nav .premium-link {
+
+    color: #ffd76a;
+}
+
+
+html.study-mind-premium .sidebar-nav .premium-link .nav-icon,
+body.study-mind-premium .sidebar-nav .premium-link .nav-icon {
+
+    color: #ffd76a;
+}
+
+
+html.study-mind-premium .sidebar-bottom,
+body.study-mind-premium .sidebar-bottom {
+
+    border-top-color:
+        rgba(245, 184, 61, 0.10);
 }
 
 
@@ -227,13 +573,16 @@ body {
 ========================================================= */
 
 .main-content {
+
     margin-left: 250px;
 
-    width: calc(100% - 250px);
+    width:
+        calc(100% - 250px);
 
     min-height: 100vh;
 
-    padding: 32px 42px 55px;
+    padding:
+        32px 42px 55px;
 
     max-width: 1700px;
 }
@@ -244,8 +593,11 @@ body {
 ========================================================= */
 
 .topbar {
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: flex-start;
 
     margin-bottom: 25px;
@@ -253,9 +605,11 @@ body {
 
 
 .page-eyebrow {
+
     color: #5f9df7;
 
     font-size: 10px;
+
     font-weight: 800;
 
     letter-spacing: 1.8px;
@@ -265,36 +619,48 @@ body {
 
 
 .topbar h1 {
+
     margin: 0;
 
-    font-size: clamp(
-        26px,
-        3vw,
-        35px
-    );
+    font-size:
+        clamp(
+            26px,
+            3vw,
+            35px
+        );
 
     letter-spacing: -1px;
 }
 
 
 .topbar p {
+
     margin:
         7px 0 0;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 13px;
 }
 
 
 .top-actions {
+
     display: flex;
+
     align-items: center;
+
     gap: 10px;
 }
 
 
+/* =========================================================
+   ICON BUTTON
+========================================================= */
+
 .icon-button {
+
     width: 42px;
     height: 42px;
 
@@ -310,6 +676,7 @@ body {
     color: #9fb0c7;
 
     display: grid;
+
     place-items: center;
 
     cursor: pointer;
@@ -320,12 +687,14 @@ body {
 
 
 .icon-button:hover {
+
     color: white;
 
     border-color:
         rgba(59, 130, 246, 0.35);
 
-    transform: translateY(-1px);
+    transform:
+        translateY(-1px);
 }
 
 
@@ -334,13 +703,53 @@ body {
 }
 
 
+/* =========================================================
+   PREMIUM TOPBAR
+========================================================= */
+
+html.study-mind-premium .icon-button,
+body.study-mind-premium .icon-button {
+
+    background:
+        rgba(21, 18, 11, 0.85);
+
+    color: #b9ad91;
+
+    border-color:
+        rgba(245, 184, 61, 0.14);
+}
+
+
+html.study-mind-premium .icon-button:hover,
+body.study-mind-premium .icon-button:hover {
+
+    color: #fff8df;
+
+    border-color:
+        rgba(245, 184, 61, 0.38);
+}
+
+
+html.study-mind-premium .page-eyebrow,
+body.study-mind-premium .page-eyebrow {
+
+    color: #f5c54d;
+}
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
 .avatar {
+
     width: 42px;
     height: 42px;
 
     border-radius: 13px;
 
     display: grid;
+
     place-items: center;
 
     background:
@@ -350,6 +759,8 @@ body {
             #4f46e5
         );
 
+    color: white;
+
     font-weight: 800;
 
     box-shadow:
@@ -357,6 +768,28 @@ body {
         rgba(37, 99, 235, 0.2);
 }
 
+
+html.study-mind-premium .avatar,
+body.study-mind-premium .avatar {
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5b83d,
+            #b87816
+        );
+
+    color: #211708;
+
+    box-shadow:
+        0 7px 20px
+        rgba(245, 184, 61, 0.14);
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
 
 .mobile-menu {
     display: none;
@@ -368,11 +801,15 @@ body {
 ========================================================= */
 
 .ai-banner {
+
     display: flex;
+
     align-items: center;
+
     gap: 15px;
 
-    padding: 15px 18px;
+    padding:
+        15px 18px;
 
     border-radius: 15px;
 
@@ -392,10 +829,12 @@ body {
 
 
 .ai-banner-icon {
+
     width: 40px;
     height: 40px;
 
     display: grid;
+
     place-items: center;
 
     border-radius: 11px;
@@ -413,9 +852,11 @@ body {
 
 
 .ai-banner-content {
+
     flex: 1;
 
     display: flex;
+
     flex-direction: column;
 
     gap: 3px;
@@ -428,20 +869,26 @@ body {
 
 
 .ai-banner-content span {
-    color: var(--calendar-muted);
+
+    color:
+        var(--calendar-muted);
 
     font-size: 11px;
 }
 
 
 .ai-status-pill {
+
     display: flex;
+
     align-items: center;
+
     gap: 7px;
 
     color: #86efac;
 
     font-size: 10px;
+
     font-weight: 800;
 
     padding:
@@ -455,6 +902,7 @@ body {
 
 
 .status-dot {
+
     width: 6px;
     height: 6px;
 
@@ -469,10 +917,40 @@ body {
 
 
 /* =========================================================
+   PREMIUM AI BANNER
+========================================================= */
+
+html.study-mind-premium .ai-banner,
+body.study-mind-premium .ai-banner {
+
+    background:
+        linear-gradient(
+            100deg,
+            rgba(245, 184, 61, 0.12),
+            rgba(217, 154, 24, 0.045)
+        );
+
+    border-color:
+        rgba(245, 184, 61, 0.16);
+}
+
+
+html.study-mind-premium .ai-banner-icon,
+body.study-mind-premium .ai-banner-icon {
+
+    background:
+        rgba(245, 184, 61, 0.10);
+
+    color: #f5c54d;
+}
+
+
+/* =========================================================
    STATS
 ========================================================= */
 
 .calendar-stats {
+
     display: grid;
 
     grid-template-columns:
@@ -485,8 +963,11 @@ body {
 
 
 .stat-card {
+
     display: flex;
+
     align-items: center;
+
     gap: 13px;
 
     padding: 17px;
@@ -503,10 +984,12 @@ body {
 
 
 .stat-icon {
+
     width: 40px;
     height: 40px;
 
     display: grid;
+
     place-items: center;
 
     border-radius: 11px;
@@ -519,39 +1002,50 @@ body {
 
 
 .stat-icon.study {
+
     color: #60a5fa;
+
     background:
         rgba(59, 130, 246, 0.11);
 }
 
 
 .stat-icon.rest {
+
     color: #a78bfa;
+
     background:
         rgba(139, 92, 246, 0.11);
 }
 
 
 .stat-icon.test {
+
     color: #fbbf24;
+
     background:
         rgba(245, 158, 11, 0.1);
 }
 
 
 .stat-icon.exam {
+
     color: #f87171;
+
     background:
         rgba(239, 68, 68, 0.1);
 }
 
 
 .stat-card span {
+
     display: block;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 10px;
+
     font-weight: 700;
 
     text-transform: uppercase;
@@ -561,6 +1055,7 @@ body {
 
 
 .stat-card strong {
+
     display: block;
 
     margin-top: 3px;
@@ -570,10 +1065,66 @@ body {
 
 
 /* =========================================================
+   PREMIUM STATS
+========================================================= */
+
+html.study-mind-premium .stat-card,
+body.study-mind-premium .stat-card {
+
+    background:
+        rgba(21, 18, 11, 0.82);
+
+    border-color:
+        rgba(245, 184, 61, 0.13);
+}
+
+
+html.study-mind-premium .stat-icon.study,
+body.study-mind-premium .stat-icon.study {
+
+    color: #f5c54d;
+
+    background:
+        rgba(245, 184, 61, 0.09);
+}
+
+
+html.study-mind-premium .stat-icon.rest,
+body.study-mind-premium .stat-icon.rest {
+
+    color: #d99a18;
+
+    background:
+        rgba(217, 154, 24, 0.09);
+}
+
+
+html.study-mind-premium .stat-icon.test,
+body.study-mind-premium .stat-icon.test {
+
+    color: #ffd76a;
+
+    background:
+        rgba(245, 197, 77, 0.08);
+}
+
+
+html.study-mind-premium .stat-icon.exam,
+body.study-mind-premium .stat-icon.exam {
+
+    color: #d9a52e;
+
+    background:
+        rgba(217, 165, 46, 0.08);
+}
+
+
+/* =========================================================
    CALENDAR PANEL
 ========================================================= */
 
 .calendar-panel {
+
     background:
         rgba(16, 26, 45, 0.82);
 
@@ -592,17 +1143,22 @@ body {
 
 
 .calendar-toolbar {
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     gap: 20px;
 
-    padding: 22px 24px 17px;
+    padding:
+        22px 24px 17px;
 }
 
 
 .month-arrow {
+
     width: 37px;
     height: 37px;
 
@@ -620,6 +1176,7 @@ body {
     cursor: pointer;
 
     display: grid;
+
     place-items: center;
 
     transition:
@@ -628,6 +1185,7 @@ body {
 
 
 .month-arrow:hover {
+
     color: white;
 
     border-color:
@@ -644,6 +1202,7 @@ body {
 
 
 .month-heading {
+
     min-width: 230px;
 
     text-align: center;
@@ -651,6 +1210,7 @@ body {
 
 
 .month-heading h2 {
+
     margin: 0;
 
     font-size: 20px;
@@ -660,13 +1220,60 @@ body {
 
 
 .month-heading span {
+
     display: block;
 
     margin-top: 3px;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 10px;
+}
+
+
+/* =========================================================
+   PREMIUM CALENDAR PANEL
+========================================================= */
+
+html.study-mind-premium .calendar-panel,
+body.study-mind-premium .calendar-panel {
+
+    background:
+        rgba(21, 18, 11, 0.84);
+
+    border-color:
+        rgba(245, 184, 61, 0.14);
+
+    box-shadow:
+        0 20px 60px
+        rgba(0, 0, 0, 0.28);
+}
+
+
+html.study-mind-premium .month-arrow,
+body.study-mind-premium .month-arrow {
+
+    background:
+        rgba(245, 184, 61, 0.045);
+
+    border-color:
+        rgba(245, 184, 61, 0.13);
+
+    color: #b9ad91;
+}
+
+
+html.study-mind-premium .month-arrow:hover,
+body.study-mind-premium .month-arrow:hover {
+
+    color: #fff8df;
+
+    border-color:
+        rgba(245, 184, 61, 0.36);
+
+    background:
+        rgba(245, 184, 61, 0.08);
 }
 
 
@@ -675,9 +1282,13 @@ body {
 ========================================================= */
 
 .calendar-legend {
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     flex-wrap: wrap;
 
     gap: 17px;
@@ -689,21 +1300,27 @@ body {
         1px solid
         var(--calendar-border);
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 10px;
+
     font-weight: 600;
 }
 
 
 .calendar-legend div {
+
     display: flex;
+
     align-items: center;
+
     gap: 6px;
 }
 
 
 .legend-dot {
+
     width: 7px;
     height: 7px;
 
@@ -737,6 +1354,40 @@ body {
 
 
 /* =========================================================
+   PREMIUM LEGEND
+========================================================= */
+
+html.study-mind-premium .study-dot,
+body.study-mind-premium .study-dot {
+    background: #f5b83d;
+}
+
+
+html.study-mind-premium .rest-dot,
+body.study-mind-premium .rest-dot {
+    background: #d99a18;
+}
+
+
+html.study-mind-premium .test-dot,
+body.study-mind-premium .test-dot {
+    background: #ffd76a;
+}
+
+
+html.study-mind-premium .exam-dot,
+body.study-mind-premium .exam-dot {
+    background: #d98d46;
+}
+
+
+html.study-mind-premium .completed-dot,
+body.study-mind-premium .completed-dot {
+    background: #e7b83f;
+}
+
+
+/* =========================================================
    GRID
 ========================================================= */
 
@@ -747,16 +1398,21 @@ body {
 
 .calendar-weekdays,
 .calendar-grid {
+
     display: grid;
 
     grid-template-columns:
-        repeat(7, minmax(105px, 1fr));
+        repeat(
+            7,
+            minmax(105px, 1fr)
+        );
 
     min-width: 735px;
 }
 
 
 .calendar-weekdays {
+
     border-bottom:
         1px solid
         var(--calendar-border);
@@ -764,6 +1420,7 @@ body {
 
 
 .calendar-weekdays div {
+
     padding:
         12px 10px;
 
@@ -772,6 +1429,7 @@ body {
     color: #65758e;
 
     font-size: 9px;
+
     font-weight: 800;
 
     letter-spacing: 1px;
@@ -779,12 +1437,14 @@ body {
 
 
 .calendar-grid {
+
     background:
         rgba(0, 0, 0, 0.05);
 }
 
 
 .calendar-day {
+
     min-height: 118px;
 
     position: relative;
@@ -817,6 +1477,7 @@ body {
 
 
 .calendar-day:hover {
+
     background:
         rgba(59, 130, 246, 0.055);
 
@@ -827,6 +1488,7 @@ body {
 
 
 .calendar-day.outside-month {
+
     opacity: 0.23;
 
     cursor: default;
@@ -837,6 +1499,7 @@ body {
 
 
 .calendar-day.selected {
+
     box-shadow:
         inset 0 0 0 2px
         rgba(59, 130, 246, 0.55);
@@ -847,10 +1510,12 @@ body {
 
 
 .calendar-day.today .day-number {
+
     width: 27px;
     height: 27px;
 
     display: inline-grid;
+
     place-items: center;
 
     border-radius: 8px;
@@ -863,12 +1528,14 @@ body {
 
 
 .calendar-day.completed {
+
     background:
         rgba(34, 197, 94, 0.055);
 }
 
 
 .calendar-day.completed::after {
+
     content: "";
 
     position: absolute;
@@ -885,19 +1552,25 @@ body {
 
 
 .calendar-day-top {
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: center;
 }
 
 
 .day-number {
+
     font-size: 12px;
+
     font-weight: 800;
 }
 
 
 .day-marker {
+
     width: 7px;
     height: 7px;
 
@@ -921,6 +1594,7 @@ body {
 
 
 .exam-marker {
+
     background: #ef4444;
 
     box-shadow:
@@ -930,7 +1604,9 @@ body {
 
 
 .day-content {
+
     display: flex;
+
     flex-direction: column;
 
     gap: 5px;
@@ -940,6 +1616,7 @@ body {
 
 
 .day-content span {
+
     display: block;
 
     max-width: 100%;
@@ -953,6 +1630,7 @@ body {
     color: #91a4bf;
 
     font-size: 9px;
+
     font-weight: 600;
 
     padding:
@@ -966,6 +1644,7 @@ body {
 
 
 .day-study .day-content span {
+
     border-left:
         2px solid
         rgba(59, 130, 246, 0.65);
@@ -973,6 +1652,7 @@ body {
 
 
 .day-rest {
+
     background:
         rgba(139, 92, 246, 0.045);
 }
@@ -984,6 +1664,7 @@ body {
 
 
 .day-test {
+
     background:
         rgba(245, 158, 11, 0.035);
 }
@@ -995,6 +1676,7 @@ body {
 
 
 .day-exam {
+
     background:
         rgba(239, 68, 68, 0.05);
 }
@@ -1006,6 +1688,7 @@ body {
 
 
 .day-label {
+
     font-size: 8px !important;
 
     font-weight: 900 !important;
@@ -1015,10 +1698,160 @@ body {
 
 
 /* =========================================================
+   PREMIUM CALENDAR DAYS
+========================================================= */
+
+html.study-mind-premium .calendar-day,
+body.study-mind-premium .calendar-day {
+
+    background:
+        rgba(21, 18, 11, 0.58);
+
+    color: #fff8df;
+}
+
+
+html.study-mind-premium .calendar-day:hover,
+body.study-mind-premium .calendar-day:hover {
+
+    background:
+        rgba(245, 184, 61, 0.045);
+
+    box-shadow:
+        inset 0 0 0 1px
+        rgba(245, 184, 61, 0.14);
+}
+
+
+html.study-mind-premium .calendar-day.selected,
+body.study-mind-premium .calendar-day.selected {
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(245, 184, 61, 0.52);
+
+    background:
+        rgba(245, 184, 61, 0.055);
+}
+
+
+html.study-mind-premium .calendar-day.today .day-number,
+body.study-mind-premium .calendar-day.today .day-number {
+
+    background:
+        #f5b83d;
+
+    color: #211708;
+}
+
+
+html.study-mind-premium .calendar-day.completed,
+body.study-mind-premium .calendar-day.completed {
+
+    background:
+        rgba(231, 184, 63, 0.045);
+}
+
+
+html.study-mind-premium .calendar-day.completed::after,
+body.study-mind-premium .calendar-day.completed::after {
+
+    background:
+        #e7b83f;
+}
+
+
+html.study-mind-premium .study-marker,
+body.study-mind-premium .study-marker {
+
+    background: #f5b83d;
+}
+
+
+html.study-mind-premium .rest-marker,
+body.study-mind-premium .rest-marker {
+
+    background: #d99a18;
+}
+
+
+html.study-mind-premium .test-marker,
+body.study-mind-premium .test-marker {
+
+    background: #ffd76a;
+}
+
+
+html.study-mind-premium .exam-marker,
+body.study-mind-premium .exam-marker {
+
+    background: #d98d46;
+
+    box-shadow:
+        0 0 7px
+        rgba(217, 141, 70, 0.45);
+}
+
+
+html.study-mind-premium .day-study .day-content span,
+body.study-mind-premium .day-study .day-content span {
+
+    border-left-color:
+        rgba(245, 184, 61, 0.65);
+}
+
+
+html.study-mind-premium .day-rest,
+body.study-mind-premium .day-rest {
+
+    background:
+        rgba(217, 154, 24, 0.035);
+}
+
+
+html.study-mind-premium .day-rest .day-content span,
+body.study-mind-premium .day-rest .day-content span {
+
+    color: #d6bd7f;
+}
+
+
+html.study-mind-premium .day-test,
+body.study-mind-premium .day-test {
+
+    background:
+        rgba(245, 197, 77, 0.025);
+}
+
+
+html.study-mind-premium .day-test .day-content span,
+body.study-mind-premium .day-test .day-content span {
+
+    color: #e8c56b;
+}
+
+
+html.study-mind-premium .day-exam,
+body.study-mind-premium .day-exam {
+
+    background:
+        rgba(217, 141, 70, 0.035);
+}
+
+
+html.study-mind-premium .day-exam .day-content span,
+body.study-mind-premium .day-exam .day-content span {
+
+    color: #dcb184;
+}
+
+
+/* =========================================================
    DAY DETAILS
 ========================================================= */
 
 .day-details {
+
     margin-top: 18px;
 
     padding: 22px;
@@ -1037,12 +1870,15 @@ body {
 
 
 .empty-day {
+
     min-height: 105px;
 
     display: flex;
+
     flex-direction: column;
 
     justify-content: center;
+
     align-items: center;
 
     text-align: center;
@@ -1050,10 +1886,12 @@ body {
 
 
 .empty-day-icon {
+
     width: 38px;
     height: 38px;
 
     display: grid;
+
     place-items: center;
 
     border-radius: 11px;
@@ -1073,6 +1911,7 @@ body {
 
 
 .empty-day h3 {
+
     margin: 0;
 
     font-size: 13px;
@@ -1080,15 +1919,48 @@ body {
 
 
 .empty-day p {
-    margin: 5px 0 0;
 
-    color: var(--calendar-muted);
+    margin:
+        5px 0 0;
+
+    color:
+        var(--calendar-muted);
 
     font-size: 11px;
 }
 
 
+/* =========================================================
+   PREMIUM DAY DETAILS
+========================================================= */
+
+html.study-mind-premium .day-details,
+body.study-mind-premium .day-details {
+
+    background:
+        rgba(21, 18, 11, 0.82);
+
+    border-color:
+        rgba(245, 184, 61, 0.13);
+}
+
+
+html.study-mind-premium .empty-day-icon,
+body.study-mind-premium .empty-day-icon {
+
+    background:
+        rgba(245, 184, 61, 0.075);
+
+    color: #f5c54d;
+}
+
+
+/* =========================================================
+   DAY DETAIL HEADER
+========================================================= */
+
 .day-detail-header {
+
     display: flex;
 
     align-items: center;
@@ -1100,17 +1972,22 @@ body {
 
 
 .detail-title {
+
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 }
 
 
 .detail-icon {
+
     width: 43px;
     height: 43px;
 
     display: grid;
+
     place-items: center;
 
     border-radius: 12px;
@@ -1123,6 +2000,7 @@ body {
 
 
 .detail-icon.rest {
+
     color: #a78bfa;
 
     background:
@@ -1131,6 +2009,7 @@ body {
 
 
 .detail-icon.test {
+
     color: #fbbf24;
 
     background:
@@ -1139,6 +2018,7 @@ body {
 
 
 .detail-icon.exam {
+
     color: #f87171;
 
     background:
@@ -1152,15 +2032,18 @@ body {
 
 
 .detail-title span {
+
     display: block;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 10px;
 }
 
 
 .detail-title h3 {
+
     margin:
         3px 0 0;
 
@@ -1169,8 +2052,11 @@ body {
 
 
 .completed-badge {
+
     display: flex;
+
     align-items: center;
+
     gap: 5px;
 
     padding:
@@ -1184,6 +2070,7 @@ body {
         rgba(34, 197, 94, 0.08);
 
     font-size: 9px;
+
     font-weight: 800;
 }
 
@@ -1198,6 +2085,7 @@ body {
 ========================================================= */
 
 .session-list {
+
     display: grid;
 
     grid-template-columns:
@@ -1211,7 +2099,9 @@ body {
 
 
 .session-item {
+
     display: flex;
+
     align-items: center;
 
     gap: 10px;
@@ -1230,10 +2120,12 @@ body {
 
 
 .session-number {
+
     width: 27px;
     height: 27px;
 
     display: grid;
+
     place-items: center;
 
     flex-shrink: 0;
@@ -1246,11 +2138,13 @@ body {
     color: #73a8fa;
 
     font-size: 10px;
+
     font-weight: 800;
 }
 
 
 .session-info {
+
     flex: 1;
 
     min-width: 0;
@@ -1258,6 +2152,7 @@ body {
 
 
 .session-info strong {
+
     display: block;
 
     overflow: hidden;
@@ -1271,11 +2166,13 @@ body {
 
 
 .session-info span {
+
     display: block;
 
     margin-top: 3px;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 9px;
 
@@ -1288,9 +2185,35 @@ body {
 
 
 .session-item > svg {
+
     width: 14px;
 
     color: #52627a;
+}
+
+
+/* =========================================================
+   PREMIUM SESSION LIST
+========================================================= */
+
+html.study-mind-premium .session-item,
+body.study-mind-premium .session-item {
+
+    background:
+        rgba(245, 184, 61, 0.025);
+
+    border-color:
+        rgba(245, 184, 61, 0.08);
+}
+
+
+html.study-mind-premium .session-number,
+body.study-mind-premium .session-number {
+
+    background:
+        rgba(245, 184, 61, 0.08);
+
+    color: #f5c54d;
 }
 
 
@@ -1299,6 +2222,7 @@ body {
 ========================================================= */
 
 .detail-message {
+
     display: flex;
 
     align-items: flex-start;
@@ -1321,12 +2245,15 @@ body {
 
 
 .detail-message svg {
+
     width: 19px;
+
     flex-shrink: 0;
 }
 
 
 .detail-message strong {
+
     display: block;
 
     font-size: 11px;
@@ -1336,6 +2263,7 @@ body {
 
 
 .detail-message p {
+
     margin:
         5px 0 0;
 
@@ -1348,8 +2276,11 @@ body {
 
 
 .exam-detail {
+
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 
     padding: 14px;
@@ -1366,10 +2297,12 @@ body {
 
 
 .exam-detail-icon {
+
     width: 40px;
     height: 40px;
 
     display: grid;
+
     place-items: center;
 
     border-radius: 10px;
@@ -1387,6 +2320,7 @@ body {
 
 
 .exam-detail strong {
+
     display: block;
 
     font-size: 12px;
@@ -1394,6 +2328,7 @@ body {
 
 
 .exam-detail span {
+
     display: block;
 
     margin-top: 3px;
@@ -1405,7 +2340,9 @@ body {
 
 
 .day-ai-note {
+
     display: flex;
+
     align-items: flex-start;
 
     gap: 10px;
@@ -1422,6 +2359,7 @@ body {
 
 
 .day-ai-note > svg {
+
     width: 16px;
 
     flex-shrink: 0;
@@ -1436,10 +2374,12 @@ body {
 
 
 .day-ai-note p {
+
     margin:
         4px 0 0;
 
-    color: var(--calendar-muted);
+    color:
+        var(--calendar-muted);
 
     font-size: 10px;
 
@@ -1448,11 +2388,80 @@ body {
 
 
 /* =========================================================
+   PREMIUM SPECIAL DETAILS
+========================================================= */
+
+html.study-mind-premium .detail-message,
+body.study-mind-premium .detail-message {
+
+    background:
+        rgba(217, 154, 24, 0.055);
+
+    border-color:
+        rgba(245, 184, 61, 0.10);
+
+    color: #d7c48f;
+}
+
+
+html.study-mind-premium .detail-message strong,
+body.study-mind-premium .detail-message strong {
+
+    color: #f2d88c;
+}
+
+
+html.study-mind-premium .detail-message p,
+body.study-mind-premium .detail-message p {
+
+    color: #a99b7d;
+}
+
+
+html.study-mind-premium .exam-detail,
+body.study-mind-premium .exam-detail {
+
+    background:
+        rgba(217, 141, 70, 0.045);
+
+    border-color:
+        rgba(217, 141, 70, 0.10);
+}
+
+
+html.study-mind-premium .exam-detail-icon,
+body.study-mind-premium .exam-detail-icon {
+
+    color: #d9a52e;
+
+    background:
+        rgba(217, 165, 46, 0.08);
+}
+
+
+html.study-mind-premium .day-ai-note,
+body.study-mind-premium .day-ai-note {
+
+    background:
+        rgba(245, 184, 61, 0.035);
+}
+
+
+html.study-mind-premium .day-ai-note > svg,
+body.study-mind-premium .day-ai-note > svg {
+
+    color: #f5c54d;
+}
+
+
+/* =========================================================
    AI INSIGHT
 ========================================================= */
 
 .ai-insight {
+
     display: flex;
+
     align-items: flex-start;
 
     gap: 13px;
@@ -1477,10 +2486,12 @@ body {
 
 
 .insight-icon {
+
     width: 38px;
     height: 38px;
 
     display: grid;
+
     place-items: center;
 
     flex-shrink: 0;
@@ -1500,11 +2511,13 @@ body {
 
 
 .insight-content span {
+
     display: block;
 
     color: #7eb0fa;
 
     font-size: 9px;
+
     font-weight: 800;
 
     letter-spacing: 0.8px;
@@ -1514,6 +2527,7 @@ body {
 
 
 .insight-content p {
+
     margin:
         5px 0 0;
 
@@ -1526,10 +2540,54 @@ body {
 
 
 /* =========================================================
+   PREMIUM AI INSIGHT
+========================================================= */
+
+html.study-mind-premium .ai-insight,
+body.study-mind-premium .ai-insight {
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(245, 184, 61, 0.075),
+            rgba(217, 154, 24, 0.025)
+        );
+
+    border-color:
+        rgba(245, 184, 61, 0.12);
+}
+
+
+html.study-mind-premium .insight-icon,
+body.study-mind-premium .insight-icon {
+
+    background:
+        rgba(245, 184, 61, 0.08);
+
+    color: #f5c54d;
+}
+
+
+html.study-mind-premium .insight-content span,
+body.study-mind-premium .insight-content span {
+
+    color: #f0c45c;
+}
+
+
+html.study-mind-premium .insight-content p,
+body.study-mind-premium .insight-content p {
+
+    color: #b9ad91;
+}
+
+
+/* =========================================================
    REFRESH ANIMATION
 ========================================================= */
 
 .rotating svg {
+
     animation:
         calendarSpin
         0.6s
@@ -1551,19 +2609,21 @@ body {
 
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE — TABLET
 ========================================================= */
 
-@media (
-    max-width: 1050px
-) {
+@media (max-width: 1050px) {
 
     .sidebar {
+
         width: 215px;
+
         min-width: 215px;
     }
 
+
     .main-content {
+
         margin-left: 215px;
 
         width:
@@ -1573,7 +2633,9 @@ body {
             28px 25px 45px;
     }
 
+
     .calendar-stats {
+
         grid-template-columns:
             repeat(2, 1fr);
     }
@@ -1581,11 +2643,14 @@ body {
 }
 
 
-@media (
-    max-width: 760px
-) {
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
 
     .sidebar {
+
         transform:
             translateX(-100%);
 
@@ -1595,12 +2660,14 @@ body {
 
 
     body.sidebar-open .sidebar {
+
         transform:
             translateX(0);
     }
 
 
     .main-content {
+
         margin-left: 0;
 
         width: 100%;
@@ -1611,6 +2678,7 @@ body {
 
 
     .mobile-menu {
+
         display: grid;
 
         width: 39px;
@@ -1635,12 +2703,24 @@ body {
     }
 
 
+    html.study-mind-premium .mobile-menu,
+    body.study-mind-premium .mobile-menu {
+
+        background:
+            rgba(21, 18, 11, 0.8);
+
+        color: #b9ad91;
+    }
+
+
     .topbar {
+
         align-items: center;
     }
 
 
     .topbar > div:nth-child(2) {
+
         flex: 1;
     }
 
@@ -1661,6 +2741,7 @@ body {
 
 
     .calendar-stats {
+
         grid-template-columns:
             repeat(2, 1fr);
 
@@ -1684,6 +2765,7 @@ body {
 
 
     .calendar-toolbar {
+
         padding:
             18px 12px 14px;
     }
@@ -1695,6 +2777,7 @@ body {
 
 
     .calendar-legend {
+
         justify-content: flex-start;
 
         gap: 10px;
@@ -1710,22 +2793,28 @@ body {
 }
 
 
-@media (
-    max-width: 450px
-) {
+/* =========================================================
+   RESPONSIVE — SMALL PHONES
+========================================================= */
+
+@media (max-width: 450px) {
 
     .calendar-stats {
-        grid-template-columns: 1fr 1fr;
+
+        grid-template-columns:
+            1fr 1fr;
     }
 
 
     .stat-icon {
+
         width: 34px;
         height: 34px;
     }
 
 
     .stat-card {
+
         gap: 8px;
     }
 
@@ -1742,6 +2831,7 @@ body {
 
     .avatar,
     .icon-button {
+
         width: 38px;
         height: 38px;
     }
