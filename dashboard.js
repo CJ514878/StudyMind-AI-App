@@ -1003,26 +1003,28 @@ function renderStats() {
    CANONICAL SOURCE:
        StudyMindScore
 
-   The Score engine already includes the current live
-   timer session.
+   LIVE FALLBACK:
+       Shared StudyMind timer
 
-   We ALSO verify the live timer directly here so that
-   Dashboard progress cannot remain frozen at 0 while
-   the timer is running.
+   This guarantees that Dashboard Study Progress and
+   Today's Goal visibly increase while the timer runs,
+   even if the Score engine has not refreshed yet.
 ========================================================= */
 
 function getTodayStudyMinutes() {
 
-    let scoreMinutes =
-        0;
+    let scoreMinutes = 0;
+
+    /* =====================================================
+       1. READ CANONICAL STUDY SCORE METRIC
+    ===================================================== */
 
     try {
 
         if (
             window.StudyMindScore &&
-            typeof
-                window.StudyMindScore.getMetrics ===
-                "function"
+            typeof window.StudyMindScore.getMetrics ===
+            "function"
         ) {
 
             const metrics =
@@ -1034,14 +1036,12 @@ function getTodayStudyMinutes() {
                 );
 
             if (
-                Number.isFinite(value)
+                Number.isFinite(value) &&
+                value >= 0
             ) {
 
                 scoreMinutes =
-                    Math.max(
-                        0,
-                        value
-                    );
+                    value;
 
             }
 
@@ -1050,61 +1050,189 @@ function getTodayStudyMinutes() {
     } catch (error) {
 
         console.warn(
-            "StudyMind Dashboard: Score metrics unavailable:",
+            "StudyMind Dashboard: Score metric read failed:",
             error
         );
 
     }
 
 
-    /*
-     * IMPORTANT:
-     *
-     * If Score is loaded before the timer state has
-     * refreshed, obtain the live timer minutes directly
-     * from the canonical Score API.
-     *
-     * This does NOT create another timer.
-     */
+    /* =====================================================
+       2. READ LIVE TIMER DIRECTLY
+       -----------------------------------------------------
+       This does NOT create another timer.
 
-    let liveMinutes =
-        0;
+       It simply calculates how much of the currently
+       running shared timer has already elapsed.
+    ===================================================== */
+
+    let liveMinutes = 0;
 
     try {
 
-        if (
-            window.StudyMindScore &&
-            typeof
-                window.StudyMindScore.getLiveTimerMinutes ===
-                "function"
-        ) {
+        const running =
+            localStorage.getItem(
+                TIMER_RUNNING_KEY
+            ) === "true";
+
+        if (running) {
+
+            const selectedSeconds =
+                Number(
+                    localStorage.getItem(
+                        TIMER_DURATION_KEY
+                    )
+                ) || 0;
+
+            const endTime =
+                Number(
+                    localStorage.getItem(
+                        TIMER_END_KEY
+                    )
+                );
+
+            const storedSeconds =
+                Number(
+                    localStorage.getItem(
+                        TIMER_SECONDS_KEY
+                    )
+                );
+
+            let elapsedSeconds = 0;
+
+
+            /* ---------------------------------------------
+               Preferred calculation:
+               selected duration - current remaining time
+            --------------------------------------------- */
+
+            if (
+                selectedSeconds > 0 &&
+                Number.isFinite(endTime) &&
+                endTime > 0
+            ) {
+
+                const remainingSeconds =
+                    Math.max(
+                        0,
+                        Math.ceil(
+                            (
+                                endTime -
+                                Date.now()
+                            ) / 1000
+                        )
+                    );
+
+                elapsedSeconds =
+                    Math.max(
+                        0,
+                        selectedSeconds -
+                        remainingSeconds
+                    );
+
+            }
+
+
+            /* ---------------------------------------------
+               Fallback:
+               use session start + base duration
+            --------------------------------------------- */
+
+            if (
+                elapsedSeconds <= 0
+            ) {
+
+                const sessionStart =
+                    Number(
+                        localStorage.getItem(
+                            "studyMindTimerSessionStart"
+                        )
+                    );
+
+                const baseSeconds =
+                    Number(
+                        localStorage.getItem(
+                            "studyMindTimerBaseSeconds"
+                        )
+                    ) ||
+                    selectedSeconds;
+
+
+                if (
+                    Number.isFinite(sessionStart) &&
+                    sessionStart > 0
+                ) {
+
+                    elapsedSeconds =
+                        Math.max(
+                            0,
+                            Math.min(
+                                baseSeconds,
+                                Math.floor(
+                                    (
+                                        Date.now() -
+                                        sessionStart
+                                    ) / 1000
+                                )
+                            )
+                        );
+
+                }
+
+            }
+
+
+            /* ---------------------------------------------
+               Final fallback from timer state
+            --------------------------------------------- */
+
+            if (
+                elapsedSeconds <= 0 &&
+                selectedSeconds > 0 &&
+                Number.isFinite(storedSeconds)
+            ) {
+
+                elapsedSeconds =
+                    Math.max(
+                        0,
+                        selectedSeconds -
+                        Math.max(
+                            0,
+                            storedSeconds
+                        )
+                    );
+
+            }
+
 
             liveMinutes =
-                Number(
-                    window.StudyMindScore
-                        .getLiveTimerMinutes()
-                );
+                elapsedSeconds / 60;
 
         }
 
     } catch (error) {
+
+        console.warn(
+            "StudyMind Dashboard: live timer calculation failed:",
+            error
+        );
 
         liveMinutes = 0;
 
     }
 
 
-    /*
-     * Score metrics normally already include live time.
-     *
-     * Therefore:
-     *
-     * - If metrics already contain live time, use them.
-     * - If metrics are still behind the live timer, use
-     *   the larger value.
-     *
-     * This prevents double-counting.
-     */
+    /* =====================================================
+       3. USE THE LARGER CANONICAL VALUE
+       -----------------------------------------------------
+       StudyMindScore normally already contains:
+
+           persisted minutes + live timer minutes
+
+       Therefore we do NOT add the two together here.
+
+       We simply use whichever value is currently ahead.
+    ===================================================== */
 
     const canonicalMinutes =
         Math.max(
@@ -1122,9 +1250,9 @@ function getTodayStudyMinutes() {
     }
 
 
-    /*
-     * Fallback to persisted daily study time.
-     */
+    /* =====================================================
+       4. PERSISTED DAILY FALLBACK
+    ===================================================== */
 
     const dailyTime =
         loadJSON(
