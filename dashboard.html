@@ -23,119 +23,661 @@
     href="streak-celebration.css"
 >
 
+<!-- =====================================================
+     SUMMARIZER-STYLE NAVIGATION
+     Keeps Dashboard navigation identical to Summarizer
+====================================================== -->
+
+<style>
+
+    /* =====================================================
+       STUDYMIND SHARED NAVIGATION
+       Matches summarizer.html / summarizer.css
+    ===================================================== */
+
+    .sidebar {
+        position: fixed !important;
+
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+
+        width: 250px !important;
+
+        padding: 24px 14px !important;
+
+        background:
+            linear-gradient(
+                180deg,
+                #0b1322 0%,
+                #080f1c 100%
+            ) !important;
+
+        border-right: 1px solid rgba(148, 163, 184, 0.13) !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        z-index: 1000 !important;
+
+        overflow: hidden !important;
+    }
+
+
+    /* =====================================================
+       BRAND
+    ===================================================== */
+
+    .sidebar .sidebar-brand {
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        padding: 4px 10px 25px;
+    }
+
+    .sidebar .brand-mark {
+        width: 38px;
+        height: 38px;
+
+        flex-shrink: 0;
+
+        border-radius: 12px;
+
+        display: grid;
+        place-items: center;
+
+        background:
+            linear-gradient(
+                135deg,
+                #4f8cff,
+                #8b5cf6
+            );
+
+        color: white;
+
+        font-weight: 900;
+        font-size: 18px;
+
+        box-shadow:
+            0 8px 25px rgba(79, 140, 255, 0.25);
+    }
+
+    .sidebar .sidebar-brand strong {
+        display: block;
+
+        color: #f8fafc;
+
+        font-size: 15px;
+    }
+
+    .sidebar .sidebar-brand span {
+        display: block;
+
+        margin-top: 2px;
+
+        color: #64748b;
+
+        font-size: 11px;
+    }
+
+
+    /* =====================================================
+       NAVIGATION SCROLL AREA
+    ===================================================== */
+
+    .sidebar .sidebar-nav {
+        flex: 1;
+
+        overflow-y: auto;
+
+        padding-right: 4px;
+
+        scrollbar-width: thin;
+    }
+
+    .sidebar .sidebar-nav::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.18);
+
+        border-radius: 999px;
+    }
+
+
+    /* =====================================================
+       NAVIGATION SECTIONS
+    ===================================================== */
+
+    .sidebar .nav-section {
+        margin-bottom: 20px;
+    }
+
+    .sidebar .nav-section > span {
+        display: block;
+
+        padding: 0 12px 7px;
+
+        color: #475569;
+
+        font-size: 9px;
+
+        font-weight: 800;
+
+        letter-spacing: 1.3px;
+    }
+
+
+    /* =====================================================
+       NAVIGATION LINKS
+    ===================================================== */
+
+    .sidebar .sidebar-nav a,
+    .sidebar .sidebar-bottom a,
+    .sidebar .logout-button {
+
+        width: 100%;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        padding: 10px 12px;
+
+        margin-bottom: 3px;
+
+        border: 0;
+
+        border-radius: 10px;
+
+        background: transparent;
+
+        color: #94a3b8;
+
+        text-decoration: none;
+
+        font-family: inherit;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            transform 0.2s ease;
+    }
+
+
+    .sidebar .sidebar-nav a:hover,
+    .sidebar .sidebar-bottom a:hover,
+    .sidebar .logout-button:hover {
+
+        color: white;
+
+        background:
+            rgba(255, 255, 255, 0.055);
+
+        transform: translateX(2px);
+    }
+
+
+    /* =====================================================
+       ACTIVE PAGE
+    ===================================================== */
+
+    .sidebar .sidebar-nav a.active {
+
+        color: white;
+
+        background:
+            linear-gradient(
+                90deg,
+                rgba(79, 140, 255, 0.18),
+                rgba(79, 140, 255, 0.07)
+            );
+
+        box-shadow:
+            inset 3px 0 0 #4f8cff;
+    }
+
+
+    /* =====================================================
+       ICONS
+    ===================================================== */
+
+    .sidebar .nav-icon {
+
+        width: 20px;
+
+        min-width: 20px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 15px;
+
+        line-height: 1;
+    }
+
+
+    /* =====================================================
+       PREMIUM
+    ===================================================== */
+
+    .sidebar .premium-link {
+
+        color: #fbbf24 !important;
+    }
+
+
+    .sidebar .premium-link:hover {
+
+        color: #fcd34d !important;
+
+        background:
+            rgba(251, 191, 36, 0.055);
+    }
+
+
+    /* =====================================================
+       BOTTOM NAV
+    ===================================================== */
+
+    .sidebar .sidebar-bottom {
+
+        padding-top: 15px;
+
+        border-top:
+            1px solid rgba(148, 163, 184, 0.13);
+    }
+
+
+    .sidebar .logout-button {
+
+        appearance: none;
+
+        -webkit-appearance: none;
+
+        text-align: left;
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ===================================================== */
+
+    @media (max-width: 850px) {
+
+        .sidebar {
+            display: none !important;
+        }
+
+    }
+
+
+    /* =====================================================
+       ACCESSIBILITY
+    ===================================================== */
+
+    .sidebar a:focus-visible,
+    .sidebar button:focus-visible {
+
+        outline:
+            2px solid #6ba1ff;
+
+        outline-offset: 3px;
+    }
+
+</style>
+
+
 <!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
 
 </head>
 
+
 <body>
+
+
+<!-- =====================================================
+     SIDEBAR
+     IDENTICAL STRUCTURE TO SUMMARIZER
+====================================================== -->
 
 <aside class="sidebar">
 
-<div class="brand">
-    StudyMind <span>AI</span>
-</div>
 
-<nav>
+    <!-- BRAND -->
 
-    <a
-        href="dashboard.html"
-        class="active"
-    >
-        <span>⌂</span>
-        Dashboard
-    </a>
+    <div class="sidebar-brand">
 
-    <a href="study-timer.html">
-        <span>◷</span>
-        Study Timer
-    </a>
+        <div class="brand-mark">
+            S
+        </div>
 
-    <a href="schedule.html">
-        <span>◷</span>
-        Schedule
-    </a>
+        <div>
 
-    <a href="calendar.html">
-        <span>▦</span>
-        Calendar
-    </a>
+            <strong>
+                StudyMind AI
+            </strong>
 
-    <a href="ai-support.html">
-        <span>✦</span>
-        AI Support
-    </a>
+            <span>
+                AI Study Coach
+            </span>
 
-    <a href="ai-assistant.html">
-        <span>◉</span>
-        AI Assistant
-    </a>
+        </div>
 
-    <a href="summarizer.html">
-        <span>▤</span>
-        Summarizer
-    </a>
+    </div>
 
-    <a href="streak.html">
-        <span>🔥</span>
-        Study Streak
-    </a>
 
-    <a href="goals.html">
-        <span>◎</span>
-        Goals
-    </a>
+    <!-- NAVIGATION -->
 
-    <a href="rewards.html">
-        <span>🏆</span>
-        Rewards
-    </a>
+    <nav class="sidebar-nav">
 
-    <a href="leaderboard.html">
-        <span>♛</span>
-        Leaderboard
-    </a>
 
-    <a href="friends.html">
-        <span>♧</span>
-        Friends
-    </a>
+        <!-- =================================================
+             WORKSPACE
+        ================================================== -->
 
-    <a href="game-mode.html">
-        <span>⚔</span>
-        Game Mode
-    </a>
+        <div class="nav-section">
 
-    <a href="premium.html">
-        <span>✦</span>
-        Premium
-    </a>
+            <span>
+                WORKSPACE
+            </span>
 
-</nav>
 
-<div class="sidebar-bottom">
+            <a
+                href="dashboard.html"
+                class="active"
+            >
 
-    <a href="feedback.html">
-        Feedback
-    </a>
+                <span class="nav-icon">
+                    ⌂
+                </span>
 
-    <a href="settings.html">
-        Settings
-    </a>
+                Dashboard
 
-    <button id="logoutButton">
-        Log out
-    </button>
+            </a>
 
-</div>
+
+            <a href="schedule.html">
+
+                <span class="nav-icon">
+                    ◷
+                </span>
+
+                Schedule
+
+            </a>
+
+
+            <a href="calendar.html">
+
+                <span class="nav-icon">
+                    ▣
+                </span>
+
+                Calendar
+
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             AI TOOLS
+        ================================================== -->
+
+        <div class="nav-section">
+
+            <span>
+                AI TOOLS
+            </span>
+
+
+            <a href="ai-support.html">
+
+                <span class="nav-icon">
+                    ✦
+                </span>
+
+                AI Support
+
+            </a>
+
+
+            <a href="ai-assistant.html">
+
+                <span class="nav-icon">
+                    ◉
+                </span>
+
+                AI Assistant
+
+            </a>
+
+
+            <a href="summarizer.html">
+
+                <span class="nav-icon">
+                    ▤
+                </span>
+
+                Summarizer
+
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             PROGRESS
+        ================================================== -->
+
+        <div class="nav-section">
+
+            <span>
+                PROGRESS
+            </span>
+
+
+            <a href="streak.html">
+
+                <span class="nav-icon">
+                    🔥
+                </span>
+
+                Study Streak
+
+            </a>
+
+
+            <a href="score.html">
+
+                <span class="nav-icon">
+                    ★
+                </span>
+
+                Study Score
+
+            </a>
+
+
+            <a href="goals.html">
+
+                <span class="nav-icon">
+                    ◎
+                </span>
+
+                Goals
+
+            </a>
+
+
+            <a href="rewards.html">
+
+                <span class="nav-icon">
+                    ◇
+                </span>
+
+                Rewards
+
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             COMMUNITY
+        ================================================== -->
+
+        <div class="nav-section">
+
+            <span>
+                COMMUNITY
+            </span>
+
+
+            <a href="leaderboard.html">
+
+                <span class="nav-icon">
+                    ♛
+                </span>
+
+                Leaderboard
+
+            </a>
+
+
+            <a href="friends.html">
+
+                <span class="nav-icon">
+                    ♧
+                </span>
+
+                Friends
+
+            </a>
+
+
+            <a href="game-mode.html">
+
+                <span class="nav-icon">
+                    ⚔
+                </span>
+
+                Game Mode
+
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             ACCOUNT
+        ================================================== -->
+
+        <div class="nav-section">
+
+            <span>
+                ACCOUNT
+            </span>
+
+
+            <a
+                href="premium.html"
+                class="premium-link"
+            >
+
+                <span class="nav-icon">
+                    ◆
+                </span>
+
+                Premium
+
+            </a>
+
+        </div>
+
+
+    </nav>
+
+
+    <!-- =================================================
+         BOTTOM
+    ================================================== -->
+
+    <div class="sidebar-bottom">
+
+
+        <a href="feedback.html">
+
+            <span class="nav-icon">
+                ◌
+            </span>
+
+            Feedback
+
+        </a>
+
+
+        <a href="settings.html">
+
+            <span class="nav-icon">
+                ⚙
+            </span>
+
+            Settings
+
+        </a>
+
+
+        <button
+            id="logoutButton"
+            class="logout-button"
+            type="button"
+        >
+
+            <span class="nav-icon">
+                ↪
+            </span>
+
+            Logout
+
+        </button>
+
+
+    </div>
+
 
 </aside>
 
+
+<!-- =====================================================
+     MAIN DASHBOARD
+====================================================== -->
 
 <main class="dashboard">
 
 
 <header class="dashboard-header">
+
 
     <div>
 
@@ -143,13 +685,19 @@
             YOUR STUDY COMMAND CENTER
         </p>
 
+
         <h1>
+
             Good morning,
+
             <span id="username">
                 Student
             </span>
+
             👋
+
         </h1>
+
 
         <p id="aiGreeting">
             Your AI study strategy is ready.
@@ -160,9 +708,12 @@
 
     <div class="header-right">
 
+
         <div class="xp-pill">
 
-            <span>⚡</span>
+            <span>
+                ⚡
+            </span>
 
             <strong id="headerXP">
                 0 XP
@@ -189,7 +740,9 @@
             S
         </div>
 
+
     </div>
+
 
 </header>
 
@@ -199,6 +752,7 @@
 ====================================================== -->
 
 <section class="stats-grid">
+
 
     <article class="stat-card">
 
@@ -211,7 +765,9 @@
         </strong>
 
         <div class="progress">
+
             <span id="todayGoalProgress"></span>
+
         </div>
 
     </article>
@@ -228,7 +784,9 @@
         </strong>
 
         <div class="progress">
+
             <span id="studyProgressBar"></span>
+
         </div>
 
     </article>
@@ -267,6 +825,7 @@
 
     </article>
 
+
 </section>
 
 
@@ -277,13 +836,13 @@
 <section class="dashboard-grid">
 
 
-    <!-- =================================================
-         TODAY'S STUDY PLAN
-    ================================================== -->
+    <!-- TODAY'S STUDY PLAN -->
 
     <article class="panel today-panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -306,6 +865,7 @@
                 Rebalance
             </button>
 
+
         </div>
 
 
@@ -317,16 +877,17 @@
 
         </div>
 
+
     </article>
 
 
-    <!-- =================================================
-         SHARED STUDY TIMER
-    ================================================== -->
+    <!-- SHARED STUDY TIMER -->
 
     <article class="panel timer-panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -348,10 +909,12 @@
                 Full Timer
             </a>
 
+
         </div>
 
 
         <div class="dashboard-timer">
+
 
             <div
                 id="dashboardTimerDisplay"
@@ -371,6 +934,7 @@
 
             <div class="timer-presets">
 
+
                 <button
                     type="button"
                     class="timer-preset"
@@ -378,6 +942,7 @@
                 >
                     25 min
                 </button>
+
 
                 <button
                     type="button"
@@ -387,6 +952,7 @@
                     45 min
                 </button>
 
+
                 <button
                     type="button"
                     class="timer-preset"
@@ -395,10 +961,12 @@
                     60 min
                 </button>
 
+
             </div>
 
 
             <div class="timer-controls">
+
 
                 <button
                     type="button"
@@ -408,6 +976,7 @@
                     Start
                 </button>
 
+
                 <button
                     type="button"
                     id="dashboardTimerReset"
@@ -416,34 +985,40 @@
                     Reset
                 </button>
 
+
             </div>
 
+
         </div>
+
 
     </article>
 
 
-    <!-- =================================================
-         AI RECOMMENDATION
-    ================================================== -->
+    <!-- AI RECOMMENDATION -->
 
     <article class="panel ai-panel">
+
 
         <div class="ai-icon">
             ✦
         </div>
 
+
         <span class="panel-label">
             STUDYMIND AI
         </span>
+
 
         <h2>
             Your next best move
         </h2>
 
+
         <p id="aiRecommendation">
             Analyzing your study data...
         </p>
+
 
         <button
             type="button"
@@ -453,16 +1028,17 @@
             Ask AI
         </button>
 
+
     </article>
 
 
-    <!-- =================================================
-         UPCOMING EXAMS
-    ================================================== -->
+    <!-- UPCOMING EXAMS -->
 
     <article class="panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -484,6 +1060,7 @@
                 View all
             </a>
 
+
         </div>
 
 
@@ -491,16 +1068,17 @@
             Loading...
         </div>
 
+
     </article>
 
 
-    <!-- =================================================
-         DAILY QUESTS
-    ================================================== -->
+    <!-- DAILY QUESTS -->
 
     <article class="panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -514,6 +1092,7 @@
 
             </div>
 
+
         </div>
 
 
@@ -521,16 +1100,17 @@
             Loading today's quests...
         </div>
 
+
     </article>
 
 
-    <!-- =================================================
-         XP JOURNEY
-    ================================================== -->
+    <!-- XP JOURNEY -->
 
     <article class="panel xp-panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -552,14 +1132,17 @@
                 Rewards
             </a>
 
+
         </div>
 
 
         <div class="level-number">
 
+
             <span id="level">
                 1
             </span>
+
 
         </div>
 
@@ -575,16 +1158,17 @@
             0 / 100 XP to Level 2
         </p>
 
+
     </article>
 
 
-    <!-- =================================================
-         QUICK ACTIONS
-    ================================================== -->
+    <!-- QUICK ACTIONS -->
 
     <article class="panel">
 
+
         <div class="panel-heading">
+
 
             <div>
 
@@ -598,43 +1182,59 @@
 
             </div>
 
+
         </div>
 
 
         <div class="quick-actions">
 
+
             <a href="ai-support.html">
+
                 ✦
+
                 <span>
                     Ask AI
                 </span>
+
             </a>
 
 
             <a href="summarizer.html">
+
                 📄
+
                 <span>
                     Summarize
                 </span>
+
             </a>
 
 
             <a href="game-mode.html">
+
                 ⚔
+
                 <span>
                     Battle
                 </span>
+
             </a>
 
 
             <a href="streak.html">
+
                 🔥
+
                 <span>
                     Streak
                 </span>
+
             </a>
 
+
         </div>
+
 
     </article>
 
@@ -648,7 +1248,9 @@
 
 <section class="my-study-plans-section">
 
+
     <div class="section-heading">
+
 
         <div>
 
@@ -656,16 +1258,20 @@
                 YOUR PLANS
             </span>
 
+
             <h2>
                 My Study Plans
             </h2>
+
 
             <p>
                 Keep each study plan's progress separate
                 and switch between them whenever you want.
             </p>
 
+
         </div>
+
 
     </div>
 
@@ -675,6 +1281,7 @@
         class="my-study-plans-grid"
     >
 
+
         <div class="study-plan-card">
 
             <p>
@@ -683,7 +1290,9 @@
 
         </div>
 
+
     </div>
+
 
 </section>
 
@@ -691,41 +1300,63 @@
 </main>
 
 
-<!-- =========================================================
+<!-- =====================================================
      STUDYMIND SHARED SERVICES
-========================================================= -->
+====================================================== -->
+
 
 <!-- Supabase -->
+
 <script src="supabase.js"></script>
 
+
 <!-- Shared timer engine -->
+
 <script src="study-timer.js"></script>
 
+
 <!-- Streak engine -->
+
 <script src="streak.js"></script>
 
+
 <!-- Study Score engine -->
+
 <script src="score.js"></script>
 
+
 <!-- Active-plan progress engine -->
+
 <script src="study-progress.js"></script>
 
+
 <!-- My Study Plans -->
+
 <script src="my-study-plans.js"></script>
 
+
 <!-- Milo assistant -->
+
 <script src="milo.js"></script>
 
+
 <!-- Milo streak celebration -->
+
 <script src="milo-celebrating.js"></script>
 
+
 <!-- Milo streak loss -->
+
 <script src="milo-streak-loss.js"></script>
 
+
 <!-- Streak calendar celebration -->
+
 <script src="streak-celebration.js"></script>
 
+
 <!-- Dashboard controller -->
+
 <script src="dashboard.js"></script>
 
 
