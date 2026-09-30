@@ -1,5 +1,6 @@
 /* =========================================================
    STUDYMIND AI — PROFESSIONAL SCHEDULE
+   PREMIUM GOLD THEME INCLUDED
 ========================================================= */
 
 :root {
@@ -7,16 +8,24 @@
     --schedule-card: #0d1929;
     --schedule-card-2: #101f32;
     --schedule-border: rgba(148, 163, 184, 0.12);
+
     --schedule-text: #f8fafc;
     --schedule-muted: #94a3b8;
+
     --schedule-blue: #3b82f6;
     --schedule-green: #22c55e;
     --schedule-purple: #8b5cf6;
     --schedule-orange: #f59e0b;
 }
 
+
+/* =========================================================
+   BASE
+========================================================= */
+
 body {
     background: var(--schedule-bg);
+    color: var(--schedule-text);
 }
 
 .main-content {
@@ -40,23 +49,30 @@ body {
 .eyebrow,
 .section-label {
     display: block;
+
     color: var(--schedule-blue);
+
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.4px;
+
     margin-bottom: 7px;
 }
 
 .topbar h1 {
     margin: 0;
+
     color: var(--schedule-text);
+
     font-size: 32px;
     line-height: 1.15;
 }
 
 .topbar-subtitle {
     margin: 8px 0 0;
+
     color: var(--schedule-muted);
+
     font-size: 14px;
 }
 
@@ -64,18 +80,25 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+
     padding: 10px 15px;
+
     border: 1px solid var(--schedule-border);
     border-radius: 14px;
+
     background: var(--schedule-card);
 }
 
 .status-dot {
     width: 9px;
     height: 9px;
+
     border-radius: 50%;
+
     background: #22c55e;
-    box-shadow: 0 0 12px rgba(34, 197, 94, .7);
+
+    box-shadow:
+        0 0 12px rgba(34, 197, 94, .7);
 }
 
 .ai-status strong,
@@ -153,6 +176,7 @@ body {
 
 .ai-banner-content > span {
     color: #60a5fa;
+
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.2px;
@@ -160,13 +184,17 @@ body {
 
 .ai-banner-content h2 {
     margin: 4px 0 5px;
+
     color: var(--schedule-text);
+
     font-size: 18px;
 }
 
 .ai-banner-content p {
     margin: 0;
+
     color: var(--schedule-muted);
+
     font-size: 13px;
     line-height: 1.6;
 }
@@ -194,8 +222,11 @@ body {
 
 .schedule-overview {
     display: grid;
+
     grid-template-columns: repeat(4, 1fr);
+
     gap: 15px;
+
     margin-bottom: 34px;
 }
 
@@ -212,6 +243,21 @@ body {
     border-radius: 17px;
 
     background: var(--schedule-card);
+
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.overview-card:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(59, 130, 246, .28);
+
+    box-shadow:
+        0 10px 28px rgba(0,0,0,.18);
 }
 
 .overview-icon {
@@ -251,13 +297,17 @@ body {
 
 .overview-card span {
     display: block;
+
     color: var(--schedule-muted);
+
     font-size: 11px;
+
     margin-bottom: 5px;
 }
 
 .overview-card strong {
     color: var(--schedule-text);
+
     font-size: 22px;
 }
 
@@ -275,21 +325,28 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 20px;
+
     margin-bottom: 15px;
 }
 
 .section-heading h2 {
     margin: 0;
+
     color: var(--schedule-text);
+
     font-size: 21px;
 }
 
 .day-type {
     padding: 8px 13px;
+
     border-radius: 999px;
+
     background: rgba(59, 130, 246, .12);
     color: #60a5fa;
+
     font-size: 11px;
     font-weight: 700;
 }
@@ -308,8 +365,11 @@ body {
 
 .session-card {
     display: grid;
+
     grid-template-columns: 72px 1fr auto;
+
     align-items: center;
+
     gap: 17px;
 
     padding: 17px 19px;
@@ -322,13 +382,20 @@ body {
     transition:
         transform .2s ease,
         border-color .2s ease,
-        background .2s ease;
+        background .2s ease,
+        box-shadow .2s ease;
 }
 
 .session-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(59, 130, 246, .28);
+
+    border-color:
+        rgba(59, 130, 246, .28);
+
     background: var(--schedule-card-2);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.18);
 }
 
 .session-time {
@@ -337,14 +404,19 @@ body {
 
 .session-time strong {
     display: block;
+
     color: var(--schedule-text);
+
     font-size: 13px;
 }
 
 .session-time span {
     display: block;
+
     margin-top: 3px;
+
     color: var(--schedule-muted);
+
     font-size: 10px;
 }
 
@@ -354,37 +426,50 @@ body {
 
 .session-date {
     color: #60a5fa;
+
     font-size: 10px;
     font-weight: 800;
+
     text-transform: uppercase;
     letter-spacing: .8px;
+
     margin-bottom: 4px;
 }
 
 .session-main h3 {
     margin: 0;
+
     color: var(--schedule-text);
+
     font-size: 15px;
 }
 
 .session-topic {
     margin-top: 4px;
+
     color: var(--schedule-muted);
+
     font-size: 12px;
 }
 
 .session-meta {
     display: flex;
     flex-wrap: wrap;
+
     gap: 6px;
+
     margin-top: 9px;
 }
 
 .session-tag {
     padding: 4px 8px;
+
     border-radius: 7px;
+
     background: rgba(148, 163, 184, .08);
+
     color: var(--schedule-muted);
+
     font-size: 10px;
 }
 
@@ -436,6 +521,7 @@ body {
 .session-card.completed .session-action button {
     background: rgba(34, 197, 94, .12);
     color: #4ade80;
+
     cursor: default;
 }
 
@@ -447,10 +533,13 @@ body {
 .schedule-filter {
     display: flex;
     gap: 6px;
+
     padding: 4px;
 
     background: var(--schedule-card);
+
     border: 1px solid var(--schedule-border);
+
     border-radius: 11px;
 }
 
@@ -463,13 +552,24 @@ body {
     border-radius: 8px;
 
     background: transparent;
+
     color: var(--schedule-muted);
 
     font-size: 11px;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease;
+}
+
+.filter-button:hover {
+    color: var(--schedule-text);
 }
 
 .filter-button.active {
     background: rgba(59, 130, 246, .14);
+
     color: #60a5fa;
 }
 
@@ -519,13 +619,17 @@ body {
 
 .special-day h3 {
     margin: 0 0 4px;
+
     color: var(--schedule-text);
+
     font-size: 15px;
 }
 
 .special-day p {
     margin: 0;
+
     color: var(--schedule-muted);
+
     font-size: 12px;
 }
 
@@ -537,11 +641,13 @@ body {
 .schedule-insight {
     display: flex;
     align-items: flex-start;
+
     gap: 15px;
 
     padding: 20px;
 
     border: 1px solid rgba(139, 92, 246, .2);
+
     border-radius: 17px;
 
     background:
@@ -550,6 +656,10 @@ body {
             rgba(139, 92, 246, .08),
             rgba(59, 130, 246, .04)
         );
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
 }
 
 .insight-icon {
@@ -565,25 +675,32 @@ body {
     border-radius: 12px;
 
     color: #a78bfa;
+
     background: rgba(139, 92, 246, .12);
 }
 
 .schedule-insight span {
     color: #a78bfa;
+
     font-size: 10px;
     font-weight: 800;
+
     letter-spacing: 1px;
 }
 
 .schedule-insight h3 {
     margin: 4px 0 5px;
+
     color: var(--schedule-text);
+
     font-size: 15px;
 }
 
 .schedule-insight p {
     margin: 0;
+
     color: var(--schedule-muted);
+
     font-size: 12px;
     line-height: 1.6;
 }
@@ -597,16 +714,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 11px;
 
     min-height: 120px;
 
     border: 1px solid var(--schedule-border);
+
     border-radius: 17px;
 
     background: var(--schedule-card);
 
     color: var(--schedule-muted);
+
     font-size: 12px;
 }
 
@@ -615,17 +735,21 @@ body {
     height: 17px;
 
     border: 2px solid rgba(148, 163, 184, .18);
+
     border-top-color: #60a5fa;
 
     border-radius: 50%;
 
-    animation: scheduleSpin .8s linear infinite;
+    animation:
+        scheduleSpin .8s linear infinite;
 }
 
 @keyframes scheduleSpin {
+
     to {
         transform: rotate(360deg);
     }
+
 }
 
 
@@ -635,9 +759,11 @@ body {
 
 .empty-state {
     padding: 35px 20px;
+
     text-align: center;
 
     border: 1px dashed var(--schedule-border);
+
     border-radius: 17px;
 
     color: var(--schedule-muted);
@@ -645,19 +771,516 @@ body {
 
 .empty-state svg {
     width: 30px;
+
     margin-bottom: 10px;
+
     opacity: .7;
 }
 
 .empty-state h3 {
     margin: 0 0 5px;
+
     color: var(--schedule-text);
+
     font-size: 15px;
 }
 
 .empty-state p {
     margin: 0;
+
     font-size: 12px;
+}
+
+
+/* =========================================================
+   =========================================================
+   PREMIUM GOLD THEME
+   =========================================================
+   Activated by:
+
+   html.study-mind-premium
+   OR
+   body.study-mind-premium
+========================================================= */
+
+
+/* ---------- GLOBAL COLORS ---------- */
+
+html.study-mind-premium,
+body.study-mind-premium {
+    --schedule-bg: #0d0d0b;
+    --schedule-card: #15120b;
+    --schedule-card-2: #1b170d;
+
+    --schedule-border:
+        rgba(245, 184, 61, .14);
+
+    --schedule-text: #fff8df;
+    --schedule-muted: #b9ad91;
+
+    --schedule-blue: #f5b83d;
+    --schedule-green: #e7b83f;
+    --schedule-purple: #d99a18;
+    --schedule-orange: #f5c54d;
+}
+
+
+/* ---------- PAGE BACKGROUND ---------- */
+
+html.study-mind-premium body,
+body.study-mind-premium {
+    background:
+        radial-gradient(
+            circle at 80% 0%,
+            rgba(245,184,61,.045),
+            transparent 32%
+        ),
+        #0d0d0b !important;
+}
+
+
+/* ---------- TOPBAR ---------- */
+
+html.study-mind-premium .eyebrow,
+body.study-mind-premium .eyebrow,
+
+html.study-mind-premium .section-label,
+body.study-mind-premium .section-label {
+    color: #d9a52e !important;
+}
+
+html.study-mind-premium .topbar h1,
+body.study-mind-premium .topbar h1 {
+    color: #fff8df !important;
+}
+
+html.study-mind-premium .topbar-subtitle,
+body.study-mind-premium .topbar-subtitle {
+    color: #b9ad91 !important;
+}
+
+html.study-mind-premium .ai-status,
+body.study-mind-premium .ai-status {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.16) !important;
+}
+
+html.study-mind-premium .ai-status strong,
+body.study-mind-premium .ai-status strong {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .ai-status small,
+body.study-mind-premium .ai-status small {
+    color: #e7b83f !important;
+}
+
+
+/* ---------- AI STATUS DOT ---------- */
+
+html.study-mind-premium .status-dot,
+body.study-mind-premium .status-dot {
+    background: #f5b83d !important;
+
+    box-shadow:
+        0 0 12px rgba(245,184,61,.65) !important;
+}
+
+
+/* ---------- AI BANNER ---------- */
+
+html.study-mind-premium .ai-banner,
+body.study-mind-premium .ai-banner {
+    border-color:
+        rgba(245,184,61,.22) !important;
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(245,184,61,.13),
+            transparent 35%
+        ),
+        linear-gradient(
+            135deg,
+            #19150b,
+            #100f0b
+        ) !important;
+
+    box-shadow:
+        0 12px 35px rgba(245,184,61,.045) !important;
+}
+
+html.study-mind-premium .ai-banner-icon,
+body.study-mind-premium .ai-banner-icon {
+    background:
+        rgba(245,184,61,.10) !important;
+
+    color: #ffd76a !important;
+
+    border:
+        1px solid rgba(245,184,61,.14);
+}
+
+html.study-mind-premium .ai-banner-content > span,
+body.study-mind-premium .ai-banner-content > span {
+    color: #d9a52e !important;
+}
+
+html.study-mind-premium .ai-banner-content h2,
+body.study-mind-premium .ai-banner-content h2 {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .ai-banner-content p,
+body.study-mind-premium .ai-banner-content p {
+    color: #b9ad91 !important;
+}
+
+html.study-mind-premium .ai-badge,
+body.study-mind-premium .ai-badge {
+    background:
+        rgba(245,184,61,.09) !important;
+
+    color: #ffd76a !important;
+
+    border:
+        1px solid rgba(245,184,61,.18) !important;
+}
+
+
+/* ---------- OVERVIEW CARDS ---------- */
+
+html.study-mind-premium .overview-card,
+body.study-mind-premium .overview-card {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.13) !important;
+}
+
+html.study-mind-premium .overview-card:hover,
+body.study-mind-premium .overview-card:hover {
+    border-color:
+        rgba(245,184,61,.30) !important;
+
+    box-shadow:
+        0 12px 32px rgba(245,184,61,.055) !important;
+}
+
+html.study-mind-premium .overview-card span,
+body.study-mind-premium .overview-card span {
+    color: #9f916f !important;
+}
+
+html.study-mind-premium .overview-card strong,
+body.study-mind-premium .overview-card strong {
+    color: #fff5d6 !important;
+}
+
+
+/* ---------- OVERVIEW ICONS ---------- */
+
+html.study-mind-premium .overview-icon.blue,
+body.study-mind-premium .overview-icon.blue,
+
+html.study-mind-premium .overview-icon.green,
+body.study-mind-premium .overview-icon.green,
+
+html.study-mind-premium .overview-icon.purple,
+body.study-mind-premium .overview-icon.purple,
+
+html.study-mind-premium .overview-icon.orange,
+body.study-mind-premium .overview-icon.orange {
+    background:
+        rgba(245,184,61,.09) !important;
+
+    color: #ffd76a !important;
+}
+
+
+/* ---------- SECTION HEADINGS ---------- */
+
+html.study-mind-premium .section-heading h2,
+body.study-mind-premium .section-heading h2 {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .day-type,
+body.study-mind-premium .day-type {
+    background:
+        rgba(245,184,61,.09) !important;
+
+    color: #ffd76a !important;
+
+    border:
+        1px solid rgba(245,184,61,.17) !important;
+}
+
+
+/* ---------- SESSION CARDS ---------- */
+
+html.study-mind-premium .session-card,
+body.study-mind-premium .session-card {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.12) !important;
+}
+
+html.study-mind-premium .session-card:hover,
+body.study-mind-premium .session-card:hover {
+    background: #1b170d !important;
+
+    border-color:
+        rgba(245,184,61,.28) !important;
+
+    box-shadow:
+        0 12px 30px rgba(245,184,61,.045) !important;
+}
+
+html.study-mind-premium .session-time strong,
+body.study-mind-premium .session-time strong {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .session-time span,
+body.study-mind-premium .session-time span {
+    color: #9f916f !important;
+}
+
+html.study-mind-premium .session-date,
+body.study-mind-premium .session-date {
+    color: #d9a52e !important;
+}
+
+html.study-mind-premium .session-main h3,
+body.study-mind-premium .session-main h3 {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .session-topic,
+body.study-mind-premium .session-topic {
+    color: #b9ad91 !important;
+}
+
+
+/* ---------- SESSION TAGS ---------- */
+
+html.study-mind-premium .session-tag,
+body.study-mind-premium .session-tag {
+    background:
+        rgba(245,184,61,.055) !important;
+
+    color: #b9ad91 !important;
+}
+
+html.study-mind-premium .session-tag.difficulty-medium,
+body.study-mind-premium .session-tag.difficulty-medium {
+    color: #ffd76a !important;
+
+    background:
+        rgba(245,184,61,.09) !important;
+}
+
+
+/* ---------- SESSION BUTTON ---------- */
+
+html.study-mind-premium .session-action button,
+body.study-mind-premium .session-action button {
+    background:
+        linear-gradient(
+            135deg,
+            #f5b83d,
+            #d99a18
+        ) !important;
+
+    color: #211806 !important;
+
+    box-shadow:
+        0 7px 18px rgba(245,184,61,.15) !important;
+}
+
+html.study-mind-premium .session-action button:hover,
+body.study-mind-premium .session-action button:hover {
+    filter: brightness(1.08);
+
+    box-shadow:
+        0 9px 22px rgba(245,184,61,.22) !important;
+}
+
+
+/* ---------- COMPLETED SESSION ---------- */
+
+html.study-mind-premium .session-card.completed,
+body.study-mind-premium .session-card.completed {
+    border-color:
+        rgba(245,184,61,.20) !important;
+}
+
+html.study-mind-premium .session-card.completed .session-main h3,
+body.study-mind-premium .session-card.completed .session-main h3 {
+    color: #e7b83f !important;
+}
+
+html.study-mind-premium .session-card.completed .session-action button,
+body.study-mind-premium .session-card.completed .session-action button {
+    background:
+        rgba(245,184,61,.09) !important;
+
+    color: #ffd76a !important;
+}
+
+
+/* ---------- FILTERS ---------- */
+
+html.study-mind-premium .schedule-filter,
+body.study-mind-premium .schedule-filter {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.13) !important;
+}
+
+html.study-mind-premium .filter-button,
+body.study-mind-premium .filter-button {
+    color: #9f916f !important;
+}
+
+html.study-mind-premium .filter-button:hover,
+body.study-mind-premium .filter-button:hover {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .filter-button.active,
+body.study-mind-premium .filter-button.active {
+    background:
+        linear-gradient(
+            135deg,
+            #f5b83d,
+            #d99a18
+        ) !important;
+
+    color: #211806 !important;
+
+    box-shadow:
+        0 6px 18px rgba(245,184,61,.15) !important;
+}
+
+
+/* ---------- SPECIAL DAYS ---------- */
+
+html.study-mind-premium .special-day,
+body.study-mind-premium .special-day {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.13) !important;
+}
+
+html.study-mind-premium .special-day.rest .special-day-icon,
+body.study-mind-premium .special-day.rest .special-day-icon,
+
+html.study-mind-premium .special-day.test .special-day-icon,
+body.study-mind-premium .special-day.test .special-day-icon,
+
+html.study-mind-premium .special-day.exam .special-day-icon,
+body.study-mind-premium .special-day.exam .special-day-icon {
+    color: #ffd76a !important;
+
+    background:
+        rgba(245,184,61,.09) !important;
+}
+
+html.study-mind-premium .special-day h3,
+body.study-mind-premium .special-day h3 {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .special-day p,
+body.study-mind-premium .special-day p {
+    color: #b9ad91 !important;
+}
+
+
+/* ---------- AI INSIGHT ---------- */
+
+html.study-mind-premium .schedule-insight,
+body.study-mind-premium .schedule-insight {
+    border-color:
+        rgba(245,184,61,.20) !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245,184,61,.08),
+            rgba(245,184,61,.025)
+        ) !important;
+
+    box-shadow:
+        0 10px 32px rgba(245,184,61,.04) !important;
+}
+
+html.study-mind-premium .insight-icon,
+body.study-mind-premium .insight-icon {
+    color: #ffd76a !important;
+
+    background:
+        rgba(245,184,61,.09) !important;
+}
+
+html.study-mind-premium .schedule-insight span,
+body.study-mind-premium .schedule-insight span {
+    color: #d9a52e !important;
+}
+
+html.study-mind-premium .schedule-insight h3,
+body.study-mind-premium .schedule-insight h3 {
+    color: #fff5d6 !important;
+}
+
+html.study-mind-premium .schedule-insight p,
+body.study-mind-premium .schedule-insight p {
+    color: #b9ad91 !important;
+}
+
+
+/* ---------- LOADING ---------- */
+
+html.study-mind-premium .loading-card,
+body.study-mind-premium .loading-card {
+    background: #15120b !important;
+
+    border-color:
+        rgba(245,184,61,.13) !important;
+
+    color: #b9ad91 !important;
+}
+
+html.study-mind-premium .loading-spinner,
+body.study-mind-premium .loading-spinner {
+    border-color:
+        rgba(245,184,61,.12) !important;
+
+    border-top-color:
+        #f5b83d !important;
+}
+
+
+/* ---------- EMPTY STATE ---------- */
+
+html.study-mind-premium .empty-state,
+body.study-mind-premium .empty-state {
+    border-color:
+        rgba(245,184,61,.18) !important;
+
+    color: #b9ad91 !important;
+}
+
+html.study-mind-premium .empty-state h3,
+body.study-mind-premium .empty-state h3 {
+    color: #fff5d6 !important;
 }
 
 
@@ -672,6 +1295,7 @@ body {
     }
 
 }
+
 
 @media (max-width: 800px) {
 
@@ -700,6 +1324,7 @@ body {
     }
 
 }
+
 
 @media (max-width: 560px) {
 
