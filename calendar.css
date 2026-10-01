@@ -2842,3 +2842,288 @@ body.study-mind-premium .insight-content p {
     }
 
 }
+
+/* =========================================================
+   CALENDAR DAY TYPE COLORS — FINAL OVERRIDE
+   ========================================================= */
+
+/* STUDY DAY */
+.calendar-day.day-study {
+    border-color: rgba(59, 130, 246, 0.45);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(59, 130, 246, 0.16),
+            rgba(15, 23, 42, 0.92)
+        );
+}
+
+.calendar-day.day-study .study-marker {
+    background: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+}
+
+
+/* REST DAY */
+.calendar-day.day-rest {
+    border-color: rgba(168, 85, 247, 0.45);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(168, 85, 247, 0.16),
+            rgba(15, 23, 42, 0.92)
+        );
+}
+
+.calendar-day.day-rest .rest-marker {
+    background: #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.7);
+}
+
+
+/* TEST DAY */
+.calendar-day.day-test {
+    border-color: rgba(249, 115, 22, 0.5);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(249, 115, 22, 0.17),
+            rgba(15, 23, 42, 0.92)
+        );
+}
+
+.calendar-day.day-test .test-marker {
+    background: #f97316;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7);
+}
+
+
+/* EXAM DAY */
+.calendar-day.day-exam {
+    border-color: rgba(239, 68, 68, 0.55);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239, 68, 68, 0.18),
+            rgba(15, 23, 42, 0.92)
+        );
+}
+
+.calendar-day.day-exam .exam-marker {
+    background: #ef4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+}
+
+
+/* =========================================================
+   COMPLETED DAYS
+   ========================================================= */
+
+/*
+   Completed should be visually distinct, but it should NOT
+   make Study / Test / Exam / Rest impossible to distinguish.
+*/
+
+.calendar-day.completed {
+    border-color: #22c55e !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(34, 197, 94, 0.35),
+        0 0 12px rgba(34, 197, 94, 0.12);
+}
+
+
+/* Completed STUDY */
+.calendar-day.day-study.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.24),
+            rgba(59, 130, 246, 0.12),
+            rgba(15, 23, 42, 0.94)
+        );
+}
+
+
+/* Completed TEST */
+.calendar-day.day-test.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.24),
+            rgba(249, 115, 22, 0.12),
+            rgba(15, 23, 42, 0.94)
+        );
+}
+
+
+/* Completed EXAM */
+.calendar-day.day-exam.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.24),
+            rgba(239, 68, 68, 0.12),
+            rgba(15, 23, 42, 0.94)
+        );
+}
+
+
+/* Completed REST */
+.calendar-day.day-rest.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.24),
+            rgba(168, 85, 247, 0.12),
+            rgba(15, 23, 42, 0.94)
+        );
+}
+
+
+/* =========================================================
+   MARKERS
+   ========================================================= */
+
+.calendar-day .day-marker {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+
+/* Study */
+.calendar-day .study-marker {
+    background: #3b82f6;
+}
+
+
+/* Rest */
+.calendar-day .rest-marker {
+    background: #a855f7;
+}
+
+
+/* Test */
+.calendar-day .test-marker {
+    background: #f97316;
+}
+
+
+/* Exam */
+.calendar-day .exam-marker {
+    background: #ef4444;
+}
+
+
+/* Completed check indicator */
+.calendar-day.completed::after {
+    content: "✓";
+    position: absolute;
+    right: 8px;
+    bottom: 7px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #ffffff;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+}
+
+
+/* =========================================================
+   PREMIUM GOLD THEME
+   Keep the day types distinguishable even in Premium mode.
+   ========================================================= */
+
+.study-mind-premium .calendar-day.day-study {
+    border-color: rgba(59, 130, 246, 0.45);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(59, 130, 246, 0.14),
+            rgba(35, 29, 12, 0.94)
+        );
+}
+
+.study-mind-premium .calendar-day.day-rest {
+    border-color: rgba(168, 85, 247, 0.45);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(168, 85, 247, 0.14),
+            rgba(35, 29, 12, 0.94)
+        );
+}
+
+.study-mind-premium .calendar-day.day-test {
+    border-color: rgba(249, 115, 22, 0.5);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(249, 115, 22, 0.15),
+            rgba(35, 29, 12, 0.94)
+        );
+}
+
+.study-mind-premium .calendar-day.day-exam {
+    border-color: rgba(239, 68, 68, 0.5);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239, 68, 68, 0.16),
+            rgba(35, 29, 12, 0.94)
+        );
+}
+
+
+/* Premium completed */
+.study-mind-premium .calendar-day.completed {
+    border-color: #22c55e !important;
+}
+
+.study-mind-premium .calendar-day.day-study.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.22),
+            rgba(59, 130, 246, 0.11),
+            rgba(35, 29, 12, 0.95)
+        );
+}
+
+.study-mind-premium .calendar-day.day-test.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.22),
+            rgba(249, 115, 22, 0.11),
+            rgba(35, 29, 12, 0.95)
+        );
+}
+
+.study-mind-premium .calendar-day.day-exam.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.22),
+            rgba(239, 68, 68, 0.11),
+            rgba(35, 29, 12, 0.95)
+        );
+}
+
+.study-mind-premium .calendar-day.day-rest.completed {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 197, 94, 0.22),
+            rgba(168, 85, 247, 0.11),
+            rgba(35, 29, 12, 0.95)
+        );
+}
