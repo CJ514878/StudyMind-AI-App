@@ -4,23 +4,34 @@
 
 <head>
 
-```
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>
-    StudyMind AI — Study Score
-</title>
+    <title>
+        StudyMind AI — Study Score
+    </title>
 
-<link
-    rel="stylesheet"
-    href="style.css"
->
-```
+    <!-- =====================================================
+         BASE STYLES
+    ====================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <!-- =====================================================
+         STUDY SCORE — GOLD THEME
+    ====================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="study-score.css"
+    >
 
 </head>
 
@@ -32,72 +43,74 @@
 
 <nav class="navbar">
 
-```
-<h2 class="logo">
-    StudyMind AI
-</h2>
+    <h2 class="logo">
+        StudyMind AI
+    </h2>
 
-<ul class="nav-links">
+    <ul class="nav-links">
 
-    <li>
-        <a href="home.html">
-            Home
-        </a>
-    </li>
+        <li>
+            <a href="home.html">
+                Home
+            </a>
+        </li>
 
-    <li>
-        <a href="dashboard.html">
-            Dashboard
-        </a>
-    </li>
+        <li>
+            <a href="dashboard.html">
+                Dashboard
+            </a>
+        </li>
 
-    <li>
-        <a href="dashboard.html#calendar">
-            Calendar
-        </a>
-    </li>
+        <li>
+            <a href="dashboard.html#calendar">
+                Calendar
+            </a>
+        </li>
 
-    <li>
-        <a href="dashboard.html#schedule">
-            Schedule
-        </a>
-    </li>
+        <li>
+            <a href="dashboard.html#schedule">
+                Schedule
+            </a>
+        </li>
 
-    <li>
-        <a href="ai-support.html">
-            🤖 AI Support
-        </a>
-    </li>
+        <li>
+            <a href="ai-support.html">
+                🤖 AI Support
+            </a>
+        </li>
 
-    <li>
-        <a href="summarizer.html">
-            📄 Summarizer
-        </a>
-    </li>
+        <li>
+            <a href="summarizer.html">
+                📄 Summarizer
+            </a>
+        </li>
 
-    <li>
-        <a href="study-streak.html">
-            🔥 Study Streak
-        </a>
-    </li>
+        <li>
+            <a href="study-streak.html">
+                🔥 Study Streak
+            </a>
+        </li>
 
-    <li>
-        <a href="study-score.html">
-            ⭐ Study Score
-        </a>
-    </li>
+        <li>
+            <a
+                href="study-score.html"
+                class="active"
+            >
+                ⭐ Study Score
+            </a>
+        </li>
 
-</ul>
+    </ul>
 
-<button
-    id="themeButton"
-    class="theme-button"
->
-    🌙 Dark Mode
-</button>
-```
+    <button
+        id="themeButton"
+        class="theme-button"
+    >
+        🌙 Dark Mode
+    </button>
 
 </nav>
+
 
 <!-- =========================================================
      MAIN
@@ -105,232 +118,243 @@
 
 <main class="dashboard-page">
 
-```
-<div class="dashboard-heading">
-
-    <div>
-
-        <span class="eyebrow">
-            YOUR PERFORMANCE
-        </span>
-
-        <h1>
-            ⭐ Study Score
-        </h1>
-
-        <p class="dashboard-subtitle">
-            See how your study progress is developing.
-        </p>
-
-    </div>
-
-    <a
-        href="dashboard.html"
-        class="dashboard-action"
-    >
-        ← Back to Dashboard
-    </a>
-
-</div>
-
-
-<!-- =====================================================
-     SCORE STAT
-====================================================== -->
-
-<section class="top-stats">
-
-    <div class="stat-card">
-
-        <span class="stat-icon">
-            ⭐
-        </span>
+    <div class="dashboard-heading">
 
         <div>
 
-            <p>
-                Study Score
+            <span class="eyebrow">
+                YOUR PERFORMANCE
+            </span>
+
+            <h1>
+                ⭐ Study Score
+            </h1>
+
+            <p class="dashboard-subtitle">
+                See how your study progress is developing.
             </p>
 
-            <h2 id="scoreNumber">
-                0
-            </h2>
-
         </div>
+
+        <a
+            href="dashboard.html"
+            class="dashboard-action"
+        >
+            ← Back to Dashboard
+        </a>
 
     </div>
 
 
-    <div class="stat-card">
+    <!-- =====================================================
+         SCORE STATISTICS
+    ====================================================== -->
 
-        <span class="stat-icon">
-            📈
-        </span>
+    <section class="top-stats">
 
-        <div>
+        <div class="stat-card">
 
-            <p>
-                Performance
-            </p>
+            <span class="stat-icon">
+                ⭐
+            </span>
 
-            <h2 id="performanceScore">
-                0
-            </h2>
+            <div>
+
+                <p>
+                    Study Score
+                </p>
+
+                <h2 id="scoreNumber">
+                    0
+                </h2>
+
+            </div>
 
         </div>
 
-    </div>
 
-</section>
+        <div class="stat-card">
+
+            <span class="stat-icon">
+                📈
+            </span>
+
+            <div>
+
+                <p>
+                    Performance
+                </p>
+
+                <h2 id="performanceScore">
+                    0
+                </h2>
+
+            </div>
+
+        </div>
+
+    </section>
 
 
-<!-- =====================================================
-     SCORE CONTENT
-====================================================== -->
+    <!-- =====================================================
+         SCORE CONTENT
+    ====================================================== -->
 
-<section class="main-dashboard">
+    <section class="main-dashboard">
 
-    <div class="left-panel">
+        <div class="left-panel">
 
-        <div class="panel-card">
 
-            <div class="card-heading">
+            <!-- =================================================
+                 MAIN SCORE
+            ================================================== -->
 
-                <div>
+            <div class="panel-card">
 
-                    <span class="card-kicker">
-                        PERFORMANCE
+                <div class="card-heading">
+
+                    <div>
+
+                        <span class="card-kicker">
+                            PERFORMANCE
+                        </span>
+
+                        <h2>
+                            ⭐ Your Study Score
+                        </h2>
+
+                    </div>
+
+                    <span class="card-badge">
+                        LIVE
                     </span>
-
-                    <h2>
-                        ⭐ Your Study Score
-                    </h2>
 
                 </div>
 
-                <span class="card-badge">
-                    LIVE
-                </span>
-
-            </div>
-
-
-            <div
-                class="progress-circle"
-                style="margin:40px auto;"
-            >
-
-                <span id="studyScoreNumber">
-                    0
-                </span>
-
-            </div>
-
-
-            <p
-                id="scoreDisplay"
-                style="text-align:center;"
-            >
-                0
-            </p>
-
-
-            <div class="progress-bar-container">
 
                 <div
-                    id="scoreBar"
-                    style="width:0%;"
+                    class="progress-circle"
                 >
-                </div>
 
-            </div>
-
-
-            <p
-                id="scoreMessage"
-                style="text-align:center; margin-top:20px;"
-            >
-                Start studying to build your score.
-            </p>
-
-        </div>
-
-
-        <div class="panel-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="card-kicker">
-                        SCORE BREAKDOWN
+                    <span id="studyScoreNumber">
+                        0
                     </span>
 
-                    <h2>
-                        How Your Score Works
-                    </h2>
+                </div>
+
+
+                <p
+                    id="scoreDisplay"
+                >
+                    0
+                </p>
+
+
+                <div class="progress-bar-container">
+
+                    <div
+                        id="scoreBar"
+                    >
+                    </div>
 
                 </div>
 
+
+                <p
+                    id="scoreMessage"
+                >
+                    Start studying to build your score.
+                </p>
+
             </div>
 
-            <p>
-                Your Study Score is based on your completed study topics
-                and your current study streak.
-            </p>
 
-            <p>
-                Completing more topics increases your progress score,
-                while maintaining a study streak can provide an additional
-                consistency bonus.
-            </p>
+            <!-- =================================================
+                 SCORE BREAKDOWN
+            ================================================== -->
 
-        </div>
+            <div class="panel-card">
 
-    </div>
+                <div class="card-heading">
 
+                    <div>
 
-    <div class="right-panel">
+                        <span class="card-kicker">
+                            SCORE BREAKDOWN
+                        </span>
 
-        <div class="panel-card">
+                        <h2>
+                            How Your Score Works
+                        </h2>
 
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="card-kicker">
-                        IMPROVE
-                    </span>
-
-                    <h2>
-                        🎯 Increase Your Score
-                    </h2>
+                    </div>
 
                 </div>
 
+
+                <p>
+                    Your Study Score reflects your overall study
+                    performance across the StudyMind system.
+                </p>
+
+                <p>
+                    Study time, knowledge-check performance,
+                    consistency, study-plan progress, and productive
+                    AI learning activity can all contribute to your score.
+                </p>
+
             </div>
-
-            <p>
-                Keep completing your study topics and maintain your study
-                streak to improve your Study Score.
-            </p>
-
-            <a
-                href="dashboard.html"
-                class="primary-button full-button"
-                style="display:block; text-align:center; text-decoration:none;"
-            >
-                📖 Continue Studying
-            </a>
 
         </div>
 
-    </div>
 
-</section>
-```
+        <!-- =====================================================
+             IMPROVEMENT
+        ====================================================== -->
+
+        <div class="right-panel">
+
+            <div class="panel-card">
+
+                <div class="card-heading">
+
+                    <div>
+
+                        <span class="card-kicker">
+                            IMPROVE
+                        </span>
+
+                        <h2>
+                            🎯 Increase Your Score
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <p>
+                    Keep studying consistently, complete your planned
+                    topics, use knowledge checks, and make productive
+                    use of your StudyMind learning tools.
+                </p>
+
+
+                <a
+                    href="dashboard.html"
+                    class="primary-button full-button"
+                >
+                    📖 Continue Studying
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
 
 </main>
+
 
 <!-- =========================================================
      SUPABASE
@@ -342,11 +366,19 @@
 
 <script src="supabase.js"></script>
 
+
 <!-- =========================================================
-     DASHBOARD JAVASCRIPT
+     DASHBOARD / SHARED SYSTEM
 ========================================================= -->
 
 <script src="dashboard.js"></script>
+
+
+<!-- =========================================================
+     STUDY SCORE
+========================================================= -->
+
+<script src="score.js"></script>
 
 </body>
 
