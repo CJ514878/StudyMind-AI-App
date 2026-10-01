@@ -17,7 +17,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
     <!-- =====================================================
          MATHJAX
          Renders AI-generated mathematics and formulas
@@ -58,7 +57,6 @@
         };
     </script>
 
-
     <script
         async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
@@ -72,24 +70,27 @@
 
     <!-- =====================================================
          SIDEBAR
+         STANDARD STUDYMIND NAVIGATION
     ====================================================== -->
 
     <aside class="sidebar">
 
-        <div class="brand">
+        <!-- BRAND -->
 
-            <div class="brand-icon">
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">
                 S
             </div>
 
             <div>
 
-                <h2>
-                    StudyMind
-                </h2>
+                <strong>
+                    StudyMind AI
+                </strong>
 
                 <span>
-                    AI Learning Platform
+                    AI Study Coach
                 </span>
 
             </div>
@@ -97,98 +98,156 @@
         </div>
 
 
+        <!-- NAVIGATION -->
+
         <nav class="sidebar-nav">
 
-            <a href="dashboard.html">
-                <span>⌂</span>
-                Dashboard
-            </a>
+            <!-- WORKSPACE -->
 
-            <a href="schedule.html">
-                <span>☷</span>
-                Schedule
-            </a>
+            <div class="nav-section">
 
-            <a href="calendar.html">
-                <span>▣</span>
-                Calendar
-            </a>
+                <span>
+                    WORKSPACE
+                </span>
 
-            <a
-                href="ai-support.html"
-                class="active"
-            >
-                <span>✦</span>
-                AI Support
-            </a>
+                <a href="dashboard.html">
+                    <span class="nav-icon">⌂</span>
+                    Dashboard
+                </a>
 
-            <a href="ai-assistant.html">
-                <span>◈</span>
-                AI Assistant
-            </a>
+                <a href="schedule.html">
+                    <span class="nav-icon">◷</span>
+                    Schedule
+                </a>
 
-            <a href="summarizer.html">
-                <span>▤</span>
-                Summarizer
-            </a>
+                <a href="calendar.html">
+                    <span class="nav-icon">▣</span>
+                    Calendar
+                </a>
 
-            <a href="study-streak.html">
-                <span>↗</span>
-                Study Streak
-            </a>
+            </div>
 
-            <a href="goals.html">
-                <span>◎</span>
-                Goals
-            </a>
 
-            <a href="rewards.html">
-                <span>◆</span>
-                Rewards
-            </a>
+            <!-- AI TOOLS -->
 
-            <a href="leaderboard.html">
-                <span>♛</span>
-                Leaderboard
-            </a>
+            <div class="nav-section">
 
-            <a href="friends.html">
-                <span>♧</span>
-                Friends
-            </a>
+                <span>
+                    AI TOOLS
+                </span>
 
-            <a href="game-mode.html">
-                <span>⚔</span>
-                Game Mode
-            </a>
+                <a
+                    href="ai-support.html"
+                    class="active"
+                >
+                    <span class="nav-icon">✦</span>
+                    AI Support
+                </a>
 
-            <a
-                href="premium.html"
-                class="premium-link"
-            >
-                <span>✦</span>
-                Premium
-            </a>
+                <a href="ai-assistant.html">
+                    <span class="nav-icon">◉</span>
+                    AI Assistant
+                </a>
+
+                <a href="summarizer.html">
+                    <span class="nav-icon">▤</span>
+                    Summarizer
+                </a>
+
+            </div>
+
+
+            <!-- PROGRESS -->
+
+            <div class="nav-section">
+
+                <span>
+                    PROGRESS
+                </span>
+
+                <a href="streak.html">
+                    <span class="nav-icon">🔥</span>
+                    Study Streak
+                </a>
+
+                <a href="score.html">
+                    <span class="nav-icon">★</span>
+                    Study Score
+                </a>
+
+                <a href="goals.html">
+                    <span class="nav-icon">◎</span>
+                    Goals
+                </a>
+
+                <a href="rewards.html">
+                    <span class="nav-icon">◇</span>
+                    Rewards
+                </a>
+
+            </div>
+
+
+            <!-- COMMUNITY -->
+
+            <div class="nav-section">
+
+                <span>
+                    COMMUNITY
+                </span>
+
+                <a href="leaderboard.html">
+                    <span class="nav-icon">♛</span>
+                    Leaderboard
+                </a>
+
+                <a href="friends.html">
+                    <span class="nav-icon">♧</span>
+                    Friends
+                </a>
+
+                <a href="game-mode.html">
+                    <span class="nav-icon">⚔</span>
+                    Game Mode
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+
+            <div class="nav-section">
+
+                <span>
+                    ACCOUNT
+                </span>
+
+                <a
+                    href="premium.html"
+                    class="premium-link"
+                >
+                    <span class="nav-icon">◆</span>
+                    Premium
+                </a>
+
+            </div>
 
         </nav>
 
 
+        <!-- SIDEBAR BOTTOM -->
+
         <div class="sidebar-bottom">
 
-            <a href="#">
-                <span>?</span>
+            <a href="feedback.html">
+                <span class="nav-icon">◌</span>
                 Feedback
             </a>
 
-            <a href="#">
-                <span>⚙</span>
+            <a href="settings.html">
+                <span class="nav-icon">⚙</span>
                 Settings
             </a>
-
-            <button id="logoutButton">
-                <span>↪</span>
-                Log out
-            </button>
 
         </div>
 
@@ -196,12 +255,15 @@
 
 
     <!-- =====================================================
-         MAIN
+         MAIN CONTENT
     ====================================================== -->
 
     <main class="main-content">
 
-        <!-- TOP BAR -->
+
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
 
         <header class="topbar">
 
@@ -311,7 +373,10 @@
 
         <section class="workspace">
 
-            <!-- CHAT -->
+
+            <!-- =================================================
+                 CHAT
+            ================================================== -->
 
             <div class="chat-card">
 
@@ -333,12 +398,15 @@
                     <button
                         id="clearChat"
                         class="clear-button"
+                        type="button"
                     >
                         Clear
                     </button>
 
                 </div>
 
+
+                <!-- CHAT MESSAGES -->
 
                 <div
                     id="chatMessages"
@@ -412,6 +480,8 @@
                 </div>
 
 
+                <!-- COMPOSER FOOTER -->
+
                 <div class="composer-footer">
 
                     <span>
@@ -429,10 +499,11 @@
 
 
             <!-- =================================================
-                 RIGHT PANEL
+                 RIGHT SUPPORT PANEL
             ================================================== -->
 
             <aside class="support-panel">
+
 
                 <!-- CURRENT STUDY -->
 
@@ -501,6 +572,7 @@
 
                     <button
                         class="prompt-button"
+                        type="button"
                         data-prompt="Explain my current topic to me like I am learning it for the first time."
                     >
 
@@ -509,6 +581,7 @@
                         </span>
 
                         <span>
+
                             Explain my topic
 
                             <small>
@@ -526,6 +599,7 @@
 
                     <button
                         class="prompt-button"
+                        type="button"
                         data-prompt="Quiz me on my current topic with five questions. Do not show the answers until I respond."
                     >
 
@@ -534,6 +608,7 @@
                         </span>
 
                         <span>
+
                             Quiz me
 
                             <small>
@@ -551,6 +626,7 @@
 
                     <button
                         class="prompt-button"
+                        type="button"
                         data-prompt="Give me a practical study strategy for my current topic and tell me what I should focus on first."
                     >
 
@@ -559,6 +635,7 @@
                         </span>
 
                         <span>
+
                             Study strategy
 
                             <small>
@@ -576,6 +653,7 @@
 
                     <button
                         class="prompt-button"
+                        type="button"
                         data-prompt="Give me the most important things I should remember about my current topic for an exam."
                     >
 
@@ -584,6 +662,7 @@
                         </span>
 
                         <span>
+
                             Exam essentials
 
                             <small>
@@ -664,6 +743,7 @@
         <button
             id="closePremiumModal"
             class="modal-close"
+            type="button"
         >
             ×
         </button>
@@ -688,6 +768,7 @@
         <button
             id="premiumButton"
             class="premium-button"
+            type="button"
         >
             Explore Premium
         </button>
@@ -698,10 +779,67 @@
 
 
 <!-- =========================================================
-     STUDYMIND AI SUPPORT
+     AI SUPPORT JAVASCRIPT
 ========================================================= -->
 
 <script src="ai-support.js"></script>
+
+
+<!-- =========================================================
+     PREMIUM THEME SYNC
+========================================================= -->
+
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    function syncPremiumTheme() {
+
+        const isPremium =
+            localStorage.getItem(
+                "studyMindPremium"
+            ) === "true";
+
+
+        document.documentElement.classList.toggle(
+            "study-mind-premium",
+            isPremium
+        );
+
+
+        if (document.body) {
+
+            document.body.classList.toggle(
+                "study-mind-premium",
+                isPremium
+            );
+
+        }
+
+    }
+
+
+    syncPremiumTheme();
+
+
+    window.addEventListener(
+        "storage",
+        syncPremiumTheme
+    );
+
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        syncPremiumTheme
+    );
+
+
+})();
+
+</script>
 
 </body>
 </html>
