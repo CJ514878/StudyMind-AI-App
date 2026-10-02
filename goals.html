@@ -7,93 +7,1417 @@
     <title>Goals | StudyMind AI</title>
 
     <link rel="stylesheet" href="goals.css">
+
+    <style>
+        /* =====================================================
+           STUDYMIND AI — GOALS
+           BLACK + GOLD / SUMMARIZER-STYLE NAVIGATION
+        ===================================================== */
+
+        :root {
+            --gold: #f5c542;
+            --gold-light: #ffd966;
+            --gold-dark: #c99b16;
+
+            --bg: #070707;
+            --panel: #101010;
+            --panel-2: #151515;
+
+            --text: #ffffff;
+            --muted: #929292;
+
+            --border: rgba(255,255,255,.08);
+            --gold-border: rgba(245,197,66,.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        body {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        /* =====================================================
+           APP SHELL
+        ===================================================== */
+
+        .app-shell {
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+
+            width: 250px;
+
+            display: flex;
+            flex-direction: column;
+
+            padding: 22px 14px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0d0d0d 0%,
+                    #090909 100%
+                );
+
+            border-right: 1px solid var(--border);
+
+            z-index: 1000;
+
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(245,197,66,.25);
+            border-radius: 10px;
+        }
+
+        /* =====================================================
+           BRAND
+        ===================================================== */
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+
+            padding: 4px 10px 24px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 11px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--gold-light),
+                    var(--gold-dark)
+                );
+
+            color: #090909;
+
+            font-size: 20px;
+            font-weight: 900;
+
+            box-shadow:
+                0 8px 25px rgba(245,197,66,.16);
+        }
+
+        .brand strong {
+            display: block;
+
+            color: #ffffff;
+
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .brand span {
+            display: block;
+
+            margin-top: 2px;
+
+            color: #777777;
+
+            font-size: 11px;
+        }
+
+        /* =====================================================
+           NAVIGATION
+        ===================================================== */
+
+        .navigation {
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 18px;
+        }
+
+        .nav-section-label {
+            padding: 0 12px 8px;
+
+            color: #686868;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            letter-spacing: 1.3px;
+        }
+
+        .nav-item {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            gap: 11px;
+
+            width: 100%;
+            min-height: 42px;
+
+            margin: 2px 0;
+            padding: 9px 12px;
+
+            border-radius: 9px;
+
+            color: #9b9b9b;
+
+            font-size: 13px;
+            font-weight: 500;
+
+            transition:
+                background .18s ease,
+                color .18s ease;
+        }
+
+        .nav-item:hover {
+            color: #ffffff;
+            background: rgba(255,255,255,.055);
+        }
+
+        .nav-item.active {
+            color: var(--gold-light);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(245,197,66,.16),
+                    rgba(245,197,66,.055)
+                );
+
+            box-shadow:
+                inset 3px 0 0 var(--gold);
+        }
+
+        .nav-item.active .nav-icon {
+            color: var(--gold);
+        }
+
+        .nav-icon {
+            width: 20px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #777777;
+
+            font-size: 16px;
+
+            flex-shrink: 0;
+        }
+
+        .nav-divider {
+            height: 1px;
+
+            margin: 12px 10px;
+
+            background: var(--border);
+        }
+
+        /* =====================================================
+           SIDEBAR BOTTOM
+        ===================================================== */
+
+        .sidebar-bottom {
+            padding-top: 12px;
+
+            border-top: 1px solid var(--border);
+        }
+
+        .premium-link,
+        .theme-button {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+
+            width: 100%;
+            min-height: 42px;
+
+            padding: 9px 12px;
+
+            border: 0;
+            border-radius: 9px;
+
+            background: transparent;
+
+            color: #999999;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition:
+                background .18s ease,
+                color .18s ease;
+        }
+
+        .premium-link:hover,
+        .theme-button:hover {
+            color: #ffffff;
+            background: rgba(255,255,255,.055);
+        }
+
+        .premium-link {
+            color: var(--gold);
+        }
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main-content {
+            min-height: 100vh;
+            margin-left: 250px;
+            background: var(--bg);
+        }
+
+        /* =====================================================
+           TOPBAR
+        ===================================================== */
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+
+            min-height: 76px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 15px 34px;
+
+            background: rgba(7,7,7,.88);
+
+            border-bottom: 1px solid var(--border);
+
+            backdrop-filter: blur(18px);
+        }
+
+        .welcome > span {
+            display: block;
+
+            margin-bottom: 2px;
+
+            color: var(--gold);
+
+            font-size: 11px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+            letter-spacing: .8px;
+        }
+
+        .welcome h1 {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .welcome p {
+            margin: 4px 0 0;
+
+            color: var(--muted);
+
+            font-size: 12px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .date-pill {
+            padding: 9px 14px;
+
+            border: 1px solid var(--border);
+            border-radius: 999px;
+
+            background: #101010;
+
+            color: #a8a8a8;
+
+            font-size: 12px;
+        }
+
+        .mobile-menu {
+            display: none;
+
+            width: 40px;
+            height: 40px;
+
+            border: 1px solid var(--border);
+            border-radius: 9px;
+
+            background: var(--panel);
+            color: #ffffff;
+
+            cursor: pointer;
+        }
+
+        /* =====================================================
+           CONTENT
+        ===================================================== */
+
+        .goals-hero,
+        .section,
+        .empty-plan,
+        .footer {
+            max-width: 1250px;
+
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .goals-hero {
+            margin-top: 28px;
+            padding: 30px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 30px;
+
+            border: 1px solid var(--gold-border);
+            border-radius: 18px;
+
+            background:
+                radial-gradient(
+                    circle at 85% 30%,
+                    rgba(245,197,66,.12),
+                    transparent 32%
+                ),
+                linear-gradient(
+                    135deg,
+                    #111111,
+                    #0b0b0b
+                );
+        }
+
+        .hero-copy {
+            max-width: 700px;
+        }
+
+        .eyebrow,
+        .section-label,
+        .mini-label {
+            color: var(--gold);
+
+            font-size: 10px;
+            font-weight: 800;
+
+            letter-spacing: 1.2px;
+        }
+
+        .hero-copy h2 {
+            margin: 10px 0;
+
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.04;
+
+            letter-spacing: -1.7px;
+        }
+
+        .hero-copy h2 span {
+            color: var(--gold);
+        }
+
+        .hero-copy p {
+            max-width: 650px;
+
+            margin: 0;
+
+            color: var(--muted);
+
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* =====================================================
+           SCORE RING
+        ===================================================== */
+
+        .hero-score {
+            flex-shrink: 0;
+        }
+
+        .score-ring {
+            width: 145px;
+            height: 145px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    #101010 58%,
+                    transparent 59%
+                );
+
+            border: 8px solid rgba(245,197,66,.16);
+
+            text-align: center;
+        }
+
+        .score-ring > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-ring strong {
+            color: var(--gold);
+
+            font-size: 31px;
+            line-height: 1;
+        }
+
+        .score-ring span {
+            margin-top: 5px;
+
+            color: #777777;
+
+            font-size: 11px;
+        }
+
+        /* =====================================================
+           SECTIONS
+        ===================================================== */
+
+        .section {
+            margin-top: 38px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+
+            margin-bottom: 16px;
+        }
+
+        .section-heading h2 {
+            margin: 5px 0 0;
+
+            color: #ffffff;
+
+            font-size: 22px;
+        }
+
+        .goal-status,
+        .week-range {
+            color: #777777;
+
+            font-size: 12px;
+        }
+
+        /* =====================================================
+           TODAY GOALS
+        ===================================================== */
+
+        .goal-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+        }
+
+        .goal-card,
+        .weekly-card,
+        .plan-card,
+        .achievement {
+            border: 1px solid var(--border);
+            background: var(--panel);
+        }
+
+        .goal-card {
+            padding: 21px;
+
+            border-radius: 14px;
+        }
+
+        .goal-card-top {
+            display: flex;
+            align-items: center;
+
+            gap: 11px;
+        }
+
+        .goal-icon {
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background: rgba(245,197,66,.1);
+
+            color: var(--gold);
+        }
+
+        .goal-heading {
+            flex: 1;
+        }
+
+        .goal-heading h3 {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 14px;
+        }
+
+        .goal-heading span {
+            display: block;
+
+            margin-top: 3px;
+
+            color: #777777;
+
+            font-size: 11px;
+        }
+
+        .goal-percent {
+            color: var(--gold);
+
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .goal-numbers {
+            display: flex;
+            align-items: baseline;
+
+            gap: 5px;
+
+            margin: 22px 0 12px;
+        }
+
+        .goal-numbers strong {
+            color: #ffffff;
+
+            font-size: 27px;
+        }
+
+        .goal-numbers span {
+            color: #777777;
+
+            font-size: 12px;
+        }
+
+        .goal-numbers b {
+            color: #bdbdbd;
+        }
+
+        .progress-track,
+        .weekly-progress,
+        .mini-progress,
+        .plan-progress {
+            width: 100%;
+            height: 7px;
+
+            overflow: hidden;
+
+            border-radius: 99px;
+
+            background: #242424;
+        }
+
+        .progress-bar,
+        #weeklyHoursProgress,
+        #weeklyDaysProgress,
+        #weeklyTopicsProgress,
+        #planProgress {
+            width: 0%;
+            height: 100%;
+
+            border-radius: inherit;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--gold-dark),
+                    var(--gold-light)
+                );
+
+            transition: width .4s ease;
+        }
+
+        .goal-card p,
+        .weekly-card p,
+        .plan-info p {
+            margin: 13px 0 0;
+
+            color: #777777;
+
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        /* =====================================================
+           WEEKLY
+        ===================================================== */
+
+        .weekly-grid {
+            display: grid;
+
+            grid-template-columns:
+                1.5fr 1fr 1fr;
+
+            gap: 16px;
+        }
+
+        .weekly-card {
+            min-height: 170px;
+
+            padding: 22px;
+
+            border-radius: 14px;
+        }
+
+        .weekly-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .weekly-header h3 {
+            margin: 7px 0 0;
+
+            color: #ffffff;
+
+            font-size: 34px;
+        }
+
+        .weekly-header h3 small {
+            color: #777777;
+
+            font-size: 12px;
+        }
+
+        .weekly-target {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .weekly-target span {
+            color: #666666;
+
+            font-size: 10px;
+        }
+
+        .weekly-target strong {
+            margin-top: 4px;
+
+            color: var(--gold);
+
+            font-size: 15px;
+        }
+
+        .weekly-progress {
+            height: 8px;
+            margin-top: 23px;
+        }
+
+        .big-stat {
+            display: flex;
+            align-items: baseline;
+
+            gap: 5px;
+
+            margin-top: 18px;
+        }
+
+        .big-stat strong {
+            color: #ffffff;
+
+            font-size: 35px;
+        }
+
+        .big-stat span {
+            color: #777777;
+
+            font-size: 12px;
+        }
+
+        .mini-progress {
+            height: 6px;
+            margin-top: 19px;
+        }
+
+        /* =====================================================
+           STUDY PLAN
+        ===================================================== */
+
+        .plan-card {
+            display: grid;
+
+            grid-template-columns:
+                1.6fr .8fr 1.4fr;
+
+            align-items: center;
+
+            gap: 25px;
+
+            padding: 24px;
+
+            border-radius: 14px;
+        }
+
+        .plan-info {
+            display: flex;
+            align-items: center;
+
+            gap: 15px;
+        }
+
+        .plan-icon {
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 12px;
+
+            background: rgba(245,197,66,.1);
+        }
+
+        .plan-info h3 {
+            margin: 5px 0 0;
+
+            color: #ffffff;
+
+            font-size: 16px;
+        }
+
+        .plan-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .plan-stat strong {
+            color: var(--gold);
+
+            font-size: 29px;
+        }
+
+        .plan-stat span {
+            color: #777777;
+
+            font-size: 11px;
+        }
+
+        .plan-progress-container {
+            display: flex;
+            align-items: center;
+
+            gap: 12px;
+        }
+
+        .plan-progress {
+            flex: 1;
+        }
+
+        .plan-progress-container > span {
+            color: var(--gold);
+
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        /* =====================================================
+           SUBJECTS
+        ===================================================== */
+
+        .subject-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 14px;
+        }
+
+        .subject-card {
+            border: 1px solid var(--border);
+            border-radius: 13px;
+
+            padding: 18px;
+
+            background: var(--panel);
+        }
+
+        .subject-card h3,
+        .subject-card strong {
+            color: #ffffff;
+        }
+
+        .subject-card p,
+        .subject-card span {
+            color: #777777;
+        }
+
+        /* =====================================================
+           ACHIEVEMENTS
+        ===================================================== */
+
+        .achievement-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 14px;
+        }
+
+        .achievement {
+            position: relative;
+
+            min-height: 120px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 12px;
+
+            padding: 18px;
+
+            border-radius: 13px;
+        }
+
+        .achievement-icon {
+            width: 40px;
+            height: 40px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 10px;
+
+            background: rgba(245,197,66,.08);
+
+            font-size: 19px;
+
+            opacity: .55;
+        }
+
+        .achievement strong {
+            display: block;
+
+            color: #ffffff;
+
+            font-size: 13px;
+        }
+
+        .achievement p {
+            margin: 4px 0 0;
+
+            color: #777777;
+
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .achievement-check {
+            position: absolute;
+
+            top: 12px;
+            right: 12px;
+
+            color: #555555;
+
+            font-size: 12px;
+        }
+
+        .achievement.completed,
+        .achievement.unlocked {
+            border-color: var(--gold-border);
+        }
+
+        .achievement.completed .achievement-icon,
+        .achievement.unlocked .achievement-icon {
+            opacity: 1;
+        }
+
+        .achievement.completed .achievement-check,
+        .achievement.unlocked .achievement-check {
+            color: var(--gold);
+        }
+
+        /* =====================================================
+           EMPTY STATE
+        ===================================================== */
+
+        .empty-plan {
+            margin-top: 38px;
+
+            padding: 50px 25px;
+
+            border: 1px dashed rgba(245,197,66,.25);
+            border-radius: 16px;
+
+            background: #0d0d0d;
+
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .empty-plan h2 {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 22px;
+        }
+
+        .empty-plan p {
+            max-width: 500px;
+
+            margin: 10px auto 22px;
+
+            color: #777777;
+
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .primary-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 11px 18px;
+
+            border-radius: 9px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--gold-light),
+                    var(--gold-dark)
+                );
+
+            color: #080808;
+
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 45px 20px 28px;
+
+            color: #555555;
+
+            font-size: 10px;
+        }
+
+        /* =====================================================
+           TOAST
+        ===================================================== */
+
+        .toast {
+            position: fixed;
+
+            right: 25px;
+            bottom: 25px;
+
+            max-width: 330px;
+
+            padding: 13px 17px;
+
+            border: 1px solid var(--gold-border);
+            border-radius: 10px;
+
+            background: #151515;
+
+            color: #ffffff;
+
+            font-size: 12px;
+
+            opacity: 0;
+            pointer-events: none;
+
+            transform: translateY(10px);
+
+            transition:
+                opacity .2s ease,
+                transform .2s ease;
+
+            z-index: 5000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 1100px) {
+
+            .goal-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .goal-card:last-child {
+                grid-column: span 2;
+            }
+
+            .weekly-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .weekly-card.large {
+                grid-column: span 2;
+            }
+
+            .subject-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .achievement-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .plan-card {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .plan-progress-container {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                transform: translateX(-100%);
+
+                transition: transform .25s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .topbar {
+                padding: 12px 18px;
+            }
+
+            .welcome {
+                margin-left: 10px;
+            }
+
+            .welcome h1 {
+                font-size: 18px;
+            }
+
+            .welcome p {
+                display: none;
+            }
+
+            .goals-hero,
+            .section,
+            .empty-plan,
+            .footer {
+                margin-left: 18px;
+                margin-right: 18px;
+            }
+
+            .goals-hero {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 620px) {
+
+            .goals-hero {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .hero-score {
+                align-self: center;
+            }
+
+            .goal-grid,
+            .weekly-grid,
+            .subject-grid,
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .goal-card:last-child,
+            .weekly-card.large,
+            .plan-progress-container {
+                grid-column: auto;
+            }
+
+            .plan-card {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar-actions {
+                display: none;
+            }
+
+            .section-heading {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 6px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="app-shell">
 
-    <!-- SIDEBAR -->
+    <!-- =====================================================
+         SIDEBAR
+    ===================================================== -->
+
     <aside class="sidebar" id="sidebar">
 
         <div class="brand">
-            <div class="brand-icon">S</div>
+
+            <div class="brand-icon">
+                S
+            </div>
+
             <div>
-                <strong>StudyMind</strong>
+                <strong>StudyMind AI</strong>
                 <span>AI Study Coach</span>
             </div>
+
         </div>
+
 
         <nav class="navigation">
 
-            <a href="dashboard.html" class="nav-item">
-                <span>⌂</span>
-                <span>Dashboard</span>
-            </a>
+            <div class="nav-section">
 
-            <a href="schedule.html" class="nav-item">
-                <span>☰</span>
-                <span>Schedule</span>
-            </a>
+                <div class="nav-section-label">
+                    WORKSPACE
+                </div>
 
-            <a href="calendar.html" class="nav-item">
-                <span>▣</span>
-                <span>Calendar</span>
-            </a>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">⌂</span>
+                    <span>Dashboard</span>
+                </a>
 
-            <a href="goals.html" class="nav-item active">
-                <span>🎯</span>
-                <span>Goals</span>
-            </a>
+                <a href="schedule.html" class="nav-item">
+                    <span class="nav-icon">◷</span>
+                    <span>Schedule</span>
+                </a>
 
-            <a href="study-streak.html" class="nav-item">
-                <span>🔥</span>
-                <span>Study Streak</span>
-            </a>
+                <a href="calendar.html" class="nav-item">
+                    <span class="nav-icon">▣</span>
+                    <span>Calendar</span>
+                </a>
 
-            <a href="study-timer.html" class="nav-item">
-                <span>◷</span>
-                <span>Study Timer</span>
-            </a>
+            </div>
 
-            <a href="study-session.html" class="nav-item">
-                <span>📖</span>
-                <span>Study Session</span>
-            </a>
 
-            <div class="nav-divider"></div>
+            <div class="nav-section">
 
-            <a href="ai-support.html" class="nav-item">
-                <span>✦</span>
-                <span>AI Support</span>
-            </a>
+                <div class="nav-section-label">
+                    AI TOOLS
+                </div>
 
-            <a href="ai-assistant.html" class="nav-item">
-                <span>🤖</span>
-                <span>AI Assistant</span>
-            </a>
+                <a href="ai-support.html" class="nav-item">
+                    <span class="nav-icon">✦</span>
+                    <span>AI Support</span>
+                </a>
 
-            <a href="summarizer.html" class="nav-item">
-                <span>▤</span>
-                <span>Summarizer</span>
-            </a>
+                <a href="ai-assistant.html" class="nav-item">
+                    <span class="nav-icon">◉</span>
+                    <span>AI Assistant</span>
+                </a>
 
-            <a href="game-mode.html" class="nav-item">
-                <span>🎮</span>
-                <span>Game Mode</span>
-            </a>
+                <a href="summarizer.html" class="nav-item">
+                    <span class="nav-icon">▤</span>
+                    <span>Summarizer</span>
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-label">
+                    PROGRESS
+                </div>
+
+                <a href="study-streak.html" class="nav-item">
+                    <span class="nav-icon">🔥</span>
+                    <span>Study Streak</span>
+                </a>
+
+                <a href="score.html" class="nav-item">
+                    <span class="nav-icon">★</span>
+                    <span>Study Score</span>
+                </a>
+
+                <a href="goals.html" class="nav-item active">
+                    <span class="nav-icon">◎</span>
+                    <span>Goals</span>
+                </a>
+
+                <a href="rewards.html" class="nav-item">
+                    <span class="nav-icon">◇</span>
+                    <span>Rewards</span>
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-label">
+                    COMMUNITY
+                </div>
+
+                <a href="leaderboard.html" class="nav-item">
+                    <span class="nav-icon">♛</span>
+                    <span>Leaderboard</span>
+                </a>
+
+                <a href="friends.html" class="nav-item">
+                    <span class="nav-icon">♧</span>
+                    <span>Friends</span>
+                </a>
+
+                <a href="game-mode.html" class="nav-item">
+                    <span class="nav-icon">⚔</span>
+                    <span>Game Mode</span>
+                </a>
+
+            </div>
+
+
+            <div class="nav-section">
+
+                <div class="nav-section-label">
+                    ACCOUNT
+                </div>
+
+                <a href="premium.html" class="nav-item premium-link">
+                    <span class="nav-icon">◆</span>
+                    <span>Premium</span>
+                </a>
+
+            </div>
 
         </nav>
 
+
         <div class="sidebar-bottom">
 
-            <a href="premium.html" class="premium-link">
-                <span>👑</span>
-                <span>Premium</span>
+            <a href="feedback.html" class="nav-item">
+                <span class="nav-icon">◌</span>
+                <span>Feedback</span>
+            </a>
+
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Settings</span>
             </a>
 
             <button id="themeButton" class="theme-button">
-                <span id="themeIcon">☾</span>
+                <span class="nav-icon" id="themeIcon">☾</span>
                 <span>Theme</span>
             </button>
 
@@ -102,7 +1426,10 @@
     </aside>
 
 
-    <!-- MAIN -->
+    <!-- =====================================================
+         MAIN
+    ===================================================== -->
+
     <main class="main-content">
 
         <header class="topbar">
@@ -112,26 +1439,43 @@
             </button>
 
             <div class="welcome">
-                <span id="greeting">Good morning</span>
+
+                <span id="greeting">
+                    Good morning
+                </span>
+
                 <h1>
                     Your Goals
                     <span id="userName"></span>
                 </h1>
-                <p>Turn your study plan into measurable progress.</p>
+
+                <p>
+                    Turn your study plan into measurable progress.
+                </p>
+
             </div>
 
+
             <div class="topbar-actions">
+
                 <div class="date-pill" id="todayDate"></div>
+
             </div>
 
         </header>
 
 
-        <!-- HERO -->
+        <!-- =====================================================
+             HERO
+        ===================================================== -->
+
         <section class="goals-hero">
 
             <div class="hero-copy">
-                <span class="eyebrow">YOUR PROGRESS</span>
+
+                <span class="eyebrow">
+                    YOUR PROGRESS
+                </span>
 
                 <h2>
                     Stay focused.
@@ -141,59 +1485,96 @@
                 <p id="heroMessage">
                     Your goals are calculated from your study plan and completed work.
                 </p>
+
             </div>
 
+
             <div class="hero-score">
+
                 <div class="score-ring" id="overallRing">
+
                     <div>
                         <strong id="overallPercent">0%</strong>
                         <span>today</span>
                     </div>
+
                 </div>
+
             </div>
 
         </section>
 
 
-        <!-- TODAY'S GOALS -->
+        <!-- =====================================================
+             TODAY'S GOALS
+        ===================================================== -->
+
         <section class="section">
 
             <div class="section-heading">
+
                 <div>
-                    <span class="section-label">TODAY</span>
-                    <h2>Today's Goals</h2>
+                    <span class="section-label">
+                        TODAY
+                    </span>
+
+                    <h2>
+                        Today's Goals
+                    </h2>
                 </div>
 
                 <span class="goal-status" id="todayStatus">
                     Getting started
                 </span>
+
             </div>
 
 
             <div class="goal-grid">
 
-                <!-- STUDY TIME -->
                 <article class="goal-card">
 
                     <div class="goal-card-top">
-                        <div class="goal-icon time">⏱</div>
+
+                        <div class="goal-icon time">
+                            ⏱
+                        </div>
 
                         <div class="goal-heading">
                             <h3>Study Time</h3>
                             <span>Daily target</span>
                         </div>
 
-                        <span class="goal-percent" id="timePercent">0%</span>
+                        <span class="goal-percent" id="timePercent">
+                            0%
+                        </span>
+
                     </div>
+
 
                     <div class="goal-numbers">
-                        <strong id="todayHours">0h</strong>
-                        <span>of <b id="targetHours">2h</b></span>
+
+                        <strong id="todayHours">
+                            0h
+                        </strong>
+
+                        <span>
+                            of
+                            <b id="targetHours">2h</b>
+                        </span>
+
                     </div>
 
+
                     <div class="progress-track">
-                        <div class="progress-bar" id="timeProgress"></div>
+
+                        <div
+                            class="progress-bar"
+                            id="timeProgress">
+                        </div>
+
                     </div>
+
 
                     <p id="timeMessage">
                         Start a study session to begin today's goal.
@@ -202,28 +1583,50 @@
                 </article>
 
 
-                <!-- TOPICS -->
                 <article class="goal-card">
 
                     <div class="goal-card-top">
-                        <div class="goal-icon topics">✓</div>
+
+                        <div class="goal-icon topics">
+                            ✓
+                        </div>
 
                         <div class="goal-heading">
                             <h3>Topics</h3>
                             <span>Daily target</span>
                         </div>
 
-                        <span class="goal-percent" id="topicPercent">0%</span>
+                        <span class="goal-percent" id="topicPercent">
+                            0%
+                        </span>
+
                     </div>
+
 
                     <div class="goal-numbers">
-                        <strong id="todayTopics">0</strong>
-                        <span>of <b id="targetTopics">0</b> topics</span>
+
+                        <strong id="todayTopics">
+                            0
+                        </strong>
+
+                        <span>
+                            of
+                            <b id="targetTopics">0</b>
+                            topics
+                        </span>
+
                     </div>
 
+
                     <div class="progress-track">
-                        <div class="progress-bar" id="topicProgress"></div>
+
+                        <div
+                            class="progress-bar"
+                            id="topicProgress">
+                        </div>
+
                     </div>
+
 
                     <p id="topicMessage">
                         Complete a topic to make progress.
@@ -232,28 +1635,48 @@
                 </article>
 
 
-                <!-- STREAK -->
                 <article class="goal-card">
 
                     <div class="goal-card-top">
-                        <div class="goal-icon streak">🔥</div>
+
+                        <div class="goal-icon streak">
+                            🔥
+                        </div>
 
                         <div class="goal-heading">
                             <h3>Streak</h3>
                             <span>Consistency target</span>
                         </div>
 
-                        <span class="goal-percent" id="streakPercent">0%</span>
+                        <span class="goal-percent" id="streakPercent">
+                            0%
+                        </span>
+
                     </div>
+
 
                     <div class="goal-numbers">
-                        <strong id="currentStreak">0</strong>
-                        <span>day streak</span>
+
+                        <strong id="currentStreak">
+                            0
+                        </strong>
+
+                        <span>
+                            day streak
+                        </span>
+
                     </div>
 
+
                     <div class="progress-track">
-                        <div class="progress-bar" id="streakProgress"></div>
+
+                        <div
+                            class="progress-bar"
+                            id="streakProgress">
+                        </div>
+
                     </div>
+
 
                     <p id="streakMessage">
                         Complete a topic today to start your streak.
@@ -266,16 +1689,31 @@
         </section>
 
 
-        <!-- WEEKLY -->
+        <!-- =====================================================
+             WEEKLY GOALS
+        ===================================================== -->
+
         <section class="section">
 
             <div class="section-heading">
+
                 <div>
-                    <span class="section-label">THIS WEEK</span>
-                    <h2>Weekly Goals</h2>
+
+                    <span class="section-label">
+                        THIS WEEK
+                    </span>
+
+                    <h2>
+                        Weekly Goals
+                    </h2>
+
                 </div>
 
-                <span class="week-range" id="weekRange"></span>
+                <span
+                    class="week-range"
+                    id="weekRange">
+                </span>
+
             </div>
 
 
@@ -284,23 +1722,42 @@
                 <div class="weekly-card large">
 
                     <div class="weekly-header">
+
                         <div>
-                            <span class="mini-label">STUDY HOURS</span>
+
+                            <span class="mini-label">
+                                STUDY HOURS
+                            </span>
+
                             <h3>
                                 <span id="weeklyHours">0</span>
                                 <small>hours</small>
                             </h3>
+
                         </div>
+
 
                         <div class="weekly-target">
-                            <span>Target</span>
-                            <strong id="weeklyTargetHours">0h</strong>
+
+                            <span>
+                                Target
+                            </span>
+
+                            <strong id="weeklyTargetHours">
+                                0h
+                            </strong>
+
                         </div>
+
                     </div>
 
+
                     <div class="weekly-progress">
+
                         <div id="weeklyHoursProgress"></div>
+
                     </div>
+
 
                     <p id="weeklyHoursMessage">
                         Your weekly study time will appear here.
@@ -311,34 +1768,63 @@
 
                 <div class="weekly-card">
 
-                    <span class="mini-label">STUDY DAYS</span>
+                    <span class="mini-label">
+                        STUDY DAYS
+                    </span>
 
                     <div class="big-stat">
-                        <strong id="weeklyDays">0</strong>
-                        <span>/ <b id="weeklyDaysTarget">7</b></span>
+
+                        <strong id="weeklyDays">
+                            0
+                        </strong>
+
+                        <span>
+                            /
+                            <b id="weeklyDaysTarget">7</b>
+                        </span>
+
                     </div>
+
 
                     <div class="mini-progress">
+
                         <div id="weeklyDaysProgress"></div>
+
                     </div>
 
-                    <p>Days with completed study activity.</p>
+
+                    <p>
+                        Days with completed study activity.
+                    </p>
 
                 </div>
 
 
                 <div class="weekly-card">
 
-                    <span class="mini-label">TOPICS COMPLETED</span>
+                    <span class="mini-label">
+                        TOPICS COMPLETED
+                    </span>
 
                     <div class="big-stat">
-                        <strong id="weeklyTopics">0</strong>
-                        <span>topics</span>
+
+                        <strong id="weeklyTopics">
+                            0
+                        </strong>
+
+                        <span>
+                            topics
+                        </span>
+
                     </div>
 
+
                     <div class="mini-progress">
+
                         <div id="weeklyTopicsProgress"></div>
+
                     </div>
+
 
                     <p id="weeklyTopicsMessage">
                         Keep completing topics.
@@ -351,14 +1837,26 @@
         </section>
 
 
-        <!-- PROGRESS OVERVIEW -->
+        <!-- =====================================================
+             STUDY PLAN GOALS
+        ===================================================== -->
+
         <section class="section">
 
             <div class="section-heading">
+
                 <div>
-                    <span class="section-label">PLAN PROGRESS</span>
-                    <h2>Study Plan Goals</h2>
+
+                    <span class="section-label">
+                        PLAN PROGRESS
+                    </span>
+
+                    <h2>
+                        Study Plan Goals
+                    </h2>
+
                 </div>
+
             </div>
 
 
@@ -366,14 +1864,24 @@
 
                 <div class="plan-info">
 
-                    <div class="plan-icon">📚</div>
+                    <div class="plan-icon">
+                        📚
+                    </div>
 
                     <div>
-                        <span class="mini-label">CURRENT PLAN</span>
-                        <h3 id="planName">No active study plan</h3>
+
+                        <span class="mini-label">
+                            CURRENT PLAN
+                        </span>
+
+                        <h3 id="planName">
+                            No active study plan
+                        </h3>
+
                         <p id="planDescription">
                             Create a study plan to start tracking your goals.
                         </p>
+
                     </div>
 
                 </div>
@@ -381,7 +1889,9 @@
 
                 <div class="plan-stat">
 
-                    <strong id="planCompleted">0</strong>
+                    <strong id="planCompleted">
+                        0
+                    </strong>
 
                     <span>
                         of
@@ -395,10 +1905,14 @@
                 <div class="plan-progress-container">
 
                     <div class="plan-progress">
+
                         <div id="planProgress"></div>
+
                     </div>
 
-                    <span id="planPercent">0%</span>
+                    <span id="planPercent">
+                        0%
+                    </span>
 
                 </div>
 
@@ -407,70 +1921,168 @@
         </section>
 
 
-        <!-- SUBJECT PROGRESS -->
+        <!-- =====================================================
+             SUBJECT GOALS
+        ===================================================== -->
+
         <section class="section">
 
             <div class="section-heading">
+
                 <div>
-                    <span class="section-label">SUBJECTS</span>
-                    <h2>Subject Goals</h2>
+
+                    <span class="section-label">
+                        SUBJECTS
+                    </span>
+
+                    <h2>
+                        Subject Goals
+                    </h2>
+
                 </div>
+
             </div>
 
-            <div id="subjectGoals" class="subject-grid">
+
+            <div
+                id="subjectGoals"
+                class="subject-grid">
                 <!-- Generated by JS -->
             </div>
 
         </section>
 
 
-        <!-- ACHIEVEMENTS -->
+        <!-- =====================================================
+             ACHIEVEMENTS
+        ===================================================== -->
+
         <section class="section">
 
             <div class="section-heading">
+
                 <div>
-                    <span class="section-label">MILESTONES</span>
-                    <h2>Achievements</h2>
+
+                    <span class="section-label">
+                        MILESTONES
+                    </span>
+
+                    <h2>
+                        Achievements
+                    </h2>
+
                 </div>
+
             </div>
 
 
             <div class="achievement-grid">
 
-                <div class="achievement" id="achievementFirst">
-                    <div class="achievement-icon">🌱</div>
-                    <div>
-                        <strong>First Step</strong>
-                        <p>Complete your first topic.</p>
+                <div
+                    class="achievement"
+                    id="achievementFirst">
+
+                    <div class="achievement-icon">
+                        🌱
                     </div>
-                    <span class="achievement-check">✓</span>
+
+                    <div>
+
+                        <strong>
+                            First Step
+                        </strong>
+
+                        <p>
+                            Complete your first topic.
+                        </p>
+
+                    </div>
+
+                    <span class="achievement-check">
+                        ✓
+                    </span>
+
                 </div>
 
-                <div class="achievement" id="achievementFive">
-                    <div class="achievement-icon">📚</div>
-                    <div>
-                        <strong>Getting Serious</strong>
-                        <p>Complete 5 topics.</p>
+
+                <div
+                    class="achievement"
+                    id="achievementFive">
+
+                    <div class="achievement-icon">
+                        📚
                     </div>
-                    <span class="achievement-check">✓</span>
+
+                    <div>
+
+                        <strong>
+                            Getting Serious
+                        </strong>
+
+                        <p>
+                            Complete 5 topics.
+                        </p>
+
+                    </div>
+
+                    <span class="achievement-check">
+                        ✓
+                    </span>
+
                 </div>
 
-                <div class="achievement" id="achievementTen">
-                    <div class="achievement-icon">🚀</div>
-                    <div>
-                        <strong>On A Roll</strong>
-                        <p>Complete 10 topics.</p>
+
+                <div
+                    class="achievement"
+                    id="achievementTen">
+
+                    <div class="achievement-icon">
+                        🚀
                     </div>
-                    <span class="achievement-check">✓</span>
+
+                    <div>
+
+                        <strong>
+                            On A Roll
+                        </strong>
+
+                        <p>
+                            Complete 10 topics.
+                        </p>
+
+                    </div>
+
+                    <span class="achievement-check">
+                        ✓
+                    </span>
+
                 </div>
 
-                <div class="achievement" id="achievementSeven">
-                    <div class="achievement-icon">🔥</div>
-                    <div>
-                        <strong>7-Day Streak</strong>
-                        <p>Study for 7 consecutive days.</p>
+
+                <div
+                    class="achievement"
+                    id="achievementSeven">
+
+                    <div class="achievement-icon">
+                        🔥
                     </div>
-                    <span class="achievement-check">✓</span>
+
+                    <div>
+
+                        <strong>
+                            7-Day Streak
+                        </strong>
+
+                        <p>
+                            Study for 7 consecutive days.
+                        </p>
+
+                    </div>
+
+                    <span class="achievement-check">
+                        ✓
+                    </span>
+
                 </div>
 
             </div>
@@ -478,19 +2090,31 @@
         </section>
 
 
-        <!-- EMPTY STATE -->
-        <section class="empty-plan" id="emptyPlan" hidden>
+        <!-- =====================================================
+             EMPTY STATE
+        ===================================================== -->
 
-            <div class="empty-icon">🎯</div>
+        <section
+            class="empty-plan"
+            id="emptyPlan"
+            hidden>
 
-            <h2>Create your study plan</h2>
+            <div class="empty-icon">
+                🎯
+            </div>
+
+            <h2>
+                Create your study plan
+            </h2>
 
             <p>
                 Your goals will automatically appear here once you create
                 your StudyMind study plan.
             </p>
 
-            <a href="index.html" class="primary-button">
+            <a
+                href="index.html"
+                class="primary-button">
                 Create Study Plan
             </a>
 
@@ -498,9 +2122,11 @@
 
 
         <footer class="footer">
+
             <span>StudyMind AI</span>
             <span>•</span>
             <span>Study smarter. Not harder.</span>
+
         </footer>
 
     </main>
@@ -508,10 +2134,44 @@
 </div>
 
 
-<div class="toast" id="toast"></div>
+<div
+    class="toast"
+    id="toast">
+</div>
+
+
 <script src="score.js"></script>
 <script src="goals.js"></script>
 
+
+<script>
+(function () {
+
+    const sidebar = document.getElementById("sidebar");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    if (mobileMenu && sidebar) {
+
+        mobileMenu.addEventListener("click", function () {
+            sidebar.classList.toggle("open");
+        });
+
+    }
+
+    document.querySelectorAll(".nav-item").forEach(function (item) {
+
+        item.addEventListener("click", function () {
+
+            if (window.innerWidth <= 800 && sidebar) {
+                sidebar.classList.remove("open");
+            }
+
+        });
+
+    });
+
+})();
+</script>
+
 </body>
 </html>
-
