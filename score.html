@@ -1,236 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>StudyMind AI — Study Score</title>
 
     <link rel="stylesheet" href="style.css">
 
     <style>
-
         /* =========================================================
-           STUDYMIND AI — STUDY SCORE
-           BLACK / GOLD THEME
+           STUDYMIND AI — STUDY SCORE GOLD THEME
            ========================================================= */
 
         :root {
-            --score-gold: #f5c542;
-            --score-gold-light: #ffd866;
-            --score-gold-dark: #c99a16;
+            --gold: #f5c542;
+            --gold-light: #ffd966;
+            --gold-dark: #c99b16;
 
-            --score-black: #050505;
-            --score-bg: #080808;
-            --score-panel: #101010;
-            --score-panel-2: #151515;
+            --black: #050505;
+            --black-2: #0b0b0b;
+            --panel: #111111;
+            --panel-2: #171717;
 
-            --score-border: rgba(245, 197, 66, .18);
-            --score-border-soft: rgba(255, 255, 255, .08);
+            --text: #ffffff;
+            --muted: #a5a5a5;
 
-            --score-text: #ffffff;
-            --score-muted: rgba(255, 255, 255, .62);
-
-            --score-shadow:
-                0 20px 55px rgba(0, 0, 0, .45);
-
-            --score-gold-glow:
-                0 0 30px rgba(245, 197, 66, .12);
+            --border: rgba(245, 197, 66, 0.18);
         }
-
 
         /* =========================================================
            PAGE
            ========================================================= */
 
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
         body {
             background:
                 radial-gradient(
-                    circle at 50% -10%,
-                    rgba(245, 197, 66, .08),
-                    transparent 38%
+                    circle at top right,
+                    rgba(245, 197, 66, 0.08),
+                    transparent 30%
                 ),
-                linear-gradient(
-                    180deg,
-                    #050505 0%,
-                    #080808 50%,
-                    #050505 100%
-                );
+                radial-gradient(
+                    circle at bottom left,
+                    rgba(245, 197, 66, 0.04),
+                    transparent 30%
+                ),
+                var(--black);
 
-            color: var(--score-text);
+            color: var(--text);
+
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
         }
 
 
         /* =========================================================
-           NAVIGATION
+           NAVIGATION BAR
            ========================================================= */
 
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        body .navbar {
+            width: 100%;
+            min-height: 72px;
 
             display: flex;
             align-items: center;
             justify-content: space-between;
 
-            width: 100%;
-
-            padding: 15px 28px;
+            padding: 0 28px;
+            box-sizing: border-box;
 
             background:
-                rgba(5, 5, 5, .94);
+                linear-gradient(
+                    180deg,
+                    #0d0d0d 0%,
+                    #070707 100%
+                ) !important;
 
             border-bottom:
-                1px solid rgba(245, 197, 66, .16);
+                1px solid rgba(245, 197, 66, 0.25) !important;
 
             box-shadow:
-                0 8px 30px rgba(0, 0, 0, .35);
+                0 4px 25px rgba(0, 0, 0, 0.45),
+                0 1px 0 rgba(245, 197, 66, 0.06);
 
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            position: relative;
+            z-index: 9999;
         }
 
 
-        .navbar .logo {
-            color: var(--score-gold);
+        /* GOLD LOGO */
+
+        body .navbar .logo {
+            color: var(--gold) !important;
 
             font-size: 22px;
-            font-weight: 900;
-            letter-spacing: -.4px;
+            font-weight: 800;
+
+            letter-spacing: -0.4px;
 
             text-shadow:
-                0 0 18px rgba(245, 197, 66, .16);
-
-            white-space: nowrap;
+                0 0 18px rgba(245, 197, 66, 0.15);
         }
 
 
-        .navbar nav {
+        /* NAV CONTAINER */
+
+        body .navbar nav {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-
             gap: 6px;
         }
 
 
-        .navbar nav a {
-            position: relative;
+        /* NAV LINKS */
 
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        body .navbar nav a {
+            color: #bdbdbd !important;
 
-            min-height: 40px;
+            text-decoration: none !important;
 
-            padding: 9px 13px;
+            padding: 10px 13px;
 
             border-radius: 10px;
 
-            color: rgba(255, 255, 255, .68);
-
-            text-decoration: none;
-
-            font-size: 13px;
-            font-weight: 650;
+            font-size: 14px;
+            font-weight: 600;
 
             transition:
-                color .2s ease,
-                background .2s ease,
-                transform .2s ease;
+                color 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease,
+                transform 0.2s ease;
         }
 
 
-        .navbar nav a:hover {
-            color: #ffffff;
+        /* HOVER */
+
+        body .navbar nav a:hover {
+            color: var(--gold) !important;
 
             background:
-                rgba(245, 197, 66, .08);
+                rgba(245, 197, 66, 0.08) !important;
 
             transform: translateY(-1px);
         }
 
 
-        .navbar nav a.active {
-            color: var(--score-gold);
+        /* ACTIVE STUDY SCORE */
 
-            background:
-                rgba(245, 197, 66, .11);
-
-            border:
-                1px solid rgba(245, 197, 66, .18);
-
-            box-shadow:
-                0 0 20px rgba(245, 197, 66, .06);
-        }
-
-
-        .navbar nav a.active::after {
-            content: "";
-
-            position: absolute;
-
-            left: 18%;
-            right: 18%;
-            bottom: -1px;
-
-            height: 2px;
-
-            border-radius: 999px;
+        body .navbar nav a.active {
+            color: #050505 !important;
 
             background:
                 linear-gradient(
-                    90deg,
-                    transparent,
-                    var(--score-gold),
-                    transparent
-                );
+                    135deg,
+                    var(--gold-light),
+                    var(--gold)
+                ) !important;
+
+            box-shadow:
+                0 4px 18px rgba(245, 197, 66, 0.22);
+
+            font-weight: 800;
         }
 
 
-        .navbar nav button {
-            min-height: 40px;
+        /* NAV BUTTONS */
 
-            padding: 9px 13px;
+        body .navbar nav button {
+            border: 1px solid rgba(245, 197, 66, 0.3) !important;
+
+            background:
+                rgba(245, 197, 66, 0.06) !important;
+
+            color: var(--gold) !important;
 
             border-radius: 10px;
 
-            border:
-                1px solid rgba(255, 255, 255, .09);
+            padding: 9px 13px;
 
-            background:
-                rgba(255, 255, 255, .045);
-
-            color:
-                rgba(255, 255, 255, .72);
-
-            font-size: 13px;
-            font-weight: 650;
+            font-size: 14px;
+            font-weight: 700;
 
             cursor: pointer;
 
             transition:
-                background .2s ease,
-                color .2s ease,
-                border-color .2s ease,
-                transform .2s ease;
+                background 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
         }
 
 
-        .navbar nav button:hover {
-            color: var(--score-gold);
-
+        body .navbar nav button:hover {
             background:
-                rgba(245, 197, 66, .08);
+                var(--gold) !important;
 
-            border-color:
-                rgba(245, 197, 66, .2);
+            color: #050505 !important;
 
             transform: translateY(-1px);
         }
@@ -242,20 +219,14 @@
 
         .score-page {
             max-width: 1200px;
-
             margin: 0 auto;
 
-            padding:
-                42px 20px 70px;
+            padding: 35px 20px 60px;
         }
 
 
-        /* =========================================================
-           HERO
-           ========================================================= */
-
         .score-hero {
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
 
 
@@ -264,42 +235,36 @@
 
             color: #ffffff;
 
-            font-size: clamp(30px, 4vw, 42px);
-
-            font-weight: 900;
-
-            letter-spacing: -.8px;
+            font-size: 34px;
+            font-weight: 850;
         }
 
 
         .score-hero p {
             margin: 0;
 
-            color: var(--score-muted);
+            color: var(--muted);
 
-            font-size: 15px;
-        }
-
-
-        /* =========================================================
-           TOP SECTION
-           ========================================================= */
-
-        .score-top {
-            display: grid;
-
-            grid-template-columns:
-                1.05fr .95fr;
-
-            gap: 22px;
-
-            margin-bottom: 22px;
+            opacity: 0.8;
         }
 
 
         /* =========================================================
            CARDS
            ========================================================= */
+
+        .score-top {
+            display: grid;
+
+            grid-template-columns:
+                1.05fr
+                0.95fr;
+
+            gap: 22px;
+
+            margin-bottom: 22px;
+        }
+
 
         .score-card {
             border-radius: 24px;
@@ -309,33 +274,23 @@
             background:
                 linear-gradient(
                     145deg,
-                    rgba(22, 22, 22, .98),
-                    rgba(11, 11, 11, .98)
-                );
+                    rgba(255,255,255,0.055),
+                    rgba(255,255,255,0.025)
+                ) !important;
 
             border:
-                1px solid var(--score-border);
+                1px solid rgba(245, 197, 66, 0.14) !important;
+
+            backdrop-filter: blur(12px);
 
             box-shadow:
-                var(--score-shadow);
-
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-
-            transition:
-                border-color .25s ease,
-                box-shadow .25s ease,
-                transform .25s ease;
+                0 18px 50px rgba(0,0,0,0.3);
         }
 
 
         .score-card:hover {
             border-color:
-                rgba(245, 197, 66, .27);
-
-            box-shadow:
-                0 22px 65px rgba(0, 0, 0, .5),
-                0 0 30px rgba(245, 197, 66, .04);
+                rgba(245, 197, 66, 0.25) !important;
         }
 
 
@@ -361,36 +316,38 @@
         .score-gauge {
             --score-progress: 0deg;
 
-            position: relative;
-
             width: 230px;
             height: 230px;
 
             min-width: 230px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
 
             border-radius: 50%;
 
             background:
                 conic-gradient(
                     from -90deg,
-                    var(--score-gold) 0deg,
-                    var(--score-gold-light) var(--score-progress),
-                    rgba(255, 255, 255, .07) var(--score-progress),
-                    rgba(255, 255, 255, .07) 360deg
+
+                    var(--gold) 0deg,
+
+                    var(--gold-light)
+                    var(--score-progress),
+
+                    rgba(255,255,255,0.07)
+                    var(--score-progress),
+
+                    rgba(255,255,255,0.07)
+                    360deg
                 );
 
-            box-shadow:
-                0 0 35px rgba(245, 197, 66, .14),
-                0 18px 45px rgba(0, 0, 0, .4);
+            display: flex;
 
-            transition:
-                background .7s ease,
-                box-shadow .3s ease;
+            align-items: center;
+            justify-content: center;
+
+            position: relative;
+
+            box-shadow:
+                0 0 35px rgba(245, 197, 66, 0.12);
         }
 
 
@@ -404,14 +361,7 @@
             border-radius: 50%;
 
             background:
-                radial-gradient(
-                    circle,
-                    #161616 0%,
-                    #090909 70%
-                );
-
-            border:
-                1px solid rgba(245, 197, 66, .08);
+                #0a0a0a;
         }
 
 
@@ -425,49 +375,22 @@
 
 
         .score-number {
-            color: #ffffff;
-
             font-size: 55px;
 
             line-height: 1;
 
             font-weight: 900;
 
-            text-shadow:
-                0 0 20px rgba(245, 197, 66, .15);
+            color: var(--gold);
         }
 
 
         .score-out-of {
-            margin-top: 7px;
-
-            color: rgba(255, 255, 255, .5);
-
             font-size: 14px;
-        }
 
+            color: #999;
 
-        /* =========================================================
-           SCORE EXPLANATION
-           ========================================================= */
-
-        .score-explanation h2 {
-            margin:
-                0 0 10px;
-
-            color: #ffffff;
-
-            font-size: 25px;
-
-            font-weight: 800;
-        }
-
-
-        .score-explanation p {
-            line-height: 1.7;
-
-            color:
-                rgba(255, 255, 255, .62);
+            margin-top: 6px;
         }
 
 
@@ -476,36 +399,53 @@
 
             align-items: center;
 
-            margin-top: 15px;
-
-            padding: 8px 13px;
+            padding: 7px 12px;
 
             border-radius: 999px;
 
             background:
-                rgba(245, 197, 66, .1);
+                rgba(245, 197, 66, 0.10);
 
             border:
-                1px solid rgba(245, 197, 66, .18);
+                1px solid rgba(245, 197, 66, 0.16);
 
-            color:
-                var(--score-gold);
+            color: var(--gold);
 
             font-size: 13px;
 
-            font-weight: 700;
+            margin-top: 15px;
         }
 
 
         /* =========================================================
-           MINI STAT GRID
+           SCORE EXPLANATION
+           ========================================================= */
+
+        .score-explanation h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+
+            color: #ffffff;
+        }
+
+
+        .score-explanation p {
+            line-height: 1.65;
+
+            color: #a7a7a7;
+        }
+
+
+        /* =========================================================
+           MINI STATS
            ========================================================= */
 
         .score-mini-grid {
             display: grid;
 
             grid-template-columns:
-                1fr 1fr;
+                1fr
+                1fr;
 
             gap: 14px;
         }
@@ -517,64 +457,44 @@
             padding: 20px;
 
             background:
-                rgba(255, 255, 255, .035);
+                rgba(255,255,255,0.035) !important;
 
             border:
-                1px solid rgba(255, 255, 255, .07);
-
-            transition:
-                background .2s ease,
-                border-color .2s ease,
-                transform .2s ease;
-        }
-
-
-        .score-mini:hover {
-            background:
-                rgba(245, 197, 66, .045);
-
-            border-color:
-                rgba(245, 197, 66, .16);
-
-            transform: translateY(-2px);
+                1px solid rgba(245,197,66,0.09) !important;
         }
 
 
         .score-mini-icon {
-            margin-bottom: 9px;
-
             font-size: 25px;
+
+            margin-bottom: 9px;
         }
 
 
         .score-mini-label {
+            font-size: 13px;
+
+            color: #929292;
+
             margin-bottom: 5px;
-
-            color:
-                rgba(255, 255, 255, .5);
-
-            font-size: 12px;
-
-            font-weight: 700;
-
-            letter-spacing: .5px;
         }
 
 
         .score-mini-value {
-            color: #ffffff;
-
             font-size: 27px;
 
-            font-weight: 850;
+            font-weight: 800;
+
+            color: #ffffff;
         }
 
 
         .score-mini-value small {
-            color:
-                rgba(255, 255, 255, .48);
-
             font-size: 13px;
+
+            color: #888;
+
+            margin-left: 4px;
         }
 
 
@@ -587,24 +507,18 @@
         }
 
 
-        .breakdown-card h2,
-        .score-card > h2 {
-            margin:
-                0 0 7px;
+        .breakdown-card h2 {
+            margin-top: 0;
+            margin-bottom: 7px;
 
             color: #ffffff;
-
-            font-size: 22px;
-
-            font-weight: 800;
         }
 
 
         .breakdown-description {
-            margin-bottom: 24px;
+            color: #929292;
 
-            color:
-                rgba(255, 255, 255, .52);
+            margin-bottom: 24px;
         }
 
 
@@ -622,6 +536,7 @@
             display: flex;
 
             align-items: center;
+
             justify-content: space-between;
 
             margin-bottom: 9px;
@@ -629,62 +544,59 @@
 
 
         .score-row-name {
-            color:
-                rgba(255, 255, 255, .9);
+            color: #eeeeee;
 
             font-weight: 650;
         }
 
 
         .score-row-value {
-            color:
-                rgba(255, 255, 255, .6);
+            color: var(--gold);
+
+            opacity: 0.85;
 
             font-size: 14px;
         }
 
 
         /* =========================================================
-           GOLD PROGRESS BARS
+           PROGRESS BARS
            ========================================================= */
 
         .score-progress {
-            width: 100%;
-
             height: 10px;
 
-            overflow: hidden;
+            width: 100%;
+
+            background:
+                rgba(255,255,255,0.07);
 
             border-radius: 999px;
 
-            background:
-                rgba(255, 255, 255, .07);
-
-            box-shadow:
-                inset 0 1px 2px rgba(0, 0, 0, .35);
+            overflow: hidden;
         }
 
 
         .score-progress-bar {
-            width: 0%;
-
             height: 100%;
+
+            width: 0%;
 
             border-radius: inherit;
 
             background:
                 linear-gradient(
                     90deg,
-                    var(--score-gold-dark),
-                    var(--score-gold),
-                    var(--score-gold-light)
+                    var(--gold-dark),
+                    var(--gold),
+                    var(--gold-light)
                 );
 
             box-shadow:
-                0 0 12px rgba(245, 197, 66, .18);
+                0 0 12px rgba(245,197,66,0.22);
 
             transition:
-                width .7s ease;
+                width 0.7s ease;
         }
 
 
@@ -710,15 +622,15 @@
             border-radius: 18px;
 
             background:
-                rgba(255, 255, 255, .03);
+                rgba(255,255,255,0.035) !important;
 
             border:
-                1px solid rgba(255, 255, 255, .06);
+                1px solid rgba(245,197,66,0.09) !important;
 
-            opacity: .42;
+            opacity: 0.45;
 
             transition:
-                .25s ease;
+                0.25s ease;
         }
 
 
@@ -726,45 +638,36 @@
             opacity: 1;
 
             transform:
-                translateY(-3px);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(245, 197, 66, .1),
-                    rgba(255, 255, 255, .025)
-                );
+                translateY(-2px);
 
             border-color:
-                rgba(245, 197, 66, .27);
+                rgba(245,197,66,0.3) !important;
 
             box-shadow:
-                0 12px 30px rgba(0, 0, 0, .25),
-                0 0 22px rgba(245, 197, 66, .06);
+                0 8px 25px rgba(245,197,66,0.08);
         }
 
 
         .achievement-icon {
-            margin-bottom: 10px;
-
             font-size: 34px;
+
+            margin-bottom: 10px;
         }
 
 
         .achievement-title {
-            margin-bottom: 5px;
-
             color: #ffffff;
 
             font-weight: 750;
+
+            margin-bottom: 5px;
         }
 
 
         .achievement-description {
-            color:
-                rgba(255, 255, 255, .55);
-
             font-size: 12px;
+
+            color: #8d8d8d;
 
             line-height: 1.4;
         }
@@ -785,11 +688,6 @@
 
         .score-tip-icon {
             font-size: 32px;
-
-            filter:
-                drop-shadow(
-                    0 0 10px rgba(245, 197, 66, .12)
-                );
         }
 
 
@@ -798,13 +696,12 @@
 
             margin-bottom: 5px;
 
-            color: #ffffff;
+            color: var(--gold);
         }
 
 
         .score-tip span {
-            color:
-                rgba(255, 255, 255, .6);
+            color: #999;
 
             font-size: 14px;
 
@@ -813,234 +710,107 @@
 
 
         /* =========================================================
-           LIGHT MODE
+           LIGHT MODE OVERRIDE
            ========================================================= */
 
         body.light-mode {
-            background:
-                linear-gradient(
-                    180deg,
-                    #f5f5f2,
-                    #eeeeeb
-                );
-
-            color: #111111;
+            background: #080808 !important;
+            color: #ffffff !important;
         }
-
 
         body.light-mode .navbar {
             background:
-                rgba(250, 250, 248, .95);
-
-            border-bottom:
-                1px solid rgba(190, 145, 20, .22);
+                #070707 !important;
         }
-
-
-        body.light-mode .navbar .logo {
-            color:
-                #a87900;
-        }
-
-
-        body.light-mode .navbar nav a {
-            color:
-                rgba(0, 0, 0, .62);
-        }
-
-
-        body.light-mode .navbar nav a:hover {
-            color:
-                #8f6800;
-
-            background:
-                rgba(245, 197, 66, .12);
-        }
-
-
-        body.light-mode .navbar nav a.active {
-            color:
-                #8f6800;
-
-            background:
-                rgba(245, 197, 66, .16);
-
-            border-color:
-                rgba(190, 145, 20, .25);
-        }
-
-
-        body.light-mode .navbar nav button {
-            color:
-                rgba(0, 0, 0, .65);
-
-            background:
-                rgba(0, 0, 0, .04);
-
-            border-color:
-                rgba(0, 0, 0, .09);
-        }
-
 
         body.light-mode .score-card {
             background:
-                rgba(255, 255, 255, .9);
+                linear-gradient(
+                    145deg,
+                    #151515,
+                    #0d0d0d
+                ) !important;
 
             border-color:
-                rgba(190, 145, 20, .18);
-
-            box-shadow:
-                0 15px 45px rgba(0, 0, 0, .08);
+                rgba(245,197,66,0.15) !important;
         }
-
-
-        body.light-mode .score-hero h1,
-        body.light-mode .score-explanation h2,
-        body.light-mode .breakdown-card h2,
-        body.light-mode .score-card > h2,
-        body.light-mode .score-number,
-        body.light-mode .score-mini-value,
-        body.light-mode .achievement-title,
-        body.light-mode .score-tip strong {
-            color:
-                #151515;
-        }
-
-
-        body.light-mode .score-hero p,
-        body.light-mode .score-explanation p,
-        body.light-mode .breakdown-description,
-        body.light-mode .score-row-value,
-        body.light-mode .score-tip span {
-            color:
-                rgba(0, 0, 0, .58);
-        }
-
 
         body.light-mode .score-gauge::before {
-            background:
-                #f8f8f5;
+            background: #090909;
         }
-
 
         body.light-mode .score-mini,
         body.light-mode .achievement {
             background:
-                rgba(0, 0, 0, .025);
+                rgba(255,255,255,0.035) !important;
 
             border-color:
-                rgba(0, 0, 0, .07);
+                rgba(245,197,66,0.10) !important;
         }
-
-
-        body.light-mode .score-mini:hover {
-            background:
-                rgba(245, 197, 66, .1);
-
-            border-color:
-                rgba(190, 145, 20, .2);
-        }
-
 
         body.light-mode .score-progress {
             background:
-                rgba(0, 0, 0, .08);
+                rgba(255,255,255,0.08);
         }
 
 
         /* =========================================================
-           RESPONSIVE
+           MOBILE
            ========================================================= */
 
-        @media (max-width: 1050px) {
+        @media (max-width: 1000px) {
 
-            .navbar {
-                padding:
-                    14px 18px;
-            }
-
-            .navbar nav {
-                gap: 3px;
-            }
-
-            .navbar nav a {
-                padding:
-                    8px 9px;
-
-                font-size: 12px;
-            }
-
-            .navbar nav button {
-                padding:
-                    8px 9px;
-
-                font-size: 12px;
-            }
-
-        }
-
-
-        @media (max-width: 900px) {
-
-            .navbar {
-                position: relative;
-
-                flex-direction: column;
-
-                align-items: stretch;
-
-                gap: 12px;
-            }
-
-            .navbar .logo {
-                text-align: center;
-            }
-
-            .navbar nav {
-                justify-content: center;
+            body .navbar {
+                padding: 12px 18px;
 
                 flex-wrap: wrap;
+
+                gap: 10px;
+            }
+
+            body .navbar nav {
+                flex-wrap: wrap;
+
+                justify-content: flex-end;
+            }
+
+            body .navbar nav a {
+                font-size: 12px;
+
+                padding: 8px 9px;
             }
 
             .score-top {
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
             .achievement-grid {
                 grid-template-columns:
                     1fr 1fr;
             }
-
         }
 
 
         @media (max-width: 620px) {
 
+            body .navbar {
+                flex-direction: column;
+
+                align-items: stretch;
+            }
+
+            body .navbar .logo {
+                text-align: center;
+            }
+
+            body .navbar nav {
+                justify-content: center;
+            }
+
             .score-page {
                 padding:
-                    25px 14px 45px;
+                    20px 14px 45px;
             }
-
-
-            .score-hero {
-                margin-bottom: 22px;
-            }
-
-
-            .score-hero h1 {
-                font-size: 30px;
-            }
-
-
-            .score-card {
-                padding:
-                    22px 18px;
-
-                border-radius:
-                    20px;
-            }
-
 
             .score-main-card {
                 flex-direction: column;
@@ -1051,175 +821,152 @@
                     24px 18px;
             }
 
-
             .score-gauge {
                 width: 190px;
+
                 height: 190px;
 
                 min-width: 190px;
             }
 
-
             .score-number {
                 font-size: 45px;
             }
 
-
             .score-mini-grid {
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
-
 
             .achievement-grid {
                 grid-template-columns:
                     1fr 1fr;
             }
-
-
-            .score-tip {
-                align-items: flex-start;
-            }
-
-
-            .navbar nav a,
-            .navbar nav button {
-                font-size: 11px;
-
-                padding:
-                    7px 8px;
-            }
-
         }
-
-
-        @media (max-width: 430px) {
-
-            .achievement-grid {
-                grid-template-columns:
-                    1fr;
-            }
-
-            .navbar nav {
-                display: grid;
-
-                grid-template-columns:
-                    1fr 1fr;
-
-                width: 100%;
-            }
-
-            .navbar nav a,
-            .navbar nav button {
-                width: 100%;
-            }
-
-        }
-
     </style>
-
 </head>
-
 
 <body>
 
+    <!-- =========================================================
+         NAVIGATION
+         ========================================================= -->
 
-<header class="navbar">
+    <header class="navbar">
 
-    <div class="logo">
-        StudyMind AI
-    </div>
+        <div class="logo">
+            StudyMind AI
+        </div>
 
+        <nav>
 
-    <nav>
+            <a href="home.html">
+                Home
+            </a>
 
-        <a href="home.html">
-            Home
-        </a>
+            <a href="index.html">
+                New Study Plan
+            </a>
 
-        <a href="index.html">
-            New Study Plan
-        </a>
+            <a href="summarizer.html">
+                Summarizer
+            </a>
 
-        <a href="summarizer.html">
-            Summarizer
-        </a>
+            <a href="ai-support.html">
+                AI Support
+            </a>
 
-        <a href="ai-support.html">
-            AI Support
-        </a>
+            <a href="streak.html">
+                Study Streak
+            </a>
 
-        <a href="streak.html">
-            Study Streak
-        </a>
+            <a href="score.html" class="active">
+                Study Score
+            </a>
 
-        <a
-            href="score.html"
-            class="active"
-        >
-            Study Score
-        </a>
+            <button
+                id="themeButton"
+                type="button"
+                onclick="toggleTheme()">
+                🌙
+            </button>
 
+            <button
+                type="button"
+                onclick="logoutStudyMind()">
+                Logout
+            </button>
 
-        <button
-            id="themeButton"
-            type="button"
-            onclick="toggleTheme()"
-        >
-            🌙
-        </button>
+        </nav>
 
-
-        <button
-            type="button"
-            onclick="logoutStudyMind()"
-        >
-            Logout
-        </button>
-
-    </nav>
-
-</header>
+    </header>
 
 
-<main class="score-page">
+    <!-- =========================================================
+         MAIN
+         ========================================================= -->
+
+    <main class="score-page">
+
+        <section class="score-hero">
+
+            <h1>
+                📊 Study Score
+            </h1>
+
+            <p>
+                See how consistently and effectively you're progressing.
+            </p>
+
+        </section>
 
 
-    <section class="score-hero">
+        <!-- =====================================================
+             TOP SECTION
+             ===================================================== -->
 
-        <h1>
-            📊 Study Score
-        </h1>
+        <section class="score-top">
 
-        <p>
-            See how consistently and effectively you're progressing.
-        </p>
+            <div class="score-card score-main-card">
 
-    </section>
+                <div
+                    class="score-gauge"
+                    id="scoreGauge">
 
+                    <div class="score-gauge-inner">
 
-    <section class="score-top">
+                        <div
+                            class="score-number"
+                            id="overallScore">
+                            0
+                        </div>
 
+                        <div class="score-out-of">
+                            out of 100
+                        </div>
 
-        <div class="score-card score-main-card">
-
-
-            <div
-                class="score-gauge"
-                id="scoreGauge"
-            >
-
-                <div class="score-gauge-inner">
-
-                    <div
-                        class="score-number"
-                        id="overallScore"
-                    >
-                        0
                     </div>
 
-                    <div class="score-out-of">
-                        out of 100
+                </div>
+
+
+                <div class="score-explanation">
+
+                    <h2 id="scoreTitle">
+                        Let's get started
+                    </h2>
+
+                    <p id="scoreDescription">
+                        Your Study Score will increase as you complete
+                        topics, knowledge checks, study consistently,
+                        and make progress through your study plan.
+                    </p>
+
+                    <div
+                        class="score-status"
+                        id="scoreStatus">
+
+                        🚀 Getting Started
+
                     </div>
 
                 </div>
@@ -1227,400 +974,374 @@
             </div>
 
 
-            <div class="score-explanation">
+            <!-- MINI STATS -->
 
-                <h2 id="scoreTitle">
-                    Let's get started
-                </h2>
+            <div class="score-card">
 
-                <p id="scoreDescription">
-                    Your Study Score will increase as you complete
-                    topics, knowledge checks, study consistently,
-                    and make progress through your study plan.
-                </p>
+                <div class="score-mini-grid">
+
+                    <div class="score-mini">
+
+                        <div class="score-mini-icon">
+                            📚
+                        </div>
+
+                        <div class="score-mini-label">
+                            TOPICS
+                        </div>
+
+                        <div class="score-mini-value">
+                            <span id="topicsCompleted">
+                                0
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="score-mini">
+
+                        <div class="score-mini-icon">
+                            🧠
+                        </div>
+
+                        <div class="score-mini-label">
+                            KNOWLEDGE CHECKS
+                        </div>
+
+                        <div class="score-mini-value">
+                            <span id="questionsCompleted">
+                                0
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="score-mini">
+
+                        <div class="score-mini-icon">
+                            🔥
+                        </div>
+
+                        <div class="score-mini-label">
+                            CURRENT STREAK
+                        </div>
+
+                        <div class="score-mini-value">
+
+                            <span id="currentStreak">
+                                0
+                            </span>
+
+                            <small>
+                                days
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="score-mini">
+
+                        <div class="score-mini-icon">
+                            🎯
+                        </div>
+
+                        <div class="score-mini-label">
+                            PLAN PROGRESS
+                        </div>
+
+                        <div class="score-mini-value">
+
+                            <span id="planProgress">
+                                0
+                            </span>
+
+                            <small>
+                                %
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SCORE BREAKDOWN
+             ===================================================== -->
+
+        <section class="score-card breakdown-card">
+
+            <h2>
+                Score Breakdown
+            </h2>
+
+            <p class="breakdown-description">
+                Your score is based on several parts of your study activity.
+            </p>
+
+
+            <div class="score-row">
+
+                <div class="score-row-top">
+
+                    <span class="score-row-name">
+                        📚 Topic Completion
+                    </span>
+
+                    <span
+                        class="score-row-value"
+                        id="topicScoreText">
+                        0 / 30
+                    </span>
+
+                </div>
+
+                <div class="score-progress">
+
+                    <div
+                        class="score-progress-bar"
+                        id="topicScoreBar">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-row">
+
+                <div class="score-row-top">
+
+                    <span class="score-row-name">
+                        🧠 Knowledge Checks
+                    </span>
+
+                    <span
+                        class="score-row-value"
+                        id="questionScoreText">
+                        0 / 25
+                    </span>
+
+                </div>
+
+                <div class="score-progress">
+
+                    <div
+                        class="score-progress-bar"
+                        id="questionScoreBar">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-row">
+
+                <div class="score-row-top">
+
+                    <span class="score-row-name">
+                        🔥 Study Consistency
+                    </span>
+
+                    <span
+                        class="score-row-value"
+                        id="streakScoreText">
+                        0 / 25
+                    </span>
+
+                </div>
+
+                <div class="score-progress">
+
+                    <div
+                        class="score-progress-bar"
+                        id="streakScoreBar">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-row">
+
+                <div class="score-row-top">
+
+                    <span class="score-row-name">
+                        🎯 Study Plan Progress
+                    </span>
+
+                    <span
+                        class="score-row-value"
+                        id="planScoreText">
+                        0 / 20
+                    </span>
+
+                </div>
+
+                <div class="score-progress">
+
+                    <div
+                        class="score-progress-bar"
+                        id="planScoreBar">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             ACHIEVEMENTS
+             ===================================================== -->
+
+        <section class="score-card">
+
+            <h2>
+                🏆 Achievements
+            </h2>
+
+            <p class="breakdown-description">
+                Keep studying to unlock more achievements.
+            </p>
+
+            <div class="achievement-grid">
 
 
                 <div
-                    class="score-status"
-                    id="scoreStatus"
-                >
-                    🚀 Getting Started
-                </div>
+                    class="achievement"
+                    id="achievementFirstTopic">
 
-            </div>
-
-        </div>
-
-
-        <div class="score-card">
-
-            <div class="score-mini-grid">
-
-
-                <div class="score-mini">
-
-                    <div class="score-mini-icon">
-                        📚
+                    <div class="achievement-icon">
+                        📖
                     </div>
 
-                    <div class="score-mini-label">
-                        TOPICS
+                    <div class="achievement-title">
+                        First Topic
                     </div>
 
-                    <div class="score-mini-value">
-
-                        <span id="topicsCompleted">
-                            0
-                        </span>
-
+                    <div class="achievement-description">
+                        Complete your first topic.
                     </div>
 
                 </div>
 
 
-                <div class="score-mini">
+                <div
+                    class="achievement"
+                    id="achievementFiveTopics">
 
-                    <div class="score-mini-icon">
-                        🧠
+                    <div class="achievement-icon">
+                        🎓
                     </div>
 
-                    <div class="score-mini-label">
-                        KNOWLEDGE CHECKS
+                    <div class="achievement-title">
+                        5 Topics
                     </div>
 
-                    <div class="score-mini-value">
-
-                        <span id="questionsCompleted">
-                            0
-                        </span>
-
+                    <div class="achievement-description">
+                        Complete five topics.
                     </div>
 
                 </div>
 
 
-                <div class="score-mini">
+                <div
+                    class="achievement"
+                    id="achievementSevenDays">
 
-                    <div class="score-mini-icon">
+                    <div class="achievement-icon">
                         🔥
                     </div>
 
-                    <div class="score-mini-label">
-                        CURRENT STREAK
+                    <div class="achievement-title">
+                        7-Day Streak
                     </div>
 
-                    <div class="score-mini-value">
-
-                        <span id="currentStreak">
-                            0
-                        </span>
-
-                        <small>
-                            days
-                        </small>
-
+                    <div class="achievement-description">
+                        Maintain a seven-day streak.
                     </div>
 
                 </div>
 
-
-                <div class="score-mini">
-
-                    <div class="score-mini-icon">
-                        🎯
-                    </div>
-
-                    <div class="score-mini-label">
-                        PLAN PROGRESS
-                    </div>
-
-                    <div class="score-mini-value">
-
-                        <span id="planProgress">
-                            0
-                        </span>
-
-                        <small>
-                            %
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <section class="score-card breakdown-card">
-
-        <h2>
-            Score Breakdown
-        </h2>
-
-        <p class="breakdown-description">
-            Your score is based on several parts of your study activity.
-        </p>
-
-
-        <div class="score-row">
-
-            <div class="score-row-top">
-
-                <span class="score-row-name">
-                    📚 Topic Completion
-                </span>
-
-                <span
-                    class="score-row-value"
-                    id="topicScoreText"
-                >
-                    0 / 30
-                </span>
-
-            </div>
-
-
-            <div class="score-progress">
 
                 <div
-                    class="score-progress-bar"
-                    id="topicScoreBar"
-                ></div>
+                    class="achievement"
+                    id="achievementHighScore">
 
-            </div>
+                    <div class="achievement-icon">
+                        💎
+                    </div>
 
-        </div>
+                    <div class="achievement-title">
+                        Elite Scholar
+                    </div>
 
+                    <div class="achievement-description">
+                        Reach a Study Score of 80+.
+                    </div>
 
-        <div class="score-row">
-
-            <div class="score-row-top">
-
-                <span class="score-row-name">
-                    🧠 Knowledge Checks
-                </span>
-
-                <span
-                    class="score-row-value"
-                    id="questionScoreText"
-                >
-                    0 / 25
-                </span>
-
-            </div>
-
-
-            <div class="score-progress">
-
-                <div
-                    class="score-progress-bar"
-                    id="questionScoreBar"
-                ></div>
-
-            </div>
-
-        </div>
-
-
-        <div class="score-row">
-
-            <div class="score-row-top">
-
-                <span class="score-row-name">
-                    🔥 Study Consistency
-                </span>
-
-                <span
-                    class="score-row-value"
-                    id="streakScoreText"
-                >
-                    0 / 25
-                </span>
-
-            </div>
-
-
-            <div class="score-progress">
-
-                <div
-                    class="score-progress-bar"
-                    id="streakScoreBar"
-                ></div>
-
-            </div>
-
-        </div>
-
-
-        <div class="score-row">
-
-            <div class="score-row-top">
-
-                <span class="score-row-name">
-                    🎯 Study Plan Progress
-                </span>
-
-                <span
-                    class="score-row-value"
-                    id="planScoreText"
-                >
-                    0 / 20
-                </span>
-
-            </div>
-
-
-            <div class="score-progress">
-
-                <div
-                    class="score-progress-bar"
-                    id="planScoreBar"
-                ></div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <section class="score-card">
-
-        <h2>
-            🏆 Achievements
-        </h2>
-
-        <p class="breakdown-description">
-            Keep studying to unlock more achievements.
-        </p>
-
-
-        <div class="achievement-grid">
-
-
-            <div
-                class="achievement"
-                id="achievementFirstTopic"
-            >
-
-                <div class="achievement-icon">
-                    📖
                 </div>
 
-                <div class="achievement-title">
-                    First Topic
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             TIP
+             ===================================================== -->
+
+        <section class="score-card">
+
+            <div class="score-tip">
+
+                <div class="score-tip-icon">
+                    💡
                 </div>
 
-                <div class="achievement-description">
-                    Complete your first topic.
+                <div>
+
+                    <strong id="scoreTipTitle">
+                        Your score grows with consistency.
+                    </strong>
+
+                    <span id="scoreTipText">
+                        Complete your study topics and knowledge checks,
+                        then keep your streak alive.
+                    </span>
+
                 </div>
 
             </div>
 
+        </section>
 
-            <div
-                class="achievement"
-                id="achievementFiveTopics"
-            >
-
-                <div class="achievement-icon">
-                    🎓
-                </div>
-
-                <div class="achievement-title">
-                    5 Topics
-                </div>
-
-                <div class="achievement-description">
-                    Complete five topics.
-                </div>
-
-            </div>
+    </main>
 
 
-            <div
-                class="achievement"
-                id="achievementSevenDays"
-            >
+    <!-- =========================================================
+         JAVASCRIPT
+         ========================================================= -->
 
-                <div class="achievement-icon">
-                    🔥
-                </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-                <div class="achievement-title">
-                    7-Day Streak
-                </div>
+    <script src="supabase.js"></script>
 
-                <div class="achievement-description">
-                    Maintain a seven-day streak.
-                </div>
-
-            </div>
-
-
-            <div
-                class="achievement"
-                id="achievementHighScore"
-            >
-
-                <div class="achievement-icon">
-                    💎
-                </div>
-
-                <div class="achievement-title">
-                    Elite Scholar
-                </div>
-
-                <div class="achievement-description">
-                    Reach a Study Score of 80+.
-                </div>
-
-            </div>
-
-
-        </div>
-
-    </section>
-
-
-    <section class="score-card">
-
-        <div class="score-tip">
-
-            <div class="score-tip-icon">
-                💡
-            </div>
-
-
-            <div>
-
-                <strong id="scoreTipTitle">
-                    Your score grows with consistency.
-                </strong>
-
-                <span id="scoreTipText">
-                    Complete your study topics and knowledge checks,
-                    then keep your streak alive.
-                </span>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-</main>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="score.js"></script>
+    <script src="score.js"></script>
 
 </body>
 </html>
