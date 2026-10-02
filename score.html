@@ -3,6 +3,7 @@
 <head>
 
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -14,331 +15,1103 @@
 
     <style>
 
+        /* =========================================================
+           STUDYMIND AI — STUDY SCORE
+           BLACK / GOLD THEME
+           ========================================================= */
+
+        :root {
+            --score-gold: #f5c542;
+            --score-gold-light: #ffd866;
+            --score-gold-dark: #c99a16;
+
+            --score-black: #050505;
+            --score-bg: #080808;
+            --score-panel: #101010;
+            --score-panel-2: #151515;
+
+            --score-border: rgba(245, 197, 66, .18);
+            --score-border-soft: rgba(255, 255, 255, .08);
+
+            --score-text: #ffffff;
+            --score-muted: rgba(255, 255, 255, .62);
+
+            --score-shadow:
+                0 20px 55px rgba(0, 0, 0, .45);
+
+            --score-gold-glow:
+                0 0 30px rgba(245, 197, 66, .12);
+        }
+
+
+        /* =========================================================
+           PAGE
+           ========================================================= */
+
+        body {
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    rgba(245, 197, 66, .08),
+                    transparent 38%
+                ),
+                linear-gradient(
+                    180deg,
+                    #050505 0%,
+                    #080808 50%,
+                    #050505 100%
+                );
+
+            color: var(--score-text);
+        }
+
+
+        /* =========================================================
+           NAVIGATION
+           ========================================================= */
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            width: 100%;
+
+            padding: 15px 28px;
+
+            background:
+                rgba(5, 5, 5, .94);
+
+            border-bottom:
+                1px solid rgba(245, 197, 66, .16);
+
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, .35);
+
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+
+        .navbar .logo {
+            color: var(--score-gold);
+
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -.4px;
+
+            text-shadow:
+                0 0 18px rgba(245, 197, 66, .16);
+
+            white-space: nowrap;
+        }
+
+
+        .navbar nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+
+            gap: 6px;
+        }
+
+
+        .navbar nav a {
+            position: relative;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 40px;
+
+            padding: 9px 13px;
+
+            border-radius: 10px;
+
+            color: rgba(255, 255, 255, .68);
+
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 650;
+
+            transition:
+                color .2s ease,
+                background .2s ease,
+                transform .2s ease;
+        }
+
+
+        .navbar nav a:hover {
+            color: #ffffff;
+
+            background:
+                rgba(245, 197, 66, .08);
+
+            transform: translateY(-1px);
+        }
+
+
+        .navbar nav a.active {
+            color: var(--score-gold);
+
+            background:
+                rgba(245, 197, 66, .11);
+
+            border:
+                1px solid rgba(245, 197, 66, .18);
+
+            box-shadow:
+                0 0 20px rgba(245, 197, 66, .06);
+        }
+
+
+        .navbar nav a.active::after {
+            content: "";
+
+            position: absolute;
+
+            left: 18%;
+            right: 18%;
+            bottom: -1px;
+
+            height: 2px;
+
+            border-radius: 999px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--score-gold),
+                    transparent
+                );
+        }
+
+
+        .navbar nav button {
+            min-height: 40px;
+
+            padding: 9px 13px;
+
+            border-radius: 10px;
+
+            border:
+                1px solid rgba(255, 255, 255, .09);
+
+            background:
+                rgba(255, 255, 255, .045);
+
+            color:
+                rgba(255, 255, 255, .72);
+
+            font-size: 13px;
+            font-weight: 650;
+
+            cursor: pointer;
+
+            transition:
+                background .2s ease,
+                color .2s ease,
+                border-color .2s ease,
+                transform .2s ease;
+        }
+
+
+        .navbar nav button:hover {
+            color: var(--score-gold);
+
+            background:
+                rgba(245, 197, 66, .08);
+
+            border-color:
+                rgba(245, 197, 66, .2);
+
+            transform: translateY(-1px);
+        }
+
+
+        /* =========================================================
+           MAIN PAGE
+           ========================================================= */
+
         .score-page {
             max-width: 1200px;
+
             margin: 0 auto;
-            padding: 30px 20px 60px;
+
+            padding:
+                42px 20px 70px;
         }
+
+
+        /* =========================================================
+           HERO
+           ========================================================= */
 
         .score-hero {
-            margin-bottom: 28px;
+            margin-bottom: 30px;
         }
+
 
         .score-hero h1 {
-            margin-bottom: 8px;
+            margin: 0 0 8px;
+
+            color: #ffffff;
+
+            font-size: clamp(30px, 4vw, 42px);
+
+            font-weight: 900;
+
+            letter-spacing: -.8px;
         }
 
+
         .score-hero p {
-            opacity: .7;
             margin: 0;
+
+            color: var(--score-muted);
+
+            font-size: 15px;
         }
+
+
+        /* =========================================================
+           TOP SECTION
+           ========================================================= */
 
         .score-top {
             display: grid;
-            grid-template-columns: 1.05fr .95fr;
+
+            grid-template-columns:
+                1.05fr .95fr;
+
             gap: 22px;
+
             margin-bottom: 22px;
         }
 
+
+        /* =========================================================
+           CARDS
+           ========================================================= */
+
         .score-card {
             border-radius: 24px;
+
             padding: 28px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.09);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 15px 45px rgba(0,0,0,.12);
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(22, 22, 22, .98),
+                    rgba(11, 11, 11, .98)
+                );
+
+            border:
+                1px solid var(--score-border);
+
+            box-shadow:
+                var(--score-shadow);
+
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+
+            transition:
+                border-color .25s ease,
+                box-shadow .25s ease,
+                transform .25s ease;
         }
+
+
+        .score-card:hover {
+            border-color:
+                rgba(245, 197, 66, .27);
+
+            box-shadow:
+                0 22px 65px rgba(0, 0, 0, .5),
+                0 0 30px rgba(245, 197, 66, .04);
+        }
+
+
+        /* =========================================================
+           MAIN SCORE CARD
+           ========================================================= */
 
         .score-main-card {
             display: flex;
+
             align-items: center;
+
             gap: 35px;
+
             min-height: 320px;
         }
+
+
+        /* =========================================================
+           GOLD SCORE GAUGE
+           ========================================================= */
 
         .score-gauge {
             --score-progress: 0deg;
 
+            position: relative;
+
             width: 230px;
             height: 230px;
+
             min-width: 230px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
 
             border-radius: 50%;
 
             background:
                 conic-gradient(
                     from -90deg,
-                    #6c63ff 0deg,
-                    #8c7cff var(--score-progress),
-                    rgba(255,255,255,.08) var(--score-progress),
-                    rgba(255,255,255,.08) 360deg
+                    var(--score-gold) 0deg,
+                    var(--score-gold-light) var(--score-progress),
+                    rgba(255, 255, 255, .07) var(--score-progress),
+                    rgba(255, 255, 255, .07) 360deg
                 );
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
             box-shadow:
-                0 15px 45px rgba(108,99,255,.18);
+                0 0 35px rgba(245, 197, 66, .14),
+                0 18px 45px rgba(0, 0, 0, .4);
 
-            position: relative;
+            transition:
+                background .7s ease,
+                box-shadow .3s ease;
         }
+
 
         .score-gauge::before {
             content: "";
+
             position: absolute;
+
             inset: 10px;
+
             border-radius: 50%;
-            background: #0b1220;
+
+            background:
+                radial-gradient(
+                    circle,
+                    #161616 0%,
+                    #090909 70%
+                );
+
+            border:
+                1px solid rgba(245, 197, 66, .08);
         }
+
 
         .score-gauge-inner {
             position: relative;
+
             z-index: 2;
+
             text-align: center;
         }
 
+
         .score-number {
+            color: #ffffff;
+
             font-size: 55px;
+
             line-height: 1;
+
             font-weight: 900;
+
+            text-shadow:
+                0 0 20px rgba(245, 197, 66, .15);
         }
+
 
         .score-out-of {
+            margin-top: 7px;
+
+            color: rgba(255, 255, 255, .5);
+
             font-size: 14px;
-            opacity: .55;
-            margin-top: 6px;
         }
 
-        .score-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: rgba(108,99,255,.13);
-            font-size: 13px;
-            margin-top: 15px;
-        }
+
+        /* =========================================================
+           SCORE EXPLANATION
+           ========================================================= */
 
         .score-explanation h2 {
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
+            margin:
+                0 0 10px;
 
-        .score-explanation p {
-            line-height: 1.65;
-            opacity: .7;
-        }
+            color: #ffffff;
 
-        .score-mini-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .score-mini {
-            border-radius: 18px;
-            padding: 20px;
-            background: rgba(255,255,255,.045);
-            border: 1px solid rgba(255,255,255,.06);
-        }
-
-        .score-mini-icon {
             font-size: 25px;
-            margin-bottom: 9px;
-        }
 
-        .score-mini-label {
-            font-size: 13px;
-            opacity: .6;
-            margin-bottom: 5px;
-        }
-
-        .score-mini-value {
-            font-size: 27px;
             font-weight: 800;
         }
 
-        .score-mini-value small {
-            font-size: 13px;
-            opacity: .55;
+
+        .score-explanation p {
+            line-height: 1.7;
+
+            color:
+                rgba(255, 255, 255, .62);
         }
+
+
+        .score-status {
+            display: inline-flex;
+
+            align-items: center;
+
+            margin-top: 15px;
+
+            padding: 8px 13px;
+
+            border-radius: 999px;
+
+            background:
+                rgba(245, 197, 66, .1);
+
+            border:
+                1px solid rgba(245, 197, 66, .18);
+
+            color:
+                var(--score-gold);
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+
+        /* =========================================================
+           MINI STAT GRID
+           ========================================================= */
+
+        .score-mini-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 14px;
+        }
+
+
+        .score-mini {
+            border-radius: 18px;
+
+            padding: 20px;
+
+            background:
+                rgba(255, 255, 255, .035);
+
+            border:
+                1px solid rgba(255, 255, 255, .07);
+
+            transition:
+                background .2s ease,
+                border-color .2s ease,
+                transform .2s ease;
+        }
+
+
+        .score-mini:hover {
+            background:
+                rgba(245, 197, 66, .045);
+
+            border-color:
+                rgba(245, 197, 66, .16);
+
+            transform: translateY(-2px);
+        }
+
+
+        .score-mini-icon {
+            margin-bottom: 9px;
+
+            font-size: 25px;
+        }
+
+
+        .score-mini-label {
+            margin-bottom: 5px;
+
+            color:
+                rgba(255, 255, 255, .5);
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            letter-spacing: .5px;
+        }
+
+
+        .score-mini-value {
+            color: #ffffff;
+
+            font-size: 27px;
+
+            font-weight: 850;
+        }
+
+
+        .score-mini-value small {
+            color:
+                rgba(255, 255, 255, .48);
+
+            font-size: 13px;
+        }
+
+
+        /* =========================================================
+           BREAKDOWN
+           ========================================================= */
 
         .breakdown-card {
             margin-bottom: 22px;
         }
 
-        .breakdown-card h2 {
-            margin-top: 0;
-            margin-bottom: 7px;
+
+        .breakdown-card h2,
+        .score-card > h2 {
+            margin:
+                0 0 7px;
+
+            color: #ffffff;
+
+            font-size: 22px;
+
+            font-weight: 800;
         }
 
+
         .breakdown-description {
-            opacity: .6;
             margin-bottom: 24px;
+
+            color:
+                rgba(255, 255, 255, .52);
         }
+
 
         .score-row {
             margin-bottom: 22px;
         }
 
+
         .score-row:last-child {
             margin-bottom: 0;
         }
 
+
         .score-row-top {
             display: flex;
+
             align-items: center;
             justify-content: space-between;
+
             margin-bottom: 9px;
         }
 
+
         .score-row-name {
+            color:
+                rgba(255, 255, 255, .9);
+
             font-weight: 650;
         }
 
+
         .score-row-value {
-            opacity: .7;
+            color:
+                rgba(255, 255, 255, .6);
+
             font-size: 14px;
         }
 
+
+        /* =========================================================
+           GOLD PROGRESS BARS
+           ========================================================= */
+
         .score-progress {
-            height: 10px;
             width: 100%;
-            background: rgba(255,255,255,.07);
-            border-radius: 999px;
+
+            height: 10px;
+
             overflow: hidden;
+
+            border-radius: 999px;
+
+            background:
+                rgba(255, 255, 255, .07);
+
+            box-shadow:
+                inset 0 1px 2px rgba(0, 0, 0, .35);
         }
 
+
         .score-progress-bar {
-            height: 100%;
             width: 0%;
+
+            height: 100%;
+
             border-radius: inherit;
-            background: linear-gradient(
-                90deg,
-                #6c63ff,
-                #9b91ff
-            );
-            transition: width .7s ease;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--score-gold-dark),
+                    var(--score-gold),
+                    var(--score-gold-light)
+                );
+
+            box-shadow:
+                0 0 12px rgba(245, 197, 66, .18);
+
+            transition:
+                width .7s ease;
         }
+
+
+        /* =========================================================
+           ACHIEVEMENTS
+           ========================================================= */
 
         .achievement-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
             gap: 15px;
         }
+
 
         .achievement {
             padding: 22px 15px;
+
             text-align: center;
+
             border-radius: 18px;
-            background: rgba(255,255,255,.045);
-            border: 1px solid rgba(255,255,255,.06);
-            opacity: .45;
-            transition: .25s ease;
+
+            background:
+                rgba(255, 255, 255, .03);
+
+            border:
+                1px solid rgba(255, 255, 255, .06);
+
+            opacity: .42;
+
+            transition:
+                .25s ease;
         }
+
 
         .achievement.unlocked {
             opacity: 1;
-            transform: translateY(-2px);
+
+            transform:
+                translateY(-3px);
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(245, 197, 66, .1),
+                    rgba(255, 255, 255, .025)
+                );
+
+            border-color:
+                rgba(245, 197, 66, .27);
+
+            box-shadow:
+                0 12px 30px rgba(0, 0, 0, .25),
+                0 0 22px rgba(245, 197, 66, .06);
         }
+
 
         .achievement-icon {
-            font-size: 34px;
             margin-bottom: 10px;
+
+            font-size: 34px;
         }
+
 
         .achievement-title {
-            font-weight: 750;
             margin-bottom: 5px;
+
+            color: #ffffff;
+
+            font-weight: 750;
         }
 
+
         .achievement-description {
+            color:
+                rgba(255, 255, 255, .55);
+
             font-size: 12px;
-            opacity: .6;
+
             line-height: 1.4;
         }
 
+
+        /* =========================================================
+           TIP
+           ========================================================= */
+
         .score-tip {
             display: flex;
+
             gap: 15px;
+
             align-items: center;
         }
 
+
         .score-tip-icon {
             font-size: 32px;
+
+            filter:
+                drop-shadow(
+                    0 0 10px rgba(245, 197, 66, .12)
+                );
         }
+
 
         .score-tip strong {
             display: block;
+
             margin-bottom: 5px;
+
+            color: #ffffff;
         }
 
+
         .score-tip span {
-            opacity: .65;
+            color:
+                rgba(255, 255, 255, .6);
+
             font-size: 14px;
+
             line-height: 1.5;
         }
 
-        body.light-mode .score-card {
-            background: rgba(255,255,255,.9);
-            border-color: rgba(0,0,0,.08);
+
+        /* =========================================================
+           LIGHT MODE
+           ========================================================= */
+
+        body.light-mode {
+            background:
+                linear-gradient(
+                    180deg,
+                    #f5f5f2,
+                    #eeeeeb
+                );
+
+            color: #111111;
         }
 
-        body.light-mode .score-gauge::before {
-            background: #f8f9ff;
+
+        body.light-mode .navbar {
+            background:
+                rgba(250, 250, 248, .95);
+
+            border-bottom:
+                1px solid rgba(190, 145, 20, .22);
         }
+
+
+        body.light-mode .navbar .logo {
+            color:
+                #a87900;
+        }
+
+
+        body.light-mode .navbar nav a {
+            color:
+                rgba(0, 0, 0, .62);
+        }
+
+
+        body.light-mode .navbar nav a:hover {
+            color:
+                #8f6800;
+
+            background:
+                rgba(245, 197, 66, .12);
+        }
+
+
+        body.light-mode .navbar nav a.active {
+            color:
+                #8f6800;
+
+            background:
+                rgba(245, 197, 66, .16);
+
+            border-color:
+                rgba(190, 145, 20, .25);
+        }
+
+
+        body.light-mode .navbar nav button {
+            color:
+                rgba(0, 0, 0, .65);
+
+            background:
+                rgba(0, 0, 0, .04);
+
+            border-color:
+                rgba(0, 0, 0, .09);
+        }
+
+
+        body.light-mode .score-card {
+            background:
+                rgba(255, 255, 255, .9);
+
+            border-color:
+                rgba(190, 145, 20, .18);
+
+            box-shadow:
+                0 15px 45px rgba(0, 0, 0, .08);
+        }
+
+
+        body.light-mode .score-hero h1,
+        body.light-mode .score-explanation h2,
+        body.light-mode .breakdown-card h2,
+        body.light-mode .score-card > h2,
+        body.light-mode .score-number,
+        body.light-mode .score-mini-value,
+        body.light-mode .achievement-title,
+        body.light-mode .score-tip strong {
+            color:
+                #151515;
+        }
+
+
+        body.light-mode .score-hero p,
+        body.light-mode .score-explanation p,
+        body.light-mode .breakdown-description,
+        body.light-mode .score-row-value,
+        body.light-mode .score-tip span {
+            color:
+                rgba(0, 0, 0, .58);
+        }
+
+
+        body.light-mode .score-gauge::before {
+            background:
+                #f8f8f5;
+        }
+
 
         body.light-mode .score-mini,
         body.light-mode .achievement {
-            background: rgba(0,0,0,.025);
-            border-color: rgba(0,0,0,.06);
+            background:
+                rgba(0, 0, 0, .025);
+
+            border-color:
+                rgba(0, 0, 0, .07);
         }
 
-        body.light-mode .score-progress {
-            background: rgba(0,0,0,.08);
+
+        body.light-mode .score-mini:hover {
+            background:
+                rgba(245, 197, 66, .1);
+
+            border-color:
+                rgba(190, 145, 20, .2);
         }
+
+
+        body.light-mode .score-progress {
+            background:
+                rgba(0, 0, 0, .08);
+        }
+
+
+        /* =========================================================
+           RESPONSIVE
+           ========================================================= */
+
+        @media (max-width: 1050px) {
+
+            .navbar {
+                padding:
+                    14px 18px;
+            }
+
+            .navbar nav {
+                gap: 3px;
+            }
+
+            .navbar nav a {
+                padding:
+                    8px 9px;
+
+                font-size: 12px;
+            }
+
+            .navbar nav button {
+                padding:
+                    8px 9px;
+
+                font-size: 12px;
+            }
+
+        }
+
 
         @media (max-width: 900px) {
 
+            .navbar {
+                position: relative;
+
+                flex-direction: column;
+
+                align-items: stretch;
+
+                gap: 12px;
+            }
+
+            .navbar .logo {
+                text-align: center;
+            }
+
+            .navbar nav {
+                justify-content: center;
+
+                flex-wrap: wrap;
+            }
+
             .score-top {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
 
             .achievement-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns:
+                    1fr 1fr;
             }
 
         }
+
 
         @media (max-width: 620px) {
 
             .score-page {
-                padding: 20px 14px 45px;
+                padding:
+                    25px 14px 45px;
             }
+
+
+            .score-hero {
+                margin-bottom: 22px;
+            }
+
+
+            .score-hero h1 {
+                font-size: 30px;
+            }
+
+
+            .score-card {
+                padding:
+                    22px 18px;
+
+                border-radius:
+                    20px;
+            }
+
 
             .score-main-card {
                 flex-direction: column;
+
                 text-align: center;
-                padding: 24px 18px;
+
+                padding:
+                    24px 18px;
             }
+
 
             .score-gauge {
                 width: 190px;
                 height: 190px;
+
                 min-width: 190px;
             }
+
 
             .score-number {
                 font-size: 45px;
             }
 
+
             .score-mini-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
 
+
             .achievement-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+
+            .score-tip {
+                align-items: flex-start;
+            }
+
+
+            .navbar nav a,
+            .navbar nav button {
+                font-size: 11px;
+
+                padding:
+                    7px 8px;
+            }
+
+        }
+
+
+        @media (max-width: 430px) {
+
+            .achievement-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .navbar nav {
+                display: grid;
+
+                grid-template-columns:
+                    1fr 1fr;
+
+                width: 100%;
+            }
+
+            .navbar nav a,
+            .navbar nav button {
+                width: 100%;
             }
 
         }
@@ -347,13 +1120,16 @@
 
 </head>
 
+
 <body>
+
 
 <header class="navbar">
 
     <div class="logo">
         StudyMind AI
     </div>
+
 
     <nav>
 
@@ -384,6 +1160,7 @@
             Study Score
         </a>
 
+
         <button
             id="themeButton"
             type="button"
@@ -391,6 +1168,7 @@
         >
             🌙
         </button>
+
 
         <button
             type="button"
@@ -405,6 +1183,7 @@
 
 
 <main class="score-page">
+
 
     <section class="score-hero">
 
@@ -421,7 +1200,9 @@
 
     <section class="score-top">
 
+
         <div class="score-card score-main-card">
+
 
             <div
                 class="score-gauge"
@@ -458,6 +1239,7 @@
                     and make progress through your study plan.
                 </p>
 
+
                 <div
                     class="score-status"
                     id="scoreStatus"
@@ -474,6 +1256,7 @@
 
             <div class="score-mini-grid">
 
+
                 <div class="score-mini">
 
                     <div class="score-mini-icon">
@@ -485,9 +1268,11 @@
                     </div>
 
                     <div class="score-mini-value">
+
                         <span id="topicsCompleted">
                             0
                         </span>
+
                     </div>
 
                 </div>
@@ -504,9 +1289,11 @@
                     </div>
 
                     <div class="score-mini-value">
+
                         <span id="questionsCompleted">
                             0
                         </span>
+
                     </div>
 
                 </div>
@@ -523,10 +1310,15 @@
                     </div>
 
                     <div class="score-mini-value">
+
                         <span id="currentStreak">
                             0
                         </span>
-                        <small>days</small>
+
+                        <small>
+                            days
+                        </small>
+
                     </div>
 
                 </div>
@@ -543,13 +1335,19 @@
                     </div>
 
                     <div class="score-mini-value">
+
                         <span id="planProgress">
                             0
                         </span>
-                        <small>%</small>
+
+                        <small>
+                            %
+                        </small>
+
                     </div>
 
                 </div>
+
 
             </div>
 
@@ -586,11 +1384,14 @@
 
             </div>
 
+
             <div class="score-progress">
+
                 <div
                     class="score-progress-bar"
                     id="topicScoreBar"
                 ></div>
+
             </div>
 
         </div>
@@ -613,11 +1414,14 @@
 
             </div>
 
+
             <div class="score-progress">
+
                 <div
                     class="score-progress-bar"
                     id="questionScoreBar"
                 ></div>
+
             </div>
 
         </div>
@@ -640,11 +1444,14 @@
 
             </div>
 
+
             <div class="score-progress">
+
                 <div
                     class="score-progress-bar"
                     id="streakScoreBar"
                 ></div>
+
             </div>
 
         </div>
@@ -667,11 +1474,14 @@
 
             </div>
 
+
             <div class="score-progress">
+
                 <div
                     class="score-progress-bar"
                     id="planScoreBar"
                 ></div>
+
             </div>
 
         </div>
@@ -691,6 +1501,7 @@
 
 
         <div class="achievement-grid">
+
 
             <div
                 class="achievement"
@@ -771,6 +1582,7 @@
 
             </div>
 
+
         </div>
 
     </section>
@@ -783,6 +1595,7 @@
             <div class="score-tip-icon">
                 💡
             </div>
+
 
             <div>
 
@@ -800,6 +1613,7 @@
         </div>
 
     </section>
+
 
 </main>
 
