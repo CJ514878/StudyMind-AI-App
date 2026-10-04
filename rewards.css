@@ -1,13 +1,13 @@
 /* =========================================================
    STUDYMIND AI — REWARDS
-   BLACK / GOLD ACHIEVEMENT THEME
+   PREMIUM BLACK / GOLD ACHIEVEMENT THEME
    LIGHT + DARK MODE
    ========================================================= */
 
 
 /* =========================================================
    RESET
-   ========================================================= */
+========================================================= */
 
 * {
     box-sizing: border-box;
@@ -60,14 +60,14 @@ a {
 
 /* =========================================================
    LIGHT THEME
-   ========================================================= */
+========================================================= */
 
 :root {
 
     --bg: #f7f5ef;
-
     --surface: #ffffff;
     --surface-soft: #fbfaf6;
+    --surface-hover: #f8f5eb;
 
     --text: #171717;
     --text-soft: #625f58;
@@ -78,6 +78,7 @@ a {
     --gold-dark: #b7890b;
 
     --gold-soft: rgba(245, 197, 66, .12);
+    --gold-softer: rgba(245, 197, 66, .06);
     --gold-border: rgba(183, 137, 11, .22);
 
     --track: #e8e3d8;
@@ -88,13 +89,13 @@ a {
     --red: #dc4c4c;
     --red-soft: rgba(220, 76, 76, .10);
 
-    --blue: #3b82f6;
-    --purple: #8b5cf6;
-
     --border: rgba(20, 20, 20, .09);
 
     --shadow:
         0 8px 30px rgba(30, 25, 10, .07);
+
+    --shadow-hover:
+        0 14px 38px rgba(30, 25, 10, .11);
 
     --sidebar-width: 250px;
 }
@@ -102,7 +103,7 @@ a {
 
 /* =========================================================
    DARK THEME
-   ========================================================= */
+========================================================= */
 
 body.dark {
 
@@ -110,6 +111,7 @@ body.dark {
 
     --surface: #101010;
     --surface-soft: #151515;
+    --surface-hover: #191919;
 
     --text: #ffffff;
     --text-soft: #a6a6a6;
@@ -120,6 +122,7 @@ body.dark {
     --gold-dark: #d6a91d;
 
     --gold-soft: rgba(245, 197, 66, .10);
+    --gold-softer: rgba(245, 197, 66, .055);
     --gold-border: rgba(245, 197, 66, .20);
 
     --track: #242424;
@@ -128,12 +131,15 @@ body.dark {
 
     --shadow:
         0 12px 35px rgba(0, 0, 0, .35);
+
+    --shadow-hover:
+        0 18px 45px rgba(0, 0, 0, .50);
 }
 
 
 /* =========================================================
    GLOBAL
-   ========================================================= */
+========================================================= */
 
 html,
 body,
@@ -159,9 +165,10 @@ body,
 .stat-card,
 .reward-toolbar,
 .notifications-section,
-.notification-list,
+.notification,
 .reward-card,
-.unlock-popup {
+.unlock-popup,
+.theme-button {
     transition:
         background-color .25s ease,
         border-color .25s ease,
@@ -172,7 +179,7 @@ body,
 
 /* =========================================================
    SIDEBAR
-   ========================================================= */
+========================================================= */
 
 .sidebar {
     position: fixed;
@@ -186,7 +193,7 @@ body,
     display: flex;
     flex-direction: column;
 
-    padding: 24px 14px;
+    padding: 22px 14px 16px;
 
     background: #ffffff;
 
@@ -195,6 +202,9 @@ body,
     z-index: 1000;
 
     overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
 }
 
 body.dark .sidebar {
@@ -204,7 +214,7 @@ body.dark .sidebar {
 
 /* =========================================================
    BRAND
-   ========================================================= */
+========================================================= */
 
 .brand {
     display: flex;
@@ -212,7 +222,7 @@ body.dark .sidebar {
 
     gap: 12px;
 
-    padding: 4px 10px 28px;
+    padding: 4px 10px 24px;
 }
 
 .brand-icon {
@@ -240,7 +250,7 @@ body.dark .sidebar {
     font-weight: 900;
 
     box-shadow:
-        0 6px 16px rgba(245, 197, 66, .22);
+        0 6px 18px rgba(245, 197, 66, .22);
 }
 
 .brand strong {
@@ -249,7 +259,7 @@ body.dark .sidebar {
     color: var(--text);
 
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 850;
 
     line-height: 1.15;
 }
@@ -261,48 +271,85 @@ body.dark .sidebar {
 
     color: var(--text-muted);
 
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 
 /* =========================================================
    NAVIGATION
-   ========================================================= */
+========================================================= */
 
-.sidebar nav {
+.navigation {
     flex: 1;
 
+    display: flex;
+    flex-direction: column;
+
+    gap: 17px;
+
+    min-height: 0;
+}
+
+
+/* =========================================================
+   NAV SECTION
+========================================================= */
+
+.nav-section {
     display: flex;
     flex-direction: column;
 
     gap: 3px;
 }
 
-.sidebar nav a {
-    min-height: 42px;
+.nav-section-label {
+    padding: 0 11px 7px;
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    letter-spacing: 1.35px;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   NAV ITEMS
+========================================================= */
+
+.nav-item {
+    position: relative;
+
+    min-height: 39px;
 
     display: flex;
     align-items: center;
 
     gap: 11px;
 
-    padding: 10px 12px;
+    padding: 9px 11px;
 
     border-radius: 10px;
 
     color: var(--text-soft);
 
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 650;
+
+    cursor: pointer;
 
     transition:
         background .2s ease,
         color .2s ease,
-        transform .2s ease;
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
-.sidebar nav a:hover {
+.nav-item:hover {
     background: var(--gold-soft);
 
     color: var(--text);
@@ -310,48 +357,112 @@ body.dark .sidebar {
     transform: translateX(2px);
 }
 
-.sidebar nav a.active {
-    background: var(--gold-soft);
+.nav-item.active {
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-soft),
+            rgba(245, 197, 66, .055)
+        );
 
     color: var(--gold-dark);
 
     font-weight: 800;
+
+    box-shadow:
+        inset 3px 0 0 var(--gold);
 }
 
-body.dark .sidebar nav a.active {
+body.dark .nav-item.active {
     color: var(--gold);
 }
 
-.sidebar nav a:first-letter {
-    font-size: 16px;
+.nav-icon {
+    width: 20px;
+    min-width: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: currentColor;
+
+    font-size: 15px;
+    line-height: 1;
+}
+
+.nav-item.active .nav-icon {
+    color: var(--gold-dark);
+}
+
+body.dark .nav-item.active .nav-icon {
+    color: var(--gold);
+}
+
+
+/* =========================================================
+   PREMIUM NAV
+========================================================= */
+
+.premium-link {
+    color: var(--gold-dark);
+}
+
+body.dark .premium-link {
+    color: var(--gold);
+}
+
+.premium-link .nav-icon {
+    color: var(--gold-dark);
+}
+
+body.dark .premium-link .nav-icon {
+    color: var(--gold);
+}
+
+.premium-link:hover {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(245, 197, 66, .15),
+            rgba(245, 197, 66, .05)
+        );
 }
 
 
 /* =========================================================
    SIDEBAR BOTTOM
-   ========================================================= */
+========================================================= */
 
 .sidebar-bottom {
-    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
 
-    margin-top: 14px;
+    gap: 3px;
+
+    padding-top: 13px;
+
+    margin-top: 13px;
 
     border-top: 1px solid var(--border);
 }
 
-.side-button {
+
+/* =========================================================
+   THEME + LOGOUT BUTTONS
+========================================================= */
+
+.theme-button {
     width: 100%;
 
-    min-height: 42px;
+    min-height: 39px;
 
     display: flex;
     align-items: center;
 
     gap: 11px;
 
-    padding: 10px 12px;
-
-    margin-bottom: 3px;
+    padding: 9px 11px;
 
     border-radius: 10px;
 
@@ -359,8 +470,8 @@ body.dark .sidebar nav a.active {
 
     color: var(--text-soft);
 
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 650;
 
     cursor: pointer;
 
@@ -372,7 +483,7 @@ body.dark .sidebar nav a.active {
         transform .2s ease;
 }
 
-.side-button:hover {
+.theme-button:hover {
     background: var(--gold-soft);
 
     color: var(--text);
@@ -380,25 +491,30 @@ body.dark .sidebar nav a.active {
     transform: translateX(2px);
 }
 
+.logout-button:hover {
+    background: var(--red-soft);
+
+    color: var(--red);
+}
+
 
 /* =========================================================
    MAIN
-   ========================================================= */
+========================================================= */
 
 .main {
     width: 100%;
-
     min-height: 100vh;
 
     margin-left: var(--sidebar-width);
 
-    padding-bottom: 50px;
+    padding-bottom: 60px;
 }
 
 
 /* =========================================================
    TOPBAR
-   ========================================================= */
+========================================================= */
 
 .topbar {
     min-height: 100px;
@@ -409,14 +525,14 @@ body.dark .sidebar nav a.active {
 
     gap: 25px;
 
-    padding: 25px 38px;
+    padding: 24px 38px;
 
     background:
-        rgba(247, 245, 239, .92);
+        rgba(247, 245, 239, .94);
 
     border-bottom: 1px solid var(--border);
 
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(18px);
 
     position: sticky;
     top: 0;
@@ -426,13 +542,50 @@ body.dark .sidebar nav a.active {
 
 body.dark .topbar {
     background:
-        rgba(7, 7, 7, .90);
+        rgba(7, 7, 7, .92);
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.mobile-menu {
+    display: none;
+
+    width: 40px;
+    height: 40px;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    background: var(--surface);
+
+    color: var(--text);
+
+    font-size: 19px;
+
+    cursor: pointer;
+}
+
+.mobile-menu:hover {
+    border-color: var(--gold-border);
+
+    color: var(--gold-dark);
+}
+
+body.dark .mobile-menu:hover {
+    color: var(--gold);
 }
 
 
 /* =========================================================
    TOPBAR TEXT
-   ========================================================= */
+========================================================= */
 
 .eyebrow {
     display: block;
@@ -441,10 +594,10 @@ body.dark .topbar {
 
     color: var(--gold-dark);
 
-    font-size: 10px;
-    font-weight: 850;
+    font-size: 9px;
+    font-weight: 900;
 
-    letter-spacing: 1.5px;
+    letter-spacing: 1.7px;
 }
 
 body.dark .eyebrow {
@@ -455,9 +608,11 @@ body.dark .eyebrow {
     color: var(--text);
 
     font-size: 28px;
-    font-weight: 850;
+    font-weight: 900;
 
     line-height: 1.1;
+
+    letter-spacing: -.5px;
 }
 
 .subtitle {
@@ -465,14 +620,14 @@ body.dark .eyebrow {
 
     color: var(--text-muted);
 
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.5;
 }
 
 
 /* =========================================================
    PROFILE
-   ========================================================= */
+========================================================= */
 
 .profile {
     display: flex;
@@ -491,7 +646,7 @@ body.dark .eyebrow {
     color: var(--text);
 
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 850;
 }
 
 .profile-text span {
@@ -502,7 +657,7 @@ body.dark .eyebrow {
     color: var(--gold-dark);
 
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 750;
 }
 
 body.dark .profile-text span {
@@ -516,6 +671,8 @@ body.dark .profile-text span {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     border-radius: 50%;
 
@@ -532,65 +689,105 @@ body.dark .profile-text span {
     font-weight: 900;
 
     box-shadow:
-        0 5px 16px rgba(245, 197, 66, .20);
+        0 6px 18px rgba(245, 197, 66, .22);
 }
 
 
 /* =========================================================
    HERO
-   ========================================================= */
+========================================================= */
 
 .reward-hero {
-    min-height: 245px;
+    min-height: 250px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 35px;
+    gap: 40px;
 
     margin: 30px 38px;
 
-    padding: 35px 40px;
+    padding: 36px 42px;
 
     border: 1px solid var(--gold-border);
 
-    border-radius: 22px;
+    border-radius: 24px;
 
     background:
         radial-gradient(
-            circle at 85% 25%,
-            rgba(245, 197, 66, .15),
+            circle at 88% 25%,
+            rgba(245, 197, 66, .17),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 72% 100%,
+            rgba(245, 197, 66, .06),
             transparent 35%
         ),
         linear-gradient(
             135deg,
             #fffdf7,
-            #f7f3e7
+            #f6f1e3
         );
 
     box-shadow: var(--shadow);
+
+    overflow: hidden;
+
+    position: relative;
 }
 
 body.dark .reward-hero {
     background:
         radial-gradient(
-            circle at 85% 25%,
-            rgba(245, 197, 66, .12),
+            circle at 88% 25%,
+            rgba(245, 197, 66, .14),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 72% 100%,
+            rgba(245, 197, 66, .06),
             transparent 35%
         ),
         linear-gradient(
             135deg,
-            #121212,
+            #131313,
             #090909
         );
+}
+
+.reward-hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+    height: 260px;
+
+    right: -110px;
+    top: -130px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(245, 197, 66, .13);
+
+    pointer-events: none;
 }
 
 .hero-content {
     flex: 1;
 
     max-width: 700px;
+
+    position: relative;
+    z-index: 1;
 }
+
+
+/* =========================================================
+   HERO BADGE
+========================================================= */
 
 .hero-badge {
     display: inline-flex;
@@ -606,27 +803,32 @@ body.dark .reward-hero {
 
     color: var(--gold-dark);
 
-    font-size: 10px;
-    font-weight: 850;
+    font-size: 9px;
+    font-weight: 900;
 
-    letter-spacing: 1px;
+    letter-spacing: 1.1px;
 }
 
 body.dark .hero-badge {
     color: var(--gold);
 }
 
+
+/* =========================================================
+   HERO TEXT
+========================================================= */
+
 .hero-content h2 {
     margin-top: 14px;
 
     color: var(--text);
 
-    font-size: clamp(29px, 4vw, 44px);
-    font-weight: 850;
+    font-size: clamp(30px, 4vw, 45px);
+    font-weight: 900;
 
-    line-height: 1.05;
+    line-height: 1.04;
 
-    letter-spacing: -.8px;
+    letter-spacing: -1px;
 }
 
 .hero-content p {
@@ -636,19 +838,19 @@ body.dark .hero-badge {
 
     color: var(--text-soft);
 
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.65;
 }
 
 
 /* =========================================================
    HERO PROGRESS
-   ========================================================= */
+========================================================= */
 
 .hero-progress {
     max-width: 600px;
 
-    margin-top: 25px;
+    margin-top: 24px;
 }
 
 .progress-info {
@@ -664,15 +866,15 @@ body.dark .hero-badge {
 .progress-info span {
     color: var(--text-muted);
 
-    font-size: 11px;
-    font-weight: 650;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .progress-info strong {
     color: var(--gold-dark);
 
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 10px;
+    font-weight: 850;
 }
 
 body.dark .progress-info strong {
@@ -708,8 +910,11 @@ body.dark .progress-track {
         linear-gradient(
             90deg,
             var(--gold-dark),
-            var(--gold)
+            var(--gold-light)
         );
+
+    box-shadow:
+        0 0 12px rgba(245, 197, 66, .22);
 
     transition: width .4s ease;
 }
@@ -717,22 +922,24 @@ body.dark .progress-track {
 
 /* =========================================================
    TROPHY
-   ========================================================= */
+========================================================= */
 
 .trophy {
-    width: 175px;
-    height: 175px;
+    width: 185px;
+    height: 185px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     flex-shrink: 0;
+
+    position: relative;
 }
 
 .trophy-glow {
-    width: 145px;
-    height: 145px;
+    width: 150px;
+    height: 150px;
 
     display: flex;
     align-items: center;
@@ -743,16 +950,16 @@ body.dark .progress-track {
     background:
         radial-gradient(
             circle,
-            rgba(245, 197, 66, .24),
-            rgba(245, 197, 66, .07) 55%,
+            rgba(245, 197, 66, .27),
+            rgba(245, 197, 66, .08) 52%,
             transparent 70%
         );
 
-    font-size: 78px;
+    font-size: 80px;
 
     filter:
         drop-shadow(
-            0 12px 18px rgba(245, 197, 66, .22)
+            0 13px 20px rgba(245, 197, 66, .24)
         );
 
     animation:
@@ -774,7 +981,7 @@ body.dark .progress-track {
 
 /* =========================================================
    STATS
-   ========================================================= */
+========================================================= */
 
 .stats {
     display: grid;
@@ -784,11 +991,11 @@ body.dark .progress-track {
 
     gap: 15px;
 
-    margin: 0 38px 35px;
+    margin: 0 38px 36px;
 }
 
 .stat-card {
-    min-height: 94px;
+    min-height: 96px;
 
     display: flex;
     align-items: center;
@@ -804,23 +1011,29 @@ body.dark .progress-track {
     background: var(--surface);
 
     box-shadow: var(--shadow);
+
+    cursor: default;
 }
 
 .stat-card:hover {
     border-color: var(--gold-border);
 
+    box-shadow: var(--shadow-hover);
+
     transform: translateY(-2px);
 }
 
 .stat-icon {
-    width: 42px;
-    height: 42px;
+    width: 43px;
+    height: 43px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     flex-shrink: 0;
+
+    border: 1px solid var(--gold-border);
 
     border-radius: 12px;
 
@@ -834,8 +1047,11 @@ body.dark .progress-track {
 
     color: var(--text-muted);
 
-    font-size: 10px;
-    font-weight: 650;
+    font-size: 9px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: .5px;
 }
 
 .stat-card strong {
@@ -846,13 +1062,13 @@ body.dark .progress-track {
     color: var(--text);
 
     font-size: 25px;
-    font-weight: 850;
+    font-weight: 900;
 }
 
 
 /* =========================================================
    REWARD TOOLBAR
-   ========================================================= */
+========================================================= */
 
 .reward-toolbar {
     display: flex;
@@ -868,7 +1084,7 @@ body.dark .progress-track {
     color: var(--text);
 
     font-size: 21px;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .reward-toolbar p {
@@ -876,8 +1092,13 @@ body.dark .progress-track {
 
     color: var(--text-muted);
 
-    font-size: 12px;
+    font-size: 11px;
 }
+
+
+/* =========================================================
+   FILTERS
+========================================================= */
 
 .filters {
     display: flex;
@@ -899,8 +1120,8 @@ body.dark .progress-track {
 
     color: var(--text-soft);
 
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 750;
 
     cursor: pointer;
 
@@ -908,11 +1129,14 @@ body.dark .progress-track {
         background .2s ease,
         color .2s ease,
         border-color .2s ease,
-        transform .2s ease;
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
 .filter:hover {
     border-color: var(--gold-border);
+
+    background: var(--gold-softer);
 
     color: var(--text);
 
@@ -920,20 +1144,25 @@ body.dark .progress-track {
 }
 
 .filter.active {
-    border-color: var(--gold-border);
+    border-color: var(--gold);
 
-    background: var(--gold);
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        );
 
     color: #111111;
 
     box-shadow:
-        0 5px 14px rgba(245, 197, 66, .16);
+        0 5px 15px rgba(245, 197, 66, .17);
 }
 
 
 /* =========================================================
    REWARDS GRID
-   ========================================================= */
+========================================================= */
 
 .rewards-grid {
     display: grid;
@@ -943,18 +1172,18 @@ body.dark .progress-track {
 
     gap: 15px;
 
-    margin: 0 38px 38px;
+    margin: 0 38px 40px;
 }
 
 
 /* =========================================================
    REWARD CARD
-   ========================================================= */
+========================================================= */
 
 .reward-card {
     position: relative;
 
-    min-height: 205px;
+    min-height: 210px;
 
     display: flex;
     flex-direction: column;
@@ -974,13 +1203,16 @@ body.dark .progress-track {
     transition:
         transform .2s ease,
         border-color .2s ease,
-        box-shadow .2s ease;
+        box-shadow .2s ease,
+        opacity .2s ease;
 }
 
 .reward-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
 
     border-color: var(--gold-border);
+
+    box-shadow: var(--shadow-hover);
 }
 
 .reward-card.unlocked {
@@ -990,12 +1222,12 @@ body.dark .progress-track {
         linear-gradient(
             145deg,
             var(--surface),
-            var(--gold-soft)
+            var(--gold-softer)
         );
 }
 
 .reward-card.locked {
-    opacity: .70;
+    opacity: .68;
 }
 
 .reward-card::after {
@@ -1003,27 +1235,32 @@ body.dark .progress-track {
 
     position: absolute;
 
-    top: -50px;
-    right: -50px;
+    top: -55px;
+    right: -55px;
 
-    width: 120px;
-    height: 120px;
+    width: 135px;
+    height: 135px;
 
     border-radius: 50%;
 
-    background: rgba(245, 197, 66, .06);
+    background:
+        radial-gradient(
+            circle,
+            rgba(245, 197, 66, .10),
+            transparent 68%
+        );
 
     pointer-events: none;
 }
 
 
 /* =========================================================
-   REWARD CARD ICONS
-   ========================================================= */
+   REWARD CARD ICON
+========================================================= */
 
 .reward-icon {
-    width: 54px;
-    height: 54px;
+    width: 55px;
+    height: 55px;
 
     display: flex;
     align-items: center;
@@ -1031,28 +1268,42 @@ body.dark .progress-track {
 
     margin-bottom: 14px;
 
+    border: 1px solid var(--gold-border);
+
     border-radius: 15px;
 
     background: var(--gold-soft);
 
     font-size: 27px;
+
+    position: relative;
+    z-index: 1;
+}
+
+.reward-card.unlocked .reward-icon {
+    box-shadow:
+        0 7px 18px rgba(245, 197, 66, .10);
 }
 
 .reward-card.locked .reward-icon {
     filter: grayscale(.7);
-    opacity: .65;
+
+    opacity: .62;
 }
 
 
 /* =========================================================
    REWARD CARD TEXT
-   ========================================================= */
+========================================================= */
 
 .reward-card h3 {
     color: var(--text);
 
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 850;
+
+    position: relative;
+    z-index: 1;
 }
 
 .reward-card p {
@@ -1063,6 +1314,9 @@ body.dark .progress-track {
     font-size: 11px;
 
     line-height: 1.55;
+
+    position: relative;
+    z-index: 1;
 }
 
 .reward-card .reward-description {
@@ -1072,7 +1326,7 @@ body.dark .progress-track {
 
 /* =========================================================
    REWARD META
-   ========================================================= */
+========================================================= */
 
 .reward-meta {
     display: flex;
@@ -1083,13 +1337,16 @@ body.dark .progress-track {
 
     margin-top: auto;
     padding-top: 16px;
+
+    position: relative;
+    z-index: 1;
 }
 
 .reward-xp {
     color: var(--gold-dark);
 
     font-size: 11px;
-    font-weight: 850;
+    font-weight: 900;
 }
 
 body.dark .reward-xp {
@@ -1105,11 +1362,11 @@ body.dark .reward-xp {
 
     color: var(--text-muted);
 
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 8px;
+    font-weight: 850;
 
     text-transform: uppercase;
-    letter-spacing: .5px;
+    letter-spacing: .6px;
 }
 
 .reward-card.unlocked .reward-status {
@@ -1126,8 +1383,8 @@ body.dark .reward-xp {
 
 
 /* =========================================================
-   COMMON DYNAMIC REWARD ELEMENTS
-   ========================================================= */
+   DYNAMIC REWARD ELEMENTS
+========================================================= */
 
 .reward-card .icon,
 .reward-card .badge-icon,
@@ -1145,8 +1402,8 @@ body.dark .reward-card .achievement-icon {
 .reward-card .reward-category {
     color: var(--gold-dark);
 
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 8px;
+    font-weight: 900;
 
     letter-spacing: 1px;
 
@@ -1161,7 +1418,7 @@ body.dark .reward-card .reward-category {
 
 /* =========================================================
    NOTIFICATIONS
-   ========================================================= */
+========================================================= */
 
 .notifications-section {
     margin: 0 38px;
@@ -1181,7 +1438,7 @@ body.dark .reward-card .reward-category {
     color: var(--text);
 
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .section-heading p {
@@ -1189,7 +1446,7 @@ body.dark .reward-card .reward-category {
 
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
 #clearNotifications {
@@ -1203,15 +1460,16 @@ body.dark .reward-card .reward-category {
 
     color: var(--text-soft);
 
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 750;
 
     cursor: pointer;
 
     transition:
         background .2s ease,
         color .2s ease,
-        border-color .2s ease;
+        border-color .2s ease,
+        transform .2s ease;
 }
 
 #clearNotifications:hover {
@@ -1220,11 +1478,18 @@ body.dark .reward-card .reward-category {
     background: var(--gold-soft);
 
     color: var(--gold-dark);
+
+    transform: translateY(-1px);
 }
 
 body.dark #clearNotifications:hover {
     color: var(--gold);
 }
+
+
+/* =========================================================
+   NOTIFICATION LIST
+========================================================= */
 
 .notification-list {
     display: flex;
@@ -1235,8 +1500,8 @@ body.dark #clearNotifications:hover {
 
 
 /* =========================================================
-   NOTIFICATION ITEMS
-   ========================================================= */
+   NOTIFICATION ITEM
+========================================================= */
 
 .notification {
     display: flex;
@@ -1251,6 +1516,9 @@ body.dark #clearNotifications:hover {
     border-radius: 13px;
 
     background: var(--surface);
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, .025);
 }
 
 .notification:hover {
@@ -1266,6 +1534,8 @@ body.dark #clearNotifications:hover {
     justify-content: center;
 
     flex-shrink: 0;
+
+    border: 1px solid var(--gold-border);
 
     border-radius: 10px;
 
@@ -1284,7 +1554,7 @@ body.dark #clearNotifications:hover {
     color: var(--text);
 
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 850;
 }
 
 .notification-content p {
@@ -1306,8 +1576,8 @@ body.dark #clearNotifications:hover {
 
 
 /* =========================================================
-   EMPTY NOTIFICATION STATE
-   ========================================================= */
+   EMPTY NOTIFICATIONS
+========================================================= */
 
 .notification-list:empty::before {
     content: "No reward notifications yet.";
@@ -1324,7 +1594,7 @@ body.dark #clearNotifications:hover {
 
     color: var(--text-muted);
 
-    font-size: 12px;
+    font-size: 11px;
 
     text-align: center;
 }
@@ -1332,7 +1602,7 @@ body.dark #clearNotifications:hover {
 
 /* =========================================================
    REWARD UNLOCK OVERLAY
-   ========================================================= */
+========================================================= */
 
 .reward-overlay {
     position: fixed;
@@ -1345,9 +1615,9 @@ body.dark #clearNotifications:hover {
 
     padding: 20px;
 
-    background: rgba(0, 0, 0, .58);
+    background: rgba(0, 0, 0, .62);
 
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(9px);
 
     opacity: 0;
     visibility: hidden;
@@ -1373,7 +1643,7 @@ body.dark #clearNotifications:hover {
 
 /* =========================================================
    UNLOCK POPUP
-   ========================================================= */
+========================================================= */
 
 .unlock-popup {
     position: relative;
@@ -1384,7 +1654,7 @@ body.dark #clearNotifications:hover {
 
     border: 1px solid var(--gold-border);
 
-    border-radius: 22px;
+    border-radius: 23px;
 
     background: var(--surface);
 
@@ -1393,7 +1663,7 @@ body.dark #clearNotifications:hover {
     text-align: center;
 
     box-shadow:
-        0 25px 70px rgba(0, 0, 0, .28);
+        0 25px 70px rgba(0, 0, 0, .30);
 
     transform: translateY(15px) scale(.97);
 
@@ -1409,13 +1679,13 @@ body.dark #clearNotifications:hover {
 
 body.dark .unlock-popup {
     box-shadow:
-        0 25px 70px rgba(0, 0, 0, .65);
+        0 25px 70px rgba(0, 0, 0, .70);
 }
 
 
 /* =========================================================
    POPUP CLOSE
-   ========================================================= */
+========================================================= */
 
 .popup-close {
     position: absolute;
@@ -1454,7 +1724,7 @@ body.dark .unlock-popup {
 
 /* =========================================================
    POPUP STARS
-   ========================================================= */
+========================================================= */
 
 .unlock-stars {
     color: var(--gold);
@@ -1483,7 +1753,7 @@ body.dark .unlock-popup {
 
 /* =========================================================
    POPUP ICON
-   ========================================================= */
+========================================================= */
 
 .popup-icon {
     width: 82px;
@@ -1494,6 +1764,8 @@ body.dark .unlock-popup {
     justify-content: center;
 
     margin: 18px auto;
+
+    border: 1px solid var(--gold-border);
 
     border-radius: 22px;
 
@@ -1513,17 +1785,17 @@ body.dark .unlock-popup {
 
 /* =========================================================
    POPUP TEXT
-   ========================================================= */
+========================================================= */
 
 .popup-label {
     display: block;
 
     color: var(--gold-dark);
 
-    font-size: 10px;
-    font-weight: 850;
+    font-size: 9px;
+    font-weight: 900;
 
-    letter-spacing: 1.5px;
+    letter-spacing: 1.6px;
 }
 
 body.dark .popup-label {
@@ -1536,7 +1808,7 @@ body.dark .popup-label {
     color: var(--text);
 
     font-size: 25px;
-    font-weight: 850;
+    font-weight: 900;
 }
 
 .unlock-popup > p {
@@ -1551,7 +1823,7 @@ body.dark .popup-label {
 
 /* =========================================================
    POPUP XP
-   ========================================================= */
+========================================================= */
 
 .popup-xp {
     display: inline-flex;
@@ -1562,6 +1834,8 @@ body.dark .popup-label {
     margin-top: 18px;
 
     padding: 8px 13px;
+
+    border: 1px solid var(--gold-border);
 
     border-radius: 999px;
 
@@ -1580,7 +1854,7 @@ body.dark .popup-xp {
 
 /* =========================================================
    POPUP BUTTON
-   ========================================================= */
+========================================================= */
 
 .popup-button {
     width: 100%;
@@ -1601,7 +1875,7 @@ body.dark .popup-xp {
     color: #111111;
 
     font-size: 12px;
-    font-weight: 850;
+    font-weight: 900;
 
     cursor: pointer;
 
@@ -1623,7 +1897,7 @@ body.dark .popup-xp {
 
 /* =========================================================
    LIGHT MODE PROTECTION
-   ========================================================= */
+========================================================= */
 
 body:not(.dark) {
     background: #f7f5ef;
@@ -1638,7 +1912,7 @@ body:not(.dark) .main {
 }
 
 body:not(.dark) .topbar {
-    background: rgba(247, 245, 239, .92);
+    background: rgba(247, 245, 239, .94);
 }
 
 body:not(.dark) .topbar h1,
@@ -1659,14 +1933,9 @@ body:not(.dark) .progress-track {
 
 /* =========================================================
    DARK MODE PROTECTION
-   ========================================================= */
+========================================================= */
 
 body.dark {
-    background: #070707;
-}
-
-body.dark .sidebar,
-body.dark .main {
     background: #070707;
 }
 
@@ -1674,8 +1943,12 @@ body.dark .sidebar {
     background: #0b0b0b;
 }
 
+body.dark .main {
+    background: #070707;
+}
+
 body.dark .topbar {
-    background: rgba(7, 7, 7, .90);
+    background: rgba(7, 7, 7, .92);
 }
 
 body.dark .topbar h1,
@@ -1696,7 +1969,7 @@ body.dark .progress-track {
 
 /* =========================================================
    RESPONSIVE — 1100px
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 1100px) {
 
@@ -1714,9 +1987,21 @@ body.dark .progress-track {
 
 /* =========================================================
    RESPONSIVE — 900px
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 900px) {
+
+    .sidebar {
+        width: 250px;
+    }
+
+    .mobile-menu {
+        display: flex;
+    }
+
+    .topbar {
+        gap: 15px;
+    }
 
     .reward-hero {
         padding: 30px;
@@ -1748,7 +2033,7 @@ body.dark .progress-track {
 
 /* =========================================================
    RESPONSIVE — 800px
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 800px) {
 
@@ -1756,7 +2041,7 @@ body.dark .progress-track {
         transform: translateX(-100%);
 
         box-shadow:
-            10px 0 30px rgba(0, 0, 0, .18);
+            10px 0 30px rgba(0, 0, 0, .22);
 
         transition:
             transform .25s ease,
@@ -1792,7 +2077,7 @@ body.dark .progress-track {
 
 /* =========================================================
    RESPONSIVE — 620px
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 620px) {
 
@@ -1800,25 +2085,21 @@ body.dark .progress-track {
         align-items: flex-start;
         flex-direction: column;
 
-        padding: 20px 16px;
+        padding: 18px 16px;
+    }
+
+    .topbar > div:first-of-type {
+        width: 100%;
     }
 
     .profile {
         width: 100%;
 
-        justify-content: space-between;
+        justify-content: flex-start;
     }
 
     .profile-text {
-        order: 2;
-
-        flex: 1;
-
         text-align: left;
-    }
-
-    .avatar {
-        order: 1;
     }
 
     .reward-hero {
@@ -1836,14 +2117,14 @@ body.dark .progress-track {
 
     .trophy {
         width: 100%;
-        height: 130px;
+        height: 125px;
     }
 
     .trophy-glow {
-        width: 115px;
-        height: 115px;
+        width: 110px;
+        height: 110px;
 
-        font-size: 58px;
+        font-size: 55px;
     }
 
     .stats {
@@ -1864,6 +2145,7 @@ body.dark .progress-track {
 
     .filter {
         flex: 1;
+        min-width: 75px;
     }
 
     .rewards-grid {
@@ -1894,8 +2176,50 @@ body.dark .progress-track {
 
 
 /* =========================================================
+   RESPONSIVE — 430px
+========================================================= */
+
+@media (max-width: 430px) {
+
+    .topbar h1 {
+        font-size: 24px;
+    }
+
+    .subtitle {
+        font-size: 11px;
+    }
+
+    .reward-hero {
+        border-radius: 19px;
+    }
+
+    .hero-content h2 {
+        font-size: 28px;
+    }
+
+    .reward-toolbar h2 {
+        font-size: 19px;
+    }
+
+    .filters {
+        gap: 5px;
+    }
+
+    .filter {
+        padding: 7px 9px;
+
+        font-size: 9px;
+    }
+
+    .stat-card {
+        min-height: 88px;
+    }
+}
+
+
+/* =========================================================
    REDUCED MOTION
-   ========================================================= */
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
