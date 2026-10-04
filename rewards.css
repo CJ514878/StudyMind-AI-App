@@ -1,18 +1,75 @@
 /* =========================================================
    STUDYMIND AI — REWARDS
+   COMPLETE REPLACEMENT CSS
    PREMIUM BLACK / GOLD ACHIEVEMENT THEME
+   SUMMARIZER-STYLE SIDEBAR
    LIGHT + DARK MODE
-   ========================================================= */
-
-
-/* =========================================================
-   RESET
 ========================================================= */
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+:root {
+    --bg: #f7f5ef;
+    --surface: #ffffff;
+    --surface-soft: #fbfaf6;
+    --surface-hover: #f8f5eb;
+
+    --text: #171717;
+    --text-soft: #625f58;
+    --text-muted: #8a857b;
+
+    --gold: #f5c542;
+    --gold-light: #ffd966;
+    --gold-dark: #b7890b;
+
+    --gold-soft: rgba(245, 197, 66, .12);
+    --gold-softer: rgba(245, 197, 66, .06);
+    --gold-border: rgba(183, 137, 11, .22);
+
+    --track: #e8e3d8;
+
+    --green: #22a06b;
+    --green-soft: rgba(34, 160, 107, .12);
+
+    --red: #dc4c4c;
+    --red-soft: rgba(220, 76, 76, .10);
+
+    --border: rgba(20, 20, 20, .09);
+
+    --shadow: 0 8px 30px rgba(30, 25, 10, .07);
+    --shadow-hover: 0 14px 38px rgba(30, 25, 10, .11);
+
+    --sidebar-width: 250px;
+}
+
+body.dark {
+    --bg: #070707;
+    --surface: #101010;
+    --surface-soft: #151515;
+    --surface-hover: #191919;
+
+    --text: #ffffff;
+    --text-soft: #a6a6a6;
+    --text-muted: #707070;
+
+    --gold: #f5c542;
+    --gold-light: #ffd966;
+    --gold-dark: #d6a91d;
+
+    --gold-soft: rgba(245, 197, 66, .10);
+    --gold-softer: rgba(245, 197, 66, .055);
+    --gold-border: rgba(245, 197, 66, .20);
+
+    --track: #242424;
+
+    --border: rgba(255, 255, 255, .08);
+
+    --shadow: 0 12px 35px rgba(0, 0, 0, .35);
+    --shadow-hover: 0 18px 45px rgba(0, 0, 0, .50);
 }
 
 html {
@@ -57,105 +114,6 @@ a {
     text-decoration: none;
 }
 
-
-/* =========================================================
-   LIGHT THEME
-========================================================= */
-
-:root {
-
-    --bg: #f7f5ef;
-    --surface: #ffffff;
-    --surface-soft: #fbfaf6;
-    --surface-hover: #f8f5eb;
-
-    --text: #171717;
-    --text-soft: #625f58;
-    --text-muted: #8a857b;
-
-    --gold: #f5c542;
-    --gold-light: #ffd966;
-    --gold-dark: #b7890b;
-
-    --gold-soft: rgba(245, 197, 66, .12);
-    --gold-softer: rgba(245, 197, 66, .06);
-    --gold-border: rgba(183, 137, 11, .22);
-
-    --track: #e8e3d8;
-
-    --green: #22a06b;
-    --green-soft: rgba(34, 160, 107, .12);
-
-    --red: #dc4c4c;
-    --red-soft: rgba(220, 76, 76, .10);
-
-    --border: rgba(20, 20, 20, .09);
-
-    --shadow:
-        0 8px 30px rgba(30, 25, 10, .07);
-
-    --shadow-hover:
-        0 14px 38px rgba(30, 25, 10, .11);
-
-    --sidebar-width: 250px;
-}
-
-
-/* =========================================================
-   DARK THEME
-========================================================= */
-
-body.dark {
-
-    --bg: #070707;
-
-    --surface: #101010;
-    --surface-soft: #151515;
-    --surface-hover: #191919;
-
-    --text: #ffffff;
-    --text-soft: #a6a6a6;
-    --text-muted: #707070;
-
-    --gold: #f5c542;
-    --gold-light: #ffd966;
-    --gold-dark: #d6a91d;
-
-    --gold-soft: rgba(245, 197, 66, .10);
-    --gold-softer: rgba(245, 197, 66, .055);
-    --gold-border: rgba(245, 197, 66, .20);
-
-    --track: #242424;
-
-    --border: rgba(255, 255, 255, .08);
-
-    --shadow:
-        0 12px 35px rgba(0, 0, 0, .35);
-
-    --shadow-hover:
-        0 18px 45px rgba(0, 0, 0, .50);
-}
-
-
-/* =========================================================
-   GLOBAL
-========================================================= */
-
-html,
-body,
-.app,
-.main {
-    background: var(--bg);
-}
-
-.app {
-    min-height: 100vh;
-
-    display: flex;
-
-    background: var(--bg);
-}
-
 body,
 .app,
 .sidebar,
@@ -174,6 +132,19 @@ body,
         border-color .25s ease,
         color .25s ease,
         box-shadow .25s ease;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+    min-height: 100vh;
+
+    display: flex;
+
+    background: var(--bg);
 }
 
 
@@ -291,11 +262,6 @@ body.dark .sidebar {
     min-height: 0;
 }
 
-
-/* =========================================================
-   NAV SECTION
-========================================================= */
-
 .nav-section {
     display: flex;
     flex-direction: column;
@@ -401,7 +367,7 @@ body.dark .nav-item.active .nav-icon {
 
 
 /* =========================================================
-   PREMIUM NAV
+   PREMIUM
 ========================================================= */
 
 .premium-link {
@@ -441,7 +407,6 @@ body.dark .premium-link .nav-icon {
     gap: 3px;
 
     padding-top: 13px;
-
     margin-top: 13px;
 
     border-top: 1px solid var(--border);
@@ -449,7 +414,7 @@ body.dark .premium-link .nav-icon {
 
 
 /* =========================================================
-   THEME + LOGOUT BUTTONS
+   THEME BUTTON
 ========================================================= */
 
 .theme-button {
@@ -480,7 +445,8 @@ body.dark .premium-link .nav-icon {
     transition:
         background .2s ease,
         color .2s ease,
-        transform .2s ease;
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
 .theme-button:hover {
@@ -491,10 +457,51 @@ body.dark .premium-link .nav-icon {
     transform: translateX(2px);
 }
 
-.logout-button:hover {
-    background: var(--red-soft);
 
-    color: var(--red);
+/* =========================================================
+   LOGOUT — RED GLOW
+========================================================= */
+
+.logout-button {
+    color: #dc4c4c !important;
+}
+
+.logout-button .nav-icon {
+    color: #dc4c4c !important;
+}
+
+.logout-button:hover {
+    background: rgba(220, 76, 76, .10) !important;
+
+    color: #ff5c5c !important;
+
+    transform: translateX(2px);
+
+    box-shadow:
+        0 0 12px rgba(220, 76, 76, .14),
+        inset 0 0 10px rgba(220, 76, 76, .04);
+}
+
+.logout-button:hover .nav-icon {
+    color: #ff5c5c !important;
+}
+
+body.dark .logout-button {
+    color: #ff5c5c !important;
+}
+
+body.dark .logout-button .nav-icon {
+    color: #ff5c5c !important;
+}
+
+body.dark .logout-button:hover {
+    background: rgba(220, 76, 76, .12) !important;
+
+    color: #ff5c5c !important;
+
+    box-shadow:
+        0 0 16px rgba(220, 76, 76, .22),
+        inset 0 0 12px rgba(220, 76, 76, .05);
 }
 
 
@@ -509,6 +516,8 @@ body.dark .premium-link .nav-icon {
     margin-left: var(--sidebar-width);
 
     padding-bottom: 60px;
+
+    background: var(--bg);
 }
 
 
@@ -527,8 +536,7 @@ body.dark .premium-link .nav-icon {
 
     padding: 24px 38px;
 
-    background:
-        rgba(247, 245, 239, .94);
+    background: rgba(247, 245, 239, .94);
 
     border-bottom: 1px solid var(--border);
 
@@ -541,8 +549,7 @@ body.dark .premium-link .nav-icon {
 }
 
 body.dark .topbar {
-    background:
-        rgba(7, 7, 7, .92);
+    background: rgba(7, 7, 7, .92);
 }
 
 
@@ -570,10 +577,18 @@ body.dark .topbar {
     font-size: 19px;
 
     cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
 }
 
 .mobile-menu:hover {
     border-color: var(--gold-border);
+
+    background: var(--gold-soft);
 
     color: var(--gold-dark);
 }
@@ -784,11 +799,6 @@ body.dark .reward-hero {
     z-index: 1;
 }
 
-
-/* =========================================================
-   HERO BADGE
-========================================================= */
-
 .hero-badge {
     display: inline-flex;
     align-items: center;
@@ -812,11 +822,6 @@ body.dark .reward-hero {
 body.dark .hero-badge {
     color: var(--gold);
 }
-
-
-/* =========================================================
-   HERO TEXT
-========================================================= */
 
 .hero-content h2 {
     margin-top: 14px;
@@ -889,10 +894,6 @@ body.dark .progress-info strong {
 
     border-radius: 999px;
 
-    background: var(--track) !important;
-}
-
-body:not(.dark) .progress-track {
     background: #e8e3d8 !important;
 }
 
@@ -967,7 +968,6 @@ body.dark .progress-track {
 }
 
 @keyframes trophyFloat {
-
     0%,
     100% {
         transform: translateY(0);
@@ -1255,7 +1255,7 @@ body.dark .progress-track {
 
 
 /* =========================================================
-   REWARD CARD ICON
+   REWARD ICON
 ========================================================= */
 
 .reward-icon {
@@ -1293,7 +1293,7 @@ body.dark .progress-track {
 
 
 /* =========================================================
-   REWARD CARD TEXT
+   REWARD TEXT
 ========================================================= */
 
 .reward-card h3 {
@@ -1312,7 +1312,6 @@ body.dark .progress-track {
     color: var(--text-muted);
 
     font-size: 11px;
-
     line-height: 1.55;
 
     position: relative;
@@ -1498,11 +1497,6 @@ body.dark #clearNotifications:hover {
     gap: 9px;
 }
 
-
-/* =========================================================
-   NOTIFICATION ITEM
-========================================================= */
-
 .notification {
     display: flex;
     align-items: center;
@@ -1574,11 +1568,6 @@ body.dark #clearNotifications:hover {
     white-space: nowrap;
 }
 
-
-/* =========================================================
-   EMPTY NOTIFICATIONS
-========================================================= */
-
 .notification-list:empty::before {
     content: "No reward notifications yet.";
 
@@ -1601,7 +1590,7 @@ body.dark #clearNotifications:hover {
 
 
 /* =========================================================
-   REWARD UNLOCK OVERLAY
+   REWARD OVERLAY
 ========================================================= */
 
 .reward-overlay {
@@ -1737,7 +1726,6 @@ body.dark .unlock-popup {
 }
 
 @keyframes starsPulse {
-
     0%,
     100% {
         opacity: .7;
@@ -1896,7 +1884,7 @@ body.dark .popup-xp {
 
 
 /* =========================================================
-   LIGHT MODE PROTECTION
+   LIGHT MODE
 ========================================================= */
 
 body:not(.dark) {
@@ -1926,13 +1914,9 @@ body:not(.dark) .unlock-popup h2 {
     color: #171717 !important;
 }
 
-body:not(.dark) .progress-track {
-    background: #e8e3d8 !important;
-}
-
 
 /* =========================================================
-   DARK MODE PROTECTION
+   DARK MODE
 ========================================================= */
 
 body.dark {
@@ -1962,10 +1946,6 @@ body.dark .unlock-popup h2 {
     color: #ffffff !important;
 }
 
-body.dark .progress-track {
-    background: #242424 !important;
-}
-
 
 /* =========================================================
    RESPONSIVE — 1100px
@@ -1990,10 +1970,6 @@ body.dark .progress-track {
 ========================================================= */
 
 @media (max-width: 900px) {
-
-    .sidebar {
-        width: 250px;
-    }
 
     .mobile-menu {
         display: flex;
