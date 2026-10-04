@@ -1941,3 +1941,483 @@ body.dark .date-pill,
 body.dark .mobile-menu {
     background: #101010 !important;
 }
+
+/* =========================================================
+   STUDYMIND AI — GOALS
+   FINAL LIGHT MODE OVERRIDES
+   ---------------------------------------------------------
+   These rules specifically force elements that may still
+   be inheriting old dark-mode styles.
+========================================================= */
+
+
+/* =========================================================
+   LIGHT MODE — TOPBAR
+========================================================= */
+
+body:not(.dark) .welcome span {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .welcome h1 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .welcome h1 span {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .welcome p {
+    color: #625e55 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — HERO
+========================================================= */
+
+body:not(.dark) .goals-hero {
+    color: #171717 !important;
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(201, 150, 25, 0.15),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 10% 100%,
+            rgba(201, 150, 25, 0.07),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #fff9e8,
+            #ffffff 55%,
+            #f5efdf
+        ) !important;
+
+    border-color:
+        rgba(201, 150, 25, 0.22) !important;
+}
+
+body:not(.dark) .hero-copy h2 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .hero-copy h2 span {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .hero-copy p {
+    color: #625e55 !important;
+}
+
+body:not(.dark) .eyebrow {
+    color: #b8830d !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SCORE RING
+========================================================= */
+
+body:not(.dark) .score-ring {
+    background:
+        conic-gradient(
+            #c99619 0 var(--progress, 0%),
+            #e9e4d8 var(--progress, 0%) 100%
+        ) !important;
+}
+
+body:not(.dark) .score-ring::before {
+    background: #ffffff !important;
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .score-ring strong {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .score-ring span {
+    color: #888174 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SECTION HEADINGS
+========================================================= */
+
+body:not(.dark) .section-heading h2 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .section-label {
+    color: #888174 !important;
+}
+
+body:not(.dark) .goal-status,
+body:not(.dark) .week-range {
+    color: #888174 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — GOAL CARDS
+========================================================= */
+
+body:not(.dark) .goal-card {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .goal-heading h3 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .goal-heading span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .goal-numbers strong {
+    color: #171717 !important;
+}
+
+body:not(.dark) .goal-numbers span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .goal-numbers b {
+    color: #625e55 !important;
+}
+
+body:not(.dark) .goal-percent {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .goal-card p {
+    color: #888174 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — PROGRESS TRACKS
+========================================================= */
+
+body:not(.dark) .progress-track {
+    background: #e9e4d8 !important;
+}
+
+body:not(.dark) .progress-bar {
+    background:
+        linear-gradient(
+            90deg,
+            #a9780d,
+            #c99619
+        ) !important;
+}
+
+body:not(.dark) .goal-card:nth-child(2) .progress-bar {
+    background: #20a45a !important;
+}
+
+body:not(.dark) .goal-card:nth-child(3) .progress-bar {
+    background: #d97706 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — WEEKLY CARDS
+========================================================= */
+
+body:not(.dark) .weekly-card {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .weekly-card h3 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .weekly-card h3 small {
+    color: #888174 !important;
+}
+
+body:not(.dark) .weekly-target span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .weekly-target strong {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .weekly-card p {
+    color: #888174 !important;
+}
+
+
+/* WEEKLY PROGRESS */
+
+body:not(.dark) .weekly-progress {
+    background: #e9e4d8 !important;
+}
+
+body:not(.dark) .weekly-progress div {
+    background:
+        linear-gradient(
+            90deg,
+            #a9780d,
+            #c99619
+        ) !important;
+}
+
+body:not(.dark) .mini-progress {
+    background: #e9e4d8 !important;
+}
+
+body:not(.dark) .mini-progress div {
+    background: #c99619 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — PLAN
+========================================================= */
+
+body:not(.dark) .plan-card {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .plan-info h3 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .plan-info p {
+    color: #888174 !important;
+}
+
+body:not(.dark) .plan-stat strong {
+    color: #171717 !important;
+}
+
+body:not(.dark) .plan-stat span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .plan-stat b {
+    color: #625e55 !important;
+}
+
+body:not(.dark) .plan-progress {
+    background: #e9e4d8 !important;
+}
+
+body:not(.dark) .plan-progress div {
+    background:
+        linear-gradient(
+            90deg,
+            #a9780d,
+            #c99619
+        ) !important;
+}
+
+body:not(.dark) .plan-progress-container > span {
+    color: #b8830d !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SUBJECTS
+========================================================= */
+
+body:not(.dark) .subject-card {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .subject-info h3 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .subject-info span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .subject-percent {
+    color: #b8830d !important;
+}
+
+body:not(.dark) .subject-progress {
+    background: #e9e4d8 !important;
+}
+
+body:not(.dark) .subject-progress div {
+    background:
+        linear-gradient(
+            90deg,
+            #a9780d,
+            #c99619
+        ) !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — ACHIEVEMENTS
+========================================================= */
+
+body:not(.dark) .achievement {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .achievement strong {
+    color: #171717 !important;
+}
+
+body:not(.dark) .achievement p {
+    color: #888174 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — EMPTY STATE
+========================================================= */
+
+body:not(.dark) .empty-plan {
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .empty-plan h2 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .empty-plan p {
+    color: #888174 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — DATE
+========================================================= */
+
+body:not(.dark) .date-pill {
+    color: #625e55 !important;
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — MOBILE MENU
+========================================================= */
+
+body:not(.dark) .mobile-menu {
+    color: #171717 !important;
+    background: #ffffff !important;
+
+    border-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SIDEBAR
+========================================================= */
+
+body:not(.dark) .sidebar {
+    background: #ffffff !important;
+
+    border-right-color:
+        rgba(20, 20, 20, 0.09) !important;
+}
+
+body:not(.dark) .brand strong {
+    color: #171717 !important;
+}
+
+body:not(.dark) .brand span {
+    color: #888174 !important;
+}
+
+body:not(.dark) .nav-item {
+    color: #706b61 !important;
+}
+
+body:not(.dark) .nav-item:hover {
+    color: #171717 !important;
+
+    background:
+        rgba(201, 150, 25, 0.07) !important;
+}
+
+body:not(.dark) .nav-item.active {
+    color: #080808 !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e2b936,
+            #c99619
+        ) !important;
+}
+
+body:not(.dark) .premium-link {
+    color: #a9790e !important;
+
+    background:
+        rgba(201, 150, 25, 0.09) !important;
+}
+
+body:not(.dark) .theme-button {
+    color: #706b61 !important;
+}
+
+
+/* =========================================================
+   LIGHT MODE — TRACK SAFETY
+   ---------------------------------------------------------
+   Catches dynamically generated progress elements too.
+========================================================= */
+
+body:not(.dark) [class*="progress"] {
+    --track: #e9e4d8;
+}
+
+body:not(.dark) .progress-track,
+body:not(.dark) .weekly-progress,
+body:not(.dark) .mini-progress,
+body:not(.dark) .plan-progress,
+body:not(.dark) .subject-progress {
+    background-color: #e9e4d8 !important;
+}
+
+
+/* =========================================================
+   DARK MODE REMAINS INTACT
+========================================================= */
+
+body.dark .welcome span,
+body.dark .eyebrow,
+body.dark .goal-percent,
+body.dark .weekly-target strong,
+body.dark .subject-percent,
+body.dark .plan-progress-container > span {
+    color: #f5c542 !important;
+}
