@@ -1,105 +1,216 @@
 /* =========================================================
    STUDYMIND AI — REWARDS
-========================================================= */
+   BLACK / GOLD ACHIEVEMENT THEME
+   LIGHT + DARK MODE
+   ========================================================= */
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
 
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-:root {
-    --bg: #f5f7fb;
-    --card: #ffffff;
-    --text: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --primary: #2563eb;
-    --primary-light: #eff6ff;
-    --gold: #f59e0b;
-    --gold-light: #fff7ed;
-    --green: #16a34a;
-    --purple: #7c3aed;
-    --shadow:
-        0 12px 35px rgba(15, 23, 42, 0.07);
-}
-
-body.dark {
-    --bg: #0b1120;
-    --card: #111827;
-    --text: #f9fafb;
-    --muted: #9ca3af;
-    --border: #243044;
-    --primary: #60a5fa;
-    --primary-light: #172554;
-    --gold: #fbbf24;
-    --gold-light: #422006;
-    --green: #4ade80;
-    --purple: #a78bfa;
-    --shadow:
-        0 12px 35px rgba(0, 0, 0, 0.25);
+html {
+    min-height: 100%;
+    background: var(--bg);
 }
 
 body {
-    margin: 0;
+    min-height: 100vh;
+
     font-family:
         Inter,
-        system-ui,
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
         sans-serif;
 
     background: var(--bg);
     color: var(--text);
 
     transition:
-        background 0.25s ease,
-        color 0.25s ease;
+        background-color .25s ease,
+        color .25s ease;
 }
 
 button,
-a {
-    font-family: inherit;
+input,
+textarea,
+select {
+    font: inherit;
 }
 
 button {
-    cursor: pointer;
+    border: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
 
 /* =========================================================
-   APP
-========================================================= */
+   LIGHT THEME
+   ========================================================= */
+
+:root {
+
+    --bg: #f7f5ef;
+
+    --surface: #ffffff;
+    --surface-soft: #fbfaf6;
+
+    --text: #171717;
+    --text-soft: #625f58;
+    --text-muted: #8a857b;
+
+    --gold: #f5c542;
+    --gold-light: #ffd966;
+    --gold-dark: #b7890b;
+
+    --gold-soft: rgba(245, 197, 66, .12);
+    --gold-border: rgba(183, 137, 11, .22);
+
+    --track: #e8e3d8;
+
+    --green: #22a06b;
+    --green-soft: rgba(34, 160, 107, .12);
+
+    --red: #dc4c4c;
+    --red-soft: rgba(220, 76, 76, .10);
+
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+
+    --border: rgba(20, 20, 20, .09);
+
+    --shadow:
+        0 8px 30px rgba(30, 25, 10, .07);
+
+    --sidebar-width: 250px;
+}
+
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
+body.dark {
+
+    --bg: #070707;
+
+    --surface: #101010;
+    --surface-soft: #151515;
+
+    --text: #ffffff;
+    --text-soft: #a6a6a6;
+    --text-muted: #707070;
+
+    --gold: #f5c542;
+    --gold-light: #ffd966;
+    --gold-dark: #d6a91d;
+
+    --gold-soft: rgba(245, 197, 66, .10);
+    --gold-border: rgba(245, 197, 66, .20);
+
+    --track: #242424;
+
+    --border: rgba(255, 255, 255, .08);
+
+    --shadow:
+        0 12px 35px rgba(0, 0, 0, .35);
+}
+
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+html,
+body,
+.app,
+.main {
+    background: var(--bg);
+}
 
 .app {
-    display: flex;
     min-height: 100vh;
+
+    display: flex;
+
+    background: var(--bg);
+}
+
+body,
+.app,
+.sidebar,
+.main,
+.topbar,
+.reward-hero,
+.stat-card,
+.reward-toolbar,
+.notifications-section,
+.notification-list,
+.reward-card,
+.unlock-popup {
+    transition:
+        background-color .25s ease,
+        border-color .25s ease,
+        color .25s ease,
+        box-shadow .25s ease;
 }
 
 
 /* =========================================================
    SIDEBAR
-========================================================= */
+   ========================================================= */
 
 .sidebar {
-    width: 250px;
     position: fixed;
-    inset: 0 auto 0 0;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: var(--sidebar-width);
 
     display: flex;
     flex-direction: column;
 
-    padding: 24px 16px;
+    padding: 24px 14px;
 
-    background: var(--card);
+    background: #ffffff;
+
     border-right: 1px solid var(--border);
 
-    z-index: 20;
+    z-index: 1000;
+
+    overflow-y: auto;
 }
+
+body.dark .sidebar {
+    background: #0b0b0b;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+
+    gap: 12px;
 
     padding: 4px 10px 28px;
 }
@@ -108,133 +219,265 @@ button {
     width: 40px;
     height: 40px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
 
     border-radius: 12px;
 
     background:
         linear-gradient(
             135deg,
-            #2563eb,
-            #7c3aed
+            var(--gold-light),
+            var(--gold)
         );
 
-    color: white;
-    font-weight: 800;
+    color: #111111;
+
     font-size: 20px;
+    font-weight: 900;
+
+    box-shadow:
+        0 6px 16px rgba(245, 197, 66, .22);
 }
 
 .brand strong {
     display: block;
-    font-size: 17px;
+
+    color: var(--text);
+
+    font-size: 15px;
+    font-weight: 800;
+
+    line-height: 1.15;
 }
 
 .brand span {
-    color: var(--primary);
-    font-size: 12px;
-    font-weight: 700;
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+    font-weight: 500;
 }
 
-nav {
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.sidebar nav {
+    flex: 1;
+
     display: flex;
     flex-direction: column;
-    gap: 5px;
+
+    gap: 3px;
 }
 
-nav a,
-.side-button {
-    width: 100%;
+.sidebar nav a {
+    min-height: 42px;
 
     display: flex;
     align-items: center;
-    gap: 13px;
 
-    padding: 12px 13px;
+    gap: 11px;
 
-    border: 0;
-    border-radius: 11px;
+    padding: 10px 12px;
 
-    background: transparent;
-    color: var(--muted);
+    border-radius: 10px;
 
-    text-decoration: none;
+    color: var(--text-soft);
 
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
 
-    transition: 0.2s ease;
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease;
 }
 
-nav a:hover,
-.side-button:hover {
-    background: var(--bg);
+.sidebar nav a:hover {
+    background: var(--gold-soft);
+
     color: var(--text);
+
+    transform: translateX(2px);
 }
 
-nav a.active {
-    background: var(--primary-light);
-    color: var(--primary);
+.sidebar nav a.active {
+    background: var(--gold-soft);
+
+    color: var(--gold-dark);
+
+    font-weight: 800;
 }
+
+body.dark .sidebar nav a.active {
+    color: var(--gold);
+}
+
+.sidebar nav a:first-letter {
+    font-size: 16px;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+   ========================================================= */
 
 .sidebar-bottom {
-    margin-top: auto;
+    padding-top: 14px;
+
+    margin-top: 14px;
+
+    border-top: 1px solid var(--border);
+}
+
+.side-button {
+    width: 100%;
+
+    min-height: 42px;
 
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 10px 12px;
+
+    margin-bottom: 3px;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    color: var(--text-soft);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease;
+}
+
+.side-button:hover {
+    background: var(--gold-soft);
+
+    color: var(--text);
+
+    transform: translateX(2px);
 }
 
 
 /* =========================================================
    MAIN
-========================================================= */
+   ========================================================= */
 
 .main {
-    width: calc(100% - 250px);
-    margin-left: 250px;
+    width: 100%;
 
-    padding: 32px 40px 60px;
+    min-height: 100vh;
+
+    margin-left: var(--sidebar-width);
+
+    padding-bottom: 50px;
 }
 
 
 /* =========================================================
    TOPBAR
-========================================================= */
+   ========================================================= */
 
 .topbar {
+    min-height: 100px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    margin-bottom: 28px;
+    gap: 25px;
+
+    padding: 25px 38px;
+
+    background:
+        rgba(247, 245, 239, .92);
+
+    border-bottom: 1px solid var(--border);
+
+    backdrop-filter: blur(16px);
+
+    position: sticky;
+    top: 0;
+
+    z-index: 100;
 }
+
+body.dark .topbar {
+    background:
+        rgba(7, 7, 7, .90);
+}
+
+
+/* =========================================================
+   TOPBAR TEXT
+   ========================================================= */
 
 .eyebrow {
-    margin: 0 0 5px;
+    display: block;
 
-    color: var(--primary);
+    margin-bottom: 5px;
 
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    color: var(--gold-dark);
+
+    font-size: 10px;
+    font-weight: 850;
+
+    letter-spacing: 1.5px;
 }
 
-h1 {
-    margin: 0;
+body.dark .eyebrow {
+    color: var(--gold);
+}
 
-    font-size: clamp(30px, 4vw, 42px);
-    letter-spacing: -0.04em;
+.topbar h1 {
+    color: var(--text);
+
+    font-size: 28px;
+    font-weight: 850;
+
+    line-height: 1.1;
 }
 
 .subtitle {
-    margin: 8px 0 0;
-    color: var(--muted);
+    margin-top: 7px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+    line-height: 1.5;
 }
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
 
 .profile {
     display: flex;
     align-items: center;
+
     gap: 12px;
 }
 
@@ -244,196 +487,276 @@ h1 {
 
 .profile-text strong {
     display: block;
+
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 800;
 }
 
 .profile-text span {
-    color: var(--muted);
-    font-size: 12px;
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--gold-dark);
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+body.dark .profile-text span {
+    color: var(--gold);
 }
 
 .avatar {
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     border-radius: 50%;
 
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--purple)
+            var(--gold-light),
+            var(--gold)
         );
 
-    color: white;
-    font-weight: 800;
+    color: #111111;
+
+    font-size: 15px;
+    font-weight: 900;
+
+    box-shadow:
+        0 5px 16px rgba(245, 197, 66, .20);
 }
 
 
 /* =========================================================
    HERO
-========================================================= */
+   ========================================================= */
 
 .reward-hero {
-    position: relative;
-    overflow: hidden;
+    min-height: 245px;
 
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
-    min-height: 270px;
+    gap: 35px;
 
-    padding: 38px 45px;
+    margin: 30px 38px;
 
-    border-radius: 25px;
+    padding: 35px 40px;
+
+    border: 1px solid var(--gold-border);
+
+    border-radius: 22px;
 
     background:
+        radial-gradient(
+            circle at 85% 25%,
+            rgba(245, 197, 66, .15),
+            transparent 35%
+        ),
         linear-gradient(
             135deg,
-            #111827,
-            #1e3a8a 70%,
-            #312e81
+            #fffdf7,
+            #f7f3e7
         );
 
-    color: white;
-
-    box-shadow:
-        0 20px 50px rgba(30, 64, 175, 0.22);
+    box-shadow: var(--shadow);
 }
 
-.reward-hero::before,
-.reward-hero::after {
-    content: "";
-
-    position: absolute;
-
-    width: 250px;
-    height: 250px;
-
-    border-radius: 50%;
-
-    border: 1px solid rgba(255,255,255,0.12);
-}
-
-.reward-hero::before {
-    right: 120px;
-    top: -150px;
-}
-
-.reward-hero::after {
-    right: -70px;
-    bottom: -170px;
+body.dark .reward-hero {
+    background:
+        radial-gradient(
+            circle at 85% 25%,
+            rgba(245, 197, 66, .12),
+            transparent 35%
+        ),
+        linear-gradient(
+            135deg,
+            #121212,
+            #090909
+        );
 }
 
 .hero-content {
-    max-width: 650px;
-    position: relative;
-    z-index: 2;
+    flex: 1;
+
+    max-width: 700px;
 }
 
 .hero-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
 
     padding: 7px 11px;
 
+    border: 1px solid var(--gold-border);
+
     border-radius: 999px;
 
-    background: rgba(255,255,255,0.12);
+    background: var(--gold-soft);
 
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    color: var(--gold-dark);
+
+    font-size: 10px;
+    font-weight: 850;
+
+    letter-spacing: 1px;
 }
 
-.reward-hero h2 {
-    margin: 17px 0 8px;
-
-    font-size: clamp(28px, 4vw, 42px);
-    letter-spacing: -0.04em;
+body.dark .hero-badge {
+    color: var(--gold);
 }
 
-.reward-hero p {
-    margin: 0;
+.hero-content h2 {
+    margin-top: 14px;
 
-    color: rgba(255,255,255,0.78);
+    color: var(--text);
 
-    line-height: 1.6;
+    font-size: clamp(29px, 4vw, 44px);
+    font-weight: 850;
+
+    line-height: 1.05;
+
+    letter-spacing: -.8px;
 }
+
+.hero-content p {
+    max-width: 600px;
+
+    margin-top: 13px;
+
+    color: var(--text-soft);
+
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+
+/* =========================================================
+   HERO PROGRESS
+   ========================================================= */
 
 .hero-progress {
-    margin-top: 27px;
-    max-width: 500px;
+    max-width: 600px;
+
+    margin-top: 25px;
 }
 
 .progress-info {
     display: flex;
+    align-items: center;
     justify-content: space-between;
 
-    margin-bottom: 8px;
+    gap: 15px;
 
-    font-size: 12px;
+    margin-bottom: 9px;
+}
+
+.progress-info span {
+    color: var(--text-muted);
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.progress-info strong {
+    color: var(--gold-dark);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+body.dark .progress-info strong {
+    color: var(--gold);
 }
 
 .progress-track {
-    height: 8px;
+    width: 100%;
+    height: 9px;
 
     overflow: hidden;
 
     border-radius: 999px;
 
-    background: rgba(255,255,255,0.15);
+    background: var(--track) !important;
+}
+
+body:not(.dark) .progress-track {
+    background: #e8e3d8 !important;
+}
+
+body.dark .progress-track {
+    background: #242424 !important;
 }
 
 .progress-fill {
-    height: 100%;
     width: 0%;
+    height: 100%;
 
     border-radius: inherit;
 
     background:
         linear-gradient(
             90deg,
-            #fbbf24,
-            #f59e0b
+            var(--gold-dark),
+            var(--gold)
         );
 
-    transition: width 0.5s ease;
+    transition: width .4s ease;
 }
 
+
+/* =========================================================
+   TROPHY
+   ========================================================= */
+
 .trophy {
-    position: relative;
-    z-index: 2;
+    width: 175px;
+    height: 175px;
 
-    width: 190px;
-    height: 190px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    display: grid;
-    place-items: center;
+    flex-shrink: 0;
 }
 
 .trophy-glow {
-    width: 135px;
-    height: 135px;
+    width: 145px;
+    height: 145px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     border-radius: 50%;
 
     background:
         radial-gradient(
             circle,
-            rgba(251,191,36,0.35),
+            rgba(245, 197, 66, .24),
+            rgba(245, 197, 66, .07) 55%,
             transparent 70%
         );
 
     font-size: 78px;
 
+    filter:
+        drop-shadow(
+            0 12px 18px rgba(245, 197, 66, .22)
+        );
+
     animation:
-        trophyFloat 3s ease-in-out infinite;
+        trophyFloat 3.5s ease-in-out infinite;
 }
 
 @keyframes trophyFloat {
@@ -444,126 +767,173 @@ h1 {
     }
 
     50% {
-        transform: translateY(-10px);
+        transform: translateY(-7px);
     }
 }
 
 
 /* =========================================================
    STATS
-========================================================= */
+   ========================================================= */
 
 .stats {
     display: grid;
+
     grid-template-columns:
-        repeat(4, 1fr);
+        repeat(4, minmax(0, 1fr));
 
-    gap: 16px;
+    gap: 15px;
 
-    margin: 22px 0 35px;
+    margin: 0 38px 35px;
 }
 
 .stat-card {
+    min-height: 94px;
+
     display: flex;
     align-items: center;
-    gap: 14px;
 
-    padding: 20px;
+    gap: 13px;
 
-    background: var(--card);
+    padding: 18px;
+
     border: 1px solid var(--border);
-    border-radius: 17px;
+
+    border-radius: 16px;
+
+    background: var(--surface);
 
     box-shadow: var(--shadow);
 }
 
+.stat-card:hover {
+    border-color: var(--gold-border);
+
+    transform: translateY(-2px);
+}
+
 .stat-icon {
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    border-radius: 13px;
+    flex-shrink: 0;
 
-    background: var(--gold-light);
+    border-radius: 12px;
 
-    font-size: 21px;
+    background: var(--gold-soft);
+
+    font-size: 20px;
 }
 
 .stat-card small {
     display: block;
 
-    color: var(--muted);
+    color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 650;
 }
 
 .stat-card strong {
     display: block;
 
-    margin-top: 3px;
+    margin-top: 4px;
 
-    font-size: 24px;
+    color: var(--text);
+
+    font-size: 25px;
+    font-weight: 850;
 }
 
 
 /* =========================================================
-   TOOLBAR
-========================================================= */
+   REWARD TOOLBAR
+   ========================================================= */
 
 .reward-toolbar {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 25px;
 
-    margin-bottom: 18px;
+    margin: 0 38px 20px;
 }
 
 .reward-toolbar h2 {
-    margin: 0;
-    font-size: 23px;
+    color: var(--text);
+
+    font-size: 21px;
+    font-weight: 800;
 }
 
 .reward-toolbar p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 13px;
+    margin-top: 5px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
 }
 
 .filters {
     display: flex;
+    align-items: center;
+
     flex-wrap: wrap;
+
     gap: 7px;
 }
 
 .filter {
-    border: 1px solid var(--border);
+    padding: 8px 12px;
 
-    background: var(--card);
-    color: var(--muted);
+    border: 1px solid var(--border);
 
     border-radius: 999px;
 
-    padding: 8px 12px;
+    background: var(--surface);
 
-    font-size: 12px;
+    color: var(--text-soft);
+
+    font-size: 11px;
     font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
 }
 
-.filter.active,
 .filter:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
+    border-color: var(--gold-border);
+
+    color: var(--text);
+
+    transform: translateY(-1px);
+}
+
+.filter.active {
+    border-color: var(--gold-border);
+
+    background: var(--gold);
+
+    color: #111111;
+
+    box-shadow:
+        0 5px 14px rgba(245, 197, 66, .16);
 }
 
 
 /* =========================================================
    REWARDS GRID
-========================================================= */
+   ========================================================= */
 
 .rewards-grid {
     display: grid;
@@ -571,483 +941,969 @@ h1 {
     grid-template-columns:
         repeat(4, minmax(0, 1fr));
 
-    gap: 16px;
+    gap: 15px;
+
+    margin: 0 38px 38px;
 }
+
+
+/* =========================================================
+   REWARD CARD
+   ========================================================= */
 
 .reward-card {
     position: relative;
 
     min-height: 205px;
 
-    padding: 22px;
+    display: flex;
+    flex-direction: column;
 
-    background: var(--card);
+    padding: 20px;
+
     border: 1px solid var(--border);
 
-    border-radius: 19px;
+    border-radius: 17px;
+
+    background: var(--surface);
 
     box-shadow: var(--shadow);
 
+    overflow: hidden;
+
     transition:
-        transform 0.2s ease,
-        border 0.2s ease,
-        box-shadow 0.2s ease;
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
 }
 
 .reward-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
+
+    border-color: var(--gold-border);
 }
 
 .reward-card.unlocked {
-    border-color:
-        rgba(245,158,11,0.45);
+    border-color: var(--gold-border);
 
-    box-shadow:
-        0 12px 35px
-        rgba(245,158,11,0.10);
+    background:
+        linear-gradient(
+            145deg,
+            var(--surface),
+            var(--gold-soft)
+        );
 }
 
 .reward-card.locked {
-    opacity: 0.58;
+    opacity: .70;
+}
+
+.reward-card::after {
+    content: "";
+
+    position: absolute;
+
+    top: -50px;
+    right: -50px;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    background: rgba(245, 197, 66, .06);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   REWARD CARD ICONS
+   ========================================================= */
+
+.reward-icon {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 14px;
+
+    border-radius: 15px;
+
+    background: var(--gold-soft);
+
+    font-size: 27px;
 }
 
 .reward-card.locked .reward-icon {
-    filter: grayscale(1);
+    filter: grayscale(.7);
+    opacity: .65;
 }
 
-.reward-icon {
-    width: 58px;
-    height: 58px;
 
-    display: grid;
-    place-items: center;
-
-    border-radius: 16px;
-
-    background: var(--gold-light);
-
-    font-size: 29px;
-
-    margin-bottom: 15px;
-}
-
-.reward-category {
-    color: var(--primary);
-
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
+/* =========================================================
+   REWARD CARD TEXT
+   ========================================================= */
 
 .reward-card h3 {
-    margin: 5px 0 6px;
+    color: var(--text);
 
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .reward-card p {
-    margin: 0;
+    margin-top: 6px;
 
-    color: var(--muted);
+    color: var(--text-muted);
 
-    font-size: 12px;
+    font-size: 11px;
+
     line-height: 1.55;
 }
 
-.reward-footer {
+.reward-card .reward-description {
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   REWARD META
+   ========================================================= */
+
+.reward-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    margin-top: 17px;
+    gap: 10px;
+
+    margin-top: auto;
+    padding-top: 16px;
 }
 
 .reward-xp {
-    color: var(--gold);
+    color: var(--gold-dark);
 
-    font-size: 12px;
-    font-weight: 800;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+body.dark .reward-xp {
+    color: var(--gold);
 }
 
 .reward-status {
-    font-size: 12px;
+    padding: 5px 8px;
+
+    border-radius: 999px;
+
+    background: var(--surface-soft);
+
+    color: var(--text-muted);
+
+    font-size: 9px;
     font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: .5px;
 }
 
-.reward-status.unlocked {
+.reward-card.unlocked .reward-status {
+    background: var(--green-soft);
+
     color: var(--green);
 }
 
-.reward-status.locked {
-    color: var(--muted);
+.reward-card.locked .reward-status {
+    background: rgba(120, 120, 120, .08);
+
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   COMMON DYNAMIC REWARD ELEMENTS
+   ========================================================= */
+
+.reward-card .icon,
+.reward-card .badge-icon,
+.reward-card .achievement-icon {
+    color: var(--gold-dark);
+}
+
+body.dark .reward-card .icon,
+body.dark .reward-card .badge-icon,
+body.dark .reward-card .achievement-icon {
+    color: var(--gold);
+}
+
+.reward-card .category,
+.reward-card .reward-category {
+    color: var(--gold-dark);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+}
+
+body.dark .reward-card .category,
+body.dark .reward-card .reward-category {
+    color: var(--gold);
 }
 
 
 /* =========================================================
    NOTIFICATIONS
-========================================================= */
+   ========================================================= */
 
 .notifications-section {
-    margin-top: 45px;
+    margin: 0 38px;
 }
 
 .section-heading {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
 
-    margin-bottom: 14px;
+    gap: 20px;
+
+    margin-bottom: 15px;
 }
 
 .section-heading h2 {
-    margin: 0;
+    color: var(--text);
+
+    font-size: 20px;
+    font-weight: 800;
 }
 
 .section-heading p {
-    margin: 5px 0 0;
+    margin-top: 5px;
 
-    color: var(--muted);
-    font-size: 13px;
+    color: var(--text-muted);
+
+    font-size: 11px;
 }
 
 #clearNotifications {
-    border: 0;
+    padding: 8px 12px;
 
-    background: var(--card);
     border: 1px solid var(--border);
 
-    color: var(--muted);
-
-    padding: 8px 13px;
-
     border-radius: 9px;
+
+    background: var(--surface);
+
+    color: var(--text-soft);
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        border-color .2s ease;
+}
+
+#clearNotifications:hover {
+    border-color: var(--gold-border);
+
+    background: var(--gold-soft);
+
+    color: var(--gold-dark);
+}
+
+body.dark #clearNotifications:hover {
+    color: var(--gold);
 }
 
 .notification-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
 
-.notification {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-
-    padding: 14px 17px;
-
-    background: var(--card);
-
-    border: 1px solid var(--border);
-    border-radius: 13px;
-}
-
-.notification-icon {
-    width: 40px;
-    height: 40px;
-
-    display: grid;
-    place-items: center;
-
-    border-radius: 11px;
-
-    background: var(--gold-light);
-}
-
-.notification strong {
-    display: block;
-    font-size: 13px;
-}
-
-.notification span {
-    color: var(--muted);
-    font-size: 11px;
+    gap: 9px;
 }
 
 
 /* =========================================================
-   POPUP
-========================================================= */
+   NOTIFICATION ITEMS
+   ========================================================= */
+
+.notification {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 14px 16px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 13px;
+
+    background: var(--surface);
+}
+
+.notification:hover {
+    border-color: var(--gold-border);
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background: var(--gold-soft);
+
+    font-size: 17px;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content strong {
+    display: block;
+
+    color: var(--text);
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.notification-content p {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.notification-time {
+    color: var(--text-muted);
+
+    font-size: 9px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   EMPTY NOTIFICATION STATE
+   ========================================================= */
+
+.notification-list:empty::before {
+    content: "No reward notifications yet.";
+
+    display: block;
+
+    padding: 25px;
+
+    border: 1px dashed var(--border);
+
+    border-radius: 14px;
+
+    background: var(--surface);
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   REWARD UNLOCK OVERLAY
+   ========================================================= */
 
 .reward-overlay {
     position: fixed;
+
     inset: 0;
 
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
 
     padding: 20px;
 
-    background:
-        rgba(3, 7, 18, 0.72);
+    background: rgba(0, 0, 0, .58);
 
     backdrop-filter: blur(8px);
 
-    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+
+    z-index: 9999;
+
+    transition:
+        opacity .25s ease,
+        visibility .25s ease;
 }
 
-.reward-overlay.show {
-    display: flex;
+.reward-overlay.show,
+.reward-overlay.active,
+.reward-overlay.visible {
+    opacity: 1;
+    visibility: visible;
 
-    animation:
-        overlayIn 0.25s ease;
+    pointer-events: auto;
 }
 
-@keyframes overlayIn {
 
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
-}
+/* =========================================================
+   UNLOCK POPUP
+   ========================================================= */
 
 .unlock-popup {
     position: relative;
 
     width: min(440px, 100%);
 
-    padding: 40px 30px 30px;
+    padding: 38px 30px 30px;
+
+    border: 1px solid var(--gold-border);
+
+    border-radius: 22px;
+
+    background: var(--surface);
+
+    color: var(--text);
 
     text-align: center;
 
-    background: var(--card);
-
-    border: 1px solid
-        rgba(245,158,11,0.35);
-
-    border-radius: 25px;
-
     box-shadow:
-        0 30px 80px
-        rgba(0,0,0,0.35);
+        0 25px 70px rgba(0, 0, 0, .28);
 
-    animation:
-        popupIn 0.35s cubic-bezier(.2,.8,.2,1);
+    transform: translateY(15px) scale(.97);
+
+    transition:
+        transform .3s ease;
 }
 
-@keyframes popupIn {
-
-    from {
-        transform:
-            translateY(25px)
-            scale(0.94);
-
-        opacity: 0;
-    }
-
-    to {
-        transform:
-            translateY(0)
-            scale(1);
-
-        opacity: 1;
-    }
-
+.reward-overlay.show .unlock-popup,
+.reward-overlay.active .unlock-popup,
+.reward-overlay.visible .unlock-popup {
+    transform: translateY(0) scale(1);
 }
+
+body.dark .unlock-popup {
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, .65);
+}
+
+
+/* =========================================================
+   POPUP CLOSE
+   ========================================================= */
 
 .popup-close {
     position: absolute;
 
-    top: 13px;
-    right: 15px;
+    top: 12px;
+    right: 14px;
 
-    border: 0;
-    background: transparent;
+    width: 32px;
+    height: 32px;
 
-    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    font-size: 25px;
+    border-radius: 50%;
+
+    background: var(--surface-soft);
+
+    color: var(--text-muted);
+
+    font-size: 21px;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease;
 }
+
+.popup-close:hover {
+    background: var(--gold-soft);
+
+    color: var(--text);
+}
+
+
+/* =========================================================
+   POPUP STARS
+   ========================================================= */
 
 .unlock-stars {
     color: var(--gold);
 
-    letter-spacing: 12px;
+    font-size: 22px;
+    letter-spacing: 8px;
 
-    margin-bottom: 10px;
+    animation:
+        starsPulse 1.8s ease-in-out infinite;
 }
+
+@keyframes starsPulse {
+
+    0%,
+    100% {
+        opacity: .7;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.06);
+    }
+}
+
+
+/* =========================================================
+   POPUP ICON
+   ========================================================= */
 
 .popup-icon {
-    width: 90px;
-    height: 90px;
+    width: 82px;
+    height: 82px;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    margin: 0 auto 16px;
+    margin: 18px auto;
 
-    border-radius: 25px;
+    border-radius: 22px;
 
-    background: var(--gold-light);
+    background:
+        radial-gradient(
+            circle,
+            rgba(245, 197, 66, .20),
+            var(--gold-soft)
+        );
 
-    font-size: 47px;
+    font-size: 43px;
 
     box-shadow:
-        0 0 40px
-        rgba(245,158,11,0.15);
+        0 10px 28px rgba(245, 197, 66, .14);
 }
 
+
+/* =========================================================
+   POPUP TEXT
+   ========================================================= */
+
 .popup-label {
+    display: block;
+
+    color: var(--gold-dark);
+
+    font-size: 10px;
+    font-weight: 850;
+
+    letter-spacing: 1.5px;
+}
+
+body.dark .popup-label {
     color: var(--gold);
-
-    font-size: 11px;
-    font-weight: 900;
-
-    letter-spacing: 0.12em;
 }
 
 .unlock-popup h2 {
-    margin: 8px 0;
+    margin-top: 8px;
 
-    font-size: 27px;
+    color: var(--text);
+
+    font-size: 25px;
+    font-weight: 850;
 }
 
-.unlock-popup p {
-    margin: 0 auto;
+.unlock-popup > p {
+    margin-top: 8px;
 
-    max-width: 320px;
+    color: var(--text-muted);
 
-    color: var(--muted);
-
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.55;
 }
+
+
+/* =========================================================
+   POPUP XP
+   ========================================================= */
 
 .popup-xp {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
 
-    margin: 18px 0;
+    gap: 3px;
+
+    margin-top: 18px;
 
     padding: 8px 13px;
 
     border-radius: 999px;
 
-    background: var(--gold-light);
+    background: var(--gold-soft);
 
-    color: var(--gold);
+    color: var(--gold-dark);
 
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 900;
 }
 
-.popup-button {
-    display: block;
-
-    width: 100%;
-
-    border: 0;
-
-    padding: 13px;
-
-    border-radius: 12px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #f59e0b,
-            #d97706
-        );
-
-    color: white;
-
-    font-weight: 800;
+body.dark .popup-xp {
+    color: var(--gold);
 }
 
 
 /* =========================================================
-   RESPONSIVE
-========================================================= */
+   POPUP BUTTON
+   ========================================================= */
 
-@media (max-width: 1150px) {
+.popup-button {
+    width: 100%;
 
-    .rewards-grid {
-        grid-template-columns:
-            repeat(3, 1fr);
-    }
+    margin-top: 20px;
 
+    padding: 12px 18px;
+
+    border-radius: 11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        );
+
+    color: #111111;
+
+    font-size: 12px;
+    font-weight: 850;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 20px rgba(245, 197, 66, .18);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
-@media (max-width: 900px) {
+.popup-button:hover {
+    transform: translateY(-2px);
 
-    .sidebar {
-        width: 75px;
-        padding: 18px 10px;
-    }
+    box-shadow:
+        0 11px 25px rgba(245, 197, 66, .25);
+}
 
-    .brand {
-        justify-content: center;
-        padding-inline: 0;
-    }
 
-    .brand > div:last-child,
-    nav a span,
-    .side-button span {
-        display: none;
-    }
+/* =========================================================
+   LIGHT MODE PROTECTION
+   ========================================================= */
 
-    nav a,
-    .side-button {
-        justify-content: center;
-        padding: 13px 8px;
-    }
+body:not(.dark) {
+    background: #f7f5ef;
+}
 
-    .main {
-        width: calc(100% - 75px);
-        margin-left: 75px;
-        padding: 25px;
-    }
+body:not(.dark) .sidebar {
+    background: #ffffff;
+}
+
+body:not(.dark) .main {
+    background: #f7f5ef;
+}
+
+body:not(.dark) .topbar {
+    background: rgba(247, 245, 239, .92);
+}
+
+body:not(.dark) .topbar h1,
+body:not(.dark) .hero-content h2,
+body:not(.dark) .reward-toolbar h2,
+body:not(.dark) .section-heading h2,
+body:not(.dark) .reward-card h3,
+body:not(.dark) .stat-card strong,
+body:not(.dark) .profile-text strong,
+body:not(.dark) .unlock-popup h2 {
+    color: #171717 !important;
+}
+
+body:not(.dark) .progress-track {
+    background: #e8e3d8 !important;
+}
+
+
+/* =========================================================
+   DARK MODE PROTECTION
+   ========================================================= */
+
+body.dark {
+    background: #070707;
+}
+
+body.dark .sidebar,
+body.dark .main {
+    background: #070707;
+}
+
+body.dark .sidebar {
+    background: #0b0b0b;
+}
+
+body.dark .topbar {
+    background: rgba(7, 7, 7, .90);
+}
+
+body.dark .topbar h1,
+body.dark .hero-content h2,
+body.dark .reward-toolbar h2,
+body.dark .section-heading h2,
+body.dark .reward-card h3,
+body.dark .stat-card strong,
+body.dark .profile-text strong,
+body.dark .unlock-popup h2 {
+    color: #ffffff !important;
+}
+
+body.dark .progress-track {
+    background: #242424 !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE — 1100px
+   ========================================================= */
+
+@media (max-width: 1100px) {
 
     .stats {
         grid-template-columns:
-            repeat(2, 1fr);
+            repeat(2, minmax(0, 1fr));
     }
 
     .rewards-grid {
         grid-template-columns:
-            repeat(2, 1fr);
+            repeat(3, minmax(0, 1fr));
     }
-
 }
 
-@media (max-width: 650px) {
 
-    .main {
-        padding: 18px;
-    }
+/* =========================================================
+   RESPONSIVE — 900px
+   ========================================================= */
 
-    .topbar {
-        align-items: flex-start;
-    }
-
-    .profile-text {
-        display: none;
-    }
+@media (max-width: 900px) {
 
     .reward-hero {
-        padding: 28px;
+        padding: 30px;
     }
 
     .trophy {
-        display: none;
+        width: 140px;
+        height: 140px;
     }
 
-    .stats,
+    .trophy-glow {
+        width: 120px;
+        height: 120px;
+
+        font-size: 62px;
+    }
+
     .rewards-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
     .reward-toolbar {
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 800px
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    .sidebar {
+        transform: translateX(-100%);
+
+        box-shadow:
+            10px 0 30px rgba(0, 0, 0, .18);
+
+        transition:
+            transform .25s ease,
+            background-color .25s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .topbar {
+        padding: 20px 24px;
+    }
+
+    .reward-hero {
+        margin-left: 24px;
+        margin-right: 24px;
+    }
+
+    .stats,
+    .reward-toolbar,
+    .rewards-grid,
+    .notifications-section {
+        margin-left: 24px;
+        margin-right: 24px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 620px
+   ========================================================= */
+
+@media (max-width: 620px) {
+
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+
+        padding: 20px 16px;
+    }
+
+    .profile {
+        width: 100%;
+
+        justify-content: space-between;
+    }
+
+    .profile-text {
+        order: 2;
+
+        flex: 1;
+
+        text-align: left;
+    }
+
+    .avatar {
+        order: 1;
+    }
+
+    .reward-hero {
+        flex-direction: column;
+        align-items: flex-start;
+
+        margin: 18px 16px;
+
+        padding: 25px 22px;
+    }
+
+    .hero-content h2 {
+        font-size: 31px;
+    }
+
+    .trophy {
+        width: 100%;
+        height: 130px;
+    }
+
+    .trophy-glow {
+        width: 115px;
+        height: 115px;
+
+        font-size: 58px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    .reward-toolbar {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
 
     .filters {
         width: 100%;
     }
 
+    .filter {
+        flex: 1;
+    }
+
+    .rewards-grid {
+        grid-template-columns: 1fr;
+
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    .notifications-section {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #clearNotifications {
+        align-self: flex-start;
+    }
+
+    .unlock-popup {
+        padding: 35px 22px 24px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
 }
