@@ -1,9 +1,14 @@
 /* =========================================================
    STUDYMIND AI — REWARDS
    COMPLETE REPLACEMENT CSS
-   PREMIUM BLACK / GOLD ACHIEVEMENT THEME
    SUMMARIZER-STYLE SIDEBAR
+   PREMIUM BLACK / GOLD REWARDS THEME
    LIGHT + DARK MODE
+========================================================= */
+
+
+/* =========================================================
+   RESET
 ========================================================= */
 
 * {
@@ -12,8 +17,11 @@
     padding: 0;
 }
 
+
 :root {
+
     --bg: #f7f5ef;
+
     --surface: #ffffff;
     --surface-soft: #fbfaf6;
     --surface-hover: #f8f5eb;
@@ -36,18 +44,29 @@
     --green-soft: rgba(34, 160, 107, .12);
 
     --red: #dc4c4c;
+    --red-light: #ff5c5c;
     --red-soft: rgba(220, 76, 76, .10);
 
     --border: rgba(20, 20, 20, .09);
 
-    --shadow: 0 8px 30px rgba(30, 25, 10, .07);
-    --shadow-hover: 0 14px 38px rgba(30, 25, 10, .11);
+    --shadow:
+        0 8px 30px rgba(30, 25, 10, .07);
+
+    --shadow-hover:
+        0 14px 38px rgba(30, 25, 10, .11);
 
     --sidebar-width: 250px;
 }
 
+
+/* =========================================================
+   DARK MODE VARIABLES
+========================================================= */
+
 body.dark {
+
     --bg: #070707;
+
     --surface: #101010;
     --surface-soft: #151515;
     --surface-hover: #191919;
@@ -68,16 +87,31 @@ body.dark {
 
     --border: rgba(255, 255, 255, .08);
 
-    --shadow: 0 12px 35px rgba(0, 0, 0, .35);
-    --shadow-hover: 0 18px 45px rgba(0, 0, 0, .50);
+    --shadow:
+        0 12px 35px rgba(0, 0, 0, .35);
+
+    --shadow-hover:
+        0 18px 45px rgba(0, 0, 0, .50);
 }
+
+
+/* =========================================================
+   HTML
+========================================================= */
 
 html {
     min-height: 100%;
+
     background: var(--bg);
 }
 
+
+/* =========================================================
+   BODY
+========================================================= */
+
 body {
+
     min-height: 100vh;
 
     font-family:
@@ -91,12 +125,14 @@ body {
         sans-serif;
 
     background: var(--bg);
+
     color: var(--text);
 
     transition:
         background-color .25s ease,
         color .25s ease;
 }
+
 
 button,
 input,
@@ -105,14 +141,17 @@ select {
     font: inherit;
 }
 
+
 button {
     border: 0;
 }
+
 
 a {
     color: inherit;
     text-decoration: none;
 }
+
 
 body,
 .app,
@@ -140,6 +179,7 @@ body,
 ========================================================= */
 
 .app {
+
     min-height: 100vh;
 
     display: flex;
@@ -150,9 +190,11 @@ body,
 
 /* =========================================================
    SIDEBAR
+   MATCHES SUMMARIZER
 ========================================================= */
 
 .sidebar {
+
     position: fixed;
 
     top: 0;
@@ -176,7 +218,13 @@ body,
     overflow-x: hidden;
 
     scrollbar-width: thin;
+
+    transition:
+        transform .25s ease,
+        background-color .25s ease,
+        border-color .25s ease;
 }
+
 
 body.dark .sidebar {
     background: #0b0b0b;
@@ -184,11 +232,13 @@ body.dark .sidebar {
 
 
 /* =========================================================
-   BRAND
+   SUMMARIZER BRAND
 ========================================================= */
 
-.brand {
+.sidebar-brand {
+
     display: flex;
+
     align-items: center;
 
     gap: 12px;
@@ -196,11 +246,14 @@ body.dark .sidebar {
     padding: 4px 10px 24px;
 }
 
-.brand-icon {
+
+.brand-mark {
+
     width: 40px;
     height: 40px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -218,24 +271,30 @@ body.dark .sidebar {
     color: #111111;
 
     font-size: 20px;
+
     font-weight: 900;
 
     box-shadow:
         0 6px 18px rgba(245, 197, 66, .22);
 }
 
-.brand strong {
+
+.sidebar-brand strong {
+
     display: block;
 
     color: var(--text);
 
     font-size: 15px;
+
     font-weight: 850;
 
     line-height: 1.15;
 }
 
-.brand span {
+
+.sidebar-brand span {
+
     display: block;
 
     margin-top: 3px;
@@ -243,18 +302,22 @@ body.dark .sidebar {
     color: var(--text-muted);
 
     font-size: 10px;
+
     font-weight: 600;
 }
 
 
 /* =========================================================
-   NAVIGATION
+   SIDEBAR NAV
+   EXACT SUMMARIZER-STYLE STRUCTURE
 ========================================================= */
 
-.navigation {
+.sidebar-nav {
+
     flex: 1;
 
     display: flex;
+
     flex-direction: column;
 
     gap: 17px;
@@ -262,19 +325,29 @@ body.dark .sidebar {
     min-height: 0;
 }
 
+
+/* =========================================================
+   NAV SECTION
+========================================================= */
+
 .nav-section {
+
     display: flex;
+
     flex-direction: column;
 
     gap: 3px;
 }
 
-.nav-section-label {
+
+.nav-section > span {
+
     padding: 0 11px 7px;
 
     color: var(--text-muted);
 
     font-size: 9px;
+
     font-weight: 850;
 
     letter-spacing: 1.35px;
@@ -284,15 +357,19 @@ body.dark .sidebar {
 
 
 /* =========================================================
-   NAV ITEMS
+   SIDEBAR LINKS
+   SAME STYLE AS SUMMARIZER
 ========================================================= */
 
-.nav-item {
+.sidebar-nav a,
+.sidebar-bottom a {
+
     position: relative;
 
     min-height: 39px;
 
     display: flex;
+
     align-items: center;
 
     gap: 11px;
@@ -301,9 +378,12 @@ body.dark .sidebar {
 
     border-radius: 10px;
 
+    background: transparent;
+
     color: var(--text-soft);
 
     font-size: 12px;
+
     font-weight: 650;
 
     cursor: pointer;
@@ -315,7 +395,14 @@ body.dark .sidebar {
         box-shadow .2s ease;
 }
 
-.nav-item:hover {
+
+/* =========================================================
+   NAV HOVER
+========================================================= */
+
+.sidebar-nav a:hover,
+.sidebar-bottom a:hover {
+
     background: var(--gold-soft);
 
     color: var(--text);
@@ -323,7 +410,13 @@ body.dark .sidebar {
     transform: translateX(2px);
 }
 
-.nav-item.active {
+
+/* =========================================================
+   ACTIVE REWARDS
+========================================================= */
+
+.sidebar-nav a.active {
+
     background:
         linear-gradient(
             90deg,
@@ -339,60 +432,84 @@ body.dark .sidebar {
         inset 3px 0 0 var(--gold);
 }
 
-body.dark .nav-item.active {
+
+body.dark .sidebar-nav a.active {
+
     color: var(--gold);
 }
 
+
+/* =========================================================
+   NAV ICON
+========================================================= */
+
 .nav-icon {
+
     width: 20px;
+
     min-width: 20px;
 
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
     color: currentColor;
 
     font-size: 15px;
+
     line-height: 1;
 }
 
-.nav-item.active .nav-icon {
+
+.sidebar-nav a.active .nav-icon {
+
     color: var(--gold-dark);
 }
 
-body.dark .nav-item.active .nav-icon {
+
+body.dark .sidebar-nav a.active .nav-icon {
+
     color: var(--gold);
 }
 
 
 /* =========================================================
-   PREMIUM
+   PREMIUM LINK
 ========================================================= */
 
 .premium-link {
-    color: var(--gold-dark);
+
+    color: var(--gold-dark) !important;
 }
+
 
 body.dark .premium-link {
-    color: var(--gold);
+
+    color: var(--gold) !important;
 }
 
+
 .premium-link .nav-icon {
+
     color: var(--gold-dark);
 }
 
+
 body.dark .premium-link .nav-icon {
+
     color: var(--gold);
 }
 
+
 .premium-link:hover {
+
     background:
         linear-gradient(
             90deg,
             rgba(245, 197, 66, .15),
             rgba(245, 197, 66, .05)
-        );
+        ) !important;
 }
 
 
@@ -401,12 +518,15 @@ body.dark .premium-link .nav-icon {
 ========================================================= */
 
 .sidebar-bottom {
+
     display: flex;
+
     flex-direction: column;
 
     gap: 3px;
 
     padding-top: 13px;
+
     margin-top: 13px;
 
     border-top: 1px solid var(--border);
@@ -418,11 +538,13 @@ body.dark .premium-link .nav-icon {
 ========================================================= */
 
 .theme-button {
+
     width: 100%;
 
     min-height: 39px;
 
     display: flex;
+
     align-items: center;
 
     gap: 11px;
@@ -436,6 +558,7 @@ body.dark .premium-link .nav-icon {
     color: var(--text-soft);
 
     font-size: 12px;
+
     font-weight: 650;
 
     cursor: pointer;
@@ -449,7 +572,9 @@ body.dark .premium-link .nav-icon {
         box-shadow .2s ease;
 }
 
+
 .theme-button:hover {
+
     background: var(--gold-soft);
 
     color: var(--text);
@@ -459,21 +584,35 @@ body.dark .premium-link .nav-icon {
 
 
 /* =========================================================
-   LOGOUT — RED GLOW
+   LOGOUT
+   ALWAYS RED
+   GLOW ON HOVER
 ========================================================= */
 
 .logout-button {
-    color: #dc4c4c !important;
+
+    color: var(--red) !important;
+
+    background: transparent;
+
+    border-radius: 10px;
+
+    cursor: pointer;
 }
+
 
 .logout-button .nav-icon {
-    color: #dc4c4c !important;
+
+    color: var(--red) !important;
 }
 
-.logout-button:hover {
-    background: rgba(220, 76, 76, .10) !important;
 
-    color: #ff5c5c !important;
+.logout-button:hover {
+
+    background:
+        rgba(220, 76, 76, .10) !important;
+
+    color: var(--red-light) !important;
 
     transform: translateX(2px);
 
@@ -482,22 +621,31 @@ body.dark .premium-link .nav-icon {
         inset 0 0 10px rgba(220, 76, 76, .04);
 }
 
+
 .logout-button:hover .nav-icon {
-    color: #ff5c5c !important;
+
+    color: var(--red-light) !important;
 }
+
 
 body.dark .logout-button {
-    color: #ff5c5c !important;
+
+    color: var(--red-light) !important;
 }
+
 
 body.dark .logout-button .nav-icon {
-    color: #ff5c5c !important;
+
+    color: var(--red-light) !important;
 }
 
-body.dark .logout-button:hover {
-    background: rgba(220, 76, 76, .12) !important;
 
-    color: #ff5c5c !important;
+body.dark .logout-button:hover {
+
+    background:
+        rgba(220, 76, 76, .12) !important;
+
+    color: var(--red-light) !important;
 
     box-shadow:
         0 0 16px rgba(220, 76, 76, .22),
@@ -510,7 +658,9 @@ body.dark .logout-button:hover {
 ========================================================= */
 
 .main {
+
     width: 100%;
+
     min-height: 100vh;
 
     margin-left: var(--sidebar-width);
@@ -526,30 +676,38 @@ body.dark .logout-button:hover {
 ========================================================= */
 
 .topbar {
+
     min-height: 100px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 25px;
 
     padding: 24px 38px;
 
-    background: rgba(247, 245, 239, .94);
+    background:
+        rgba(247, 245, 239, .94);
 
     border-bottom: 1px solid var(--border);
 
     backdrop-filter: blur(18px);
 
     position: sticky;
+
     top: 0;
 
     z-index: 100;
 }
 
+
 body.dark .topbar {
-    background: rgba(7, 7, 7, .92);
+
+    background:
+        rgba(7, 7, 7, .92);
 }
 
 
@@ -558,12 +716,15 @@ body.dark .topbar {
 ========================================================= */
 
 .mobile-menu {
+
     display: none;
 
     width: 40px;
+
     height: 40px;
 
     align-items: center;
+
     justify-content: center;
 
     border: 1px solid var(--border);
@@ -585,7 +746,9 @@ body.dark .topbar {
         box-shadow .2s ease;
 }
 
+
 .mobile-menu:hover {
+
     border-color: var(--gold-border);
 
     background: var(--gold-soft);
@@ -593,7 +756,9 @@ body.dark .topbar {
     color: var(--gold-dark);
 }
 
+
 body.dark .mobile-menu:hover {
+
     color: var(--gold);
 }
 
@@ -603,6 +768,7 @@ body.dark .mobile-menu:hover {
 ========================================================= */
 
 .eyebrow {
+
     display: block;
 
     margin-bottom: 5px;
@@ -610,19 +776,25 @@ body.dark .mobile-menu:hover {
     color: var(--gold-dark);
 
     font-size: 9px;
+
     font-weight: 900;
 
     letter-spacing: 1.7px;
 }
 
+
 body.dark .eyebrow {
+
     color: var(--gold);
 }
 
+
 .topbar h1 {
+
     color: var(--text);
 
     font-size: 28px;
+
     font-weight: 900;
 
     line-height: 1.1;
@@ -630,12 +802,15 @@ body.dark .eyebrow {
     letter-spacing: -.5px;
 }
 
+
 .subtitle {
+
     margin-top: 7px;
 
     color: var(--text-muted);
 
     font-size: 12px;
+
     line-height: 1.5;
 }
 
@@ -645,26 +820,35 @@ body.dark .eyebrow {
 ========================================================= */
 
 .profile {
+
     display: flex;
+
     align-items: center;
 
     gap: 12px;
 }
 
+
 .profile-text {
+
     text-align: right;
 }
 
+
 .profile-text strong {
+
     display: block;
 
     color: var(--text);
 
     font-size: 13px;
+
     font-weight: 850;
 }
 
+
 .profile-text span {
+
     display: block;
 
     margin-top: 3px;
@@ -672,19 +856,27 @@ body.dark .eyebrow {
     color: var(--gold-dark);
 
     font-size: 10px;
+
     font-weight: 750;
 }
 
+
 body.dark .profile-text span {
+
     color: var(--gold);
 }
 
+
 .avatar {
+
     width: 42px;
+
     height: 42px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     flex-shrink: 0;
@@ -701,6 +893,7 @@ body.dark .profile-text span {
     color: #111111;
 
     font-size: 15px;
+
     font-weight: 900;
 
     box-shadow:
@@ -713,10 +906,13 @@ body.dark .profile-text span {
 ========================================================= */
 
 .reward-hero {
+
     min-height: 250px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 40px;
@@ -753,7 +949,9 @@ body.dark .profile-text span {
     position: relative;
 }
 
+
 body.dark .reward-hero {
+
     background:
         radial-gradient(
             circle at 88% 25%,
@@ -772,15 +970,19 @@ body.dark .reward-hero {
         );
 }
 
+
 .reward-hero::before {
+
     content: "";
 
     position: absolute;
 
     width: 260px;
+
     height: 260px;
 
     right: -110px;
+
     top: -130px;
 
     border-radius: 50%;
@@ -790,17 +992,23 @@ body.dark .reward-hero {
     pointer-events: none;
 }
 
+
 .hero-content {
+
     flex: 1;
 
     max-width: 700px;
 
     position: relative;
+
     z-index: 1;
 }
 
+
 .hero-badge {
+
     display: inline-flex;
+
     align-items: center;
 
     padding: 7px 11px;
@@ -814,21 +1022,27 @@ body.dark .reward-hero {
     color: var(--gold-dark);
 
     font-size: 9px;
+
     font-weight: 900;
 
     letter-spacing: 1.1px;
 }
 
+
 body.dark .hero-badge {
+
     color: var(--gold);
 }
 
+
 .hero-content h2 {
+
     margin-top: 14px;
 
     color: var(--text);
 
     font-size: clamp(30px, 4vw, 45px);
+
     font-weight: 900;
 
     line-height: 1.04;
@@ -836,7 +1050,9 @@ body.dark .hero-badge {
     letter-spacing: -1px;
 }
 
+
 .hero-content p {
+
     max-width: 600px;
 
     margin-top: 13px;
@@ -844,6 +1060,7 @@ body.dark .hero-badge {
     color: var(--text-soft);
 
     font-size: 13px;
+
     line-height: 1.65;
 }
 
@@ -853,14 +1070,19 @@ body.dark .hero-badge {
 ========================================================= */
 
 .hero-progress {
+
     max-width: 600px;
 
     margin-top: 24px;
 }
 
+
 .progress-info {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 15px;
@@ -868,26 +1090,37 @@ body.dark .hero-badge {
     margin-bottom: 9px;
 }
 
+
 .progress-info span {
+
     color: var(--text-muted);
 
     font-size: 10px;
+
     font-weight: 700;
 }
 
+
 .progress-info strong {
+
     color: var(--gold-dark);
 
     font-size: 10px;
+
     font-weight: 850;
 }
 
+
 body.dark .progress-info strong {
+
     color: var(--gold);
 }
 
+
 .progress-track {
+
     width: 100%;
+
     height: 9px;
 
     overflow: hidden;
@@ -897,12 +1130,17 @@ body.dark .progress-info strong {
     background: #e8e3d8 !important;
 }
 
+
 body.dark .progress-track {
+
     background: #242424 !important;
 }
 
+
 .progress-fill {
+
     width: 0%;
+
     height: 100%;
 
     border-radius: inherit;
@@ -926,11 +1164,15 @@ body.dark .progress-track {
 ========================================================= */
 
 .trophy {
+
     width: 185px;
+
     height: 185px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     flex-shrink: 0;
@@ -938,12 +1180,17 @@ body.dark .progress-track {
     position: relative;
 }
 
+
 .trophy-glow {
+
     width: 150px;
+
     height: 150px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     border-radius: 50%;
@@ -967,7 +1214,9 @@ body.dark .progress-track {
         trophyFloat 3.5s ease-in-out infinite;
 }
 
+
 @keyframes trophyFloat {
+
     0%,
     100% {
         transform: translateY(0);
@@ -984,6 +1233,7 @@ body.dark .progress-track {
 ========================================================= */
 
 .stats {
+
     display: grid;
 
     grid-template-columns:
@@ -994,10 +1244,13 @@ body.dark .progress-track {
     margin: 0 38px 36px;
 }
 
+
 .stat-card {
+
     min-height: 96px;
 
     display: flex;
+
     align-items: center;
 
     gap: 13px;
@@ -1015,7 +1268,9 @@ body.dark .progress-track {
     cursor: default;
 }
 
+
 .stat-card:hover {
+
     border-color: var(--gold-border);
 
     box-shadow: var(--shadow-hover);
@@ -1023,12 +1278,17 @@ body.dark .progress-track {
     transform: translateY(-2px);
 }
 
+
 .stat-icon {
+
     width: 43px;
+
     height: 43px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     flex-shrink: 0;
@@ -1042,19 +1302,25 @@ body.dark .progress-track {
     font-size: 20px;
 }
 
+
 .stat-card small {
+
     display: block;
 
     color: var(--text-muted);
 
     font-size: 9px;
+
     font-weight: 700;
 
     text-transform: uppercase;
+
     letter-spacing: .5px;
 }
 
+
 .stat-card strong {
+
     display: block;
 
     margin-top: 4px;
@@ -1062,6 +1328,7 @@ body.dark .progress-track {
     color: var(--text);
 
     font-size: 25px;
+
     font-weight: 900;
 }
 
@@ -1071,8 +1338,11 @@ body.dark .progress-track {
 ========================================================= */
 
 .reward-toolbar {
+
     display: flex;
+
     align-items: flex-end;
+
     justify-content: space-between;
 
     gap: 25px;
@@ -1080,14 +1350,19 @@ body.dark .progress-track {
     margin: 0 38px 20px;
 }
 
+
 .reward-toolbar h2 {
+
     color: var(--text);
 
     font-size: 21px;
+
     font-weight: 900;
 }
 
+
 .reward-toolbar p {
+
     margin-top: 5px;
 
     color: var(--text-muted);
@@ -1101,7 +1376,9 @@ body.dark .progress-track {
 ========================================================= */
 
 .filters {
+
     display: flex;
+
     align-items: center;
 
     flex-wrap: wrap;
@@ -1109,7 +1386,9 @@ body.dark .progress-track {
     gap: 7px;
 }
 
+
 .filter {
+
     padding: 8px 12px;
 
     border: 1px solid var(--border);
@@ -1121,6 +1400,7 @@ body.dark .progress-track {
     color: var(--text-soft);
 
     font-size: 10px;
+
     font-weight: 750;
 
     cursor: pointer;
@@ -1133,7 +1413,9 @@ body.dark .progress-track {
         box-shadow .2s ease;
 }
 
+
 .filter:hover {
+
     border-color: var(--gold-border);
 
     background: var(--gold-softer);
@@ -1143,7 +1425,9 @@ body.dark .progress-track {
     transform: translateY(-1px);
 }
 
+
 .filter.active {
+
     border-color: var(--gold);
 
     background:
@@ -1165,6 +1449,7 @@ body.dark .progress-track {
 ========================================================= */
 
 .rewards-grid {
+
     display: grid;
 
     grid-template-columns:
@@ -1181,11 +1466,13 @@ body.dark .progress-track {
 ========================================================= */
 
 .reward-card {
+
     position: relative;
 
     min-height: 210px;
 
     display: flex;
+
     flex-direction: column;
 
     padding: 20px;
@@ -1207,7 +1494,9 @@ body.dark .progress-track {
         opacity .2s ease;
 }
 
+
 .reward-card:hover {
+
     transform: translateY(-4px);
 
     border-color: var(--gold-border);
@@ -1215,7 +1504,9 @@ body.dark .progress-track {
     box-shadow: var(--shadow-hover);
 }
 
+
 .reward-card.unlocked {
+
     border-color: var(--gold-border);
 
     background:
@@ -1226,19 +1517,25 @@ body.dark .progress-track {
         );
 }
 
+
 .reward-card.locked {
+
     opacity: .68;
 }
 
+
 .reward-card::after {
+
     content: "";
 
     position: absolute;
 
     top: -55px;
+
     right: -55px;
 
     width: 135px;
+
     height: 135px;
 
     border-radius: 50%;
@@ -1259,11 +1556,15 @@ body.dark .progress-track {
 ========================================================= */
 
 .reward-icon {
+
     width: 55px;
+
     height: 55px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     margin-bottom: 14px;
@@ -1277,15 +1578,20 @@ body.dark .progress-track {
     font-size: 27px;
 
     position: relative;
+
     z-index: 1;
 }
 
+
 .reward-card.unlocked .reward-icon {
+
     box-shadow:
         0 7px 18px rgba(245, 197, 66, .10);
 }
 
+
 .reward-card.locked .reward-icon {
+
     filter: grayscale(.7);
 
     opacity: .62;
@@ -1297,28 +1603,37 @@ body.dark .progress-track {
 ========================================================= */
 
 .reward-card h3 {
+
     color: var(--text);
 
     font-size: 15px;
+
     font-weight: 850;
 
     position: relative;
+
     z-index: 1;
 }
 
+
 .reward-card p {
+
     margin-top: 6px;
 
     color: var(--text-muted);
 
     font-size: 11px;
+
     line-height: 1.55;
 
     position: relative;
+
     z-index: 1;
 }
 
+
 .reward-card .reward-description {
+
     color: var(--text-muted);
 }
 
@@ -1328,31 +1643,43 @@ body.dark .progress-track {
 ========================================================= */
 
 .reward-meta {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 10px;
 
     margin-top: auto;
+
     padding-top: 16px;
 
     position: relative;
+
     z-index: 1;
 }
 
+
 .reward-xp {
+
     color: var(--gold-dark);
 
     font-size: 11px;
+
     font-weight: 900;
 }
 
+
 body.dark .reward-xp {
+
     color: var(--gold);
 }
 
+
 .reward-status {
+
     padding: 5px 8px;
 
     border-radius: 999px;
@@ -1362,20 +1689,27 @@ body.dark .reward-xp {
     color: var(--text-muted);
 
     font-size: 8px;
+
     font-weight: 850;
 
     text-transform: uppercase;
+
     letter-spacing: .6px;
 }
 
+
 .reward-card.unlocked .reward-status {
+
     background: var(--green-soft);
 
     color: var(--green);
 }
 
+
 .reward-card.locked .reward-status {
-    background: rgba(120, 120, 120, .08);
+
+    background:
+        rgba(120, 120, 120, .08);
 
     color: var(--text-muted);
 }
@@ -1388,20 +1722,26 @@ body.dark .reward-xp {
 .reward-card .icon,
 .reward-card .badge-icon,
 .reward-card .achievement-icon {
+
     color: var(--gold-dark);
 }
+
 
 body.dark .reward-card .icon,
 body.dark .reward-card .badge-icon,
 body.dark .reward-card .achievement-icon {
+
     color: var(--gold);
 }
 
+
 .reward-card .category,
 .reward-card .reward-category {
+
     color: var(--gold-dark);
 
     font-size: 8px;
+
     font-weight: 900;
 
     letter-spacing: 1px;
@@ -1409,8 +1749,10 @@ body.dark .reward-card .achievement-icon {
     text-transform: uppercase;
 }
 
+
 body.dark .reward-card .category,
 body.dark .reward-card .reward-category {
+
     color: var(--gold);
 }
 
@@ -1420,12 +1762,17 @@ body.dark .reward-card .reward-category {
 ========================================================= */
 
 .notifications-section {
+
     margin: 0 38px;
 }
 
+
 .section-heading {
+
     display: flex;
+
     align-items: flex-end;
+
     justify-content: space-between;
 
     gap: 20px;
@@ -1433,14 +1780,19 @@ body.dark .reward-card .reward-category {
     margin-bottom: 15px;
 }
 
+
 .section-heading h2 {
+
     color: var(--text);
 
     font-size: 20px;
+
     font-weight: 900;
 }
 
+
 .section-heading p {
+
     margin-top: 5px;
 
     color: var(--text-muted);
@@ -1448,7 +1800,9 @@ body.dark .reward-card .reward-category {
     font-size: 10px;
 }
 
+
 #clearNotifications {
+
     padding: 8px 12px;
 
     border: 1px solid var(--border);
@@ -1460,6 +1814,7 @@ body.dark .reward-card .reward-category {
     color: var(--text-soft);
 
     font-size: 10px;
+
     font-weight: 750;
 
     cursor: pointer;
@@ -1471,7 +1826,9 @@ body.dark .reward-card .reward-category {
         transform .2s ease;
 }
 
+
 #clearNotifications:hover {
+
     border-color: var(--gold-border);
 
     background: var(--gold-soft);
@@ -1481,7 +1838,9 @@ body.dark .reward-card .reward-category {
     transform: translateY(-1px);
 }
 
+
 body.dark #clearNotifications:hover {
+
     color: var(--gold);
 }
 
@@ -1491,14 +1850,19 @@ body.dark #clearNotifications:hover {
 ========================================================= */
 
 .notification-list {
+
     display: flex;
+
     flex-direction: column;
 
     gap: 9px;
 }
 
+
 .notification {
+
     display: flex;
+
     align-items: center;
 
     gap: 12px;
@@ -1515,16 +1879,23 @@ body.dark #clearNotifications:hover {
         0 4px 15px rgba(0, 0, 0, .025);
 }
 
+
 .notification:hover {
+
     border-color: var(--gold-border);
 }
 
+
 .notification-icon {
+
     width: 36px;
+
     height: 36px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     flex-shrink: 0;
@@ -1538,29 +1909,39 @@ body.dark #clearNotifications:hover {
     font-size: 17px;
 }
 
+
 .notification-content {
+
     flex: 1;
 }
 
+
 .notification-content strong {
+
     display: block;
 
     color: var(--text);
 
     font-size: 12px;
+
     font-weight: 850;
 }
 
+
 .notification-content p {
+
     margin-top: 3px;
 
     color: var(--text-muted);
 
     font-size: 10px;
+
     line-height: 1.45;
 }
 
+
 .notification-time {
+
     color: var(--text-muted);
 
     font-size: 9px;
@@ -1568,8 +1949,11 @@ body.dark #clearNotifications:hover {
     white-space: nowrap;
 }
 
+
 .notification-list:empty::before {
-    content: "No reward notifications yet.";
+
+    content:
+        "No reward notifications yet.";
 
     display: block;
 
@@ -1594,21 +1978,26 @@ body.dark #clearNotifications:hover {
 ========================================================= */
 
 .reward-overlay {
+
     position: fixed;
 
     inset: 0;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     padding: 20px;
 
-    background: rgba(0, 0, 0, .62);
+    background:
+        rgba(0, 0, 0, .62);
 
     backdrop-filter: blur(9px);
 
     opacity: 0;
+
     visibility: hidden;
 
     pointer-events: none;
@@ -1620,10 +2009,13 @@ body.dark #clearNotifications:hover {
         visibility .25s ease;
 }
 
+
 .reward-overlay.show,
 .reward-overlay.active,
 .reward-overlay.visible {
+
     opacity: 1;
+
     visibility: visible;
 
     pointer-events: auto;
@@ -1635,6 +2027,7 @@ body.dark #clearNotifications:hover {
 ========================================================= */
 
 .unlock-popup {
+
     position: relative;
 
     width: min(440px, 100%);
@@ -1654,19 +2047,25 @@ body.dark #clearNotifications:hover {
     box-shadow:
         0 25px 70px rgba(0, 0, 0, .30);
 
-    transform: translateY(15px) scale(.97);
+    transform:
+        translateY(15px) scale(.97);
 
     transition:
         transform .3s ease;
 }
 
+
 .reward-overlay.show .unlock-popup,
 .reward-overlay.active .unlock-popup,
 .reward-overlay.visible .unlock-popup {
-    transform: translateY(0) scale(1);
+
+    transform:
+        translateY(0) scale(1);
 }
 
+
 body.dark .unlock-popup {
+
     box-shadow:
         0 25px 70px rgba(0, 0, 0, .70);
 }
@@ -1677,16 +2076,21 @@ body.dark .unlock-popup {
 ========================================================= */
 
 .popup-close {
+
     position: absolute;
 
     top: 12px;
+
     right: 14px;
 
     width: 32px;
+
     height: 32px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     border-radius: 50%;
@@ -1704,7 +2108,9 @@ body.dark .unlock-popup {
         color .2s ease;
 }
 
+
 .popup-close:hover {
+
     background: var(--gold-soft);
 
     color: var(--text);
@@ -1716,16 +2122,20 @@ body.dark .unlock-popup {
 ========================================================= */
 
 .unlock-stars {
+
     color: var(--gold);
 
     font-size: 22px;
+
     letter-spacing: 8px;
 
     animation:
         starsPulse 1.8s ease-in-out infinite;
 }
 
+
 @keyframes starsPulse {
+
     0%,
     100% {
         opacity: .7;
@@ -1744,11 +2154,15 @@ body.dark .unlock-popup {
 ========================================================= */
 
 .popup-icon {
+
     width: 82px;
+
     height: 82px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     margin: 18px auto;
@@ -1776,35 +2190,45 @@ body.dark .unlock-popup {
 ========================================================= */
 
 .popup-label {
+
     display: block;
 
     color: var(--gold-dark);
 
     font-size: 9px;
+
     font-weight: 900;
 
     letter-spacing: 1.6px;
 }
 
+
 body.dark .popup-label {
+
     color: var(--gold);
 }
 
+
 .unlock-popup h2 {
+
     margin-top: 8px;
 
     color: var(--text);
 
     font-size: 25px;
+
     font-weight: 900;
 }
 
+
 .unlock-popup > p {
+
     margin-top: 8px;
 
     color: var(--text-muted);
 
     font-size: 12px;
+
     line-height: 1.55;
 }
 
@@ -1814,7 +2238,9 @@ body.dark .popup-label {
 ========================================================= */
 
 .popup-xp {
+
     display: inline-flex;
+
     align-items: center;
 
     gap: 3px;
@@ -1832,10 +2258,13 @@ body.dark .popup-label {
     color: var(--gold-dark);
 
     font-size: 14px;
+
     font-weight: 900;
 }
 
+
 body.dark .popup-xp {
+
     color: var(--gold);
 }
 
@@ -1845,6 +2274,7 @@ body.dark .popup-xp {
 ========================================================= */
 
 .popup-button {
+
     width: 100%;
 
     margin-top: 20px;
@@ -1863,6 +2293,7 @@ body.dark .popup-xp {
     color: #111111;
 
     font-size: 12px;
+
     font-weight: 900;
 
     cursor: pointer;
@@ -1875,7 +2306,9 @@ body.dark .popup-xp {
         box-shadow .2s ease;
 }
 
+
 .popup-button:hover {
+
     transform: translateY(-2px);
 
     box-shadow:
@@ -1888,20 +2321,29 @@ body.dark .popup-xp {
 ========================================================= */
 
 body:not(.dark) {
+
     background: #f7f5ef;
 }
 
+
 body:not(.dark) .sidebar {
+
     background: #ffffff;
 }
 
+
 body:not(.dark) .main {
+
     background: #f7f5ef;
 }
 
+
 body:not(.dark) .topbar {
-    background: rgba(247, 245, 239, .94);
+
+    background:
+        rgba(247, 245, 239, .94);
 }
+
 
 body:not(.dark) .topbar h1,
 body:not(.dark) .hero-content h2,
@@ -1911,6 +2353,7 @@ body:not(.dark) .reward-card h3,
 body:not(.dark) .stat-card strong,
 body:not(.dark) .profile-text strong,
 body:not(.dark) .unlock-popup h2 {
+
     color: #171717 !important;
 }
 
@@ -1920,20 +2363,29 @@ body:not(.dark) .unlock-popup h2 {
 ========================================================= */
 
 body.dark {
+
     background: #070707;
 }
 
+
 body.dark .sidebar {
+
     background: #0b0b0b;
 }
 
+
 body.dark .main {
+
     background: #070707;
 }
 
+
 body.dark .topbar {
-    background: rgba(7, 7, 7, .92);
+
+    background:
+        rgba(7, 7, 7, .92);
 }
+
 
 body.dark .topbar h1,
 body.dark .hero-content h2,
@@ -1943,6 +2395,7 @@ body.dark .reward-card h3,
 body.dark .stat-card strong,
 body.dark .profile-text strong,
 body.dark .unlock-popup h2 {
+
     color: #ffffff !important;
 }
 
@@ -1954,11 +2407,14 @@ body.dark .unlock-popup h2 {
 @media (max-width: 1100px) {
 
     .stats {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
+
     .rewards-grid {
+
         grid-template-columns:
             repeat(3, minmax(0, 1fr));
     }
@@ -1972,36 +2428,52 @@ body.dark .unlock-popup h2 {
 @media (max-width: 900px) {
 
     .mobile-menu {
+
         display: flex;
     }
 
+
     .topbar {
+
         gap: 15px;
     }
 
+
     .reward-hero {
+
         padding: 30px;
     }
 
+
     .trophy {
+
         width: 140px;
+
         height: 140px;
     }
 
+
     .trophy-glow {
+
         width: 120px;
+
         height: 120px;
 
         font-size: 62px;
     }
 
+
     .rewards-grid {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
+
     .reward-toolbar {
+
         align-items: flex-start;
+
         flex-direction: column;
     }
 }
@@ -2014,38 +2486,47 @@ body.dark .unlock-popup h2 {
 @media (max-width: 800px) {
 
     .sidebar {
+
         transform: translateX(-100%);
 
         box-shadow:
             10px 0 30px rgba(0, 0, 0, .22);
-
-        transition:
-            transform .25s ease,
-            background-color .25s ease;
     }
 
+
     .sidebar.open {
+
         transform: translateX(0);
     }
 
+
     .main {
+
         margin-left: 0;
     }
 
+
     .topbar {
+
         padding: 20px 24px;
     }
 
+
     .reward-hero {
+
         margin-left: 24px;
+
         margin-right: 24px;
     }
+
 
     .stats,
     .reward-toolbar,
     .rewards-grid,
     .notifications-section {
+
         margin-left: 24px;
+
         margin-right: 24px;
     }
 }
@@ -2058,28 +2539,39 @@ body.dark .unlock-popup h2 {
 @media (max-width: 620px) {
 
     .topbar {
+
         align-items: flex-start;
+
         flex-direction: column;
 
         padding: 18px 16px;
     }
 
+
     .topbar > div:first-of-type {
+
         width: 100%;
     }
 
+
     .profile {
+
         width: 100%;
 
         justify-content: flex-start;
     }
 
+
     .profile-text {
+
         text-align: left;
     }
 
+
     .reward-hero {
+
         flex-direction: column;
+
         align-items: flex-start;
 
         margin: 18px 16px;
@@ -2087,65 +2579,97 @@ body.dark .unlock-popup h2 {
         padding: 25px 22px;
     }
 
+
     .hero-content h2 {
+
         font-size: 31px;
     }
 
+
     .trophy {
+
         width: 100%;
+
         height: 125px;
     }
 
+
     .trophy-glow {
+
         width: 110px;
+
         height: 110px;
 
         font-size: 55px;
     }
 
+
     .stats {
+
         grid-template-columns: 1fr;
 
         margin-left: 16px;
+
         margin-right: 16px;
     }
+
 
     .reward-toolbar {
+
         margin-left: 16px;
+
         margin-right: 16px;
     }
 
+
     .filters {
+
         width: 100%;
     }
 
+
     .filter {
+
         flex: 1;
+
         min-width: 75px;
     }
 
+
     .rewards-grid {
+
         grid-template-columns: 1fr;
 
         margin-left: 16px;
+
         margin-right: 16px;
     }
+
 
     .notifications-section {
+
         margin-left: 16px;
+
         margin-right: 16px;
     }
 
+
     .section-heading {
+
         align-items: flex-start;
+
         flex-direction: column;
     }
 
+
     #clearNotifications {
+
         align-self: flex-start;
     }
 
+
     .unlock-popup {
+
         padding: 35px 22px 24px;
     }
 }
@@ -2158,36 +2682,51 @@ body.dark .unlock-popup h2 {
 @media (max-width: 430px) {
 
     .topbar h1 {
+
         font-size: 24px;
     }
 
+
     .subtitle {
+
         font-size: 11px;
     }
 
+
     .reward-hero {
+
         border-radius: 19px;
     }
 
+
     .hero-content h2 {
+
         font-size: 28px;
     }
 
+
     .reward-toolbar h2 {
+
         font-size: 19px;
     }
 
+
     .filters {
+
         gap: 5px;
     }
 
+
     .filter {
+
         padding: 7px 9px;
 
         font-size: 9px;
     }
 
+
     .stat-card {
+
         min-height: 88px;
     }
 }
@@ -2202,8 +2741,11 @@ body.dark .unlock-popup h2 {
     *,
     *::before,
     *::after {
+
         animation-duration: .01ms !important;
+
         animation-iteration-count: 1 !important;
+
         transition-duration: .01ms !important;
     }
 }
