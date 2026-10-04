@@ -1,1917 +1,2280 @@
+"use strict";
+
 /* =========================================================
    STUDYMIND AI — GOALS
-   PROFESSIONAL GOALS DASHBOARD
-   BLACK / GOLD + LIGHT / DARK THEME
+   ---------------------------------------------------------
+   GOALS DASHBOARD
 ========================================================= */
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+(function () {
 
-:root {
-    /* ---------- LIGHT THEME ---------- */
-    --bg: #f6f3eb;
-    --surface: #ffffff;
-    --surface-soft: #faf8f2;
-    --surface-hover: #f4f0e5;
+    /* =====================================================
+       CONSTANTS
+    ===================================================== */
 
-    --sidebar-bg: #ffffff;
-    --sidebar-border: rgba(0, 0, 0, 0.08);
+    const PLAN_KEY = "studyMindPlan";
+    const PLANS_KEY = "studyMindPlans";
+    const ACTIVE_PLAN_KEY = "studyMindActivePlanId";
 
-    --text: #171717;
-    --text-soft: #555555;
-    --text-muted: #777777;
+    const COMPLETED_TOPICS_KEY = "studyMindCompletedTopics";
+    const STREAK_ACTIVITY_KEY = "studyMindStreakActivity";
+    const STUDY_HISTORY_KEY = "studyMindStudyHistory";
 
-    --border: rgba(0, 0, 0, 0.09);
-    --border-strong: rgba(0, 0, 0, 0.14);
+    const USER_KEY = "studyMindUser";
 
-    --gold: #c89b22;
-    --gold-light: #e0b83f;
-    --gold-dark: #9f7610;
-    --gold-soft: rgba(200, 155, 34, 0.10);
-    --gold-border: rgba(200, 155, 34, 0.25);
-
-    --green: #16a34a;
-    --green-soft: rgba(22, 163, 74, 0.10);
-
-    --orange: #ea8a00;
-    --orange-soft: rgba(234, 138, 0, 0.10);
-
-    --danger: #dc2626;
-
-    --shadow-sm:
-        0 2px 10px rgba(0, 0, 0, 0.05);
-
-    --shadow-md:
-        0 10px 30px rgba(0, 0, 0, 0.08);
-
-    --shadow-lg:
-        0 20px 50px rgba(0, 0, 0, 0.10);
-
-    --sidebar-width: 250px;
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 22px;
-
-    --transition:
-        180ms ease;
-}
+    const THEME_KEY = "studyMindTheme";
+    const OLD_THEME_KEY = "studyMindDarkMode";
 
 
-/* =========================================================
-   DARK THEME
-========================================================= */
+    /* =====================================================
+       HELPERS
+    ===================================================== */
 
-body.dark {
-    --bg: #070707;
-    --surface: #101010;
-    --surface-soft: #151515;
-    --surface-hover: #1b1b1b;
+    function $(id) {
+        return document.getElementById(id);
+    }
 
-    --sidebar-bg: #0b0b0b;
-    --sidebar-border: rgba(255, 255, 255, 0.08);
+    function safeParse(value, fallback) {
+        try {
+            return value ? JSON.parse(value) : fallback;
+        } catch (error) {
+            return fallback;
+        }
+    }
 
-    --text: #f5f5f5;
-    --text-soft: #b7b7b7;
-    --text-muted: #858585;
+    function getJSON(key, fallback) {
+        return safeParse(localStorage.getItem(key), fallback);
+    }
 
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.14);
+    function setJSON(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
 
-    --gold: #f5c542;
-    --gold-light: #ffd966;
-    --gold-dark: #c99b16;
-    --gold-soft: rgba(245, 197, 66, 0.10);
-    --gold-border: rgba(245, 197, 66, 0.20);
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
 
-    --green: #35c76f;
-    --green-soft: rgba(53, 199, 111, 0.10);
+    function number(value, fallback = 0) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+    }
 
-    --orange: #ffad32;
-    --orange-soft: rgba(255, 173, 50, 0.10);
+    function formatHours(hours) {
+        const value = number(hours);
 
-    --danger: #ff5c5c;
+        if (value <= 0) {
+            return "0h";
+        }
 
-    --shadow-sm:
-        0 2px 10px rgba(0, 0, 0, 0.25);
+        if (value < 1) {
+            return `${Math.round(value * 60)}m`;
+        }
 
-    --shadow-md:
-        0 10px 30px rgba(0, 0, 0, 0.35);
+        if (Number.isInteger(value)) {
+            return `${value}h`;
+        }
 
-    --shadow-lg:
-        0 20px 50px rgba(0, 0, 0, 0.50);
-}
+        return `${value.toFixed(1)}h`;
+    }
 
+    function todayKey() {
+        const date = new Date();
 
-/* =========================================================
-   BODY
-========================================================= */
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
 
-html {
-    min-height: 100%;
-}
+        return `${year}-${month}-${day}`;
+    }
 
-body {
-    min-height: 100vh;
+    function dateFromKey(key) {
+        if (!key) return null;
 
-    background: var(--bg);
-    color: var(--text);
+        const parts = String(key).split("-");
 
-    font-family:
-        Inter,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+        if (parts.length !== 3) {
+            return null;
+        }
 
-    line-height: 1.5;
+        const year = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const day = Number(parts[2]);
 
-    transition:
-        background-color var(--transition),
-        color var(--transition);
-}
+        const date = new Date(year, month, day);
 
-button,
-a {
-    font: inherit;
-}
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
 
-button {
-    border: 0;
-}
+    function getDateKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
+        return `${year}-${month}-${day}`;
+    }
 
+    function startOfWeek(date) {
+        const result = new Date(date);
+        const day = result.getDay();
 
-/* =========================================================
-   APP SHELL
-========================================================= */
+        const diff = day === 0 ? -6 : 1 - day;
 
-.app-shell {
-    display: flex;
-    min-height: 100vh;
-}
+        result.setDate(result.getDate() + diff);
+        result.setHours(0, 0, 0, 0);
 
+        return result;
+    }
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-
-    width: var(--sidebar-width);
-
-    display: flex;
-    flex-direction: column;
-
-    background: var(--sidebar-bg);
-
-    border-right: 1px solid var(--sidebar-border);
-
-    z-index: 1000;
-
-    transition:
-        background-color var(--transition),
-        border-color var(--transition),
-        transform 220ms ease;
-}
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
 
-/* =========================================================
-   BRAND
-========================================================= */
+    /* =====================================================
+       PLAN LOADING
+    ===================================================== */
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    function getActivePlan() {
 
-    padding: 24px 20px;
+        const multiPlans = getJSON(PLANS_KEY, null);
+        const activeId = localStorage.getItem(ACTIVE_PLAN_KEY);
 
-    border-bottom: 1px solid var(--border);
-}
+        if (Array.isArray(multiPlans) && multiPlans.length) {
 
-.brand-icon {
-    width: 38px;
-    height: 38px;
+            if (activeId) {
 
-    display: grid;
-    place-items: center;
+                const active = multiPlans.find(
+                    plan => String(
+                        plan.id ??
+                        plan.planId ??
+                        plan._id
+                    ) === String(activeId)
+                );
 
-    flex-shrink: 0;
+                if (active) {
+                    return active;
+                }
+            }
 
-    border-radius: 11px;
+            return multiPlans[0];
+        }
 
-    background:
-        linear-gradient(
-            135deg,
-            var(--gold-light),
-            var(--gold-dark)
+        const singlePlan = getJSON(PLAN_KEY, null);
+
+        if (singlePlan && typeof singlePlan === "object") {
+            return singlePlan;
+        }
+
+        const compatibilityPlan = getJSON("studyData", null);
+
+        if (compatibilityPlan && typeof compatibilityPlan === "object") {
+            return compatibilityPlan;
+        }
+
+        return null;
+    }
+
+
+    /* =====================================================
+       USER
+    ===================================================== */
+
+    function getUser() {
+
+        const user = getJSON(USER_KEY, {});
+
+        if (!user || typeof user !== "object") {
+            return {};
+        }
+
+        return user;
+    }
+
+    function getUsername() {
+
+        const user = getUser();
+
+        return (
+            user.username ||
+            user.display_name ||
+            user.displayName ||
+            user.name ||
+            user.full_name ||
+            user.fullName ||
+            "Student"
+        );
+    }
+
+
+    /* =====================================================
+       COMPLETED TOPICS
+    ===================================================== */
+
+    function getCompletedTopics() {
+
+        const stored = getJSON(COMPLETED_TOPICS_KEY, []);
+
+        if (Array.isArray(stored)) {
+            return stored;
+        }
+
+        if (stored && typeof stored === "object") {
+            return Object.keys(stored).filter(
+                key => stored[key]
+            );
+        }
+
+        return [];
+    }
+
+
+    /* =====================================================
+       STREAK ACTIVITY
+    ===================================================== */
+
+    function getStreakActivity() {
+
+        const activity = getJSON(STREAK_ACTIVITY_KEY, {});
+
+        if (
+            activity &&
+            typeof activity === "object" &&
+            !Array.isArray(activity)
+        ) {
+            return activity;
+        }
+
+        return {};
+    }
+
+
+    /* =====================================================
+       STUDY HISTORY
+    ===================================================== */
+
+    function getStudyHistory() {
+
+        const history = getJSON(STUDY_HISTORY_KEY, {});
+
+        if (
+            history &&
+            typeof history === "object" &&
+            !Array.isArray(history)
+        ) {
+            return history;
+        }
+
+        if (Array.isArray(history)) {
+            return history;
+        }
+
+        return {};
+    }
+
+
+    /* =====================================================
+       SCORE ENGINE
+    ===================================================== */
+
+    function getScoreMetrics() {
+
+        try {
+
+            if (
+                window.StudyMindScore &&
+                typeof window.StudyMindScore.getMetrics === "function"
+            ) {
+                const metrics =
+                    window.StudyMindScore.getMetrics();
+
+                if (metrics && typeof metrics === "object") {
+                    return metrics;
+                }
+            }
+
+        } catch (error) {
+            console.warn(
+                "StudyMind Goals: score metrics unavailable",
+                error
+            );
+        }
+
+        return {
+            todayCompleted: 0,
+            weeklyCompleted: 0,
+            weeklyActiveDays: 0,
+            completedTopicNames: getCompletedTopics(),
+            planProgress: 0
+        };
+    }
+
+
+    /* =====================================================
+       PLAN TOPICS
+    ===================================================== */
+
+    function getPlanSubjects(plan) {
+
+        if (!plan || typeof plan !== "object") {
+            return [];
+        }
+
+        if (Array.isArray(plan.subjects)) {
+            return plan.subjects;
+        }
+
+        return [];
+    }
+
+    function getSubjectName(subject) {
+
+        if (typeof subject === "string") {
+            return subject;
+        }
+
+        if (!subject || typeof subject !== "object") {
+            return "Subject";
+        }
+
+        return (
+            subject.name ||
+            subject.subject ||
+            subject.title ||
+            subject.subjectName ||
+            "Subject"
+        );
+    }
+
+    function getSubjectTopics(subject) {
+
+        if (typeof subject === "string") {
+            return [];
+        }
+
+        if (!subject || typeof subject !== "object") {
+            return [];
+        }
+
+        if (Array.isArray(subject.topics)) {
+            return subject.topics;
+        }
+
+        if (Array.isArray(subject.topicList)) {
+            return subject.topicList;
+        }
+
+        if (Array.isArray(subject.units)) {
+            return subject.units;
+        }
+
+        return [];
+    }
+
+    function getTopicName(topic) {
+
+        if (typeof topic === "string") {
+            return topic;
+        }
+
+        if (!topic || typeof topic !== "object") {
+            return "";
+        }
+
+        return (
+            topic.name ||
+            topic.title ||
+            topic.topic ||
+            topic.topicName ||
+            ""
+        );
+    }
+
+    function normalizeTopicName(value) {
+
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+
+    /* =====================================================
+       FLAT PLAN TOPICS
+    ===================================================== */
+
+    function getAllPlanTopics(plan) {
+
+        if (!plan) {
+            return [];
+        }
+
+        const subjects = getPlanSubjects(plan);
+
+        const result = [];
+
+        subjects.forEach(subject => {
+
+            const subjectName = getSubjectName(subject);
+            const topics = getSubjectTopics(subject);
+
+            topics.forEach(topic => {
+
+                const topicName = getTopicName(topic);
+
+                if (!topicName) {
+                    return;
+                }
+
+                result.push({
+                    subject: subjectName,
+                    topic: topicName,
+                    key: `${subjectName}::${topicName}`
+                });
+
+            });
+
+        });
+
+        if (!result.length && Array.isArray(plan.flatTopics)) {
+
+            plan.flatTopics.forEach(item => {
+
+                if (typeof item === "string") {
+
+                    result.push({
+                        subject: "General",
+                        topic: item,
+                        key: `General::${item}`
+                    });
+
+                    return;
+                }
+
+                if (item && typeof item === "object") {
+
+                    const subject =
+                        item.subject ||
+                        item.subjectName ||
+                        "General";
+
+                    const topic =
+                        item.topic ||
+                        item.topicName ||
+                        item.name ||
+                        item.title;
+
+                    if (topic) {
+
+                        result.push({
+                            subject,
+                            topic,
+                            key: `${subject}::${topic}`
+                        });
+
+                    }
+                }
+
+            });
+
+        }
+
+        return result;
+    }
+
+
+    /* =====================================================
+       COMPLETION MATCHING
+    ===================================================== */
+
+    function isTopicCompleted(topic, completedTopics) {
+
+        const topicKey =
+            normalizeTopicName(topic.key);
+
+        const topicOnly =
+            normalizeTopicName(topic.topic);
+
+        return completedTopics.some(item => {
+
+            if (typeof item === "string") {
+
+                const normalized =
+                    normalizeTopicName(item);
+
+                return (
+                    normalized === topicKey ||
+                    normalized === topicOnly ||
+                    normalized.endsWith(`::${topicOnly}`)
+                );
+            }
+
+            if (item && typeof item === "object") {
+
+                const key =
+                    normalizeTopicName(
+                        item.key ||
+                        item.id ||
+                        item.topicKey ||
+                        ""
+                    );
+
+                const name =
+                    normalizeTopicName(
+                        item.topic ||
+                        item.topicName ||
+                        item.name ||
+                        ""
+                    );
+
+                return (
+                    key === topicKey ||
+                    name === topicOnly
+                );
+            }
+
+            return false;
+        });
+    }
+
+
+    /* =====================================================
+       STUDY TIME
+    ===================================================== */
+
+    function getTodayStudyHours() {
+
+        const history = getStudyHistory();
+        const today = todayKey();
+
+        if (
+            history &&
+            !Array.isArray(history) &&
+            Object.prototype.hasOwnProperty.call(history, today)
+        ) {
+
+            const value = history[today];
+
+            if (typeof value === "number") {
+                return Math.max(0, value / 60);
+            }
+
+            if (value && typeof value === "object") {
+
+                return Math.max(
+                    0,
+                    number(
+                        value.hours,
+                        number(value.minutes, 0) / 60
+                    )
+                );
+            }
+        }
+
+        const timerMinutes =
+            number(
+                localStorage.getItem(
+                    "studyMindTodayStudyMinutes"
+                ),
+                0
+            );
+
+        if (timerMinutes > 0) {
+            return timerMinutes / 60;
+        }
+
+        return 0;
+    }
+
+    function getWeeklyStudyHours() {
+
+        const history = getStudyHistory();
+
+        const start =
+            startOfWeek(new Date());
+
+        let totalMinutes = 0;
+
+        if (Array.isArray(history)) {
+
+            history.forEach(entry => {
+
+                if (!entry || typeof entry !== "object") {
+                    return;
+                }
+
+                const dateValue =
+                    entry.date ||
+                    entry.day ||
+                    entry.dateKey;
+
+                const date =
+                    dateFromKey(dateValue);
+
+                if (!date || date < start) {
+                    return;
+                }
+
+                const minutes =
+                    number(
+                        entry.minutes,
+                        number(entry.duration, 0)
+                    );
+
+                totalMinutes += minutes;
+            });
+
+        } else {
+
+            for (let i = 0; i < 7; i++) {
+
+                const date =
+                    new Date(start);
+
+                date.setDate(
+                    start.getDate() + i
+                );
+
+                const key =
+                    getDateKey(date);
+
+                const value =
+                    history[key];
+
+                if (typeof value === "number") {
+
+                    totalMinutes += value;
+
+                } else if (
+                    value &&
+                    typeof value === "object"
+                ) {
+
+                    totalMinutes += number(
+                        value.minutes,
+                        number(value.hours, 0) * 60
+                    );
+                }
+            }
+        }
+
+        if (totalMinutes === 0) {
+            totalMinutes =
+                getTodayStudyHours() * 60;
+        }
+
+        return totalMinutes / 60;
+    }
+
+
+    /* =====================================================
+       DAILY TARGETS
+    ===================================================== */
+
+    function getDailyHoursTarget(plan) {
+
+        return number(
+            plan?.hoursPerDay ??
+            plan?.studyHours ??
+            plan?.dailyHours ??
+            plan?.hours ??
+            2,
+            2
+        );
+    }
+
+    function getDailyTopicTarget(
+        plan,
+        totalTopics
+    ) {
+
+        const explicit =
+            number(
+                plan?.topicsPerDay ??
+                plan?.dailyTopics ??
+                plan?.topicsPerDayTarget,
+                0
+            );
+
+        if (explicit > 0) {
+            return explicit;
+        }
+
+        if (totalTopics <= 0) {
+            return 0;
+        }
+
+        const remainingDays =
+            getRemainingPlanDays(plan);
+
+        if (remainingDays > 0) {
+
+            return Math.max(
+                1,
+                Math.ceil(
+                    totalTopics /
+                    remainingDays
+                )
+            );
+        }
+
+        return Math.min(
+            totalTopics,
+            3
+        );
+    }
+
+    function getRemainingPlanDays(plan) {
+
+        if (!plan) {
+            return 0;
+        }
+
+        const examDate =
+            plan.examDate ||
+            plan.exam_date ||
+            plan.endDate;
+
+        if (!examDate) {
+            return 0;
+        }
+
+        const exam =
+            new Date(examDate);
+
+        if (Number.isNaN(exam.getTime())) {
+            return 0;
+        }
+
+        const today =
+            new Date();
+
+        today.setHours(
+            0, 0, 0, 0
         );
 
-    color: #080808;
-
-    font-size: 18px;
-    font-weight: 900;
-
-    box-shadow:
-        0 5px 18px rgba(200, 155, 34, 0.20);
-}
-
-.brand strong {
-    display: block;
-
-    color: var(--text);
-
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: -0.2px;
-}
-
-.brand span {
-    display: block;
-
-    margin-top: 2px;
-
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.navigation {
-    flex: 1;
-
-    padding: 18px 12px;
-
-    overflow-y: auto;
-}
-
-.nav-item {
-    position: relative;
-
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    width: 100%;
-
-    margin-bottom: 5px;
-    padding: 11px 13px;
-
-    border-radius: 11px;
-
-    color: var(--text-soft);
-
-    font-size: 13px;
-    font-weight: 600;
-
-    transition:
-        background var(--transition),
-        color var(--transition),
-        transform var(--transition);
-}
-
-.nav-item > span:first-child {
-    width: 22px;
-
-    display: inline-grid;
-    place-items: center;
-
-    flex-shrink: 0;
-
-    color: var(--text-muted);
-
-    font-size: 15px;
-
-    transition: color var(--transition);
-}
-
-.nav-item:hover {
-    background: var(--surface-hover);
-
-    color: var(--text);
-}
-
-.nav-item:hover > span:first-child {
-    color: var(--gold);
-}
-
-.nav-item.active {
-    background:
-        linear-gradient(
-            135deg,
-            var(--gold),
-            var(--gold-dark)
+        exam.setHours(
+            0, 0, 0, 0
         );
 
-    color: #090909;
-
-    box-shadow:
-        0 7px 18px rgba(200, 155, 34, 0.18);
-}
-
-.nav-item.active > span:first-child {
-    color: #090909;
-}
-
-.nav-divider {
-    height: 1px;
-
-    margin: 14px 8px;
-
-    background: var(--border);
-}
+        return Math.max(
+            0,
+            Math.ceil(
+                (exam - today) /
+                (1000 * 60 * 60 * 24)
+            )
+        );
+    }
 
 
-/* =========================================================
-   SIDEBAR BOTTOM
-========================================================= */
+    /* =====================================================
+       CURRENT STREAK
+    ===================================================== */
 
-.sidebar-bottom {
-    padding: 14px 12px 18px;
+    function getCurrentStreak() {
 
-    border-top: 1px solid var(--border);
-}
+        const activity =
+            getStreakActivity();
 
-.premium-link,
-.theme-button {
-    width: 100%;
+        let streak = 0;
 
-    display: flex;
-    align-items: center;
-    gap: 12px;
+        const date =
+            new Date();
 
-    padding: 11px 13px;
-
-    border-radius: 11px;
-
-    color: var(--text-soft);
-
-    font-size: 13px;
-    font-weight: 600;
-
-    background: transparent;
-
-    cursor: pointer;
-
-    transition:
-        background var(--transition),
-        color var(--transition);
-}
-
-.premium-link:hover,
-.theme-button:hover {
-    background: var(--surface-hover);
-    color: var(--text);
-}
-
-.premium-link span:first-child,
-.theme-button span:first-child {
-    width: 22px;
-
-    display: inline-grid;
-    place-items: center;
-
-    color: var(--gold);
-}
-
-
-/* =========================================================
-   MAIN CONTENT
-========================================================= */
-
-.main-content {
-    width: calc(100% - var(--sidebar-width));
-
-    min-height: 100vh;
-
-    margin-left: var(--sidebar-width);
-
-    background: var(--bg);
-
-    transition: background-color var(--transition);
-}
-
-
-/* =========================================================
-   TOPBAR
-========================================================= */
-
-.topbar {
-    position: sticky;
-    top: 0;
-
-    min-height: 88px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-
-    padding: 20px 34px;
-
-    background:
-        color-mix(
-            in srgb,
-            var(--bg) 94%,
-            transparent
+        date.setHours(
+            0, 0, 0, 0
         );
 
-    backdrop-filter: blur(14px);
+        if (!activity[getDateKey(date)]) {
+            date.setDate(
+                date.getDate() - 1
+            );
+        }
 
-    border-bottom: 1px solid var(--border);
+        while (
+            activity[getDateKey(date)]
+        ) {
 
-    z-index: 100;
-}
+            streak++;
 
-.welcome {
-    min-width: 0;
-}
+            date.setDate(
+                date.getDate() - 1
+            );
 
-.welcome > span {
-    display: block;
+            if (streak > 10000) {
+                break;
+            }
+        }
 
-    margin-bottom: 2px;
-
-    color: var(--gold-dark);
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-body.dark .welcome > span {
-    color: var(--gold);
-}
-
-.welcome h1 {
-    color: var(--text);
-
-    font-size: 25px;
-    font-weight: 800;
-    letter-spacing: -0.7px;
-}
-
-.welcome h1 span {
-    color: var(--gold);
-}
-
-.welcome p {
-    margin-top: 3px;
-
-    color: var(--text-muted);
-
-    font-size: 13px;
-}
-
-.topbar-actions {
-    display: flex;
-    align-items: center;
-}
-
-.date-pill {
-    padding: 9px 14px;
-
-    border: 1px solid var(--gold-border);
-
-    border-radius: 999px;
-
-    background: var(--gold-soft);
-
-    color: var(--gold-dark);
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-body.dark .date-pill {
-    color: var(--gold);
-}
-
-.mobile-menu {
-    display: none;
-
-    width: 40px;
-    height: 40px;
-
-    place-items: center;
-
-    border-radius: 10px;
-
-    background: var(--surface);
-
-    border: 1px solid var(--border);
-
-    color: var(--text);
-
-    cursor: pointer;
-}
+        return streak;
+    }
 
 
-/* =========================================================
-   GOALS HERO
-========================================================= */
+    /* =====================================================
+       WEEKLY ACTIVE DAYS
+    ===================================================== */
 
-.goals-hero {
-    position: relative;
+    function getWeeklyActiveDays() {
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
+        const activity =
+            getStreakActivity();
 
-    margin: 28px 34px 0;
+        const start =
+            startOfWeek(new Date());
 
-    padding: 38px;
+        let count = 0;
 
-    min-height: 230px;
+        for (let i = 0; i < 7; i++) {
 
-    overflow: hidden;
+            const date =
+                new Date(start);
 
-    border-radius: var(--radius-lg);
+            date.setDate(
+                start.getDate() + i
+            );
 
-    background:
-        radial-gradient(
-            circle at 85% 20%,
-            rgba(245, 197, 66, 0.18),
-            transparent 32%
-        ),
-        linear-gradient(
-            135deg,
-            #171717,
-            #090909
+            const key =
+                getDateKey(date);
+
+            if (activity[key]) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+
+    /* =====================================================
+       GREETING
+    ===================================================== */
+
+    function updateGreeting() {
+
+        const greeting =
+            $("greeting");
+
+        if (!greeting) {
+            return;
+        }
+
+        const hour =
+            new Date().getHours();
+
+        if (hour < 12) {
+
+            greeting.textContent =
+                "Good morning";
+
+        } else if (hour < 18) {
+
+            greeting.textContent =
+                "Good afternoon";
+
+        } else {
+
+            greeting.textContent =
+                "Good evening";
+        }
+    }
+
+
+    /* =====================================================
+       DATE
+    ===================================================== */
+
+    function updateDate() {
+
+        const element =
+            $("todayDate");
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            new Intl.DateTimeFormat(
+                undefined,
+                {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                }
+            ).format(new Date());
+    }
+
+
+    /* =====================================================
+       WEEK RANGE
+    ===================================================== */
+
+    function updateWeekRange() {
+
+        const element =
+            $("weekRange");
+
+        if (!element) {
+            return;
+        }
+
+        const start =
+            startOfWeek(new Date());
+
+        const end =
+            new Date(start);
+
+        end.setDate(
+            start.getDate() + 6
         );
 
-    border: 1px solid rgba(245, 197, 66, 0.18);
+        const options = {
+            month: "short",
+            day: "numeric"
+        };
 
-    box-shadow: var(--shadow-lg);
-}
+        element.textContent =
+            `${start.toLocaleDateString(
+                undefined,
+                options
+            )} – ${end.toLocaleDateString(
+                undefined,
+                options
+            )}`;
+    }
 
-body:not(.dark) .goals-hero {
-    background:
-        radial-gradient(
-            circle at 85% 20%,
-            rgba(200, 155, 34, 0.13),
-            transparent 32%
-        ),
-        linear-gradient(
-            135deg,
-            #fffdf7,
-            #f2ede0
+
+    /* =====================================================
+       USERNAME
+    ===================================================== */
+
+    function updateUsername() {
+
+        const element =
+            $("userName");
+
+        if (!element) {
+            return;
+        }
+
+        const username =
+            getUsername();
+
+        element.textContent =
+            username &&
+            username !== "Student"
+                ? `, ${username}`
+                : "";
+    }
+
+
+    /* =====================================================
+       TODAY GOALS
+    ===================================================== */
+
+    function updateTodayGoals(
+        plan,
+        metrics
+    ) {
+
+        const allTopics =
+            getAllPlanTopics(plan);
+
+        const completedTopics =
+            getCompletedTopics();
+
+        const totalTopics =
+            allTopics.length;
+
+        const completedTotal =
+            allTopics.filter(
+                topic =>
+                    isTopicCompleted(
+                        topic,
+                        completedTopics
+                    )
+            ).length;
+
+        let todayCompleted =
+            number(
+                metrics?.todayCompleted,
+                0
+            );
+
+        if (todayCompleted < 0) {
+            todayCompleted = 0;
+        }
+
+        const todayHours =
+            getTodayStudyHours();
+
+        const targetHours =
+            getDailyHoursTarget(plan);
+
+        const targetTopics =
+            getDailyTopicTarget(
+                plan,
+                totalTopics
+            );
+
+        const timePercent =
+            targetHours > 0
+                ? clamp(
+                    (todayHours /
+                        targetHours) * 100,
+                    0,
+                    100
+                )
+                : 0;
+
+        const topicPercent =
+            targetTopics > 0
+                ? clamp(
+                    (todayCompleted /
+                        targetTopics) * 100,
+                    0,
+                    100
+                )
+                : 0;
+
+        const currentStreak =
+            getCurrentStreak();
+
+        const streakTarget = 7;
+
+        const streakPercent =
+            clamp(
+                (currentStreak /
+                    streakTarget) * 100,
+                0,
+                100
+            );
+
+        if ($("todayHours")) {
+
+            $("todayHours").textContent =
+                formatHours(todayHours);
+        }
+
+        if ($("targetHours")) {
+
+            $("targetHours").textContent =
+                formatHours(targetHours);
+        }
+
+        if ($("timePercent")) {
+
+            $("timePercent").textContent =
+                `${Math.round(timePercent)}%`;
+        }
+
+        if ($("timeProgress")) {
+
+            $("timeProgress").style.width =
+                `${timePercent}%`;
+        }
+
+        if ($("todayTopics")) {
+
+            $("todayTopics").textContent =
+                todayCompleted;
+        }
+
+        if ($("targetTopics")) {
+
+            $("targetTopics").textContent =
+                targetTopics;
+        }
+
+        if ($("topicPercent")) {
+
+            $("topicPercent").textContent =
+                `${Math.round(topicPercent)}%`;
+        }
+
+        if ($("topicProgress")) {
+
+            $("topicProgress").style.width =
+                `${topicPercent}%`;
+        }
+
+        if ($("currentStreak")) {
+
+            $("currentStreak").textContent =
+                currentStreak;
+        }
+
+        if ($("streakPercent")) {
+
+            $("streakPercent").textContent =
+                `${Math.round(streakPercent)}%`;
+        }
+
+        if ($("streakProgress")) {
+
+            $("streakProgress").style.width =
+                `${streakPercent}%`;
+        }
+
+
+        /* -------------------------------------------------
+           TIME MESSAGE
+        ------------------------------------------------- */
+
+        if ($("timeMessage")) {
+
+            if (
+                todayHours >= targetHours &&
+                targetHours > 0
+            ) {
+
+                $("timeMessage").textContent =
+                    "Daily study-time goal complete. Great work!";
+
+            } else if (todayHours > 0) {
+
+                const remaining =
+                    Math.max(
+                        0,
+                        targetHours - todayHours
+                    );
+
+                $("timeMessage").textContent =
+                    `${formatHours(
+                        remaining
+                    )} left to reach today's target.`;
+
+            } else {
+
+                $("timeMessage").textContent =
+                    "Start a study session to begin today's goal.";
+            }
+        }
+
+
+        /* -------------------------------------------------
+           TOPIC MESSAGE
+        ------------------------------------------------- */
+
+        if ($("topicMessage")) {
+
+            if (
+                targetTopics > 0 &&
+                todayCompleted >= targetTopics
+            ) {
+
+                $("topicMessage").textContent =
+                    "Today's topic goal is complete!";
+
+            } else if (todayCompleted > 0) {
+
+                const remaining =
+                    Math.max(
+                        0,
+                        targetTopics -
+                        todayCompleted
+                    );
+
+                $("topicMessage").textContent =
+                    `${remaining} more topic${
+                        remaining === 1
+                            ? ""
+                            : "s"
+                    } to reach today's goal.`;
+
+            } else {
+
+                $("topicMessage").textContent =
+                    "Complete a topic to make progress.";
+            }
+        }
+
+
+        /* -------------------------------------------------
+           STREAK MESSAGE
+        ------------------------------------------------- */
+
+        if ($("streakMessage")) {
+
+            if (currentStreak >= 7) {
+
+                $("streakMessage").textContent =
+                    "You've reached the 7-day consistency goal!";
+
+            } else if (currentStreak > 0) {
+
+                const remaining =
+                    7 - currentStreak;
+
+                $("streakMessage").textContent =
+                    `${remaining} more day${
+                        remaining === 1
+                            ? ""
+                            : "s"
+                    } to reach 7 days.`;
+
+            } else {
+
+                $("streakMessage").textContent =
+                    "Complete a topic today to start your streak.";
+            }
+        }
+
+
+        /* -------------------------------------------------
+           OVERALL GOAL
+        ------------------------------------------------- */
+
+        const overall =
+            Math.round(
+                (
+                    timePercent +
+                    topicPercent +
+                    streakPercent
+                ) / 3
+            );
+
+        if ($("overallPercent")) {
+
+            $("overallPercent").textContent =
+                `${overall}%`;
+        }
+
+        if ($("overallRing")) {
+
+            $("overallRing").style.setProperty(
+                "--progress",
+                `${overall}%`
+            );
+
+            $("overallRing").style.setProperty(
+                "--percentage",
+                `${overall}%`
+            );
+        }
+
+
+        /* -------------------------------------------------
+           STATUS
+        ------------------------------------------------- */
+
+        if ($("todayStatus")) {
+
+            if (overall >= 100) {
+
+                $("todayStatus").textContent =
+                    "Goal complete";
+
+            } else if (overall >= 70) {
+
+                $("todayStatus").textContent =
+                    "Great progress";
+
+            } else if (overall > 0) {
+
+                $("todayStatus").textContent =
+                    "In progress";
+
+            } else {
+
+                $("todayStatus").textContent =
+                    "Getting started";
+            }
+        }
+
+
+        /* -------------------------------------------------
+           HERO MESSAGE
+        ------------------------------------------------- */
+
+        if ($("heroMessage")) {
+
+            if (overall >= 100) {
+
+                $("heroMessage").textContent =
+                    "You've hit today's goals. Keep the momentum going.";
+
+            } else if (overall >= 70) {
+
+                $("heroMessage").textContent =
+                    "You're making strong progress today. Keep going.";
+
+            } else if (overall > 0) {
+
+                $("heroMessage").textContent =
+                    "You're on your way. Small focused sessions add up.";
+
+            } else {
+
+                $("heroMessage").textContent =
+                    "Your goals are calculated from your study plan and completed work.";
+            }
+        }
+
+        return {
+            totalTopics,
+            completedTotal,
+            todayCompleted,
+            todayHours,
+            targetHours,
+            targetTopics,
+            currentStreak,
+            overall
+        };
+    }
+
+
+    /* =====================================================
+       WEEKLY GOALS
+    ===================================================== */
+
+    function updateWeeklyGoals(
+        plan,
+        metrics
+    ) {
+
+        const dailyHours =
+            getDailyHoursTarget(plan);
+
+        const weeklyTargetHours =
+            dailyHours * 7;
+
+        const weeklyHours =
+            getWeeklyStudyHours();
+
+        const weeklyHoursPercent =
+            weeklyTargetHours > 0
+                ? clamp(
+                    (weeklyHours /
+                        weeklyTargetHours) * 100,
+                    0,
+                    100
+                )
+                : 0;
+
+        const activeDays =
+            number(
+                metrics?.weeklyActiveDays,
+                getWeeklyActiveDays()
+            );
+
+        const weeklyCompleted =
+            number(
+                metrics?.weeklyCompleted,
+                0
+            );
+
+        const totalTopics =
+            getAllPlanTopics(plan).length;
+
+        const weeklyTopicTarget =
+            Math.max(
+                1,
+                getDailyTopicTarget(
+                    plan,
+                    totalTopics
+                ) * 7
+            );
+
+        const weeklyTopicPercent =
+            clamp(
+                (weeklyCompleted /
+                    weeklyTopicTarget) * 100,
+                0,
+                100
+            );
+
+        if ($("weeklyHours")) {
+
+            $("weeklyHours").textContent =
+                weeklyHours.toFixed(
+                    weeklyHours % 1 === 0
+                        ? 0
+                        : 1
+                );
+        }
+
+        if ($("weeklyTargetHours")) {
+
+            $("weeklyTargetHours").textContent =
+                formatHours(
+                    weeklyTargetHours
+                );
+        }
+
+        if ($("weeklyHoursProgress")) {
+
+            $("weeklyHoursProgress").style.width =
+                `${weeklyHoursPercent}%`;
+        }
+
+        if ($("weeklyHoursMessage")) {
+
+            if (
+                weeklyHours >=
+                weeklyTargetHours
+            ) {
+
+                $("weeklyHoursMessage").textContent =
+                    "You've reached your weekly study-time target!";
+
+            } else {
+
+                const remaining =
+                    Math.max(
+                        0,
+                        weeklyTargetHours -
+                        weeklyHours
+                    );
+
+                $("weeklyHoursMessage").textContent =
+                    `${formatHours(
+                        remaining
+                    )} remaining this week.`;
+            }
+        }
+
+        if ($("weeklyDays")) {
+
+            $("weeklyDays").textContent =
+                activeDays;
+        }
+
+        if ($("weeklyDaysTarget")) {
+
+            $("weeklyDaysTarget").textContent =
+                7;
+        }
+
+        if ($("weeklyDaysProgress")) {
+
+            $("weeklyDaysProgress").style.width =
+                `${clamp(
+                    (activeDays / 7) * 100,
+                    0,
+                    100
+                )}%`;
+        }
+
+        if ($("weeklyTopics")) {
+
+            $("weeklyTopics").textContent =
+                weeklyCompleted;
+        }
+
+        if ($("weeklyTopicsProgress")) {
+
+            $("weeklyTopicsProgress").style.width =
+                `${weeklyTopicPercent}%`;
+        }
+
+        if ($("weeklyTopicsMessage")) {
+
+            if (
+                weeklyCompleted >=
+                weeklyTopicTarget
+            ) {
+
+                $("weeklyTopicsMessage").textContent =
+                    "Weekly topic target complete!";
+
+            } else {
+
+                const remaining =
+                    Math.max(
+                        0,
+                        weeklyTopicTarget -
+                        weeklyCompleted
+                    );
+
+                $("weeklyTopicsMessage").textContent =
+                    `${remaining} topic${
+                        remaining === 1
+                            ? ""
+                            : "s"
+                    } remaining toward this week's target.`;
+            }
+        }
+    }
+
+
+    /* =====================================================
+       PLAN PROGRESS
+    ===================================================== */
+
+    function updatePlanProgress(
+        plan,
+        metrics
+    ) {
+
+        const topics =
+            getAllPlanTopics(plan);
+
+        const completed =
+            getCompletedTopics();
+
+        const total =
+            topics.length;
+
+        const completedCount =
+            topics.filter(
+                topic =>
+                    isTopicCompleted(
+                        topic,
+                        completed
+                    )
+            ).length;
+
+        const percent =
+            total > 0
+                ? clamp(
+                    (completedCount /
+                        total) * 100,
+                    0,
+                    100
+                )
+                : 0;
+
+        let planProgress =
+            number(
+                metrics?.planProgress,
+                percent
+            );
+
+        if (
+            !Number.isFinite(planProgress) ||
+            planProgress < 0
+        ) {
+            planProgress = percent;
+        }
+
+        planProgress =
+            clamp(
+                planProgress,
+                0,
+                100
+            );
+
+        const planName =
+            plan?.name ||
+            plan?.planName ||
+            plan?.title ||
+            plan?.examType ||
+            "Current Study Plan";
+
+        const description =
+            plan?.description ||
+            plan?.curriculum ||
+            (
+                plan
+                    ? "Your current study plan progress."
+                    : "Create a study plan to start tracking your goals."
+            );
+
+        if ($("planName")) {
+
+            $("planName").textContent =
+                plan
+                    ? planName
+                    : "No active study plan";
+        }
+
+        if ($("planDescription")) {
+
+            $("planDescription").textContent =
+                plan
+                    ? description
+                    : "Create a study plan to start tracking your goals.";
+        }
+
+        if ($("planCompleted")) {
+
+            $("planCompleted").textContent =
+                completedCount;
+        }
+
+        if ($("planTotal")) {
+
+            $("planTotal").textContent =
+                total;
+        }
+
+        if ($("planProgress")) {
+
+            $("planProgress").style.width =
+                `${planProgress}%`;
+        }
+
+        if ($("planPercent")) {
+
+            $("planPercent").textContent =
+                `${Math.round(
+                    planProgress
+                )}%`;
+        }
+    }
+
+
+    /* =====================================================
+       SUBJECT GOALS
+    ===================================================== */
+
+    function updateSubjectGoals(plan) {
+
+        const container =
+            $("subjectGoals");
+
+        if (!container) {
+            return;
+        }
+
+        const subjects =
+            getPlanSubjects(plan);
+
+        const completed =
+            getCompletedTopics();
+
+        if (!subjects.length) {
+
+            container.innerHTML = `
+                <div class="subject-empty">
+                    <strong>No subject data yet</strong>
+                    <p>Create a study plan to see subject progress.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            subjects.map(
+                (subject, index) => {
+
+                    const subjectName =
+                        getSubjectName(
+                            subject
+                        );
+
+                    const topics =
+                        getSubjectTopics(
+                            subject
+                        );
+
+                    const total =
+                        topics.length;
+
+                    const completedCount =
+                        topics.filter(
+                            topic => {
+
+                                const topicName =
+                                    getTopicName(
+                                        topic
+                                    );
+
+                                if (!topicName) {
+                                    return false;
+                                }
+
+                                return isTopicCompleted(
+                                    {
+                                        subject:
+                                            subjectName,
+
+                                        topic:
+                                            topicName,
+
+                                        key:
+                                            `${subjectName}::${topicName}`
+                                    },
+                                    completed
+                                );
+                            }
+                        ).length;
+
+                    const percent =
+                        total > 0
+                            ? clamp(
+                                (completedCount /
+                                    total) * 100,
+                                0,
+                                100
+                            )
+                            : 0;
+
+                    const initials =
+                        subjectName
+                            .trim()
+                            .split(/\s+/)
+                            .slice(0, 2)
+                            .map(
+                                word =>
+                                    word.charAt(0)
+                            )
+                            .join("")
+                            .toUpperCase();
+
+                    return `
+                        <article class="subject-card">
+
+                            <div class="subject-card-top">
+
+                                <div class="subject-icon">
+                                    ${escapeHTML(
+                                        initials ||
+                                        String(index + 1)
+                                    )}
+                                </div>
+
+                                <div class="subject-info">
+
+                                    <h3>
+                                        ${escapeHTML(
+                                            subjectName
+                                        )}
+                                    </h3>
+
+                                    <span>
+                                        ${completedCount}
+                                        of
+                                        ${total}
+                                        topics
+                                    </span>
+
+                                </div>
+
+                                <strong class="subject-percent">
+                                    ${Math.round(
+                                        percent
+                                    )}%
+                                </strong>
+
+                            </div>
+
+                            <div class="subject-progress">
+                                <div
+                                    style="width:${percent}%"
+                                ></div>
+                            </div>
+
+                        </article>
+                    `;
+                }
+            ).join("");
+    }
+
+
+    /* =====================================================
+       ACHIEVEMENTS
+    ===================================================== */
+
+    function updateAchievements(
+        plan,
+        metrics
+    ) {
+
+        const completed =
+            getCompletedTopics();
+
+        const topics =
+            getAllPlanTopics(plan);
+
+        const completedCount =
+            topics.filter(
+                topic =>
+                    isTopicCompleted(
+                        topic,
+                        completed
+                    )
+            ).length;
+
+        const effectiveCount =
+            topics.length
+                ? completedCount
+                : completed.length;
+
+        const streak =
+            getCurrentStreak();
+
+        const achievementRules = [
+
+            {
+                id: "achievementFirst",
+                unlocked:
+                    effectiveCount >= 1
+            },
+
+            {
+                id: "achievementFive",
+                unlocked:
+                    effectiveCount >= 5
+            },
+
+            {
+                id: "achievementTen",
+                unlocked:
+                    effectiveCount >= 10
+            },
+
+            {
+                id: "achievementSeven",
+                unlocked:
+                    streak >= 7
+            }
+
+        ];
+
+        achievementRules.forEach(
+            rule => {
+
+                const element =
+                    $(rule.id);
+
+                if (!element) {
+                    return;
+                }
+
+                element.classList.toggle(
+                    "unlocked",
+                    rule.unlocked
+                );
+
+                element.classList.toggle(
+                    "completed",
+                    rule.unlocked
+                );
+            }
+        );
+    }
+
+
+    /* =====================================================
+       EMPTY PLAN
+    ===================================================== */
+
+    function updateEmptyPlan(plan) {
+
+        const empty =
+            $("emptyPlan");
+
+        if (!empty) {
+            return;
+        }
+
+        empty.hidden = !!plan;
+    }
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    function showToast(message) {
+
+        const toast =
+            $("toast");
+
+        if (!toast) {
+            return;
+        }
+
+        toast.textContent =
+            message;
+
+        toast.classList.add("show");
+
+        clearTimeout(
+            showToast.timeout
         );
 
-    border-color: var(--gold-border);
-}
+        showToast.timeout =
+            setTimeout(
+                () => {
 
-.hero-copy {
-    position: relative;
-    z-index: 2;
+                    toast.classList.remove(
+                        "show"
+                    );
 
-    max-width: 650px;
-}
-
-.eyebrow {
-    display: inline-block;
-
-    margin-bottom: 10px;
-
-    color: var(--gold);
-
-    font-size: 11px;
-    font-weight: 800;
-
-    letter-spacing: 1.5px;
-}
-
-body:not(.dark) .eyebrow {
-    color: var(--gold-dark);
-}
-
-.hero-copy h2 {
-    color: #ffffff;
-
-    font-size: clamp(30px, 4vw, 46px);
-    line-height: 1.05;
-    letter-spacing: -1.8px;
-}
-
-body:not(.dark) .hero-copy h2 {
-    color: #171717;
-}
-
-.hero-copy h2 span {
-    display: block;
-
-    color: var(--gold);
-}
-
-.hero-copy p {
-    max-width: 600px;
-
-    margin-top: 15px;
-
-    color: rgba(255, 255, 255, 0.68);
-
-    font-size: 14px;
-}
-
-body:not(.dark) .hero-copy p {
-    color: #666666;
-}
+                },
+                2500
+            );
+    }
 
 
-/* =========================================================
-   HERO SCORE
-========================================================= */
+    /* =====================================================
+       THEME
+    ===================================================== */
 
-.hero-score {
-    position: relative;
-    z-index: 2;
+    function applyTheme(theme) {
 
-    flex-shrink: 0;
-}
+        const isDark =
+            theme === "dark";
 
-.score-ring {
-    width: 150px;
-    height: 150px;
-
-    display: grid;
-    place-items: center;
-
-    border-radius: 50%;
-
-    background:
-        conic-gradient(
-            var(--gold) 0deg,
-            var(--gold) 0deg,
-            rgba(255, 255, 255, 0.13) 0deg
+        document.body.classList.toggle(
+            "dark",
+            isDark
         );
 
-    box-shadow:
-        0 0 0 8px rgba(245, 197, 66, 0.06),
-        0 15px 40px rgba(0, 0, 0, 0.22);
-}
+        const icon =
+            $("themeIcon");
 
-body:not(.dark) .score-ring {
-    background:
-        conic-gradient(
-            var(--gold) 0deg,
-            var(--gold) 0deg,
-            rgba(0, 0, 0, 0.10) 0deg
+        if (icon) {
+
+            icon.textContent =
+                isDark
+                    ? "☀"
+                    : "☾";
+        }
+    }
+
+    function getStoredTheme() {
+
+        const modern =
+            localStorage.getItem(
+                THEME_KEY
+            );
+
+        if (
+            modern === "dark" ||
+            modern === "light"
+        ) {
+            return modern;
+        }
+
+        const old =
+            localStorage.getItem(
+                OLD_THEME_KEY
+            );
+
+        if (old === "true") {
+            return "dark";
+        }
+
+        if (old === "false") {
+            return "light";
+        }
+
+        return "light";
+    }
+
+    function setTheme(theme) {
+
+        const normalized =
+            theme === "dark"
+                ? "dark"
+                : "light";
+
+        localStorage.setItem(
+            THEME_KEY,
+            normalized
         );
 
-    box-shadow:
-        0 0 0 8px rgba(200, 155, 34, 0.07),
-        0 15px 40px rgba(0, 0, 0, 0.10);
-}
-
-.score-ring::before {
-    content: "";
-
-    position: absolute;
-
-    width: 116px;
-    height: 116px;
-
-    border-radius: 50%;
-
-    background: #111111;
-}
-
-body:not(.dark) .score-ring::before {
-    background: #fffdf7;
-}
-
-.score-ring > div {
-    position: relative;
-    z-index: 2;
-
-    text-align: center;
-}
-
-.score-ring strong {
-    display: block;
-
-    color: var(--gold);
-
-    font-size: 28px;
-    font-weight: 900;
-}
-
-.score-ring span {
-    display: block;
-
-    margin-top: 1px;
-
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-
-/* =========================================================
-   SECTIONS
-========================================================= */
-
-.section {
-    margin: 38px 34px 0;
-}
-
-.section-heading {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 20px;
-
-    margin-bottom: 17px;
-}
-
-.section-label,
-.mini-label {
-    display: block;
-
-    margin-bottom: 4px;
-
-    color: var(--gold-dark);
-
-    font-size: 10px;
-    font-weight: 800;
-
-    letter-spacing: 1.4px;
-}
-
-body.dark .section-label,
-body.dark .mini-label {
-    color: var(--gold);
-}
-
-.section-heading h2 {
-    color: var(--text);
-
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-}
-
-.goal-status,
-.week-range {
-    color: var(--text-muted);
-
-    font-size: 12px;
-    font-weight: 600;
-}
-
-
-/* =========================================================
-   TODAY GOAL GRID
-========================================================= */
-
-.goal-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 17px;
-}
-
-.goal-card {
-    min-width: 0;
-
-    padding: 21px;
-
-    border-radius: var(--radius-md);
-
-    background: var(--surface);
-
-    border: 1px solid var(--border);
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        background var(--transition),
-        border-color var(--transition),
-        transform var(--transition),
-        box-shadow var(--transition);
-}
-
-.goal-card:hover {
-    transform: translateY(-2px);
-
-    border-color: var(--gold-border);
-
-    box-shadow: var(--shadow-md);
-}
-
-.goal-card-top {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-}
-
-.goal-icon {
-    width: 42px;
-    height: 42px;
-
-    display: grid;
-    place-items: center;
-
-    flex-shrink: 0;
-
-    border-radius: 12px;
-
-    font-size: 18px;
-    font-weight: 800;
-}
-
-.goal-icon.time {
-    background: var(--gold-soft);
-    color: var(--gold-dark);
-}
-
-.goal-icon.topics {
-    background: var(--green-soft);
-    color: var(--green);
-}
-
-.goal-icon.streak {
-    background: var(--orange-soft);
-    color: var(--orange);
-}
-
-.goal-heading {
-    min-width: 0;
-
-    flex: 1;
-}
-
-.goal-heading h3 {
-    color: var(--text);
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.goal-heading span {
-    display: block;
-
-    margin-top: 1px;
-
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-.goal-percent {
-    color: var(--gold-dark);
-
-    font-size: 13px;
-    font-weight: 900;
-}
-
-body.dark .goal-percent {
-    color: var(--gold);
-}
-
-.goal-numbers {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-
-    margin-top: 24px;
-}
-
-.goal-numbers strong {
-    color: var(--text);
-
-    font-size: 27px;
-    font-weight: 850;
-}
-
-.goal-numbers span {
-    color: var(--text-muted);
-
-    font-size: 12px;
-}
-
-.goal-numbers b {
-    color: var(--text-soft);
-}
-
-.progress-track {
-    width: 100%;
-    height: 7px;
-
-    margin-top: 15px;
-
-    overflow: hidden;
-
-    border-radius: 999px;
-
-    background: var(--surface-hover);
-}
-
-.progress-bar {
-    width: 0;
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--gold-dark),
-            var(--gold-light)
+        localStorage.setItem(
+            OLD_THEME_KEY,
+            normalized === "dark"
+                ? "true"
+                : "false"
         );
 
-    transition: width 500ms ease;
-}
-
-#topicProgress {
-    background:
-        linear-gradient(
-            90deg,
-            #168a43,
-            var(--green)
+        applyTheme(
+            normalized
         );
-}
+    }
 
-#streakProgress {
-    background:
-        linear-gradient(
-            90deg,
-            #d97706,
-            var(--orange)
-        );
-}
+    function toggleTheme() {
 
-.goal-card p {
-    min-height: 36px;
+        const current =
+            getStoredTheme();
 
-    margin-top: 13px;
+        const next =
+            current === "dark"
+                ? "light"
+                : "dark";
 
-    color: var(--text-muted);
+        setTheme(next);
+    }
 
-    font-size: 11px;
-    line-height: 1.55;
-}
+    function setupTheme() {
 
-
-/* =========================================================
-   WEEKLY GRID
-========================================================= */
-
-.weekly-grid {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1.6fr)
-        repeat(2, minmax(0, 1fr));
-
-    gap: 17px;
-}
-
-.weekly-card {
-    min-width: 0;
-
-    padding: 22px;
-
-    border-radius: var(--radius-md);
-
-    background: var(--surface);
-
-    border: 1px solid var(--border);
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        background var(--transition),
-        border-color var(--transition);
-}
-
-.weekly-card:hover {
-    border-color: var(--gold-border);
-}
-
-.weekly-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.weekly-card h3 {
-    color: var(--text);
-
-    font-size: 30px;
-    line-height: 1;
-}
-
-.weekly-card h3 small {
-    color: var(--text-muted);
-
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.weekly-target {
-    text-align: right;
-}
-
-.weekly-target span {
-    display: block;
-
-    color: var(--text-muted);
-
-    font-size: 10px;
-}
-
-.weekly-target strong {
-    color: var(--gold-dark);
-
-    font-size: 13px;
-}
-
-body.dark .weekly-target strong {
-    color: var(--gold);
-}
-
-.weekly-progress {
-    width: 100%;
-    height: 8px;
-
-    margin-top: 20px;
-
-    overflow: hidden;
-
-    border-radius: 999px;
-
-    background: var(--surface-hover);
-}
-
-#weeklyHoursProgress {
-    width: 0;
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--gold-dark),
-            var(--gold-light)
+        applyTheme(
+            getStoredTheme()
         );
 
-    transition: width 500ms ease;
-}
+        const button =
+            $("themeButton");
 
-.weekly-card p {
-    margin-top: 13px;
+        if (!button) {
+            return;
+        }
 
-    color: var(--text-muted);
+        if (
+            button.dataset.themeBound ===
+            "true"
+        ) {
+            return;
+        }
 
-    font-size: 11px;
-    line-height: 1.5;
-}
+        button.dataset.themeBound =
+            "true";
 
-.big-stat {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
+        button.addEventListener(
+            "click",
+            toggleTheme
+        );
+    }
 
-    margin-top: 17px;
-}
 
-.big-stat strong {
-    color: var(--text);
+    /* =====================================================
+       MOBILE SIDEBAR
+    ===================================================== */
 
-    font-size: 32px;
-    font-weight: 850;
-}
+    function setupMobileMenu() {
 
-.big-stat span {
-    color: var(--text-muted);
+        const button =
+            $("mobileMenu");
 
-    font-size: 12px;
-}
+        const sidebar =
+            $("sidebar");
 
-.big-stat b {
-    color: var(--text-soft);
-}
+        if (!button || !sidebar) {
+            return;
+        }
 
-.mini-progress {
-    width: 100%;
-    height: 7px;
+        if (
+            button.dataset.menuBound ===
+            "true"
+        ) {
+            return;
+        }
 
-    margin-top: 18px;
+        button.dataset.menuBound =
+            "true";
 
-    overflow: hidden;
+        button.addEventListener(
+            "click",
+            () => {
 
-    border-radius: 999px;
-
-    background: var(--surface-hover);
-}
-
-#weeklyDaysProgress,
-#weeklyTopicsProgress {
-    width: 0;
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--gold-dark),
-            var(--gold-light)
+                sidebar.classList.toggle(
+                    "open"
+                );
+            }
         );
 
-    transition: width 500ms ease;
-}
+        sidebar
+            .querySelectorAll("a")
+            .forEach(
+                link => {
+
+                    link.addEventListener(
+                        "click",
+                        () => {
+
+                            sidebar.classList.remove(
+                                "open"
+                            );
+                        }
+                    );
+                }
+            );
+    }
 
 
-/* =========================================================
-   PLAN CARD
-========================================================= */
+    /* =====================================================
+       STORAGE EVENT
+    ===================================================== */
 
-.plan-card {
-    display: grid;
+    function setupStorageListener() {
 
-    grid-template-columns:
-        minmax(0, 1.4fr)
-        auto
-        minmax(180px, 0.8fr);
+        if (
+            window.__studyMindGoalsStorageBound
+        ) {
+            return;
+        }
 
-    align-items: center;
+        window.__studyMindGoalsStorageBound =
+            true;
 
-    gap: 25px;
+        window.addEventListener(
+            "storage",
+            event => {
 
-    padding: 23px;
+                const relevantKeys = [
 
-    border-radius: var(--radius-md);
+                    PLAN_KEY,
+                    PLANS_KEY,
+                    ACTIVE_PLAN_KEY,
+                    COMPLETED_TOPICS_KEY,
+                    STREAK_ACTIVITY_KEY,
+                    STUDY_HISTORY_KEY,
+                    USER_KEY,
+                    THEME_KEY,
+                    OLD_THEME_KEY
 
-    background: var(--surface);
+                ];
 
-    border: 1px solid var(--border);
+                if (
+                    relevantKeys.includes(
+                        event.key
+                    )
+                ) {
 
-    box-shadow: var(--shadow-sm);
-}
+                    refresh();
+                }
+            }
+        );
+    }
 
-.plan-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
 
-    min-width: 0;
-}
+    /* =====================================================
+       CUSTOM STUDYMIND EVENTS
+    ===================================================== */
 
-.plan-icon {
-    width: 48px;
-    height: 48px;
+    function setupCustomEvents() {
 
-    display: grid;
-    place-items: center;
+        if (
+            window.__studyMindGoalsEventsBound
+        ) {
+            return;
+        }
 
-    flex-shrink: 0;
+        window.__studyMindGoalsEventsBound =
+            true;
 
-    border-radius: 13px;
+        [
+            "studyMindPlanUpdated",
+            "studyMindPlanChanged",
+            "studyMindTopicCompleted",
+            "studyMindStudyActivity",
+            "studyMindScoreUpdated",
+            "studyMindPremiumChanged",
+            "studyMindUserUpdated"
+        ].forEach(
+            eventName => {
 
-    background: var(--gold-soft);
+                window.addEventListener(
+                    eventName,
+                    () => refresh()
+                );
+            }
+        );
+    }
 
-    color: var(--gold-dark);
 
-    font-size: 21px;
-}
+    /* =====================================================
+       MAIN REFRESH
+    ===================================================== */
 
-body.dark .plan-icon {
-    color: var(--gold);
-}
+    function refresh() {
 
-.plan-info h3 {
-    margin-top: 2px;
+        const plan =
+            getActivePlan();
 
-    color: var(--text);
+        const metrics =
+            getScoreMetrics();
 
-    font-size: 16px;
-    font-weight: 800;
-}
+        updateGreeting();
+        updateDate();
+        updateWeekRange();
+        updateUsername();
 
-.plan-info p {
-    margin-top: 3px;
-
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-.plan-stat {
-    text-align: center;
-}
-
-.plan-stat strong {
-    display: block;
-
-    color: var(--text);
-
-    font-size: 28px;
-    font-weight: 850;
-}
-
-.plan-stat span {
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-.plan-stat b {
-    color: var(--text-soft);
-}
-
-.plan-progress-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.plan-progress {
-    flex: 1;
-
-    height: 8px;
-
-    overflow: hidden;
-
-    border-radius: 999px;
-
-    background: var(--surface-hover);
-}
-
-#planProgress {
-    width: 0;
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--gold-dark),
-            var(--gold-light)
+        updateTodayGoals(
+            plan,
+            metrics
         );
 
-    transition: width 500ms ease;
-}
-
-#planPercent {
-    min-width: 36px;
-
-    color: var(--gold-dark);
-
-    font-size: 11px;
-    font-weight: 900;
-
-    text-align: right;
-}
-
-body.dark #planPercent {
-    color: var(--gold);
-}
-
-
-/* =========================================================
-   SUBJECT GRID
-========================================================= */
-
-.subject-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(220px, 1fr)
+        updateWeeklyGoals(
+            plan,
+            metrics
         );
 
-    gap: 15px;
-}
-
-.subject-card {
-    padding: 18px;
-
-    border-radius: var(--radius-md);
-
-    background: var(--surface);
-
-    border: 1px solid var(--border);
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        transform var(--transition),
-        border-color var(--transition);
-}
-
-.subject-card:hover {
-    transform: translateY(-2px);
-
-    border-color: var(--gold-border);
-}
-
-.subject-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.subject-name {
-    color: var(--text);
-
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.subject-percent {
-    color: var(--gold-dark);
-
-    font-size: 12px;
-    font-weight: 900;
-}
-
-body.dark .subject-percent {
-    color: var(--gold);
-}
-
-.subject-count {
-    margin-top: 7px;
-
-    color: var(--text-muted);
-
-    font-size: 11px;
-}
-
-.subject-progress {
-    width: 100%;
-    height: 6px;
-
-    margin-top: 13px;
-
-    overflow: hidden;
-
-    border-radius: 999px;
-
-    background: var(--surface-hover);
-}
-
-.subject-progress > div {
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--gold-dark),
-            var(--gold-light)
+        updatePlanProgress(
+            plan,
+            metrics
         );
 
-    transition: width 500ms ease;
-}
-
-
-/* =========================================================
-   ACHIEVEMENTS
-========================================================= */
-
-.achievement-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 15px;
-}
-
-.achievement {
-    position: relative;
-
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    min-width: 0;
-
-    padding: 17px;
-
-    border-radius: var(--radius-md);
-
-    background: var(--surface);
-
-    border: 1px solid var(--border);
-
-    opacity: 0.58;
-
-    transition:
-        opacity var(--transition),
-        border-color var(--transition),
-        background var(--transition);
-}
-
-.achievement.unlocked {
-    opacity: 1;
-
-    border-color: var(--gold-border);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--surface),
-            var(--gold-soft)
-        );
-}
-
-.achievement-icon {
-    width: 39px;
-    height: 39px;
-
-    display: grid;
-    place-items: center;
-
-    flex-shrink: 0;
-
-    border-radius: 11px;
-
-    background: var(--surface-hover);
-
-    font-size: 17px;
-}
-
-.achievement.unlocked .achievement-icon {
-    background: var(--gold-soft);
-}
-
-.achievement strong {
-    display: block;
-
-    color: var(--text);
-
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.achievement p {
-    margin-top: 2px;
-
-    color: var(--text-muted);
-
-    font-size: 10px;
-    line-height: 1.4;
-}
-
-.achievement-check {
-    margin-left: auto;
-
-    color: transparent;
-
-    font-size: 15px;
-    font-weight: 900;
-}
-
-.achievement.unlocked .achievement-check {
-    color: var(--gold);
-}
-
-
-/* =========================================================
-   EMPTY PLAN
-========================================================= */
-
-.empty-plan {
-    margin: 38px 34px;
-
-    padding: 55px 25px;
-
-    text-align: center;
-
-    border-radius: var(--radius-lg);
-
-    background: var(--surface);
-
-    border: 1px dashed var(--gold-border);
-}
-
-.empty-icon {
-    width: 58px;
-    height: 58px;
-
-    display: grid;
-    place-items: center;
-
-    margin: 0 auto 16px;
-
-    border-radius: 17px;
-
-    background: var(--gold-soft);
-
-    font-size: 25px;
-}
-
-.empty-plan h2 {
-    color: var(--text);
-
-    font-size: 22px;
-}
-
-.empty-plan p {
-    max-width: 480px;
-
-    margin: 8px auto 20px;
-
-    color: var(--text-muted);
-
-    font-size: 13px;
-}
-
-.primary-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 11px 18px;
-
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--gold-light),
-            var(--gold-dark)
+        updateSubjectGoals(
+            plan
         );
 
-    color: #080808;
+        updateAchievements(
+            plan,
+            metrics
+        );
 
-    font-size: 12px;
-    font-weight: 800;
-
-    box-shadow:
-        0 7px 18px rgba(200, 155, 34, 0.18);
-
-    transition:
-        transform var(--transition),
-        box-shadow var(--transition);
-}
-
-.primary-button:hover {
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 10px 24px rgba(200, 155, 34, 0.25);
-}
-
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-.footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-
-    margin: 45px 34px 25px;
-
-    color: var(--text-muted);
-
-    font-size: 10px;
-}
-
-.footer span:first-child {
-    color: var(--gold-dark);
-
-    font-weight: 800;
-}
-
-body.dark .footer span:first-child {
-    color: var(--gold);
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-.toast {
-    position: fixed;
-
-    left: 50%;
-    bottom: 25px;
-
-    transform:
-        translate(-50%, 20px);
-
-    z-index: 9999;
-
-    padding: 11px 17px;
-
-    border-radius: 10px;
-
-    background: #111111;
-
-    color: #ffffff;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    opacity: 0;
-    pointer-events: none;
-
-    box-shadow: var(--shadow-lg);
-
-    transition:
-        opacity 200ms ease,
-        transform 200ms ease;
-}
-
-body:not(.dark) .toast {
-    background: #ffffff;
-
-    color: #171717;
-
-    border: 1px solid var(--border);
-}
-
-.toast.show {
-    opacity: 1;
-
-    transform:
-        translate(-50%, 0);
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 1100px) {
-
-    .goal-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        updateEmptyPlan(
+            plan
+        );
     }
 
-    .weekly-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+
+    /* =====================================================
+       INIT
+    ===================================================== */
+
+    function init() {
+
+        setupTheme();
+
+        setupMobileMenu();
+
+        setupStorageListener();
+
+        setupCustomEvents();
+
+        refresh();
+
+        setInterval(
+            refresh,
+            30000
+        );
     }
 
-    .weekly-card.large {
-        grid-column: 1 / -1;
+
+    /* =====================================================
+       PUBLIC API
+    ===================================================== */
+
+    window.StudyMindGoals = {
+
+        refresh,
+
+        getActivePlan,
+
+        getCompletedTopics,
+
+        getCurrentStreak,
+
+        getTodayStudyHours,
+
+        getWeeklyStudyHours,
+
+        toggleTheme,
+
+        setTheme
+
+    };
+
+
+    /* =====================================================
+       START
+    ===================================================== */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
+
+    } else {
+
+        init();
     }
 
-    .achievement-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .plan-card {
-        grid-template-columns:
-            1fr 1fr;
-    }
-
-    .plan-progress-container {
-        grid-column: 1 / -1;
-    }
-}
-
-
-@media (max-width: 820px) {
-
-    :root {
-        --sidebar-width: 250px;
-    }
-
-    .sidebar {
-        transform:
-            translateX(-100%);
-
-        box-shadow:
-            15px 0 40px rgba(0, 0, 0, 0.18);
-    }
-
-    .sidebar.open {
-        transform:
-            translateX(0);
-    }
-
-    .main-content {
-        width: 100%;
-
-        margin-left: 0;
-    }
-
-    .mobile-menu {
-        display: grid;
-    }
-
-    .topbar {
-        padding: 16px 20px;
-    }
-
-    .welcome {
-        flex: 1;
-    }
-
-    .welcome h1 {
-        font-size: 21px;
-    }
-
-    .welcome p {
-        display: none;
-    }
-
-    .goals-hero,
-    .section,
-    .empty-plan {
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-
-    .goals-hero {
-        padding: 28px;
-
-        min-height: 210px;
-    }
-
-    .hero-copy h2 {
-        font-size: 32px;
-    }
-
-    .score-ring {
-        width: 125px;
-        height: 125px;
-    }
-
-    .score-ring::before {
-        width: 96px;
-        height: 96px;
-    }
-}
-
-
-@media (max-width: 620px) {
-
-    .topbar {
-        min-height: 75px;
-
-        gap: 10px;
-    }
-
-    .topbar-actions {
-        display: none;
-    }
-
-    .welcome h1 {
-        font-size: 19px;
-    }
-
-    .goals-hero {
-        flex-direction: column;
-        align-items: flex-start;
-
-        padding: 25px;
-    }
-
-    .hero-score {
-        align-self: center;
-    }
-
-    .goal-grid,
-    .weekly-grid,
-    .achievement-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .weekly-card.large {
-        grid-column: auto;
-    }
-
-    .plan-card {
-        grid-template-columns: 1fr;
-    }
-
-    .plan-stat {
-        text-align: left;
-    }
-
-    .plan-progress-container {
-        grid-column: auto;
-    }
-
-    .subject-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section {
-        margin-top: 30px;
-    }
-
-    .section-heading {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .footer {
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media (max-width: 400px) {
-
-    .topbar {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .goals-hero,
-    .section,
-    .empty-plan {
-        margin-left: 14px;
-        margin-right: 14px;
-    }
-
-    .goals-hero {
-        padding: 22px;
-    }
-
-    .hero-copy h2 {
-        font-size: 28px;
-    }
-
-    .goal-card,
-    .weekly-card,
-    .subject-card,
-    .achievement {
-        padding: 15px;
-    }
-}
-
-
-/* =========================================================
-   ACCESSIBILITY
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-    }
-}
-
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-
-    border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gold);
-}
+})();
