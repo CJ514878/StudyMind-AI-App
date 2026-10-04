@@ -1,2341 +1,1392 @@
 /* =========================================================
    STUDYMIND AI — GOALS
-   SINGLE-SOURCE-OF-TRUTH FRONTEND
-   ---------------------------------------------------------
-   Goals does NOT create its own scoring/data system.
-
-   StudyMindScore is the single source of truth for:
-   - Completed topics
-   - Study time
-   - Streak
-   - Best streak
-   - Plan progress
-   - Knowledge-check performance
-   - AI learning activity
-
-   Goals only converts those metrics into goal progress.
+   PROFESSIONAL GOALS DASHBOARD
+   BLACK / GOLD + LIGHT / DARK THEME
 ========================================================= */
 
-"use strict";
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    /* ---------- LIGHT THEME ---------- */
+    --bg: #f6f3eb;
+    --surface: #ffffff;
+    --surface-soft: #faf8f2;
+    --surface-hover: #f4f0e5;
+
+    --sidebar-bg: #ffffff;
+    --sidebar-border: rgba(0, 0, 0, 0.08);
+
+    --text: #171717;
+    --text-soft: #555555;
+    --text-muted: #777777;
+
+    --border: rgba(0, 0, 0, 0.09);
+    --border-strong: rgba(0, 0, 0, 0.14);
+
+    --gold: #c89b22;
+    --gold-light: #e0b83f;
+    --gold-dark: #9f7610;
+    --gold-soft: rgba(200, 155, 34, 0.10);
+    --gold-border: rgba(200, 155, 34, 0.25);
+
+    --green: #16a34a;
+    --green-soft: rgba(22, 163, 74, 0.10);
+
+    --orange: #ea8a00;
+    --orange-soft: rgba(234, 138, 0, 0.10);
+
+    --danger: #dc2626;
+
+    --shadow-sm:
+        0 2px 10px rgba(0, 0, 0, 0.05);
+
+    --shadow-md:
+        0 10px 30px rgba(0, 0, 0, 0.08);
+
+    --shadow-lg:
+        0 20px 50px rgba(0, 0, 0, 0.10);
+
+    --sidebar-width: 250px;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+
+    --transition:
+        180ms ease;
+}
 
 
 /* =========================================================
-   STORAGE
+   DARK THEME
 ========================================================= */
 
-const STORAGE = {
+body.dark {
+    --bg: #070707;
+    --surface: #101010;
+    --surface-soft: #151515;
+    --surface-hover: #1b1b1b;
 
-    PLAN: "studyMindPlan",
+    --sidebar-bg: #0b0b0b;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
 
-    PLANS: "studyMindPlans",
+    --text: #f5f5f5;
+    --text-soft: #b7b7b7;
+    --text-muted: #858585;
 
-    ACTIVE_PLAN: "studyMindActivePlanId",
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
 
-    COMPLETED: "studyMindCompletedTopics",
+    --gold: #f5c542;
+    --gold-light: #ffd966;
+    --gold-dark: #c99b16;
+    --gold-soft: rgba(245, 197, 66, 0.10);
+    --gold-border: rgba(245, 197, 66, 0.20);
 
-    STREAK_ACTIVITY: "studyMindStreakActivity",
+    --green: #35c76f;
+    --green-soft: rgba(53, 199, 111, 0.10);
 
-    STUDY_HISTORY: "studyMindStudyHistory",
+    --orange: #ffad32;
+    --orange-soft: rgba(255, 173, 50, 0.10);
 
-    DAILY_STUDY_TIME: "studyMindDailyStudyTime",
+    --danger: #ff5c5c;
 
-    STUDY_SESSIONS: "studyMindStudySessions",
+    --shadow-sm:
+        0 2px 10px rgba(0, 0, 0, 0.25);
 
-    KNOWLEDGE_RESULTS: "studyMindKnowledgeCheckResults",
+    --shadow-md:
+        0 10px 30px rgba(0, 0, 0, 0.35);
 
-    COMPLETED_QUESTION_TOPICS:
-        "studyMindCompletedQuestionTopics",
-
-    USER: "studyMindUser",
-
-    THEME: "studyMindTheme",
-
-    DARK_MODE: "studyMindDarkMode",
-
-    AI_COUNT: "aiQuestionCount",
-
-    AI_DATE: "aiQuestionDate"
-};
+    --shadow-lg:
+        0 20px 50px rgba(0, 0, 0, 0.50);
+}
 
 
 /* =========================================================
-   STATE
+   BODY
 ========================================================= */
 
-let state = {
+html {
+    min-height: 100%;
+}
 
-    plan: null,
+body {
+    min-height: 100vh;
 
-    metrics: null,
+    background: var(--bg);
+    color: var(--text);
 
-    completedTopics: [],
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-    completedTopicNames: new Set(),
+    line-height: 1.5;
 
-    today: new Date(),
+    transition:
+        background-color var(--transition),
+        color var(--transition);
+}
 
-    totalTopics: 0,
+button,
+a {
+    font: inherit;
+}
 
-    completedTotal: 0,
+button {
+    border: 0;
+}
 
-    todayCompleted: 0,
-
-    todayHours: 0,
-
-    weeklyHours: 0,
-
-    weeklyTopics: 0,
-
-    weeklyDays: 0,
-
-    currentStreak: 0,
-
-    bestStreak: 0,
-
-    sharedScore: 0,
-
-    knowledgeAverage: 0,
-
-    knowledgeCheckCount: 0
-};
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
 
 /* =========================================================
-   HELPERS
+   APP SHELL
 ========================================================= */
 
-function readJSON(key, fallback = null) {
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
 
-    try {
 
-        const value =
-            localStorage.getItem(key);
+/* =========================================================
+   SIDEBAR
+========================================================= */
 
-        if (!value) {
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
 
-            return fallback;
-        }
+    width: var(--sidebar-width);
 
-        return JSON.parse(value);
+    display: flex;
+    flex-direction: column;
 
-    } catch (error) {
+    background: var(--sidebar-bg);
 
-        console.warn(
-            "StudyMind Goals storage error:",
-            key,
-            error
+    border-right: 1px solid var(--sidebar-border);
+
+    z-index: 1000;
+
+    transition:
+        background-color var(--transition),
+        border-color var(--transition),
+        transform 220ms ease;
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 24px 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border-radius: 11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold-dark)
         );
 
-        return fallback;
-    }
+    color: #080808;
+
+    font-size: 18px;
+    font-weight: 900;
+
+    box-shadow:
+        0 5px 18px rgba(200, 155, 34, 0.20);
+}
+
+.brand strong {
+    display: block;
+
+    color: var(--text);
+
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
+
+.brand span {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
 }
 
 
-function todayKey(date = new Date()) {
+/* =========================================================
+   NAVIGATION
+========================================================= */
 
-    const y =
-        date.getFullYear();
+.navigation {
+    flex: 1;
 
-    const m =
-        String(
-            date.getMonth() + 1
-        ).padStart(2, "0");
+    padding: 18px 12px;
 
-    const d =
-        String(
-            date.getDate()
-        ).padStart(2, "0");
+    overflow-y: auto;
+}
 
-    return `${y}-${m}-${d}`;
+.nav-item {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+
+    margin-bottom: 5px;
+    padding: 11px 13px;
+
+    border-radius: 11px;
+
+    color: var(--text-soft);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition:
+        background var(--transition),
+        color var(--transition),
+        transform var(--transition);
+}
+
+.nav-item > span:first-child {
+    width: 22px;
+
+    display: inline-grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    color: var(--text-muted);
+
+    font-size: 15px;
+
+    transition: color var(--transition);
+}
+
+.nav-item:hover {
+    background: var(--surface-hover);
+
+    color: var(--text);
+}
+
+.nav-item:hover > span:first-child {
+    color: var(--gold);
+}
+
+.nav-item.active {
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold),
+            var(--gold-dark)
+        );
+
+    color: #090909;
+
+    box-shadow:
+        0 7px 18px rgba(200, 155, 34, 0.18);
+}
+
+.nav-item.active > span:first-child {
+    color: #090909;
+}
+
+.nav-divider {
+    height: 1px;
+
+    margin: 14px 8px;
+
+    background: var(--border);
 }
 
 
-function startOfDay(date) {
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
 
-    const result =
-        new Date(date);
+.sidebar-bottom {
+    padding: 14px 12px 18px;
 
-    result.setHours(
-        0,
-        0,
-        0,
-        0
-    );
+    border-top: 1px solid var(--border);
+}
 
-    return result;
+.premium-link,
+.theme-button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 11px 13px;
+
+    border-radius: 11px;
+
+    color: var(--text-soft);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        color var(--transition);
+}
+
+.premium-link:hover,
+.theme-button:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.premium-link span:first-child,
+.theme-button span:first-child {
+    width: 22px;
+
+    display: inline-grid;
+    place-items: center;
+
+    color: var(--gold);
 }
 
 
-function clamp(number, min, max) {
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
 
-    return Math.min(
-        Math.max(
-            Number(number) || 0,
-            min
+.main-content {
+    width: calc(100% - var(--sidebar-width));
+
+    min-height: 100vh;
+
+    margin-left: var(--sidebar-width);
+
+    background: var(--bg);
+
+    transition: background-color var(--transition);
+}
+
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+.topbar {
+    position: sticky;
+    top: 0;
+
+    min-height: 88px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 20px 34px;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--bg) 94%,
+            transparent
+        );
+
+    backdrop-filter: blur(14px);
+
+    border-bottom: 1px solid var(--border);
+
+    z-index: 100;
+}
+
+.welcome {
+    min-width: 0;
+}
+
+.welcome > span {
+    display: block;
+
+    margin-bottom: 2px;
+
+    color: var(--gold-dark);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+body.dark .welcome > span {
+    color: var(--gold);
+}
+
+.welcome h1 {
+    color: var(--text);
+
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.7px;
+}
+
+.welcome h1 span {
+    color: var(--gold);
+}
+
+.welcome p {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+}
+
+.date-pill {
+    padding: 9px 14px;
+
+    border: 1px solid var(--gold-border);
+
+    border-radius: 999px;
+
+    background: var(--gold-soft);
+
+    color: var(--gold-dark);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+body.dark .date-pill {
+    color: var(--gold);
+}
+
+.mobile-menu {
+    display: none;
+
+    width: 40px;
+    height: 40px;
+
+    place-items: center;
+
+    border-radius: 10px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   GOALS HERO
+========================================================= */
+
+.goals-hero {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+
+    margin: 28px 34px 0;
+
+    padding: 38px;
+
+    min-height: 230px;
+
+    overflow: hidden;
+
+    border-radius: var(--radius-lg);
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(245, 197, 66, 0.18),
+            transparent 32%
         ),
-        max
-    );
-}
-
-
-function percent(value, target) {
-
-    if (
-        !target ||
-        Number(target) <= 0
-    ) {
-
-        return 0;
-    }
-
-    return Math.round(
-        clamp(
-            (
-                Number(value) /
-                Number(target)
-            ) * 100,
-            0,
-            100
-        )
-    );
-}
-
-
-function formatHours(hours) {
-
-    const value =
-        Number(hours) || 0;
-
-
-    if (value < 1) {
-
-        return `${Math.round(value * 60)}m`;
-    }
-
-
-    if (Number.isInteger(value)) {
-
-        return `${value}h`;
-    }
-
-
-    return `${value.toFixed(1)}h`;
-}
-
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-
-        .replaceAll(
-            "'",
-            "&#039;"
+        linear-gradient(
+            135deg,
+            #171717,
+            #090909
         );
+
+    border: 1px solid rgba(245, 197, 66, 0.18);
+
+    box-shadow: var(--shadow-lg);
 }
 
+body:not(.dark) .goals-hero {
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(200, 155, 34, 0.13),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #fffdf7,
+            #f2ede0
+        );
 
-function setText(id, value) {
-
-    const element =
-        document.getElementById(id);
-
-    if (element) {
-
-        element.textContent =
-            value;
-    }
+    border-color: var(--gold-border);
 }
 
+.hero-copy {
+    position: relative;
+    z-index: 2;
 
-function setWidth(id, value) {
+    max-width: 650px;
+}
 
-    const element =
-        document.getElementById(id);
+.eyebrow {
+    display: inline-block;
 
-    if (!element) return;
+    margin-bottom: 10px;
 
+    color: var(--gold);
 
-    element.style.width =
-        `${clamp(
-            value,
-            0,
-            100
-        )}%`;
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+}
+
+body:not(.dark) .eyebrow {
+    color: var(--gold-dark);
+}
+
+.hero-copy h2 {
+    color: #ffffff;
+
+    font-size: clamp(30px, 4vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -1.8px;
+}
+
+body:not(.dark) .hero-copy h2 {
+    color: #171717;
+}
+
+.hero-copy h2 span {
+    display: block;
+
+    color: var(--gold);
+}
+
+.hero-copy p {
+    max-width: 600px;
+
+    margin-top: 15px;
+
+    color: rgba(255, 255, 255, 0.68);
+
+    font-size: 14px;
+}
+
+body:not(.dark) .hero-copy p {
+    color: #666666;
 }
 
 
 /* =========================================================
-   PLAN LOADING
+   HERO SCORE
 ========================================================= */
 
-function loadPlan() {
+.hero-score {
+    position: relative;
+    z-index: 2;
 
-    let plan =
-        readJSON(
-            STORAGE.PLAN,
-            null
+    flex-shrink: 0;
+}
+
+.score-ring {
+    width: 150px;
+    height: 150px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background:
+        conic-gradient(
+            var(--gold) 0deg,
+            var(--gold) 0deg,
+            rgba(255, 255, 255, 0.13) 0deg
         );
 
+    box-shadow:
+        0 0 0 8px rgba(245, 197, 66, 0.06),
+        0 15px 40px rgba(0, 0, 0, 0.22);
+}
 
-    /*
-       Multi-plan system.
-
-       Always prefer the active plan.
-    */
-
-    const plans =
-        readJSON(
-            STORAGE.PLANS,
-            null
+body:not(.dark) .score-ring {
+    background:
+        conic-gradient(
+            var(--gold) 0deg,
+            var(--gold) 0deg,
+            rgba(0, 0, 0, 0.10) 0deg
         );
 
+    box-shadow:
+        0 0 0 8px rgba(200, 155, 34, 0.07),
+        0 15px 40px rgba(0, 0, 0, 0.10);
+}
 
-    const activeId =
-        localStorage.getItem(
-            STORAGE.ACTIVE_PLAN
-        );
+.score-ring::before {
+    content: "";
 
+    position: absolute;
 
-    if (
-        Array.isArray(plans) &&
-        plans.length
-    ) {
+    width: 116px;
+    height: 116px;
 
-        let activePlan = null;
+    border-radius: 50%;
 
+    background: #111111;
+}
 
-        if (activeId) {
+body:not(.dark) .score-ring::before {
+    background: #fffdf7;
+}
 
-            activePlan =
-                plans.find(
-                    item =>
-                        item &&
-                        String(item.id) ===
-                        String(activeId)
-                );
-        }
+.score-ring > div {
+    position: relative;
+    z-index: 2;
 
+    text-align: center;
+}
 
-        /*
-           If no active ID exists, use
-           the first available plan.
-        */
+.score-ring strong {
+    display: block;
 
-        if (!activePlan) {
+    color: var(--gold);
 
-            activePlan =
-                plans[0];
-        }
+    font-size: 28px;
+    font-weight: 900;
+}
 
+.score-ring span {
+    display: block;
 
-        if (activePlan) {
+    margin-top: 1px;
 
-            plan =
-                activePlan;
-        }
-    }
+    color: var(--text-muted);
 
-
-    state.plan =
-        plan;
-
-
-    return plan;
+    font-size: 11px;
 }
 
 
 /* =========================================================
-   PLAN TOPICS
+   SECTIONS
 ========================================================= */
 
-function normalizeTopic(topic) {
-
-    if (typeof topic === "string") {
-
-        return {
-
-            name: topic,
-
-            id: topic
-
-        };
-    }
-
-
-    if (
-        !topic ||
-        typeof topic !== "object"
-    ) {
-
-        return {
-
-            name: "",
-
-            id: ""
-
-        };
-    }
-
-
-    const name =
-        topic.name ||
-        topic.title ||
-        topic.topic ||
-        topic.text ||
-        "";
-
-
-    const id =
-        topic.id ||
-        topic.topicId ||
-        name;
-
-
-    return {
-
-        name: String(name),
-
-        id: String(id)
-
-    };
+.section {
+    margin: 38px 34px 0;
 }
 
+.section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
 
-function getPlanSubjects() {
-
-    const plan =
-        state.plan;
-
-
-    if (!plan) {
-
-        return [];
-    }
-
-
-    /*
-       Standard StudyMind format.
-    */
-
-    if (
-        Array.isArray(plan.subjects)
-    ) {
-
-        return plan.subjects.map(
-            subject => {
-
-                if (
-                    typeof subject ===
-                    "string"
-                ) {
-
-                    return {
-
-                        name: subject,
-
-                        topics: []
-
-                    };
-                }
-
-
-                return {
-
-                    ...subject,
-
-                    name:
-                        subject.name ||
-                        subject.subject ||
-                        subject.title ||
-                        "Subject",
-
-                    topics:
-                        Array.isArray(
-                            subject.topics
-                        )
-                            ? subject.topics
-                            : []
-
-                };
-
-            }
-        );
-    }
-
-
-    /*
-       Compatibility format.
-    */
-
-    if (
-        Array.isArray(
-            plan.subjectNames
-        )
-    ) {
-
-        return plan.subjectNames.map(
-            name => ({
-
-                name: String(name),
-
-                topics: []
-
-            })
-        );
-    }
-
-
-    return [];
+    margin-bottom: 17px;
 }
 
+.section-label,
+.mini-label {
+    display: block;
 
-function getAllPlanTopics() {
+    margin-bottom: 4px;
 
-    const subjects =
-        getPlanSubjects();
+    color: var(--gold-dark);
 
+    font-size: 10px;
+    font-weight: 800;
 
-    const result = [];
+    letter-spacing: 1.4px;
+}
 
+body.dark .section-label,
+body.dark .mini-label {
+    color: var(--gold);
+}
 
-    subjects.forEach(
-        subject => {
+.section-heading h2 {
+    color: var(--text);
 
-            if (
-                !Array.isArray(
-                    subject.topics
-                )
-            ) {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
 
-                return;
-            }
+.goal-status,
+.week-range {
+    color: var(--text-muted);
 
-
-            subject.topics.forEach(
-                topic => {
-
-                    const normalized =
-                        normalizeTopic(
-                            topic
-                        );
-
-
-                    if (
-                        !normalized.name
-                    ) {
-
-                        return;
-                    }
-
-
-                    result.push({
-
-                        ...normalized,
-
-                        subject:
-                            subject.name
-
-                    });
-
-                }
-            );
-
-        }
-    );
-
-
-    /*
-       Compatibility with flat topics.
-    */
-
-    if (
-        !result.length &&
-        Array.isArray(
-            state.plan?.topics
-        )
-    ) {
-
-        state.plan.topics.forEach(
-            topic => {
-
-                const normalized =
-                    normalizeTopic(
-                        topic
-                    );
-
-
-                if (
-                    !normalized.name
-                ) {
-
-                    return;
-                }
-
-
-                result.push({
-
-                    ...normalized,
-
-                    subject:
-                        typeof topic ===
-                        "object"
-                            ? (
-                                topic.subject ||
-                                "General"
-                            )
-                            : "General"
-
-                });
-
-            }
-        );
-    }
-
-
-    /*
-       Compatibility with topicList.
-    */
-
-    if (
-        !result.length &&
-        Array.isArray(
-            state.plan?.topicList
-        )
-    ) {
-
-        state.plan.topicList.forEach(
-            topic => {
-
-                const normalized =
-                    normalizeTopic(
-                        topic
-                    );
-
-
-                if (
-                    !normalized.name
-                ) {
-
-                    return;
-                }
-
-
-                result.push({
-
-                    ...normalized,
-
-                    subject:
-                        typeof topic ===
-                        "object"
-                            ? (
-                                topic.subject ||
-                                "General"
-                            )
-                            : "General"
-
-                });
-
-            }
-        );
-    }
-
-
-    return result;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 
 /* =========================================================
-   COMPLETED TOPICS
-   ---------------------------------------------------------
-   This is retained for compatibility and subject rendering.
-
-   StudyMindScore remains the canonical source whenever
-   getMetrics() is available.
+   TODAY GOAL GRID
 ========================================================= */
 
-function loadCompletedTopics() {
+.goal-grid {
+    display: grid;
 
-    const stored =
-        readJSON(
-            STORAGE.COMPLETED,
-            []
-        );
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
 
-
-    if (
-        Array.isArray(stored)
-    ) {
-
-        state.completedTopics =
-            stored;
-
-        return;
-    }
-
-
-    if (
-        stored &&
-        typeof stored === "object"
-    ) {
-
-        state.completedTopics =
-            Object.values(
-                stored
-            ).flat();
-
-        return;
-    }
-
-
-    state.completedTopics =
-        [];
+    gap: 17px;
 }
 
+.goal-card {
+    min-width: 0;
 
-function topicIsCompleted(topic) {
+    padding: 21px;
 
-    const normalized =
-        normalizeTopic(topic);
+    border-radius: var(--radius-md);
 
+    background: var(--surface);
 
-    /*
-       FIRST:
-       Use canonical completed topic names
-       supplied by StudyMindScore.
-    */
+    border: 1px solid var(--border);
 
-    if (
-        state.completedTopicNames instanceof Set &&
-        state.completedTopicNames.size
-    ) {
+    box-shadow: var(--shadow-sm);
 
-        if (
-            state.completedTopicNames.has(
-                normalized.name
-            ) ||
-            state.completedTopicNames.has(
-                normalized.id
-            )
-        ) {
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
 
-            return true;
-        }
-    }
+.goal-card:hover {
+    transform: translateY(-2px);
 
+    border-color: var(--gold-border);
 
-    /*
-       SECOND:
-       Compatibility fallback for older
-       completed-topic storage.
-    */
+    box-shadow: var(--shadow-md);
+}
 
-    return state.completedTopics.some(
-        item => {
+.goal-card-top {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
 
-            if (
-                typeof item ===
-                "string"
-            ) {
+.goal-icon {
+    width: 42px;
+    height: 42px;
 
-                return (
-                    item ===
-                    normalized.name ||
+    display: grid;
+    place-items: center;
 
-                    item ===
-                    normalized.id
-                );
-            }
+    flex-shrink: 0;
 
+    border-radius: 12px;
 
-            if (
-                !item ||
-                typeof item !==
-                "object"
-            ) {
+    font-size: 18px;
+    font-weight: 800;
+}
 
-                return false;
-            }
+.goal-icon.time {
+    background: var(--gold-soft);
+    color: var(--gold-dark);
+}
 
+.goal-icon.topics {
+    background: var(--green-soft);
+    color: var(--green);
+}
 
-            return (
+.goal-icon.streak {
+    background: var(--orange-soft);
+    color: var(--orange);
+}
 
-                item.id ===
-                normalized.id ||
+.goal-heading {
+    min-width: 0;
 
-                item.topicId ===
-                normalized.id ||
+    flex: 1;
+}
 
-                item.name ===
-                normalized.name ||
+.goal-heading h3 {
+    color: var(--text);
 
-                item.topic ===
-                normalized.name ||
+    font-size: 14px;
+    font-weight: 800;
+}
 
-                item.title ===
-                normalized.name
+.goal-heading span {
+    display: block;
 
-            );
-        }
-    );
+    margin-top: 1px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+}
+
+.goal-percent {
+    color: var(--gold-dark);
+
+    font-size: 13px;
+    font-weight: 900;
+}
+
+body.dark .goal-percent {
+    color: var(--gold);
+}
+
+.goal-numbers {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+
+    margin-top: 24px;
+}
+
+.goal-numbers strong {
+    color: var(--text);
+
+    font-size: 27px;
+    font-weight: 850;
+}
+
+.goal-numbers span {
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
+
+.goal-numbers b {
+    color: var(--text-soft);
+}
+
+.progress-track {
+    width: 100%;
+    height: 7px;
+
+    margin-top: 15px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: var(--surface-hover);
+}
+
+.progress-bar {
+    width: 0;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light)
+        );
+
+    transition: width 500ms ease;
+}
+
+#topicProgress {
+    background:
+        linear-gradient(
+            90deg,
+            #168a43,
+            var(--green)
+        );
+}
+
+#streakProgress {
+    background:
+        linear-gradient(
+            90deg,
+            #d97706,
+            var(--orange)
+        );
+}
+
+.goal-card p {
+    min-height: 36px;
+
+    margin-top: 13px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+    line-height: 1.55;
 }
 
 
 /* =========================================================
-   SHARED SCORE ENGINE
+   WEEKLY GRID
 ========================================================= */
 
-function getSharedScoreData() {
+.weekly-grid {
+    display: grid;
 
-    /*
-       StudyMindScore MUST be the source of truth.
+    grid-template-columns:
+        minmax(0, 1.6fr)
+        repeat(2, minmax(0, 1fr));
 
-       getMetrics() is preferred because it exposes
-       the complete shared data model.
-    */
+    gap: 17px;
+}
 
-    if (
-        window.StudyMindScore &&
-        typeof
-        window.StudyMindScore.getMetrics ===
-        "function"
-    ) {
+.weekly-card {
+    min-width: 0;
 
-        return (
-            window.StudyMindScore.getMetrics()
+    padding: 22px;
+
+    border-radius: var(--radius-md);
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    box-shadow: var(--shadow-sm);
+
+    transition:
+        background var(--transition),
+        border-color var(--transition);
+}
+
+.weekly-card:hover {
+    border-color: var(--gold-border);
+}
+
+.weekly-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.weekly-card h3 {
+    color: var(--text);
+
+    font-size: 30px;
+    line-height: 1;
+}
+
+.weekly-card h3 small {
+    color: var(--text-muted);
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.weekly-target {
+    text-align: right;
+}
+
+.weekly-target span {
+    display: block;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+.weekly-target strong {
+    color: var(--gold-dark);
+
+    font-size: 13px;
+}
+
+body.dark .weekly-target strong {
+    color: var(--gold);
+}
+
+.weekly-progress {
+    width: 100%;
+    height: 8px;
+
+    margin-top: 20px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: var(--surface-hover);
+}
+
+#weeklyHoursProgress {
+    width: 0;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light)
         );
-    }
 
+    transition: width 500ms ease;
+}
 
-    /*
-       Compatibility with an older Score engine.
+.weekly-card p {
+    margin-top: 13px;
 
-       This does NOT create a second scoring system.
-    */
+    color: var(--text-muted);
 
-    if (
-        window.StudyMindScore &&
-        typeof
-        window.StudyMindScore.calculate ===
-        "function"
-    ) {
+    font-size: 11px;
+    line-height: 1.5;
+}
 
-        const score =
-            window.StudyMindScore.calculate();
+.big-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
 
+    margin-top: 17px;
+}
 
-        return {
+.big-stat strong {
+    color: var(--text);
 
-            total:
-                Number(
-                    score.total
-                ) || 0,
+    font-size: 32px;
+    font-weight: 850;
+}
 
-            completedTopics:
-                Number(
-                    score.completedTopics
-                ) || 0,
+.big-stat span {
+    color: var(--text-muted);
 
-            totalTopics:
-                Number(
-                    score.totalTopics
-                ) || 0,
+    font-size: 12px;
+}
 
-            todayCompleted:
-                Number(
-                    score.todayCompleted
-                ) ||
+.big-stat b {
+    color: var(--text-soft);
+}
 
-                Number(
-                    score.todayCompletedTopics
-                ) || 0,
+.mini-progress {
+    width: 100%;
+    height: 7px;
 
-            weeklyCompleted:
-                Number(
-                    score.weeklyCompleted
-                ) ||
+    margin-top: 18px;
 
-                Number(
-                    score.weeklyCompletedTopics
-                ) || 0,
+    overflow: hidden;
 
-            weeklyActiveDays:
-                Number(
-                    score.weeklyActiveDays
-                ) || 0,
+    border-radius: 999px;
 
-            todayMinutes:
-                Number(
-                    score.todayMinutes
-                ) || 0,
+    background: var(--surface-hover);
+}
 
-            weeklyMinutes:
-                Number(
-                    score.weeklyMinutes
-                ) || 0,
+#weeklyDaysProgress,
+#weeklyTopicsProgress {
+    width: 0;
+    height: 100%;
 
-            currentStreak:
-                Number(
-                    score.currentStreak
-                ) || 0,
+    border-radius: inherit;
 
-            bestStreak:
-                Number(
-                    score.bestStreak
-                ) || 0,
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light)
+        );
 
-            planProgress:
-                Number(
-                    score.planProgress
-                ) || 0,
-
-            knowledgeCheckCount:
-                Number(
-                    score.knowledgeCheckCount
-                ) || 0,
-
-            knowledgeAverage:
-                Number(
-                    score.knowledgeAverage
-                ) || 0,
-
-            completedTopicNames:
-                Array.isArray(
-                    score.completedTopicNames
-                )
-                    ? score.completedTopicNames
-                    : [],
-
-            plan:
-                score.plan || null
-
-        };
-    }
-
-
-    /*
-       Score engine has not loaded yet.
-
-       Do NOT calculate a second score here.
-    */
-
-    return {
-
-        total: 0,
-
-        completedTopics: 0,
-
-        totalTopics: 0,
-
-        todayCompleted: 0,
-
-        weeklyCompleted: 0,
-
-        weeklyActiveDays: 0,
-
-        todayMinutes: 0,
-
-        weeklyMinutes: 0,
-
-        currentStreak: 0,
-
-        bestStreak: 0,
-
-        planProgress: 0,
-
-        knowledgeCheckCount: 0,
-
-        knowledgeAverage: 0,
-
-        completedTopicNames: [],
-
-        plan: null
-
-    };
+    transition: width 500ms ease;
 }
 
 
 /* =========================================================
-   UPDATE STATE FROM SCORE ENGINE
+   PLAN CARD
 ========================================================= */
 
-function calculateState() {
+.plan-card {
+    display: grid;
 
-    /*
-       Get the SINGLE shared metrics object.
-    */
+    grid-template-columns:
+        minmax(0, 1.4fr)
+        auto
+        minmax(180px, 0.8fr);
 
-    const metrics =
-        getSharedScoreData();
+    align-items: center;
 
+    gap: 25px;
 
-    state.metrics =
-        metrics;
+    padding: 23px;
 
+    border-radius: var(--radius-md);
 
-    /*
-       If Score has a canonical plan,
-       use that plan.
-    */
+    background: var(--surface);
 
-    if (
-        metrics &&
-        metrics.plan
-    ) {
+    border: 1px solid var(--border);
 
-        state.plan =
-            metrics.plan;
-    }
+    box-shadow: var(--shadow-sm);
+}
 
+.plan-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 
-    /*
-       Local topic list is used only for
-       compatibility and subject display.
-    */
+    min-width: 0;
+}
 
-    const localPlanTopics =
-        getAllPlanTopics();
+.plan-icon {
+    width: 48px;
+    height: 48px;
 
+    display: grid;
+    place-items: center;
 
-    /*
-       TOTAL TOPICS
-    */
+    flex-shrink: 0;
 
-    state.totalTopics =
-        Number(
-            metrics.totalTopics
-        ) || 0;
+    border-radius: 13px;
 
+    background: var(--gold-soft);
 
-    if (
-        !state.totalTopics &&
-        localPlanTopics.length
-    ) {
+    color: var(--gold-dark);
 
-        /*
-           Compatibility fallback only.
+    font-size: 21px;
+}
 
-           This does NOT calculate Score.
-        */
+body.dark .plan-icon {
+    color: var(--gold);
+}
 
-        state.totalTopics =
-            localPlanTopics.length;
-    }
+.plan-info h3 {
+    margin-top: 2px;
 
+    color: var(--text);
 
-    /*
-       COMPLETED TOPICS
-    */
+    font-size: 16px;
+    font-weight: 800;
+}
 
-    state.completedTotal =
-        Number(
-            metrics.completedTopics
-        ) || 0;
+.plan-info p {
+    margin-top: 3px;
 
+    color: var(--text-muted);
 
-    if (
-        !state.completedTotal &&
-        state.completedTopics.length &&
-        localPlanTopics.length
-    ) {
+    font-size: 11px;
+}
 
-        /*
-           Compatibility fallback only.
+.plan-stat {
+    text-align: center;
+}
 
-           Used if an older Score engine doesn't
-           expose completedTopics correctly.
-        */
+.plan-stat strong {
+    display: block;
 
-        state.completedTotal =
-            localPlanTopics.filter(
-                topicIsCompleted
-            ).length;
-    }
+    color: var(--text);
 
+    font-size: 28px;
+    font-weight: 850;
+}
 
-    /*
-       CANONICAL COMPLETED TOPIC NAMES
-    */
+.plan-stat span {
+    color: var(--text-muted);
 
-    state.completedTopicNames =
-        new Set(
-            Array.isArray(
-                metrics.completedTopicNames
-            )
-                ? metrics.completedTopicNames
-                : []
+    font-size: 11px;
+}
+
+.plan-stat b {
+    color: var(--text-soft);
+}
+
+.plan-progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.plan-progress {
+    flex: 1;
+
+    height: 8px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: var(--surface-hover);
+}
+
+#planProgress {
+    width: 0;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light)
         );
 
+    transition: width 500ms ease;
+}
 
-    /*
-       If Score doesn't expose the names,
-       keep the compatibility data available.
-    */
+#planPercent {
+    min-width: 36px;
 
-    if (
-        !state.completedTopicNames.size &&
-        state.completedTopics.length
-    ) {
+    color: var(--gold-dark);
 
-        state.completedTopics.forEach(
-            item => {
+    font-size: 11px;
+    font-weight: 900;
 
-                if (
-                    typeof item ===
-                    "string"
-                ) {
+    text-align: right;
+}
 
-                    state.completedTopicNames.add(
-                        item
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    item &&
-                    typeof item ===
-                    "object"
-                ) {
-
-                    const name =
-                        item.name ||
-                        item.topic ||
-                        item.title ||
-                        item.id ||
-                        item.topicId;
-
-
-                    if (name) {
-
-                        state.completedTopicNames.add(
-                            String(name)
-                        );
-                    }
-                }
-
-            }
-        );
-    }
-
-
-    /*
-       TODAY
-
-       IMPORTANT:
-       The new Score engine uses
-       metrics.todayCompleted.
-    */
-
-    state.todayCompleted =
-        Number(
-            metrics.todayCompleted
-        ) || 0;
-
-
-    /*
-       WEEK
-
-       IMPORTANT:
-       The new Score engine uses
-       metrics.weeklyCompleted.
-    */
-
-    state.weeklyTopics =
-        Number(
-            metrics.weeklyCompleted
-        ) || 0;
-
-
-    state.weeklyDays =
-        Number(
-            metrics.weeklyActiveDays
-        ) || 0;
-
-
-    /*
-       STUDY TIME
-
-       All study-time aggregation comes
-       from StudyMindScore.
-    */
-
-    state.todayHours =
-        (
-            Number(
-                metrics.todayMinutes
-            ) || 0
-        ) / 60;
-
-
-    state.weeklyHours =
-        (
-            Number(
-                metrics.weeklyMinutes
-            ) || 0
-        ) / 60;
-
-
-    /*
-       STREAK
-
-       These values come directly from Score.
-    */
-
-    state.currentStreak =
-        Number(
-            metrics.currentStreak
-        ) || 0;
-
-
-    state.bestStreak =
-        Number(
-            metrics.bestStreak
-        ) || 0;
-
-
-    /*
-       SCORE
-
-       This is display-only.
-
-       Goals never modifies it.
-    */
-
-    state.sharedScore =
-        Number(
-            metrics.total
-        ) || 0;
-
-
-    /*
-       KNOWLEDGE CHECKS
-    */
-
-    state.knowledgeAverage =
-        Number(
-            metrics.knowledgeAverage
-        ) || 0;
-
-
-    state.knowledgeCheckCount =
-        Number(
-            metrics.knowledgeCheckCount
-        ) || 0;
+body.dark #planPercent {
+    color: var(--gold);
 }
 
 
 /* =========================================================
-   DATE
+   SUBJECT GRID
 ========================================================= */
 
-function getWeekStart(date) {
+.subject-grid {
+    display: grid;
 
-    const result =
-        startOfDay(date);
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
 
-
-    const day =
-        result.getDay();
-
-
-    const difference =
-        day === 0
-            ? -6
-            : 1 - day;
-
-
-    result.setDate(
-        result.getDate() +
-        difference
-    );
-
-
-    return result;
+    gap: 15px;
 }
 
+.subject-card {
+    padding: 18px;
 
-function renderDate() {
+    border-radius: var(--radius-md);
 
-    const dateElement =
-        document.getElementById(
-            "todayDate"
-        );
+    background: var(--surface);
 
+    border: 1px solid var(--border);
 
-    const rangeElement =
-        document.getElementById(
-            "weekRange"
-        );
+    box-shadow: var(--shadow-sm);
 
-
-    if (dateElement) {
-
-        dateElement.textContent =
-            new Intl.DateTimeFormat(
-                undefined,
-                {
-
-                    weekday: "short",
-
-                    month: "short",
-
-                    day: "numeric"
-
-                }
-            ).format(
-                state.today
-            );
-    }
-
-
-    if (rangeElement) {
-
-        const start =
-            getWeekStart(
-                state.today
-            );
-
-
-        const end =
-            new Date(start);
-
-
-        end.setDate(
-            end.getDate() + 6
-        );
-
-
-        const formatter =
-            new Intl.DateTimeFormat(
-                undefined,
-                {
-
-                    month: "short",
-
-                    day: "numeric"
-
-                }
-            );
-
-
-        rangeElement.textContent =
-            `${formatter.format(start)} – ${formatter.format(end)}`;
-    }
+    transition:
+        transform var(--transition),
+        border-color var(--transition);
 }
 
+.subject-card:hover {
+    transform: translateY(-2px);
 
-/* =========================================================
-   GREETING
-========================================================= */
-
-function renderGreeting() {
-
-    const hour =
-        new Date().getHours();
-
-
-    let greeting =
-        "Good morning";
-
-
-    if (
-        hour >= 12 &&
-        hour < 18
-    ) {
-
-        greeting =
-            "Good afternoon";
-
-    } else if (
-        hour >= 18
-    ) {
-
-        greeting =
-            "Good evening";
-    }
-
-
-    setText(
-        "greeting",
-        greeting
-    );
-
-
-    let name =
-        "";
-
-
-    const user =
-        readJSON(
-            STORAGE.USER,
-            null
-        );
-
-
-    if (user) {
-
-        name =
-            user.name ||
-            user.fullName ||
-            user.username ||
-            "";
-    }
-
-
-    if (!name) {
-
-        name =
-            localStorage.getItem(
-                "studyMindUserName"
-            ) ||
-            localStorage.getItem(
-                "username"
-            ) ||
-            "";
-    }
-
-
-    const nameElement =
-        document.getElementById(
-            "userName"
-        );
-
-
-    if (
-        nameElement &&
-        name
-    ) {
-
-        nameElement.textContent =
-            `, ${name}`;
-    }
+    border-color: var(--gold-border);
 }
 
-
-/* =========================================================
-   DAILY TARGETS
-========================================================= */
-
-function getDailyHoursTarget() {
-
-    const plan =
-        state.plan || {};
-
-
-    const value =
-        Number(
-            plan.hoursPerDay ??
-            plan.studyHours ??
-            plan.dailyHours ??
-            plan.dailyStudyHours ??
-            2
-        );
-
-
-    return value > 0
-        ? value
-        : 2;
+.subject-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
+.subject-name {
+    color: var(--text);
 
-function getDailyTopicTarget() {
-
-    const explicit =
-        Number(
-            state.plan?.dailyTopicGoal ??
-            state.plan?.topicsPerDay ??
-            state.plan?.dailyTopics
-        );
-
-
-    if (explicit > 0) {
-
-        return Math.round(
-            explicit
-        );
-    }
-
-
-    const topics =
-        state.totalTopics;
-
-
-    if (!topics) {
-
-        return 0;
-    }
-
-
-    const days =
-        Number(
-            state.plan?.daysLeft ??
-            state.plan?.durationDays
-        );
-
-
-    if (days > 0) {
-
-        return Math.max(
-            1,
-            Math.ceil(
-                topics / days
-            )
-        );
-    }
-
-
-    return Math.max(
-        1,
-        Math.min(
-            3,
-            topics
-        )
-    );
+    font-size: 14px;
+    font-weight: 800;
 }
 
+.subject-percent {
+    color: var(--gold-dark);
 
-function getWeeklyHoursTarget() {
-
-    return (
-        getDailyHoursTarget() *
-        7
-    );
+    font-size: 12px;
+    font-weight: 900;
 }
 
-
-/* =========================================================
-   HERO
-========================================================= */
-
-function renderHero() {
-
-    const targetHours =
-        getDailyHoursTarget();
-
-
-    const targetTopics =
-        getDailyTopicTarget();
-
-
-    const timePct =
-        percent(
-            state.todayHours,
-            targetHours
-        );
-
-
-    const topicPct =
-        percent(
-            state.todayCompleted,
-            targetTopics
-        );
-
-
-    const streakPct =
-        percent(
-            state.currentStreak,
-            7
-        );
-
-
-    /*
-       This is GOAL progress only.
-
-       It is NOT StudyMindScore.
-    */
-
-    const overall =
-        Math.round(
-            (
-                timePct +
-                topicPct +
-                streakPct
-            ) / 3
-        );
-
-
-    setText(
-        "overallPercent",
-        `${overall}%`
-    );
-
-
-    const ring =
-        document.getElementById(
-            "overallRing"
-        );
-
-
-    if (ring) {
-
-        const degrees =
-            overall * 3.6;
-
-
-        ring.style.background =
-            `conic-gradient(
-                rgba(255,255,255,0.95) ${degrees}deg,
-                rgba(255,255,255,0.16) ${degrees}deg
-            )`;
-    }
-
-
-    const message =
-        document.getElementById(
-            "heroMessage"
-        );
-
-
-    if (!message) return;
-
-
-    if (overall >= 100) {
-
-        message.textContent =
-            "Excellent work. You've completed today's goals.";
-
-    } else if (overall >= 70) {
-
-        message.textContent =
-            "You're having a strong study day. Keep going.";
-
-    } else if (overall >= 35) {
-
-        message.textContent =
-            "You're making progress. A little more work can move you forward.";
-
-    } else {
-
-        message.textContent =
-            "Start with one focused study session and build from there.";
-    }
+body.dark .subject-percent {
+    color: var(--gold);
 }
 
+.subject-count {
+    margin-top: 7px;
 
-/* =========================================================
-   TODAY GOALS
-========================================================= */
+    color: var(--text-muted);
 
-function renderTodayGoals() {
-
-    const targetHours =
-        getDailyHoursTarget();
-
-
-    const targetTopics =
-        getDailyTopicTarget();
-
-
-    const timePct =
-        percent(
-            state.todayHours,
-            targetHours
-        );
-
-
-    const topicPct =
-        percent(
-            state.todayCompleted,
-            targetTopics
-        );
-
-
-    const streakPct =
-        percent(
-            state.currentStreak,
-            7
-        );
-
-
-    setText(
-        "todayHours",
-        formatHours(
-            state.todayHours
-        )
-    );
-
-
-    setText(
-        "targetHours",
-        formatHours(
-            targetHours
-        )
-    );
-
-
-    setText(
-        "todayTopics",
-        state.todayCompleted
-    );
-
-
-    setText(
-        "targetTopics",
-        targetTopics
-    );
-
-
-    setText(
-        "currentStreak",
-        state.currentStreak
-    );
-
-
-    setText(
-        "timePercent",
-        `${timePct}%`
-    );
-
-
-    setText(
-        "topicPercent",
-        `${topicPct}%`
-    );
-
-
-    setText(
-        "streakPercent",
-        `${streakPct}%`
-    );
-
-
-    setWidth(
-        "timeProgress",
-        timePct
-    );
-
-
-    setWidth(
-        "topicProgress",
-        topicPct
-    );
-
-
-    setWidth(
-        "streakProgress",
-        streakPct
-    );
-
-
-    const timeMessage =
-        document.getElementById(
-            "timeMessage"
-        );
-
-
-    if (timeMessage) {
-
-        if (
-            timePct >= 100
-        ) {
-
-            timeMessage.textContent =
-                "Daily study-time goal completed.";
-
-        } else {
-
-            const remaining =
-                Math.max(
-                    0,
-                    targetHours -
-                    state.todayHours
-                );
-
-
-            timeMessage.textContent =
-                `${formatHours(
-                    remaining
-                )} remaining today.`;
-        }
-    }
-
-
-    const topicMessage =
-        document.getElementById(
-            "topicMessage"
-        );
-
-
-    if (topicMessage) {
-
-        if (
-            targetTopics > 0 &&
-            topicPct >= 100
-        ) {
-
-            topicMessage.textContent =
-                "Today's topic goal is complete.";
-
-        } else {
-
-            const remaining =
-                Math.max(
-                    0,
-                    targetTopics -
-                    state.todayCompleted
-                );
-
-
-            topicMessage.textContent =
-                targetTopics > 0
-                    ? `${remaining} more topic${
-                        remaining === 1
-                            ? ""
-                            : "s"
-                    } to go.`
-                    : "Your plan has no topic target yet.";
-        }
-    }
-
-
-    const streakMessage =
-        document.getElementById(
-            "streakMessage"
-        );
-
-
-    if (streakMessage) {
-
-        if (
-            state.currentStreak === 0
-        ) {
-
-            streakMessage.textContent =
-                "Complete a study session today to start your streak.";
-
-        } else if (
-            state.currentStreak >= 7
-        ) {
-
-            streakMessage.textContent =
-                "Amazing consistency. You've reached a 7-day streak.";
-
-        } else {
-
-            const remaining =
-                7 -
-                state.currentStreak;
-
-
-            streakMessage.textContent =
-                `${remaining} more day${
-                    remaining === 1
-                        ? ""
-                        : "s"
-                } toward a 7-day streak.`;
-        }
-    }
-
-
-    const status =
-        document.getElementById(
-            "todayStatus"
-        );
-
-
-    if (status) {
-
-        const overall =
-            Math.round(
-                (
-                    timePct +
-                    topicPct +
-                    streakPct
-                ) / 3
-            );
-
-
-        if (
-            overall >= 100
-        ) {
-
-            status.textContent =
-                "✓ Goals complete";
-
-        } else if (
-            overall >= 60
-        ) {
-
-            status.textContent =
-                "Good progress";
-
-        } else {
-
-            status.textContent =
-                "In progress";
-        }
-    }
+    font-size: 11px;
 }
 
+.subject-progress {
+    width: 100%;
+    height: 6px;
 
-/* =========================================================
-   WEEKLY GOALS
-========================================================= */
+    margin-top: 13px;
 
-function renderWeekly() {
+    overflow: hidden;
 
-    const weeklyTarget =
-        getWeeklyHoursTarget();
+    border-radius: 999px;
 
-
-    const hoursPct =
-        percent(
-            state.weeklyHours,
-            weeklyTarget
-        );
-
-
-    const daysPct =
-        percent(
-            state.weeklyDays,
-            7
-        );
-
-
-    const dailyTopicTarget =
-        getDailyTopicTarget();
-
-
-    const estimatedWeeklyTopics =
-        Math.max(
-            dailyTopicTarget * 7,
-            1
-        );
-
-
-    const topicsPct =
-        percent(
-            state.weeklyTopics,
-            estimatedWeeklyTopics
-        );
-
-
-    setText(
-        "weeklyHours",
-        state.weeklyHours.toFixed(
-            state.weeklyHours % 1 === 0
-                ? 0
-                : 1
-        )
-    );
-
-
-    setText(
-        "weeklyTargetHours",
-        formatHours(
-            weeklyTarget
-        )
-    );
-
-
-    setWidth(
-        "weeklyHoursProgress",
-        hoursPct
-    );
-
-
-    setText(
-        "weeklyDays",
-        state.weeklyDays
-    );
-
-
-    setText(
-        "weeklyDaysTarget",
-        7
-    );
-
-
-    setWidth(
-        "weeklyDaysProgress",
-        daysPct
-    );
-
-
-    setText(
-        "weeklyTopics",
-        state.weeklyTopics
-    );
-
-
-    setWidth(
-        "weeklyTopicsProgress",
-        topicsPct
-    );
-
-
-    const hoursMessage =
-        document.getElementById(
-            "weeklyHoursMessage"
-        );
-
-
-    if (hoursMessage) {
-
-        if (
-            hoursPct >= 100
-        ) {
-
-            hoursMessage.textContent =
-                "You've reached your weekly study-hour goal.";
-
-        } else {
-
-            hoursMessage.textContent =
-                `${formatHours(
-                    Math.max(
-                        0,
-                        weeklyTarget -
-                        state.weeklyHours
-                    )
-                )} remaining to reach this week's target.`;
-        }
-    }
-
-
-    const topicMessage =
-        document.getElementById(
-            "weeklyTopicsMessage"
-        );
-
-
-    if (topicMessage) {
-
-        topicMessage.textContent =
-            `${state.weeklyTopics} topic${
-                state.weeklyTopics === 1
-                    ? ""
-                    : "s"
-            } completed this week.`;
-    }
+    background: var(--surface-hover);
 }
 
+.subject-progress > div {
+    height: 100%;
 
-/* =========================================================
-   PLAN
-========================================================= */
+    border-radius: inherit;
 
-function renderPlan() {
-
-    const plan =
-        state.plan;
-
-
-    const emptyPlan =
-        document.getElementById(
-            "emptyPlan"
+    background:
+        linear-gradient(
+            90deg,
+            var(--gold-dark),
+            var(--gold-light)
         );
 
-
-    if (!plan) {
-
-        if (emptyPlan) {
-
-            emptyPlan.hidden =
-                false;
-        }
-
-        setText(
-            "planCompleted",
-            0
-        );
-
-        setText(
-            "planTotal",
-            0
-        );
-
-        setText(
-            "planPercent",
-            "0%"
-        );
-
-        setWidth(
-            "planProgress",
-            0
-        );
-
-        return;
-    }
-
-
-    if (emptyPlan) {
-
-        emptyPlan.hidden =
-            true;
-    }
-
-
-    const curriculum =
-        plan.curriculum ||
-        plan.curriculumName ||
-        "";
-
-
-    const examType =
-        plan.examType ||
-        "";
-
-
-    let planName =
-        plan.name ||
-        plan.title ||
-        "";
-
-
-    if (!planName) {
-
-        if (curriculum) {
-
-            planName =
-                `${curriculum} Study Plan`;
-
-        } else if (examType) {
-
-            planName =
-                `${examType} Study Plan`;
-
-        } else {
-
-            planName =
-                "My Study Plan";
-        }
-    }
-
-
-    setText(
-        "planName",
-        planName
-    );
-
-
-    const descriptionParts =
-        [];
-
-
-    if (curriculum) {
-
-        descriptionParts.push(
-            curriculum
-        );
-    }
-
-
-    if (
-        examType &&
-        examType !==
-        "No exam selected"
-    ) {
-
-        descriptionParts.push(
-            examType
-        );
-    }
-
-
-    setText(
-        "planDescription",
-
-        descriptionParts.length
-            ? descriptionParts.join(
-                " • "
-            )
-            : "Your current StudyMind plan."
-    );
-
-
-    const total =
-        state.totalTopics;
-
-
-    const completed =
-        state.completedTotal;
-
-
-    /*
-       IMPORTANT:
-
-       StudyMindScore.planProgress is the
-       canonical plan progress.
-
-       Goals does not calculate a competing
-       plan score.
-    */
-
-    const planPct =
-        Number(
-            state.metrics?.planProgress
-        ) || 0;
-
-
-    setText(
-        "planCompleted",
-        completed
-    );
-
-
-    setText(
-        "planTotal",
-        total
-    );
-
-
-    setText(
-        "planPercent",
-        `${planPct}%`
-    );
-
-
-    setWidth(
-        "planProgress",
-        planPct
-    );
-}
-
-
-/* =========================================================
-   SUBJECT GOALS
-========================================================= */
-
-function renderSubjects() {
-
-    const container =
-        document.getElementById(
-            "subjectGoals"
-        );
-
-
-    if (!container) return;
-
-
-    const subjects =
-        getPlanSubjects();
-
-
-    if (!subjects.length) {
-
-        container.innerHTML = `
-
-            <div class="subject-card">
-
-                <div class="subject-top">
-
-                    <span class="subject-name">
-                        No subjects yet
-                    </span>
-
-                </div>
-
-                <div class="subject-count">
-                    Create a study plan to track subjects.
-                </div>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        subjects.map(
-            subject => {
-
-                const topics =
-                    Array.isArray(
-                        subject.topics
-                    )
-
-                        ? subject.topics
-                            .map(
-                                normalizeTopic
-                            )
-                            .filter(
-                                topic =>
-                                    topic.name
-                            )
-
-                        : [];
-
-
-                const completed =
-                    topics.filter(
-                        topicIsCompleted
-                    ).length;
-
-
-                const pct =
-                    percent(
-                        completed,
-                        topics.length
-                    );
-
-
-                return `
-
-                    <div class="subject-card">
-
-                        <div class="subject-top">
-
-                            <span class="subject-name">
-                                ${escapeHTML(
-                                    subject.name
-                                )}
-                            </span>
-
-                            <span class="subject-percent">
-                                ${pct}%
-                            </span>
-
-                        </div>
-
-
-                        <div class="subject-count">
-
-                            ${completed}
-                            of
-                            ${topics.length}
-                            topics completed
-
-                        </div>
-
-
-                        <div class="subject-progress">
-
-                            <div
-                                style="width:${pct}%"
-                            ></div>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }
-        ).join("");
+    transition: width 500ms ease;
 }
 
 
@@ -2343,531 +1394,524 @@ function renderSubjects() {
    ACHIEVEMENTS
 ========================================================= */
 
-function renderAchievements() {
+.achievement-grid {
+    display: grid;
 
-    const completed =
-        state.completedTotal;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
-
-    toggleAchievement(
-        "achievementFirst",
-        completed >= 1
-    );
-
-
-    toggleAchievement(
-        "achievementFive",
-        completed >= 5
-    );
-
-
-    toggleAchievement(
-        "achievementTen",
-        completed >= 10
-    );
-
-
-    toggleAchievement(
-        "achievementSeven",
-        state.bestStreak >= 7
-    );
+    gap: 15px;
 }
 
+.achievement {
+    position: relative;
 
-function toggleAchievement(
-    id,
-    unlocked
-) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-    const element =
-        document.getElementById(
-            id
+    min-width: 0;
+
+    padding: 17px;
+
+    border-radius: var(--radius-md);
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    opacity: 0.58;
+
+    transition:
+        opacity var(--transition),
+        border-color var(--transition),
+        background var(--transition);
+}
+
+.achievement.unlocked {
+    opacity: 1;
+
+    border-color: var(--gold-border);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--surface),
+            var(--gold-soft)
         );
-
-
-    if (!element) return;
-
-
-    element.classList.toggle(
-        "unlocked",
-        Boolean(unlocked)
-    );
 }
 
+.achievement-icon {
+    width: 39px;
+    height: 39px;
 
-/* =========================================================
-   SHARED SCORE DISPLAY
-========================================================= */
+    display: grid;
+    place-items: center;
 
-function renderSharedScore() {
+    flex-shrink: 0;
 
-    const metrics =
-        state.metrics ||
-        getSharedScoreData();
+    border-radius: 11px;
 
+    background: var(--surface-hover);
 
-    /*
-       These are READ-ONLY displays
-       of StudyMindScore.
-    */
+    font-size: 17px;
+}
 
-    setText(
-        "studyScore",
-        Number(
-            metrics.total
-        ) || 0
-    );
+.achievement.unlocked .achievement-icon {
+    background: var(--gold-soft);
+}
 
+.achievement strong {
+    display: block;
 
-    setText(
-        "goalStudyScore",
-        Number(
-            metrics.total
-        ) || 0
-    );
+    color: var(--text);
 
+    font-size: 12px;
+    font-weight: 800;
+}
 
-    setText(
-        "goalKnowledgeAverage",
-        `${Number(
-            metrics.knowledgeAverage
-        ) || 0}%`
-    );
+.achievement p {
+    margin-top: 2px;
 
+    color: var(--text-muted);
 
-    setText(
-        "goalKnowledgeChecks",
-        Number(
-            metrics.knowledgeCheckCount
-        ) || 0
-    );
+    font-size: 10px;
+    line-height: 1.4;
+}
 
+.achievement-check {
+    margin-left: auto;
 
-    setText(
-        "goalPlanProgress",
-        `${Number(
-            metrics.planProgress
-        ) || 0}%`
-    );
+    color: transparent;
+
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.achievement.unlocked .achievement-check {
+    color: var(--gold);
 }
 
 
 /* =========================================================
-   THEME
+   EMPTY PLAN
 ========================================================= */
 
-function loadTheme() {
+.empty-plan {
+    margin: 38px 34px;
 
-    const saved =
-        localStorage.getItem(
-            STORAGE.THEME
+    padding: 55px 25px;
+
+    text-align: center;
+
+    border-radius: var(--radius-lg);
+
+    background: var(--surface);
+
+    border: 1px dashed var(--gold-border);
+}
+
+.empty-icon {
+    width: 58px;
+    height: 58px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 auto 16px;
+
+    border-radius: 17px;
+
+    background: var(--gold-soft);
+
+    font-size: 25px;
+}
+
+.empty-plan h2 {
+    color: var(--text);
+
+    font-size: 22px;
+}
+
+.empty-plan p {
+    max-width: 480px;
+
+    margin: 8px auto 20px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 11px 18px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold-dark)
         );
 
+    color: #080808;
 
-    if (
-        saved === "dark" ||
-        saved === "light"
-    ) {
+    font-size: 12px;
+    font-weight: 800;
 
-        document.body.classList.toggle(
-            "dark",
-            saved === "dark"
-        );
+    box-shadow:
+        0 7px 18px rgba(200, 155, 34, 0.18);
 
-        updateThemeButton();
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition);
+}
 
-        return;
+.primary-button:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 10px 24px rgba(200, 155, 34, 0.25);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+
+    margin: 45px 34px 25px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+.footer span:first-child {
+    color: var(--gold-dark);
+
+    font-weight: 800;
+}
+
+body.dark .footer span:first-child {
+    color: var(--gold);
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 25px;
+
+    transform:
+        translate(-50%, 20px);
+
+    z-index: 9999;
+
+    padding: 11px 17px;
+
+    border-radius: 10px;
+
+    background: #111111;
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    opacity: 0;
+    pointer-events: none;
+
+    box-shadow: var(--shadow-lg);
+
+    transition:
+        opacity 200ms ease,
+        transform 200ms ease;
+}
+
+body:not(.dark) .toast {
+    background: #ffffff;
+
+    color: #171717;
+
+    border: 1px solid var(--border);
+}
+
+.toast.show {
+    opacity: 1;
+
+    transform:
+        translate(-50%, 0);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .goal-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
-
-    const oldTheme =
-        localStorage.getItem(
-            STORAGE.DARK_MODE
-        );
-
-
-    if (
-        oldTheme === "true" ||
-        oldTheme === "dark"
-    ) {
-
-        document.body.classList.add(
-            "dark"
-        );
-
-    } else {
-
-        document.body.classList.remove(
-            "dark"
-        );
+    .weekly-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
-
-    updateThemeButton();
-}
-
-
-function updateThemeButton() {
-
-    const icon =
-        document.getElementById(
-            "themeIcon"
-        );
-
-
-    if (!icon) return;
-
-
-    icon.textContent =
-        document.body.classList.contains(
-            "dark"
-        )
-            ? "☀"
-            : "☾";
-}
-
-
-/*
-   Named differently internally so Goals
-   doesn't fight with another page's
-   global toggleTheme().
-*/
-
-function goalsToggleTheme() {
-
-    const dark =
-        document.body.classList.toggle(
-            "dark"
-        );
-
-
-    localStorage.setItem(
-        STORAGE.THEME,
-        dark
-            ? "dark"
-            : "light"
-    );
-
-
-    localStorage.setItem(
-        STORAGE.DARK_MODE,
-        String(dark)
-    );
-
-
-    updateThemeButton();
-}
-
-
-/*
-   Preserve existing HTML such as:
-
-   onclick="toggleTheme()"
-
-   without overwriting another StudyMind
-   theme function if one already exists.
-*/
-
-if (
-    typeof window.toggleTheme !==
-    "function"
-) {
-
-    window.toggleTheme =
-        goalsToggleTheme;
-}
-
-
-window.goalsToggleTheme =
-    goalsToggleTheme;
-
-
-/* =========================================================
-   MOBILE MENU
-========================================================= */
-
-function setupMobileMenu() {
-
-    const button =
-        document.getElementById(
-            "mobileMenu"
-        );
-
-
-    const sidebar =
-        document.getElementById(
-            "sidebar"
-        );
-
-
-    if (
-        !button ||
-        !sidebar
-    ) {
-
-        return;
+    .weekly-card.large {
+        grid-column: 1 / -1;
     }
 
-
-    button.addEventListener(
-        "click",
-        () => {
-
-            sidebar.classList.toggle(
-                "open"
-            );
-
-        }
-    );
-
-
-    document
-        .querySelectorAll(
-            ".nav-item"
-        )
-        .forEach(
-            link => {
-
-                link.addEventListener(
-                    "click",
-                    () => {
-
-                        sidebar.classList.remove(
-                            "open"
-                        );
-
-                    }
-                );
-
-            }
-        );
-}
-
-
-/* =========================================================
-   REFRESH EVENTS
-   ---------------------------------------------------------
-   Goals listens for changes generated by:
-   - Timer
-   - Study Session
-   - Knowledge Check
-   - Plan creation/change
-   - Streak engine
-   - Score engine
-   - AI activity
-   - Study activity
-========================================================= */
-
-const GOALS_REFRESH_EVENTS = [
-
-    "studyMindScoreUpdated",
-
-    "studyMindKnowledgeCheckCompleted",
-
-    "studyMindKnowledgeCheckResultsUpdated",
-
-    "studyMindStreakUpdated",
-
-    "studyMindPlanUpdated",
-
-    "studyMindPlanCreated",
-
-    "studyMindPlanChanged",
-
-    "studyMindProgressUpdated",
-
-    "studyMindCompletedTopicsUpdated",
-
-    "studyMindTimerCompleted",
-
-    "studyMindTimerFinished",
-
-    "studyMindStudyActivity",
-
-    "studyMindStudyTimeUpdated",
-
-    "studyMindStudyDataUpdated",
-
-    "studyMindAIUsed",
-
-    "studyMindAIUsageUpdated"
-
-];
-
-
-GOALS_REFRESH_EVENTS.forEach(
-    eventName => {
-
-        window.addEventListener(
-            eventName,
-            () => {
-
-                refreshGoals();
-
-            }
-        );
-
+    .achievement-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
-);
 
-
-/* =========================================================
-   STORAGE LISTENER
-========================================================= */
-
-window.addEventListener(
-    "storage",
-    event => {
-
-        const relevantKeys = [
-
-            STORAGE.PLAN,
-
-            STORAGE.PLANS,
-
-            STORAGE.ACTIVE_PLAN,
-
-            STORAGE.COMPLETED,
-
-            STORAGE.STREAK_ACTIVITY,
-
-            STORAGE.STUDY_HISTORY,
-
-            STORAGE.DAILY_STUDY_TIME,
-
-            STORAGE.STUDY_SESSIONS,
-
-            STORAGE.KNOWLEDGE_RESULTS,
-
-            STORAGE.COMPLETED_QUESTION_TOPICS,
-
-            STORAGE.AI_COUNT,
-
-            STORAGE.AI_DATE,
-
-            "studyMindStudyScore"
-
-        ];
-
-
-        if (
-            relevantKeys.includes(
-                event.key
-            )
-        ) {
-
-            refreshGoals();
-        }
-
+    .plan-card {
+        grid-template-columns:
+            1fr 1fr;
     }
-);
+
+    .plan-progress-container {
+        grid-column: 1 / -1;
+    }
+}
 
 
-/* =========================================================
-   REFRESH
-========================================================= */
+@media (max-width: 820px) {
 
-function refreshGoals() {
+    :root {
+        --sidebar-width: 250px;
+    }
 
-    /*
-       Always reload the active plan.
-    */
+    .sidebar {
+        transform:
+            translateX(-100%);
 
-    loadPlan();
+        box-shadow:
+            15px 0 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .sidebar.open {
+        transform:
+            translateX(0);
+    }
+
+    .main-content {
+        width: 100%;
+
+        margin-left: 0;
+    }
+
+    .mobile-menu {
+        display: grid;
+    }
+
+    .topbar {
+        padding: 16px 20px;
+    }
+
+    .welcome {
+        flex: 1;
+    }
+
+    .welcome h1 {
+        font-size: 21px;
+    }
+
+    .welcome p {
+        display: none;
+    }
+
+    .goals-hero,
+    .section,
+    .empty-plan {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+
+    .goals-hero {
+        padding: 28px;
+
+        min-height: 210px;
+    }
+
+    .hero-copy h2 {
+        font-size: 32px;
+    }
+
+    .score-ring {
+        width: 125px;
+        height: 125px;
+    }
+
+    .score-ring::before {
+        width: 96px;
+        height: 96px;
+    }
+}
 
 
-    /*
-       Completion data is retained for
-       compatibility and subject display.
+@media (max-width: 620px) {
 
-       StudyMindScore remains canonical.
-    */
+    .topbar {
+        min-height: 75px;
 
-    loadCompletedTopics();
+        gap: 10px;
+    }
 
+    .topbar-actions {
+        display: none;
+    }
 
-    /*
-       Pull all shared metrics from Score.
-    */
+    .welcome h1 {
+        font-size: 19px;
+    }
 
-    calculateState();
+    .goals-hero {
+        flex-direction: column;
+        align-items: flex-start;
 
+        padding: 25px;
+    }
 
-    /*
-       Render the Goals interface.
-    */
+    .hero-score {
+        align-self: center;
+    }
 
-    renderDate();
+    .goal-grid,
+    .weekly-grid,
+    .achievement-grid {
+        grid-template-columns: 1fr;
+    }
 
-    renderGreeting();
+    .weekly-card.large {
+        grid-column: auto;
+    }
 
-    renderHero();
+    .plan-card {
+        grid-template-columns: 1fr;
+    }
 
-    renderTodayGoals();
+    .plan-stat {
+        text-align: left;
+    }
 
-    renderWeekly();
+    .plan-progress-container {
+        grid-column: auto;
+    }
 
-    renderPlan();
+    .subject-grid {
+        grid-template-columns: 1fr;
+    }
 
-    renderSubjects();
+    .section {
+        margin-top: 30px;
+    }
 
-    renderAchievements();
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
 
-    renderSharedScore();
+    .footer {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
 }
 
 
 /* =========================================================
-   INITIALIZATION
+   SMALL MOBILE
 ========================================================= */
 
-function initializeGoals() {
+@media (max-width: 400px) {
 
-    loadTheme();
+    .topbar {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
 
-    renderGreeting();
+    .goals-hero,
+    .section,
+    .empty-plan {
+        margin-left: 14px;
+        margin-right: 14px;
+    }
 
-    setupMobileMenu();
+    .goals-hero {
+        padding: 22px;
+    }
 
-    refreshGoals();
+    .hero-copy h2 {
+        font-size: 28px;
+    }
 
-
-    /*
-       UI refresh only.
-
-       This does NOT create:
-       - XP
-       - streaks
-       - study sessions
-       - completed topics
-       - score
-       - knowledge checks
-       - AI usage
-    */
-
-    setInterval(
-        refreshGoals,
-        5000
-    );
+    .goal-card,
+    .weekly-card,
+    .subject-card,
+    .achievement {
+        padding: 15px;
+    }
 }
 
 
 /* =========================================================
-   START
+   ACCESSIBILITY
 ========================================================= */
 
-if (
-    document.readyState ===
-    "loading"
-) {
+@media (prefers-reduced-motion: reduce) {
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeGoals
-    );
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
 
-} else {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
 
-    initializeGoals();
 
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
 }
