@@ -1915,3 +1915,754 @@ body:not(.dark) .toast {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gold);
 }
+/* =========================================================
+   STUDYMIND AI — COMPLETE LIGHT / DARK THEME FIX
+   ---------------------------------------------------------
+   IMPORTANT:
+   Add this at the VERY END of goals.css.
+
+   goals.js already controls:
+       body.dark
+
+   This section makes every Goals component respond to it.
+========================================================= */
+
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+
+:root {
+
+    --bg: #f6f3ea;
+
+    --surface: #ffffff;
+
+    --surface-soft: #faf8f1;
+
+    --surface-hover: #f4efe1;
+
+    --text: #171717;
+
+    --text-soft: #5f5b52;
+
+    --text-muted: #8a8477;
+
+    --gold: #c99619;
+
+    --gold-light: #e0b52f;
+
+    --gold-dark: #a9790e;
+
+    --gold-soft: rgba(201, 150, 25, 0.10);
+
+    --gold-border: rgba(201, 150, 25, 0.22);
+
+    --green: #22a45a;
+
+    --green-soft: rgba(34, 164, 90, 0.10);
+
+    --orange: #d97706;
+
+    --orange-soft: rgba(217, 119, 6, 0.10);
+
+    --purple: #7658c7;
+
+    --purple-soft: rgba(118, 88, 199, 0.10);
+
+    --red: #dc2626;
+
+    --border: rgba(30, 30, 30, 0.10);
+
+    --shadow:
+        0 12px 35px rgba(50, 42, 20, 0.08);
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+body.dark {
+
+    --bg: #070707;
+
+    --surface: #101010;
+
+    --surface-soft: #151515;
+
+    --surface-hover: #191919;
+
+    --text: #ffffff;
+
+    --text-soft: #a5a5a5;
+
+    --text-muted: #6f6f6f;
+
+    --gold: #f5c542;
+
+    --gold-light: #ffd966;
+
+    --gold-dark: #c99b16;
+
+    --gold-soft: rgba(245, 197, 66, 0.10);
+
+    --gold-border: rgba(245, 197, 66, 0.18);
+
+    --green: #4ade80;
+
+    --green-soft: rgba(74, 222, 128, 0.10);
+
+    --orange: #f59e0b;
+
+    --orange-soft: rgba(245, 158, 11, 0.10);
+
+    --purple: #a78bfa;
+
+    --purple-soft: rgba(167, 139, 250, 0.10);
+
+    --red: #ef4444;
+
+    --border: rgba(255, 255, 255, 0.08);
+
+    --shadow:
+        0 14px 40px rgba(0, 0, 0, 0.30);
+}
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+body,
+.sidebar,
+.main-content,
+.goal-card,
+.weekly-card,
+.plan-card,
+.subject-card,
+.achievement,
+.empty-plan,
+.date-pill,
+.mobile-menu {
+    transition:
+        background-color 0.25s ease,
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SIDEBAR
+========================================================= */
+
+body:not(.dark) .sidebar {
+    background: #ffffff;
+
+    border-right-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        8px 0 30px rgba(40, 35, 20, 0.04);
+}
+
+body:not(.dark) .brand strong {
+    color: #171717;
+}
+
+body:not(.dark) .brand span {
+    color: #8a8477;
+}
+
+body:not(.dark) .nav-item {
+    color: #706b60;
+}
+
+body:not(.dark) .nav-item:hover {
+    color: #171717;
+
+    background:
+        rgba(201, 150, 25, 0.07);
+}
+
+body:not(.dark) .nav-item.active {
+    color: #171717;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e5bd46,
+            #c99619
+        );
+
+    box-shadow:
+        0 7px 18px rgba(201, 150, 25, 0.16);
+}
+
+body:not(.dark) .nav-divider {
+    background:
+        rgba(30, 30, 30, 0.09);
+}
+
+body:not(.dark) .theme-button {
+    color: #706b60;
+}
+
+body:not(.dark) .theme-button:hover {
+    color: #171717;
+
+    background:
+        rgba(201, 150, 25, 0.07);
+}
+
+body:not(.dark) .premium-link {
+    color: #a9790e;
+
+    background:
+        rgba(201, 150, 25, 0.09);
+}
+
+body:not(.dark) .premium-link:hover {
+    color: #8a620b;
+
+    background:
+        rgba(201, 150, 25, 0.15);
+}
+
+
+/* =========================================================
+   LIGHT MODE — TOPBAR
+========================================================= */
+
+body:not(.dark) .welcome h1 {
+    color: #171717;
+}
+
+body:not(.dark) .welcome h1 span {
+    color: var(--gold);
+}
+
+body:not(.dark) .welcome p {
+    color: #706b60;
+}
+
+body:not(.dark) .date-pill {
+    color: #706b60;
+
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.10);
+
+    box-shadow:
+        0 5px 15px rgba(40, 35, 20, 0.04);
+}
+
+
+/* =========================================================
+   LIGHT MODE — YOUR PROGRESS HERO
+========================================================= */
+
+body:not(.dark) .goals-hero {
+
+    color: #171717;
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(201, 150, 25, 0.16),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 10% 100%,
+            rgba(201, 150, 25, 0.08),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #fff9e8,
+            #ffffff 55%,
+            #f7f1df
+        );
+
+    border-color:
+        rgba(201, 150, 25, 0.22);
+
+    box-shadow:
+        0 20px 50px rgba(50, 42, 20, 0.09);
+}
+
+body:not(.dark) .hero-copy h2 {
+    color: #171717;
+}
+
+body:not(.dark) .hero-copy h2 span {
+    color: var(--gold);
+}
+
+body:not(.dark) .hero-copy p {
+    color: #706b60;
+}
+
+body:not(.dark) .score-ring::before {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.07);
+}
+
+body:not(.dark) .score-ring {
+    background:
+        conic-gradient(
+            var(--gold) 0deg,
+            var(--gold) var(--progress, 0%),
+            #e8e3d7 var(--progress, 0%),
+            #e8e3d7 100%
+        );
+}
+
+body:not(.dark) .score-ring span {
+    color: #817b70;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SECTION HEADINGS
+========================================================= */
+
+body:not(.dark) .section-heading h2 {
+    color: #171717;
+}
+
+body:not(.dark) .section-label,
+body:not(.dark) .mini-label {
+    color: #817b70;
+}
+
+body:not(.dark) .goal-status,
+body:not(.dark) .week-range {
+    color: #817b70;
+}
+
+
+/* =========================================================
+   LIGHT MODE — TODAY'S GOALS
+========================================================= */
+
+body:not(.dark) .goal-card {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .goal-card:hover {
+    border-color:
+        rgba(201, 150, 25, 0.28);
+
+    box-shadow:
+        0 18px 45px rgba(50, 42, 20, 0.10);
+}
+
+body:not(.dark) .goal-heading h3 {
+    color: #171717;
+}
+
+body:not(.dark) .goal-heading span {
+    color: #817b70;
+}
+
+body:not(.dark) .goal-numbers strong {
+    color: #171717;
+}
+
+body:not(.dark) .goal-numbers span {
+    color: #817b70;
+}
+
+body:not(.dark) .goal-numbers b {
+    color: #5f5b52;
+}
+
+body:not(.dark) .goal-card p {
+    color: #817b70;
+}
+
+body:not(.dark) .progress-track {
+    background: #ebe7dc;
+}
+
+
+/* =========================================================
+   LIGHT MODE — WEEKLY
+========================================================= */
+
+body:not(.dark) .weekly-card {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .weekly-card h3 {
+    color: #171717;
+}
+
+body:not(.dark) .weekly-card h3 small {
+    color: #817b70;
+}
+
+body:not(.dark) .weekly-target span {
+    color: #817b70;
+}
+
+body:not(.dark) .big-stat strong {
+    color: #171717;
+}
+
+body:not(.dark) .big-stat span {
+    color: #817b70;
+}
+
+body:not(.dark) .big-stat b {
+    color: #5f5b52;
+}
+
+body:not(.dark) .weekly-card p {
+    color: #817b70;
+}
+
+body:not(.dark) .weekly-progress,
+body:not(.dark) .mini-progress {
+    background: #ebe7dc;
+}
+
+
+/* =========================================================
+   LIGHT MODE — STUDY PLAN
+========================================================= */
+
+body:not(.dark) .plan-card {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .plan-info h3 {
+    color: #171717;
+}
+
+body:not(.dark) .plan-info p {
+    color: #817b70;
+}
+
+body:not(.dark) .plan-stat strong {
+    color: #171717;
+}
+
+body:not(.dark) .plan-stat span {
+    color: #817b70;
+}
+
+body:not(.dark) .plan-stat b {
+    color: #5f5b52;
+}
+
+body:not(.dark) .plan-progress {
+    background: #ebe7dc;
+}
+
+
+/* =========================================================
+   LIGHT MODE — SUBJECT GOALS
+========================================================= */
+
+body:not(.dark) .subject-card {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .subject-card:hover {
+    border-color:
+        rgba(201, 150, 25, 0.25);
+}
+
+body:not(.dark) .subject-name {
+    color: #171717;
+}
+
+body:not(.dark) .subject-count {
+    color: #817b70;
+}
+
+body:not(.dark) .subject-progress {
+    background: #ebe7dc;
+}
+
+body:not(.dark) .subject-empty strong {
+    color: #171717;
+}
+
+body:not(.dark) .subject-empty p {
+    color: #817b70;
+}
+
+
+/* =========================================================
+   LIGHT MODE — ACHIEVEMENTS
+========================================================= */
+
+body:not(.dark) .achievement {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .achievement strong {
+    color: #171717;
+}
+
+body:not(.dark) .achievement p {
+    color: #817b70;
+}
+
+body:not(.dark) .achievement.unlocked {
+    border-color:
+        rgba(201, 150, 25, 0.25);
+
+    box-shadow:
+        0 10px 30px rgba(201, 150, 25, 0.08);
+}
+
+
+/* =========================================================
+   LIGHT MODE — EMPTY PLAN
+========================================================= */
+
+body:not(.dark) .empty-plan {
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.09);
+
+    box-shadow:
+        0 12px 35px rgba(50, 42, 20, 0.07);
+}
+
+body:not(.dark) .empty-plan h2 {
+    color: #171717;
+}
+
+body:not(.dark) .empty-plan p {
+    color: #817b70;
+}
+
+
+/* =========================================================
+   LIGHT MODE — MOBILE MENU
+========================================================= */
+
+body:not(.dark) .mobile-menu {
+    color: #171717;
+
+    background: #ffffff;
+
+    border-color:
+        rgba(30, 30, 30, 0.10);
+
+    box-shadow:
+        0 5px 15px rgba(50, 42, 20, 0.06);
+}
+
+
+/* =========================================================
+   LIGHT MODE — FOOTER
+========================================================= */
+
+body:not(.dark) .footer {
+    color: #938d81;
+}
+
+
+/* =========================================================
+   LIGHT MODE — TOAST
+========================================================= */
+
+body:not(.dark) .toast {
+    color: #171717;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e5bd46,
+            #c99619
+        );
+
+    border-color:
+        rgba(167, 121, 14, 0.25);
+
+    box-shadow:
+        0 12px 30px rgba(50, 42, 20, 0.16);
+}
+
+
+/* =========================================================
+   DARK MODE — FORCE COMPLETE DARK THEME
+   ---------------------------------------------------------
+   These overrides make sure nothing accidentally inherits
+   the light theme after switching back to dark mode.
+========================================================= */
+
+body.dark .sidebar {
+    background: #0b0b0b;
+}
+
+body.dark .brand strong {
+    color: #ffffff;
+}
+
+body.dark .brand span {
+    color: #666666;
+}
+
+body.dark .nav-item {
+    color: #8d8d8d;
+}
+
+body.dark .nav-item:hover {
+    color: #ffffff;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+}
+
+body.dark .nav-item.active {
+    color: #080808;
+}
+
+body.dark .welcome h1 {
+    color: #ffffff;
+}
+
+body.dark .welcome p {
+    color: #a5a5a5;
+}
+
+body.dark .date-pill {
+    color: #a5a5a5;
+
+    background: #101010;
+}
+
+body.dark .section-heading h2 {
+    color: #ffffff;
+}
+
+body.dark .goal-heading h3,
+body.dark .goal-numbers strong,
+body.dark .weekly-card h3,
+body.dark .big-stat strong,
+body.dark .plan-info h3,
+body.dark .plan-stat strong,
+body.dark .subject-name,
+body.dark .achievement strong,
+body.dark .empty-plan h2 {
+    color: #ffffff;
+}
+
+body.dark .goal-heading span,
+body.dark .goal-numbers span,
+body.dark .goal-card p,
+body.dark .weekly-card p,
+body.dark .plan-info p,
+body.dark .plan-stat span,
+body.dark .subject-count,
+body.dark .achievement p,
+body.dark .empty-plan p {
+    color: #777777;
+}
+
+body.dark .progress-track,
+body.dark .weekly-progress,
+body.dark .mini-progress,
+body.dark .plan-progress,
+body.dark .subject-progress {
+    background: #1b1b1b;
+}
+
+body.dark .weekly-card,
+body.dark .goal-card,
+body.dark .plan-card,
+body.dark .subject-card,
+body.dark .achievement,
+body.dark .empty-plan {
+    background: #101010;
+}
+
+body.dark .mobile-menu {
+    color: #ffffff;
+
+    background: #101010;
+}
+
+body.dark .footer {
+    color: #505050;
+}
+
+
+/* =========================================================
+   THEME TRANSITION
+========================================================= */
+
+body,
+body * {
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   DO NOT REMOVE
+========================================================= */
+
+body.dark .goals-hero {
+    color: #ffffff;
+}
+
+body.dark .hero-copy h2 {
+    color: #ffffff;
+}
+
+body.dark .hero-copy p {
+    color: #a7a7a7;
+}
