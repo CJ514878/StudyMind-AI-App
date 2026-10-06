@@ -371,6 +371,99 @@ body {
 
 }
 
+/* =========================================================
+   PREMIUM NAVIGATION
+   GOLD / PREMIUM STYLING
+========================================================= */
+
+.nav-section a.premium-link {
+
+    color: #fbbf24;
+
+}
+
+
+.nav-section a.premium-link .nav-icon {
+
+    color: #fbbf24;
+
+    filter:
+        drop-shadow(
+            0 0 5px
+            rgba(251, 191, 36, .45)
+        );
+
+}
+
+
+.nav-section a.premium-link:hover {
+
+    color: #fcd34d;
+
+    background:
+        rgba(251, 191, 36, .10);
+
+    box-shadow:
+        0 0 18px
+        rgba(251, 191, 36, .08);
+
+}
+
+
+.nav-section a.premium-link:hover .nav-icon {
+
+    color: #fcd34d;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(251, 191, 36, .7)
+        );
+
+}
+
+
+/* =========================================================
+   PREMIUM ACTIVE STATE
+========================================================= */
+
+.nav-section a.premium-link.active {
+
+    color: #fbbf24;
+
+    background:
+        rgba(251, 191, 36, .12);
+
+}
+
+
+.nav-section a.premium-link.active::before {
+
+    background:
+        linear-gradient(
+            180deg,
+            #f59e0b,
+            #fbbf24
+        );
+
+    box-shadow:
+        0 0 12px
+        rgba(251, 191, 36, .55);
+
+}
+
+
+.nav-section a.premium-link.active .nav-icon {
+
+    color: #fbbf24;
+
+    filter:
+        drop-shadow(
+            0 0 7px
+            rgba(251, 191, 36, .7)
+        );
+
+}
 
 /* =========================================================
    SIDEBAR BOTTOM
