@@ -17,7 +17,10 @@
         href="leaderboard.css"
     >
 
-    <!-- SUPABASE -->
+    <!-- =====================================================
+         SUPABASE LIBRARY
+    ====================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
@@ -25,391 +28,359 @@
 
 <body>
 
+<div class="app-shell">
 
-<!-- =====================================================
-     SIDEBAR — SAME STRUCTURE AS SUMMARIZER
-===================================================== -->
 
-<aside class="sidebar">
+    <!-- =====================================================
+         SIDEBAR
+         SUMMARIZER-STYLE NAVIGATION
+    ====================================================== -->
 
+    <aside class="sidebar">
 
-    <!-- BRAND -->
 
-    <div class="sidebar-brand">
+        <!-- =================================================
+             BRAND
+        ================================================== -->
 
-        <div class="brand-mark">
-            S
-        </div>
+        <div class="sidebar-brand">
 
-        <div>
-
-            <strong>
-                StudyMind AI
-            </strong>
-
-            <span>
-                AI Study Coach
-            </span>
-
-        </div>
-
-    </div>
-
-
-    <!-- NAVIGATION -->
-
-    <nav class="sidebar-nav">
-
-
-        <!-- WORKSPACE -->
-
-        <div class="nav-section">
-
-            <span>
-                WORKSPACE
-            </span>
-
-
-            <a href="dashboard.html">
-
-                <span class="nav-icon">
-                    ⌂
-                </span>
-
-                Dashboard
-
-            </a>
-
-
-            <a href="schedule.html">
-
-                <span class="nav-icon">
-                    ◷
-                </span>
-
-                Schedule
-
-            </a>
-
-
-            <a href="calendar.html">
-
-                <span class="nav-icon">
-                    ▣
-                </span>
-
-                Calendar
-
-            </a>
-
-        </div>
-
-
-
-        <!-- AI TOOLS -->
-
-        <div class="nav-section">
-
-            <span>
-                AI TOOLS
-            </span>
-
-
-            <a href="ai-support.html">
-
-                <span class="nav-icon">
-                    ✦
-                </span>
-
-                AI Support
-
-            </a>
-
-
-            <a href="ai-assistant.html">
-
-                <span class="nav-icon">
-                    ◉
-                </span>
-
-                AI Assistant
-
-            </a>
-
-
-            <a href="summarizer.html">
-
-                <span class="nav-icon">
-                    ▤
-                </span>
-
-                Summarizer
-
-            </a>
-
-        </div>
-
-
-
-        <!-- PROGRESS -->
-
-        <div class="nav-section">
-
-            <span>
-                PROGRESS
-            </span>
-
-
-            <a href="streak.html">
-
-                <span class="nav-icon">
-                    🔥
-                </span>
-
-                Study Streak
-
-            </a>
-
-
-            <a href="score.html">
-
-                <span class="nav-icon">
-                    ★
-                </span>
-
-                Study Score
-
-            </a>
-
-
-            <a href="goals.html">
-
-                <span class="nav-icon">
-                    ◎
-                </span>
-
-                Goals
-
-            </a>
-
-
-            <a href="rewards.html">
-
-                <span class="nav-icon">
-                    ◇
-                </span>
-
-                Rewards
-
-            </a>
-
-        </div>
-
-
-
-        <!-- COMMUNITY -->
-
-        <div class="nav-section">
-
-            <span>
-                COMMUNITY
-            </span>
-
-
-            <a
-                href="leaderboard.html"
-                class="active"
-            >
-
-                <span class="nav-icon">
-                    ♛
-                </span>
-
-                Leaderboard
-
-            </a>
-
-
-            <a href="friends.html">
-
-                <span class="nav-icon">
-                    ♧
-                </span>
-
-                Friends
-
-            </a>
-
-
-            <a href="game-mode.html">
-
-                <span class="nav-icon">
-                    ⚔
-                </span>
-
-                Game Mode
-
-            </a>
-
-        </div>
-
-
-
-        <!-- ACCOUNT -->
-
-        <div class="nav-section">
-
-            <span>
-                ACCOUNT
-            </span>
-
-
-            <a
-                href="premium.html"
-                class="premium-link"
-            >
-
-                <span class="nav-icon">
-                    ◆
-                </span>
-
-                Premium
-
-            </a>
-
-        </div>
-
-
-    </nav>
-
-
-
-    <!-- BOTTOM -->
-
-    <div class="sidebar-bottom">
-
-
-        <a href="feedback.html">
-
-            <span class="nav-icon">
-                ◌
-            </span>
-
-            Feedback
-
-        </a>
-
-
-        <a href="settings.html">
-
-            <span class="nav-icon">
-                ⚙
-            </span>
-
-            Settings
-
-        </a>
-
-
-        <button
-            id="logoutButton"
-            class="logout-button"
-            type="button"
-        >
-
-            <span class="nav-icon">
-                ↪
-            </span>
-
-            Logout
-
-        </button>
-
-
-    </div>
-
-
-</aside>
-
-
-
-<!-- =====================================================
-     MAIN
-===================================================== -->
-
-<main class="app-main">
-
-
-    <!-- TOPBAR -->
-
-    <header class="topbar">
-
-
-        <div class="mobile-brand">
-            StudyMind AI
-        </div>
-
-
-        <div class="topbar-spacer"></div>
-
-
-        <div class="profile-area">
-
-
-            <div class="profile-avatar">
+            <div class="brand-mark">
                 S
             </div>
 
-
-            <div class="profile-text">
-
-                <strong id="currentUsername">
-                    Student
-                </strong>
-
-                <span>
-                    Student
-                </span>
-
+            <div>
+                <strong>StudyMind AI</strong>
+                <span>AI Study Coach</span>
             </div>
-
 
         </div>
 
 
-    </header>
+
+        <!-- =================================================
+             NAVIGATION
+        ================================================== -->
+
+        <nav class="sidebar-nav">
+
+
+            <!-- =================================================
+                 WORKSPACE
+            ================================================== -->
+
+            <div class="nav-section">
+
+                <span>WORKSPACE</span>
+
+
+                <a href="dashboard.html">
+
+                    <span class="nav-icon">⌂</span>
+
+                    Dashboard
+
+                </a>
+
+
+                <a href="schedule.html">
+
+                    <span class="nav-icon">◷</span>
+
+                    Schedule
+
+                </a>
+
+
+                <a href="calendar.html">
+
+                    <span class="nav-icon">▣</span>
+
+                    Calendar
+
+                </a>
+
+            </div>
 
 
 
-    <!-- =================================================
-         PAGE
-    ================================================== -->
+            <!-- =================================================
+                 AI TOOLS
+            ================================================== -->
 
-    <div class="page-container">
+            <div class="nav-section">
+
+                <span>AI TOOLS</span>
 
 
-        <!-- PAGE HEADER -->
+                <a href="ai-support.html">
 
-        <section class="leaderboard-header">
+                    <span class="nav-icon">✦</span>
+
+                    AI Support
+
+                </a>
+
+
+                <a href="ai-assistant.html">
+
+                    <span class="nav-icon">◉</span>
+
+                    AI Assistant
+
+                </a>
+
+
+                <a href="summarizer.html">
+
+                    <span class="nav-icon">▤</span>
+
+                    Summarizer
+
+                </a>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 PROGRESS
+            ================================================== -->
+
+            <div class="nav-section">
+
+                <span>PROGRESS</span>
+
+
+                <a href="streak.html">
+
+                    <span class="nav-icon">🔥</span>
+
+                    Study Streak
+
+                </a>
+
+
+                <a href="score.html">
+
+                    <span class="nav-icon">★</span>
+
+                    Study Score
+
+                </a>
+
+
+                <a href="goals.html">
+
+                    <span class="nav-icon">◎</span>
+
+                    Goals
+
+                </a>
+
+
+                <a href="rewards.html">
+
+                    <span class="nav-icon">◇</span>
+
+                    Rewards
+
+                </a>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 COMMUNITY
+            ================================================== -->
+
+            <div class="nav-section">
+
+                <span>COMMUNITY</span>
+
+
+                <!-- ACTIVE PAGE -->
+
+                <a
+                    href="leaderboard.html"
+                    class="active"
+                >
+
+                    <span class="nav-icon">♛</span>
+
+                    Leaderboard
+
+                </a>
+
+
+                <a href="friends.html">
+
+                    <span class="nav-icon">♧</span>
+
+                    Friends
+
+                </a>
+
+
+                <a href="game-mode.html">
+
+                    <span class="nav-icon">⚔</span>
+
+                    Game Mode
+
+                </a>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ACCOUNT
+            ================================================== -->
+
+            <div class="nav-section">
+
+                <span>ACCOUNT</span>
+
+
+                <a
+                    href="premium.html"
+                    class="premium-link"
+                >
+
+                    <span class="nav-icon">◆</span>
+
+                    Premium
+
+                </a>
+
+            </div>
+
+        </nav>
+
+
+
+        <!-- =================================================
+             SIDEBAR BOTTOM
+        ================================================== -->
+
+        <div class="sidebar-bottom">
+
+
+            <!-- FEEDBACK -->
+
+            <a href="feedback.html">
+
+                <span class="nav-icon">◌</span>
+
+                Feedback
+
+            </a>
+
+
+
+            <!-- SETTINGS -->
+
+            <a href="settings.html">
+
+                <span class="nav-icon">⚙</span>
+
+                Settings
+
+            </a>
+
+
+
+            <!-- THEME
+                 Preserved because leaderboard.js
+                 already uses #themeButton -->
+
+            <button
+                id="themeButton"
+                class="theme-button"
+                type="button"
+            >
+
+                <span class="nav-icon">◐</span>
+
+                <span>Toggle theme</span>
+
+            </button>
+
+
+
+            <!-- LOGOUT -->
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+                type="button"
+            >
+
+                <span class="nav-icon">↪</span>
+
+                Logout
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =================================================
+             TOPBAR
+        ================================================== -->
+
+        <header class="topbar">
 
             <div>
 
-                <span class="section-label">
-                    COMMUNITY
-                </span>
+                <p class="eyebrow">
+                    StudyMind AI
+                </p>
 
                 <h1>
                     Leaderboard
                 </h1>
 
-                <p>
-                    See how you rank against other
-                    StudyMind students.
-                </p>
+            </div>
+
+
+            <div class="user-area">
+
+                <div
+                    class="user-avatar"
+                    id="userAvatar"
+                >
+                    S
+                </div>
+
+
+                <div>
+
+                    <strong id="currentUsername">
+                        Student
+                    </strong>
+
+                    <span>
+                        Student
+                    </span>
+
+                </div>
 
             </div>
 
-        </section>
+        </header>
 
 
 
@@ -418,7 +389,6 @@
         ================================================== -->
 
         <section class="leaderboard-hero">
-
 
             <div class="hero-text">
 
@@ -445,7 +415,6 @@
             <div class="hero-trophy">
                 🏆
             </div>
-
 
         </section>
 
@@ -590,7 +559,6 @@
 
             </div>
 
-
         </section>
 
 
@@ -600,7 +568,6 @@
         ================================================== -->
 
         <section class="leaderboard-controls">
-
 
             <div class="search-box">
 
@@ -626,24 +593,23 @@
             >
 
                 ↻
+
                 Refresh
 
             </button>
-
 
         </section>
 
 
 
         <!-- =================================================
-             YOUR RANKING
+             CURRENT USER
         ================================================== -->
 
         <section
             class="your-ranking"
             id="yourRanking"
         >
-
 
             <div class="your-ranking-icon">
                 ⭐
@@ -688,7 +654,6 @@
 
             </div>
 
-
         </section>
 
 
@@ -701,7 +666,6 @@
 
 
             <div class="section-heading">
-
 
                 <div>
 
@@ -723,16 +687,13 @@
                     0 students
                 </span>
 
-
             </div>
 
 
 
             <div class="table-wrapper">
 
-
                 <table>
-
 
                     <thead>
 
@@ -786,12 +747,9 @@
 
                     </tbody>
 
-
                 </table>
 
-
             </div>
-
 
 
             <!-- EMPTY STATE -->
@@ -815,20 +773,17 @@
 
             </div>
 
-
         </section>
 
+    </main>
 
-    </div>
-
-
-</main>
+</div>
 
 
 
-<!-- =====================================================
+<!-- =======================================================
      TOAST
-===================================================== -->
+======================================================== -->
 
 <div
     id="toast"
@@ -837,9 +792,21 @@
 
 
 
-<!-- =====================================================
-     SCRIPTS
-===================================================== -->
+<!-- =======================================================
+     STUDYMIND SUPABASE CLIENT
+========================================================
+
+     IMPORTANT SCRIPT ORDER:
+
+     1. Supabase CDN
+     2. supabase.js
+     3. leaderboard.js
+
+     leaderboard.js therefore uses the same shared
+     Supabase client and authenticated session as
+     Settings, Dashboard, and Game Mode.
+
+======================================================== -->
 
 <script src="supabase.js"></script>
 
