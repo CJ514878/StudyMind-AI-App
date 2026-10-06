@@ -14,925 +14,1304 @@
 
 <body>
 
-<div class="battle-page">
+<div class="app-shell">
 
-    <!-- =========================
-         NAVBAR
-    ========================== -->
+    <!-- =====================================================
+         SIDEBAR — SUMMARIZER STYLE
+    ====================================================== -->
 
-    <nav class="battle-navbar">
+    <aside class="sidebar">
 
-        <div class="brand">
-            <div class="brand-mark">S</div>
+        <!-- BRAND -->
 
-            <div>
-                <strong>StudyMind AI</strong>
-                <span>Battle Arena</span>
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">
+                S
             </div>
-        </div>
 
-        <div class="battle-nav-links">
+            <div class="brand-text">
 
-            <button onclick="openHome()">Home</button>
+                <strong>
+                    StudyMind AI
+                </strong>
 
-            <button onclick="openDashboard()">
-                Dashboard
-            </button>
+                <span>
+                    AI Study Coach
+                </span>
 
-            <button onclick="openStudyStreak()">
-                Study Streak
-            </button>
-
-            <button onclick="openSummarizer()">
-                Summarizer
-            </button>
-
-            <button class="active">
-                <i data-lucide="swords"></i>
-                Game Mode
-            </button>
-
-            <button
-                onclick="openPremium()"
-                class="premium-nav"
-            >
-                <i data-lucide="sparkles"></i>
-                Premium
-            </button>
-
-            <button
-                onclick="logoutStudyMind()"
-                class="logout-button"
-            >
-                Logout
-            </button>
+            </div>
 
         </div>
 
-    </nav>
 
+        <!-- NAVIGATION -->
 
-    <!-- =========================
-         MAIN
-    ========================== -->
+        <nav class="sidebar-nav">
 
-    <main class="battle-main">
+            <!-- WORKSPACE -->
 
-        <!-- =========================
-             HERO
-        ========================== -->
+            <div class="nav-section">
 
-        <section class="battle-hero">
+                <span>
+                    WORKSPACE
+                </span>
 
-            <div class="hero-copy">
+                <a href="dashboard.html">
 
-                <div class="eyebrow">
-                    <i data-lucide="bot"></i>
-                    AI COMPUTER BATTLE
-                </div>
+                    <i data-lucide="layout-dashboard"></i>
 
-                <h1>
-                    Think fast.<br>
-                    <span>Play smart.</span>
-                </h1>
-
-                <p>
-                    Challenge the StudyMind AI opponent using questions
-                    generated specifically from your curriculum, subject
-                    and topic.
-                </p>
-
-                <div class="hero-stats">
-
-                    <div>
-                        <strong id="heroXP">0</strong>
-                        <span>Battle XP</span>
-                    </div>
-
-                    <div>
-                        <strong id="heroWins">0</strong>
-                        <span>Wins</span>
-                    </div>
-
-                    <div>
-                        <strong id="heroBattles">0</strong>
-                        <span>Battles</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="battle-visual">
-
-                <div class="orb orb-one"></div>
-                <div class="orb orb-two"></div>
-
-                <div class="ai-avatar">
-                    <i data-lucide="bot"></i>
-                </div>
-
-                <div class="vs-badge">
-                    VS
-                </div>
-
-                <div class="player-avatar">
-                    <i data-lucide="user-round"></i>
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             BATTLE SETUP
-        ========================== -->
-
-        <section
-            id="setupScreen"
-            class="battle-card setup-card"
-        >
-
-            <div class="section-title">
-
-                <div>
-
-                    <span class="section-label">
-                        BATTLE SETUP
+                    <span>
+                        Dashboard
                     </span>
 
-                    <h2>
-                        Choose your battlefield
-                    </h2>
+                </a>
 
-                    <p>
-                        StudyMind AI will build the battle around your
-                        selected curriculum.
-                    </p>
+                <a href="schedule.html">
 
-                </div>
+                    <i data-lucide="clock-3"></i>
 
-                <div class="ai-status">
-                    <span></span>
-                    AI READY
-                </div>
+                    <span>
+                        Schedule
+                    </span>
 
-            </div>
+                </a>
 
+                <a href="calendar.html">
 
-            <div class="selection-grid">
+                    <i data-lucide="calendar-days"></i>
 
-                <!-- CURRICULUM -->
+                    <span>
+                        Calendar
+                    </span>
 
-                <div class="field">
-
-                    <label for="curriculumSelect">
-                        Curriculum
-                    </label>
-
-                    <div class="select-wrapper">
-
-                        <i data-lucide="book-open"></i>
-
-                        <select id="curriculumSelect">
-
-                            <option value="">
-                                Select curriculum
-                            </option>
-
-                            <option value="WAEC">
-                                WAEC
-                            </option>
-
-                            <option value="JAMB">
-                                JAMB
-                            </option>
-
-                            <option value="NECO">
-                                NECO
-                            </option>
-
-                            <option value="IGCSE">
-                                IGCSE
-                            </option>
-
-                            <option value="SAT">
-                                SAT
-                            </option>
-
-                            <option value="Nigerian Junior Secondary Curriculum">
-                                Nigerian Junior Secondary Curriculum
-                            </option>
-
-                            <option value="BECE">
-                                BECE
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- SUBJECT -->
-
-                <div class="field">
-
-                    <label for="subjectSelect">
-                        Subject
-                    </label>
-
-                    <div class="select-wrapper">
-
-                        <i data-lucide="graduation-cap"></i>
-
-                        <select
-                            id="subjectSelect"
-                            disabled
-                        >
-
-                            <option value="">
-                                Select a curriculum first
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- TOPIC -->
-
-                <div class="field">
-
-                    <label for="topicSelect">
-                        Topic
-                    </label>
-
-                    <div class="select-wrapper">
-
-                        <i data-lucide="layers"></i>
-
-                        <select
-                            id="topicSelect"
-                            disabled
-                        >
-
-                            <option value="">
-                                Select a subject first
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- DIFFICULTY -->
-
-                <div class="field">
-
-                    <label for="difficultySelect">
-                        Difficulty
-                    </label>
-
-                    <div class="select-wrapper">
-
-                        <i data-lucide="brain"></i>
-
-                        <select id="difficultySelect">
-
-                            <option value="adaptive">
-                                Adaptive AI
-                            </option>
-
-                            <option value="easy">
-                                Easy
-                            </option>
-
-                            <option value="medium">
-                                Medium
-                            </option>
-
-                            <option value="hard">
-                                Hard
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
+                </a>
 
             </div>
 
 
-            <!-- TOPIC SEARCH -->
+            <!-- AI TOOLS -->
 
-            <div class="topic-search">
+            <div class="nav-section">
 
-                <i data-lucide="search"></i>
+                <span>
+                    AI TOOLS
+                </span>
 
-                <input
-                    id="topicSearch"
-                    type="text"
-                    placeholder="Search topics..."
-                    autocomplete="off"
-                >
+                <a href="ai-support.html">
 
-            </div>
+                    <i data-lucide="sparkles"></i>
 
+                    <span>
+                        AI Support
+                    </span>
 
-            <!-- BATTLE INFO -->
+                </a>
 
-            <div class="battle-config">
-
-                <div class="config-item">
-
-                    <i data-lucide="list-ordered"></i>
-
-                    <div>
-                        <strong>10</strong>
-                        <span>Questions</span>
-                    </div>
-
-                </div>
-
-                <div class="config-item">
-
-                    <i data-lucide="timer"></i>
-
-                    <div>
-                        <strong>15s</strong>
-                        <span>Per question</span>
-                    </div>
-
-                </div>
-
-                <div class="config-item">
-
-                    <i data-lucide="zap"></i>
-
-                    <div>
-                        <strong>XP</strong>
-                        <span>Performance rewards</span>
-                    </div>
-
-                </div>
-
-                <div class="config-item">
+                <a href="ai-assistant.html">
 
                     <i data-lucide="bot"></i>
 
-                    <div>
-                        <strong>AI</strong>
-                        <span>Adaptive opponent</span>
-                    </div>
+                    <span>
+                        AI Assistant
+                    </span>
 
-                </div>
+                </a>
 
-            </div>
+                <a href="summarizer.html">
 
-
-            <div class="setup-footer">
-
-                <div class="free-battle-info">
-
-                    <div class="mini-icon">
-                        <i data-lucide="gamepad-2"></i>
-                    </div>
-
-                    <div>
-
-                        <strong>
-
-                            <span id="battlesUsed">
-                                0
-                            </span>
-
-                            /
-
-                            <span id="battleLimit">
-                                5
-                            </span>
-
-                        </strong>
-
-                        <span>
-                            free battles used
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    id="startBattleButton"
-                    class="start-button"
-                    onclick="startComputerBattle()"
-                >
+                    <i data-lucide="notebook-pen"></i>
 
                     <span>
-                        Start Battle
+                        Summarizer
                     </span>
 
-                    <i data-lucide="arrow-right"></i>
-
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             BATTLE SCREEN
-        ========================== -->
-
-        <section
-            id="battleScreen"
-            class="battle-card battle-screen"
-            style="display:none;"
-        >
-
-            <!-- TOP -->
-
-            <div class="battle-top">
-
-                <div class="battle-player">
-
-                    <div class="small-avatar player">
-                        <i data-lucide="user-round"></i>
-                    </div>
-
-                    <div>
-
-                        <span>
-                            You
-                        </span>
-
-                        <!--
-                            This value is populated from:
-
-                            Supabase Auth
-                            user_metadata.username
-
-                            It is NOT populated from
-                            localStorage as the source of truth.
-                        -->
-
-                        <strong id="playerName">
-                            Student
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="battle-center">
-
-                    <span id="battleQuestionNumber">
-                        QUESTION 1 / 10
-                    </span>
-
-                    <div class="timer-ring">
-
-                        <strong id="questionTimer">
-                            15
-                        </strong>
-
-                        <span>
-                            sec
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="battle-player ai">
-
-                    <div class="small-avatar ai">
-                        <i data-lucide="bot"></i>
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Opponent
-                        </span>
-
-                        <strong>
-                            StudyMind AI
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- SCOREBOARD -->
-
-            <div class="scoreboard">
-
-                <div class="score-side">
-
-                    <span>
-                        Your Score
-                    </span>
-
-                    <strong id="playerScore">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="score-middle">
-                    <span>
-                        VS
-                    </span>
-                </div>
-
-                <div class="score-side">
-
-                    <span>
-                        AI Score
-                    </span>
-
-                    <strong id="aiScore">
-                        0
-                    </strong>
-
-                </div>
+                </a>
 
             </div>
 
 
             <!-- PROGRESS -->
 
-            <div class="battle-progress">
+            <div class="nav-section">
 
-                <div
-                    id="battleProgressBar"
-                    class="battle-progress-fill"
-                ></div>
+                <span>
+                    PROGRESS
+                </span>
+
+                <a href="streak.html">
+
+                    <span class="nav-icon">
+                        🔥
+                    </span>
+
+                    <span>
+                        Study Streak
+                    </span>
+
+                </a>
+
+                <a href="score.html">
+
+                    <i data-lucide="star"></i>
+
+                    <span>
+                        Study Score
+                    </span>
+
+                </a>
+
+                <a href="goals.html">
+
+                    <i data-lucide="target"></i>
+
+                    <span>
+                        Goals
+                    </span>
+
+                </a>
+
+                <a href="rewards.html">
+
+                    <i data-lucide="gem"></i>
+
+                    <span>
+                        Rewards
+                    </span>
+
+                </a>
 
             </div>
 
 
-            <!-- QUESTION -->
+            <!-- COMMUNITY -->
 
-            <div class="question-area">
+            <div class="nav-section">
 
-                <div class="question-meta">
+                <span>
+                    COMMUNITY
+                </span>
 
-                    <span id="questionSubject">
-                        Subject
+                <a href="leaderboard.html">
+
+                    <i data-lucide="crown"></i>
+
+                    <span>
+                        Leaderboard
                     </span>
 
-                    <span id="questionTopic">
-                        Topic
+                </a>
+
+                <a href="friends.html">
+
+                    <i data-lucide="users"></i>
+
+                    <span>
+                        Friends
+                    </span>
+
+                </a>
+
+                <a
+                    href="game-mode.html"
+                    class="active"
+                >
+
+                    <i data-lucide="swords"></i>
+
+                    <span>
+                        Game Mode
+                    </span>
+
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+
+            <div class="nav-section">
+
+                <span>
+                    ACCOUNT
+                </span>
+
+                <a href="premium.html">
+
+                    <i data-lucide="gem"></i>
+
+                    <span>
+                        Premium
+                    </span>
+
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <!-- SIDEBAR BOTTOM -->
+
+        <div class="sidebar-bottom">
+
+            <a href="feedback.html">
+
+                <i data-lucide="message-circle"></i>
+
+                <span>
+                    Feedback
+                </span>
+
+            </a>
+
+
+            <a href="settings.html">
+
+                <i data-lucide="settings"></i>
+
+                <span>
+                    Settings
+                </span>
+
+            </a>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+                onclick="logoutStudyMind()"
+            >
+
+                <i data-lucide="log-out"></i>
+
+                <span>
+                    Logout
+                </span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="app-main">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div class="mobile-brand">
+
+                <div class="brand-mark">
+                    S
+                </div>
+
+                <strong>
+                    StudyMind AI
+                </strong>
+
+            </div>
+
+
+            <div class="topbar-spacer"></div>
+
+
+            <div class="profile-area">
+
+                <div class="profile-avatar">
+                    S
+                </div>
+
+                <div class="profile-text">
+
+                    <strong id="currentUsername">
+                        Student
+                    </strong>
+
+                    <span>
+                        Student
                     </span>
 
                 </div>
 
-
-                <h2 id="questionText">
-                    Loading question...
-                </h2>
-
-
-                <div
-                    id="answerOptions"
-                    class="answer-grid"
-                ></div>
-
-
-                <div
-                    class="question-feedback"
-                    id="questionFeedback"
-                ></div>
-
             </div>
 
+        </header>
 
-            <!-- COMBO -->
 
-            <div class="battle-bottom">
+        <!-- =================================================
+             GAME MODE CONTENT
+        ================================================== -->
 
-                <div class="combo-display">
+        <div class="battle-page">
 
-                    <i data-lucide="flame"></i>
 
-                    <div>
+            <!-- =================================================
+                 HERO
+            ================================================== -->
 
-                        <strong id="comboCount">
-                            0
-                        </strong>
+            <section class="battle-hero">
+
+                <div class="hero-copy">
+
+                    <div class="eyebrow">
+
+                        <i data-lucide="bot"></i>
+
+                        AI COMPUTER BATTLE
+
+                    </div>
+
+
+                    <h1>
+
+                        Think fast.<br>
 
                         <span>
-                            combo
+                            Play smart.
                         </span>
+
+                    </h1>
+
+
+                    <p>
+                        Challenge the StudyMind AI opponent using questions
+                        generated specifically from your curriculum, subject
+                        and topic.
+                    </p>
+
+
+                    <div class="hero-stats">
+
+                        <div>
+
+                            <strong id="heroXP">
+                                0
+                            </strong>
+
+                            <span>
+                                Battle XP
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong id="heroWins">
+                                0
+                            </strong>
+
+                            <span>
+                                Wins
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong id="heroBattles">
+                                0
+                            </strong>
+
+                            <span>
+                                Battles
+                            </span>
+
+                        </div>
 
                     </div>
 
                 </div>
 
 
-                <div class="live-performance">
+                <div class="battle-visual">
 
-                    <span>
-                        Accuracy
-                    </span>
+                    <div class="orb orb-one"></div>
 
-                    <strong id="liveAccuracy">
-                        0%
-                    </strong>
+                    <div class="orb orb-two"></div>
+
+
+                    <div class="ai-avatar">
+
+                        <i data-lucide="bot"></i>
+
+                    </div>
+
+
+                    <div class="vs-badge">
+                        VS
+                    </div>
+
+
+                    <div class="player-avatar">
+
+                        <i data-lucide="user-round"></i>
+
+                    </div>
 
                 </div>
 
-
-                <button
-                    id="nextQuestionButton"
-                    class="next-button"
-                    onclick="nextBattleQuestion()"
-                    style="display:none;"
-                >
-
-                    Next Question
-
-                    <i data-lucide="arrow-right"></i>
-
-                </button>
-
-            </div>
-
-        </section>
+            </section>
 
 
-        <!-- =========================
-             RESULTS
-        ========================== -->
+            <!-- =================================================
+                 BATTLE SETUP
+            ================================================== -->
 
-        <section
-            id="resultScreen"
-            class="battle-card result-screen"
-            style="display:none;"
-        >
-
-            <div
-                class="result-icon"
-                id="resultIcon"
+            <section
+                id="setupScreen"
+                class="battle-card setup-card"
             >
-                🏆
-            </div>
 
-            <span class="section-label">
-                BATTLE COMPLETE
-            </span>
+                <div class="section-title">
 
-            <h2 id="resultTitle">
-                Victory!
-            </h2>
+                    <div>
 
-            <p id="resultSubtitle">
-                Excellent performance.
-            </p>
+                        <span class="section-label">
+                            BATTLE SETUP
+                        </span>
+
+                        <h2>
+                            Choose your battlefield
+                        </h2>
+
+                        <p>
+                            StudyMind AI will build the battle around your
+                            selected curriculum.
+                        </p>
+
+                    </div>
 
 
-            <div class="final-score">
+                    <div class="ai-status">
 
-                <div>
+                        <span></span>
 
-                    <span>
-                        Your Score
-                    </span>
+                        AI READY
 
-                    <strong id="finalPlayerScore">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="final-vs">
-                    VS
-                </div>
-
-                <div>
-
-                    <span>
-                        AI Score
-                    </span>
-
-                    <strong id="finalAIScore">
-                        0
-                    </strong>
+                    </div>
 
                 </div>
 
-            </div>
+
+                <div class="selection-grid">
 
 
-            <div class="performance-grid">
+                    <!-- CURRICULUM -->
 
-                <div>
+                    <div class="field">
 
-                    <span>
-                        Accuracy
-                    </span>
+                        <label for="curriculumSelect">
+                            Curriculum
+                        </label>
 
-                    <strong id="finalAccuracy">
-                        0%
-                    </strong>
+                        <div class="select-wrapper">
+
+                            <i data-lucide="book-open"></i>
+
+                            <select id="curriculumSelect">
+
+                                <option value="">
+                                    Select curriculum
+                                </option>
+
+                                <option value="WAEC">
+                                    WAEC
+                                </option>
+
+                                <option value="JAMB">
+                                    JAMB
+                                </option>
+
+                                <option value="NECO">
+                                    NECO
+                                </option>
+
+                                <option value="IGCSE">
+                                    IGCSE
+                                </option>
+
+                                <option value="SAT">
+                                    SAT
+                                </option>
+
+                                <option value="Nigerian Junior Secondary Curriculum">
+                                    Nigerian Junior Secondary Curriculum
+                                </option>
+
+                                <option value="BECE">
+                                    BECE
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SUBJECT -->
+
+                    <div class="field">
+
+                        <label for="subjectSelect">
+                            Subject
+                        </label>
+
+                        <div class="select-wrapper">
+
+                            <i data-lucide="graduation-cap"></i>
+
+                            <select
+                                id="subjectSelect"
+                                disabled
+                            >
+
+                                <option value="">
+                                    Select a curriculum first
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TOPIC -->
+
+                    <div class="field">
+
+                        <label for="topicSelect">
+                            Topic
+                        </label>
+
+                        <div class="select-wrapper">
+
+                            <i data-lucide="layers"></i>
+
+                            <select
+                                id="topicSelect"
+                                disabled
+                            >
+
+                                <option value="">
+                                    Select a subject first
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DIFFICULTY -->
+
+                    <div class="field">
+
+                        <label for="difficultySelect">
+                            Difficulty
+                        </label>
+
+                        <div class="select-wrapper">
+
+                            <i data-lucide="brain"></i>
+
+                            <select id="difficultySelect">
+
+                                <option value="adaptive">
+                                    Adaptive AI
+                                </option>
+
+                                <option value="easy">
+                                    Easy
+                                </option>
+
+                                <option value="medium">
+                                    Medium
+                                </option>
+
+                                <option value="hard">
+                                    Hard
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
-                <div>
 
-                    <span>
-                        Correct
-                    </span>
+                <!-- TOPIC SEARCH -->
 
-                    <strong id="finalCorrect">
-                        0/10
-                    </strong>
+                <div class="topic-search">
 
-                </div>
+                    <i data-lucide="search"></i>
 
-                <div>
-
-                    <span>
-                        Best Combo
-                    </span>
-
-                    <strong id="finalCombo">
-                        0
-                    </strong>
+                    <input
+                        id="topicSearch"
+                        type="text"
+                        placeholder="Search topics..."
+                        autocomplete="off"
+                    >
 
                 </div>
 
-                <div>
 
-                    <span>
-                        Performance
-                    </span>
+                <!-- BATTLE INFO -->
 
-                    <strong id="finalRating">
-                        —
-                    </strong>
+                <div class="battle-config">
 
-                </div>
+                    <div class="config-item">
 
-            </div>
+                        <i data-lucide="list-ordered"></i>
 
+                        <div>
 
-            <div class="xp-reward">
+                            <strong>
+                                10
+                            </strong>
 
-                <div class="xp-icon">
-                    <i data-lucide="zap"></i>
-                </div>
+                            <span>
+                                Questions
+                            </span>
 
-                <div>
+                        </div>
 
-                    <span>
-                        XP EARNED
-                    </span>
-
-                    <strong id="earnedXP">
-                        +0 XP
-                    </strong>
-
-                </div>
-
-            </div>
+                    </div>
 
 
-            <div class="reward-breakdown">
+                    <div class="config-item">
 
-                <div>
+                        <i data-lucide="timer"></i>
 
-                    <span>
-                        Correct answers
-                    </span>
+                        <div>
 
-                    <strong id="correctXP">
-                        +0
-                    </strong>
+                            <strong>
+                                15s
+                            </strong>
 
-                </div>
+                            <span>
+                                Per question
+                            </span>
 
-                <div>
+                        </div>
 
-                    <span>
-                        Speed bonus
-                    </span>
+                    </div>
 
-                    <strong id="speedXP">
-                        +0
-                    </strong>
 
-                </div>
+                    <div class="config-item">
 
-                <div>
+                        <i data-lucide="zap"></i>
 
-                    <span>
-                        Combo bonus
-                    </span>
+                        <div>
 
-                    <strong id="comboXP">
-                        +0
-                    </strong>
+                            <strong>
+                                XP
+                            </strong>
 
-                </div>
+                            <span>
+                                Performance rewards
+                            </span>
 
-                <div>
+                        </div>
 
-                    <span>
-                        Victory bonus
-                    </span>
+                    </div>
 
-                    <strong id="winXP">
-                        +0
-                    </strong>
+
+                    <div class="config-item">
+
+                        <i data-lucide="bot"></i>
+
+                        <div>
+
+                            <strong>
+                                AI
+                            </strong>
+
+                            <span>
+                                Adaptive opponent
+                            </span>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
-                <div>
 
-                    <span>
-                        Difficulty bonus
-                    </span>
+                <!-- SETUP FOOTER -->
 
-                    <strong id="difficultyXP">
-                        +0
-                    </strong>
+                <div class="setup-footer">
+
+                    <div class="free-battle-info">
+
+                        <div class="mini-icon">
+
+                            <i data-lucide="gamepad-2"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+
+                                <span id="battlesUsed">
+                                    0
+                                </span>
+
+                                /
+
+                                <span id="battleLimit">
+                                    5
+                                </span>
+
+                            </strong>
+
+                            <span>
+                                free battles used
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="startBattleButton"
+                        class="start-button"
+                        onclick="startComputerBattle()"
+                    >
+
+                        <span>
+                            Start Battle
+                        </span>
+
+                        <i data-lucide="arrow-right"></i>
+
+                    </button>
 
                 </div>
 
-            </div>
+            </section>
 
 
-            <div class="result-actions">
+            <!-- =================================================
+                 BATTLE SCREEN
+            ================================================== -->
 
-                <button
-                    class="secondary-button"
-                    onclick="returnToGameMode()"
+            <section
+                id="battleScreen"
+                class="battle-card battle-screen"
+                style="display:none;"
+            >
+
+                <div class="battle-top">
+
+
+                    <div class="battle-player">
+
+                        <div class="small-avatar player">
+
+                            <i data-lucide="user-round"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                You
+                            </span>
+
+                            <strong id="playerName">
+                                Student
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="battle-center">
+
+                        <span id="battleQuestionNumber">
+                            QUESTION 1 / 10
+                        </span>
+
+
+                        <div class="timer-ring">
+
+                            <strong id="questionTimer">
+                                15
+                            </strong>
+
+                            <span>
+                                sec
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="battle-player ai">
+
+                        <div class="small-avatar ai">
+
+                            <i data-lucide="bot"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Opponent
+                            </span>
+
+                            <strong>
+                                StudyMind AI
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SCOREBOARD -->
+
+                <div class="scoreboard">
+
+                    <div class="score-side">
+
+                        <span>
+                            Your Score
+                        </span>
+
+                        <strong id="playerScore">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="score-middle">
+
+                        <span>
+                            VS
+                        </span>
+
+                    </div>
+
+
+                    <div class="score-side">
+
+                        <span>
+                            AI Score
+                        </span>
+
+                        <strong id="aiScore">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PROGRESS -->
+
+                <div class="battle-progress">
+
+                    <div
+                        id="battleProgressBar"
+                        class="battle-progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <!-- QUESTION -->
+
+                <div class="question-area">
+
+                    <div class="question-meta">
+
+                        <span id="questionSubject">
+                            Subject
+                        </span>
+
+                        <span id="questionTopic">
+                            Topic
+                        </span>
+
+                    </div>
+
+
+                    <h2 id="questionText">
+                        Loading question...
+                    </h2>
+
+
+                    <div
+                        id="answerOptions"
+                        class="answer-grid"
+                    ></div>
+
+
+                    <div
+                        class="question-feedback"
+                        id="questionFeedback"
+                    ></div>
+
+                </div>
+
+
+                <!-- BATTLE BOTTOM -->
+
+                <div class="battle-bottom">
+
+                    <div class="combo-display">
+
+                        <i data-lucide="flame"></i>
+
+                        <div>
+
+                            <strong id="comboCount">
+                                0
+                            </strong>
+
+                            <span>
+                                combo
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="live-performance">
+
+                        <span>
+                            Accuracy
+                        </span>
+
+                        <strong id="liveAccuracy">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        id="nextQuestionButton"
+                        class="next-button"
+                        onclick="nextBattleQuestion()"
+                        style="display:none;"
+                    >
+
+                        Next Question
+
+                        <i data-lucide="arrow-right"></i>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 RESULTS
+            ================================================== -->
+
+            <section
+                id="resultScreen"
+                class="battle-card result-screen"
+                style="display:none;"
+            >
+
+                <div
+                    class="result-icon"
+                    id="resultIcon"
                 >
-                    Game Mode
-                </button>
-
-                <button
-                    class="start-button"
-                    onclick="playAgain()"
-                >
-
-                    Battle Again
-
-                    <i data-lucide="rotate-cw"></i>
-
-                </button>
-
-            </div>
-
-        </section>
+                    🏆
+                </div>
 
 
-        <!-- =========================
-             AI INSIGHT
-        ========================== -->
-
-        <section
-            id="aiInsight"
-            class="ai-insight"
-        >
-
-            <div class="insight-icon">
-                <i data-lucide="sparkles"></i>
-            </div>
-
-            <div>
-
-                <span>
-                    STUDYMIND AI
+                <span class="section-label">
+                    BATTLE COMPLETE
                 </span>
 
-                <p id="aiInsightText">
-                    Select a curriculum and topic.
-                    I'll build the battle around your learning level.
+
+                <h2 id="resultTitle">
+                    Victory!
+                </h2>
+
+
+                <p id="resultSubtitle">
+                    Excellent performance.
                 </p>
 
-            </div>
 
-        </section>
+                <div class="final-score">
+
+                    <div>
+
+                        <span>
+                            Your Score
+                        </span>
+
+                        <strong id="finalPlayerScore">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="final-vs">
+                        VS
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            AI Score
+                        </span>
+
+                        <strong id="finalAIScore">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="performance-grid">
+
+                    <div>
+
+                        <span>
+                            Accuracy
+                        </span>
+
+                        <strong id="finalAccuracy">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Correct
+                        </span>
+
+                        <strong id="finalCorrect">
+                            0/10
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Best Combo
+                        </span>
+
+                        <strong id="finalCombo">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Performance
+                        </span>
+
+                        <strong id="finalRating">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="xp-reward">
+
+                    <div class="xp-icon">
+
+                        <i data-lucide="zap"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            XP EARNED
+                        </span>
+
+                        <strong id="earnedXP">
+                            +0 XP
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reward-breakdown">
+
+                    <div>
+
+                        <span>
+                            Correct answers
+                        </span>
+
+                        <strong id="correctXP">
+                            +0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Speed bonus
+                        </span>
+
+                        <strong id="speedXP">
+                            +0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Combo bonus
+                        </span>
+
+                        <strong id="comboXP">
+                            +0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Victory bonus
+                        </span>
+
+                        <strong id="winXP">
+                            +0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Difficulty bonus
+                        </span>
+
+                        <strong id="difficultyXP">
+                            +0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="result-actions">
+
+                    <button
+                        class="secondary-button"
+                        onclick="returnToGameMode()"
+                    >
+                        Game Mode
+                    </button>
+
+
+                    <button
+                        class="start-button"
+                        onclick="playAgain()"
+                    >
+
+                        Battle Again
+
+                        <i data-lucide="rotate-cw"></i>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 AI INSIGHT
+            ================================================== -->
+
+            <section
+                id="aiInsight"
+                class="ai-insight"
+            >
+
+                <div class="insight-icon">
+
+                    <i data-lucide="sparkles"></i>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        STUDYMIND AI
+                    </span>
+
+                    <p id="aiInsightText">
+                        Select a curriculum and topic.
+                        I'll build the battle around your learning level.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </div>
 
     </main>
 
@@ -960,13 +1339,17 @@
 ====================================================== -->
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
 
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
+document.addEventListener("DOMContentLoaded", function () {
 
-    });
+    if (window.lucide) {
+
+        window.lucide.createIcons();
+
+    }
+
+});
+
 </script>
 
 </body>
