@@ -3130,3 +3130,453 @@ body {
     }
 
 }
+
+/* =========================================================
+   STUDYMIND AI — PREMIUM GAME MODE THEME
+   Turns the Computer Battle page GOLD when Premium is active
+========================================================= */
+
+/* Premium page background */
+body.premium-active,
+body.premium-user {
+
+    --battle-bg: #0d0b08;
+
+    --battle-card: rgba(28, 23, 14, 0.92);
+    --battle-card-2: rgba(38, 31, 18, 0.94);
+
+    --battle-border: rgba(251, 191, 36, 0.16);
+
+    --battle-blue: #d4a017;
+    --battle-blue-2: #f5c542;
+
+    --battle-purple: #b8860b;
+
+    --battle-gold: #fbbf24;
+
+}
+
+
+/* Premium background */
+body.premium-active .app-shell,
+body.premium-user .app-shell,
+body.premium-active .app-main,
+body.premium-user .app-main {
+
+    background:
+        #0d0b08;
+
+}
+
+
+/* Premium battle page */
+body.premium-active .battle-page,
+body.premium-user .battle-page {
+
+    background:
+
+        radial-gradient(
+            circle at 20% 10%,
+            rgba(251,191,36,.10),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 85% 25%,
+            rgba(217,160,23,.08),
+            transparent 30%
+        ),
+
+        #0d0b08;
+
+}
+
+
+/* Premium topbar */
+body.premium-active .topbar,
+body.premium-user .topbar {
+
+    background:
+        rgba(13, 11, 8, .88);
+
+    border-bottom:
+        1px solid
+        rgba(251,191,36,.12);
+
+}
+
+
+/* Premium brand */
+body.premium-active .sidebar-brand .brand-mark,
+body.premium-user .sidebar-brand .brand-mark {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #fbbf24
+        );
+
+    box-shadow:
+        0 8px 25px
+        rgba(251,191,36,.18);
+
+}
+
+
+/* Premium profile avatar */
+body.premium-active .profile-avatar,
+body.premium-user .profile-avatar {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #fbbf24
+        );
+
+}
+
+
+/* Premium sidebar */
+body.premium-active .sidebar,
+body.premium-user .sidebar {
+
+    background:
+        #0d0b08;
+
+    border-right:
+        1px solid
+        rgba(251,191,36,.12);
+
+}
+
+
+/* Premium active navigation */
+body.premium-active .nav-section a.active,
+body.premium-user .nav-section a.active {
+
+    color:
+        #fef3c7;
+
+    background:
+        rgba(251,191,36,.10);
+
+}
+
+
+/* Premium active indicator */
+body.premium-active .nav-section a.active::before,
+body.premium-user .nav-section a.active::before {
+
+    background:
+        linear-gradient(
+            180deg,
+            #d4a017,
+            #fbbf24
+        );
+
+    box-shadow:
+        0 0 14px
+        rgba(251,191,36,.65);
+
+}
+
+
+/* Premium active icon */
+body.premium-active .nav-section a.active svg,
+body.premium-user .nav-section a.active svg {
+
+    color:
+        #fbbf24;
+
+}
+
+
+/* Premium hero eyebrow */
+body.premium-active .eyebrow,
+body.premium-user .eyebrow {
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium hero gradient */
+body.premium-active .hero-copy h1 span,
+body.premium-user .hero-copy h1 span {
+
+    background:
+        linear-gradient(
+            90deg,
+            #fbbf24,
+            #fde68a
+        );
+
+    -webkit-background-clip:
+        text;
+
+    background-clip:
+        text;
+
+    color:
+        transparent;
+
+}
+
+
+/* Premium hero stats */
+body.premium-active .hero-stats strong,
+body.premium-user .hero-stats strong {
+
+    color:
+        #fef3c7;
+
+}
+
+
+/* Premium VS badge */
+body.premium-active .vs-badge,
+body.premium-user .vs-badge {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #fbbf24
+        );
+
+    color:
+        #1c1505;
+
+    box-shadow:
+        0 0 40px
+        rgba(251,191,36,.30);
+
+}
+
+
+/* Premium battle orb */
+body.premium-active .orb-one,
+body.premium-user .orb-one {
+
+    background:
+        #d4a017;
+
+}
+
+
+body.premium-active .orb-two,
+body.premium-user .orb-two {
+
+    background:
+        #fbbf24;
+
+}
+
+
+/* Premium cards */
+body.premium-active .battle-card,
+body.premium-user .battle-card {
+
+    border-color:
+        rgba(251,191,36,.15);
+
+    background:
+        rgba(28,23,14,.92);
+
+}
+
+
+/* Premium section labels */
+body.premium-active .section-label,
+body.premium-user .section-label {
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium select icons */
+body.premium-active .select-wrapper svg,
+body.premium-user .select-wrapper svg {
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium select focus */
+body.premium-active .select-wrapper select:focus,
+body.premium-user .select-wrapper select:focus {
+
+    border-color:
+        #d4a017;
+
+}
+
+
+/* Premium search focus */
+body.premium-active .topic-search input:focus,
+body.premium-user .topic-search input:focus {
+
+    border-color:
+        #d4a017;
+
+}
+
+
+/* Premium config icons */
+body.premium-active .config-item svg,
+body.premium-user .config-item svg {
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium mini icon */
+body.premium-active .mini-icon,
+body.premium-user .mini-icon {
+
+    background:
+        rgba(251,191,36,.10);
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium primary buttons */
+body.premium-active .start-button,
+body.premium-active .next-button,
+body.premium-user .start-button,
+body.premium-user .next-button {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b,
+            #fbbf24
+        );
+
+    color:
+        #1c1505;
+
+    box-shadow:
+        0 12px 30px
+        rgba(251,191,36,.18);
+
+}
+
+
+/* Premium progress */
+body.premium-active .battle-progress-fill,
+body.premium-user .battle-progress-fill {
+
+    background:
+        linear-gradient(
+            90deg,
+            #b8860b,
+            #fbbf24
+        );
+
+}
+
+
+/* Premium timer */
+body.premium-active .timer-ring,
+body.premium-user .timer-ring {
+
+    border-color:
+        #fbbf24;
+
+    background:
+        rgba(251,191,36,.07);
+
+}
+
+
+/* Premium question metadata */
+body.premium-active .question-meta span,
+body.premium-user .question-meta span {
+
+    background:
+        rgba(251,191,36,.08);
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium answer hover */
+body.premium-active .answer-option:hover,
+body.premium-user .answer-option:hover {
+
+    border-color:
+        rgba(251,191,36,.55);
+
+    background:
+        rgba(251,191,36,.07);
+
+}
+
+
+/* Premium AI avatar */
+body.premium-active .ai-avatar,
+body.premium-user .ai-avatar {
+
+    color:
+        #fbbf24;
+
+}
+
+
+/* Premium player avatar */
+body.premium-active .player-avatar,
+body.premium-user .player-avatar {
+
+    color:
+        #f5c542;
+
+}
+
+
+/* Premium AI insight */
+body.premium-active .ai-insight,
+body.premium-user .ai-insight {
+
+    border-color:
+        rgba(251,191,36,.16);
+
+    background:
+        rgba(251,191,36,.045);
+
+}
+
+
+body.premium-active .insight-icon,
+body.premium-user .insight-icon {
+
+    background:
+        rgba(251,191,36,.10);
+
+    color:
+        #fbbf24;
+
+}
+
+
+body.premium-active .ai-insight span,
+body.premium-user .ai-insight span {
+
+    color:
+        #fbbf24;
+
+}
