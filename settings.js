@@ -3,27 +3,13 @@
 /* =========================================================
    STUDYMIND AI — SETTINGS
    SUPABASE AUTHORITATIVE USERNAME SYSTEM
-
-   IMPORTANT
-   ---------------------------------------------------------
-   Supabase Auth user_metadata.username is the ONLY
-   authoritative username.
-
-   Compatibility fields:
-   - name
-   - display_name
-   - full_name
-
-   are kept synchronized with username, but are NEVER
-   allowed to override username.
-
-   localStorage is only a local cache.
-   ========================================================= */
+   GOLD / BLACK THEME SYSTEM
+========================================================= */
 
 
 /* =========================================================
    SETTINGS KEYS
-   ========================================================= */
+========================================================= */
 
 const SETTINGS = {
 
@@ -56,7 +42,7 @@ const SETTINGS = {
 
 /* =========================================================
    SUPABASE CLIENT
-   ========================================================= */
+========================================================= */
 
 function settingsClient() {
 
@@ -71,7 +57,7 @@ function settingsClient() {
 
 /* =========================================================
    NORMALIZE USERNAME
-   ========================================================= */
+========================================================= */
 
 function normalizeUsername(username) {
 
@@ -86,9 +72,7 @@ function normalizeUsername(username) {
 
 /* =========================================================
    GET LOCAL CACHED USERNAME
-   ---------------------------------------------------------
-   This is ONLY a fallback for offline/UI situations.
-   ========================================================= */
+========================================================= */
 
 function getCachedUsername() {
 
@@ -103,7 +87,7 @@ function getCachedUsername() {
 
 /* =========================================================
    SET LOCAL CACHE
-   ========================================================= */
+========================================================= */
 
 function cacheUsername(username) {
 
@@ -122,15 +106,7 @@ function cacheUsername(username) {
 
 /* =========================================================
    GET CANONICAL USERNAME
-   ---------------------------------------------------------
-   IMPORTANT:
-   This function does NOT use:
-   - name
-   - display_name
-   - full_name
-
-   Those fields are compatibility fields only.
-   ========================================================= */
+========================================================= */
 
 function getCanonicalUsername() {
 
@@ -141,7 +117,7 @@ function getCanonicalUsername() {
 
 /* =========================================================
    UPDATE CURRENT PAGE
-   ========================================================= */
+========================================================= */
 
 function updateUsernameUI(username) {
 
@@ -177,6 +153,32 @@ function updateUsernameUI(username) {
 
     document
         .querySelectorAll(
+            "#largeAvatar"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                username
+                    .charAt(0)
+                    .toUpperCase();
+
+        });
+
+
+    document
+        .querySelectorAll(
+            "#profileName"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                username;
+
+        });
+
+
+    document
+        .querySelectorAll(
             "[data-username]"
         )
         .forEach(element => {
@@ -191,12 +193,7 @@ function updateUsernameUI(username) {
 
 /* =========================================================
    SET CANONICAL USERNAME
-   ---------------------------------------------------------
-   This updates the local cache/UI.
-
-   Supabase persistence is handled separately by
-   saveUsernameToSupabase().
-   ========================================================= */
+========================================================= */
 
 function setCanonicalUsername(username) {
 
@@ -221,7 +218,7 @@ function setCanonicalUsername(username) {
 
 /* =========================================================
    SAVE USERNAME TO SUPABASE AUTH
-   ========================================================= */
+========================================================= */
 
 async function saveUsernameToSupabase(
     username,
@@ -248,10 +245,6 @@ async function saveUsernameToSupabase(
     let user =
         existingUser;
 
-
-    /* -------------------------------------------------------
-       GET AUTHENTICATED USER
-       ------------------------------------------------------- */
 
     if (!user) {
 
@@ -282,16 +275,6 @@ async function saveUsernameToSupabase(
 
     }
 
-
-    /* -------------------------------------------------------
-       UPDATE AUTH METADATA
-       -------------------------------------------------------
-
-       username = AUTHORITATIVE
-
-       The other fields exist only for compatibility with
-       older StudyMind code.
-       ------------------------------------------------------- */
 
     const {
         data,
@@ -326,10 +309,6 @@ async function saveUsernameToSupabase(
         data?.user ||
         user;
 
-
-    /* -------------------------------------------------------
-       VERIFY THE SAVED VALUE
-       ------------------------------------------------------- */
 
     const savedUsername =
         normalizeUsername(
@@ -372,7 +351,7 @@ async function saveUsernameToSupabase(
 
 /* =========================================================
    SYNC LEADERBOARD USERNAME
-   ========================================================= */
+========================================================= */
 
 async function syncLeaderboardUsername(
     username,
@@ -480,20 +459,7 @@ async function syncLeaderboardUsername(
 
 /* =========================================================
    LOAD AUTHENTICATED USER
-   ---------------------------------------------------------
-   CRITICAL:
-   ONLY user_metadata.username is accepted as the
-   authoritative Supabase username.
-
-   We deliberately DO NOT do:
-
-   metadata.name
-   metadata.display_name
-   metadata.full_name
-
-   because that is what caused the old
-   "Ronaldo Cristiano" value to return.
-   ========================================================= */
+========================================================= */
 
 async function loadSettingsUser() {
 
@@ -543,10 +509,6 @@ async function loadSettingsUser() {
                 {};
 
 
-            /* ==============================================
-               ONLY AUTHORITATIVE FIELD
-               ============================================== */
-
             username =
                 String(
                     metadata.username ||
@@ -554,22 +516,9 @@ async function loadSettingsUser() {
                 ).trim();
 
 
-            /* ==============================================
-               IMPORTANT
-
-               If username doesn't exist yet, DO NOT revive
-               metadata.name / display_name / full_name.
-
-               We migrate the existing name ONCE into the
-               canonical username field.
-
-               This is needed for your current account because
-               it currently has:
-
-               name: "Ronaldo Cristiano"
-
-               but no username.
-               ============================================== */
+            /* ------------------------------------------------
+               ONE-TIME MIGRATION
+            ------------------------------------------------ */
 
             if (!username) {
 
@@ -604,13 +553,6 @@ async function loadSettingsUser() {
 
             }
 
-
-            /* ==============================================
-               LAST RESORT
-
-               Only use local cache if Supabase contains
-               absolutely no usable username.
-               ============================================== */
 
             if (!username) {
 
@@ -674,7 +616,7 @@ async function loadSettingsUser() {
 
 /* =========================================================
    PROFILE
-   ========================================================= */
+========================================================= */
 
 function setupProfile() {
 
@@ -709,10 +651,6 @@ function setupProfile() {
                 );
 
 
-            /* ------------------------------------------------
-               VALIDATION
-               ------------------------------------------------ */
-
             if (
                 username.length < 3
             ) {
@@ -743,13 +681,6 @@ function setupProfile() {
                 true;
 
 
-            let authSaved =
-                false;
-
-            let leaderboardSaved =
-                false;
-
-
             try {
 
                 const client =
@@ -764,10 +695,6 @@ function setupProfile() {
 
                 }
 
-
-                /* ==========================================
-                   GET CURRENT AUTH USER
-                   ========================================== */
 
                 const {
                     data,
@@ -795,10 +722,6 @@ function setupProfile() {
                 }
 
 
-                /* ==========================================
-                   SAVE AUTHORITATIVE USERNAME
-                   ========================================== */
-
                 const result =
                     await saveUsernameToSupabase(
                         username,
@@ -814,15 +737,6 @@ function setupProfile() {
                     result.username;
 
 
-                authSaved =
-                    true;
-
-
-                /* ==========================================
-                   UPDATE LOCAL CACHE/UI ONLY AFTER SUPABASE
-                   SUCCESS
-                   ========================================== */
-
                 setCanonicalUsername(
                     savedUsername
                 );
@@ -832,10 +746,6 @@ function setupProfile() {
                     savedUsername;
 
 
-                /* ==========================================
-                   LEADERBOARD
-                   ========================================== */
-
                 const leaderboardResult =
                     await syncLeaderboardUsername(
                         savedUsername,
@@ -843,13 +753,9 @@ function setupProfile() {
                     );
 
 
-                leaderboardSaved =
+                const leaderboardSaved =
                     leaderboardResult.success;
 
-
-                /* ==========================================
-                   USERNAME CHANGE EVENT
-                   ========================================== */
 
                 window.dispatchEvent(
                     new CustomEvent(
@@ -873,10 +779,6 @@ function setupProfile() {
                 );
 
 
-                /* ==========================================
-                   PROFILE UPDATED EVENT
-                   ========================================== */
-
                 window.dispatchEvent(
                     new CustomEvent(
                         "studyMindProfileUpdated",
@@ -899,10 +801,6 @@ function setupProfile() {
                 );
 
 
-                /* ==========================================
-                   BROADCAST TO OTHER OPEN STUDYMIND TABS
-                   ========================================== */
-
                 try {
 
                     localStorage.setItem(
@@ -917,27 +815,11 @@ function setupProfile() {
                 catch (_) {}
 
 
-                /* ==========================================
-                   MESSAGE
-                   ========================================== */
-
-                if (
+                showSettingsToast(
                     leaderboardSaved
-                ) {
-
-                    showSettingsToast(
-                        "Username updated everywhere."
-                    );
-
-                }
-
-                else {
-
-                    showSettingsToast(
-                        "Username updated successfully."
-                    );
-
-                }
+                        ? "Username updated everywhere."
+                        : "Username updated successfully."
+                );
 
             }
 
@@ -948,15 +830,6 @@ function setupProfile() {
                     error
                 );
 
-
-                /*
-                 * IMPORTANT:
-                 *
-                 * Do NOT pretend the username was saved
-                 * locally when Supabase failed.
-                 *
-                 * The old username remains authoritative.
-                 */
 
                 showSettingsToast(
                     "Could not update username. Please try again."
@@ -978,17 +851,132 @@ function setupProfile() {
 
 
 /* =========================================================
-   THEME
-   ========================================================= */
+   PREMIUM DETECTION
+========================================================= */
 
-function loadTheme() {
+function isPremiumUser() {
 
-    const theme =
+    const cached =
         localStorage.getItem(
-            SETTINGS.THEME
-        ) ||
-        "dark";
+            "studyMindPremium"
+        );
 
+
+    if (
+        cached === "true" ||
+        cached === "1"
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        window.premiumStatus === true
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        typeof window.isStudyMindPremium ===
+        "function"
+    ) {
+
+        try {
+
+            return Boolean(
+                window.isStudyMindPremium()
+            );
+
+        }
+
+        catch (_) {}
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   APPLY PREMIUM THEME
+========================================================= */
+
+function applyPremiumTheme() {
+
+    const premium =
+        isPremiumUser();
+
+
+    document.body.classList.toggle(
+        "premium-active",
+        premium
+    );
+
+
+    document.body.classList.toggle(
+        "premium-user",
+        premium
+    );
+
+
+    document.documentElement
+        .setAttribute(
+            "data-premium",
+            premium
+                ? "true"
+                : "false"
+        );
+
+}
+
+
+/* =========================================================
+   RESOLVE SYSTEM THEME
+========================================================= */
+
+function getSystemTheme() {
+
+    return window.matchMedia &&
+        window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        ).matches
+            ? "dark"
+            : "light";
+
+}
+
+
+/* =========================================================
+   APPLY THEME
+   ---------------------------------------------------------
+   Supports:
+   - system
+   - light
+   - dark
+========================================================= */
+
+function applyTheme(theme) {
+
+    theme =
+        theme || "system";
+
+
+    const resolvedTheme =
+        theme === "system"
+            ? getSystemTheme()
+            : theme;
+
+
+    /* -------------------------------------------------------
+       HTML ATTRIBUTE
+    ------------------------------------------------------- */
 
     document.documentElement
         .setAttribute(
@@ -996,53 +984,464 @@ function loadTheme() {
             theme
         );
 
+
+    /* -------------------------------------------------------
+       BODY CLASS
+       This is required by settings.css.
+    ------------------------------------------------------- */
+
+    document.body.classList.toggle(
+        "dark",
+        resolvedTheme === "dark"
+    );
+
+
+    document.body.classList.toggle(
+        "light",
+        resolvedTheme === "light"
+    );
+
+
+    /* -------------------------------------------------------
+       PREMIUM ALWAYS OVERRIDES NORMAL THEME
+    ------------------------------------------------------- */
+
+    applyPremiumTheme();
+
+
+    /* -------------------------------------------------------
+       UPDATE SIDEBAR THEME BUTTON
+    ------------------------------------------------------- */
+
+    updateThemeToggle(
+        theme,
+        resolvedTheme
+    );
+
+
+    /* -------------------------------------------------------
+       UPDATE APPEARANCE SELECT
+    ------------------------------------------------------- */
+
+    const themeSelect =
+        document.getElementById(
+            "themeSelect"
+        );
+
+
+    if (themeSelect) {
+
+        themeSelect.value =
+            theme;
+
+    }
+
+
+    /* -------------------------------------------------------
+       UPDATE META THEME COLOR
+    ------------------------------------------------------- */
+
+    const themeColor =
+        resolvedTheme === "dark"
+            ? "#0d0b08"
+            : "#f7f5ef";
+
+
+    let meta =
+        document.querySelector(
+            'meta[name="theme-color"]'
+        );
+
+
+    if (!meta) {
+
+        meta =
+            document.createElement(
+                "meta"
+            );
+
+        meta.name =
+            "theme-color";
+
+        document.head.appendChild(
+            meta
+        );
+
+    }
+
+
+    meta.content =
+        isPremiumUser()
+            ? "#0d0b08"
+            : themeColor;
+
 }
 
 
-function setupTheme() {
+/* =========================================================
+   UPDATE SIDEBAR THEME BUTTON
+========================================================= */
 
-    document
-        .querySelectorAll(
-            "[data-theme]"
+function updateThemeToggle(
+    theme,
+    resolvedTheme
+) {
+
+    const button =
+        document.getElementById(
+            "themeToggle"
+        );
+
+
+    const text =
+        document.getElementById(
+            "themeText"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    const icon =
+        button.querySelector(
+            "span:first-child"
+        );
+
+
+    if (icon) {
+
+        icon.textContent =
+            resolvedTheme === "dark"
+                ? "☀️"
+                : "🌙";
+
+    }
+
+
+    if (text) {
+
+        if (
+            theme === "system"
+        ) {
+
+            text.textContent =
+                resolvedTheme === "dark"
+                    ? "System · Dark"
+                    : "System · Light";
+
+        }
+
+        else if (
+            theme === "dark"
+        ) {
+
+            text.textContent =
+                "Light mode";
+
+        }
+
+        else {
+
+            text.textContent =
+                "Dark mode";
+
+        }
+
+    }
+
+
+    button.dataset.currentTheme =
+        theme;
+
+}
+
+
+/* =========================================================
+   LOAD THEME
+========================================================= */
+
+function loadTheme() {
+
+    const savedTheme =
+        localStorage.getItem(
+            SETTINGS.THEME
+        );
+
+
+    const theme =
+        (
+            savedTheme === "light" ||
+            savedTheme === "dark" ||
+            savedTheme === "system"
         )
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const theme =
-                        button.dataset.theme;
+            ? savedTheme
+            : "system";
 
 
-                    if (!theme) {
-                        return;
-                    }
+    applyTheme(
+        theme
+    );
+
+}
 
 
-                    localStorage.setItem(
-                        SETTINGS.THEME,
-                        theme
-                    );
+/* =========================================================
+   SET THEME
+========================================================= */
+
+function setTheme(theme) {
+
+    if (
+        theme !== "system" &&
+        theme !== "light" &&
+        theme !== "dark"
+    ) {
+
+        theme =
+            "system";
+
+    }
 
 
-                    document.documentElement
-                        .setAttribute(
-                            "data-theme",
-                            theme
-                        );
+    localStorage.setItem(
+        SETTINGS.THEME,
+        theme
+    );
+
+
+    applyTheme(
+        theme
+    );
+
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindThemeChanged",
+            {
+
+                detail: {
+
+                    theme
 
                 }
+
+            }
+        )
+    );
+
+}
+
+
+/* =========================================================
+   SETUP APPEARANCE THEME SELECT
+========================================================= */
+
+function setupThemeSelect() {
+
+    const themeSelect =
+        document.getElementById(
+            "themeSelect"
+        );
+
+
+    if (!themeSelect) {
+        return;
+    }
+
+
+    themeSelect.addEventListener(
+        "change",
+        () => {
+
+            setTheme(
+                themeSelect.value
             );
 
-        });
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SETUP SIDEBAR THEME BUTTON
+   ---------------------------------------------------------
+   Clicking the sidebar button toggles:
+   light → dark → light
+   while System remains selectable from Appearance.
+========================================================= */
+
+function setupThemeToggle() {
+
+    const button =
+        document.getElementById(
+            "themeToggle"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            const current =
+                localStorage.getItem(
+                    SETTINGS.THEME
+                ) ||
+                "system";
+
+
+            const resolved =
+                current === "system"
+                    ? getSystemTheme()
+                    : current;
+
+
+            const nextTheme =
+                resolved === "dark"
+                    ? "light"
+                    : "dark";
+
+
+            setTheme(
+                nextTheme
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SYSTEM THEME CHANGE
+   ---------------------------------------------------------
+   Only affects the page while Theme = System.
+========================================================= */
+
+function setupSystemThemeListener() {
+
+    if (
+        !window.matchMedia
+    ) {
+
+        return;
+
+    }
+
+
+    const mediaQuery =
+        window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        );
+
+
+    const handleChange =
+        () => {
+
+            const current =
+                localStorage.getItem(
+                    SETTINGS.THEME
+                ) ||
+                "system";
+
+
+            if (
+                current === "system"
+            ) {
+
+                applyTheme(
+                    "system"
+                );
+
+            }
+
+        };
+
+
+    if (
+        typeof mediaQuery.addEventListener ===
+        "function"
+    ) {
+
+        mediaQuery.addEventListener(
+            "change",
+            handleChange
+        );
+
+    }
+
+    else if (
+        typeof mediaQuery.addListener ===
+        "function"
+    ) {
+
+        mediaQuery.addListener(
+            handleChange
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM THEME LISTENER
+========================================================= */
+
+function setupPremiumThemeListener() {
+
+    applyPremiumTheme();
+
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        () => {
+
+            applyPremiumTheme();
+
+        }
+    );
+
+
+    window.addEventListener(
+        "storage",
+        event => {
+
+            if (
+                event.key ===
+                "studyMindPremium"
+            ) {
+
+                applyPremiumTheme();
+
+                const currentTheme =
+                    localStorage.getItem(
+                        SETTINGS.THEME
+                    ) ||
+                    "system";
+
+                applyTheme(
+                    currentTheme
+                );
+
+            }
+
+        }
+    );
 
 }
 
 
 /* =========================================================
    TOAST
-   ========================================================= */
+========================================================= */
 
 function showSettingsToast(
     message
@@ -1062,8 +1461,25 @@ function showSettingsToast(
     }
 
 
-    toast.textContent =
-        message;
+    const messageElement =
+        document.getElementById(
+            "toastMessage"
+        );
+
+
+    if (messageElement) {
+
+        messageElement.textContent =
+            message;
+
+    }
+
+    else {
+
+        toast.textContent =
+            message;
+
+    }
 
 
     toast.classList.add(
@@ -1087,13 +1503,13 @@ function showSettingsToast(
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
 function setupLogout() {
 
     document
         .querySelectorAll(
-            "#logout, [data-logout]"
+            "#logout, #logoutButton, [data-logout]"
         )
         .forEach(button => {
 
@@ -1140,10 +1556,159 @@ function setupLogout() {
 
 
 /* =========================================================
+   MOBILE MENU
+========================================================= */
+
+function setupMobileMenu() {
+
+    const button =
+        document.getElementById(
+            "mobileMenu"
+        );
+
+
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
+
+
+    if (
+        !button ||
+        !sidebar
+    ) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            sidebar.classList.toggle(
+                "open"
+            );
+
+        }
+    );
+
+
+    document
+        .querySelectorAll(
+            ".navigation a"
+        )
+        .forEach(link => {
+
+            link.addEventListener(
+                "click",
+                () => {
+
+                    sidebar.classList.remove(
+                        "open"
+                    );
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   SETTINGS SECTION NAVIGATION
+========================================================= */
+
+function setupSettingsSections() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".settings-nav-item"
+        );
+
+
+    const sections =
+        document.querySelectorAll(
+            ".settings-section"
+        );
+
+
+    if (!buttons.length) {
+        return;
+    }
+
+
+    buttons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const target =
+                    button.dataset.section;
+
+
+                if (!target) {
+                    return;
+                }
+
+
+                buttons.forEach(
+                    item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+                sections.forEach(
+                    section => {
+
+                        section.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                const section =
+                    document.getElementById(
+                        `section-${target}`
+                    );
+
+
+                if (section) {
+
+                    section.classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
+        );
+
+    });
+
+}
+
+
+/* =========================================================
    RESET STUDY DATA
    ---------------------------------------------------------
    USERNAME + PREMIUM ARE PRESERVED.
-   ========================================================= */
+========================================================= */
 
 function resetStudyData() {
 
@@ -1207,8 +1772,8 @@ function resetStudyData() {
 
 
     /* -------------------------------------------------------
-       EXPLICIT ZERO STATE
-       ------------------------------------------------------- */
+       ZERO PROGRESS STATE
+    ------------------------------------------------------- */
 
     localStorage.setItem(
         "studyMindXP",
@@ -1259,38 +1824,74 @@ function resetStudyData() {
 
 
 /* =========================================================
+   RESET BUTTON
+   ---------------------------------------------------------
+   Supports BOTH:
+   #resetStudyData
+   #resetData
+========================================================= */
+
+function setupResetData() {
+
+    document
+        .querySelectorAll(
+            "#resetStudyData, #resetData"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                resetStudyData
+            );
+
+        });
+
+}
+
+
+/* =========================================================
    INITIALIZE
-   ========================================================= */
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
+        /* ---------------------------------------------------
+           THEME FIRST
+        --------------------------------------------------- */
+
         loadTheme();
+
+        setupThemeSelect();
+
+        setupThemeToggle();
+
+        setupSystemThemeListener();
+
+        setupPremiumThemeListener();
+
+
+        /* ---------------------------------------------------
+           USER
+        --------------------------------------------------- */
 
         await loadSettingsUser();
 
         setupProfile();
 
-        setupTheme();
+
+        /* ---------------------------------------------------
+           PAGE CONTROLS
+        --------------------------------------------------- */
 
         setupLogout();
 
+        setupMobileMenu();
 
-        const reset =
-            document.getElementById(
-                "resetStudyData"
-            );
+        setupSettingsSections();
 
-
-        if (reset) {
-
-            reset.addEventListener(
-                "click",
-                resetStudyData
-            );
-
-        }
+        setupResetData();
 
     }
 );
@@ -1298,7 +1899,7 @@ document.addEventListener(
 
 /* =========================================================
    PUBLIC API
-   ========================================================= */
+========================================================= */
 
 window.StudyMindSettings = {
 
@@ -1316,7 +1917,16 @@ window.StudyMindSettings = {
 
     resetStudyData,
 
-    syncLeaderboardUsername
+    syncLeaderboardUsername,
+
+    setTheme,
+
+    getTheme:
+        () =>
+            localStorage.getItem(
+                SETTINGS.THEME
+            ) || "system",
+
+    applyTheme
 
 };
-
