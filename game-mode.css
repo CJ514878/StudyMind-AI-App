@@ -3580,3 +3580,898 @@ body.premium-user .ai-insight span {
         #fbbf24;
 
 }
+
+/* =========================================================
+   STUDYMIND AI — PREMIUM GAME MODE
+   GOLD OVERRIDES FOR BATTLE SETUP CONTROLS
+   ---------------------------------------------------------
+   These rules activate when:
+       <body class="premium-active">
+========================================================= */
+
+
+/* =========================================================
+   PREMIUM COLOR VARIABLES
+========================================================= */
+
+body.premium-active {
+    --battle-blue: #d4af37;
+    --battle-blue-2: #f0c75e;
+    --battle-purple: #b8860b;
+
+    --battle-gold: #d4af37;
+    --premium-gold: #d4af37;
+    --premium-gold-light: #f0c75e;
+    --premium-gold-dark: #a67c00;
+
+    --premium-bg: #f7f3e8;
+    --premium-card: #ffffff;
+    --premium-card-soft: #fbf8f0;
+
+    --premium-border: rgba(212, 175, 55, 0.30);
+
+    --premium-text: #181818;
+    --premium-muted: #756f60;
+}
+
+
+/* =========================================================
+   PREMIUM SETUP AREA
+========================================================= */
+
+body.premium-active .battle-setup,
+body.premium-active .setup-card,
+body.premium-active .battle-setup-card,
+body.premium-active .setup-panel,
+body.premium-active .battle-config,
+body.premium-active .configuration-card {
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fbf8f0 100%
+        );
+
+    border-color: rgba(212, 175, 55, 0.30);
+}
+
+
+/* =========================================================
+   PREMIUM SETUP LABELS
+========================================================= */
+
+body.premium-active .battle-setup label,
+body.premium-active .setup-card label,
+body.premium-active .battle-setup-card label,
+body.premium-active .setup-panel label,
+body.premium-active .battle-config label,
+body.premium-active .configuration-card label {
+    color: #756f60;
+}
+
+
+/* =========================================================
+   PREMIUM SELECTS
+   Curriculum
+   Subject
+   Topic
+   Difficulty
+========================================================= */
+
+body.premium-active
+.battle-setup
+select,
+
+body.premium-active
+.setup-card
+select,
+
+body.premium-active
+.battle-setup-card
+select,
+
+body.premium-active
+.setup-panel
+select,
+
+body.premium-active
+.battle-config
+select,
+
+body.premium-active
+.configuration-card
+select,
+
+body.premium-active
+#curriculumSelect,
+
+body.premium-active
+#subjectSelect,
+
+body.premium-active
+#topicSelect,
+
+body.premium-active
+#difficultySelect {
+    background-color: #ffffff;
+
+    background-image: none;
+
+    color: #181818;
+
+    border: 1px solid
+        rgba(212, 175, 55, 0.42);
+
+    box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.04);
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background-color .2s ease;
+}
+
+
+/* =========================================================
+   PREMIUM SELECT HOVER
+========================================================= */
+
+body.premium-active
+.battle-setup
+select:hover,
+
+body.premium-active
+.setup-card
+select:hover,
+
+body.premium-active
+.battle-setup-card
+select:hover,
+
+body.premium-active
+.setup-panel
+select:hover,
+
+body.premium-active
+.battle-config
+select:hover,
+
+body.premium-active
+.configuration-card
+select:hover,
+
+body.premium-active
+#curriculumSelect:hover,
+
+body.premium-active
+#subjectSelect:hover,
+
+body.premium-active
+#topicSelect:hover,
+
+body.premium-active
+#difficultySelect:hover {
+    border-color: #d4af37;
+
+    background-color: #fffdf7;
+
+    box-shadow:
+        0 4px 14px
+        rgba(212, 175, 55, 0.10);
+}
+
+
+/* =========================================================
+   PREMIUM SELECT FOCUS
+========================================================= */
+
+body.premium-active
+.battle-setup
+select:focus,
+
+body.premium-active
+.setup-card
+select:focus,
+
+body.premium-active
+.battle-setup-card
+select:focus,
+
+body.premium-active
+.setup-panel
+select:focus,
+
+body.premium-active
+.battle-config
+select:focus,
+
+body.premium-active
+.configuration-card
+select:focus,
+
+body.premium-active
+#curriculumSelect:focus,
+
+body.premium-active
+#subjectSelect:focus,
+
+body.premium-active
+#topicSelect:focus,
+
+body.premium-active
+#difficultySelect:focus {
+    outline: none;
+
+    border-color: #d4af37;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(212, 175, 55, 0.15),
+        0 4px 14px
+        rgba(212, 175, 55, 0.08);
+}
+
+
+/* =========================================================
+   PREMIUM SELECT OPTIONS
+========================================================= */
+
+body.premium-active
+select option {
+    background: #ffffff;
+    color: #181818;
+}
+
+
+/* =========================================================
+   PREMIUM TOPIC SEARCH
+========================================================= */
+
+body.premium-active
+#topicSearch {
+    background: #ffffff;
+
+    color: #181818;
+
+    border: 1px solid
+        rgba(212, 175, 55, 0.42);
+
+    box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.04);
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background-color .2s ease;
+}
+
+
+body.premium-active
+#topicSearch::placeholder {
+    color: #9a9383;
+}
+
+
+body.premium-active
+#topicSearch:hover {
+    border-color: #d4af37;
+
+    background: #fffdf7;
+}
+
+
+body.premium-active
+#topicSearch:focus {
+    outline: none;
+
+    border-color: #d4af37;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(212, 175, 55, 0.15),
+        0 4px 14px
+        rgba(212, 175, 55, 0.08);
+}
+
+
+/* =========================================================
+   PREMIUM TOPIC SECTION
+========================================================= */
+
+body.premium-active
+.topic-section,
+
+body.premium-active
+.topic-selector,
+
+body.premium-active
+.topic-list,
+
+body.premium-active
+.topics-section,
+
+body.premium-active
+.topic-panel,
+
+body.premium-active
+.topic-container {
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fbf8f0 100%
+        );
+
+    border-color:
+        rgba(212, 175, 55, 0.28);
+}
+
+
+/* =========================================================
+   PREMIUM TOPIC ITEMS
+========================================================= */
+
+body.premium-active
+.topic-item,
+
+body.premium-active
+.topic-option,
+
+body.premium-active
+.topic-result,
+
+body.premium-active
+.topic-row {
+    background: #ffffff;
+
+    color: #181818;
+
+    border-color:
+        rgba(212, 175, 55, 0.20);
+}
+
+
+body.premium-active
+.topic-item:hover,
+
+body.premium-active
+.topic-option:hover,
+
+body.premium-active
+.topic-result:hover,
+
+body.premium-active
+.topic-row:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #fffdf7,
+            #faf5e6
+        );
+
+    border-color:
+        rgba(212, 175, 55, 0.45);
+}
+
+
+/* =========================================================
+   PREMIUM ACTIVE TOPIC
+========================================================= */
+
+body.premium-active
+.topic-item.active,
+
+body.premium-active
+.topic-item.selected,
+
+body.premium-active
+.topic-option.active,
+
+body.premium-active
+.topic-option.selected,
+
+body.premium-active
+.topic-result.active,
+
+body.premium-active
+.topic-result.selected {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(212, 175, 55, 0.14),
+            rgba(240, 199, 94, 0.08)
+        );
+
+    color: #8a6500;
+
+    border-color: #d4af37;
+
+    box-shadow:
+        0 4px 14px
+        rgba(212, 175, 55, 0.10);
+}
+
+
+/* =========================================================
+   PREMIUM TOPIC TEXT
+========================================================= */
+
+body.premium-active
+.topic-item h3,
+
+body.premium-active
+.topic-item h4,
+
+body.premium-active
+.topic-option h3,
+
+body.premium-active
+.topic-option h4,
+
+body.premium-active
+.topic-result h3,
+
+body.premium-active
+.topic-result h4 {
+    color: #181818;
+}
+
+
+body.premium-active
+.topic-item p,
+
+body.premium-active
+.topic-option p,
+
+body.premium-active
+.topic-result p {
+    color: #756f60;
+}
+
+
+/* =========================================================
+   PREMIUM SETUP ICONS
+========================================================= */
+
+body.premium-active
+.battle-setup svg,
+
+body.premium-active
+.setup-card svg,
+
+body.premium-active
+.setup-panel svg,
+
+body.premium-active
+.battle-config svg,
+
+body.premium-active
+.configuration-card svg {
+    color: #d4af37;
+}
+
+
+/* =========================================================
+   PREMIUM INPUT ICON / SEARCH ICON
+========================================================= */
+
+body.premium-active
+.topic-search svg,
+
+body.premium-active
+.search-wrapper svg,
+
+body.premium-active
+.search-box svg {
+    color: #d4af37;
+}
+
+
+/* =========================================================
+   PREMIUM START BATTLE BUTTON
+========================================================= */
+
+body.premium-active
+#startBattleButton {
+    background:
+        linear-gradient(
+            135deg,
+            #b8860b 0%,
+            #d4af37 48%,
+            #f0c75e 100%
+        );
+
+    color: #ffffff;
+
+    border-color: transparent;
+
+    box-shadow:
+        0 8px 24px
+        rgba(212, 175, 55, 0.28);
+}
+
+
+body.premium-active
+#startBattleButton:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #a67c00 0%,
+            #d4af37 48%,
+            #f5d477 100%
+        );
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 12px 30px
+        rgba(212, 175, 55, 0.34);
+}
+
+
+/* =========================================================
+   PREMIUM BATTLE LIMIT
+========================================================= */
+
+body.premium-active
+#battleLimit,
+
+body.premium-active
+#battlesUsed {
+    color: #9a7200;
+}
+
+
+/* =========================================================
+   PREMIUM GOLD BADGES
+========================================================= */
+
+body.premium-active
+.premium-badge,
+
+body.premium-active
+.gold-badge,
+
+body.premium-active
+.setup-badge {
+    background:
+        rgba(212, 175, 55, 0.12);
+
+    color: #8a6500;
+
+    border:
+        1px solid
+        rgba(212, 175, 55, 0.30);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE
+========================================================= */
+
+body.dark-mode.premium-active,
+body.premium-active.dark-mode {
+    --premium-bg: #0d0d0d;
+    --premium-card: #151515;
+    --premium-card-soft: #1b1b1b;
+
+    --premium-text: #f5f1e5;
+    --premium-muted: #aaa28f;
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — SETUP
+========================================================= */
+
+body.dark-mode.premium-active
+.battle-setup,
+
+body.dark-mode.premium-active
+.setup-card,
+
+body.dark-mode.premium-active
+.battle-setup-card,
+
+body.dark-mode.premium-active
+.setup-panel,
+
+body.dark-mode.premium-active
+.battle-config,
+
+body.dark-mode.premium-active
+.configuration-card {
+    background:
+        linear-gradient(
+            145deg,
+            #151515 0%,
+            #1b1b1b 100%
+        );
+
+    border-color:
+        rgba(212, 175, 55, 0.25);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — SELECTS
+========================================================= */
+
+body.dark-mode.premium-active
+select,
+
+body.dark-mode.premium-active
+#curriculumSelect,
+
+body.dark-mode.premium-active
+#subjectSelect,
+
+body.dark-mode.premium-active
+#topicSelect,
+
+body.dark-mode.premium-active
+#difficultySelect {
+    background: #151515;
+
+    color: #f5f1e5;
+
+    border-color:
+        rgba(212, 175, 55, 0.35);
+
+    box-shadow:
+        0 3px 12px
+        rgba(0, 0, 0, 0.25);
+}
+
+
+body.dark-mode.premium-active
+select:hover,
+
+body.dark-mode.premium-active
+#curriculumSelect:hover,
+
+body.dark-mode.premium-active
+#subjectSelect:hover,
+
+body.dark-mode.premium-active
+#topicSelect:hover,
+
+body.dark-mode.premium-active
+#difficultySelect:hover {
+    background: #1b1b1b;
+
+    border-color: #d4af37;
+}
+
+
+body.dark-mode.premium-active
+select:focus,
+
+body.dark-mode.premium-active
+#curriculumSelect:focus,
+
+body.dark-mode.premium-active
+#subjectSelect:focus,
+
+body.dark-mode.premium-active
+#topicSelect:focus,
+
+body.dark-mode.premium-active
+#difficultySelect:focus {
+    border-color: #d4af37;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(212, 175, 55, 0.15);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — SEARCH
+========================================================= */
+
+body.dark-mode.premium-active
+#topicSearch {
+    background: #151515;
+
+    color: #f5f1e5;
+
+    border-color:
+        rgba(212, 175, 55, 0.35);
+}
+
+
+body.dark-mode.premium-active
+#topicSearch::placeholder {
+    color: #918b7d;
+}
+
+
+body.dark-mode.premium-active
+#topicSearch:focus {
+    background: #1b1b1b;
+
+    border-color: #d4af37;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(212, 175, 55, 0.15);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — TOPIC ITEMS
+========================================================= */
+
+body.dark-mode.premium-active
+.topic-item,
+
+body.dark-mode.premium-active
+.topic-option,
+
+body.dark-mode.premium-active
+.topic-result,
+
+body.dark-mode.premium-active
+.topic-row {
+    background: #151515;
+
+    color: #f5f1e5;
+
+    border-color:
+        rgba(212, 175, 55, 0.18);
+}
+
+
+body.dark-mode.premium-active
+.topic-item:hover,
+
+body.dark-mode.premium-active
+.topic-option:hover,
+
+body.dark-mode.premium-active
+.topic-result:hover,
+
+body.dark-mode.premium-active
+.topic-row:hover {
+    background: #1d1b16;
+
+    border-color:
+        rgba(212, 175, 55, 0.42);
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — TOPIC TEXT
+========================================================= */
+
+body.dark-mode.premium-active
+.topic-item h3,
+
+body.dark-mode.premium-active
+.topic-item h4,
+
+body.dark-mode.premium-active
+.topic-option h3,
+
+body.dark-mode.premium-active
+.topic-option h4,
+
+body.dark-mode.premium-active
+.topic-result h3,
+
+body.dark-mode.premium-active
+.topic-result h4 {
+    color: #f5f1e5;
+}
+
+
+body.dark-mode.premium-active
+.topic-item p,
+
+body.dark-mode.premium-active
+.topic-option p,
+
+body.dark-mode.premium-active
+.topic-result p {
+    color: #aaa28f;
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — LABELS
+========================================================= */
+
+body.dark-mode.premium-active
+.battle-setup label,
+
+body.dark-mode.premium-active
+.setup-card label,
+
+body.dark-mode.premium-active
+.setup-panel label,
+
+body.dark-mode.premium-active
+.battle-config label {
+    color: #aaa28f;
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — OPTIONS
+========================================================= */
+
+body.dark-mode.premium-active
+select option {
+    background: #151515;
+    color: #f5f1e5;
+}
+
+
+/* =========================================================
+   PREMIUM DARK MODE — START BUTTON
+========================================================= */
+
+body.dark-mode.premium-active
+#startBattleButton {
+    background:
+        linear-gradient(
+            135deg,
+            #a67c00 0%,
+            #d4af37 50%,
+            #f0c75e 100%
+        );
+
+    color: #111111;
+
+    box-shadow:
+        0 8px 26px
+        rgba(212, 175, 55, 0.22);
+}
+
+
+/* =========================================================
+   REMOVE BLUE ACCENTS FROM COMMON SETUP ELEMENTS
+========================================================= */
+
+body.premium-active
+.battle-setup
+button:not(#startBattleButton),
+
+body.premium-active
+.setup-card
+button:not(#startBattleButton),
+
+body.premium-active
+.setup-panel
+button:not(#startBattleButton) {
+    border-color:
+        rgba(212, 175, 55, 0.30);
+}
+
+
+/* =========================================================
+   PREMIUM SCROLLBARS
+========================================================= */
+
+body.premium-active
+.topic-list::-webkit-scrollbar {
+    width: 7px;
+}
+
+
+body.premium-active
+.topic-list::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.45);
+    border-radius: 999px;
+}
+
+
+body.premium-active
+.topic-list::-webkit-scrollbar-track {
+    background: transparent;
+}
