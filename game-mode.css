@@ -1,29 +1,18 @@
 /* =========================================================
-   STUDYMIND AI — GAME MODE
-   COMPLETE REPLACEMENT CSS
+   STUDYMIND AI — COMPUTER BATTLE
    SUMMARIZER-STYLE SIDEBAR
-   PREMIUM GOLD NAVIGATION
-   RED / GLOWING LOGOUT
-========================================================= */
+   PROFESSIONAL GAME MODE / BATTLE ARENA
+   ========================================================= */
 
 
 /* =========================================================
-   GLOBAL RESET
-========================================================= */
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-
-/* =========================================================
-   ROOT VARIABLES
+   ROOT
 ========================================================= */
 
 :root {
+
     --battle-bg: #07111f;
+
     --battle-card: rgba(15, 27, 46, 0.88);
     --battle-card-2: rgba(20, 35, 58, 0.9);
 
@@ -36,59 +25,74 @@
     --battle-blue-2: #60a5fa;
 
     --battle-purple: #8b5cf6;
-
     --battle-green: #22c55e;
     --battle-red: #ef4444;
-
     --battle-gold: #fbbf24;
 
     --sidebar-width: 250px;
+
 }
 
 
 /* =========================================================
-   BODY
+   RESET
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HTML / BODY
 ========================================================= */
 
 html,
 body {
+    margin: 0;
+    padding: 0;
     min-height: 100%;
 }
 
+
 body {
-    margin: 0;
-    background:
-        radial-gradient(
-            circle at top left,
-            rgba(59, 130, 246, 0.08),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at bottom right,
-            rgba(139, 92, 246, 0.07),
-            transparent 30%
-        ),
-        var(--battle-bg);
+
+    background: var(--battle-bg);
 
     color: var(--battle-text);
 
     font-family:
         Inter,
-        system-ui,
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
 
-    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   APP SHELL
+========================================================= */
+
+.app-shell {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    background: var(--battle-bg);
+
 }
 
 
 /* =========================================================
    SIDEBAR
+   SUMMARIZER-STYLE
 ========================================================= */
 
 .sidebar {
+
     position: fixed;
 
     top: 0;
@@ -98,690 +102,32 @@ body {
     width: var(--sidebar-width);
 
     display: flex;
+
     flex-direction: column;
 
     padding: 22px 14px 16px;
 
-    background: rgba(7, 17, 31, 0.97);
+    background: #0a1424;
 
     border-right:
-        1px solid rgba(148, 163, 184, 0.12);
+        1px solid
+        rgba(148, 163, 184, 0.10);
 
     z-index: 1000;
 
     overflow-y: auto;
 
     scrollbar-width: thin;
+
+    scrollbar-color:
+        rgba(148, 163, 184, 0.18)
+        transparent;
+
 }
 
 
 /* =========================================================
-   SIDEBAR BRAND
-========================================================= */
-
-.sidebar-brand {
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding:
-        0 8px
-        22px
-        8px;
-
-    margin-bottom: 6px;
-}
-
-.brand-mark {
-    width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #3b82f6,
-            #8b5cf6
-        );
-
-    color: white;
-
-    font-size: 17px;
-    font-weight: 800;
-
-    box-shadow:
-        0 0 18px rgba(59, 130, 246, 0.25);
-}
-
-.brand-copy {
-    display: flex;
-    flex-direction: column;
-
-    min-width: 0;
-}
-
-.brand-title {
-    color: #ffffff;
-
-    font-size: 14px;
-    font-weight: 800;
-
-    line-height: 1.2;
-}
-
-.brand-subtitle {
-    margin-top: 2px;
-
-    color: #64748b;
-
-    font-size: 9px;
-    font-weight: 600;
-
-    letter-spacing: 0.04em;
-}
-
-
-/* =========================================================
-   SIDEBAR NAV
-========================================================= */
-
-.sidebar-nav {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 17px;
-}
-
-
-/* =========================================================
-   NAV SECTIONS
-========================================================= */
-
-.nav-section {
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-}
-
-.nav-section > span {
-    padding:
-        0 10px
-        5px;
-
-    color: #475569;
-
-    font-size: 9px;
-    font-weight: 800;
-
-    letter-spacing: 0.13em;
-
-    text-transform: uppercase;
-}
-
-
-/* =========================================================
-   NAV LINKS
-========================================================= */
-
-.nav-section a {
-    position: relative;
-
-    min-height: 39px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding:
-        8px 10px;
-
-    border-radius: 10px;
-
-    color: var(--battle-muted);
-
-    text-decoration: none;
-
-    font-size: 12px;
-    font-weight: 600;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease;
-}
-
-
-/* =========================================================
-   LUCIDE ICONS
-========================================================= */
-
-.nav-section a svg {
-    width: 16px;
-    height: 16px;
-
-    flex-shrink: 0;
-
-    stroke-width: 2;
-}
-
-.nav-section a .nav-icon {
-    width: 16px;
-
-    flex-shrink: 0;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 14px;
-}
-
-
-/* =========================================================
-   NAV HOVER
-========================================================= */
-
-.nav-section a:hover {
-    color: var(--battle-text);
-
-    background:
-        rgba(59, 130, 246, 0.08);
-}
-
-
-/* =========================================================
-   ACTIVE NAV
-========================================================= */
-
-.nav-section a.active {
-    color: white;
-
-    background:
-        rgba(59, 130, 246, 0.13);
-}
-
-.nav-section a.active::before {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    top: 8px;
-    bottom: 8px;
-
-    width: 3px;
-
-    border-radius:
-        0 4px 4px 0;
-
-    background:
-        linear-gradient(
-            180deg,
-            var(--battle-blue),
-            var(--battle-purple)
-        );
-
-    box-shadow:
-        0 0 12px rgba(59, 130, 246, 0.5);
-}
-
-.nav-section a.active svg {
-    color: var(--battle-blue-2);
-}
-
-
-/* =========================================================
-   SIDEBAR BOTTOM
-========================================================= */
-
-.sidebar-bottom {
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-
-    padding-top: 10px;
-
-    border-top:
-        1px solid rgba(148, 163, 184, 0.08);
-}
-
-
-/* =========================================================
-   LOGOUT — RED / GLOWING
-========================================================= */
-
-.sidebar-bottom .logout-button {
-    color: #f87171;
-}
-
-.sidebar-bottom .logout-button:hover {
-    color: #ffffff;
-
-    background:
-        rgba(239, 68, 68, 0.12);
-
-    box-shadow:
-        0 0 18px rgba(239, 68, 68, 0.16);
-}
-
-.sidebar-bottom .logout-button svg {
-    color: #ef4444;
-
-    filter:
-        drop-shadow(
-            0 0 4px
-            rgba(239, 68, 68, 0.45)
-        );
-}
-
-.sidebar-bottom .logout-button:hover svg {
-    color: #ff6b6b;
-
-    filter:
-        drop-shadow(
-            0 0 7px
-            rgba(239, 68, 68, 0.8)
-        );
-}
-
-
-/* =========================================================
-   =========================================================
-   PREMIUM — FORCE GOLD
-   =========================================================
-   This section deliberately comes AFTER every normal
-   sidebar rule.
-
-   It targets:
-   - the Premium anchor
-   - Premium text
-   - Lucide SVG
-   - SVG paths
-   - SVG lines
-   - SVG polygons
-   - SVG circles
-   - SVG rectangles
-
-   This prevents blue sidebar rules from overriding it.
-========================================================= */
-
-
-/* PREMIUM LINK ITSELF */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link {
-    color: #fbbf24 !important;
-
-    background: transparent !important;
-
-    border-color: transparent !important;
-
-    box-shadow: none !important;
-}
-
-
-/* PREMIUM TEXT */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link span {
-    color: #fbbf24 !important;
-}
-
-
-/* PREMIUM ICON */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg {
-    width: 16px !important;
-    height: 16px !important;
-
-    color: #fbbf24 !important;
-
-    stroke: #fbbf24 !important;
-
-    fill: none !important;
-
-    opacity: 1 !important;
-
-    filter:
-        drop-shadow(
-            0 0 6px
-            rgba(251, 191, 36, 0.65)
-        ) !important;
-}
-
-
-/* FORCE LUCIDE SVG CHILDREN GOLD */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg *,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg path,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg line,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg polyline,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg polygon,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg circle,
-html body .sidebar .sidebar-nav .nav-section a.premium-link svg rect {
-    color: #fbbf24 !important;
-
-    stroke: #fbbf24 !important;
-
-    fill: none !important;
-}
-
-
-/* =========================================================
-   PREMIUM HOVER
-========================================================= */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link:hover {
-    color: #fcd34d !important;
-
-    background:
-        rgba(251, 191, 36, 0.10) !important;
-
-    box-shadow:
-        0 0 18px
-        rgba(251, 191, 36, 0.12) !important;
-
-    transform: translateX(1px);
-}
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link:hover span {
-    color: #fcd34d !important;
-}
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link:hover svg,
-html body .sidebar .sidebar-nav .nav-section a.premium-link:hover svg *,
-html body .sidebar .sidebar-nav .nav-section a.premium-link:hover svg path {
-    color: #fcd34d !important;
-
-    stroke: #fcd34d !important;
-
-    filter:
-        drop-shadow(
-            0 0 9px
-            rgba(251, 191, 36, 0.85)
-        ) !important;
-}
-
-
-/* =========================================================
-   PREMIUM ACTIVE
-========================================================= */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active {
-    color: #fbbf24 !important;
-
-    background:
-        rgba(251, 191, 36, 0.12) !important;
-
-    box-shadow:
-        0 0 18px
-        rgba(251, 191, 36, 0.08) !important;
-}
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active span {
-    color: #fbbf24 !important;
-}
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active svg,
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active svg *,
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active svg path {
-    color: #fbbf24 !important;
-
-    stroke: #fbbf24 !important;
-
-    fill: none !important;
-
-    filter:
-        drop-shadow(
-            0 0 9px
-            rgba(251, 191, 36, 0.85)
-        ) !important;
-}
-
-
-/* =========================================================
-   PREMIUM ACTIVE GOLD INDICATOR
-========================================================= */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link.active::before {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    top: 8px;
-    bottom: 8px;
-
-    width: 3px;
-
-    border-radius:
-        0 4px 4px 0;
-
-    background:
-        linear-gradient(
-            180deg,
-            #f59e0b,
-            #fbbf24
-        ) !important;
-
-    box-shadow:
-        0 0 14px
-        rgba(251, 191, 36, 0.7) !important;
-}
-
-
-/* =========================================================
-   PREMIUM FOCUS
-========================================================= */
-
-html body .sidebar .sidebar-nav .nav-section a.premium-link:focus-visible {
-    outline:
-        2px solid
-        #fbbf24 !important;
-
-    outline-offset: 2px;
-
-    color: #fbbf24 !important;
-}
-
-
-/* =========================================================
-   MAIN APPLICATION AREA
-========================================================= */
-
-.app-main {
-    min-height: 100vh;
-
-    margin-left: var(--sidebar-width);
-}
-
-
-/* =========================================================
-   TOPBAR
-========================================================= */
-
-.topbar {
-    height: 70px;
-
-    display: flex;
-    align-items: center;
-
-    padding:
-        0 28px;
-
-    border-bottom:
-        1px solid
-        rgba(148, 163, 184, 0.08);
-
-    background:
-        rgba(7, 17, 31, 0.72);
-
-    backdrop-filter: blur(18px);
-}
-
-.mobile-brand {
-    display: none;
-}
-
-.topbar-spacer {
-    flex: 1;
-}
-
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-.profile-area {
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-}
-
-.profile-avatar {
-    width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #3b82f6,
-            #8b5cf6
-        );
-
-    color: white;
-
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.profile-text {
-    color: #cbd5e1;
-
-    font-size: 12px;
-    font-weight: 600;
-}
-
-#currentUsername {
-    color: #f8fafc;
-}
-
-
-/* =========================================================
-   GAME MODE PAGE
-========================================================= */
-
-.battle-page {
-    width: min(1200px, calc(100% - 48px));
-
-    margin:
-        0 auto;
-
-    padding:
-        34px 0 60px;
-}
-
-
-/* =========================================================
-   RESPONSIVE SIDEBAR
-========================================================= */
-
-@media (max-width: 900px) {
-
-    :root {
-        --sidebar-width: 220px;
-    }
-
-    .sidebar {
-        width: 220px;
-    }
-
-    .battle-page {
-        width:
-            calc(100% - 36px);
-    }
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 700px) {
-
-    .sidebar {
-        position: fixed;
-
-        width: 100%;
-
-        height: auto;
-
-        max-height: 100vh;
-
-        padding:
-            12px;
-
-        border-right: none;
-
-        border-bottom:
-            1px solid
-            rgba(148, 163, 184, 0.12);
-    }
-
-    .sidebar-brand {
-        padding:
-            6px 8px 12px;
-    }
-
-    .sidebar-nav {
-        display: none;
-    }
-
-    .sidebar-bottom {
-        display: none;
-    }
-
-    .app-main {
-        margin-left: 0;
-
-        padding-top: 72px;
-    }
-
-    .topbar {
-        display: none;
-    }
-
-    .mobile-brand {
-        display: flex;
-    }
-
-    .battle-page {
-        width:
-            calc(100% - 24px);
-
-        padding-top: 24px;
-    }
-}
-
-
-/* =========================================================
-   SCROLLBAR
+   SIDEBAR SCROLLBAR
 ========================================================= */
 
 .sidebar::-webkit-scrollbar {
@@ -793,99 +139,342 @@ html body .sidebar .sidebar-nav .nav-section a.premium-link:focus-visible {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
+
     background:
         rgba(148, 163, 184, 0.18);
 
     border-radius: 10px;
-}
 
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background:
-        rgba(148, 163, 184, 0.3);
-}
-
-/* =========================================================
-   PREMIUM — ABSOLUTE GOLD OVERRIDE
-   MUST BE THE LAST CSS IN GAME-MODE.CSS
-========================================================= */
-
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:link,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:visited {
-    color: #fbbf24 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-
-/* PREMIUM TEXT */
-
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > span {
-    color: #fbbf24 !important;
-}
-
-
-/* PREMIUM LUCIDE ICON */
-
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg {
-    color: #fbbf24 !important;
-    stroke: #fbbf24 !important;
-    fill: none !important;
-
-    width: 16px !important;
-    height: 16px !important;
-
-    opacity: 1 !important;
-
-    filter:
-        drop-shadow(
-            0 0 6px rgba(251, 191, 36, 0.75)
-        ) !important;
-}
-
-
-/* FORCE EVERY PART OF THE LUCIDE SVG GOLD */
-
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg *,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg path,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg line,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg polyline,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg polygon,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg circle,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg rect {
-    color: #fbbf24 !important;
-    stroke: #fbbf24 !important;
-    fill: none !important;
 }
 
 
 /* =========================================================
-   PREMIUM HOVER
+   SIDEBAR BRAND
 ========================================================= */
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover {
-    color: #fcd34d !important;
+.sidebar-brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        4px 10px 24px;
+
+}
+
+
+.sidebar-brand .brand-mark {
+
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 12px;
 
     background:
-        rgba(251, 191, 36, 0.10) !important;
+        linear-gradient(
+            135deg,
+            #3b82f6,
+            #8b5cf6
+        );
+
+    color: #ffffff;
+
+    font-size: 16px;
+
+    font-weight: 900;
 
     box-shadow:
-        0 0 18px rgba(251, 191, 36, 0.15) !important;
+        0 8px 25px
+        rgba(59, 130, 246, 0.20);
+
 }
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > span {
-    color: #fcd34d !important;
+
+.brand-text {
+
+    min-width: 0;
+
 }
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > svg,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > svg * {
-    color: #fcd34d !important;
-    stroke: #fcd34d !important;
+
+.brand-text strong {
+
+    display: block;
+
+    color: #f8fafc;
+
+    font-size: 15px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+
+}
+
+
+.brand-text span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 10px;
+
+    line-height: 1.2;
+
+}
+
+
+/* =========================================================
+   SIDEBAR NAV
+========================================================= */
+
+.sidebar-nav {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 17px;
+
+}
+
+
+.nav-section {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+}
+
+
+.nav-section > span {
+
+    padding:
+        0 10px 7px;
+
+    color:
+        rgba(148, 163, 184, 0.58);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .13em;
+
+    text-transform: uppercase;
+
+}
+
+
+/* =========================================================
+   NAV LINKS
+========================================================= */
+
+.nav-section a {
+
+    position: relative;
+
+    min-height: 39px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    padding:
+        8px 10px;
+
+    border-radius: 10px;
+
+    color: #94a3b8;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.nav-section a svg {
+
+    width: 16px;
+    height: 16px;
+
+    flex-shrink: 0;
+
+    stroke-width: 2;
+
+    color: currentColor;
+
+}
+
+
+.nav-section a .nav-icon {
+
+    width: 16px;
+
+    flex-shrink: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 14px;
+
+    line-height: 1;
+
+}
+
+
+/* =========================================================
+   NAV HOVER
+========================================================= */
+
+.nav-section a:hover {
+
+    color: #f8fafc;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+
+    transform:
+        translateX(1px);
+
+}
+
+
+/* =========================================================
+   ACTIVE GAME MODE
+========================================================= */
+
+.nav-section a.active {
+
+    color: #ffffff;
+
+    background:
+        rgba(59, 130, 246, 0.10);
+
+}
+
+
+.nav-section a.active::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    top: 8px;
+    bottom: 8px;
+
+    width: 3px;
+
+    border-radius:
+        0 4px 4px 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            #3b82f6,
+            #8b5cf6
+        );
+
+    box-shadow:
+        0 0 12px
+        rgba(59, 130, 246, 0.55);
+
+}
+
+
+.nav-section a.active svg {
+
+    color: #60a5fa;
+
+}
+
+
+/* =========================================================
+   PREMIUM
+   GOLD
+========================================================= */
+
+.nav-section a.premium-link {
+
+    color: #fbbf24;
+
+}
+
+
+.nav-section a.premium-link svg {
+
+    color: #fbbf24;
+
+    stroke: #fbbf24;
 
     filter:
         drop-shadow(
-            0 0 9px rgba(251, 191, 36, 0.9)
-        ) !important;
+            0 0 5px
+            rgba(251, 191, 36, 0.45)
+        );
+
+}
+
+
+.nav-section a.premium-link:hover {
+
+    color: #fcd34d;
+
+    background:
+        rgba(251, 191, 36, 0.08);
+
+    box-shadow:
+        0 0 18px
+        rgba(251, 191, 36, 0.06);
+
+}
+
+
+.nav-section a.premium-link:hover svg {
+
+    color: #fcd34d;
+
+    stroke: #fcd34d;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(251, 191, 36, 0.75)
+        );
+
 }
 
 
@@ -893,52 +482,2651 @@ html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-
    PREMIUM ACTIVE
 ========================================================= */
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active {
-    color: #fbbf24 !important;
+.nav-section a.premium-link.active {
+
+    color: #fbbf24;
 
     background:
-        rgba(251, 191, 36, 0.12) !important;
+        rgba(251, 191, 36, 0.10);
 
-    box-shadow:
-        0 0 18px rgba(251, 191, 36, 0.12) !important;
 }
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > span {
-    color: #fbbf24 !important;
-}
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > svg,
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > svg * {
-    color: #fbbf24 !important;
-    stroke: #fbbf24 !important;
-    fill: none !important;
+.nav-section a.premium-link.active::before {
 
-    filter:
-        drop-shadow(
-            0 0 10px rgba(251, 191, 36, 0.95)
-        ) !important;
-}
-
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active::before {
     background:
         linear-gradient(
             180deg,
             #f59e0b,
             #fbbf24
-        ) !important;
+        );
 
     box-shadow:
-        0 0 14px rgba(251, 191, 36, 0.8) !important;
+        0 0 12px
+        rgba(251, 191, 36, 0.65);
+
+}
+
+
+.nav-section a.premium-link.active svg {
+
+    color: #fbbf24;
+
+    stroke: #fbbf24;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(251, 191, 36, 0.80)
+        );
+
 }
 
 
 /* =========================================================
-   PREMIUM FOCUS
+   SIDEBAR BOTTOM
 ========================================================= */
 
-html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:focus-visible {
-    outline:
-        2px solid #fbbf24 !important;
+.sidebar-bottom {
 
-    outline-offset: 2px;
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding-top: 15px;
+
+    border-top:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+}
+
+
+.sidebar-bottom a,
+.sidebar-bottom button {
+
+    width: 100%;
+
+    min-height: 39px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    padding:
+        8px 10px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    text-decoration: none;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        box-shadow .2s ease,
+        transform .2s ease;
+
+}
+
+
+.sidebar-bottom a svg,
+.sidebar-bottom button svg {
+
+    width: 16px;
+    height: 16px;
+
+    flex-shrink: 0;
+
+}
+
+
+/* =========================================================
+   BOTTOM HOVER
+========================================================= */
+
+.sidebar-bottom a:hover {
+
+    color: #f8fafc;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+
+}
+
+
+/* =========================================================
+   LOGOUT
+   RED + GLOW
+========================================================= */
+
+.sidebar-bottom .logout-button {
+
+    color: #f87171;
+
+}
+
+
+.sidebar-bottom .logout-button svg {
+
+    color: #ef4444;
+
+    filter:
+        drop-shadow(
+            0 0 4px
+            rgba(239, 68, 68, 0.45)
+        );
+
+}
+
+
+.sidebar-bottom .logout-button:hover {
+
+    color: #ffffff;
+
+    background:
+        rgba(239, 68, 68, 0.11);
+
+    box-shadow:
+        0 0 18px
+        rgba(239, 68, 68, 0.15);
+
+    transform:
+        translateX(1px);
+
+}
+
+
+.sidebar-bottom .logout-button:hover svg {
+
+    color: #ff6b6b;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(239, 68, 68, 0.85)
+        );
+
+}
+
+
+/* =========================================================
+   MAIN APP AREA
+========================================================= */
+
+.app-main {
+
+    width:
+        calc(100% - var(--sidebar-width));
+
+    min-height: 100vh;
+
+    margin-left:
+        var(--sidebar-width);
+
+    background:
+        var(--battle-bg);
+
+}
+
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+.topbar {
+
+    height: 70px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding:
+        0 30px;
+
+    border-bottom:
+        1px solid
+        rgba(148, 163, 184, .08);
+
+    background:
+        rgba(7, 17, 31, .72);
+
+    backdrop-filter:
+        blur(18px);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+}
+
+
+.topbar-spacer {
+
+    flex: 1;
+
+}
+
+
+/* =========================================================
+   MOBILE BRAND
+========================================================= */
+
+.mobile-brand {
+
+    display: none;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+
+.mobile-brand .brand-mark {
+
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #3b82f6,
+            #8b5cf6
+        );
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+}
+
+
+.mobile-brand strong {
+
+    color: var(--battle-text);
+
+    font-size: 14px;
+
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.profile-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+}
+
+
+.profile-avatar {
+
+    width: 36px;
+    height: 36px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--battle-blue),
+            var(--battle-purple)
+        );
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+}
+
+
+.profile-text strong {
+
+    display: block;
+
+    color: var(--battle-text);
+
+    font-size: 12px;
+
+}
+
+
+.profile-text span {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--battle-muted);
+
+    font-size: 9px;
+
+}
+
+
+/* =========================================================
+   BATTLE PAGE
+========================================================= */
+
+.battle-page {
+
+    min-height:
+        calc(100vh - 70px);
+
+    background:
+
+        radial-gradient(
+            circle at 20% 10%,
+            rgba(59,130,246,.12),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 85% 25%,
+            rgba(139,92,246,.12),
+            transparent 30%
+        ),
+
+        var(--battle-bg);
+
+    color: var(--battle-text);
+
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.battle-main {
+
+    width:
+        min(1180px, 92%);
+
+    margin: auto;
+
+    padding:
+        55px 0 90px;
+
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.battle-hero {
+
+    display: grid;
+
+    grid-template-columns:
+        1.15fr .85fr;
+
+    gap: 50px;
+
+    align-items: center;
+
+    margin-bottom: 35px;
+
+}
+
+
+.eyebrow {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color:
+        var(--battle-blue-2);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: .14em;
+
+}
+
+
+.eyebrow svg {
+
+    width: 15px;
+    height: 15px;
+
+}
+
+
+.hero-copy h1 {
+
+    font-size:
+        clamp(42px, 6vw, 72px);
+
+    line-height: .96;
+
+    margin:
+        18px 0;
+
+    letter-spacing:
+        -3px;
+
+}
+
+
+.hero-copy h1 span {
+
+    background:
+        linear-gradient(
+            90deg,
+            #60a5fa,
+            #a78bfa
+        );
+
+    -webkit-background-clip: text;
+
+    background-clip: text;
+
+    color: transparent;
+
+}
+
+
+.hero-copy p {
+
+    color:
+        var(--battle-muted);
+
+    max-width:
+        620px;
+
+    line-height:
+        1.75;
+
+    font-size:
+        15px;
+
+}
+
+
+.hero-stats {
+
+    display: flex;
+
+    gap: 35px;
+
+    margin-top:
+        28px;
+
+}
+
+
+.hero-stats strong {
+
+    display: block;
+
+    font-size:
+        24px;
+
+}
+
+
+.hero-stats span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        11px;
+
+}
+
+
+/* =========================================================
+   BATTLE VISUAL
+========================================================= */
+
+.battle-visual {
+
+    min-height:
+        300px;
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 25px;
+
+}
+
+
+.ai-avatar,
+.player-avatar {
+
+    width: 110px;
+    height: 110px;
+
+    border-radius: 30px;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    background:
+        var(--battle-card);
+
+    box-shadow:
+        0 25px 80px
+        rgba(0,0,0,.35);
+
+}
+
+
+.ai-avatar {
+
+    color:
+        var(--battle-purple);
+
+}
+
+
+.player-avatar {
+
+    color:
+        var(--battle-blue);
+
+}
+
+
+.ai-avatar svg,
+.player-avatar svg {
+
+    width: 45px;
+    height: 45px;
+
+}
+
+
+.vs-badge {
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    display: grid;
+
+    place-items: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--battle-blue),
+            var(--battle-purple)
+        );
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 0 40px
+        rgba(59,130,246,.35);
+
+    z-index: 2;
+
+}
+
+
+.orb {
+
+    position: absolute;
+
+    border-radius: 50%;
+
+    filter:
+        blur(50px);
+
+    opacity: .35;
+
+}
+
+
+.orb-one {
+
+    width: 140px;
+    height: 140px;
+
+    background:
+        var(--battle-blue);
+
+    left: 15%;
+
+}
+
+
+.orb-two {
+
+    width: 140px;
+    height: 140px;
+
+    background:
+        var(--battle-purple);
+
+    right: 15%;
+
+}
+
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.battle-card {
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    background:
+        var(--battle-card);
+
+    backdrop-filter:
+        blur(18px);
+
+    border-radius:
+        24px;
+
+    box-shadow:
+        0 30px 80px
+        rgba(0,0,0,.2);
+
+}
+
+
+.setup-card {
+
+    padding:
+        30px;
+
+}
+
+
+.section-title {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    margin-bottom:
+        30px;
+
+}
+
+
+.section-label {
+
+    color:
+        var(--battle-blue-2);
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        .15em;
+
+}
+
+
+.section-title h2 {
+
+    margin:
+        8px 0;
+
+    font-size:
+        26px;
+
+}
+
+
+.section-title p {
+
+    color:
+        var(--battle-muted);
+
+    margin:
+        0;
+
+}
+
+
+.ai-status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color:
+        var(--battle-green);
+
+    font-size:
+        10px;
+
+    font-weight:
+        800;
+
+}
+
+
+.ai-status span {
+
+    width: 7px;
+    height: 7px;
+
+    background:
+        var(--battle-green);
+
+    border-radius:
+        50%;
+
+    box-shadow:
+        0 0 12px
+        var(--battle-green);
+
+}
+
+
+/* =========================================================
+   FIELDS
+========================================================= */
+
+.selection-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 18px;
+
+}
+
+
+.field label {
+
+    display: block;
+
+    margin-bottom:
+        8px;
+
+    font-size:
+        12px;
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+.select-wrapper {
+
+    position: relative;
+
+}
+
+
+.select-wrapper svg {
+
+    position: absolute;
+
+    left: 14px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    width: 17px;
+
+    color:
+        var(--battle-blue-2);
+
+    pointer-events:
+        none;
+
+}
+
+
+.select-wrapper select {
+
+    width: 100%;
+
+    height: 52px;
+
+    border-radius:
+        13px;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    background:
+        #0b1729;
+
+    color:
+        white;
+
+    padding:
+        0 15px 0 44px;
+
+    outline:
+        none;
+
+}
+
+
+.select-wrapper select:focus {
+
+    border-color:
+        var(--battle-blue);
+
+}
+
+
+.select-wrapper select:disabled {
+
+    opacity:
+        .45;
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.topic-search {
+
+    position: relative;
+
+    margin-top:
+        18px;
+
+}
+
+
+.topic-search svg {
+
+    position: absolute;
+
+    left: 15px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    width: 17px;
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+.topic-search input {
+
+    width: 100%;
+
+    height: 48px;
+
+    box-sizing:
+        border-box;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    border-radius:
+        12px;
+
+    background:
+        rgba(5,15,28,.7);
+
+    color:
+        white;
+
+    padding:
+        0 16px 0 44px;
+
+    outline:
+        none;
+
+}
+
+
+.topic-search input:focus {
+
+    border-color:
+        var(--battle-blue);
+
+}
+
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+.battle-config {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap: 12px;
+
+    margin-top:
+        20px;
+
+}
+
+
+.config-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        15px;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    border-radius:
+        14px;
+
+    background:
+        rgba(255,255,255,.025);
+
+}
+
+
+.config-item svg {
+
+    width: 20px;
+
+    color:
+        var(--battle-blue-2);
+
+}
+
+
+.config-item strong,
+.config-item span {
+
+    display: block;
+
+}
+
+
+.config-item strong {
+
+    font-size:
+        14px;
+
+}
+
+
+.config-item span {
+
+    font-size:
+        10px;
+
+    color:
+        var(--battle-muted);
+
+    margin-top:
+        3px;
+
+}
+
+
+/* =========================================================
+   SETUP FOOTER
+========================================================= */
+
+.setup-footer {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    margin-top:
+        24px;
+
+}
+
+
+.free-battle-info {
+
+    display: flex;
+
+    align-items:
+        center;
+
+    gap:
+        11px;
+
+}
+
+
+.mini-icon {
+
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        11px;
+
+    background:
+        rgba(59,130,246,.1);
+
+    color:
+        var(--battle-blue-2);
+
+}
+
+
+.free-battle-info strong,
+.free-battle-info span {
+
+    display:
+        block;
+
+}
+
+
+.free-battle-info strong {
+
+    font-size:
+        15px;
+
+}
+
+
+.free-battle-info span {
+
+    font-size:
+        10px;
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.start-button,
+.next-button {
+
+    border:
+        0;
+
+    color:
+        white;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--battle-blue),
+            var(--battle-purple)
+        );
+
+    padding:
+        13px 20px;
+
+    border-radius:
+        12px;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        10px;
+
+    font-weight:
+        800;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0 12px 30px
+        rgba(59,130,246,.2);
+
+    transition:
+        .2s ease;
+
+}
+
+
+.start-button:hover,
+.next-button:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+.start-button:disabled {
+
+    opacity:
+        .55;
+
+    cursor:
+        wait;
+
+}
+
+
+.secondary-button {
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    background:
+        rgba(255,255,255,.04);
+
+    color:
+        white;
+
+    padding:
+        13px 20px;
+
+    border-radius:
+        12px;
+
+    cursor:
+        pointer;
+
+}
+
+
+/* =========================================================
+   BATTLE SCREEN
+========================================================= */
+
+.battle-screen {
+
+    padding:
+        25px;
+
+}
+
+
+.battle-top {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr auto 1fr;
+
+    align-items:
+        center;
+
+    gap:
+        20px;
+
+}
+
+
+.battle-player {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        12px;
+
+}
+
+
+.battle-player.ai {
+
+    justify-content:
+        flex-end;
+
+    text-align:
+        right;
+
+}
+
+
+.small-avatar {
+
+    width: 45px;
+    height: 45px;
+
+    border-radius:
+        13px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    background:
+        rgba(59,130,246,.1);
+
+}
+
+
+.small-avatar.ai {
+
+    background:
+        rgba(139,92,246,.12);
+
+    color:
+        #a78bfa;
+
+}
+
+
+.small-avatar.player {
+
+    color:
+        var(--battle-blue-2);
+
+}
+
+
+.battle-player span,
+.battle-player strong {
+
+    display:
+        block;
+
+}
+
+
+.battle-player span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        10px;
+
+}
+
+
+.battle-player strong {
+
+    font-size:
+        13px;
+
+    margin-top:
+        3px;
+
+}
+
+
+.battle-center {
+
+    text-align:
+        center;
+
+}
+
+
+.battle-center > span {
+
+    display:
+        block;
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        9px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        .12em;
+
+}
+
+
+.timer-ring {
+
+    width: 70px;
+    height: 70px;
+
+    border-radius:
+        50%;
+
+    margin:
+        8px auto 0;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border:
+        3px solid
+        var(--battle-blue);
+
+    background:
+        rgba(59,130,246,.07);
+
+}
+
+
+.timer-ring strong {
+
+    font-size:
+        22px;
+
+}
+
+
+.timer-ring span {
+
+    display:
+        none;
+
+}
+
+
+/* =========================================================
+   SCORE
+========================================================= */
+
+.scoreboard {
+
+    margin:
+        25px auto;
+
+    max-width:
+        560px;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr 50px 1fr;
+
+    align-items:
+        center;
+
+    text-align:
+        center;
+
+}
+
+
+.score-side span {
+
+    display:
+        block;
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        10px;
+
+}
+
+
+.score-side strong {
+
+    display:
+        block;
+
+    font-size:
+        34px;
+
+    margin-top:
+        5px;
+
+}
+
+
+.score-middle span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.battle-progress {
+
+    height:
+        5px;
+
+    border-radius:
+        10px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    overflow:
+        hidden;
+
+}
+
+
+.battle-progress-fill {
+
+    height:
+        100%;
+
+    width:
+        0;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--battle-blue),
+            var(--battle-purple)
+        );
+
+    transition:
+        width .25s ease;
+
+}
+
+
+/* =========================================================
+   QUESTION
+========================================================= */
+
+.question-area {
+
+    max-width:
+        850px;
+
+    margin:
+        35px auto 0;
+
+}
+
+
+.question-meta {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+}
+
+
+.question-meta span {
+
+    padding:
+        6px 9px;
+
+    border-radius:
+        7px;
+
+    background:
+        rgba(59,130,246,.08);
+
+    color:
+        var(--battle-blue-2);
+
+    font-size:
+        9px;
+
+    font-weight:
+        800;
+
+}
+
+
+.question-area h2 {
+
+    font-size:
+        clamp(21px,3vw,31px);
+
+    line-height:
+        1.4;
+
+    margin:
+        18px 0 25px;
+
+}
+
+
+/* =========================================================
+   ANSWERS
+========================================================= */
+
+.answer-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+    gap:
+        12px;
+
+}
+
+
+.answer-option {
+
+    min-height:
+        70px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        14px;
+
+    text-align:
+        left;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    border-radius:
+        14px;
+
+    background:
+        rgba(255,255,255,.025);
+
+    color:
+        white;
+
+    padding:
+        13px 15px;
+
+    cursor:
+        pointer;
+
+    transition:
+        .2s ease;
+
+}
+
+
+.answer-option:hover {
+
+    border-color:
+        rgba(59,130,246,.6);
+
+    background:
+        rgba(59,130,246,.08);
+
+}
+
+
+.answer-option:disabled {
+
+    cursor:
+        default;
+
+}
+
+
+.answer-letter {
+
+    width: 34px;
+    height: 34px;
+
+    flex-shrink:
+        0;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        9px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    font-weight:
+        900;
+
+}
+
+
+.answer-text {
+
+    line-height:
+        1.45;
+
+    font-size:
+        13px;
+
+}
+
+
+.answer-option.correct {
+
+    border-color:
+        rgba(34,197,94,.7);
+
+    background:
+        rgba(34,197,94,.1);
+
+}
+
+
+.answer-option.incorrect {
+
+    border-color:
+        rgba(239,68,68,.7);
+
+    background:
+        rgba(239,68,68,.1);
+
+}
+
+
+.question-feedback {
+
+    min-height:
+        30px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        10px;
+
+    margin-top:
+        15px;
+
+    font-size:
+        11px;
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+.feedback-good {
+
+    color:
+        var(--battle-green);
+
+    font-weight:
+        900;
+
+}
+
+
+.feedback-bad {
+
+    color:
+        var(--battle-red);
+
+    font-weight:
+        900;
+
+}
+
+
+/* =========================================================
+   BATTLE BOTTOM
+========================================================= */
+
+.battle-bottom {
+
+    margin-top:
+        25px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+}
+
+
+.combo-display {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        9px;
+
+}
+
+
+.combo-display svg {
+
+    color:
+        var(--battle-gold);
+
+}
+
+
+.combo-display strong,
+.combo-display span {
+
+    display:
+        block;
+
+}
+
+
+.combo-display strong {
+
+    font-size:
+        16px;
+
+}
+
+
+.combo-display span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        9px;
+
+}
+
+
+.live-performance span,
+.live-performance strong {
+
+    display:
+        block;
+
+}
+
+
+.live-performance span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        9px;
+
+}
+
+
+.live-performance strong {
+
+    margin-top:
+        3px;
+
+}
+
+
+/* =========================================================
+   RESULTS
+========================================================= */
+
+.result-screen {
+
+    padding:
+        50px 35px;
+
+    text-align:
+        center;
+
+}
+
+
+.result-icon {
+
+    font-size:
+        60px;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.result-screen h2 {
+
+    font-size:
+        42px;
+
+    margin:
+        10px 0;
+
+}
+
+
+.result-screen > p {
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+.final-score {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr 70px 1fr;
+
+    max-width:
+        500px;
+
+    margin:
+        35px auto;
+
+    align-items:
+        center;
+
+}
+
+
+.final-score span {
+
+    display:
+        block;
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        10px;
+
+}
+
+
+.final-score strong {
+
+    display:
+        block;
+
+    font-size:
+        40px;
+
+    margin-top:
+        5px;
+
+}
+
+
+.final-vs {
+
+    font-size:
+        11px;
+
+    color:
+        var(--battle-muted);
+
+    font-weight:
+        900;
+
+}
+
+
+.performance-grid {
+
+    max-width:
+        650px;
+
+    margin:
+        auto;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:
+        10px;
+
+}
+
+
+.performance-grid > div {
+
+    padding:
+        15px 10px;
+
+    border:
+        1px solid
+        var(--battle-border);
+
+    border-radius:
+        12px;
+
+    background:
+        rgba(255,255,255,.025);
+
+}
+
+
+.performance-grid span,
+.performance-grid strong {
+
+    display:
+        block;
+
+}
+
+
+.performance-grid span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        9px;
+
+}
+
+
+.performance-grid strong {
+
+    margin-top:
+        5px;
+
+    font-size:
+        17px;
+
+}
+
+
+/* =========================================================
+   XP
+========================================================= */
+
+.xp-reward {
+
+    max-width:
+        420px;
+
+    margin:
+        25px auto 15px;
+
+    padding:
+        17px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        13px;
+
+    border:
+        1px solid
+        rgba(251,191,36,.2);
+
+    border-radius:
+        15px;
+
+    background:
+        rgba(251,191,36,.06);
+
+}
+
+
+.xp-icon {
+
+    width: 40px;
+    height: 40px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        12px;
+
+    background:
+        rgba(251,191,36,.12);
+
+    color:
+        var(--battle-gold);
+
+}
+
+
+.xp-reward span,
+.xp-reward strong {
+
+    display:
+        block;
+
+    text-align:
+        left;
+
+}
+
+
+.xp-reward span {
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        9px;
+
+}
+
+
+.xp-reward strong {
+
+    color:
+        var(--battle-gold);
+
+    font-size:
+        22px;
+
+}
+
+
+/* =========================================================
+   BREAKDOWN
+========================================================= */
+
+.reward-breakdown {
+
+    max-width:
+        500px;
+
+    margin:
+        20px auto;
+
+    display:
+        grid;
+
+    gap:
+        7px;
+
+}
+
+
+.reward-breakdown div {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    padding:
+        8px 0;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.05);
+
+    font-size:
+        11px;
+
+}
+
+
+.reward-breakdown span {
+
+    color:
+        var(--battle-muted);
+
+}
+
+
+.reward-breakdown strong {
+
+    color:
+        var(--battle-green);
+
+}
+
+
+/* =========================================================
+   RESULT ACTIONS
+========================================================= */
+
+.result-actions {
+
+    display:
+        flex;
+
+    justify-content:
+        center;
+
+    gap:
+        10px;
+
+    margin-top:
+        28px;
+
+}
+
+
+/* =========================================================
+   AI INSIGHT
+========================================================= */
+
+.ai-insight {
+
+    margin-top:
+        18px;
+
+    padding:
+        17px 20px;
+
+    border:
+        1px solid
+        rgba(139,92,246,.16);
+
+    border-radius:
+        17px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        14px;
+
+    background:
+        rgba(139,92,246,.045);
+
+}
+
+
+.insight-icon {
+
+    width: 40px;
+    height: 40px;
+
+    flex-shrink:
+        0;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        12px;
+
+    background:
+        rgba(139,92,246,.1);
+
+    color:
+        #a78bfa;
+
+}
+
+
+.ai-insight span {
+
+    font-size:
+        9px;
+
+    font-weight:
+        900;
+
+    color:
+        #a78bfa;
+
+    letter-spacing:
+        .1em;
+
+}
+
+
+.ai-insight p {
+
+    margin:
+        4px 0 0;
+
+    color:
+        var(--battle-muted);
+
+    font-size:
+        12px;
+
+    line-height:
+        1.5;
+
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+.shake-card {
+
+    animation:
+        shake .35s ease;
+
+}
+
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform:
+            translateX(0);
+    }
+
+    25% {
+        transform:
+            translateX(-7px);
+    }
+
+    75% {
+        transform:
+            translateX(7px);
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE — SIDEBAR
+========================================================= */
+
+@media (max-width: 900px) {
+
+    :root {
+
+        --sidebar-width: 0px;
+
+    }
+
+
+    .sidebar {
+
+        width:
+            250px;
+
+        transform:
+            translateX(-100%);
+
+        transition:
+            transform .25s ease;
+
+        box-shadow:
+            15px 0 50px
+            rgba(0,0,0,.35);
+
+    }
+
+
+    .app-main {
+
+        width:
+            100%;
+
+        margin-left:
+            0;
+
+    }
+
+
+    .mobile-brand {
+
+        display:
+            flex;
+
+    }
+
+
+    .battle-hero {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .battle-visual {
+
+        min-height:
+            210px;
+
+    }
+
+
+    .battle-config {
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE — SMALL
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .topbar {
+
+        padding:
+            0 18px;
+
+    }
+
+
+    .profile-text {
+
+        display:
+            none;
+
+    }
+
+
+    .battle-main {
+
+        width:
+            94%;
+
+        padding-top:
+            30px;
+
+    }
+
+
+    .setup-card,
+    .battle-screen,
+    .result-screen {
+
+        padding:
+            20px;
+
+    }
+
+
+    .selection-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .battle-config {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .battle-top {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .battle-player.ai {
+
+        justify-content:
+            flex-start;
+
+        text-align:
+            left;
+
+    }
+
+
+    .battle-center {
+
+        order:
+            -1;
+
+    }
+
+
+    .answer-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .performance-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .setup-footer {
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+
+        gap:
+            15px;
+
+    }
+
+
+    .start-button {
+
+        width:
+            100%;
+
+    }
+
+
+    .battle-bottom {
+
+        flex-wrap:
+            wrap;
+
+        gap:
+            15px;
+
+    }
+
+
+    .hero-copy h1 {
+
+        letter-spacing:
+            -2px;
+
+    }
+
+
+    .hero-stats {
+
+        gap:
+            20px;
+
+    }
+
+
+    .battle-visual {
+
+        gap:
+            12px;
+
+    }
+
+
+    .ai-avatar,
+    .player-avatar {
+
+        width:
+            85px;
+
+        height:
+            85px;
+
+        border-radius:
+            23px;
+
+    }
+
+
+    .ai-avatar svg,
+    .player-avatar svg {
+
+        width:
+            35px;
+
+        height:
+            35px;
+
+    }
+
 }
