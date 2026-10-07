@@ -803,3 +803,142 @@ html body .sidebar .sidebar-nav .nav-section a.premium-link:focus-visible {
     background:
         rgba(148, 163, 184, 0.3);
 }
+
+/* =========================================================
+   PREMIUM — ABSOLUTE GOLD OVERRIDE
+   MUST BE THE LAST CSS IN GAME-MODE.CSS
+========================================================= */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:link,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:visited {
+    color: #fbbf24 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+
+/* PREMIUM TEXT */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > span {
+    color: #fbbf24 !important;
+}
+
+
+/* PREMIUM LUCIDE ICON */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg {
+    color: #fbbf24 !important;
+    stroke: #fbbf24 !important;
+    fill: none !important;
+
+    width: 16px !important;
+    height: 16px !important;
+
+    opacity: 1 !important;
+
+    filter:
+        drop-shadow(
+            0 0 6px rgba(251, 191, 36, 0.75)
+        ) !important;
+}
+
+
+/* FORCE EVERY PART OF THE LUCIDE SVG GOLD */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg *,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg path,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg line,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg polyline,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg polygon,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg circle,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link > svg rect {
+    color: #fbbf24 !important;
+    stroke: #fbbf24 !important;
+    fill: none !important;
+}
+
+
+/* =========================================================
+   PREMIUM HOVER
+========================================================= */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover {
+    color: #fcd34d !important;
+
+    background:
+        rgba(251, 191, 36, 0.10) !important;
+
+    box-shadow:
+        0 0 18px rgba(251, 191, 36, 0.15) !important;
+}
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > span {
+    color: #fcd34d !important;
+}
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > svg,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:hover > svg * {
+    color: #fcd34d !important;
+    stroke: #fcd34d !important;
+
+    filter:
+        drop-shadow(
+            0 0 9px rgba(251, 191, 36, 0.9)
+        ) !important;
+}
+
+
+/* =========================================================
+   PREMIUM ACTIVE
+========================================================= */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active {
+    color: #fbbf24 !important;
+
+    background:
+        rgba(251, 191, 36, 0.12) !important;
+
+    box-shadow:
+        0 0 18px rgba(251, 191, 36, 0.12) !important;
+}
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > span {
+    color: #fbbf24 !important;
+}
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > svg,
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active > svg * {
+    color: #fbbf24 !important;
+    stroke: #fbbf24 !important;
+    fill: none !important;
+
+    filter:
+        drop-shadow(
+            0 0 10px rgba(251, 191, 36, 0.95)
+        ) !important;
+}
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link.active::before {
+    background:
+        linear-gradient(
+            180deg,
+            #f59e0b,
+            #fbbf24
+        ) !important;
+
+    box-shadow:
+        0 0 14px rgba(251, 191, 36, 0.8) !important;
+}
+
+
+/* =========================================================
+   PREMIUM FOCUS
+========================================================= */
+
+html body div.app-shell aside.sidebar nav.sidebar-nav div.nav-section a.premium-link:focus-visible {
+    outline:
+        2px solid #fbbf24 !important;
+
+    outline-offset: 2px;
+}
