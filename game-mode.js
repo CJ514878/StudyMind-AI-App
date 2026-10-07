@@ -708,6 +708,14 @@ document.addEventListener(
         await syncGameModeUsername();
 
 
+        /*
+         * Apply the correct Premium/non-Premium
+         * visual theme.
+         */
+
+        setupPremiumThemeListener();
+
+
         loadStats();
 
         loadPlanDefaults();
