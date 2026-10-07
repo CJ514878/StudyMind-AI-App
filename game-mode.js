@@ -1492,6 +1492,14 @@ function updateAIInsight() {
 
 /* =========================================================
    PREMIUM
+   ---------------------------------------------------------
+   Premium status uses the existing StudyMind system:
+
+       localStorage:
+           studyMindPremium
+
+   This section also applies the Premium gold theme
+   to the entire Game Mode page.
 ========================================================= */
 
 function isPremium() {
@@ -1501,6 +1509,10 @@ function isPremium() {
             STORAGE.PREMIUM
         );
 
+
+    /*
+     * Existing StudyMind Premium cache.
+     */
 
     if (
         cached === "true" ||
@@ -1512,6 +1524,11 @@ function isPremium() {
     }
 
 
+    /*
+     * Some StudyMind pages expose the current
+     * Premium state globally.
+     */
+
     if (
         window.premiumStatus === true
     ) {
@@ -1520,6 +1537,11 @@ function isPremium() {
 
     }
 
+
+    /*
+     * Use the shared StudyMind Premium helper
+     * if another page/system has provided it.
+     */
 
     if (
         typeof window.isStudyMindPremium ===
@@ -1532,12 +1554,129 @@ function isPremium() {
                 window.isStudyMindPremium()
             );
 
-        } catch (_) {}
+        }
+
+        catch (_) {}
 
     }
 
 
     return false;
+
+}
+
+
+/* =========================================================
+   APPLY PREMIUM GAME MODE THEME
+========================================================= */
+
+function applyGameModePremiumTheme() {
+
+    const premium =
+        isPremium();
+
+
+    /*
+     * The CSS uses this class to switch the
+     * entire Game Mode interface to Premium gold.
+     */
+
+    document.body.classList.toggle(
+        "premium-active",
+        premium
+    );
+
+
+    /*
+     * Also keep a data attribute available for
+     * CSS/debugging and future StudyMind features.
+     */
+
+    document.body.dataset.premium =
+        premium
+            ? "true"
+            : "false";
+
+
+    /*
+     * Refresh the battle limit immediately.
+     *
+     * Premium users receive unlimited battles.
+     */
+
+    updateBattleLimit();
+
+
+    /*
+     * Lucide icons can be refreshed safely after
+     * the theme state changes.
+     */
+
+    if (window.lucide) {
+
+        window.lucide.createIcons();
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM STATE LISTENER
+========================================================= */
+
+function setupPremiumThemeListener() {
+
+    /*
+     * Apply Premium theme when Game Mode first loads.
+     */
+
+    applyGameModePremiumTheme();
+
+
+    /*
+     * Listen for Premium activation/deactivation
+     * elsewhere in StudyMind.
+     *
+     * This allows the page to react without requiring
+     * a manual refresh.
+     */
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        () => {
+
+            applyGameModePremiumTheme();
+
+        }
+    );
+
+
+    /*
+     * Cross-tab Premium synchronization.
+     *
+     * If Premium is activated in another tab,
+     * update Game Mode automatically.
+     */
+
+    window.addEventListener(
+        "storage",
+        event => {
+
+            if (
+                event.key !==
+                STORAGE.PREMIUM
+            ) {
+
+                return;
+
+            }
+
+
+            applyGameModePremiumTheme();
+
+        }
+    );
 
 }
 
