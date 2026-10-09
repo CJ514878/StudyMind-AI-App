@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Friends | StudyMind AI</title>
+    <meta name="description" content="Connect with friends, share study progress, and learn together on StudyMind AI.">
+
+    <link rel="stylesheet" href="friends.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="dashboard.html">
+            <span class="brand-mark"><i data-lucide="brain-circuit"></i></span>
+            <span>StudyMind <b>AI</b></span>
+        </a>
+
+        <div class="sidebar-scroll">
+            <nav class="sidebar-nav">
+
+                <p class="nav-label">WORKSPACE</p>
+                <a class="nav-link" href="dashboard.html">
+                    <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+                </a>
+                <a class="nav-link" href="schedule.html">
+                    <i data-lucide="calendar-days"></i><span>Schedule</span>
+                </a>
+                <a class="nav-link" href="calendar.html">
+                    <i data-lucide="calendar"></i><span>Calendar</span>
+                </a>
+
+                <p class="nav-label">AI TOOLS</p>
+                <a class="nav-link" href="ai-support.html">
+                    <i data-lucide="message-circle"></i><span>AI Support</span>
+                </a>
+                <a class="nav-link" href="ai-assistant.html">
+                    <i data-lucide="bot"></i><span>AI Assistant</span>
+                </a>
+                <a class="nav-link" href="summarizer.html">
+                    <i data-lucide="file-text"></i><span>Summarizer</span>
+                </a>
+
+                <p class="nav-label">PROGRESS</p>
+                <a class="nav-link" href="streak.html">
+                    <i data-lucide="flame"></i><span>Study Streak</span>
+                </a>
+                <a class="nav-link" href="score.html">
+                    <i data-lucide="chart-no-axes-column-increasing"></i><span>Study Score</span>
+                </a>
+                <a class="nav-link" href="goals.html">
+                    <i data-lucide="target"></i><span>Goals</span>
+                </a>
+                <a class="nav-link" href="rewards.html">
+                    <i data-lucide="trophy"></i><span>Rewards</span>
+                </a>
+
+                <p class="nav-label">COMMUNITY</p>
+                <a class="nav-link" href="leaderboard.html">
+                    <i data-lucide="medal"></i><span>Leaderboard</span>
+                </a>
+                <a class="nav-link active" href="friends.html" aria-current="page">
+                    <i data-lucide="users"></i><span>Friends</span>
+                    <span class="nav-count" id="sidebarRequestCount" hidden>0</span>
+                </a>
+                <a class="nav-link" href="game-mode.html">
+                    <i data-lucide="swords"></i><span>Game Mode</span>
+                </a>
+
+                <p class="nav-label">ACCOUNT</p>
+                <a class="nav-link" href="premium.html">
+                    <i data-lucide="crown"></i><span>Premium</span>
+                </a>
+                <a class="nav-link" href="feedback.html">
+                    <i data-lucide="message-square-text"></i><span>Feedback</span>
+                </a>
+                <a class="nav-link" href="settings.html">
+                    <i data-lucide="settings"></i><span>Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-user">
+                <div class="avatar avatar-small" id="sidebarAvatar">S</div>
+                <div class="sidebar-user-info">
+                    <strong id="sidebarUsername">Student</strong>
+                    <span id="sidebarUserEmail">StudyMind member</span>
+                </div>
+            </div>
+            <button class="logout-button" id="logoutButton" type="button">
+                <i data-lucide="log-out"></i><span>Log out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="icon-button mobile-menu" id="menuButton"
+                        type="button" aria-label="Open navigation">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div>
+                    <div class="breadcrumb">Community <span>/</span> Friends</div>
+                    <h1>Friends</h1>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <span class="premium-label" id="premiumLabel" hidden>
+                    <i data-lucide="crown"></i> PREMIUM
+                </span>
+                <button class="icon-button" id="themeToggle" type="button"
+                        aria-label="Toggle light or dark theme">
+                    <i data-lucide="moon"></i>
+                </button>
+                <div class="avatar top-avatar" id="topAvatar">S</div>
+            </div>
+        </header>
+
+        <section class="page-content">
+
+            <!-- WELCOME BANNER -->
+            <section class="welcome-banner">
+                <div class="welcome-copy">
+                    <span class="eyebrow"><i data-lucide="users"></i> YOUR STUDY COMMUNITY</span>
+                    <h2>Better together.</h2>
+                    <p>Find your study people, encourage one another, and make every study session count.</p>
+                    <button class="gold-button" id="findFriendsButton" type="button">
+                        <i data-lucide="user-plus"></i> Find friends
+                    </button>
+                </div>
+                <div class="welcome-art" aria-hidden="true">
+                    <div class="art-orbit orbit-one"></div>
+                    <div class="art-orbit orbit-two"></div>
+                    <div class="art-icon"><i data-lucide="users-round"></i></div>
+                    <span class="art-star star-one">✦</span>
+                    <span class="art-star star-two">✧</span>
+                </div>
+            </section>
+
+            <!-- SUMMARY STATS -->
+            <section class="stats-grid" aria-label="Friends overview">
+                <article class="stat-card">
+                    <div class="stat-icon"><i data-lucide="users-round"></i></div>
+                    <span class="stat-label">Your friends</span>
+                    <strong id="friendsStat">—</strong>
+                    <span class="stat-note">Connected learners</span>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i data-lucide="user-round-plus"></i></div>
+                    <span class="stat-label">Pending requests</span>
+                    <strong id="requestsStat">—</strong>
+                    <span class="stat-note">Waiting for a response</span>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i data-lucide="search"></i></div>
+                    <span class="stat-label">Discover</span>
+                    <strong class="stat-word">Together</strong>
+                    <span class="stat-note">Find your next study partner</span>
+                </article>
+            </section>
+
+            <!-- FIND FRIENDS -->
+            <section class="panel find-panel" id="findFriendsSection">
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-kicker">GROW YOUR CIRCLE</span>
+                        <h2>Find friends</h2>
+                        <p>Search using a student's StudyMind username.</p>
+                    </div>
+                    <div class="heading-icon"><i data-lucide="user-round-search"></i></div>
+                </div>
+
+                <form class="search-form" id="friendSearchForm">
+                    <div class="search-input-wrap">
+                        <i data-lucide="search"></i>
+                        <input id="friendSearchInput" type="search"
+                               placeholder="Enter a username..."
+                               autocomplete="off" maxlength="40"
+                               aria-label="Search friends by username">
+                    </div>
+                    <button class="gold-button" id="searchButton" type="submit">
+                        Search
+                    </button>
+                </form>
+
+                <div class="inline-message" id="searchMessage" role="status" hidden></div>
+                <div class="people-list" id="searchResults">
+                    <div class="empty-state compact-empty">
+                        <div class="empty-icon"><i data-lucide="user-round-search"></i></div>
+                        <strong>Your next study partner is out there.</strong>
+                        <p>Search for a username to find other StudyMind learners.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FRIEND REQUESTS -->
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-kicker">CONNECTIONS</span>
+                        <h2>Friend requests</h2>
+                        <p>Manage invitations from other learners.</p>
+                    </div>
+                    <span class="count-pill" id="requestCount">0 requests</span>
+                </div>
+
+                <div class="people-list" id="incomingRequests">
+                    <div class="loading-state">Loading friend requests…</div>
+                </div>
+            </section>
+
+            <!-- FRIENDS LIST -->
+            <section class="panel">
+                <div class="panel-heading friends-heading">
+                    <div>
+                        <span class="section-kicker">YOUR PEOPLE</span>
+                        <h2>Your friends</h2>
+                        <p>Keep your study community close.</p>
+                    </div>
+                    <div class="friends-tools">
+                        <label class="friend-filter">
+                            <i data-lucide="search"></i>
+                            <input type="search" id="friendFilterInput"
+                                   placeholder="Filter friends…" aria-label="Filter friends">
+                        </label>
+                        <button class="icon-button" id="refreshButton"
+                                type="button" aria-label="Refresh friends">
+                            <i data-lucide="refresh-cw"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="people-list" id="friendsList">
+                    <div class="loading-state">Loading your friends…</div>
+                </div>
+                <div class="inline-message" id="friendsMessage" role="status" hidden></div>
+            </section>
+
+            <!-- STUDY TOGETHER SHORTCUTS -->
+            <section class="community-grid">
+                <a class="community-card" href="leaderboard.html">
+                    <div class="community-card-icon"><i data-lucide="trophy"></i></div>
+                    <div>
+                        <span class="section-kicker">FRIENDLY COMPETITION</span>
+                        <h3>Leaderboard</h3>
+                        <p>See how your learning journey compares.</p>
+                    </div>
+                    <i data-lucide="arrow-up-right" class="card-arrow"></i>
+                </a>
+
+                <a class="community-card" href="game-mode.html">
+                    <div class="community-card-icon"><i data-lucide="swords"></i></div>
+                    <div>
+                        <span class="section-kicker">TEST YOUR KNOWLEDGE</span>
+                        <h3>Game Mode</h3>
+                        <p>Challenge yourself with a learning battle.</p>
+                    </div>
+                    <i data-lucide="arrow-up-right" class="card-arrow"></i>
+                </a>
+            </section>
+
+            <footer class="page-footer">
+                <span>StudyMind AI</span>
+                <span>Learn together. Grow together.</span>
+            </footer>
+        </section>
+    </main>
+</div>
+
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Load your existing Supabase initialization script here, if it is a separate file. -->
+<!-- Example: <script src="supabase-config.js"></script> -->
+
+<script src="friends.js"></script>
+</body>
+</html>
