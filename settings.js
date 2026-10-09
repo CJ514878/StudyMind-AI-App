@@ -2,8 +2,10 @@
 
 /* =========================================================
    STUDYMIND AI — SETTINGS
-   SUPABASE AUTHORITATIVE USERNAME SYSTEM
-   GOLD / BLACK THEME SYSTEM
+   COMPLETE REPLACEMENT
+   SUPABASE USERNAME SYSTEM
+   PREMIUM STATUS + GOLD THEME
+   SETTINGS / PROFILE / RESET / LOGOUT
 ========================================================= */
 
 
@@ -71,7 +73,7 @@ function normalizeUsername(username) {
 
 
 /* =========================================================
-   GET LOCAL CACHED USERNAME
+   LOCAL USERNAME
 ========================================================= */
 
 function getCachedUsername() {
@@ -84,10 +86,6 @@ function getCachedUsername() {
 
 }
 
-
-/* =========================================================
-   SET LOCAL CACHE
-========================================================= */
 
 function cacheUsername(username) {
 
@@ -104,10 +102,6 @@ function cacheUsername(username) {
 }
 
 
-/* =========================================================
-   GET CANONICAL USERNAME
-========================================================= */
-
 function getCanonicalUsername() {
 
     return getCachedUsername();
@@ -116,7 +110,7 @@ function getCanonicalUsername() {
 
 
 /* =========================================================
-   UPDATE CURRENT PAGE
+   UPDATE USERNAME UI
 ========================================================= */
 
 function updateUsernameUI(username) {
@@ -191,25 +185,14 @@ function updateUsernameUI(username) {
 }
 
 
-/* =========================================================
-   SET CANONICAL USERNAME
-========================================================= */
-
 function setCanonicalUsername(username) {
 
     username =
         normalizeUsername(username);
 
+    cacheUsername(username);
 
-    cacheUsername(
-        username
-    );
-
-
-    updateUsernameUI(
-        username
-    );
-
+    updateUsernameUI(username);
 
     return username;
 
@@ -350,7 +333,7 @@ async function saveUsernameToSupabase(
 
 
 /* =========================================================
-   SYNC LEADERBOARD USERNAME
+   LEADERBOARD USERNAME SYNC
 ========================================================= */
 
 async function syncLeaderboardUsername(
@@ -408,24 +391,6 @@ async function syncLeaderboardUsername(
         }
 
 
-        console.log(
-            "StudyMind: leaderboard username synchronized.",
-            {
-
-                userId:
-                    user.id,
-
-                username,
-
-                rowsUpdated:
-                    Array.isArray(data)
-                        ? data.length
-                        : 0
-
-            }
-        );
-
-
         return {
 
             success: true,
@@ -474,11 +439,6 @@ async function loadSettingsUser() {
     try {
 
         if (!client) {
-
-            console.warn(
-                "StudyMind: Supabase client unavailable while loading username."
-            );
-
 
             username =
                 getCachedUsername();
@@ -533,21 +493,31 @@ async function loadSettingsUser() {
 
                 if (migrationUsername) {
 
-                    console.log(
-                        "StudyMind: migrating existing Supabase name into canonical username:",
-                        migrationUsername
-                    );
+                    try {
+
+                        const result =
+                            await saveUsernameToSupabase(
+                                migrationUsername,
+                                user
+                            );
 
 
-                    const result =
-                        await saveUsernameToSupabase(
-                            migrationUsername,
-                            user
+                        username =
+                            result.username;
+
+                    }
+
+                    catch (migrationError) {
+
+                        console.warn(
+                            "StudyMind username migration failed:",
+                            migrationError
                         );
 
+                        username =
+                            migrationUsername;
 
-                    username =
-                        result.username;
+                    }
 
                 }
 
@@ -558,14 +528,6 @@ async function loadSettingsUser() {
 
                 username =
                     getCachedUsername();
-
-            }
-
-
-            if (!username) {
-
-                username =
-                    "Student";
 
             }
 
@@ -588,25 +550,23 @@ async function loadSettingsUser() {
 
 
     username =
-        normalizeUsername(
-            username
+        normalizeUsername(username);
+
+
+    cacheUsername(username);
+
+    updateUsernameUI(username);
+
+
+    const input =
+        document.getElementById(
+            "displayName"
         );
 
 
-    cacheUsername(
-        username
-    );
-
-
-    updateUsernameUI(
-        username
-    );
-
-
-    console.log(
-        "StudyMind Settings: canonical username:",
-        username
-    );
+    if (input) {
+        input.value = username;
+    }
 
 
     return username;
@@ -708,7 +668,7 @@ function setupProfile() {
                 }
 
 
-                let user =
+                const user =
                     data?.user ||
                     null;
 
@@ -729,10 +689,6 @@ function setupProfile() {
                     );
 
 
-                user =
-                    result.user;
-
-
                 const savedUsername =
                     result.username;
 
@@ -749,7 +705,7 @@ function setupProfile() {
                 const leaderboardResult =
                     await syncLeaderboardUsername(
                         savedUsername,
-                        user
+                        result.user
                     );
 
 
@@ -851,10 +807,85 @@ function setupProfile() {
 
 
 /* =========================================================
-   PREMIUM DETECTION
+   PREMIUM
 ========================================================= */
 
-function isPremiumUser() {
+let studyMindPremium =
+    false;
+
+
+/* ---------------------------------------------------------
+   PARSE PREMIUM RESPONSE
+--------------------------------------------------------- */
+
+function parsePremiumValue(value) {
+
+    if (
+        value === true ||
+        value === 1 ||
+        value === "true" ||
+        value === "1"
+    ) {
+
+        return true;
+
+    }
+
+
+    if (!value) {
+        return false;
+    }
+
+
+    if (
+        typeof value === "object"
+    ) {
+
+        return (
+            value.isPremium === true ||
+            value.premium === true ||
+            value.active === true ||
+            value.is_premium === true ||
+            value.premium_active === true ||
+            value.status === "active" ||
+            value.subscription_status === "active" ||
+            value.plan === "premium" ||
+            value.plan === "Premium"
+        );
+
+    }
+
+
+    return false;
+
+}
+
+
+/* ---------------------------------------------------------
+   CACHE PREMIUM
+--------------------------------------------------------- */
+
+function cachePremiumStatus(isPremium) {
+
+    studyMindPremium =
+        Boolean(isPremium);
+
+
+    localStorage.setItem(
+        "studyMindPremium",
+        studyMindPremium
+            ? "true"
+            : "false"
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   LOCAL PREMIUM FALLBACK
+--------------------------------------------------------- */
+
+function getCachedPremiumStatus() {
 
     const cached =
         localStorage.getItem(
@@ -872,46 +903,426 @@ function isPremiumUser() {
     }
 
 
-    if (
-        window.premiumStatus === true
-    ) {
+    try {
 
-        return true;
+        const parsed =
+            JSON.parse(
+                cached
+            );
+
+
+        return parsePremiumValue(
+            parsed
+        );
+
+    }
+
+    catch (_) {
+
+        return false;
+
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   UPDATE PREMIUM UI
+--------------------------------------------------------- */
+
+function updatePremiumUI(isPremium) {
+
+    isPremium =
+        Boolean(isPremium);
+
+
+    studyMindPremium =
+        isPremium;
+
+
+    /* -------------------------------------------------------
+       ACCOUNT BADGE
+    ------------------------------------------------------- */
+
+    const premiumBadge =
+        document.getElementById(
+            "premiumBadge"
+        );
+
+
+    if (premiumBadge) {
+
+        premiumBadge.textContent =
+            isPremium
+                ? "PREMIUM PLAN"
+                : "FREE PLAN";
+
+
+        premiumBadge.classList.toggle(
+            "premium",
+            isPremium
+        );
+
+
+        premiumBadge.classList.toggle(
+            "free",
+            !isPremium
+        );
 
     }
 
 
-    if (
-        typeof window.isStudyMindPremium ===
-        "function"
-    ) {
+    /* -------------------------------------------------------
+       ACCOUNT STATUS
+    ------------------------------------------------------- */
 
-        try {
+    const accountStatus =
+        document.getElementById(
+            "accountStatus"
+        );
 
-            return Boolean(
-                window.isStudyMindPremium()
+
+    if (accountStatus) {
+
+        accountStatus.textContent =
+            isPremium
+                ? "Premium"
+                : "Free";
+
+    }
+
+
+    /* -------------------------------------------------------
+       OPTIONAL PREMIUM ELEMENTS
+    ------------------------------------------------------- */
+
+    document
+        .querySelectorAll(
+            "[data-premium-status]"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                isPremium
+                    ? "Premium"
+                    : "Free";
+
+        });
+
+
+    document
+        .querySelectorAll(
+            "[data-premium-badge]"
+        )
+        .forEach(element => {
+
+            element.textContent =
+                isPremium
+                    ? "PREMIUM"
+                    : "FREE";
+
+        });
+
+
+    /* -------------------------------------------------------
+       BODY THEME
+    ------------------------------------------------------- */
+
+    document.body.classList.toggle(
+        "premium-active",
+        isPremium
+    );
+
+
+    document.body.classList.toggle(
+        "premium-user",
+        isPremium
+    );
+
+
+    document.documentElement
+        .setAttribute(
+            "data-premium",
+            isPremium
+                ? "true"
+                : "false"
+        );
+
+}
+
+
+/* ---------------------------------------------------------
+   CHECK PREMIUM FROM SERVER
+   /api/premium/status
+--------------------------------------------------------- */
+
+async function checkPremiumStatus() {
+
+    const localFallback =
+        getCachedPremiumStatus();
+
+
+    /* Immediately show cached state */
+    updatePremiumUI(
+        localFallback
+    );
+
+
+    try {
+
+        const client =
+            settingsClient();
+
+
+        const headers = {
+
+            "Content-Type":
+                "application/json"
+
+        };
+
+
+        /* ---------------------------------------------------
+           Add Supabase access token when available
+        --------------------------------------------------- */
+
+        if (client) {
+
+            try {
+
+                const {
+                    data
+                } =
+                    await client.auth.getSession();
+
+
+                const accessToken =
+                    data?.session
+                        ?.access_token;
+
+
+                if (accessToken) {
+
+                    headers.Authorization =
+                        `Bearer ${accessToken}`;
+
+                }
+
+            }
+
+            catch (_) {}
+
+        }
+
+
+        const response =
+            await fetch(
+                "/api/premium/status",
+                {
+
+                    method:
+                        "GET",
+
+                    headers,
+
+                    credentials:
+                        "include",
+
+                    cache:
+                        "no-store"
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Premium status request failed: ${response.status}`
             );
 
         }
 
-        catch (_) {}
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "StudyMind Premium status:",
+            result
+        );
+
+
+        const serverPremium =
+            parsePremiumValue(
+                result
+            ) ||
+            parsePremiumValue(
+                result?.data
+            ) ||
+            parsePremiumValue(
+                result?.user
+            ) ||
+            parsePremiumValue(
+                result?.subscription
+            );
+
+
+        cachePremiumStatus(
+            serverPremium
+        );
+
+
+        updatePremiumUI(
+            serverPremium
+        );
+
+
+        return serverPremium;
 
     }
 
+    catch (error) {
 
-    return false;
+        console.warn(
+            "StudyMind: Could not verify Premium status from server. Using cached status.",
+            error
+        );
+
+
+        updatePremiumUI(
+            localFallback
+        );
+
+
+        return localFallback;
+
+    }
 
 }
 
 
 /* =========================================================
-   APPLY PREMIUM THEME
+   PREMIUM EVENTS
 ========================================================= */
+
+function setupPremiumListener() {
+
+    updatePremiumUI(
+        getCachedPremiumStatus()
+    );
+
+
+    window.addEventListener(
+        "studyMindPremiumChanged",
+        event => {
+
+            const detail =
+                event.detail;
+
+
+            const isPremium =
+                parsePremiumValue(
+                    detail
+                );
+
+
+            cachePremiumStatus(
+                isPremium
+            );
+
+
+            updatePremiumUI(
+                isPremium
+            );
+
+
+            applyTheme(
+                getStoredTheme()
+            );
+
+        }
+    );
+
+
+    window.addEventListener(
+        "storage",
+        event => {
+
+            if (
+                event.key ===
+                "studyMindPremium"
+            ) {
+
+                const isPremium =
+                    getCachedPremiumStatus();
+
+
+                updatePremiumUI(
+                    isPremium
+                );
+
+
+                applyTheme(
+                    getStoredTheme()
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+function getSystemTheme() {
+
+    return (
+        window.matchMedia &&
+        window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        ).matches
+    )
+        ? "dark"
+        : "light";
+
+}
+
+
+function getStoredTheme() {
+
+    const saved =
+        localStorage.getItem(
+            SETTINGS.THEME
+        );
+
+
+    if (
+        saved === "light" ||
+        saved === "dark" ||
+        saved === "system"
+    ) {
+
+        return saved;
+
+    }
+
+
+    return "system";
+
+}
+
 
 function applyPremiumTheme() {
 
     const premium =
-        isPremiumUser();
+        studyMindPremium ||
+        getCachedPremiumStatus();
 
 
     document.body.classList.toggle(
@@ -937,35 +1348,18 @@ function applyPremiumTheme() {
 }
 
 
-/* =========================================================
-   RESOLVE SYSTEM THEME
-========================================================= */
-
-function getSystemTheme() {
-
-    return window.matchMedia &&
-        window.matchMedia(
-            "(prefers-color-scheme: dark)"
-        ).matches
-            ? "dark"
-            : "light";
-
-}
-
-
-/* =========================================================
-   APPLY THEME
-   ---------------------------------------------------------
-   Supports:
-   - system
-   - light
-   - dark
-========================================================= */
-
 function applyTheme(theme) {
 
-    theme =
-        theme || "system";
+    if (
+        theme !== "light" &&
+        theme !== "dark" &&
+        theme !== "system"
+    ) {
+
+        theme =
+            "system";
+
+    }
 
 
     const resolvedTheme =
@@ -974,21 +1368,12 @@ function applyTheme(theme) {
             : theme;
 
 
-    /* -------------------------------------------------------
-       HTML ATTRIBUTE
-    ------------------------------------------------------- */
-
     document.documentElement
         .setAttribute(
             "data-theme",
             theme
         );
 
-
-    /* -------------------------------------------------------
-       BODY CLASS
-       This is required by settings.css.
-    ------------------------------------------------------- */
 
     document.body.classList.toggle(
         "dark",
@@ -1002,26 +1387,14 @@ function applyTheme(theme) {
     );
 
 
-    /* -------------------------------------------------------
-       PREMIUM ALWAYS OVERRIDES NORMAL THEME
-    ------------------------------------------------------- */
-
     applyPremiumTheme();
 
-
-    /* -------------------------------------------------------
-       UPDATE SIDEBAR THEME BUTTON
-    ------------------------------------------------------- */
 
     updateThemeToggle(
         theme,
         resolvedTheme
     );
 
-
-    /* -------------------------------------------------------
-       UPDATE APPEARANCE SELECT
-    ------------------------------------------------------- */
 
     const themeSelect =
         document.getElementById(
@@ -1035,16 +1408,6 @@ function applyTheme(theme) {
             theme;
 
     }
-
-
-    /* -------------------------------------------------------
-       UPDATE META THEME COLOR
-    ------------------------------------------------------- */
-
-    const themeColor =
-        resolvedTheme === "dark"
-            ? "#0d0b08"
-            : "#f7f5ef";
 
 
     let meta =
@@ -1071,16 +1434,15 @@ function applyTheme(theme) {
 
 
     meta.content =
-        isPremiumUser()
+        studyMindPremium ||
+        getCachedPremiumStatus()
             ? "#0d0b08"
-            : themeColor;
+            : resolvedTheme === "dark"
+                ? "#0d0b08"
+                : "#f7f5ef";
 
 }
 
-
-/* =========================================================
-   UPDATE SIDEBAR THEME BUTTON
-========================================================= */
 
 function updateThemeToggle(
     theme,
@@ -1105,6 +1467,9 @@ function updateThemeToggle(
 
 
     const icon =
+        button.querySelector(
+            ".theme-icon"
+        ) ||
         button.querySelector(
             "span:first-child"
         );
@@ -1158,45 +1523,21 @@ function updateThemeToggle(
 }
 
 
-/* =========================================================
-   LOAD THEME
-========================================================= */
-
 function loadTheme() {
 
-    const savedTheme =
-        localStorage.getItem(
-            SETTINGS.THEME
-        );
-
-
-    const theme =
-        (
-            savedTheme === "light" ||
-            savedTheme === "dark" ||
-            savedTheme === "system"
-        )
-            ? savedTheme
-            : "system";
-
-
     applyTheme(
-        theme
+        getStoredTheme()
     );
 
 }
 
 
-/* =========================================================
-   SET THEME
-========================================================= */
-
 function setTheme(theme) {
 
     if (
-        theme !== "system" &&
         theme !== "light" &&
-        theme !== "dark"
+        theme !== "dark" &&
+        theme !== "system"
     ) {
 
         theme =
@@ -1235,7 +1576,7 @@ function setTheme(theme) {
 
 
 /* =========================================================
-   SETUP APPEARANCE THEME SELECT
+   THEME SELECT
 ========================================================= */
 
 function setupThemeSelect() {
@@ -1249,6 +1590,10 @@ function setupThemeSelect() {
     if (!themeSelect) {
         return;
     }
+
+
+    themeSelect.value =
+        getStoredTheme();
 
 
     themeSelect.addEventListener(
@@ -1266,11 +1611,7 @@ function setupThemeSelect() {
 
 
 /* =========================================================
-   SETUP SIDEBAR THEME BUTTON
-   ---------------------------------------------------------
-   Clicking the sidebar button toggles:
-   light → dark → light
-   while System remains selectable from Appearance.
+   SIDEBAR THEME BUTTON
 ========================================================= */
 
 function setupThemeToggle() {
@@ -1291,10 +1632,7 @@ function setupThemeToggle() {
         () => {
 
             const current =
-                localStorage.getItem(
-                    SETTINGS.THEME
-                ) ||
-                "system";
+                getStoredTheme();
 
 
             const resolved =
@@ -1320,19 +1658,13 @@ function setupThemeToggle() {
 
 
 /* =========================================================
-   SYSTEM THEME CHANGE
-   ---------------------------------------------------------
-   Only affects the page while Theme = System.
+   SYSTEM THEME LISTENER
 ========================================================= */
 
 function setupSystemThemeListener() {
 
-    if (
-        !window.matchMedia
-    ) {
-
+    if (!window.matchMedia) {
         return;
-
     }
 
 
@@ -1345,15 +1677,9 @@ function setupSystemThemeListener() {
     const handleChange =
         () => {
 
-            const current =
-                localStorage.getItem(
-                    SETTINGS.THEME
-                ) ||
-                "system";
-
-
             if (
-                current === "system"
+                getStoredTheme() ===
+                "system"
             ) {
 
                 applyTheme(
@@ -1392,46 +1718,430 @@ function setupSystemThemeListener() {
 
 
 /* =========================================================
-   PREMIUM THEME LISTENER
+   STUDY PREFERENCES
 ========================================================= */
 
-function setupPremiumThemeListener() {
+function loadStudyPreferences() {
 
-    applyPremiumTheme();
+    const timerSelect =
+        document.getElementById(
+            "timerSelect"
+        );
 
 
-    window.addEventListener(
-        "studyMindPremiumChanged",
+    const difficultySelect =
+        document.getElementById(
+            "difficultySelect"
+        );
+
+
+    const smartPlanning =
+        document.getElementById(
+            "smartPlanning"
+        );
+
+
+    if (timerSelect) {
+
+        timerSelect.value =
+            localStorage.getItem(
+                SETTINGS.TIMER
+            ) ||
+            "25";
+
+    }
+
+
+    if (difficultySelect) {
+
+        difficultySelect.value =
+            localStorage.getItem(
+                SETTINGS.DIFFICULTY
+            ) ||
+            "balanced";
+
+    }
+
+
+    if (smartPlanning) {
+
+        smartPlanning.checked =
+            localStorage.getItem(
+                SETTINGS.SMART_PLANNING
+            ) !== "false";
+
+    }
+
+}
+
+
+function setupStudyPreferences() {
+
+    loadStudyPreferences();
+
+
+    const saveButton =
+        document.getElementById(
+            "saveStudy"
+        );
+
+
+    if (!saveButton) {
+        return;
+    }
+
+
+    saveButton.addEventListener(
+        "click",
         () => {
 
-            applyPremiumTheme();
+            const timerSelect =
+                document.getElementById(
+                    "timerSelect"
+                );
+
+
+            const difficultySelect =
+                document.getElementById(
+                    "difficultySelect"
+                );
+
+
+            const smartPlanning =
+                document.getElementById(
+                    "smartPlanning"
+                );
+
+
+            if (timerSelect) {
+
+                localStorage.setItem(
+                    SETTINGS.TIMER,
+                    timerSelect.value
+                );
+
+            }
+
+
+            if (difficultySelect) {
+
+                localStorage.setItem(
+                    SETTINGS.DIFFICULTY,
+                    difficultySelect.value
+                );
+
+            }
+
+
+            if (smartPlanning) {
+
+                localStorage.setItem(
+                    SETTINGS.SMART_PLANNING,
+                    String(
+                        smartPlanning.checked
+                    )
+                );
+
+            }
+
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindSettingsChanged"
+                )
+            );
+
+
+            showSettingsToast(
+                "Study preferences saved."
+            );
 
         }
     );
 
+}
 
-    window.addEventListener(
-        "storage",
-        event => {
 
-            if (
-                event.key ===
-                "studyMindPremium"
-            ) {
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
 
-                applyPremiumTheme();
+function loadNotificationPreferences() {
 
-                const currentTheme =
-                    localStorage.getItem(
-                        SETTINGS.THEME
-                    ) ||
-                    "system";
+    let stored = null;
 
-                applyTheme(
-                    currentTheme
+
+    try {
+
+        stored =
+            JSON.parse(
+                localStorage.getItem(
+                    SETTINGS.NOTIFICATIONS
+                )
+            );
+
+    }
+
+    catch (_) {}
+
+
+    if (
+        !stored ||
+        typeof stored !== "object"
+    ) {
+
+        stored = {
+
+            streakNotifications:
+                true,
+
+            rewardNotifications:
+                true,
+
+            studyNotifications:
+                true
+
+        };
+
+    }
+
+
+    const streak =
+        document.getElementById(
+            "streakNotifications"
+        );
+
+
+    const rewards =
+        document.getElementById(
+            "rewardNotifications"
+        );
+
+
+    const study =
+        document.getElementById(
+            "studyNotifications"
+        );
+
+
+    if (streak) {
+
+        streak.checked =
+            stored.streakNotifications !== false;
+
+    }
+
+
+    if (rewards) {
+
+        rewards.checked =
+            stored.rewardNotifications !== false;
+
+    }
+
+
+    if (study) {
+
+        study.checked =
+            stored.studyNotifications !== false;
+
+    }
+
+}
+
+
+function setupNotifications() {
+
+    loadNotificationPreferences();
+
+
+    const saveButton =
+        document.getElementById(
+            "saveNotifications"
+        );
+
+
+    if (!saveButton) {
+        return;
+    }
+
+
+    saveButton.addEventListener(
+        "click",
+        () => {
+
+            const streak =
+                document.getElementById(
+                    "streakNotifications"
+                );
+
+
+            const rewards =
+                document.getElementById(
+                    "rewardNotifications"
+                );
+
+
+            const study =
+                document.getElementById(
+                    "studyNotifications"
+                );
+
+
+            const preferences = {
+
+                streakNotifications:
+                    streak
+                        ? streak.checked
+                        : true,
+
+                rewardNotifications:
+                    rewards
+                        ? rewards.checked
+                        : true,
+
+                studyNotifications:
+                    study
+                        ? study.checked
+                        : true
+
+            };
+
+
+            localStorage.setItem(
+                SETTINGS.NOTIFICATIONS,
+                JSON.stringify(
+                    preferences
+                )
+            );
+
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindNotificationsChanged",
+                    {
+                        detail:
+                            preferences
+                    }
+                )
+            );
+
+
+            showSettingsToast(
+                "Notification settings saved."
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   AI PREFERENCES
+========================================================= */
+
+function loadAIPreferences() {
+
+    const style =
+        document.getElementById(
+            "aiStyle"
+        );
+
+
+    const suggestions =
+        document.getElementById(
+            "aiSuggestions"
+        );
+
+
+    if (style) {
+
+        style.value =
+            localStorage.getItem(
+                SETTINGS.AI_STYLE
+            ) ||
+            "balanced";
+
+    }
+
+
+    if (suggestions) {
+
+        suggestions.checked =
+            localStorage.getItem(
+                SETTINGS.SUGGESTIONS
+            ) !== "false";
+
+    }
+
+}
+
+
+function setupAIPreferences() {
+
+    loadAIPreferences();
+
+
+    const saveButton =
+        document.getElementById(
+            "saveAI"
+        );
+
+
+    if (!saveButton) {
+        return;
+    }
+
+
+    saveButton.addEventListener(
+        "click",
+        () => {
+
+            const style =
+                document.getElementById(
+                    "aiStyle"
+                );
+
+
+            const suggestions =
+                document.getElementById(
+                    "aiSuggestions"
+                );
+
+
+            if (style) {
+
+                localStorage.setItem(
+                    SETTINGS.AI_STYLE,
+                    style.value
                 );
 
             }
+
+
+            if (suggestions) {
+
+                localStorage.setItem(
+                    SETTINGS.SUGGESTIONS,
+                    String(
+                        suggestions.checked
+                    )
+                );
+
+            }
+
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindAIPreferencesChanged"
+                )
+            );
+
+
+            showSettingsToast(
+                "AI preferences saved."
+            );
 
         }
     );
@@ -1443,9 +2153,11 @@ function setupPremiumThemeListener() {
    TOAST
 ========================================================= */
 
-function showSettingsToast(
-    message
-) {
+let settingsToastTimer =
+    null;
+
+
+function showSettingsToast(message) {
 
     const toast =
         document.getElementById(
@@ -1487,16 +2199,22 @@ function showSettingsToast(
     );
 
 
-    setTimeout(
-        () => {
-
-            toast.classList.remove(
-                "show"
-            );
-
-        },
-        2500
+    clearTimeout(
+        settingsToastTimer
     );
+
+
+    settingsToastTimer =
+        setTimeout(
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            2500
+        );
 
 }
 
@@ -1518,6 +2236,10 @@ function setupLogout() {
                 async event => {
 
                     event.preventDefault();
+
+
+                    button.disabled =
+                        true;
 
 
                     try {
@@ -1705,23 +2427,81 @@ function setupSettingsSections() {
 
 
 /* =========================================================
-   RESET STUDY DATA
-   ---------------------------------------------------------
-   USERNAME + PREMIUM ARE PRESERVED.
+   RESET MODAL
 ========================================================= */
 
-function resetStudyData() {
+function openResetModal() {
 
-    const confirmed =
-        window.confirm(
-            "This will reset your study progress. Your username and Premium status will remain. Continue?"
+    const modal =
+        document.getElementById(
+            "resetModal"
         );
 
 
-    if (!confirmed) {
+    if (!modal) {
+
+        resetStudyData();
+
+        return;
+
+    }
+
+
+    modal.classList.add(
+        "show"
+    );
+
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+}
+
+
+function closeResetModal() {
+
+    const modal =
+        document.getElementById(
+            "resetModal"
+        );
+
+
+    if (!modal) {
         return;
     }
 
+
+    modal.classList.remove(
+        "show"
+    );
+
+
+    modal.classList.remove(
+        "active"
+    );
+
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+/* =========================================================
+   RESET STUDY DATA
+   USERNAME + PREMIUM PRESERVED
+========================================================= */
+
+function resetStudyData() {
 
     const username =
         getCanonicalUsername();
@@ -1733,27 +2513,31 @@ function resetStudyData() {
         );
 
 
-    Object.keys(localStorage)
+    Object.keys(
+        localStorage
+    )
         .filter(
             key =>
                 key.startsWith(
                     "studyMind"
                 )
         )
-        .forEach(key => {
+        .forEach(
+            key => {
 
-            if (
-                key !== SETTINGS.NAME &&
-                key !== "studyMindPremium"
-            ) {
+                if (
+                    key !== SETTINGS.NAME &&
+                    key !== "studyMindPremium"
+                ) {
 
-                localStorage.removeItem(
-                    key
-                );
+                    localStorage.removeItem(
+                        key
+                    );
+
+                }
 
             }
-
-        });
+        );
 
 
     cacheUsername(
@@ -1761,7 +2545,9 @@ function resetStudyData() {
     );
 
 
-    if (premium !== null) {
+    if (
+        premium !== null
+    ) {
 
         localStorage.setItem(
             "studyMindPremium",
@@ -1772,7 +2558,7 @@ function resetStudyData() {
 
 
     /* -------------------------------------------------------
-       ZERO PROGRESS STATE
+       ZERO PROGRESS
     ------------------------------------------------------- */
 
     localStorage.setItem(
@@ -1799,11 +2585,26 @@ function resetStudyData() {
     );
 
 
+    localStorage.setItem(
+        "studyMindStudyHistory",
+        JSON.stringify([])
+    );
+
+
+    localStorage.setItem(
+        "studyMindStreakActivity",
+        JSON.stringify({})
+    );
+
+
     window.dispatchEvent(
         new CustomEvent(
             "studyMindProgressUpdated"
         )
     );
+
+
+    closeResetModal();
 
 
     showSettingsToast(
@@ -1824,27 +2625,103 @@ function resetStudyData() {
 
 
 /* =========================================================
-   RESET BUTTON
-   ---------------------------------------------------------
-   Supports BOTH:
-   #resetStudyData
-   #resetData
+   RESET BUTTONS
 ========================================================= */
 
 function setupResetData() {
 
-    document
-        .querySelectorAll(
+    const resetButtons =
+        document.querySelectorAll(
             "#resetStudyData, #resetData"
-        )
-        .forEach(button => {
+        );
+
+
+    resetButtons.forEach(
+        button => {
 
             button.addEventListener(
                 "click",
-                resetStudyData
+                event => {
+
+                    event.preventDefault();
+
+                    openResetModal();
+
+                }
             );
 
-        });
+        }
+    );
+
+
+    const cancelButton =
+        document.getElementById(
+            "cancelReset"
+        );
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                closeResetModal();
+
+            }
+        );
+
+    }
+
+
+    const confirmButton =
+        document.getElementById(
+            "confirmReset"
+        );
+
+
+    if (confirmButton) {
+
+        confirmButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                resetStudyData();
+
+            }
+        );
+
+    }
+
+
+    const modal =
+        document.getElementById(
+            "resetModal"
+        );
+
+
+    if (modal) {
+
+        modal.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target === modal
+                ) {
+
+                    closeResetModal();
+
+                }
+
+            }
+        );
+
+    }
 
 }
 
@@ -1858,7 +2735,7 @@ document.addEventListener(
     async () => {
 
         /* ---------------------------------------------------
-           THEME FIRST
+           THEME
         --------------------------------------------------- */
 
         loadTheme();
@@ -1869,7 +2746,14 @@ document.addEventListener(
 
         setupSystemThemeListener();
 
-        setupPremiumThemeListener();
+
+        /* ---------------------------------------------------
+           PREMIUM
+        --------------------------------------------------- */
+
+        setupPremiumListener();
+
+        await checkPremiumStatus();
 
 
         /* ---------------------------------------------------
@@ -1882,7 +2766,18 @@ document.addEventListener(
 
 
         /* ---------------------------------------------------
-           PAGE CONTROLS
+           SETTINGS
+        --------------------------------------------------- */
+
+        setupStudyPreferences();
+
+        setupNotifications();
+
+        setupAIPreferences();
+
+
+        /* ---------------------------------------------------
+           PAGE
         --------------------------------------------------- */
 
         setupLogout();
@@ -1892,6 +2787,28 @@ document.addEventListener(
         setupSettingsSections();
 
         setupResetData();
+
+
+        /* ---------------------------------------------------
+           FINAL THEME PASS
+        --------------------------------------------------- */
+
+        applyTheme(
+            getStoredTheme()
+        );
+
+
+        console.log(
+            "StudyMind Settings initialized.",
+            {
+                premium:
+                    studyMindPremium,
+                username:
+                    getCanonicalUsername(),
+                theme:
+                    getStoredTheme()
+            }
+        );
 
     }
 );
@@ -1922,11 +2839,15 @@ window.StudyMindSettings = {
     setTheme,
 
     getTheme:
-        () =>
-            localStorage.getItem(
-                SETTINGS.THEME
-            ) || "system",
+        getStoredTheme,
 
-    applyTheme
+    applyTheme,
+
+    isPremium:
+        () =>
+            studyMindPremium,
+
+    refreshPremium:
+        checkPremiumStatus
 
 };
