@@ -531,120 +531,84 @@ async function getAccessToken() {
     }
 }
 
-    /* =====================================================
-       LOAD PREMIUM STATUS
-       ===================================================== */
+ /* =====================================================
+   LOAD PREMIUM STATUS — SERVER AUTHORITATIVE
+===================================================== */
 
-    async function loadStudyMindPremium() {
+async function loadStudyMindPremium() {
 
-        /*
-         * Restore cached state immediately.
-         */
+    /*
+     * Fail closed.
+     * Never trust localStorage to grant Premium.
+     */
 
-        premiumStatus =
-            getCachedPremiumStatus();
+    premiumStatus = false;
+    premiumLoaded = false;
 
+    saveCachedPremiumStatus(false);
+    applyPremiumTheme();
+
+    const token = await getAccessToken();
+
+    if (!token) {
+        premiumStatus = false;
+        premiumLoaded = true;
+
+        saveCachedPremiumStatus(false);
         applyPremiumTheme();
 
+        return false;
+    }
+
+    try {
+        const response = await fetch(
+            "/api/premium/status",
+            {
+                method: "GET",
+                cache: "no-store",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Cache-Control": "no-cache"
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.error ||
+                "Could not verify Premium status."
+            );
+        }
 
         /*
-         * Server remains authoritative.
+         * Only the server may authorize Premium.
          */
 
-        const token =
-            await getAccessToken();
+        premiumStatus = data?.premium === true;
 
+        saveCachedPremiumStatus(premiumStatus);
 
-        if (!token) {
+        return premiumStatus;
 
-            premiumStatus = false;
+    } catch (error) {
+        console.error(
+            "[StudyMind Premium] Verification failed:",
+            error
+        );
 
-            saveCachedPremiumStatus(
-                false
-            );
+        premiumStatus = false;
 
-            applyPremiumTheme();
+        saveCachedPremiumStatus(false);
 
-            premiumLoaded = true;
+        return false;
 
-            return false;
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/premium/status",
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Authorization":
-                                `Bearer ${token}`
-                        }
-                    }
-                );
-
-
-            const data =
-                await response.json();
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data?.error ||
-                    "Could not check Premium status."
-                );
-
-            }
-
-
-            premiumStatus =
-                data?.premium === true;
-
-
-            saveCachedPremiumStatus(
-                premiumStatus
-            );
-
-
-            applyPremiumTheme();
-
-            premiumLoaded = true;
-
-            return premiumStatus;
-
-
-        } catch (error) {
-
-            console.warn(
-                "Premium status check failed:",
-                error
-            );
-
-
-            /*
-             * Never grant Premium if verification fails.
-             */
-
-            premiumStatus = false;
-
-            saveCachedPremiumStatus(
-                false
-            );
-
-            applyPremiumTheme();
-
-            premiumLoaded = true;
-
-            return false;
-
-        }
-
+    } finally {
+        premiumLoaded = true;
+        applyPremiumTheme();
     }
+}
 
 
     /* =====================================================
