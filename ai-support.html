@@ -785,61 +785,116 @@
 <script src="ai-support.js"></script>
 
 
+
 <!-- =========================================================
      PREMIUM THEME SYNC
+     Theme reflects server-verified Premium status only.
 ========================================================= -->
 
 <script>
-
 (function () {
-
     "use strict";
 
+    let verificationInProgress = false;
 
-    function syncPremiumTheme() {
+    async function syncPremiumTheme() {
+        if (verificationInProgress) return;
+        verificationInProgress = true;
 
-        const isPremium =
-            localStorage.getItem(
-                "studyMindPremium"
-            ) === "true";
+        try {
+            // Never trust the localStorage Premium flag.
+            const client =
+                window.supabaseClient ||
+                window.studyMindSupabase;
 
+            if (!client?.auth) {
+                applyPremiumTheme(false);
+                return;
+            }
 
+            const { data, error } =
+                await client.auth.getSession();
+
+            if (error || !data?.session?.access_token) {
+                applyPremiumTheme(false);
+                return;
+            }
+
+            const response = await fetch(
+                "/api/premium/status",
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    headers: {
+                        "Authorization":
+                            `Bearer ${data.session.access_token}`,
+                        "Accept": "application/json"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                applyPremiumTheme(false);
+                return;
+            }
+
+            const result = await response.json();
+
+            // Only trust the server's Premium decision.
+            applyPremiumTheme(result.premium === true);
+
+        } catch (error) {
+            console.error(
+                "[StudyMind] Premium verification failed:",
+                error
+            );
+
+            applyPremiumTheme(false);
+
+        } finally {
+            verificationInProgress = false;
+        }
+    }
+
+    function applyPremiumTheme(isPremium) {
         document.documentElement.classList.toggle(
             "study-mind-premium",
             isPremium
         );
 
-
-        if (document.body) {
-
-            document.body.classList.toggle(
-                "study-mind-premium",
-                isPremium
-            );
-
-        }
-
+        document.body?.classList.toggle(
+            "study-mind-premium",
+            isPremium
+        );
     }
 
+    // Never restore Premium access from localStorage.
+    applyPremiumTheme(false);
 
     syncPremiumTheme();
-
-
-    window.addEventListener(
-        "storage",
-        syncPremiumTheme
-    );
-
 
     window.addEventListener(
         "studyMindPremiumChanged",
         syncPremiumTheme
     );
 
+    window.addEventListener(
+        "storage",
+        function (event) {
+            if (
+                event.key === "studyMindPremium" ||
+                event.key === null
+            ) {
+                syncPremiumTheme();
+            }
+        }
+    );
 
+    window.addEventListener(
+        "pageshow",
+        syncPremiumTheme
+    );
 })();
-
 </script>
-
 </body>
 </html>
