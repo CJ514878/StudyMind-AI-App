@@ -1337,15 +1337,16 @@ async function loadStudyMindPremium() {
         }
 
 
-        /*
-         * Restore cached Premium state.
-         */
+       /*
+ * Start as FREE until the server verifies access.
+ */
 
-        premiumStatus =
-            getCachedPremiumStatus();
+premiumStatus = false;
+premiumLoaded = false;
 
+saveCachedPremiumStatus(false);
 
-        applyPremiumTheme();
+applyPremiumTheme();
 
 
         /*
