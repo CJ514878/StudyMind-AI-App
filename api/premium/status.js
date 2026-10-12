@@ -276,12 +276,14 @@ module.exports =
  */
 
 const ADMIN_EMAIL =
-    "studymindaiofficial@gmail.com";
+    (process.env.ADMIN_EMAIL || "")
+        .trim()
+        .toLowerCase();
 
 const isAdmin =
+    Boolean(ADMIN_EMAIL) &&
     typeof user.email === "string" &&
-    user.email.trim().toLowerCase() ===
-        ADMIN_EMAIL.toLowerCase();
+    user.email.trim().toLowerCase() === ADMIN_EMAIL;
 
 /*
  * Admin receives Premium automatically.
