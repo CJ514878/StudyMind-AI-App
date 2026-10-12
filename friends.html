@@ -281,11 +281,14 @@
 
 <div class="mobile-overlay" id="mobileOverlay"></div>
 
+
+<!-- 1. Load the Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- Load your existing Supabase initialization script here, if it is a separate file. -->
-<!-- Example: <script src="supabase-config.js"></script> -->
+<!-- 2. Initialize the shared StudyMind AI Supabase client -->
+<script src="supabase-config.js"></script>
 
+<!-- 3. Load Friends functionality after initialization -->
 <script src="friends.js"></script>
 </body>
 </html>
