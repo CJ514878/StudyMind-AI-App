@@ -269,15 +269,29 @@ module.exports =
             }
 
 
-            /*
-             * Check the database for an
-             * active Premium subscription.
-             */
+           /*
+ * ADMIN EXCEPTION
+ * Only the designated admin receives
+ * Premium without a paid subscription.
+ */
 
-            const premium =
-                await checkPremiumSubscription(
-                    user.id
-                );
+const ADMIN_EMAIL =
+    "studymindaiofficial@gmail.com";
+
+const isAdmin =
+    typeof user.email === "string" &&
+    user.email.trim().toLowerCase() ===
+        ADMIN_EMAIL.toLowerCase();
+
+/*
+ * Admin receives Premium automatically.
+ * Everyone else must have a verified,
+ * active Premium subscription.
+ */
+
+const premium = isAdmin
+    ? true
+    : await checkPremiumSubscription(user.id);
 
 
             /*
