@@ -491,62 +491,45 @@
     }
 
 
-    /* =====================================================
-       AUTH SESSION
-       ===================================================== */
+   /* =====================================================
+   AUTH SESSION — SHARED SUPABASE CLIENT
+===================================================== */
 
-    async function getAccessToken() {
+async function getAccessToken() {
+    try {
+        const client =
+            window.supabaseClient ||
+            window.studyMindSupabase ||
+            null;
 
-        try {
-
-            if (
-                typeof window.supabaseClient ===
-                "undefined"
-            ) {
-
-                return null;
-
-            }
-
-            const {
-                data,
-                error
-            } =
-                await window.supabaseClient
-                    .auth
-                    .getSession();
-
-
-            if (error) {
-
-                console.warn(
-                    "Could not get Supabase session:",
-                    error
-                );
-
-                return null;
-
-            }
-
-
-            return (
-                data?.session?.access_token ||
-                null
+        if (!client?.auth) {
+            console.error(
+                "[StudyMind Premium] Supabase client unavailable."
             );
-
-        } catch (error) {
-
-            console.warn(
-                "Premium auth error:",
-                error
-            );
-
             return null;
-
         }
 
-    }
+        const { data, error } =
+            await client.auth.getSession();
 
+        if (error) {
+            console.error(
+                "[StudyMind Premium] Session error:",
+                error
+            );
+            return null;
+        }
+
+        return data?.session?.access_token || null;
+
+    } catch (error) {
+        console.error(
+            "[StudyMind Premium] Authentication error:",
+            error
+        );
+        return null;
+    }
+}
 
     /* =====================================================
        LOAD PREMIUM STATUS
