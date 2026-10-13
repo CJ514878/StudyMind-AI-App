@@ -810,143 +810,71 @@ async function sendMessage() {
 }
 
 
+
 /* =========================================================
-   CALL YOUR ACTUAL BACKEND
+   CALL STUDYMIND AI — AUTHENTICATED REQUEST
 ========================================================= */
 
-async function callAI(
-    userMessage
-) {
+async function callAI(userMessage) {
+    const topic = getCurrentTopic();
 
-    const topic =
-        getCurrentTopic();
+    const client = window.supabaseClient;
 
-
-    const body = {
-
-        message:
-            userMessage,
-
-        subject:
-            topic?.subject || "",
-
-        topic:
-            topic?.name || "",
-
-        difficulty:
-            "mixed",
-
-        type:
-            "normal",
-
-        requestType:
-            "normal",
-
-        mode:
-            "normal"
-
-    };
-
-
-    const response =
-        await fetch(
-            "/api/ask-ai",
-            {
-
-                method:
-                    "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body:
-                    JSON.stringify(body)
-
-            }
-        );
-
-
-    if (!response.ok) {
-
-        let errorMessage =
-            `AI request failed: ${response.status}`;
-
-
-        try {
-
-            const errorData =
-                await response.json();
-
-
-            if (
-                errorData?.error
-            ) {
-
-                errorMessage +=
-                    ` ${errorData.error}`;
-
-            }
-
-        } catch {
-
-            const text =
-                await response.text()
-                    .catch(() => "");
-
-
-            if (text) {
-
-                errorMessage +=
-                    ` ${text}`;
-
-            }
-
-        }
-
-
+    if (!client) {
         throw new Error(
-            errorMessage
+            "Supabase is not initialized. Please refresh the page and sign in again."
         );
-
     }
 
+    // Get the authenticated user's current session.
+    const {
+        data: { session },
+        error: sessionError
+    } = await client.auth.getSession();
 
-    const data =
-        await response.json();
-
-
-    if (
-        data?.success === false
-    ) {
-
+    if (sessionError || !session?.access_token) {
         throw new Error(
-            data.error ||
-            "StudyMind AI returned an error."
+            "Please sign in again before using StudyMind AI."
         );
-
     }
 
+    const response = await fetch("/api/ask-ai", {
+        method: "POST",
 
-    const reply =
-        data?.reply;
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`
+        },
 
+        body: JSON.stringify({
+            message: userMessage,
+            subject: topic?.subject || "",
+            topic: topic?.name || "",
+            difficulty: "mixed",
+            type: "normal",
+            requestType: "normal",
+            mode: "normal"
+        })
+    });
 
-    if (
-        typeof reply !== "string" ||
-        !reply.trim()
-    ) {
+    const data = await response.json().catch(() => ({}));
 
+    if (!response.ok || data?.success === false) {
+        throw new Error(
+            data?.error ||
+            `AI request failed: ${response.status}`
+        );
+    }
+
+    const reply = data?.reply;
+
+    if (typeof reply !== "string" || !reply.trim()) {
         throw new Error(
             "StudyMind AI returned an empty response."
         );
-
     }
 
-
     return reply.trim();
-
 }
 
 
