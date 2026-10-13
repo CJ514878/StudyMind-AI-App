@@ -778,9 +778,60 @@
 </div>
 
 
+
 <!-- =========================================================
-     AI SUPPORT JAVASCRIPT
+     INITIALIZE SUPABASE BEFORE AI SUPPORT
 ========================================================= -->
+
+<script>
+(function () {
+    "use strict";
+
+    // Reuse an existing client if one has already been created.
+    const existingClient =
+        window.supabaseClient ||
+        window.studyMindSupabase;
+
+    if (existingClient?.auth) {
+        window.supabaseClient = existingClient;
+        window.studyMindSupabase = existingClient;
+        return;
+    }
+
+    // Public Supabase project configuration.
+    const SUPABASE_URL =
+        "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+    const SUPABASE_KEY =
+        "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+    if (!window.supabase?.createClient) {
+        console.error(
+            "[StudyMind] Supabase library failed to load."
+        );
+        return;
+    }
+
+    try {
+        const client = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+        window.supabaseClient = client;
+        window.studyMindSupabase = client;
+
+        console.log(
+            "[StudyMind] Supabase client initialized."
+        );
+    } catch (error) {
+        console.error(
+            "[StudyMind] Supabase initialization failed:",
+            error
+        );
+    }
+})();
+</script>
 
 <script src="ai-support.js"></script>
 
