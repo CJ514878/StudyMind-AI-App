@@ -1,14 +1,296 @@
+
 const OpenAI = require("openai");
 
 const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+const DAILY_AI_LIMIT = 5;
+const LAGOS_TIME_ZONE = "Africa/Lagos";
+
+/* =========================================================
+   SUPABASE SERVER CONFIGURATION
+========================================================= */
+
+function getSupabaseConfig() {
+    const url = process.env.SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !serviceRoleKey) {
+        throw new Error(
+            "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing."
+        );
+    }
+
+    return {
+        url: url.replace(/\/+$/, ""),
+        serviceRoleKey
+    };
+}
+
+/* =========================================================
+   GET TODAY'S DATE IN NIGERIA
+========================================================= */
+
+function getLagosDate() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: LAGOS_TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).formatToParts(new Date());
+
+    const values = Object.fromEntries(
+        parts.map(part => [part.type, part.value])
+    );
+
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+/* =========================================================
+   VERIFY THE SIGNED-IN SUPABASE USER
+========================================================= */
+
+async function verifySupabaseUser(req) {
+    const authorization =
+        req.headers.authorization ||
+        req.headers.Authorization ||
+        "";
+
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
+
+    if (!match) {
+        return {
+            ok: false,
+            status: 401,
+            error: "Please sign in to use StudyMind AI."
+        };
+    }
+
+    const accessToken = match[1].trim();
+
+    if (!accessToken) {
+        return {
+            ok: false,
+            status: 401,
+            error: "Your session is invalid. Please sign in again."
+        };
+    }
+
+    const { url, serviceRoleKey } = getSupabaseConfig();
+
+    const response = await fetch(`${url}/auth/v1/user`, {
+        method: "GET",
+        headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${accessToken}`
+        }
+    });
+
+    if (!response.ok) {
+        return {
+            ok: false,
+            status: 401,
+            error: "Your session has expired. Please sign in again."
+        };
+    }
+
+    const user = await response.json();
+
+    if (!user || !user.id || !user.email) {
+        return {
+            ok: false,
+            status: 401,
+            error: "Unable to verify your account. Please sign in again."
+        };
+    }
+
+    return {
+        ok: true,
+        user
+    };
+}
+
+/* =========================================================
+   CHECK THE DESIGNATED ADMIN EMAIL
+========================================================= */
+
+function isAdminUser(user) {
+    const configuredAdminEmail =
+        (process.env.ADMIN_EMAIL || "")
+            .trim()
+            .toLowerCase();
+
+    const verifiedUserEmail =
+        (user.email || "")
+            .trim()
+            .toLowerCase();
+
+    return Boolean(
+        configuredAdminEmail &&
+        verifiedUserEmail &&
+        configuredAdminEmail === verifiedUserEmail
+    );
+}
+
+/* =========================================================
+   CHECK PREMIUM STATUS IN SUPABASE
+
+   The browser's localStorage is not trusted.
+   Premium access must be verified on the server.
+========================================================= */
+
+async function checkPremiumStatus(userId) {
+    const { url, serviceRoleKey } = getSupabaseConfig();
+
+    const query = new URLSearchParams({
+        user_id: `eq.${userId}`,
+        status: "eq.active",
+        is_premium: "eq.true",
+        select: "id",
+        limit: "1"
+    });
+
+    const response = await fetch(
+        `${url}/rest/v1/premium_subscriptions?${query.toString()}`,
+        {
+            method: "GET",
+            headers: {
+                "apikey": serviceRoleKey,
+                "Authorization": `Bearer ${serviceRoleKey}`
+            }
+        }
+    );
+
+    if (!response.ok) {
+        const details = await response.text();
+
+        console.error(
+            "Premium subscription lookup failed:",
+            response.status,
+            details
+        );
+
+        throw new Error(
+            "Unable to verify Premium status."
+        );
+    }
+
+    const subscriptions = await response.json();
+
+    return Array.isArray(subscriptions) &&
+        subscriptions.length > 0;
+}
+
+/* =========================================================
+   RESERVE ONE FREE AI QUESTION
+
+   The Supabase RPC performs the increment atomically.
+   Concurrent requests cannot exceed the configured limit.
+========================================================= */
+
+async function consumeAIQuestion(userId, usageDate) {
+    const { url, serviceRoleKey } = getSupabaseConfig();
+
+    const response = await fetch(
+        `${url}/rest/v1/rpc/consume_ai_question`,
+        {
+            method: "POST",
+            headers: {
+                "apikey": serviceRoleKey,
+                "Authorization": `Bearer ${serviceRoleKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                p_user_id: userId,
+                p_usage_date: usageDate,
+                p_daily_limit: DAILY_AI_LIMIT
+            })
+        }
+    );
+
+    if (!response.ok) {
+        const details = await response.text();
+
+        console.error(
+            "AI usage counter failed:",
+            response.status,
+            details
+        );
+
+        throw new Error(
+            "Unable to check your daily AI question allowance."
+        );
+    }
+
+    const result = await response.json();
+
+    const record = Array.isArray(result)
+        ? result[0]
+        : result;
+
+    if (!record || typeof record.allowed !== "boolean") {
+        throw new Error(
+            "The AI usage counter returned an invalid response."
+        );
+    }
+
+    return {
+        allowed: record.allowed,
+        questionsUsed: Number(record.questions_used) || 0
+    };
+}
+
+/* =========================================================
+   REFUND A RESERVED QUESTION IF OPENAI FAILS
+========================================================= */
+
+async function refundAIQuestion(userId, usageDate) {
+    try {
+        const { url, serviceRoleKey } = getSupabaseConfig();
+
+        const response = await fetch(
+            `${url}/rest/v1/rpc/refund_ai_question`,
+            {
+                method: "POST",
+                headers: {
+                    "apikey": serviceRoleKey,
+                    "Authorization": `Bearer ${serviceRoleKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    p_user_id: userId,
+                    p_usage_date: usageDate
+                })
+            }
+        );
+
+        if (!response.ok) {
+            console.error(
+                "Unable to refund failed AI question:",
+                response.status,
+                await response.text()
+            );
+        }
+    } catch (error) {
+        console.error(
+            "AI question refund error:",
+            error.message
+        );
+    }
+}
+
+/* =========================================================
+   MAIN API HANDLER
+========================================================= */
+
 module.exports = async function handler(req, res) {
 
-    // =========================================================
+    let usageReservation = null;
+
+    // =====================================================
     // METHOD CHECK
-    // =========================================================
+    // =====================================================
 
     if (req.method !== "POST") {
         return res.status(405).json({
@@ -17,12 +299,11 @@ module.exports = async function handler(req, res) {
         });
     }
 
-    // =========================================================
+    // =====================================================
     // API KEY CHECK
-    // =========================================================
+    // =====================================================
 
     if (!process.env.OPENAI_API_KEY) {
-
         console.error("OPENAI_API_KEY is missing.");
 
         return res.status(500).json({
@@ -32,12 +313,11 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-
         const body = req.body || {};
 
-        // =====================================================
+        // =================================================
         // READ REQUEST DATA
-        // =====================================================
+        // =================================================
 
         const message =
             typeof body.message === "string"
@@ -75,9 +355,9 @@ module.exports = async function handler(req, res) {
                 ? body.difficulty.trim()
                 : "mixed";
 
-        // =====================================================
+        // =================================================
         // QUESTION COUNT
-        // =====================================================
+        // =================================================
 
         const requestedQuestionCount =
             body.numberOfQuestions ??
@@ -97,9 +377,9 @@ module.exports = async function handler(req, res) {
             20
         );
 
-        // =====================================================
+        // =================================================
         // DETECT COMPUTER BATTLE / GAME MODE
-        // =====================================================
+        // =================================================
 
         const isComputerBattle =
             mode === "computer_battle" ||
@@ -114,7 +394,6 @@ module.exports = async function handler(req, res) {
             mode === "game" ||
             mode === "game_mode" ||
             mode === "game-mode" ||
-            type === "game_questions" ||
             type === "game_questions" ||
             type === "game" ||
             type === "computer_battle" ||
@@ -131,9 +410,15 @@ module.exports = async function handler(req, res) {
             isComputerBattle
         });
 
-        // =====================================================
+        // =================================================
         // GAME MODE / COMPUTER BATTLE
-        // =====================================================
+        //
+        // This remains separate from the normal AI daily
+        // question counter.
+        //
+        // Existing battle generation and response behavior
+        // are preserved.
+        // =================================================
 
         if (isGameMode) {
 
@@ -142,7 +427,6 @@ module.exports = async function handler(req, res) {
             // -------------------------------------------------
 
             if (!subject) {
-
                 return res.status(400).json({
                     success: false,
                     error:
@@ -155,7 +439,6 @@ module.exports = async function handler(req, res) {
             // -------------------------------------------------
 
             if (!topic) {
-
                 return res.status(400).json({
                     success: false,
                     error:
@@ -350,17 +633,11 @@ Do not reuse a previous question set.
             // OPENAI REQUEST
             // =================================================
 
-            const response =
-                await client.responses.create({
-
-                    model: "gpt-5-mini",
-
-                    instructions:
-                        gameInstructions,
-
-                    input:
-                        gameMessage
-                });
+            const response = await client.responses.create({
+                model: "gpt-5-mini",
+                instructions: gameInstructions,
+                input: gameMessage
+            });
 
             const output =
                 typeof response.output_text === "string"
@@ -376,7 +653,6 @@ Do not reuse a previous question set.
             // =================================================
 
             if (!output) {
-
                 console.error(
                     "OpenAI returned an empty response."
                 );
@@ -394,67 +670,35 @@ Do not reuse a previous question set.
 
             let parsed = null;
 
-            // -------------------------------------------------
-            // First attempt: direct JSON
-            // -------------------------------------------------
-
             try {
-
-                parsed =
-                    JSON.parse(output);
-
+                parsed = JSON.parse(output);
             } catch (directParseError) {
-
                 console.warn(
                     "Direct JSON parsing failed. Attempting recovery."
                 );
 
-                // ------------------------------------------------
-                // Remove possible markdown code fences
-                // ------------------------------------------------
-
-                let cleaned =
-                    output
-                        .replace(/^```json\s*/i, "")
-                        .replace(/^```\s*/i, "")
-                        .replace(/\s*```$/i, "")
-                        .trim();
+                let cleaned = output
+                    .replace(/^```json\s*/i, "")
+                    .replace(/^```\s*/i, "")
+                    .replace(/\s*```$/i, "")
+                    .trim();
 
                 try {
-
-                    parsed =
-                        JSON.parse(cleaned);
-
+                    parsed = JSON.parse(cleaned);
                 } catch (cleanedParseError) {
-
-                    // ------------------------------------------------
-                    // Recover JSON object from surrounding text
-                    // ------------------------------------------------
-
-                    const start =
-                        cleaned.indexOf("{");
-
-                    const end =
-                        cleaned.lastIndexOf("}");
+                    const start = cleaned.indexOf("{");
+                    const end = cleaned.lastIndexOf("}");
 
                     if (
                         start !== -1 &&
                         end !== -1 &&
                         end > start
                     ) {
-
                         try {
-
-                            parsed =
-                                JSON.parse(
-                                    cleaned.slice(
-                                        start,
-                                        end + 1
-                                    )
-                                );
-
+                            parsed = JSON.parse(
+                                cleaned.slice(start, end + 1)
+                            );
                         } catch (recoveryError) {
-
                             parsed = null;
                         }
                     }
@@ -469,7 +713,6 @@ Do not reuse a previous question set.
                 !parsed ||
                 !Array.isArray(parsed.questions)
             ) {
-
                 console.error(
                     "Invalid Computer Battle AI output:",
                     output
@@ -489,7 +732,6 @@ Do not reuse a previous question set.
             const validQuestions =
                 parsed.questions
                     .filter(question => {
-
                         if (
                             !question ||
                             typeof question !== "object"
@@ -498,24 +740,17 @@ Do not reuse a previous question set.
                         }
 
                         if (
-                            typeof question.question !==
-                            "string" ||
+                            typeof question.question !== "string" ||
                             !question.question.trim()
                         ) {
                             return false;
                         }
 
-                        if (
-                            !Array.isArray(
-                                question.options
-                            )
-                        ) {
+                        if (!Array.isArray(question.options)) {
                             return false;
                         }
 
-                        if (
-                            question.options.length !== 4
-                        ) {
+                        if (question.options.length !== 4) {
                             return false;
                         }
 
@@ -529,8 +764,7 @@ Do not reuse a previous question set.
                             return false;
                         }
 
-                        const answer =
-                            Number(question.answer);
+                        const answer = Number(question.answer);
 
                         if (
                             !Number.isInteger(answer) ||
@@ -543,18 +777,13 @@ Do not reuse a previous question set.
                         return true;
                     })
                     .map(question => ({
+                        question: question.question.trim(),
 
-                        question:
-                            question.question.trim(),
+                        options: question.options.map(
+                            option => option.trim()
+                        ),
 
-                        options:
-                            question.options.map(
-                                option =>
-                                    option.trim()
-                            ),
-
-                        answer:
-                            Number(question.answer),
+                        answer: Number(question.answer),
 
                         explanation:
                             typeof question.explanation === "string"
@@ -567,34 +796,18 @@ Do not reuse a previous question set.
             // =================================================
 
             const uniqueQuestions = [];
+            const seenQuestions = new Set();
 
-            const seenQuestions =
-                new Set();
-
-            for (
-                const question
-                of validQuestions
-            ) {
-
+            for (const question of validQuestions) {
                 const normalized =
                     question.question
                         .toLowerCase()
                         .replace(/\s+/g, " ")
                         .trim();
 
-                if (
-                    !seenQuestions.has(
-                        normalized
-                    )
-                ) {
-
-                    seenQuestions.add(
-                        normalized
-                    );
-
-                    uniqueQuestions.push(
-                        question
-                    );
+                if (!seenQuestions.has(normalized)) {
+                    seenQuestions.add(normalized);
+                    uniqueQuestions.push(question);
                 }
             }
 
@@ -602,11 +815,7 @@ Do not reuse a previous question set.
             // CHECK QUESTION COUNT
             // =================================================
 
-            if (
-                uniqueQuestions.length <
-                questionCount
-            ) {
-
+            if (uniqueQuestions.length < questionCount) {
                 console.error(
                     "Insufficient unique questions:",
                     uniqueQuestions.length,
@@ -615,14 +824,10 @@ Do not reuse a previous question set.
                 );
 
                 return res.status(502).json({
-
                     success: false,
-
                     error:
                         `Computer Battle generated only ${uniqueQuestions.length} unique valid questions out of ${questionCount}.`,
-
-                    questions:
-                        uniqueQuestions
+                    questions: uniqueQuestions
                 });
             }
 
@@ -631,28 +836,18 @@ Do not reuse a previous question set.
             // =================================================
 
             return res.status(200).json({
-
                 success: true,
-
                 type: "game_questions",
-
                 mode: "computer_battle",
-
                 requestType: "computer_battle",
-
                 subject,
-
                 topic,
-
                 difficulty,
-
                 questionCount,
-
-                questions:
-                    uniqueQuestions.slice(
-                        0,
-                        questionCount
-                    )
+                questions: uniqueQuestions.slice(
+                    0,
+                    questionCount
+                )
             });
         }
 
@@ -661,14 +856,84 @@ Do not reuse a previous question set.
         // =====================================================
 
         if (!message) {
-
             return res.status(400).json({
-
                 success: false,
-
-                error:
-                    "Please provide a message."
+                error: "Please provide a message."
             });
+        }
+
+        // =====================================================
+        // AUTHENTICATE NORMAL AI REQUEST
+        // =====================================================
+
+        const auth = await verifySupabaseUser(req);
+
+        if (!auth.ok) {
+            return res.status(auth.status).json({
+                success: false,
+                error: auth.error
+            });
+        }
+
+        const user = auth.user;
+
+        // =====================================================
+        // ADMIN BYPASS
+        //
+        // Only the verified email matching ADMIN_EMAIL in
+        // Vercel receives this exception.
+        // =====================================================
+
+        const isAdmin = isAdminUser(user);
+
+        // =====================================================
+        // PREMIUM STATUS
+        // =====================================================
+
+        let isPremium = false;
+
+        if (!isAdmin) {
+            isPremium = await checkPremiumStatus(user.id);
+        }
+
+        console.log("StudyMind AI access:", {
+            userId: user.id,
+            isAdmin,
+            isPremium
+        });
+
+        // =====================================================
+        // FREE DAILY QUESTION LIMIT
+        //
+        // Admin and Premium users bypass this counter.
+        // Free users can consume at most five questions
+        // per calendar day in Nigeria.
+        // =====================================================
+
+        if (!isAdmin && !isPremium) {
+            const usageDate = getLagosDate();
+
+            const usage = await consumeAIQuestion(
+                user.id,
+                usageDate
+            );
+
+            if (!usage.allowed) {
+                return res.status(429).json({
+                    success: false,
+                    code: "DAILY_AI_LIMIT_REACHED",
+                    error:
+                        "You've reached your 5 free AI questions for today. Your limit resets at midnight Nigeria time.",
+                    questionsUsed: usage.questionsUsed,
+                    dailyLimit: DAILY_AI_LIMIT,
+                    premiumRequired: true
+                });
+            }
+
+            usageReservation = {
+                userId: user.id,
+                usageDate
+            };
         }
 
         // =====================================================
@@ -755,45 +1020,72 @@ teach it rather than simply giving an unexplained answer.
         // NORMAL OPENAI REQUEST
         // =====================================================
 
-        const response =
-            await client.responses.create({
+        const response = await client.responses.create({
+            model: "gpt-5-mini",
+            instructions: normalInstructions,
+            input: message
+        });
 
-                model: "gpt-5-mini",
+        const reply =
+            typeof response.output_text === "string"
+                ? response.output_text.trim()
+                : "";
 
-                instructions:
-                    normalInstructions,
+        // =====================================================
+        // EMPTY RESPONSE CHECK
+        // =====================================================
 
-                input:
-                    message
+        if (!reply) {
+            if (usageReservation) {
+                await refundAIQuestion(
+                    usageReservation.userId,
+                    usageReservation.usageDate
+                );
+
+                usageReservation = null;
+            }
+
+            return res.status(502).json({
+                success: false,
+                error: "StudyMind AI returned an empty response."
             });
+        }
+
+        // =====================================================
+        // SUCCESS
+        // The reserved free question remains counted.
+        // =====================================================
+
+        usageReservation = null;
 
         return res.status(200).json({
-
             success: true,
-
-            reply:
-                response.output_text || ""
+            reply
         });
 
     } catch (error) {
-
         console.error(
             "StudyMind AI API error:",
             error
         );
 
+        // =====================================================
+        // REFUND A FREE QUESTION IF THE REQUEST FAILED
+        // =====================================================
+
+        if (usageReservation) {
+            await refundAIQuestion(
+                usageReservation.userId,
+                usageReservation.usageDate
+            );
+
+            usageReservation = null;
+        }
+
         return res.status(500).json({
-
             success: false,
-
             error:
-                "AI API error",
-
-            details:
-                error &&
-                error.message
-                    ? error.message
-                    : "Unknown error"
+                "StudyMind AI could not complete your request. Please try again."
         });
     }
 };
