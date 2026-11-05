@@ -45,6 +45,14 @@ let fileStatus;
 let inputInfo;
 let themeButton;
 
+/* =========================================================
+   VERIFIED PREMIUM STATUS
+========================================================= */
+
+let premiumStatus = false;
+let adminStatus = false;
+let premiumStatusLoaded = false;
+
 
 /* =========================================================
    INITIALIZATION
