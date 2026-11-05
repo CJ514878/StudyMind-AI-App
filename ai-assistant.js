@@ -209,34 +209,20 @@ function isPremium() {
 
 
 function applyPremiumStatus() {
-
-    const body =
-        document.body;
-
+    const body = document.body;
     if (!body) return;
 
-    body.classList.toggle(
-        "premium-user",
-        isPremium()
-    );
+    const premium = isPremium();
 
-    body.classList.toggle(
-        "premium-theme",
-        isPremium()
-    );
-
-    body.classList.toggle(
-        "admin-user",
-        adminStatus
-    );
-
+    body.classList.toggle("premium-user", premium);
+    body.classList.toggle("premium-theme", premium);
+    body.classList.toggle("study-mind-premium", premium);
+    body.classList.toggle("admin-user", adminStatus);
     body.classList.toggle(
         "free-user",
-        premiumStatusLoaded && !isPremium()
+        premiumStatusLoaded && !premium
     );
-
 }
-
 
 function listenForAuthChanges() {
 
