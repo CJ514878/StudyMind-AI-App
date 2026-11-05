@@ -1,7 +1,9 @@
+
 "use strict";
 
 /* =========================================================
    STUDYMIND AI — AI ASSISTANT
+   VERIFIED PREMIUM + BLUE/GOLD THEME
 ========================================================= */
 
 const AI_LIMIT = 5;
@@ -14,41 +16,281 @@ const STORAGE = {
     USERNAME: "studyMindUsername"
 };
 
+const SUPABASE_URL =
+    "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
 let studyPlan = null;
 let sending = false;
+
+let premiumStatus = false;
+let adminStatus = false;
+let premiumStatusLoaded = false;
+
+
+/* =========================================================
+   SUPABASE CLIENT
+========================================================= */
+
+function getSupabaseClient() {
+
+    return (
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        window.gameSupabase ||
+        null
+    );
+
+}
+
+
+async function getAccessToken() {
+
+    const client = getSupabaseClient();
+
+    if (!client?.auth) {
+        throw new Error(
+            "Supabase is not initialized. Please refresh the page."
+        );
+    }
+
+    const {
+        data,
+        error
+    } = await client.auth.getSession();
+
+    if (error) {
+        throw error;
+    }
+
+    const token =
+        data?.session?.access_token;
+
+    if (!token) {
+        throw new Error(
+            "Your session has expired. Please log in again."
+        );
+    }
+
+    return token;
+
+}
 
 
 /* =========================================================
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-    studyPlan = loadJSON(STORAGE.PLAN, null);
+        studyPlan = loadJSON(
+            STORAGE.PLAN,
+            null
+        );
 
-    await loadUser();
+        setupTheme();
 
-    renderStudyContext();
+        await loadPremiumStatus();
+
+        await loadUser();
+
+        renderStudyContext();
+
+        renderUsage();
+
+        setupComposer();
+
+        setupQuickActions();
+
+        setupStarterButtons();
+
+        setupProgressAnalysis();
+
+        setupClearChat();
+
+        setupPremiumModal();
+
+        setupLogout();
+
+        listenForAuthChanges();
+
+    }
+);
+
+
+/* =========================================================
+   VERIFIED PREMIUM STATUS
+========================================================= */
+
+async function loadPremiumStatus() {
+
+    premiumStatusLoaded = false;
+
+    premiumStatus = false;
+
+    adminStatus = false;
+
+    applyPremiumStatus();
+
+    try {
+
+        const token =
+            await getAccessToken();
+
+        const response =
+            await fetch(
+                "/api/premium/status",
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                `Premium verification failed: ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
+        premiumStatus =
+            data?.premium === true;
+
+        adminStatus =
+            data?.isAdmin === true;
+
+        premiumStatusLoaded = true;
+
+    } catch (error) {
+
+        console.error(
+            "Premium verification error:",
+            error
+        );
+
+        premiumStatus = false;
+
+        adminStatus = false;
+
+        premiumStatusLoaded = true;
+
+    }
+
+    applyPremiumStatus();
 
     renderUsage();
 
-    setupComposer();
+}
 
-    setupQuickActions();
 
-    setupStarterButtons();
+function isPremium() {
 
-    setupProgressAnalysis();
+    return (
+        premiumStatusLoaded &&
+        premiumStatus === true
+    );
 
-    setupClearChat();
+}
 
-    setupPremiumModal();
 
-    setupLogout();
+function applyPremiumStatus() {
 
-    setupTheme();
+    const body =
+        document.body;
 
-});
+    if (!body) return;
+
+    body.classList.toggle(
+        "premium-user",
+        isPremium()
+    );
+
+    body.classList.toggle(
+        "premium-theme",
+        isPremium()
+    );
+
+    body.classList.toggle(
+        "admin-user",
+        adminStatus
+    );
+
+    body.classList.toggle(
+        "free-user",
+        premiumStatusLoaded && !isPremium()
+    );
+
+}
+
+
+function listenForAuthChanges() {
+
+    const client =
+        getSupabaseClient();
+
+    if (!client?.auth) return;
+
+    client.auth.onAuthStateChange(
+        async (event) => {
+
+            if (
+                event === "SIGNED_OUT"
+            ) {
+
+                premiumStatus = false;
+
+                adminStatus = false;
+
+                premiumStatusLoaded = true;
+
+                applyPremiumStatus();
+
+                renderUsage();
+
+                return;
+            }
+
+            if (
+                event === "SIGNED_IN" ||
+                event === "TOKEN_REFRESHED" ||
+                event === "USER_UPDATED"
+            ) {
+
+                await loadPremiumStatus();
+
+                await loadUser();
+
+            }
+
+        }
+    );
+
+}
+
+
+window.addEventListener(
+    "studyMindPremiumChanged",
+    async () => {
+
+        await loadPremiumStatus();
+
+    }
+);
 
 
 /* =========================================================
@@ -64,52 +306,46 @@ async function loadUser() {
         document.getElementById("avatar");
 
     let name =
-        localStorage.getItem(STORAGE.USERNAME) ||
+        localStorage.getItem(
+            STORAGE.USERNAME
+        ) ||
         "Student";
-
 
     try {
 
-        if (
-            window.supabase &&
-            window.supabase.createClient
-        ) {
+        const client =
+            getSupabaseClient();
 
-            const SUPABASE_URL =
-                "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-            const SUPABASE_KEY =
-                "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
-            const client =
-                window.supabase.createClient(
-                    SUPABASE_URL,
-                    SUPABASE_KEY
-                );
-
+        if (client?.auth) {
 
             const {
-                data
-            } =
-                await client.auth.getUser();
+                data,
+                error
+            } = await client.auth.getUser();
 
+            if (error) {
+                throw error;
+            }
 
             const user =
                 data?.user;
-
 
             if (user) {
 
                 const metadata =
                     user.user_metadata || {};
 
-
                 name =
+                    metadata.username ||
                     metadata.full_name ||
                     metadata.name ||
-                    metadata.username ||
                     user.email?.split("@")[0] ||
                     name;
+
+                localStorage.setItem(
+                    STORAGE.USERNAME,
+                    name
+                );
 
             }
 
@@ -124,7 +360,6 @@ async function loadUser() {
 
     }
 
-
     name =
         String(name)
             .trim()
@@ -132,11 +367,9 @@ async function loadUser() {
             .slice(0, 2)
             .join(" ");
 
-
     if (username) {
         username.textContent = name;
     }
-
 
     if (avatar) {
 
@@ -155,14 +388,14 @@ async function loadUser() {
 function renderStudyContext() {
 
     const container =
-        document.getElementById("currentStudy");
+        document.getElementById(
+            "currentStudy"
+        );
 
     if (!container) return;
 
-
     const topic =
         getCurrentTopic();
-
 
     if (!topic) {
 
@@ -176,7 +409,6 @@ function renderStudyContext() {
 
         return;
     }
-
 
     container.innerHTML = `
         <strong>${escapeHTML(topic.name)}</strong>
@@ -193,11 +425,6 @@ function getCurrentTopic() {
     if (!studyPlan) {
         return null;
     }
-
-
-    /*
-       New plan format
-    */
 
     if (
         Array.isArray(studyPlan.subjects)
@@ -216,6 +443,7 @@ function getCurrentTopic() {
                     subject.topics[0];
 
                 return {
+
                     subject:
                         subject.name ||
                         subject.subject ||
@@ -227,6 +455,7 @@ function getCurrentTopic() {
                             : topic.name ||
                               topic.title ||
                               "Topic"
+
                 };
 
             }
@@ -234,11 +463,6 @@ function getCurrentTopic() {
         }
 
     }
-
-
-    /*
-       Flat topics format
-    */
 
     if (
         Array.isArray(studyPlan.topics) &&
@@ -253,17 +477,19 @@ function getCurrentTopic() {
         ) {
 
             return {
+
                 subject:
                     studyPlan.subject ||
                     "Subject",
 
                 name: topic
+
             };
 
         }
 
-
         return {
+
             subject:
                 topic.subject ||
                 studyPlan.subject ||
@@ -273,33 +499,12 @@ function getCurrentTopic() {
                 topic.name ||
                 topic.title ||
                 "Topic"
+
         };
 
     }
 
-
     return null;
-
-}
-
-
-/* =========================================================
-   PREMIUM
-========================================================= */
-
-function isPremium() {
-
-    const value =
-        localStorage.getItem(
-            STORAGE.PREMIUM
-        );
-
-
-    return (
-        value === "true" ||
-        value === "1" ||
-        value === "premium"
-    );
 
 }
 
@@ -315,12 +520,15 @@ function getToday() {
 
     return [
         now.getFullYear(),
+
         String(
             now.getMonth() + 1
         ).padStart(2, "0"),
+
         String(
             now.getDate()
         ).padStart(2, "0")
+
     ].join("-");
 
 }
@@ -336,16 +544,13 @@ function getQuestionCount() {
         return 0;
     }
 
-
     const today =
         getToday();
-
 
     const savedDate =
         localStorage.getItem(
             STORAGE.AI_DATE
         );
-
 
     if (savedDate !== today) {
 
@@ -363,14 +568,12 @@ function getQuestionCount() {
 
     }
 
-
     const count =
         Number(
             localStorage.getItem(
                 STORAGE.AI_COUNT
             ) || 0
         );
-
 
     return Number.isFinite(count)
         ? Math.max(0, count)
@@ -385,22 +588,18 @@ function incrementQuestionCount() {
         return;
     }
 
-
     const count =
         getQuestionCount() + 1;
-
 
     localStorage.setItem(
         STORAGE.AI_COUNT,
         String(count)
     );
 
-
     localStorage.setItem(
         STORAGE.AI_DATE,
         getToday()
     );
-
 
     renderUsage();
 
@@ -424,6 +623,25 @@ function renderUsage() {
             "usageDescription"
         );
 
+    if (!premiumStatusLoaded) {
+
+        if (usageText) {
+            usageText.textContent =
+                "Checking...";
+        }
+
+        if (usageProgress) {
+            usageProgress.style.width = "0%";
+        }
+
+        if (usageDescription) {
+            usageDescription.textContent =
+                "Verifying your account access";
+        }
+
+        return;
+
+    }
 
     if (isPremium()) {
 
@@ -439,23 +657,23 @@ function renderUsage() {
 
         if (usageDescription) {
             usageDescription.textContent =
-                "Premium AI access enabled";
+                adminStatus
+                    ? "Administrator access enabled"
+                    : "Premium AI access enabled";
         }
 
         return;
-    }
 
+    }
 
     const count =
         getQuestionCount();
-
 
     const percentage =
         Math.min(
             100,
             (count / AI_LIMIT) * 100
         );
-
 
     if (usageText) {
 
@@ -464,14 +682,12 @@ function renderUsage() {
 
     }
 
-
     if (usageProgress) {
 
         usageProgress.style.width =
             `${percentage}%`;
 
     }
-
 
     if (usageDescription) {
 
@@ -496,6 +712,25 @@ function renderUsage() {
 
 
 /* =========================================================
+   FREE LIMIT CHECK
+========================================================= */
+
+function canUseAI() {
+
+    if (!premiumStatusLoaded) {
+        return false;
+    }
+
+    if (isPremium()) {
+        return true;
+    }
+
+    return getQuestionCount() < AI_LIMIT;
+
+}
+
+
+/* =========================================================
    COMPOSER
 ========================================================= */
 
@@ -511,17 +746,14 @@ function setupComposer() {
             "askAIButton"
         );
 
-
     if (!textarea || !button) {
         return;
     }
-
 
     button.addEventListener(
         "click",
         sendMessage
     );
-
 
     textarea.addEventListener(
         "keydown",
@@ -541,13 +773,11 @@ function setupComposer() {
         }
     );
 
-
     textarea.addEventListener(
         "input",
         () => {
 
-            textarea.style.height =
-                "auto";
+            textarea.style.height = "auto";
 
             textarea.style.height =
                 Math.min(
@@ -569,74 +799,67 @@ async function sendMessage(
     customMessage = null
 ) {
 
-    if (sending) {
-        return;
-    }
-
+    if (sending) return;
 
     const textarea =
         document.getElementById(
             "aiQuestion"
         );
 
-
     const text =
         customMessage ||
         textarea?.value.trim();
 
+    if (!text) return;
 
-    if (!text) {
-        return;
-    }
+    if (!premiumStatusLoaded) {
 
+        addMessage(
+            "ai",
+            "Please wait while we verify your account."
+        );
 
-    if (
-        !isPremium() &&
-        getQuestionCount() >= AI_LIMIT
-    ) {
+        await loadPremiumStatus();
+
+        if (!canUseAI()) {
+            openPremiumModal();
+            return;
+        }
+
+    } else if (!canUseAI()) {
 
         openPremiumModal();
 
         return;
+
     }
 
-
     sending = true;
-
 
     if (textarea) {
 
         textarea.value = "";
 
-        textarea.style.height =
-            "auto";
+        textarea.style.height = "auto";
 
     }
-
 
     addMessage(
         "user",
         text
     );
 
-
     const typing =
         addTypingMessage();
 
-
     updateSendButton(true);
-
 
     try {
 
         const response =
             await callAI(text);
 
-
-        removeTypingMessage(
-            typing
-        );
-
+        removeTypingMessage(typing);
 
         const bubble =
             addMessage(
@@ -644,16 +867,11 @@ async function sendMessage(
                 response
             );
 
-
-        await renderMath(
-            bubble
-        );
-
+        await renderMath(bubble);
 
         if (!isPremium()) {
             incrementQuestionCount();
         }
-
 
     } catch (error) {
 
@@ -662,14 +880,11 @@ async function sendMessage(
             error
         );
 
-
-        removeTypingMessage(
-            typing
-        );
-
+        removeTypingMessage(typing);
 
         addMessage(
             "ai",
+            error.message ||
             "I couldn't connect to StudyMind AI right now. Please try again in a moment."
         );
 
@@ -688,17 +903,16 @@ async function sendMessage(
    CALL BACKEND
 ========================================================= */
 
-async function callAI(
-    userMessage
-) {
+async function callAI(userMessage) {
 
     const topic =
         getCurrentTopic();
 
-
     const context =
         buildStudyContext();
 
+    const token =
+        await getAccessToken();
 
     const prompt = `
 
@@ -727,7 +941,6 @@ STUDENT REQUEST:
 ${userMessage}
 `;
 
-
     const response =
         await fetch(
             "/api/ask-ai",
@@ -736,10 +949,14 @@ ${userMessage}
 
                 headers: {
                     "Content-Type":
-                        "application/json"
+                        "application/json",
+
+                    "Authorization":
+                        `Bearer ${token}`
                 },
 
                 body: JSON.stringify({
+
                     message: prompt,
 
                     subject:
@@ -759,30 +976,39 @@ ${userMessage}
 
                     mode:
                         "normal"
+
                 })
             }
         );
 
+    const data =
+        await response.json();
 
     if (!response.ok) {
 
-        const text =
-            await response.text();
+        if (
+            response.status === 429
+        ) {
+
+            await loadPremiumStatus();
+
+            renderUsage();
+
+            throw new Error(
+                data?.error ||
+                "Your free AI limit has been reached."
+            );
+
+        }
 
         throw new Error(
-            `AI request failed: ${response.status} ${text}`
+            data?.error ||
+            `AI request failed: ${response.status}`
         );
 
     }
 
-
-    const data =
-        await response.json();
-
-
-    if (
-        data?.success === false
-    ) {
+    if (data?.success === false) {
 
         throw new Error(
             data.error ||
@@ -791,10 +1017,8 @@ ${userMessage}
 
     }
 
-
     const reply =
         data?.reply;
-
 
     if (
         typeof reply !== "string" ||
@@ -806,7 +1030,6 @@ ${userMessage}
         );
 
     }
-
 
     return reply.trim();
 
@@ -825,9 +1048,7 @@ function buildStudyContext() {
 
     }
 
-
     const lines = [];
-
 
     if (studyPlan.curriculum) {
 
@@ -837,7 +1058,6 @@ function buildStudyContext() {
 
     }
 
-
     if (studyPlan.examType) {
 
         lines.push(
@@ -846,7 +1066,6 @@ function buildStudyContext() {
 
     }
 
-
     if (studyPlan.examDate) {
 
         lines.push(
@@ -854,7 +1073,6 @@ function buildStudyContext() {
         );
 
     }
-
 
     if (
         studyPlan.daysLeft !== undefined
@@ -866,10 +1084,8 @@ function buildStudyContext() {
 
     }
 
-
     const topic =
         getCurrentTopic();
-
 
     if (topic) {
 
@@ -883,11 +1099,8 @@ function buildStudyContext() {
 
     }
 
-
     if (
-        Array.isArray(
-            studyPlan.subjects
-        )
+        Array.isArray(studyPlan.subjects)
     ) {
 
         const subjects =
@@ -899,7 +1112,6 @@ function buildStudyContext() {
                 )
                 .filter(Boolean);
 
-
         if (subjects.length) {
 
             lines.push(
@@ -909,7 +1121,6 @@ function buildStudyContext() {
         }
 
     }
-
 
     if (
         studyPlan.hoursPerDay ||
@@ -925,7 +1136,6 @@ function buildStudyContext() {
 
     }
 
-
     if (
         studyPlan.studyScore !== undefined
     ) {
@@ -936,7 +1146,6 @@ function buildStudyContext() {
 
     }
 
-
     if (
         studyPlan.streak !== undefined
     ) {
@@ -946,7 +1155,6 @@ function buildStudyContext() {
         );
 
     }
-
 
     return lines.length
         ? lines.join("\n")
@@ -959,109 +1167,77 @@ function buildStudyContext() {
    ADD MESSAGE
 ========================================================= */
 
-function addMessage(
-    role,
-    text
-) {
+function addMessage(role, text) {
 
     const container =
         document.getElementById(
             "chatMessages"
         );
 
-
-    if (!container) {
-        return null;
-    }
-
+    if (!container) return null;
 
     const empty =
         container.querySelector(
             ".empty-chat"
         );
 
-
     if (empty) {
         empty.remove();
     }
 
-
     const wrapper =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     wrapper.className =
         `message ${role}`;
 
-
     const avatar =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     avatar.className =
         "message-avatar";
 
     avatar.textContent =
-        role === "ai"
-            ? "✦"
-            : "S";
-
+        role === "ai" ? "✦" : "S";
 
     const content =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     content.className =
         "message-content";
 
-
     const bubble =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     bubble.className =
         "message-bubble";
 
-
     if (role === "ai") {
-
-        /*
-           Markdown is converted safely.
-        */
 
         const raw =
             String(text || "");
 
-
         let html;
-
 
         try {
 
             html =
                 window.marked
                     ? marked.parse(raw)
-                    : escapeHTML(raw)
-                        .replace(
-                            /\n/g,
-                            "<br>"
-                        );
-
-        } catch {
-
-            html =
-                escapeHTML(raw)
-                    .replace(
+                    : escapeHTML(raw).replace(
                         /\n/g,
                         "<br>"
                     );
 
-        }
+        } catch {
 
+            html =
+                escapeHTML(raw).replace(
+                    /\n/g,
+                    "<br>"
+                );
+
+        }
 
         bubble.innerHTML =
             window.DOMPurify
@@ -1077,57 +1253,37 @@ function addMessage(
 
     } else {
 
-        bubble.textContent =
-            text;
+        bubble.textContent = text;
 
     }
 
-
     const time =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     time.className =
         "message-time";
 
     time.textContent =
-        new Date()
-            .toLocaleTimeString(
-                [],
-                {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
+        new Date().toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
 
+    content.appendChild(bubble);
 
-    content.appendChild(
-        bubble
-    );
+    content.appendChild(time);
 
-    content.appendChild(
-        time
-    );
+    wrapper.appendChild(avatar);
 
+    wrapper.appendChild(content);
 
-    wrapper.appendChild(
-        avatar
-    );
-
-    wrapper.appendChild(
-        content
-    );
-
-
-    container.appendChild(
-        wrapper
-    );
-
+    container.appendChild(wrapper);
 
     container.scrollTop =
         container.scrollHeight;
-
 
     return bubble;
 
@@ -1138,21 +1294,11 @@ function addMessage(
    MATHJAX
 ========================================================= */
 
-async function renderMath(
-    element
-) {
+async function renderMath(element) {
 
-    if (!element) {
+    if (!element || !window.MathJax) {
         return;
     }
-
-
-    if (
-        !window.MathJax
-    ) {
-        return;
-    }
-
 
     try {
 
@@ -1167,17 +1313,13 @@ async function renderMath(
 
         }
 
-
         if (
-            typeof
-            window.MathJax.typesetPromise ===
+            typeof window.MathJax.typesetPromise ===
             "function"
         ) {
 
             await window.MathJax
-                .typesetPromise([
-                    element
-                ]);
+                .typesetPromise([element]);
 
         }
 
@@ -1204,45 +1346,31 @@ function addTypingMessage() {
             "chatMessages"
         );
 
-
     const wrapper =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     wrapper.className =
         "message ai typing-message";
 
-
     const avatar =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     avatar.className =
         "message-avatar";
 
-    avatar.textContent =
-        "✦";
-
+    avatar.textContent = "✦";
 
     const content =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     content.className =
         "message-content";
 
-
     const bubble =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     bubble.className =
         "message-bubble";
-
 
     bubble.innerHTML = `
         <div class="typing">
@@ -1252,36 +1380,23 @@ function addTypingMessage() {
         </div>
     `;
 
+    content.appendChild(bubble);
 
-    content.appendChild(
-        bubble
-    );
+    wrapper.appendChild(avatar);
 
-    wrapper.appendChild(
-        avatar
-    );
+    wrapper.appendChild(content);
 
-    wrapper.appendChild(
-        content
-    );
-
-    container.appendChild(
-        wrapper
-    );
-
+    container.appendChild(wrapper);
 
     container.scrollTop =
         container.scrollHeight;
-
 
     return wrapper;
 
 }
 
 
-function removeTypingMessage(
-    element
-) {
+function removeTypingMessage(element) {
 
     if (element?.parentNode) {
         element.remove();
@@ -1297,9 +1412,7 @@ function removeTypingMessage(
 function setupQuickActions() {
 
     document
-        .querySelectorAll(
-            ".quick-action"
-        )
+        .querySelectorAll(".quick-action")
         .forEach(button => {
 
             button.addEventListener(
@@ -1324,9 +1437,7 @@ function setupQuickActions() {
 function setupStarterButtons() {
 
     document
-        .querySelectorAll(
-            ".starter-button"
-        )
+        .querySelectorAll(".starter-button")
         .forEach(button => {
 
             button.addEventListener(
@@ -1359,11 +1470,7 @@ function setupProgressAnalysis() {
             "analyzeProgressButton"
         );
 
-
-    if (!button) {
-        return;
-    }
-
+    if (!button) return;
 
     button.addEventListener(
         "click",
@@ -1375,16 +1482,21 @@ function setupProgressAnalysis() {
 
 async function analyzeProgress() {
 
-    if (
-        !isPremium() &&
-        getQuestionCount() >= AI_LIMIT
-    ) {
+    if (!premiumStatusLoaded) {
+
+        await loadPremiumStatus();
+
+    }
+
+    if (!canUseAI()) {
 
         openPremiumModal();
 
         return;
+
     }
 
+    if (sending) return;
 
     const button =
         document.getElementById(
@@ -1401,30 +1513,23 @@ async function analyzeProgress() {
             "analysisBadge"
         );
 
+    if (!button || !result) return;
 
-    if (!button || !result) {
-        return;
-    }
-
+    sending = true;
 
     button.disabled = true;
 
-
     if (badge) {
-        badge.textContent =
-            "Analyzing...";
+        badge.textContent = "Analyzing...";
     }
-
 
     result.innerHTML = `
         <div class="result-placeholder">
             <span>✦</span>
-
             <div>
                 <strong>
                     StudyMind is analyzing your plan...
                 </strong>
-
                 <small>
                     Looking at your subjects,
                     topics and study progress.
@@ -1433,10 +1538,8 @@ async function analyzeProgress() {
         </div>
     `;
 
-
     const context =
         buildStudyContext();
-
 
     const prompt = `
 
@@ -1476,8 +1579,10 @@ in the study plan.
 Keep the advice useful and realistic.
 `;
 
-
     try {
+
+        const token =
+            await getAccessToken();
 
         const response =
             await fetch(
@@ -1487,43 +1592,50 @@ Keep the advice useful and realistic.
 
                     headers: {
                         "Content-Type":
-                            "application/json"
+                            "application/json",
+
+                        "Authorization":
+                            `Bearer ${token}`
                     },
 
-                    body:
-                        JSON.stringify({
-                            message:
-                                prompt,
+                    body: JSON.stringify({
 
-                            type:
-                                "normal",
+                        message: prompt,
 
-                            requestType:
-                                "normal",
+                        type: "normal",
 
-                            mode:
-                                "normal"
-                        })
+                        requestType: "normal",
+
+                        mode: "normal"
+
+                    })
                 }
             );
 
+        const data =
+            await response.json();
 
         if (!response.ok) {
 
+            if (response.status === 429) {
+
+                await loadPremiumStatus();
+
+                throw new Error(
+                    data?.error ||
+                    "Your free AI limit has been reached."
+                );
+
+            }
+
             throw new Error(
+                data?.error ||
                 `Request failed: ${response.status}`
             );
 
         }
 
-
-        const data =
-            await response.json();
-
-
-        if (
-            data?.success === false
-        ) {
+        if (data?.success === false) {
 
             throw new Error(
                 data.error ||
@@ -1532,10 +1644,8 @@ Keep the advice useful and realistic.
 
         }
 
-
         const reply =
             data?.reply;
-
 
         if (
             typeof reply !== "string" ||
@@ -1548,38 +1658,28 @@ Keep the advice useful and realistic.
 
         }
 
-
         let html =
-            marked.parse(
-                reply
-            );
-
-
-        html =
-            DOMPurify.sanitize(
-                html
-            );
-
+            window.marked
+                ? marked.parse(reply)
+                : escapeHTML(reply).replace(
+                    /\n/g,
+                    "<br>"
+                );
 
         result.innerHTML =
-            html;
+            window.DOMPurify
+                ? DOMPurify.sanitize(html)
+                : html;
 
-
-        await renderMath(
-            result
-        );
-
+        await renderMath(result);
 
         if (!isPremium()) {
             incrementQuestionCount();
         }
 
-
         if (badge) {
-            badge.textContent =
-                "Complete";
+            badge.textContent = "Complete";
         }
-
 
     } catch (error) {
 
@@ -1588,35 +1688,32 @@ Keep the advice useful and realistic.
             error
         );
 
-
         result.innerHTML = `
             <div class="result-placeholder">
                 <span>!</span>
-
                 <div>
                     <strong>
                         Analysis unavailable
                     </strong>
-
                     <small>
-                        StudyMind could not connect
-                        to the AI service. Please try again.
+                        ${escapeHTML(
+                            error.message ||
+                            "StudyMind could not connect to the AI service."
+                        )}
                     </small>
                 </div>
             </div>
         `;
 
-
         if (badge) {
-            badge.textContent =
-                "Error";
+            badge.textContent = "Error";
         }
-
 
     } finally {
 
-        button.disabled =
-            false;
+        sending = false;
+
+        button.disabled = false;
 
     }
 
@@ -1634,11 +1731,7 @@ function setupClearChat() {
             "clearChat"
         );
 
-
-    if (!button) {
-        return;
-    }
-
+    if (!button) return;
 
     button.addEventListener(
         "click",
@@ -1649,11 +1742,7 @@ function setupClearChat() {
                     "chatMessages"
                 );
 
-
-            if (!container) {
-                return;
-            }
-
+            if (!container) return;
 
             container.innerHTML = `
                 <div class="empty-chat">
@@ -1730,7 +1819,6 @@ function setupClearChat() {
                 </div>
             `;
 
-
             setupStarterButtons();
 
         }
@@ -1755,11 +1843,7 @@ function setupPremiumModal() {
             "premiumModal"
         );
 
-
-    if (!modal) {
-        return;
-    }
-
+    if (!modal) return;
 
     if (close) {
 
@@ -1770,17 +1854,12 @@ function setupPremiumModal() {
 
     }
 
-
     modal.addEventListener(
         "click",
         event => {
 
-            if (
-                event.target === modal
-            ) {
-
+            if (event.target === modal) {
                 closePremiumModal();
-
             }
 
         }
@@ -1796,11 +1875,8 @@ function openPremiumModal() {
             "premiumModal"
         );
 
-
     if (modal) {
-        modal.classList.remove(
-            "hidden"
-        );
+        modal.classList.remove("hidden");
     }
 
 }
@@ -1813,11 +1889,8 @@ function closePremiumModal() {
             "premiumModal"
         );
 
-
     if (modal) {
-        modal.classList.add(
-            "hidden"
-        );
+        modal.classList.add("hidden");
     }
 
 }
@@ -1827,37 +1900,25 @@ function closePremiumModal() {
    SEND BUTTON
 ========================================================= */
 
-function updateSendButton(
-    loading
-) {
+function updateSendButton(loading) {
 
     const button =
         document.getElementById(
             "askAIButton"
         );
 
+    if (!button) return;
 
-    if (!button) {
-        return;
-    }
-
-
-    button.disabled =
-        loading;
-
+    button.disabled = loading;
 
     button.innerHTML =
         loading
             ? `
-                <span>
-                    Thinking...
-                </span>
+                <span>Thinking...</span>
                 <b>✦</b>
             `
             : `
-                <span>
-                    Ask AI
-                </span>
+                <span>Ask AI</span>
                 <b>↗</b>
             `;
 
@@ -1875,11 +1936,7 @@ function setupLogout() {
             "logoutButton"
         );
 
-
-    if (!button) {
-        return;
-    }
-
+    if (!button) return;
 
     button.addEventListener(
         "click",
@@ -1887,17 +1944,10 @@ function setupLogout() {
 
             try {
 
-                if (
-                    window.supabase &&
-                    window.supabase.createClient
-                ) {
+                const client =
+                    getSupabaseClient();
 
-                    const client =
-                        window.supabase.createClient(
-                            "https://bicnrbqqvucgpbwudmit.supabase.co",
-                            "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB"
-                        );
-
+                if (client?.auth) {
 
                     await client.auth.signOut();
 
@@ -1911,7 +1961,6 @@ function setupLogout() {
                 );
 
             }
-
 
             window.location.href =
                 "home.html";
@@ -1933,22 +1982,17 @@ function setupTheme() {
             "themeButton"
         );
 
-
-    if (!button) {
-        return;
-    }
-
-
     /*
-       This page uses the new dark StudyMind
-       interface by default.
-
-       If the old app has a global theme system,
-       this listener remains harmless.
+       Premium status controls the theme.
+       Free = Blue.
+       Premium/Admin = Gold.
     */
 
-    button.style.display =
-        "none";
+    if (button) {
+        button.style.display = "none";
+    }
+
+    applyPremiumStatus();
 
 }
 
@@ -1957,31 +2001,14 @@ function setupTheme() {
    ESCAPE HTML
 ========================================================= */
 
-function escapeHTML(
-    value
-) {
+function escapeHTML(value) {
 
     return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
 
@@ -1990,27 +2017,18 @@ function escapeHTML(
    LOCAL STORAGE JSON
 ========================================================= */
 
-function loadJSON(
-    key,
-    fallback
-) {
+function loadJSON(key, fallback) {
 
     try {
 
         const raw =
-            localStorage.getItem(
-                key
-            );
-
+            localStorage.getItem(key);
 
         if (!raw) {
             return fallback;
         }
 
-
-        return JSON.parse(
-            raw
-        );
+        return JSON.parse(raw);
 
     } catch {
 
@@ -2022,7 +2040,7 @@ function loadJSON(
 
 
 /* =========================================================
-   PREMIUM EVENT
+   STORAGE EVENT
 ========================================================= */
 
 window.addEventListener(
@@ -2030,23 +2048,17 @@ window.addEventListener(
     event => {
 
         if (
-            event.key ===
-            STORAGE.PREMIUM
+            event.key === STORAGE.PREMIUM
         ) {
 
-            renderUsage();
+            /*
+               Local storage is not trusted
+               for entitlement verification.
+            */
+
+            loadPremiumStatus();
 
         }
-
-    }
-);
-
-
-window.addEventListener(
-    "studyMindPremiumChanged",
-    () => {
-
-        renderUsage();
 
     }
 );
