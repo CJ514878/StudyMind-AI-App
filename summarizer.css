@@ -1700,3 +1700,159 @@ label:focus-visible {
     }
 
 }
+
+/* =========================================================
+   STUDYMIND AI — FREE VS PREMIUM THEME
+   Free users: Blue
+   Premium/Admin: Gold
+   ========================================================= */
+
+/* DEFAULT THEME — FREE USERS */
+
+:root {
+    --gold: #3984f6;
+    --gold-light: #65a5ff;
+    --gold-dark: #2463c5;
+    --gold-soft: rgba(57, 132, 246, 0.10);
+    --gold-border: rgba(57, 132, 246, 0.27);
+}
+
+/* FREE USER BACKGROUNDS */
+
+body:not(.premium-theme) {
+    background:
+        radial-gradient(
+            circle at 72% 0%,
+            rgba(57, 132, 246, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 15% 85%,
+            rgba(57, 132, 246, 0.035),
+            transparent 30%
+        ),
+        var(--bg);
+}
+
+/* PREMIUM THEME — VERIFIED PREMIUM USERS ONLY */
+
+body.premium-theme {
+    --gold: #f5c542;
+    --gold-light: #ffd95a;
+    --gold-dark: #c99a16;
+    --gold-soft: rgba(245, 197, 66, 0.10);
+    --gold-border: rgba(245, 197, 66, 0.27);
+
+    background:
+        radial-gradient(
+            circle at 72% 0%,
+            rgba(245, 197, 66, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 15% 85%,
+            rgba(245, 197, 66, 0.035),
+            transparent 30%
+        ),
+        var(--bg);
+}
+
+/* PREMIUM HERO */
+
+body.premium-theme .summarizer-hero {
+    border-color: var(--gold-border);
+
+    background:
+        radial-gradient(
+            circle at 85% 50%,
+            rgba(245, 197, 66, 0.14),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #18140a,
+            #101010
+        );
+}
+
+/* FREE HERO */
+
+body:not(.premium-theme) .summarizer-hero {
+    border-color: var(--gold-border);
+
+    background:
+        radial-gradient(
+            circle at 85% 50%,
+            rgba(57, 132, 246, 0.14),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #0c1525,
+            #101010
+        );
+}
+
+/* PREMIUM CAPABILITY CARD */
+
+body.premium-theme .capability-card {
+    background:
+        radial-gradient(
+            circle at 90% 0%,
+            rgba(245, 197, 66, 0.12),
+            transparent 50%
+        ),
+        linear-gradient(
+            135deg,
+            #17130a,
+            #111111
+        );
+}
+
+/* FREE CAPABILITY CARD */
+
+body:not(.premium-theme) .capability-card {
+    background:
+        radial-gradient(
+            circle at 90% 0%,
+            rgba(57, 132, 246, 0.12),
+            transparent 50%
+        ),
+        linear-gradient(
+            135deg,
+            #0c1525,
+            #111111
+        );
+}
+
+/* PREMIUM ORB */
+
+body.premium-theme .ai-orb {
+    border-color: rgba(245, 197, 66, 0.23);
+}
+
+/* FREE ORB */
+
+body:not(.premium-theme) .ai-orb {
+    border-color: rgba(57, 132, 246, 0.23);
+}
+
+/* PREMIUM USAGE RING */
+
+body.premium-theme .usage-ring {
+    background:
+        conic-gradient(
+            #f5c542 var(--usage-progress, 0%),
+            rgba(255, 255, 255, 0.06) 0
+        );
+}
+
+/* FREE USAGE RING */
+
+body:not(.premium-theme) .usage-ring {
+    background:
+        conic-gradient(
+            #3984f6 var(--usage-progress, 0%),
+            rgba(255, 255, 255, 0.06) 0
+        );
+}
