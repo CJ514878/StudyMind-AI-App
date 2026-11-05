@@ -1,1435 +1,1386 @@
+
+/* =========================================================
+   STUDYMIND AI — DOCUMENT SUMMARIZER
+   COMPLETE REPLACEMENT
+========================================================= */
+
 "use strict";
 
 /* =========================================================
-   STUDYMIND AI — PREMIUM SYSTEM
-   GOLD / NAMESPACED PREMIUM VERSION
-   ========================================================= */
+   CONFIGURATION
+========================================================= */
 
-(function () {
+const FREE_SUMMARY_LIMIT = 5;
 
-    /* =====================================================
-       STORAGE
-       ===================================================== */
+const SUMMARY_STORAGE_KEY = "studyMindSummaryCount";
+const PLAN_STORAGE_KEY = "studyMindPlan";
 
-    const PREMIUM_CACHE_KEY =
-        "studyMindPremium";
+/* =========================================================
+   ELEMENT SHORTCUT
+========================================================= */
 
-    const PREMIUM_EVENT =
-        "studyMindPremiumChanged";
+function $(id) {
+    return document.getElementById(id);
+}
 
+/* =========================================================
+   PAGE ELEMENTS
+========================================================= */
 
-    /* =====================================================
-       GLOBAL STATE
-       ===================================================== */
+let summarizeInput;
+let summarizeBtn;
+let summaryOutput;
+let summaryCountBadge;
+let summaryUsagePercent;
+let summaryUsageText;
+let summaryUsageProgressBar;
+let summaryStudyContext;
+let documentFile;
+let fileStatus;
+let inputInfo;
+let themeButton;
 
-    let premiumStatus = false;
-    let premiumLoaded = false;
+/* =========================================================
+   AUTHENTICATION
+========================================================= */
 
+function getSupabaseClient() {
+    return (
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        null
+    );
+}
 
-    /* =====================================================
-       BASIC HELPERS
-       ===================================================== */
+async function getAuthenticatedSession() {
+    const supabase = getSupabaseClient();
 
-    function isPremium() {
-        return premiumStatus === true;
+    if (!supabase) {
+        throw new Error(
+            "Authentication service is unavailable. Please refresh the page."
+        );
     }
 
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
 
-    function isStudyMindPremium() {
-        return premiumStatus === true;
+    if (error) {
+        console.error("Session error:", error);
+
+        throw new Error(
+            "Could not verify your login session. Please sign in again."
+        );
     }
 
+    if (!data || !data.session) {
+        throw new Error(
+            "Please sign in to use StudyMind AI."
+        );
+    }
 
-    function getCachedPremiumStatus() {
+    return data.session;
+}
 
+/* =========================================================
+   PREMIUM STATUS
+========================================================= */
+
+/*
+   Never use localStorage as proof of Premium membership.
+
+   Premium status must come from the authenticated backend.
+   Until verified, the user receives FREE access.
+*/
+
+let premiumStatus = {
+    checked: false,
+    isPremium: false,
+    isAdmin: false
+};
+
+let premiumCheckPromise = null;
+
+async function refreshPremiumStatus() {
+    if (premiumCheckPromise) {
+        return premiumCheckPromise;
+    }
+
+    premiumCheckPromise = (async function () {
         try {
-
-            return (
-                localStorage.getItem(
-                    PREMIUM_CACHE_KEY
-                ) === "true"
-            );
-
-        } catch {
-
-            return false;
-
-        }
-
-    }
-
-
-    function saveCachedPremiumStatus(value) {
-
-        try {
-
-            localStorage.setItem(
-                PREMIUM_CACHE_KEY,
-                value ? "true" : "false"
-            );
-
-        } catch {}
-
-    }
-
-
-    /* =====================================================
-       PREMIUM PAGE
-       ===================================================== */
-
-    function getPremiumPage() {
-
-        return document.getElementById(
-            "premiumPage"
-        );
-
-    }
-
-
-    function isPremiumPageDark() {
-
-        const page =
-            getPremiumPage();
-
-        if (!page) {
-            return false;
-        }
-
-        return page.classList.contains(
-            "premium-dark"
-        );
-
-    }
-
-
-    /* =====================================================
-       GOLD PREMIUM VARIABLES
-       Force the Premium page to use its own palette.
-       ===================================================== */
-
-    function applyPremiumPageGoldTheme() {
-
-        const page =
-            getPremiumPage();
-
-        if (!page) {
-            return;
-        }
-
-        const dark =
-            isPremiumPageDark();
-
-        const root =
-            page.style;
-
-        if (dark) {
-
-            root.setProperty(
-                "--premium-bg",
-                "#070b12"
-            );
-
-            root.setProperty(
-                "--premium-bg-soft",
-                "#0d121c"
-            );
-
-            root.setProperty(
-                "--premium-card",
-                "rgba(18,20,25,.96)"
-            );
-
-            root.setProperty(
-                "--premium-card-solid",
-                "#121419"
-            );
-
-            root.setProperty(
-                "--premium-card-border",
-                "rgba(211,164,56,.24)"
-            );
-
-            root.setProperty(
-                "--premium-border",
-                "rgba(211,164,56,.24)"
-            );
-
-            root.setProperty(
-                "--premium-text",
-                "#faf8f1"
-            );
-
-            root.setProperty(
-                "--premium-muted",
-                "#aaa696"
-            );
-
-            root.setProperty(
-                "--premium-gold",
-                "#d3a438"
-            );
-
-            root.setProperty(
-                "--premium-gold-light",
-                "#f0cb68"
-            );
-
-            root.setProperty(
-                "--premium-gold-mid",
-                "#b98522"
-            );
-
-            root.setProperty(
-                "--premium-gold-dark",
-                "#704807"
-            );
-
-            root.setProperty(
-                "--premium-shadow",
-                "rgba(0,0,0,.45)"
-            );
-
-        } else {
-
-            root.setProperty(
-                "--premium-bg",
-                "#fcfaf3"
-            );
-
-            root.setProperty(
-                "--premium-bg-soft",
-                "#fffdf7"
-            );
-
-            root.setProperty(
-                "--premium-card",
-                "rgba(255,255,255,.96)"
-            );
-
-            root.setProperty(
-                "--premium-card-solid",
-                "#ffffff"
-            );
-
-            root.setProperty(
-                "--premium-card-border",
-                "rgba(184,132,18,.20)"
-            );
-
-            root.setProperty(
-                "--premium-border",
-                "rgba(184,132,18,.20)"
-            );
-
-            root.setProperty(
-                "--premium-text",
-                "#1d1a12"
-            );
-
-            root.setProperty(
-                "--premium-muted",
-                "#716b5d"
-            );
-
-            root.setProperty(
-                "--premium-gold",
-                "#d5a52a"
-            );
-
-            root.setProperty(
-                "--premium-gold-light",
-                "#fff1b8"
-            );
-
-            root.setProperty(
-                "--premium-gold-mid",
-                "#e8bc45"
-            );
-
-            root.setProperty(
-                "--premium-gold-dark",
-                "#9a6505"
-            );
-
-            root.setProperty(
-                "--premium-shadow",
-                "rgba(120,79,5,.14)"
-            );
-
-        }
-
-        page.classList.add(
-            "premium-gold-theme"
-        );
-
-    }
-
-    /* =====================================================
-       PREMIUM MODAL THEME
-       ===================================================== */
-
-    function applyPremiumModalTheme() {
-
-        const modal =
-            document.getElementById(
-                "studyMindPremiumModal"
-            );
-
-        if (!modal) {
-            return;
-        }
-
-        const page =
-            getPremiumPage();
-
-        /*
-         * Keep modal inside Premium namespace.
-         */
-
-        if (
-            page &&
-            modal.parentElement !== page
-        ) {
-
-            page.appendChild(modal);
-
-        }
-
-        modal.classList.add(
-            "premium-modal-root"
-        );
-
-        modal.classList.toggle(
-            "premium-dark",
-            isPremiumPageDark()
-        );
-
-        /*
-         * Copy Premium variables to the
-         * dynamically generated modal.
-         */
-
-        if (!page) {
-            return;
-        }
-
-        const computedStyle =
-            window.getComputedStyle(page);
-
-        const variables = [
-            "--premium-bg",
-            "--premium-bg-soft",
-            "--premium-card",
-            "--premium-card-solid",
-            "--premium-card-border",
-            "--premium-border",
-            "--premium-text",
-            "--premium-muted",
-            "--premium-gold",
-            "--premium-gold-light",
-            "--premium-gold-mid",
-            "--premium-gold-dark",
-            "--premium-shadow"
-        ];
-
-        variables.forEach(variable => {
-
-            const value =
-                computedStyle.getPropertyValue(
-                    variable
-                );
-
-            if (value) {
-
-                modal.style.setProperty(
-                    variable,
-                    value
-                );
-
-            }
-
-        });
-
-    }
-
-
-    /* =====================================================
-       APPLY PREMIUM THEME
-       ===================================================== */
-
-    function applyPremiumTheme() {
-
-        /*
-         * Keep the existing global status classes for
-         * compatibility with other StudyMind pages.
-         *
-         * These DO NOT control the Premium page colors.
-         */
-
-        const enabled =
-            premiumStatus === true;
-
-        document.documentElement.classList.toggle(
-            "study-mind-premium",
-            enabled
-        );
-
-        if (document.body) {
-
-            document.body.classList.toggle(
-                "study-mind-premium",
-                enabled
-            );
-
-        }
-
-
-        const premiumPage =
-            getPremiumPage();
-
-        if (premiumPage) {
-
-            /*
-             * Premium page is ALWAYS gold.
-             * Premium status only changes access/UI state.
-             */
-
-            premiumPage.classList.add(
-                "premium-gold-theme"
-            );
-
-            premiumPage.classList.toggle(
-                "premium-active",
-                enabled
-            );
-
-            applyPremiumPageGoldTheme();
-
-        }
-
-
-        updatePremiumUI();
-
-        applyPremiumModalTheme();
-
-    }
-
-
-    /* =====================================================
-       PREMIUM UI
-       ===================================================== */
-
-    function updatePremiumUI() {
-
-        const page =
-            getPremiumPage();
-
-        const buttons =
-            page
-                ? page.querySelectorAll(
-                    "[data-premium-button]"
-                )
-                : document.querySelectorAll(
-                    "[data-premium-button]"
-                );
-
-
-        buttons.forEach(button => {
-
-            if (premiumStatus) {
-
-                button.textContent =
-                    "👑 Premium Active";
-
-                button.classList.add(
-                    "premium-active"
-                );
-
-            } else {
-
-                button.classList.remove(
-                    "premium-active"
-                );
-
-            }
-
-        });
-
-
-        const badges =
-            page
-                ? page.querySelectorAll(
-                    "[data-premium-badge]"
-                )
-                : document.querySelectorAll(
-                    "[data-premium-badge]"
-                );
-
-
-        badges.forEach(badge => {
-
-            badge.textContent =
-                premiumStatus
-                    ? "👑 PREMIUM"
-                    : "FREE";
-
-        });
-
-
-        document.dispatchEvent(
-            new CustomEvent(
-                PREMIUM_EVENT,
+            const session =
+                await getAuthenticatedSession();
+
+            const response = await fetch(
+                "/api/premium/status",
                 {
-                    detail: {
-                        premium:
-                            premiumStatus
-                    }
-                }
-            )
-        );
-
-    }
-
-
-   /* =====================================================
-   AUTH SESSION — SHARED SUPABASE CLIENT
-===================================================== */
-
-async function getAccessToken() {
-    try {
-        const client =
-            window.supabaseClient ||
-            window.studyMindSupabase ||
-            null;
-
-        if (!client?.auth) {
-            console.error(
-                "[StudyMind Premium] Supabase client unavailable."
-            );
-            return null;
-        }
-
-        const { data, error } =
-            await client.auth.getSession();
-
-        if (error) {
-            console.error(
-                "[StudyMind Premium] Session error:",
-                error
-            );
-            return null;
-        }
-
-        return data?.session?.access_token || null;
-
-    } catch (error) {
-        console.error(
-            "[StudyMind Premium] Authentication error:",
-            error
-        );
-        return null;
-    }
-}
-
- /* =====================================================
-   LOAD PREMIUM STATUS — SERVER AUTHORITATIVE
-===================================================== */
-
-async function loadStudyMindPremium() {
-
-    /*
-     * Fail closed.
-     * Never trust localStorage to grant Premium.
-     */
-
-    premiumStatus = false;
-    premiumLoaded = false;
-
-    saveCachedPremiumStatus(false);
-    applyPremiumTheme();
-
-    const token = await getAccessToken();
-
-    if (!token) {
-        premiumStatus = false;
-        premiumLoaded = true;
-
-        saveCachedPremiumStatus(false);
-        applyPremiumTheme();
-
-        return false;
-    }
-
-    try {
-        const response = await fetch(
-            "/api/premium/status",
-            {
-                method: "GET",
-                cache: "no-store",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Cache-Control": "no-cache"
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data?.error ||
-                "Could not verify Premium status."
-            );
-        }
-
-        /*
-         * Only the server may authorize Premium.
-         */
-
-        premiumStatus = data?.premium === true;
-
-        saveCachedPremiumStatus(premiumStatus);
-
-        return premiumStatus;
-
-    } catch (error) {
-        console.error(
-            "[StudyMind Premium] Verification failed:",
-            error
-        );
-
-        premiumStatus = false;
-
-        saveCachedPremiumStatus(false);
-
-        return false;
-
-    } finally {
-        premiumLoaded = true;
-        applyPremiumTheme();
-    }
-}
-
-
-    /* =====================================================
-       WAIT FOR PREMIUM STATUS
-       ===================================================== */
-
-    async function waitForPremiumStatus() {
-
-        if (premiumLoaded) {
-            return premiumStatus;
-        }
-
-        return await loadStudyMindPremium();
-
-    }
-
-
-    /* =====================================================
-       PREMIUM OFFER MODAL
-       ===================================================== */
-
-    function openPremiumOffer() {
-
-        if (premiumStatus) {
-
-            showPremiumAlreadyActive();
-
-            return;
-
-        }
-
-
-        closePremiumModal();
-
-
-        const overlay =
-            document.createElement("div");
-
-
-        overlay.id =
-            "studyMindPremiumModal";
-
-
-        overlay.className =
-            "study-mind-premium-overlay premium-modal-root";
-
-
-        overlay.innerHTML = `
-
-            <div
-                class="study-mind-premium-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="premiumModalTitle"
-            >
-
-                <button
-                    type="button"
-                    class="premium-modal-close"
-                    id="premiumModalClose"
-                    aria-label="Close"
-                >
-                    ×
-                </button>
-
-
-                <div class="premium-modal-icon">
-                    👑
-                </div>
-
-
-                <span class="premium-modal-label">
-                    STUDYMIND AI PREMIUM
-                </span>
-
-
-                <h2 id="premiumModalTitle">
-                    Unlock the full StudyMind experience.
-                </h2>
-
-
-                <p class="premium-modal-description">
-                    Get unlimited AI assistance, larger
-                    knowledge checks, unlimited battles,
-                    1v1 access and more.
-                </p>
-
-
-                <div class="premium-benefits">
-
-                    <div>
-                        <span>✓</span>
-                        <strong>
-                            Unlimited AI tools
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>✓</span>
-                        <strong>
-                            5–60 question knowledge checks
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>✓</span>
-                        <strong>
-                            Unlimited Game Mode battles
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>✓</span>
-                        <strong>
-                            Premium 1v1 access
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>✓</span>
-                        <strong>
-                            Premium gold experience
-                        </strong>
-                    </div>
-
-                </div>
-
-
-                <div class="premium-payment-title">
-                    Choose your payment method
-                </div>
-
-
-                <div class="premium-payment-options">
-
-                    <button
-                        type="button"
-                        class="premium-payment-button"
-                        data-provider="paystack"
-                    >
-                        <span>🇳🇬</span>
-
-                        <span>
-                            <strong>
-                                Paystack
-                            </strong>
-
-                            <small>
-                                Nigerian payment
-                            </small>
-                        </span>
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="premium-payment-button"
-                        data-provider="flutterwave"
-                    >
-                        <span>💳</span>
-
-                        <span>
-                            <strong>
-                                Flutterwave
-                            </strong>
-
-                            <small>
-                                Card & local payment
-                            </small>
-                        </span>
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="premium-payment-button"
-                        data-provider="stripe"
-                    >
-                        <span>🌎</span>
-
-                        <span>
-                            <strong>
-                                Stripe
-                            </strong>
-
-                            <small>
-                                International payment
-                            </small>
-                        </span>
-                    </button>
-
-                </div>
-
-
-                <p class="premium-secure-note">
-                    🔒 Payment is processed securely by
-                    your selected payment provider.
-                </p>
-
-
-                <div
-                    id="premiumPaymentStatus"
-                    class="premium-payment-status"
-                ></div>
-
-            </div>
-
-        `;
-
-
-        /*
-         * IMPORTANT:
-         * Put the modal INSIDE #premiumPage.
-         * This prevents dashboard/global CSS from
-         * styling it as a blue component.
-         */
-
-        const premiumPage =
-            getPremiumPage();
-
-
-        if (premiumPage) {
-
-            premiumPage.appendChild(
-                overlay
-            );
-
-        } else {
-
-            document.body.appendChild(
-                overlay
-            );
-
-        }
-
-
-        applyPremiumPageGoldTheme();
-        applyPremiumModalTheme();
-
-
-        const closeButton =
-            document.getElementById(
-                "premiumModalClose"
-            );
-
-
-        if (closeButton) {
-
-            closeButton.addEventListener(
-                "click",
-                closePremiumModal
-            );
-
-        }
-
-
-        overlay.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target === overlay
-                ) {
-
-                    closePremiumModal();
-
-                }
-
-            }
-        );
-
-
-        overlay
-            .querySelectorAll(
-                "[data-provider]"
-            )
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        () => {
-
-                            beginPremiumPayment(
-                                button.dataset.provider
-                            );
-
-                        }
-                    );
-
+                    method: "GET",
+                    headers: {
+                        "Authorization":
+                            `Bearer ${session.access_token}`,
+                        "Content-Type":
+                            "application/json"
+                    },
+                    cache: "no-store"
                 }
             );
-
-
-        requestAnimationFrame(
-            applyPremiumModalTheme
-        );
-
-    }
-
-
-    /* =====================================================
-       CLOSE MODAL
-       ===================================================== */
-
-    function closePremiumModal() {
-
-        const modal =
-            document.getElementById(
-                "studyMindPremiumModal"
-            );
-
-
-        if (modal) {
-
-            modal.remove();
-
-        }
-
-    }
-
-
-    /* =====================================================
-       PAYMENT
-       ===================================================== */
-
-    async function beginPremiumPayment(
-        provider
-    ) {
-
-        const status =
-            document.getElementById(
-                "premiumPaymentStatus"
-            );
-
-
-        if (status) {
-
-            status.innerHTML =
-                "⏳ Preparing secure checkout...";
-
-        }
-
-
-        const token =
-            await getAccessToken();
-
-
-        if (!token) {
-
-            if (status) {
-
-                status.innerHTML =
-                    "🔒 Please log in before purchasing Premium.";
-
-            }
-
-            return;
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/premium/create-checkout",
-                    {
-                        method: "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json",
-
-                            "Authorization":
-                                `Bearer ${token}`
-
-                        },
-
-                        body:
-                            JSON.stringify({
-                                provider
-                            })
-
-                    }
-                );
-
-
-            const data =
-                await response.json();
-
 
             if (!response.ok) {
-
                 throw new Error(
-                    data?.error ||
-                    "Could not start payment."
+                    "Premium verification failed."
                 );
-
             }
 
+            const data = await response.json();
 
-            if (!data.checkoutUrl) {
+            const verifiedPremium =
+                data.isPremium === true ||
+                data.premium === true ||
+                data.isAdmin === true ||
+                data.role === "admin";
 
-                throw new Error(
-                    "Payment provider did not return a checkout URL."
-                );
-
-            }
-
-
-            window.location.href =
-                data.checkoutUrl;
-
+            premiumStatus = {
+                checked: true,
+                isPremium: verifiedPremium,
+                isAdmin:
+                    data.isAdmin === true ||
+                    data.role === "admin"
+            };
 
         } catch (error) {
-
             console.error(
-                "Premium payment error:",
+                "Premium verification error:",
                 error
             );
 
-
-            if (status) {
-
-                status.innerHTML =
-                    `❌ ${escapePremiumText(
-                        error.message
-                    )}`;
-
-            }
-
+            premiumStatus = {
+                checked: true,
+                isPremium: false,
+                isAdmin: false
+            };
         }
 
+        return premiumStatus.isPremium;
+    })();
+
+    try {
+        return await premiumCheckPromise;
+    } finally {
+        premiumCheckPromise = null;
+    }
+}
+
+function isPremiumUser() {
+    return (
+        premiumStatus.checked &&
+        premiumStatus.isPremium === true
+    );
+}
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+
+        summarizeInput = $("summarizeInput");
+        summarizeBtn = $("summarizeBtn");
+        summaryOutput = $("summaryOutput");
+
+        summaryCountBadge = $("summaryCountBadge");
+        summaryUsagePercent = $("summaryUsagePercent");
+        summaryUsageText = $("summaryUsageText");
+        summaryUsageProgressBar =
+            $("summaryUsageProgressBar");
+
+        summaryStudyContext = $("summaryStudyContext");
+
+        documentFile = $("documentFile");
+        fileStatus = $("fileStatus");
+        inputInfo = $("inputInfo");
+        themeButton = $("themeButton");
+
+        /* Summarize button */
+
+        if (summarizeBtn) {
+            summarizeBtn.addEventListener(
+                "click",
+                summarizeDocument
+            );
+        }
+
+        /* File upload */
+
+        if (documentFile) {
+            documentFile.addEventListener(
+                "change",
+                handleDocumentUpload
+            );
+        }
+
+        /* Text counter */
+
+        if (summarizeInput) {
+            summarizeInput.addEventListener(
+                "input",
+                updateInputInfo
+            );
+        }
+
+        /* Theme */
+
+        setupTheme();
+
+        /* Study context */
+
+        loadStudyContext();
+
+        /* Input information */
+
+        updateInputInfo();
+
+        /* Verify authentication and Premium */
+
+        try {
+            await getAuthenticatedSession();
+            await refreshPremiumStatus();
+        } catch (error) {
+            console.warn(
+                "Summarizer authentication:",
+                error.message
+            );
+        }
+
+        updateUsageUI();
+    }
+);
+
+/* =========================================================
+   SUMMARY COUNT
+========================================================= */
+
+function getSummaryCount() {
+    const stored = localStorage.getItem(
+        SUMMARY_STORAGE_KEY
+    );
+
+    const count = Number.parseInt(
+        stored || "0",
+        10
+    );
+
+    if (!Number.isFinite(count)) {
+        return 0;
     }
 
+    return Math.max(0, count);
+}
 
-    /* =====================================================
-       ALREADY PREMIUM
-       ===================================================== */
+/* =========================================================
+   SAVE SUMMARY COUNT
+========================================================= */
 
-    function showPremiumAlreadyActive() {
+function setSummaryCount(count) {
+    const safeCount = Math.max(
+        0,
+        Number(count) || 0
+    );
 
-        closePremiumModal();
+    localStorage.setItem(
+        SUMMARY_STORAGE_KEY,
+        String(safeCount)
+    );
+}
 
+/* =========================================================
+   UPDATE USAGE UI
+========================================================= */
 
-        const overlay =
-            document.createElement("div");
+function updateUsageUI() {
+    const premium = isPremiumUser();
+    const count = getSummaryCount();
 
-
-        overlay.id =
-            "studyMindPremiumModal";
-
-
-        overlay.className =
-            "study-mind-premium-overlay premium-modal-root";
-
-
-        overlay.innerHTML = `
-
-            <div
-                class="study-mind-premium-modal"
-                role="dialog"
-                aria-modal="true"
-            >
-
-                <button
-                    type="button"
-                    class="premium-modal-close"
-                    id="premiumActiveClose"
-                    aria-label="Close"
-                >
-                    ×
-                </button>
-
-
-                <div class="premium-modal-icon">
-                    👑
-                </div>
-
-
-                <span class="premium-modal-label">
-                    PREMIUM ACTIVE
-                </span>
-
-
-                <h2>
-                    You're already Premium.
-                </h2>
-
-
-                <p class="premium-modal-description">
-                    Your StudyMind AI account has full
-                    Premium access.
-                </p>
-
-
-                <div class="premium-active-list">
-
-                    <div>
-                        ✓ Unlimited AI
-                    </div>
-
-                    <div>
-                        ✓ 5–60 question knowledge checks
-                    </div>
-
-                    <div>
-                        ✓ Unlimited Game Mode
-                    </div>
-
-                    <div>
-                        ✓ Premium 1v1 access
-                    </div>
-
-                    <div>
-                        ✓ Gold Premium experience
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="premium-modal-primary"
-                    id="premiumActiveContinue"
-                >
-                    Continue studying →
-                </button>
-
-            </div>
-
-        `;
-
-
-        const premiumPage =
-            getPremiumPage();
-
-
-        if (premiumPage) {
-
-            premiumPage.appendChild(
-                overlay
-            );
-
-        } else {
-
-            document.body.appendChild(
-                overlay
-            );
-
+    if (premium) {
+        if (summaryCountBadge) {
+            summaryCountBadge.textContent = "Unlimited";
         }
 
+        if (summaryUsagePercent) {
+            summaryUsagePercent.textContent = "∞";
+        }
 
-        applyPremiumPageGoldTheme();
-        applyPremiumModalTheme();
+        if (summaryUsageText) {
+            summaryUsageText.textContent =
+                "Unlimited AI document summaries.";
+        }
 
+        if (summaryUsageProgressBar) {
+            summaryUsageProgressBar.style.width = "100%";
+        }
 
-        document
-            .getElementById(
-                "premiumActiveClose"
-            )
-            ?.addEventListener(
-                "click",
-                closePremiumModal
+        const ring = document.querySelector(".usage-ring");
+
+        if (ring) {
+            ring.style.setProperty(
+                "--usage-progress",
+                "100%"
             );
+        }
 
+        return;
+    }
 
-        document
-            .getElementById(
-                "premiumActiveContinue"
-            )
-            ?.addEventListener(
-                "click",
-                closePremiumModal
-            );
+    const percentage = Math.min(
+        100,
+        Math.round(
+            (count / FREE_SUMMARY_LIMIT) * 100
+        )
+    );
 
+    if (summaryCountBadge) {
+        summaryCountBadge.textContent =
+            `${Math.min(count, FREE_SUMMARY_LIMIT)}/${FREE_SUMMARY_LIMIT} used`;
+    }
 
-        requestAnimationFrame(
-            applyPremiumModalTheme
+    if (summaryUsagePercent) {
+        summaryUsagePercent.textContent =
+            `${percentage}%`;
+    }
+
+    if (summaryUsageText) {
+        summaryUsageText.textContent =
+            `${Math.min(count, FREE_SUMMARY_LIMIT)} of ${FREE_SUMMARY_LIMIT} free summaries used.`;
+    }
+
+    if (summaryUsageProgressBar) {
+        summaryUsageProgressBar.style.width =
+            `${percentage}%`;
+    }
+
+    const ring = document.querySelector(".usage-ring");
+
+    if (ring) {
+        ring.style.setProperty(
+            "--usage-progress",
+            `${percentage}%`
+        );
+    }
+}
+
+/* =========================================================
+   CHECK LIMIT
+========================================================= */
+
+function hasReachedSummaryLimit() {
+    if (isPremiumUser()) {
+        return false;
+    }
+
+    return getSummaryCount() >= FREE_SUMMARY_LIMIT;
+}
+
+/* =========================================================
+   RECORD SUMMARY
+========================================================= */
+
+function recordSummary() {
+    if (!isPremiumUser()) {
+        setSummaryCount(
+            getSummaryCount() + 1
+        );
+    }
+
+    updateUsageUI();
+}
+
+/* =========================================================
+   HANDLE DOCUMENT UPLOAD
+========================================================= */
+
+async function handleDocumentUpload(event) {
+    const file =
+        event.target.files &&
+        event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const fileName = file.name.toLowerCase();
+
+    if (file.size > 10 * 1024 * 1024) {
+        setFileStatus(
+            "❌ This file is too large. Please use a file under 10 MB.",
+            true
         );
 
+        documentFile.value = "";
+        return;
     }
 
+    setFileStatus(
+        `⏳ Reading ${file.name}...`,
+        false
+    );
 
-    /* =====================================================
-       ESCAPE TEXT
-       ===================================================== */
+    try {
+        let extractedText = "";
 
-    function escapePremiumText(
-        value
+        if (
+            file.type === "application/pdf" ||
+            fileName.endsWith(".pdf")
+        ) {
+            extractedText =
+                await extractPDFText(file);
+        }
+
+        else if (
+            file.type === "text/plain" ||
+            file.type === "text/markdown" ||
+            fileName.endsWith(".txt") ||
+            fileName.endsWith(".md") ||
+            fileName.endsWith(".markdown")
+        ) {
+            extractedText = await file.text();
+        }
+
+        else {
+            throw new Error(
+                "Unsupported file type. Please upload TXT, MD or PDF."
+            );
+        }
+
+        extractedText = cleanDocumentText(
+            extractedText
+        );
+
+        if (!extractedText) {
+            throw new Error(
+                "No readable text was found in this document."
+            );
+        }
+
+        if (summarizeInput) {
+            summarizeInput.value = extractedText;
+        }
+
+        updateInputInfo();
+
+        setFileStatus(
+            `✅ ${file.name} loaded successfully.`,
+            false
+        );
+
+        if (summarizeInput) {
+            summarizeInput.focus();
+        }
+
+    } catch (error) {
+        console.error(
+            "Document upload error:",
+            error
+        );
+
+        setFileStatus(
+            `❌ ${error.message || "Could not read the document."}`,
+            true
+        );
+    }
+}
+
+/* =========================================================
+   EXTRACT PDF TEXT
+========================================================= */
+
+async function extractPDFText(file) {
+    if (!window.pdfjsLib) {
+        throw new Error(
+            "PDF reader failed to load. Please refresh the page and try again."
+        );
+    }
+
+    const arrayBuffer =
+        await file.arrayBuffer();
+
+    const pdf =
+        await window.pdfjsLib.getDocument({
+            data: arrayBuffer
+        }).promise;
+
+    let fullText = "";
+
+    for (
+        let pageNumber = 1;
+        pageNumber <= pdf.numPages;
+        pageNumber++
     ) {
+        const page =
+            await pdf.getPage(pageNumber);
 
-        return String(value || "")
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
+        const textContent =
+            await page.getTextContent();
 
+        const pageText =
+            textContent.items
+                .map(item => item.str || "")
+                .join(" ");
+
+        if (pageText.trim()) {
+            fullText +=
+                `\n\n--- Page ${pageNumber} ---\n\n`;
+
+            fullText += pageText;
+        }
     }
 
+    return fullText;
+}
 
-    /* =====================================================
-       THEME LISTENER
-       ===================================================== */
+/* =========================================================
+   CLEAN DOCUMENT TEXT
+========================================================= */
 
-    function watchPremiumTheme() {
+function cleanDocumentText(text) {
+    return String(text || "")
+        .replace(/\u0000/g, "")
+        .replace(/\r\n/g, "\n")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{4,}/g, "\n\n")
+        .trim();
+}
 
-        window.addEventListener(
-            "storage",
-            event => {
+/* =========================================================
+   FILE STATUS
+========================================================= */
 
-                if (
-                    event.key ===
-                    "studyMindTheme"
-                ) {
+function setFileStatus(message, isError) {
+    if (!fileStatus) {
+        return;
+    }
 
-                    const page =
-                        getPremiumPage();
+    fileStatus.textContent = message;
+    fileStatus.style.opacity = "0.9";
 
-                    if (!page) {
-                        return;
-                    }
+    fileStatus.style.fontWeight =
+        isError ? "600" : "400";
+}
 
-                    let theme = null;
+/* =========================================================
+   INPUT INFORMATION
+========================================================= */
 
-                    try {
+function updateInputInfo() {
+    if (!summarizeInput || !inputInfo) {
+        return;
+    }
 
-                        theme =
-                            localStorage.getItem(
-                                "studyMindTheme"
-                            );
+    const text = summarizeInput.value || "";
 
-                    } catch {
+    const characters = text.length;
 
-                        theme = null;
+    const words = text
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
 
-                    }
+    inputInfo.textContent =
+        `${characters.toLocaleString()} characters • ${words.toLocaleString()} words`;
+}
 
+/* =========================================================
+   LOAD STUDY CONTEXT
+========================================================= */
 
-                    const isDark =
-                        theme === "dark" ||
-                        theme === null;
+function loadStudyContext() {
+    if (!summaryStudyContext) {
+        return;
+    }
 
+    let plan = null;
 
-                    page.classList.toggle(
-                        "premium-dark",
-                        isDark
-                    );
-
-
-                    applyPremiumPageGoldTheme();
-                    applyPremiumModalTheme();
-
-                }
-
-            }
+    try {
+        const stored = localStorage.getItem(
+            PLAN_STORAGE_KEY
         );
 
-    }
-
-
-    /* =====================================================
-       INITIALISE
-       ===================================================== */
-
-    function initialisePremium() {
-
-        /*
-         * Make sure the page receives its gold theme
-         * BEFORE Premium status is loaded.
-         */
-
-        const page =
-            getPremiumPage();
-
-
-        if (page) {
-
-            let theme = null;
-
-            try {
-
-                theme =
-                    localStorage.getItem(
-                        "studyMindTheme"
-                    );
-
-            } catch {
-
-                theme = null;
-
-            }
-
-
-            const isDark =
-                theme === "dark" ||
-                theme === null;
-
-
-            page.classList.toggle(
-                "premium-dark",
-                isDark
-            );
-
-
-            applyPremiumPageGoldTheme();
-
+        if (stored) {
+            plan = JSON.parse(stored);
         }
 
-
-       /*
- * Start as FREE until the server verifies access.
- */
-
-premiumStatus = false;
-premiumLoaded = false;
-
-saveCachedPremiumStatus(false);
-
-applyPremiumTheme();
-
-
-        /*
-         * Verify against server.
-         */
-
-        setTimeout(
-            () => {
-
-                loadStudyMindPremium();
-
-            },
-            0
+    } catch (error) {
+        console.warn(
+            "Could not read study plan:",
+            error
         );
-
-
-        watchPremiumTheme();
-
     }
 
+    if (!plan) {
+        summaryStudyContext.innerHTML =
+            "<p>No active study plan was found. The summary will still be generated normally.</p>";
 
-    /* =====================================================
-       GLOBAL API
-       ===================================================== */
+        return;
+    }
 
-    window.isStudyMindPremium =
-        isStudyMindPremium;
+    const contextParts = [];
 
+    const examType = firstValue(
+        plan.examType,
+        plan.exam,
+        plan.examName,
+        plan.testType
+    );
 
-    window.isPremium =
-        isPremium;
+    if (examType) {
+        contextParts.push(
+            `<strong>Exam:</strong> ${escapeHTML(examType)}`
+        );
+    }
 
+    const subjects = extractSubjects(plan);
 
-    window.loadStudyMindPremium =
-        loadStudyMindPremium;
+    if (subjects.length) {
+        contextParts.push(
+            `<strong>Subjects:</strong> ${escapeHTML(subjects.join(", "))}`
+        );
+    }
 
+    const topics = extractTopics(plan);
 
-    window.waitForPremiumStatus =
-        waitForPremiumStatus;
+    if (topics.length) {
+        contextParts.push(
+            `<strong>Topics:</strong> ${escapeHTML(topics.slice(0, 8).join(", "))}`
+        );
+    }
 
+    if (!contextParts.length) {
+        summaryStudyContext.innerHTML =
+            "<p>Your study plan was found, but no readable exam or subject information is available.</p>";
 
-    window.openPremiumOffer =
-        openPremiumOffer;
+        return;
+    }
 
+    summaryStudyContext.innerHTML =
+        contextParts
+            .map(item =>
+                `<div style="margin-bottom:8px;">${item}</div>`
+            )
+            .join("");
+}
 
-    window.closePremiumModal =
-        closePremiumModal;
+/* =========================================================
+   FIRST VALUE
+========================================================= */
 
+function firstValue(...values) {
+    for (const value of values) {
+        if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim()
+        ) {
+            return String(value).trim();
+        }
+    }
 
-    window.beginPremiumPayment =
-        beginPremiumPayment;
+    return "";
+}
 
+/* =========================================================
+   EXTRACT SUBJECTS
+========================================================= */
 
-    window.applyPremiumTheme =
-        applyPremiumTheme;
+function extractSubjects(plan) {
+    const result = [];
 
+    if (Array.isArray(plan.subjects)) {
+        plan.subjects.forEach(subject => {
+            if (typeof subject === "string") {
+                result.push(subject);
+            }
 
-    window.getStudyMindPremiumStatus =
-        () => premiumStatus;
+            else if (
+                subject &&
+                typeof subject === "object"
+            ) {
+                const name = firstValue(
+                    subject.name,
+                    subject.subject,
+                    subject.title
+                );
 
+                if (name) {
+                    result.push(name);
+                }
+            }
+        });
+    }
 
-    window.applyStudyMindPremiumModalTheme =
-        applyPremiumModalTheme;
+    if (typeof plan.subjects === "string") {
+        plan.subjects
+            .split(",")
+            .map(item => item.trim())
+            .filter(Boolean)
+            .forEach(item => result.push(item));
+    }
 
+    if (typeof plan.subjectList === "string") {
+        plan.subjectList
+            .split(",")
+            .map(item => item.trim())
+            .filter(Boolean)
+            .forEach(item => result.push(item));
+    }
 
-    /* =====================================================
-       START
-       ===================================================== */
+    return [...new Set(result)];
+}
+
+/* =========================================================
+   EXTRACT TOPICS
+========================================================= */
+
+function extractTopics(plan) {
+    const result = [];
+
+    if (Array.isArray(plan.topics)) {
+        plan.topics.forEach(topic => {
+            if (typeof topic === "string") {
+                result.push(topic);
+            }
+
+            else if (
+                topic &&
+                typeof topic === "object"
+            ) {
+                const name = firstValue(
+                    topic.name,
+                    topic.title,
+                    topic.topic
+                );
+
+                if (name) {
+                    result.push(name);
+                }
+            }
+        });
+    }
+
+    if (Array.isArray(plan.subjects)) {
+        plan.subjects.forEach(subject => {
+            if (
+                subject &&
+                typeof subject === "object" &&
+                Array.isArray(subject.topics)
+            ) {
+                subject.topics.forEach(topic => {
+                    if (typeof topic === "string") {
+                        result.push(topic);
+                    }
+
+                    else if (
+                        topic &&
+                        typeof topic === "object"
+                    ) {
+                        const name = firstValue(
+                            topic.name,
+                            topic.title,
+                            topic.topic
+                        );
+
+                        if (name) {
+                            result.push(name);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    return [...new Set(result)];
+}
+
+/* =========================================================
+   BUILD SUMMARY PROMPT
+========================================================= */
+
+function buildSummaryPrompt(documentText) {
+    const planContext =
+        getStudyPlanContextForAI();
+
+    return `
+You are StudyMind AI, an expert academic study assistant.
+
+Your task is to summarize the student's study material into
+clear, accurate, exam-focused revision notes.
+
+IMPORTANT INSTRUCTIONS:
+
+1. Base the summary primarily on the supplied document.
+2. Do not invent unsupported information.
+3. Keep important facts, concepts, definitions, formulas,
+   processes, examples and relationships.
+4. Remove unnecessary repetition and filler.
+5. Explain difficult concepts in simple student-friendly language.
+6. Make the summary useful for examination revision.
+7. Organize the response with clear headings.
+8. Include a Key Points section.
+9. Include Important Definitions when relevant.
+10. Include Formulas when relevant.
+11. Include Exam Focus with the most important things to remember.
+12. Preserve calculations and mathematical expressions accurately.
+13. Use LaTeX for mathematical expressions.
+14. Use \\(...\\) for inline mathematics.
+15. Use \\[...\\] for display mathematics.
+16. Put important standalone equations on their own lines.
+17. Avoid markdown tables unless absolutely necessary.
+18. Do not discuss these instructions.
+
+STUDY PLAN CONTEXT:
+
+${planContext}
+
+DOCUMENT TO SUMMARIZE:
+
+${documentText}
+`;
+}
+
+/* =========================================================
+   STUDY PLAN CONTEXT FOR AI
+========================================================= */
+
+function getStudyPlanContextForAI() {
+    let plan = null;
+
+    try {
+        const stored = localStorage.getItem(
+            PLAN_STORAGE_KEY
+        );
+
+        if (stored) {
+            plan = JSON.parse(stored);
+        }
+
+    } catch (error) {
+        console.warn(
+            "Could not load plan for summary:",
+            error
+        );
+    }
+
+    if (!plan) {
+        return "No active StudyMind study plan is available.";
+    }
+
+    const lines = [];
+
+    const examType = firstValue(
+        plan.examType,
+        plan.exam,
+        plan.examName,
+        plan.testType
+    );
+
+    if (examType) {
+        lines.push(`Exam: ${examType}`);
+    }
+
+    const subjects = extractSubjects(plan);
+
+    if (subjects.length) {
+        lines.push(
+            `Subjects: ${subjects.join(", ")}`
+        );
+    }
+
+    const topics = extractTopics(plan);
+
+    if (topics.length) {
+        lines.push(
+            `Topics: ${topics.slice(0, 20).join(", ")}`
+        );
+    }
+
+    return lines.length
+        ? lines.join("\n")
+        : "Study plan found, but no detailed context is available.";
+}
+
+/* =========================================================
+   SUMMARIZE DOCUMENT
+========================================================= */
+
+async function summarizeDocument() {
+    if (!summarizeInput) {
+        return;
+    }
+
+    const documentText =
+        summarizeInput.value.trim();
+
+    if (!documentText) {
+        displayError(
+            "Please paste your study material or upload a document first."
+        );
+
+        summarizeInput.focus();
+        return;
+    }
 
     if (
-        document.readyState ===
-        "loading"
+        documentText.length > 100000
     ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialisePremium
+        displayError(
+            "This document is too large to summarize in one request. Please shorten the material or split it into smaller sections."
         );
 
-    } else {
-
-        initialisePremium();
-
+        return;
     }
 
-})();
+    setLoadingState(true);
+
+    try {
+        /* Verify current login */
+
+        const session =
+            await getAuthenticatedSession();
+
+        /* Verify current Premium status */
+
+        await refreshPremiumStatus();
+
+        /* Enforce free summary limit */
+
+        if (hasReachedSummaryLimit()) {
+            displayLimitMessage();
+            return;
+        }
+
+        const prompt =
+            buildSummaryPrompt(documentText);
+
+        /* Send authenticated request */
+
+        const response = await fetch(
+            "/api/ask-ai",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+
+                    "Authorization":
+                        `Bearer ${session.access_token}`
+                },
+
+                body: JSON.stringify({
+                    message: prompt,
+                    mode: "summarizer"
+                })
+            }
+        );
+
+        let data = null;
+
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            throw new Error(
+                "The AI server returned an invalid response."
+            );
+        }
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error(
+                    "Your session has expired. Please sign in again."
+                );
+            }
+
+            if (response.status === 403) {
+                throw new Error(
+                    data?.error ||
+                    "You do not have permission to use this feature."
+                );
+            }
+
+            if (response.status === 429) {
+                throw new Error(
+                    data?.error ||
+                    "You have reached your usage limit."
+                );
+            }
+
+            throw new Error(
+                data?.error ||
+                data?.message ||
+                `AI server error (${response.status}).`
+            );
+        }
+
+        const answer =
+            extractAIAnswer(data);
+
+        if (!answer) {
+            throw new Error(
+                "The AI server returned an empty summary."
+            );
+        }
+
+        /* Record successful summary */
+
+        recordSummary();
+
+        /* Display */
+
+        displaySummary(answer);
+
+    } catch (error) {
+        console.error(
+            "Summarizer error:",
+            error
+        );
+
+        displayError(
+            error.message ||
+            "StudyMind AI could not generate the summary."
+        );
+
+    } finally {
+        setLoadingState(false);
+    }
+}
+
+/* =========================================================
+   EXTRACT AI ANSWER
+========================================================= */
+
+function extractAIAnswer(data) {
+    if (!data) {
+        return "";
+    }
+
+    const candidates = [
+        data.reply,
+        data.answer,
+        data.response,
+        data.output,
+        data.message,
+        data.data?.reply
+    ];
+
+    for (const candidate of candidates) {
+        if (
+            typeof candidate === "string" &&
+            candidate.trim()
+        ) {
+            return candidate.trim();
+        }
+    }
+
+    return "";
+}
+
+/* =========================================================
+   DISPLAY SUMMARY
+========================================================= */
+
+function displaySummary(answer) {
+    if (!summaryOutput) {
+        return;
+    }
+
+    summaryOutput.className = "ai-response";
+
+    summaryOutput.innerHTML =
+        formatAIResponse(answer);
+
+    renderMath(summaryOutput);
+
+    summaryOutput.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+}
+
+/* =========================================================
+   FORMAT AI RESPONSE
+========================================================= */
+
+function formatAIResponse(text) {
+    const raw = String(text || "");
+
+    if (
+        window.marked &&
+        typeof window.marked.parse === "function" &&
+        window.DOMPurify
+    ) {
+        return window.DOMPurify.sanitize(
+            window.marked.parse(raw, {
+                breaks: true,
+                gfm: true
+            })
+        );
+    }
+
+    return escapeHTML(raw)
+        .replace(/\n/g, "<br>");
+}
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* =========================================================
+   RENDER MATH
+========================================================= */
+
+function renderMath(element) {
+    if (!element || !window.MathJax) {
+        return;
+    }
+
+    if (
+        typeof window.MathJax.typesetPromise ===
+        "function"
+    ) {
+        window.MathJax.typesetPromise([
+            element
+        ]).catch(error => {
+            console.warn(
+                "MathJax rendering error:",
+                error
+            );
+        });
+    }
+}
+
+/* =========================================================
+   LOADING STATE
+========================================================= */
+
+function setLoadingState(isLoading) {
+    if (!summarizeBtn) {
+        return;
+    }
+
+    if (isLoading) {
+        summarizeBtn.disabled = true;
+
+        summarizeBtn.dataset.originalText =
+            summarizeBtn.textContent;
+
+        summarizeBtn.textContent =
+            "⏳ StudyMind AI is summarizing...";
+
+        if (summaryOutput) {
+            summaryOutput.className = "ai-response";
+
+            summaryOutput.innerHTML = `
+                <div style="
+                    padding:20px 0;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:30px;
+                        margin-bottom:10px;
+                    ">
+                        🧠
+                    </div>
+
+                    <strong>
+                        StudyMind AI is analyzing your material...
+                    </strong>
+
+                    <p style="
+                        opacity:0.7;
+                        margin-top:8px;
+                    ">
+                        Extracting key concepts, definitions,
+                        formulas and exam-relevant points.
+                    </p>
+                </div>
+            `;
+        }
+
+    } else {
+        summarizeBtn.disabled = false;
+
+        summarizeBtn.textContent =
+            summarizeBtn.dataset.originalText ||
+            "✨ Summarize Notes";
+    }
+}
+
+/* =========================================================
+   ERROR MESSAGE
+========================================================= */
+
+function displayError(message) {
+    if (!summaryOutput) {
+        return;
+    }
+
+    summaryOutput.className = "ai-response";
+
+    summaryOutput.innerHTML = `
+        <div style="
+            padding:18px;
+            border-radius:12px;
+        ">
+            <strong>
+                ⚠️ Unable to summarize
+            </strong>
+
+            <p style="
+                margin-top:8px;
+                margin-bottom:0;
+            ">
+                ${escapeHTML(message)}
+            </p>
+        </div>
+    `;
+}
+
+/* =========================================================
+   LIMIT MESSAGE
+========================================================= */
+
+function displayLimitMessage() {
+    if (!summaryOutput) {
+        return;
+    }
+
+    summaryOutput.innerHTML = `
+        <div style="
+            padding:20px;
+            text-align:center;
+        ">
+            <div style="
+                font-size:34px;
+                margin-bottom:10px;
+            ">
+                🔒
+            </div>
+
+            <h3>
+                Free summaries used
+            </h3>
+
+            <p>
+                You have used all
+                ${FREE_SUMMARY_LIMIT}
+                free document summaries.
+            </p>
+
+            <p style="opacity:0.75;">
+                Upgrade to Premium to continue
+                summarizing study material.
+            </p>
+
+            <button
+                type="button"
+                onclick="openPremiumMessage()"
+                class="primary-button"
+                style="margin-top:10px;"
+            >
+                ⭐ Explore Premium
+            </button>
+        </div>
+    `;
+}
+
+/* =========================================================
+   PREMIUM PAGE
+========================================================= */
+
+function openPremiumMessage() {
+    window.location.href = "premium.html";
+}
+
+/* =========================================================
+   THEME
+========================================================= */
+
+function setupTheme() {
+    /*
+       Keep the page's existing theme styling.
+       Premium authorization and global theme selection
+       should be handled by the shared theme controller.
+    */
+
+    const savedTheme =
+        localStorage.getItem("studyMindTheme");
+
+    if (savedTheme === "light") {
+        document.body.classList.add("light-mode");
+    } else {
+        document.body.classList.remove("light-mode");
+    }
+
+    updateThemeButton();
+
+    if (themeButton) {
+        themeButton.addEventListener(
+            "click",
+            toggleTheme
+        );
+    }
+}
+
+/* =========================================================
+   TOGGLE THEME
+========================================================= */
+
+function toggleTheme() {
+    const isLight =
+        document.body.classList.toggle("light-mode");
+
+    localStorage.setItem(
+        "studyMindTheme",
+        isLight ? "light" : "dark"
+    );
+
+    updateThemeButton();
+}
+
+/* =========================================================
+   UPDATE THEME BUTTON
+========================================================= */
+
+function updateThemeButton() {
+    if (!themeButton) {
+        return;
+    }
+
+    const isLight =
+        document.body.classList.contains("light-mode");
+
+    themeButton.textContent =
+        isLight
+            ? "☀️ Light Mode"
+            : "🌙 Dark Mode";
+}
+
+/* =========================================================
+   GLOBAL FUNCTIONS
+========================================================= */
+
+window.summarizeDocument = summarizeDocument;
+window.handleDocumentUpload = handleDocumentUpload;
+window.toggleTheme = toggleTheme;
+window.openPremiumMessage = openPremiumMessage;
+window.isPremiumUser = isPremiumUser;
+window.refreshPremiumStatus = refreshPremiumStatus;
