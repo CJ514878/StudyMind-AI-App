@@ -301,14 +301,15 @@ const premium = isAdmin
              * authoritative Premium state.
              */
 
-            return send(
-                res,
-                200,
-                {
-                    premium,
-                    userId: user.id
-                }
-            );
+           return send(
+    res,
+    200,
+    {
+        premium,
+        isAdmin,
+        userId: user.id
+    }
+);
 
         } catch (error) {
 
