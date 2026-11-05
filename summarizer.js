@@ -1,6 +1,7 @@
+
 /* =========================================================
    STUDYMIND AI — DOCUMENT SUMMARIZER
-   COMPLETE FRONTEND
+   COMPLETE FRONTEND — VERIFIED PREMIUM VERSION
 ========================================================= */
 
 "use strict";
@@ -45,6 +46,7 @@ let fileStatus;
 let inputInfo;
 let themeButton;
 
+
 /* =========================================================
    VERIFIED PREMIUM STATUS
 ========================================================= */
@@ -60,113 +62,226 @@ let premiumStatusLoaded = false;
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    summarizeInput =
-        $("summarizeInput");
-
-    summarizeBtn =
-        $("summarizeBtn");
-
-    summaryOutput =
-        $("summaryOutput");
-
-    summaryCountBadge =
-        $("summaryCountBadge");
-
-    summaryUsagePercent =
-        $("summaryUsagePercent");
-
-    summaryUsageText =
-        $("summaryUsageText");
-
-    summaryUsageProgressBar =
-        $("summaryUsageProgressBar");
-
-    summaryStudyContext =
-        $("summaryStudyContext");
-
-    documentFile =
-        $("documentFile");
-
-    fileStatus =
-        $("fileStatus");
-
-    inputInfo =
-        $("inputInfo");
-
-    themeButton =
-        $("themeButton");
+    summarizeInput = $("summarizeInput");
+    summarizeBtn = $("summarizeBtn");
+    summaryOutput = $("summaryOutput");
+    summaryCountBadge = $("summaryCountBadge");
+    summaryUsagePercent = $("summaryUsagePercent");
+    summaryUsageText = $("summaryUsageText");
+    summaryUsageProgressBar = $("summaryUsageProgressBar");
+    summaryStudyContext = $("summaryStudyContext");
+    documentFile = $("documentFile");
+    fileStatus = $("fileStatus");
+    inputInfo = $("inputInfo");
+    themeButton = $("themeButton");
 
 
-    /* =====================================================
-       BUTTON
-    ===================================================== */
+    /* BUTTON */
 
     if (summarizeBtn) {
-
         summarizeBtn.addEventListener(
             "click",
             summarizeDocument
         );
-
     }
 
 
-    /* =====================================================
-       FILE UPLOAD
-    ===================================================== */
+    /* FILE UPLOAD */
 
     if (documentFile) {
-
         documentFile.addEventListener(
             "change",
             handleDocumentUpload
         );
-
     }
 
 
-    /* =====================================================
-       TEXT COUNTER
-    ===================================================== */
+    /* TEXT COUNTER */
 
     if (summarizeInput) {
-
         summarizeInput.addEventListener(
             "input",
             updateInputInfo
         );
-
     }
 
 
-    /* =====================================================
-       THEME
-    ===================================================== */
+    /* THEME */
 
     setupTheme();
 
 
-    /* =====================================================
-       USAGE
-    ===================================================== */
+    /* INITIAL USAGE */
 
     updateUsageUI();
 
 
-    /* =====================================================
-       STUDY CONTEXT
-    ===================================================== */
+    /* STUDY CONTEXT */
 
     loadStudyContext();
 
 
-    /* =====================================================
-       INITIAL INPUT INFO
-    ===================================================== */
+    /* INITIAL INPUT INFO */
 
     updateInputInfo();
 
+
+    /* VERIFY PREMIUM STATUS */
+
+    loadPremiumStatus();
+
 });
+
+
+/* =========================================================
+   GET SUPABASE ACCESS TOKEN
+========================================================= */
+
+async function getStudyMindAccessToken() {
+
+    const supabase =
+        window.supabaseClient ||
+        window.studyMindSupabase;
+
+    if (!supabase) {
+        throw new Error(
+            "Supabase is not initialized. Please refresh the page."
+        );
+    }
+
+    const { data, error } =
+        await supabase.auth.getSession();
+
+    if (error) {
+        throw error;
+    }
+
+    const token =
+        data?.session?.access_token;
+
+    if (!token) {
+        throw new Error(
+            "Please sign in to use StudyMind AI."
+        );
+    }
+
+    return token;
+
+}
+
+
+/* =========================================================
+   LOAD VERIFIED PREMIUM STATUS
+========================================================= */
+
+async function loadPremiumStatus() {
+
+    premiumStatus = false;
+    adminStatus = false;
+    premiumStatusLoaded = false;
+
+    applyPremiumStatus();
+    updateUsageUI();
+
+    try {
+
+        const token =
+            await getStudyMindAccessToken();
+
+        const response = await fetch(
+            "/api/premium/status",
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+
+                cache: "no-store"
+            }
+        );
+
+        let result;
+
+        try {
+            result = await response.json();
+        } catch (error) {
+            throw new Error(
+                "Invalid Premium status response."
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                result.error ||
+                "Premium verification failed."
+            );
+        }
+
+        premiumStatus =
+            result.premium === true;
+
+        adminStatus =
+            result.isAdmin === true;
+
+    } catch (error) {
+
+        console.error(
+            "Premium verification error:",
+            error
+        );
+
+        premiumStatus = false;
+        adminStatus = false;
+
+    } finally {
+
+        premiumStatusLoaded = true;
+
+        applyPremiumStatus();
+        updateUsageUI();
+
+    }
+
+}
+
+
+/* =========================================================
+   APPLY VERIFIED PREMIUM STATUS
+========================================================= */
+
+function applyPremiumStatus() {
+
+    document.body.classList.toggle(
+        "premium-user",
+        premiumStatus
+    );
+
+    document.body.classList.toggle(
+        "premium-theme",
+        premiumStatus
+    );
+
+    document.body.classList.toggle(
+        "admin-user",
+        adminStatus
+    );
+
+}
+
+
+/* =========================================================
+   PREMIUM CHECK
+========================================================= */
+
+function isPremiumUser() {
+
+    return (
+        premiumStatusLoaded &&
+        premiumStatus
+    );
+
+}
 
 
 /* =========================================================
@@ -194,6 +309,7 @@ function getSummaryCount() {
             FREE_SUMMARY_LIMIT
         )
     );
+
 }
 
 
@@ -225,6 +341,25 @@ function setSummaryCount(count) {
 ========================================================= */
 
 function updateUsageUI() {
+
+    if (!premiumStatusLoaded) {
+
+        if (summaryCountBadge) {
+            summaryCountBadge.textContent = "Checking...";
+        }
+
+        if (summaryUsagePercent) {
+            summaryUsagePercent.textContent = "—";
+        }
+
+        if (summaryUsageText) {
+            summaryUsageText.textContent =
+                "Verifying your account...";
+        }
+
+        return;
+
+    }
 
     const premium = isPremiumUser();
     const count = getSummaryCount();
@@ -259,6 +394,7 @@ function updateUsageUI() {
         }
 
         return;
+
     }
 
     const percentage = Math.round(
@@ -294,33 +430,31 @@ function updateUsageUI() {
             `${percentage}%`
         );
     }
+
 }
+
 
 /* =========================================================
-   CHECK LIMIT
+   CHECK SUMMARY LIMIT
 ========================================================= */
-function isPremiumUser() {
-
-    const value =
-        localStorage.getItem("studyMindPremium");
-
-    return (
-        value === "true" ||
-        value === "1" ||
-        value === "premium"
-    );
-}
-
 
 function hasReachedSummaryLimit() {
+
+    if (!premiumStatusLoaded) {
+        return true;
+    }
 
     if (isPremiumUser()) {
         return false;
     }
 
-    return getSummaryCount() >= FREE_SUMMARY_LIMIT;
+    return (
+        getSummaryCount() >=
+        FREE_SUMMARY_LIMIT
+    );
 
 }
+
 
 /* =========================================================
    RECORD SUMMARY
@@ -328,12 +462,16 @@ function hasReachedSummaryLimit() {
 
 function recordSummary() {
 
-    const current =
-        getSummaryCount();
+    if (!isPremiumUser()) {
 
-    setSummaryCount(
-        current + 1
-    );
+        const current =
+            getSummaryCount();
+
+        setSummaryCount(
+            current + 1
+        );
+
+    }
 
     updateUsageUI();
 
@@ -354,10 +492,8 @@ async function handleDocumentUpload(event) {
         return;
     }
 
-
     const fileName =
         file.name.toLowerCase();
-
 
     if (file.size > 10 * 1024 * 1024) {
 
@@ -369,23 +505,19 @@ async function handleDocumentUpload(event) {
         documentFile.value = "";
 
         return;
-    }
 
+    }
 
     setFileStatus(
         `⏳ Reading ${file.name}...`,
         false
     );
 
-
     try {
 
         let extractedText = "";
 
-
-        /* =================================================
-           PDF
-        ================================================== */
+        /* PDF */
 
         if (
             file.type === "application/pdf" ||
@@ -397,10 +529,7 @@ async function handleDocumentUpload(event) {
 
         }
 
-
-        /* =================================================
-           TEXT / MARKDOWN
-        ================================================== */
+        /* TEXT / MARKDOWN */
 
         else if (
             file.type === "text/plain" ||
@@ -415,10 +544,7 @@ async function handleDocumentUpload(event) {
 
         }
 
-
-        /* =================================================
-           UNSUPPORTED
-        ================================================== */
+        /* UNSUPPORTED */
 
         else {
 
@@ -428,12 +554,8 @@ async function handleDocumentUpload(event) {
 
         }
 
-
         extractedText =
-            cleanDocumentText(
-                extractedText
-            );
-
+            cleanDocumentText(extractedText);
 
         if (!extractedText) {
 
@@ -443,28 +565,19 @@ async function handleDocumentUpload(event) {
 
         }
 
-
         if (summarizeInput) {
-
-            summarizeInput.value =
-                extractedText;
-
+            summarizeInput.value = extractedText;
         }
 
-
         updateInputInfo();
-
 
         setFileStatus(
             `✅ ${file.name} loaded successfully.`,
             false
         );
 
-
         if (summarizeInput) {
-
             summarizeInput.focus();
-
         }
 
     } catch (error) {
@@ -473,7 +586,6 @@ async function handleDocumentUpload(event) {
             "Document upload error:",
             error
         );
-
 
         setFileStatus(
             `❌ ${error.message || "Could not read the document."}`,
@@ -499,19 +611,15 @@ async function extractPDFText(file) {
 
     }
 
-
     const arrayBuffer =
         await file.arrayBuffer();
-
 
     const pdf =
         await pdfjsLib.getDocument({
             data: arrayBuffer
         }).promise;
 
-
     let fullText = "";
-
 
     for (
         let pageNumber = 1;
@@ -520,14 +628,10 @@ async function extractPDFText(file) {
     ) {
 
         const page =
-            await pdf.getPage(
-                pageNumber
-            );
-
+            await pdf.getPage(pageNumber);
 
         const textContent =
             await page.getTextContent();
-
 
         const pageText =
             textContent.items
@@ -536,19 +640,16 @@ async function extractPDFText(file) {
                 })
                 .join(" ");
 
-
         if (pageText.trim()) {
 
             fullText +=
                 `\n\n--- Page ${pageNumber} ---\n\n`;
 
-            fullText +=
-                pageText;
+            fullText += pageText;
 
         }
 
     }
-
 
     return fullText;
 
@@ -581,26 +682,11 @@ function setFileStatus(message, isError) {
         return;
     }
 
+    fileStatus.textContent = message;
+    fileStatus.style.opacity = "0.9";
 
-    fileStatus.textContent =
-        message;
-
-
-    fileStatus.style.opacity =
-        "0.9";
-
-
-    if (isError) {
-
-        fileStatus.style.fontWeight =
-            "600";
-
-    } else {
-
-        fileStatus.style.fontWeight =
-            "400";
-
-    }
+    fileStatus.style.fontWeight =
+        isError ? "600" : "400";
 
 }
 
@@ -615,22 +701,17 @@ function updateInputInfo() {
         return;
     }
 
-
     const text =
         summarizeInput.value || "";
-
 
     const characters =
         text.length;
 
-
     const words =
-        text
-            .trim()
+        text.trim()
             .split(/\s+/)
             .filter(Boolean)
             .length;
-
 
     inputInfo.textContent =
         `${characters.toLocaleString()} characters • ${words.toLocaleString()} words`;
@@ -648,9 +729,7 @@ function loadStudyContext() {
         return;
     }
 
-
     let plan = null;
-
 
     try {
 
@@ -659,12 +738,8 @@ function loadStudyContext() {
                 PLAN_STORAGE_KEY
             );
 
-
         if (stored) {
-
-            plan =
-                JSON.parse(stored);
-
+            plan = JSON.parse(stored);
         }
 
     } catch (error) {
@@ -676,7 +751,6 @@ function loadStudyContext() {
 
     }
 
-
     if (!plan) {
 
         summaryStudyContext.innerHTML =
@@ -686,9 +760,7 @@ function loadStudyContext() {
 
     }
 
-
     const contextParts = [];
-
 
     const examType =
         firstValue(
@@ -698,7 +770,6 @@ function loadStudyContext() {
             plan.testType
         );
 
-
     if (examType) {
 
         contextParts.push(
@@ -707,10 +778,8 @@ function loadStudyContext() {
 
     }
 
-
     const subjects =
         extractSubjects(plan);
-
 
     if (subjects.length) {
 
@@ -720,10 +789,8 @@ function loadStudyContext() {
 
     }
 
-
     const topics =
         extractTopics(plan);
-
 
     if (topics.length) {
 
@@ -733,7 +800,6 @@ function loadStudyContext() {
 
     }
 
-
     if (!contextParts.length) {
 
         summaryStudyContext.innerHTML =
@@ -742,7 +808,6 @@ function loadStudyContext() {
         return;
 
     }
-
 
     summaryStudyContext.innerHTML =
         contextParts
@@ -787,18 +852,18 @@ function extractSubjects(plan) {
 
     const result = [];
 
-
     if (Array.isArray(plan.subjects)) {
 
         plan.subjects.forEach(function (subject) {
 
             if (typeof subject === "string") {
 
-                result.push(
-                    subject
-                );
+                result.push(subject);
 
-            } else if (subject && typeof subject === "object") {
+            } else if (
+                subject &&
+                typeof subject === "object"
+            ) {
 
                 const name =
                     firstValue(
@@ -807,13 +872,8 @@ function extractSubjects(plan) {
                         subject.title
                     );
 
-
                 if (name) {
-
-                    result.push(
-                        name
-                    );
-
+                    result.push(name);
                 }
 
             }
@@ -822,40 +882,25 @@ function extractSubjects(plan) {
 
     }
 
-
-    if (
-        typeof plan.subjects === "string"
-    ) {
+    if (typeof plan.subjects === "string") {
 
         plan.subjects
             .split(",")
-            .map(function (item) {
-                return item.trim();
-            })
+            .map(item => item.trim())
             .filter(Boolean)
-            .forEach(function (item) {
-                result.push(item);
-            });
+            .forEach(item => result.push(item));
 
     }
 
-
-    if (
-        typeof plan.subjectList === "string"
-    ) {
+    if (typeof plan.subjectList === "string") {
 
         plan.subjectList
             .split(",")
-            .map(function (item) {
-                return item.trim();
-            })
+            .map(item => item.trim())
             .filter(Boolean)
-            .forEach(function (item) {
-                result.push(item);
-            });
+            .forEach(item => result.push(item));
 
     }
-
 
     return [...new Set(result)];
 
@@ -870,18 +915,18 @@ function extractTopics(plan) {
 
     const result = [];
 
-
     if (Array.isArray(plan.topics)) {
 
         plan.topics.forEach(function (topic) {
 
             if (typeof topic === "string") {
 
-                result.push(
-                    topic
-                );
+                result.push(topic);
 
-            } else if (topic && typeof topic === "object") {
+            } else if (
+                topic &&
+                typeof topic === "object"
+            ) {
 
                 const name =
                     firstValue(
@@ -890,13 +935,8 @@ function extractTopics(plan) {
                         topic.topic
                     );
 
-
                 if (name) {
-
-                    result.push(
-                        name
-                    );
-
+                    result.push(name);
                 }
 
             }
@@ -904,7 +944,6 @@ function extractTopics(plan) {
         });
 
     }
-
 
     if (Array.isArray(plan.subjects)) {
 
@@ -920,9 +959,7 @@ function extractTopics(plan) {
 
                     if (typeof topic === "string") {
 
-                        result.push(
-                            topic
-                        );
+                        result.push(topic);
 
                     } else if (
                         topic &&
@@ -936,13 +973,8 @@ function extractTopics(plan) {
                                 topic.topic
                             );
 
-
                         if (name) {
-
-                            result.push(
-                                name
-                            );
-
+                            result.push(name);
                         }
 
                     }
@@ -954,7 +986,6 @@ function extractTopics(plan) {
         });
 
     }
-
 
     return [...new Set(result)];
 
@@ -969,7 +1000,6 @@ function buildSummaryPrompt(documentText) {
 
     const planContext =
         getStudyPlanContextForAI();
-
 
     return `
 You are StudyMind AI, an expert academic study assistant.
@@ -987,7 +1017,7 @@ IMPORTANT INSTRUCTIONS:
 5. Explain difficult concepts in simple student-friendly language.
 6. Make the summary useful for examination revision.
 7. Organize the response with clear headings.
-8. Include an "Key Points" section.
+8. Include a "Key Points" section.
 9. Include "Important Definitions" when relevant.
 10. Include "Formulas" when relevant.
 11. Include "Exam Focus" with the most important things to remember.
@@ -1021,7 +1051,6 @@ function getStudyPlanContextForAI() {
 
     let plan = null;
 
-
     try {
 
         const stored =
@@ -1029,12 +1058,8 @@ function getStudyPlanContextForAI() {
                 PLAN_STORAGE_KEY
             );
 
-
         if (stored) {
-
-            plan =
-                JSON.parse(stored);
-
+            plan = JSON.parse(stored);
         }
 
     } catch (error) {
@@ -1046,16 +1071,11 @@ function getStudyPlanContextForAI() {
 
     }
 
-
     if (!plan) {
-
         return "No active StudyMind study plan is available.";
-
     }
 
-
     const lines = [];
-
 
     const examType =
         firstValue(
@@ -1065,41 +1085,27 @@ function getStudyPlanContextForAI() {
             plan.testType
         );
 
-
     if (examType) {
-
-        lines.push(
-            `Exam: ${examType}`
-        );
-
+        lines.push(`Exam: ${examType}`);
     }
-
 
     const subjects =
         extractSubjects(plan);
 
-
     if (subjects.length) {
-
         lines.push(
             `Subjects: ${subjects.join(", ")}`
         );
-
     }
-
 
     const topics =
         extractTopics(plan);
 
-
     if (topics.length) {
-
         lines.push(
             `Topics: ${topics.slice(0, 20).join(", ")}`
         );
-
     }
-
 
     return lines.length
         ? lines.join("\n")
@@ -1118,14 +1124,21 @@ async function summarizeDocument() {
         return;
     }
 
+    if (!premiumStatusLoaded) {
+
+        displayError(
+            "Please wait while StudyMind verifies your account."
+        );
+
+        return;
+
+    }
 
     const documentText =
         summarizeInput.value.trim();
 
 
-    /* =====================================================
-       EMPTY INPUT
-    ===================================================== */
+    /* EMPTY INPUT */
 
     if (!documentText) {
 
@@ -1140,9 +1153,7 @@ async function summarizeDocument() {
     }
 
 
-    /* =====================================================
-       FREE LIMIT
-    ===================================================== */
+    /* FREE LIMIT */
 
     if (hasReachedSummaryLimit()) {
 
@@ -1153,13 +1164,9 @@ async function summarizeDocument() {
     }
 
 
-    /* =====================================================
-       PREVENT HUGE REQUESTS
-    ===================================================== */
+    /* DOCUMENT SIZE */
 
-    const MAX_DOCUMENT_CHARACTERS =
-        100000;
-
+    const MAX_DOCUMENT_CHARACTERS = 100000;
 
     if (
         documentText.length >
@@ -1175,51 +1182,40 @@ async function summarizeDocument() {
     }
 
 
-    /* =====================================================
-       LOADING STATE
-    ===================================================== */
+    /* LOADING */
 
     setLoadingState(true);
-
 
     try {
 
         const prompt =
-            buildSummaryPrompt(
-                documentText
-            );
+            buildSummaryPrompt(documentText);
 
+        const token =
+            await getStudyMindAccessToken();
 
-        const response =
-            await fetch(
-                "/api/ask-ai",
-                {
-                    method: "POST",
+        const response = await fetch(
+            "/api/ask-ai",
+            {
+                method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
 
-                    body: JSON.stringify({
-
-                        message: prompt,
-
-                        mode: "summarizer"
-
-                    })
-
-                }
-            );
-
+                body: JSON.stringify({
+                    message: prompt,
+                    mode: "summarizer"
+                })
+            }
+        );
 
         let data = null;
 
-
         try {
 
-            data =
-                await response.json();
+            data = await response.json();
 
         } catch (jsonError) {
 
@@ -1228,7 +1224,6 @@ async function summarizeDocument() {
             );
 
         }
-
 
         if (!response.ok) {
 
@@ -1240,12 +1235,8 @@ async function summarizeDocument() {
 
         }
 
-
         const answer =
-            extractAIAnswer(
-                data
-            );
-
+            extractAIAnswer(data);
 
         if (!answer) {
 
@@ -1256,21 +1247,14 @@ async function summarizeDocument() {
         }
 
 
-        /* =================================================
-           RECORD ONLY SUCCESSFUL SUMMARY
-        ================================================== */
+        /* RECORD SUCCESS */
 
         recordSummary();
 
 
-        /* =================================================
-           DISPLAY
-        ================================================== */
+        /* DISPLAY */
 
-        displaySummary(
-            answer
-        );
-
+        displaySummary(answer);
 
     } catch (error) {
 
@@ -1278,7 +1262,6 @@ async function summarizeDocument() {
             "Summarizer error:",
             error
         );
-
 
         displayError(
             error.message ||
@@ -1304,66 +1287,25 @@ function extractAIAnswer(data) {
         return "";
     }
 
+    const possibleAnswers = [
+        data.reply,
+        data.answer,
+        data.response,
+        data.output,
+        data.message,
+        data.data?.reply
+    ];
 
-    if (
-        typeof data.reply === "string" &&
-        data.reply.trim()
-    ) {
+    for (const answer of possibleAnswers) {
 
-        return data.reply.trim();
-
-    }
-
-
-    if (
-        typeof data.answer === "string" &&
-        data.answer.trim()
-    ) {
-
-        return data.answer.trim();
-
-    }
-
-
-    if (
-        typeof data.response === "string" &&
-        data.response.trim()
-    ) {
-
-        return data.response.trim();
+        if (
+            typeof answer === "string" &&
+            answer.trim()
+        ) {
+            return answer.trim();
+        }
 
     }
-
-
-    if (
-        typeof data.output === "string" &&
-        data.output.trim()
-    ) {
-
-        return data.output.trim();
-
-    }
-
-
-    if (
-        typeof data.message === "string" &&
-        data.message.trim()
-    ) {
-
-        return data.message.trim();
-
-    }
-
-
-    if (
-        data.data &&
-        typeof data.data.reply === "string"
-    ) {
-
-        return data.data.reply.trim();
-
-    }
-
 
     return "";
 
@@ -1380,21 +1322,13 @@ function displaySummary(answer) {
         return;
     }
 
-
     summaryOutput.className =
         "ai-response";
 
-
     summaryOutput.innerHTML =
-        formatAIResponse(
-            answer
-        );
+        formatAIResponse(answer);
 
-
-    renderMath(
-        summaryOutput
-    );
-
+    renderMath(summaryOutput);
 
     summaryOutput.scrollIntoView({
         behavior: "smooth",
@@ -1429,7 +1363,10 @@ function formatAIResponse(text) {
 
     return escapeHTML(raw)
         .replace(/\n/g, "<br>");
+
 }
+
+
 /* =========================================================
    ESCAPE HTML
 ========================================================= */
@@ -1456,15 +1393,11 @@ function renderMath(element) {
         !element ||
         !window.MathJax
     ) {
-
         return;
-
     }
 
-
     if (
-        typeof MathJax.typesetPromise ===
-        "function"
+        typeof MathJax.typesetPromise === "function"
     ) {
 
         MathJax.typesetPromise([
@@ -1493,11 +1426,9 @@ function setLoadingState(isLoading) {
         return;
     }
 
-
     if (isLoading) {
 
-        summarizeBtn.disabled =
-            true;
+        summarizeBtn.disabled = true;
 
         summarizeBtn.dataset.originalText =
             summarizeBtn.textContent;
@@ -1505,15 +1436,12 @@ function setLoadingState(isLoading) {
         summarizeBtn.textContent =
             "⏳ StudyMind AI is summarizing...";
 
-
         if (summaryOutput) {
 
             summaryOutput.className =
                 "ai-response";
 
-
-            summaryOutput.innerHTML =
-                `
+            summaryOutput.innerHTML = `
                 <div style="
                     padding:20px 0;
                     text-align:center;
@@ -1537,14 +1465,13 @@ function setLoadingState(isLoading) {
                         formulas and exam-relevant points.
                     </p>
                 </div>
-                `;
+            `;
 
         }
 
     } else {
 
-        summarizeBtn.disabled =
-            false;
+        summarizeBtn.disabled = false;
 
         summarizeBtn.textContent =
             summarizeBtn.dataset.originalText ||
@@ -1565,13 +1492,10 @@ function displayError(message) {
         return;
     }
 
-
     summaryOutput.className =
         "ai-response";
 
-
-    summaryOutput.innerHTML =
-        `
+    summaryOutput.innerHTML = `
         <div style="
             padding:18px;
             border-radius:12px;
@@ -1589,7 +1513,7 @@ function displayError(message) {
             </p>
 
         </div>
-        `;
+    `;
 
 }
 
@@ -1604,9 +1528,7 @@ function displayLimitMessage() {
         return;
     }
 
-
-    summaryOutput.innerHTML =
-        `
+    summaryOutput.innerHTML = `
         <div style="
             padding:20px;
             text-align:center;
@@ -1646,18 +1568,19 @@ function displayLimitMessage() {
             </button>
 
         </div>
-        `;
+    `;
 
 }
 
 
 /* =========================================================
-   PREMIUM PLACEHOLDER
+   PREMIUM PAGE
 ========================================================= */
 
 function openPremiumMessage() {
     window.location.href = "premium.html";
 }
+
 
 /* =========================================================
    THEME
@@ -1666,10 +1589,7 @@ function openPremiumMessage() {
 function setupTheme() {
 
     const savedTheme =
-        localStorage.getItem(
-            "studyMindTheme"
-        );
-
+        localStorage.getItem("studyMindTheme");
 
     if (savedTheme === "light") {
 
@@ -1679,9 +1599,7 @@ function setupTheme() {
 
     }
 
-
     updateThemeButton();
-
 
     if (themeButton) {
 
@@ -1706,14 +1624,10 @@ function toggleTheme() {
             "light-mode"
         );
 
-
     localStorage.setItem(
         "studyMindTheme",
-        isLight
-            ? "light"
-            : "dark"
+        isLight ? "light" : "dark"
     );
-
 
     updateThemeButton();
 
@@ -1730,17 +1644,53 @@ function updateThemeButton() {
         return;
     }
 
-
     const isLight =
         document.body.classList.contains(
             "light-mode"
         );
 
-
     themeButton.textContent =
         isLight
             ? "☀️ Light Mode"
             : "🌙 Dark Mode";
+
+}
+
+
+/* =========================================================
+   AUTH STATE CHANGES
+   Refresh Premium status when the user signs in/out.
+========================================================= */
+
+function listenForAuthChanges() {
+
+    const supabase =
+        window.supabaseClient ||
+        window.studyMindSupabase;
+
+    if (
+        !supabase ||
+        !supabase.auth ||
+        typeof supabase.auth.onAuthStateChange !== "function"
+    ) {
+        return;
+    }
+
+    supabase.auth.onAuthStateChange(
+        function (event) {
+
+            if (
+                event === "SIGNED_IN" ||
+                event === "SIGNED_OUT" ||
+                event === "TOKEN_REFRESHED"
+            ) {
+
+                loadPremiumStatus();
+
+            }
+
+        }
+    );
 
 }
 
@@ -1760,3 +1710,27 @@ window.toggleTheme =
 
 window.openPremiumMessage =
     openPremiumMessage;
+
+window.loadPremiumStatus =
+    loadPremiumStatus;
+
+window.isPremiumUser =
+    isPremiumUser;
+
+
+/* =========================================================
+   AUTH LISTENER
+========================================================= */
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        listenForAuthChanges
+    );
+
+} else {
+
+    listenForAuthChanges();
+
+}
