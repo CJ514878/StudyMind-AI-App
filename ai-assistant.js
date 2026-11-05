@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================================
@@ -16,12 +15,6 @@ const STORAGE = {
     USERNAME: "studyMindUsername"
 };
 
-const SUPABASE_URL =
-    "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
 let studyPlan = null;
 let sending = false;
 
@@ -29,25 +22,25 @@ let premiumStatus = false;
 let adminStatus = false;
 let premiumStatusLoaded = false;
 
+let authListenerRegistered = false;
+let composerInitialized = false;
+
 
 /* =========================================================
    SUPABASE CLIENT
 ========================================================= */
 
 function getSupabaseClient() {
-
     return (
         window.supabaseClient ||
         window.studyMindSupabase ||
         window.gameSupabase ||
         null
     );
-
 }
 
 
 async function getAccessToken() {
-
     const client = getSupabaseClient();
 
     if (!client?.auth) {
@@ -56,17 +49,11 @@ async function getAccessToken() {
         );
     }
 
-    const {
-        data,
-        error
-    } = await client.auth.getSession();
+    const { data, error } = await client.auth.getSession();
 
-    if (error) {
-        throw error;
-    }
+    if (error) throw error;
 
-    const token =
-        data?.session?.access_token;
+    const token = data?.session?.access_token;
 
     if (!token) {
         throw new Error(
@@ -75,7 +62,6 @@ async function getAccessToken() {
     }
 
     return token;
-
 }
 
 
@@ -83,43 +69,43 @@ async function getAccessToken() {
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+async function initializeAIAssistant() {
+    if (window.studyMindAIAssistantInitialized) return;
 
-        studyPlan = loadJSON(
-            STORAGE.PLAN,
-            null
-        );
+    window.studyMindAIAssistantInitialized = true;
 
-        setupTheme();
+    studyPlan = loadJSON(STORAGE.PLAN, null);
 
-        await loadPremiumStatus();
+    setupTheme();
 
-        await loadUser();
+    await loadPremiumStatus();
 
-        renderStudyContext();
+    await loadUser();
 
-        renderUsage();
+    renderStudyContext();
+    renderUsage();
 
-        setupComposer();
+    setupComposer();
+    setupQuickActions();
+    setupStarterButtons();
+    setupProgressAnalysis();
+    setupClearChat();
+    setupPremiumModal();
+    setupLogout();
 
-        setupQuickActions();
+    listenForAuthChanges();
+}
 
-        setupStarterButtons();
 
-        setupProgressAnalysis();
-
-        setupClearChat();
-
-        setupPremiumModal();
-
-        setupLogout();
-
-        listenForAuthChanges();
-
-    }
-);
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeAIAssistant,
+        { once: true }
+    );
+} else {
+    initializeAIAssistant();
+}
 
 
 /* =========================================================
@@ -127,37 +113,27 @@ document.addEventListener(
 ========================================================= */
 
 async function loadPremiumStatus() {
-
     premiumStatusLoaded = false;
-
     premiumStatus = false;
-
     adminStatus = false;
 
     applyPremiumStatus();
+    renderUsage();
 
     try {
+        const token = await getAccessToken();
 
-        const token =
-            await getAccessToken();
-
-        const response =
-            await fetch(
-                "/api/premium/status",
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            `Bearer ${token}`,
-
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    cache: "no-store"
-                }
-            );
+        const response = await fetch(
+            "/api/premium/status",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                cache: "no-store"
+            }
+        );
 
         if (!response.ok) {
             throw new Error(
@@ -165,51 +141,37 @@ async function loadPremiumStatus() {
             );
         }
 
-        const data =
-            await response.json();
+        const data = await response.json();
 
-        premiumStatus =
-            data?.premium === true;
-
-        adminStatus =
-            data?.isAdmin === true;
-
-        premiumStatusLoaded = true;
+        premiumStatus = data?.premium === true;
+        adminStatus = data?.isAdmin === true;
 
     } catch (error) {
-
-        console.error(
-            "Premium verification error:",
-            error
-        );
+        console.error("Premium verification error:", error);
 
         premiumStatus = false;
-
         adminStatus = false;
 
+    } finally {
         premiumStatusLoaded = true;
 
+        applyPremiumStatus();
+        renderUsage();
     }
-
-    applyPremiumStatus();
-
-    renderUsage();
-
 }
 
 
 function isPremium() {
-
     return (
         premiumStatusLoaded &&
         premiumStatus === true
     );
-
 }
 
 
 function applyPremiumStatus() {
     const body = document.body;
+
     if (!body) return;
 
     const premium = isPremium();
@@ -218,63 +180,60 @@ function applyPremiumStatus() {
     body.classList.toggle("premium-theme", premium);
     body.classList.toggle("study-mind-premium", premium);
     body.classList.toggle("admin-user", adminStatus);
+
     body.classList.toggle(
         "free-user",
         premiumStatusLoaded && !premium
     );
 }
 
+
+/* =========================================================
+   AUTH STATE CHANGES
+========================================================= */
+
 function listenForAuthChanges() {
+    if (authListenerRegistered) return;
 
-    const client =
-        getSupabaseClient();
+    const client = getSupabaseClient();
 
-    if (!client?.auth) return;
+    if (!client?.auth) {
+        console.warn(
+            "Supabase auth listener could not be initialized."
+        );
+        return;
+    }
 
-    client.auth.onAuthStateChange(
-        async (event) => {
+    authListenerRegistered = true;
 
-            if (
-                event === "SIGNED_OUT"
-            ) {
+    client.auth.onAuthStateChange(async (event) => {
+        if (event === "SIGNED_OUT") {
+            premiumStatus = false;
+            adminStatus = false;
+            premiumStatusLoaded = true;
 
-                premiumStatus = false;
+            applyPremiumStatus();
+            renderUsage();
 
-                adminStatus = false;
-
-                premiumStatusLoaded = true;
-
-                applyPremiumStatus();
-
-                renderUsage();
-
-                return;
-            }
-
-            if (
-                event === "SIGNED_IN" ||
-                event === "TOKEN_REFRESHED" ||
-                event === "USER_UPDATED"
-            ) {
-
-                await loadPremiumStatus();
-
-                await loadUser();
-
-            }
-
+            return;
         }
-    );
 
+        if (
+            event === "SIGNED_IN" ||
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED"
+        ) {
+            await loadPremiumStatus();
+            await loadUser();
+        }
+    });
 }
 
 
 window.addEventListener(
     "studyMindPremiumChanged",
     async () => {
-
         await loadPremiumStatus();
-
     }
 );
 
@@ -284,42 +243,25 @@ window.addEventListener(
 ========================================================= */
 
 async function loadUser() {
-
-    const username =
-        document.getElementById("username");
-
-    const avatar =
-        document.getElementById("avatar");
+    const username = document.getElementById("username");
+    const avatar = document.getElementById("avatar");
 
     let name =
-        localStorage.getItem(
-            STORAGE.USERNAME
-        ) ||
+        localStorage.getItem(STORAGE.USERNAME) ||
         "Student";
 
     try {
-
-        const client =
-            getSupabaseClient();
+        const client = getSupabaseClient();
 
         if (client?.auth) {
+            const { data, error } = await client.auth.getUser();
 
-            const {
-                data,
-                error
-            } = await client.auth.getUser();
+            if (error) throw error;
 
-            if (error) {
-                throw error;
-            }
-
-            const user =
-                data?.user;
+            const user = data?.user;
 
             if (user) {
-
-                const metadata =
-                    user.user_metadata || {};
+                const metadata = user.user_metadata || {};
 
                 name =
                     metadata.username ||
@@ -332,38 +274,25 @@ async function loadUser() {
                     STORAGE.USERNAME,
                     name
                 );
-
             }
-
         }
-
     } catch (error) {
-
-        console.warn(
-            "Could not load Supabase user:",
-            error
-        );
-
+        console.warn("Could not load Supabase user:", error);
     }
 
-    name =
-        String(name)
-            .trim()
-            .split(" ")
-            .slice(0, 2)
-            .join(" ");
+    name = String(name)
+        .trim()
+        .split(" ")
+        .slice(0, 2)
+        .join(" ");
 
     if (username) {
         username.textContent = name;
     }
 
     if (avatar) {
-
-        avatar.textContent =
-            name.charAt(0).toUpperCase();
-
+        avatar.textContent = name.charAt(0).toUpperCase();
     }
-
 }
 
 
@@ -372,19 +301,13 @@ async function loadUser() {
 ========================================================= */
 
 function renderStudyContext() {
-
-    const container =
-        document.getElementById(
-            "currentStudy"
-        );
+    const container = document.getElementById("currentStudy");
 
     if (!container) return;
 
-    const topic =
-        getCurrentTopic();
+    const topic = getCurrentTopic();
 
     if (!topic) {
-
         container.innerHTML = `
             <strong>No active topic</strong>
             <span>
@@ -402,34 +325,21 @@ function renderStudyContext() {
             ${escapeHTML(topic.subject || "Current study topic")}
         </span>
     `;
-
 }
 
 
 function getCurrentTopic() {
+    if (!studyPlan) return null;
 
-    if (!studyPlan) {
-        return null;
-    }
-
-    if (
-        Array.isArray(studyPlan.subjects)
-    ) {
-
-        for (
-            const subject of studyPlan.subjects
-        ) {
-
+    if (Array.isArray(studyPlan.subjects)) {
+        for (const subject of studyPlan.subjects) {
             if (
                 Array.isArray(subject.topics) &&
                 subject.topics.length
             ) {
-
-                const topic =
-                    subject.topics[0];
+                const topic = subject.topics[0];
 
                 return {
-
                     subject:
                         subject.name ||
                         subject.subject ||
@@ -441,41 +351,25 @@ function getCurrentTopic() {
                             : topic.name ||
                               topic.title ||
                               "Topic"
-
                 };
-
             }
-
         }
-
     }
 
     if (
         Array.isArray(studyPlan.topics) &&
         studyPlan.topics.length
     ) {
+        const topic = studyPlan.topics[0];
 
-        const topic =
-            studyPlan.topics[0];
-
-        if (
-            typeof topic === "string"
-        ) {
-
+        if (typeof topic === "string") {
             return {
-
-                subject:
-                    studyPlan.subject ||
-                    "Subject",
-
+                subject: studyPlan.subject || "Subject",
                 name: topic
-
             };
-
         }
 
         return {
-
             subject:
                 topic.subject ||
                 studyPlan.subject ||
@@ -485,13 +379,10 @@ function getCurrentTopic() {
                 topic.name ||
                 topic.title ||
                 "Topic"
-
         };
-
     }
 
     return null;
-
 }
 
 
@@ -500,23 +391,13 @@ function getCurrentTopic() {
 ========================================================= */
 
 function getToday() {
-
-    const now =
-        new Date();
+    const now = new Date();
 
     return [
         now.getFullYear(),
-
-        String(
-            now.getMonth() + 1
-        ).padStart(2, "0"),
-
-        String(
-            now.getDate()
-        ).padStart(2, "0")
-
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
     ].join("-");
-
 }
 
 
@@ -525,57 +406,35 @@ function getToday() {
 ========================================================= */
 
 function getQuestionCount() {
+    if (isPremium()) return 0;
 
-    if (isPremium()) {
-        return 0;
-    }
+    const today = getToday();
 
-    const today =
-        getToday();
-
-    const savedDate =
-        localStorage.getItem(
-            STORAGE.AI_DATE
-        );
+    const savedDate = localStorage.getItem(
+        STORAGE.AI_DATE
+    );
 
     if (savedDate !== today) {
-
-        localStorage.setItem(
-            STORAGE.AI_DATE,
-            today
-        );
-
-        localStorage.setItem(
-            STORAGE.AI_COUNT,
-            "0"
-        );
+        localStorage.setItem(STORAGE.AI_DATE, today);
+        localStorage.setItem(STORAGE.AI_COUNT, "0");
 
         return 0;
-
     }
 
-    const count =
-        Number(
-            localStorage.getItem(
-                STORAGE.AI_COUNT
-            ) || 0
-        );
+    const count = Number(
+        localStorage.getItem(STORAGE.AI_COUNT) || 0
+    );
 
     return Number.isFinite(count)
         ? Math.max(0, count)
         : 0;
-
 }
 
 
 function incrementQuestionCount() {
+    if (isPremium()) return;
 
-    if (isPremium()) {
-        return;
-    }
-
-    const count =
-        getQuestionCount() + 1;
+    const count = getQuestionCount() + 1;
 
     localStorage.setItem(
         STORAGE.AI_COUNT,
@@ -588,32 +447,19 @@ function incrementQuestionCount() {
     );
 
     renderUsage();
-
 }
 
 
 function renderUsage() {
-
-    const usageText =
-        document.getElementById(
-            "usageText"
-        );
-
-    const usageProgress =
-        document.getElementById(
-            "usageProgress"
-        );
-
-    const usageDescription =
-        document.getElementById(
-            "usageDescription"
-        );
+    const usageText = document.getElementById("usageText");
+    const usageProgress = document.getElementById("usageProgress");
+    const usageDescription = document.getElementById(
+        "usageDescription"
+    );
 
     if (!premiumStatusLoaded) {
-
         if (usageText) {
-            usageText.textContent =
-                "Checking...";
+            usageText.textContent = "Checking...";
         }
 
         if (usageProgress) {
@@ -626,74 +472,47 @@ function renderUsage() {
         }
 
         return;
-
     }
 
     if (isPremium()) {
-
         if (usageText) {
-            usageText.textContent =
-                "Unlimited";
+            usageText.textContent = "Unlimited";
         }
 
         if (usageProgress) {
-            usageProgress.style.width =
-                "100%";
+            usageProgress.style.width = "100%";
         }
 
         if (usageDescription) {
-            usageDescription.textContent =
-                adminStatus
-                    ? "Administrator access enabled"
-                    : "Premium AI access enabled";
+            usageDescription.textContent = adminStatus
+                ? "Administrator access enabled"
+                : "Premium AI access enabled";
         }
 
         return;
-
     }
 
-    const count =
-        getQuestionCount();
+    const count = getQuestionCount();
 
-    const percentage =
-        Math.min(
-            100,
-            (count / AI_LIMIT) * 100
-        );
+    const percentage = Math.min(
+        100,
+        (count / AI_LIMIT) * 100
+    );
 
     if (usageText) {
-
-        usageText.textContent =
-            `${count} / ${AI_LIMIT}`;
-
+        usageText.textContent = `${count} / ${AI_LIMIT}`;
     }
 
     if (usageProgress) {
-
-        usageProgress.style.width =
-            `${percentage}%`;
-
+        usageProgress.style.width = `${percentage}%`;
     }
 
     if (usageDescription) {
-
-        if (count >= AI_LIMIT) {
-
-            usageDescription.textContent =
-                "Free AI limit reached";
-
-        } else {
-
-            const remaining =
-                AI_LIMIT - count;
-
-            usageDescription.textContent =
-                `${remaining} free AI question${remaining === 1 ? "" : "s"} remaining`;
-
-        }
-
+        usageDescription.textContent =
+            count >= AI_LIMIT
+                ? "Free AI limit reached"
+                : `${AI_LIMIT - count} free AI questions remaining`;
     }
-
 }
 
 
@@ -702,17 +521,11 @@ function renderUsage() {
 ========================================================= */
 
 function canUseAI() {
+    if (!premiumStatusLoaded) return false;
 
-    if (!premiumStatusLoaded) {
-        return false;
-    }
-
-    if (isPremium()) {
-        return true;
-    }
+    if (isPremium()) return true;
 
     return getQuestionCount() < AI_LIMIT;
-
 }
 
 
@@ -721,59 +534,50 @@ function canUseAI() {
 ========================================================= */
 
 function setupComposer() {
+    if (composerInitialized) return;
 
-    const textarea =
-        document.getElementById(
-            "aiQuestion"
-        );
-
-    const button =
-        document.getElementById(
-            "askAIButton"
-        );
+    const textarea = document.getElementById("aiQuestion");
+    const button = document.getElementById("askAIButton");
 
     if (!textarea || !button) {
+        console.error(
+            "AI Assistant: #aiQuestion or #askAIButton was not found."
+        );
         return;
     }
 
-    button.addEventListener(
-        "click",
-        sendMessage
-    );
+    composerInitialized = true;
 
-    textarea.addEventListener(
-        "keydown",
-        event => {
+    button.addEventListener("click", (event) => {
+        event.preventDefault();
+        sendMessage();
+    });
 
-            if (
-                event.key === "Enter" &&
-                !event.shiftKey
-            ) {
+    const form = button.closest("form");
 
-                event.preventDefault();
+    if (form) {
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            sendMessage();
+        });
+    }
 
-                sendMessage();
-
-            }
-
+    textarea.addEventListener("keydown", (event) => {
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+            event.preventDefault();
+            sendMessage();
         }
-    );
+    });
 
-    textarea.addEventListener(
-        "input",
-        () => {
+    textarea.addEventListener("input", () => {
+        textarea.style.height = "auto";
 
-            textarea.style.height = "auto";
-
-            textarea.style.height =
-                Math.min(
-                    textarea.scrollHeight,
-                    160
-                ) + "px";
-
-        }
-    );
-
+        textarea.style.height =
+            Math.min(textarea.scrollHeight, 160) + "px";
+    });
 }
 
 
@@ -781,16 +585,10 @@ function setupComposer() {
    SEND MESSAGE
 ========================================================= */
 
-async function sendMessage(
-    customMessage = null
-) {
-
+async function sendMessage(customMessage = null) {
     if (sending) return;
 
-    const textarea =
-        document.getElementById(
-            "aiQuestion"
-        );
+    const textarea = document.getElementById("aiQuestion");
 
     const text =
         customMessage ||
@@ -799,59 +597,33 @@ async function sendMessage(
     if (!text) return;
 
     if (!premiumStatusLoaded) {
-
-        addMessage(
-            "ai",
-            "Please wait while we verify your account."
-        );
-
         await loadPremiumStatus();
+    }
 
-        if (!canUseAI()) {
-            openPremiumModal();
-            return;
-        }
-
-    } else if (!canUseAI()) {
-
+    if (!canUseAI()) {
         openPremiumModal();
-
         return;
-
     }
 
     sending = true;
 
-    if (textarea) {
-
+    if (textarea && !customMessage) {
         textarea.value = "";
-
         textarea.style.height = "auto";
-
     }
 
-    addMessage(
-        "user",
-        text
-    );
+    addMessage("user", text);
 
-    const typing =
-        addTypingMessage();
+    const typing = addTypingMessage();
 
     updateSendButton(true);
 
     try {
-
-        const response =
-            await callAI(text);
+        const response = await callAI(text);
 
         removeTypingMessage(typing);
 
-        const bubble =
-            addMessage(
-                "ai",
-                response
-            );
+        const bubble = addMessage("ai", response);
 
         await renderMath(bubble);
 
@@ -860,28 +632,20 @@ async function sendMessage(
         }
 
     } catch (error) {
-
-        console.error(
-            "StudyMind AI error:",
-            error
-        );
+        console.error("StudyMind AI error:", error);
 
         removeTypingMessage(typing);
 
         addMessage(
             "ai",
             error.message ||
-            "I couldn't connect to StudyMind AI right now. Please try again in a moment."
+            "I couldn't connect to StudyMind AI. Please try again."
         );
 
     } finally {
-
         sending = false;
-
         updateSendButton(false);
-
     }
-
 }
 
 
@@ -890,18 +654,12 @@ async function sendMessage(
 ========================================================= */
 
 async function callAI(userMessage) {
+    const topic = getCurrentTopic();
+    const context = buildStudyContext();
 
-    const topic =
-        getCurrentTopic();
-
-    const context =
-        buildStudyContext();
-
-    const token =
-        await getAccessToken();
+    const token = await getAccessToken();
 
     const prompt = `
-
 You are StudyMind AI, an intelligent educational assistant.
 
 You are helping a student using the StudyMind AI learning platform.
@@ -927,98 +685,84 @@ STUDENT REQUEST:
 ${userMessage}
 `;
 
-    const response =
-        await fetch(
-            "/api/ask-ai",
-            {
-                method: "POST",
+    const response = await fetch("/api/ask-ai", {
+        method: "POST",
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
 
-                    "Authorization":
-                        `Bearer ${token}`
-                },
+        body: JSON.stringify({
+            message: prompt,
 
-                body: JSON.stringify({
+            subject: topic?.subject || "",
+            topic: topic?.name || "",
 
-                    message: prompt,
+            difficulty: "mixed",
 
-                    subject:
-                        topic?.subject || "",
+            type: "normal",
+            requestType: "normal",
+            mode: "normal"
+        })
+    });
 
-                    topic:
-                        topic?.name || "",
+    let data;
 
-                    difficulty:
-                        "mixed",
-
-                    type:
-                        "normal",
-
-                    requestType:
-                        "normal",
-
-                    mode:
-                        "normal"
-
-                })
-            }
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error(
+            "The AI server returned an invalid response."
         );
-
-    const data =
-        await response.json();
+    }
 
     if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error(
+                "Your login session is invalid. Please log in again."
+            );
+        }
 
-        if (
-            response.status === 429
-        ) {
-
+        if (response.status === 429) {
             await loadPremiumStatus();
-
             renderUsage();
 
             throw new Error(
                 data?.error ||
                 "Your free AI limit has been reached."
             );
-
         }
 
         throw new Error(
             data?.error ||
             `AI request failed: ${response.status}`
         );
-
     }
 
     if (data?.success === false) {
-
         throw new Error(
-            data.error ||
-            "AI returned an error."
+            data.error || "AI returned an error."
         );
-
     }
 
     const reply =
-        data?.reply;
+        data?.reply ||
+        data?.output_text ||
+        data?.response;
 
     if (
         typeof reply !== "string" ||
         !reply.trim()
     ) {
+        console.error("Unexpected AI response:", data);
 
         throw new Error(
-            "AI returned an empty response."
+            "The AI server did not return a valid answer."
         );
-
     }
 
     return reply.trim();
-
 }
 
 
@@ -1027,125 +771,64 @@ ${userMessage}
 ========================================================= */
 
 function buildStudyContext() {
-
     if (!studyPlan) {
-
         return "No active study plan is available.";
-
     }
 
     const lines = [];
 
     if (studyPlan.curriculum) {
-
-        lines.push(
-            `Curriculum: ${studyPlan.curriculum}`
-        );
-
+        lines.push(`Curriculum: ${studyPlan.curriculum}`);
     }
 
     if (studyPlan.examType) {
-
-        lines.push(
-            `Exam: ${studyPlan.examType}`
-        );
-
+        lines.push(`Exam: ${studyPlan.examType}`);
     }
 
     if (studyPlan.examDate) {
-
-        lines.push(
-            `Exam date: ${studyPlan.examDate}`
-        );
-
+        lines.push(`Exam date: ${studyPlan.examDate}`);
     }
 
-    if (
-        studyPlan.daysLeft !== undefined
-    ) {
-
-        lines.push(
-            `Days remaining: ${studyPlan.daysLeft}`
-        );
-
+    if (studyPlan.daysLeft !== undefined) {
+        lines.push(`Days remaining: ${studyPlan.daysLeft}`);
     }
 
-    const topic =
-        getCurrentTopic();
+    const topic = getCurrentTopic();
 
     if (topic) {
-
-        lines.push(
-            `Current subject: ${topic.subject}`
-        );
-
-        lines.push(
-            `Current topic: ${topic.name}`
-        );
-
+        lines.push(`Current subject: ${topic.subject}`);
+        lines.push(`Current topic: ${topic.name}`);
     }
 
-    if (
-        Array.isArray(studyPlan.subjects)
-    ) {
-
-        const subjects =
-            studyPlan.subjects
-                .map(
-                    subject =>
-                        subject.name ||
-                        subject.subject
-                )
-                .filter(Boolean);
+    if (Array.isArray(studyPlan.subjects)) {
+        const subjects = studyPlan.subjects
+            .map(subject => subject.name || subject.subject)
+            .filter(Boolean);
 
         if (subjects.length) {
-
-            lines.push(
-                `Subjects: ${subjects.join(", ")}`
-            );
-
+            lines.push(`Subjects: ${subjects.join(", ")}`);
         }
-
     }
 
-    if (
-        studyPlan.hoursPerDay ||
-        studyPlan.studyHours
-    ) {
-
+    if (studyPlan.hoursPerDay || studyPlan.studyHours) {
         lines.push(
             `Daily study time: ${
-                studyPlan.hoursPerDay ||
-                studyPlan.studyHours
+                studyPlan.hoursPerDay || studyPlan.studyHours
             } hours`
         );
-
     }
 
-    if (
-        studyPlan.studyScore !== undefined
-    ) {
-
-        lines.push(
-            `Study score: ${studyPlan.studyScore}`
-        );
-
+    if (studyPlan.studyScore !== undefined) {
+        lines.push(`Study score: ${studyPlan.studyScore}`);
     }
 
-    if (
-        studyPlan.streak !== undefined
-    ) {
-
-        lines.push(
-            `Study streak: ${studyPlan.streak} days`
-        );
-
+    if (studyPlan.streak !== undefined) {
+        lines.push(`Study streak: ${studyPlan.streak} days`);
     }
 
     return lines.length
         ? lines.join("\n")
         : "A study plan exists, but no detailed context is available.";
-
 }
 
 
@@ -1154,125 +837,72 @@ function buildStudyContext() {
 ========================================================= */
 
 function addMessage(role, text) {
-
-    const container =
-        document.getElementById(
-            "chatMessages"
-        );
+    const container = document.getElementById("chatMessages");
 
     if (!container) return null;
 
-    const empty =
-        container.querySelector(
-            ".empty-chat"
-        );
+    const empty = container.querySelector(".empty-chat");
 
-    if (empty) {
-        empty.remove();
-    }
+    if (empty) empty.remove();
 
-    const wrapper =
-        document.createElement("div");
+    const wrapper = document.createElement("div");
+    wrapper.className = `message ${role}`;
 
-    wrapper.className =
-        `message ${role}`;
+    const avatar = document.createElement("div");
+    avatar.className = "message-avatar";
+    avatar.textContent = role === "ai" ? "✦" : "S";
 
-    const avatar =
-        document.createElement("div");
+    const content = document.createElement("div");
+    content.className = "message-content";
 
-    avatar.className =
-        "message-avatar";
-
-    avatar.textContent =
-        role === "ai" ? "✦" : "S";
-
-    const content =
-        document.createElement("div");
-
-    content.className =
-        "message-content";
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className =
-        "message-bubble";
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
 
     if (role === "ai") {
-
-        const raw =
-            String(text || "");
+        const raw = String(text || "");
 
         let html;
 
         try {
-
-            html =
-                window.marked
-                    ? marked.parse(raw)
-                    : escapeHTML(raw).replace(
-                        /\n/g,
-                        "<br>"
-                    );
-
+            html = window.marked
+                ? window.marked.parse(raw)
+                : escapeHTML(raw).replace(/\n/g, "<br>");
         } catch {
-
-            html =
-                escapeHTML(raw).replace(
-                    /\n/g,
-                    "<br>"
-                );
-
+            html = escapeHTML(raw).replace(/\n/g, "<br>");
         }
 
-        bubble.innerHTML =
-            window.DOMPurify
-                ? DOMPurify.sanitize(
-                    html,
-                    {
-                        ADD_TAGS: [
-                            "mjx-container"
-                        ]
-                    }
-                )
-                : html;
+        bubble.innerHTML = window.DOMPurify
+            ? window.DOMPurify.sanitize(html, {
+                ADD_TAGS: ["mjx-container"]
+            })
+            : html;
 
     } else {
-
         bubble.textContent = text;
-
     }
 
-    const time =
-        document.createElement("div");
+    const time = document.createElement("div");
+    time.className = "message-time";
 
-    time.className =
-        "message-time";
-
-    time.textContent =
-        new Date().toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
+    time.textContent = new Date().toLocaleTimeString(
+        [],
+        {
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
 
     content.appendChild(bubble);
-
     content.appendChild(time);
 
     wrapper.appendChild(avatar);
-
     wrapper.appendChild(content);
 
     container.appendChild(wrapper);
 
-    container.scrollTop =
-        container.scrollHeight;
+    container.scrollTop = container.scrollHeight;
 
     return bubble;
-
 }
 
 
@@ -1281,43 +911,25 @@ function addMessage(role, text) {
 ========================================================= */
 
 async function renderMath(element) {
-
-    if (!element || !window.MathJax) {
-        return;
-    }
+    if (!element || !window.MathJax) return;
 
     try {
-
         if (
             window.MathJax.startup &&
             window.MathJax.startup.promise
         ) {
-
-            await window.MathJax
-                .startup
-                .promise;
-
+            await window.MathJax.startup.promise;
         }
 
         if (
-            typeof window.MathJax.typesetPromise ===
-            "function"
+            typeof window.MathJax.typesetPromise === "function"
         ) {
-
-            await window.MathJax
-                .typesetPromise([element]);
-
+            await window.MathJax.typesetPromise([element]);
         }
 
     } catch (error) {
-
-        console.warn(
-            "MathJax rendering error:",
-            error
-        );
-
+        console.warn("MathJax rendering error:", error);
     }
-
 }
 
 
@@ -1326,37 +938,22 @@ async function renderMath(element) {
 ========================================================= */
 
 function addTypingMessage() {
+    const container = document.getElementById("chatMessages");
 
-    const container =
-        document.getElementById(
-            "chatMessages"
-        );
+    if (!container) return null;
 
-    const wrapper =
-        document.createElement("div");
+    const wrapper = document.createElement("div");
+    wrapper.className = "message ai typing-message";
 
-    wrapper.className =
-        "message ai typing-message";
-
-    const avatar =
-        document.createElement("div");
-
-    avatar.className =
-        "message-avatar";
-
+    const avatar = document.createElement("div");
+    avatar.className = "message-avatar";
     avatar.textContent = "✦";
 
-    const content =
-        document.createElement("div");
+    const content = document.createElement("div");
+    content.className = "message-content";
 
-    content.className =
-        "message-content";
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className =
-        "message-bubble";
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
 
     bubble.innerHTML = `
         <div class="typing">
@@ -1367,27 +964,21 @@ function addTypingMessage() {
     `;
 
     content.appendChild(bubble);
-
     wrapper.appendChild(avatar);
-
     wrapper.appendChild(content);
 
     container.appendChild(wrapper);
 
-    container.scrollTop =
-        container.scrollHeight;
+    container.scrollTop = container.scrollHeight;
 
     return wrapper;
-
 }
 
 
 function removeTypingMessage(element) {
-
     if (element?.parentNode) {
         element.remove();
     }
-
 }
 
 
@@ -1396,52 +987,36 @@ function removeTypingMessage(element) {
 ========================================================= */
 
 function setupQuickActions() {
+    document.querySelectorAll(".quick-action").forEach(button => {
+        if (button.dataset.aiBound === "true") return;
 
-    document
-        .querySelectorAll(".quick-action")
-        .forEach(button => {
+        button.dataset.aiBound = "true";
 
-            button.addEventListener(
-                "click",
-                () => {
+        button.addEventListener("click", event => {
+            event.preventDefault();
 
-                    const prompt =
-                        button.dataset.prompt;
+            const prompt = button.dataset.prompt;
 
-                    if (prompt) {
-                        sendMessage(prompt);
-                    }
-
-                }
-            );
-
+            if (prompt) sendMessage(prompt);
         });
-
+    });
 }
 
 
 function setupStarterButtons() {
+    document.querySelectorAll(".starter-button").forEach(button => {
+        if (button.dataset.aiBound === "true") return;
 
-    document
-        .querySelectorAll(".starter-button")
-        .forEach(button => {
+        button.dataset.aiBound = "true";
 
-            button.addEventListener(
-                "click",
-                () => {
+        button.addEventListener("click", event => {
+            event.preventDefault();
 
-                    const prompt =
-                        button.dataset.prompt;
+            const prompt = button.dataset.prompt;
 
-                    if (prompt) {
-                        sendMessage(prompt);
-                    }
-
-                }
-            );
-
+            if (prompt) sendMessage(prompt);
         });
-
+    });
 }
 
 
@@ -1450,59 +1025,44 @@ function setupStarterButtons() {
 ========================================================= */
 
 function setupProgressAnalysis() {
-
-    const button =
-        document.getElementById(
-            "analyzeProgressButton"
-        );
-
-    if (!button) return;
-
-    button.addEventListener(
-        "click",
-        analyzeProgress
+    const button = document.getElementById(
+        "analyzeProgressButton"
     );
 
+    if (!button || button.dataset.aiBound === "true") return;
+
+    button.dataset.aiBound = "true";
+
+    button.addEventListener("click", event => {
+        event.preventDefault();
+        analyzeProgress();
+    });
 }
 
 
 async function analyzeProgress() {
+    if (sending) return;
 
     if (!premiumStatusLoaded) {
-
         await loadPremiumStatus();
-
     }
 
     if (!canUseAI()) {
-
         openPremiumModal();
-
         return;
-
     }
 
-    if (sending) return;
+    const button = document.getElementById(
+        "analyzeProgressButton"
+    );
 
-    const button =
-        document.getElementById(
-            "analyzeProgressButton"
-        );
+    const result = document.getElementById("aiAdviceText");
 
-    const result =
-        document.getElementById(
-            "aiAdviceText"
-        );
-
-    const badge =
-        document.getElementById(
-            "analysisBadge"
-        );
+    const badge = document.getElementById("analysisBadge");
 
     if (!button || !result) return;
 
     sending = true;
-
     button.disabled = true;
 
     if (badge) {
@@ -1524,11 +1084,9 @@ async function analyzeProgress() {
         </div>
     `;
 
-    const context =
-        buildStudyContext();
+    const context = buildStudyContext();
 
     const prompt = `
-
 Analyze this student's StudyMind study plan.
 
 STUDY PLAN:
@@ -1566,96 +1124,83 @@ Keep the advice useful and realistic.
 `;
 
     try {
+        const token = await getAccessToken();
 
-        const token =
-            await getAccessToken();
+        const response = await fetch("/api/ask-ai", {
+            method: "POST",
 
-        const response =
-            await fetch(
-                "/api/ask-ai",
-                {
-                    method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
 
-                    headers: {
-                        "Content-Type":
-                            "application/json",
+            body: JSON.stringify({
+                message: prompt,
+                type: "normal",
+                requestType: "normal",
+                mode: "normal"
+            })
+        });
 
-                        "Authorization":
-                            `Bearer ${token}`
-                    },
+        let data;
 
-                    body: JSON.stringify({
-
-                        message: prompt,
-
-                        type: "normal",
-
-                        requestType: "normal",
-
-                        mode: "normal"
-
-                    })
-                }
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error(
+                "The AI server returned an invalid response."
             );
-
-        const data =
-            await response.json();
+        }
 
         if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error(
+                    "Your login session is invalid. Please log in again."
+                );
+            }
 
             if (response.status === 429) {
-
                 await loadPremiumStatus();
 
                 throw new Error(
                     data?.error ||
                     "Your free AI limit has been reached."
                 );
-
             }
 
             throw new Error(
                 data?.error ||
                 `Request failed: ${response.status}`
             );
-
         }
 
         if (data?.success === false) {
-
             throw new Error(
-                data.error ||
-                "AI analysis failed."
+                data.error || "AI analysis failed."
             );
-
         }
 
         const reply =
-            data?.reply;
+            data?.reply ||
+            data?.output_text ||
+            data?.response;
 
         if (
             typeof reply !== "string" ||
             !reply.trim()
         ) {
-
             throw new Error(
                 "AI returned an empty analysis."
             );
-
         }
 
-        let html =
-            window.marked
-                ? marked.parse(reply)
-                : escapeHTML(reply).replace(
-                    /\n/g,
-                    "<br>"
-                );
+        const html = window.marked
+            ? window.marked.parse(reply)
+            : escapeHTML(reply).replace(/\n/g, "<br>");
 
-        result.innerHTML =
-            window.DOMPurify
-                ? DOMPurify.sanitize(html)
-                : html;
+        result.innerHTML = window.DOMPurify
+            ? window.DOMPurify.sanitize(html)
+            : html;
 
         await renderMath(result);
 
@@ -1668,19 +1213,13 @@ Keep the advice useful and realistic.
         }
 
     } catch (error) {
-
-        console.error(
-            "Progress analysis error:",
-            error
-        );
+        console.error("Progress analysis error:", error);
 
         result.innerHTML = `
             <div class="result-placeholder">
                 <span>!</span>
                 <div>
-                    <strong>
-                        Analysis unavailable
-                    </strong>
+                    <strong>Analysis unavailable</strong>
                     <small>
                         ${escapeHTML(
                             error.message ||
@@ -1696,13 +1235,9 @@ Keep the advice useful and realistic.
         }
 
     } finally {
-
         sending = false;
-
         button.disabled = false;
-
     }
-
 }
 
 
@@ -1711,105 +1246,83 @@ Keep the advice useful and realistic.
 ========================================================= */
 
 function setupClearChat() {
+    const button = document.getElementById("clearChat");
 
-    const button =
-        document.getElementById(
-            "clearChat"
-        );
+    if (!button || button.dataset.aiBound === "true") return;
 
-    if (!button) return;
+    button.dataset.aiBound = "true";
 
-    button.addEventListener(
-        "click",
-        () => {
+    button.addEventListener("click", event => {
+        event.preventDefault();
 
-            const container =
-                document.getElementById(
-                    "chatMessages"
-                );
+        const container = document.getElementById("chatMessages");
 
-            if (!container) return;
+        if (!container) return;
 
-            container.innerHTML = `
-                <div class="empty-chat">
+        container.innerHTML = `
+            <div class="empty-chat">
 
-                    <div class="empty-icon">
-                        ✦
-                    </div>
+                <div class="empty-icon">
+                    ✦
+                </div>
 
-                    <h3>
-                        Your AI learning partner
-                    </h3>
+                <h3>
+                    Your AI learning partner
+                </h3>
 
-                    <p>
-                        Ask me anything about your
-                        current studies.
-                    </p>
+                <p>
+                    Ask me anything about your current studies.
+                </p>
 
-                    <div class="starter-grid">
+                <div class="starter-grid">
 
-                        <button
-                            class="starter-button"
-                            data-prompt="Explain my current topic to me from the basics and gradually make it more advanced."
-                        >
-                            <span>◈</span>
-                            <strong>
-                                Explain a topic
-                            </strong>
-                            <small>
-                                Learn it step by step
-                            </small>
-                        </button>
+                    <button
+                        type="button"
+                        class="starter-button"
+                        data-prompt="Explain my current topic to me from the basics and gradually make it more advanced."
+                    >
+                        <span>◈</span>
+                        <strong>Explain a topic</strong>
+                        <small>Learn it step by step</small>
+                    </button>
 
-                        <button
-                            class="starter-button"
-                            data-prompt="Give me a short quiz on my current topic. Ask one question at a time and wait for my answer."
-                        >
-                            <span>?</span>
-                            <strong>
-                                Quiz me
-                            </strong>
-                            <small>
-                                Test my knowledge
-                            </small>
-                        </button>
+                    <button
+                        type="button"
+                        class="starter-button"
+                        data-prompt="Give me a short quiz on my current topic. Ask one question at a time and wait for my answer."
+                    >
+                        <span>?</span>
+                        <strong>Quiz me</strong>
+                        <small>Test your knowledge</small>
+                    </button>
 
-                        <button
-                            class="starter-button"
-                            data-prompt="What are the most important things I should know about my current topic for an exam?"
-                        >
-                            <span>◆</span>
-                            <strong>
-                                Exam essentials
-                            </strong>
-                            <small>
-                                Focus on key ideas
-                            </small>
-                        </button>
+                    <button
+                        type="button"
+                        class="starter-button"
+                        data-prompt="What are the most important things I should know about my current topic for an exam?"
+                    >
+                        <span>◆</span>
+                        <strong>Exam essentials</strong>
+                        <small>Focus on key ideas</small>
+                    </button>
 
-                        <button
-                            class="starter-button"
-                            data-prompt="Give me a personalized study strategy based on my current study plan."
-                        >
-                            <span>↗</span>
-                            <strong>
-                                Study strategy
-                            </strong>
-                            <small>
-                                Improve my approach
-                            </small>
-                        </button>
-
-                    </div>
+                    <button
+                        type="button"
+                        class="starter-button"
+                        data-prompt="Give me a personalized study strategy based on my current study plan."
+                    >
+                        <span>↗</span>
+                        <strong>Study strategy</strong>
+                        <small>Improve my approach</small>
+                    </button>
 
                 </div>
-            `;
 
-            setupStarterButtons();
+            </div>
+        `;
 
-        }
-    );
-
+        setupStarterButtons();
+    });
 }
 
 
@@ -1818,67 +1331,47 @@ function setupClearChat() {
 ========================================================= */
 
 function setupPremiumModal() {
-
-    const close =
-        document.getElementById(
-            "closePremiumModal"
-        );
-
-    const modal =
-        document.getElementById(
-            "premiumModal"
-        );
+    const close = document.getElementById("closePremiumModal");
+    const modal = document.getElementById("premiumModal");
 
     if (!modal) return;
 
-    if (close) {
+    if (close && close.dataset.aiBound !== "true") {
+        close.dataset.aiBound = "true";
 
-        close.addEventListener(
-            "click",
-            closePremiumModal
-        );
-
+        close.addEventListener("click", event => {
+            event.preventDefault();
+            closePremiumModal();
+        });
     }
 
-    modal.addEventListener(
-        "click",
-        event => {
+    if (modal.dataset.aiBound !== "true") {
+        modal.dataset.aiBound = "true";
 
+        modal.addEventListener("click", event => {
             if (event.target === modal) {
                 closePremiumModal();
             }
-
-        }
-    );
-
+        });
+    }
 }
 
 
 function openPremiumModal() {
-
-    const modal =
-        document.getElementById(
-            "premiumModal"
-        );
+    const modal = document.getElementById("premiumModal");
 
     if (modal) {
         modal.classList.remove("hidden");
     }
-
 }
 
 
 function closePremiumModal() {
-
-    const modal =
-        document.getElementById(
-            "premiumModal"
-        );
+    const modal = document.getElementById("premiumModal");
 
     if (modal) {
         modal.classList.add("hidden");
     }
-
 }
 
 
@@ -1887,27 +1380,21 @@ function closePremiumModal() {
 ========================================================= */
 
 function updateSendButton(loading) {
-
-    const button =
-        document.getElementById(
-            "askAIButton"
-        );
+    const button = document.getElementById("askAIButton");
 
     if (!button) return;
 
     button.disabled = loading;
 
-    button.innerHTML =
-        loading
-            ? `
-                <span>Thinking...</span>
-                <b>✦</b>
-            `
-            : `
-                <span>Ask AI</span>
-                <b>↗</b>
-            `;
-
+    button.innerHTML = loading
+        ? `
+            <span>Thinking...</span>
+            <b>✦</b>
+        `
+        : `
+            <span>Ask AI</span>
+            <b>↗</b>
+        `;
 }
 
 
@@ -1916,44 +1403,30 @@ function updateSendButton(loading) {
 ========================================================= */
 
 function setupLogout() {
+    const button = document.getElementById("logoutButton");
 
-    const button =
-        document.getElementById(
-            "logoutButton"
-        );
+    if (!button || button.dataset.aiBound === "true") return;
 
-    if (!button) return;
+    button.dataset.aiBound = "true";
 
-    button.addEventListener(
-        "click",
-        async () => {
+    button.addEventListener("click", async event => {
+        event.preventDefault();
 
-            try {
+        try {
+            const client = getSupabaseClient();
 
-                const client =
-                    getSupabaseClient();
+            if (client?.auth) {
+                const { error } = await client.auth.signOut();
 
-                if (client?.auth) {
-
-                    await client.auth.signOut();
-
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "Logout error:",
-                    error
-                );
-
+                if (error) throw error;
             }
 
-            window.location.href =
-                "home.html";
-
+        } catch (error) {
+            console.warn("Logout error:", error);
         }
-    );
 
+        window.location.href = "home.html";
+    });
 }
 
 
@@ -1962,16 +1435,16 @@ function setupLogout() {
 ========================================================= */
 
 function setupTheme() {
-
-    const button =
-        document.getElementById(
-            "themeButton"
-        );
+    const button = document.getElementById("themeButton");
 
     /*
-       Premium status controls the theme.
+       Verified account status controls the theme.
+
        Free = Blue.
-       Premium/Admin = Gold.
+       Paid Premium = Gold.
+       Admin = Gold.
+
+       localStorage is NOT used to grant Premium.
     */
 
     if (button) {
@@ -1979,7 +1452,6 @@ function setupTheme() {
     }
 
     applyPremiumStatus();
-
 }
 
 
@@ -1988,14 +1460,12 @@ function setupTheme() {
 ========================================================= */
 
 function escapeHTML(value) {
-
     return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
@@ -2004,24 +1474,16 @@ function escapeHTML(value) {
 ========================================================= */
 
 function loadJSON(key, fallback) {
-
     try {
+        const raw = localStorage.getItem(key);
 
-        const raw =
-            localStorage.getItem(key);
-
-        if (!raw) {
-            return fallback;
-        }
+        if (!raw) return fallback;
 
         return JSON.parse(raw);
 
     } catch {
-
         return fallback;
-
     }
-
 }
 
 
@@ -2029,22 +1491,17 @@ function loadJSON(key, fallback) {
    STORAGE EVENT
 ========================================================= */
 
-window.addEventListener(
-    "storage",
-    event => {
-
-        if (
-            event.key === STORAGE.PREMIUM
-        ) {
-
-            /*
-               Local storage is not trusted
-               for entitlement verification.
-            */
-
-            loadPremiumStatus();
-
-        }
-
+window.addEventListener("storage", event => {
+    if (event.key === STORAGE.PREMIUM) {
+        /*
+           Never trust localStorage for Premium access.
+           Recheck the authenticated account instead.
+        */
+        loadPremiumStatus();
     }
-);
+
+    if (event.key === STORAGE.PLAN) {
+        studyPlan = loadJSON(STORAGE.PLAN, null);
+        renderStudyContext();
+    }
+});
