@@ -1,1386 +1,692 @@
 
 /* =========================================================
-   STUDYMIND AI — DOCUMENT SUMMARIZER
-   COMPLETE REPLACEMENT
-========================================================= */
+   STUDYMIND AI — PREMIUM MANAGEMENT
+   ========================================================= */
 
 "use strict";
 
-/* =========================================================
-   CONFIGURATION
-========================================================= */
+(function StudyMindPremiumManager() {
 
-const FREE_SUMMARY_LIMIT = 5;
+    /* =====================================================
+       CONFIGURATION
+    ===================================================== */
 
-const SUMMARY_STORAGE_KEY = "studyMindSummaryCount";
-const PLAN_STORAGE_KEY = "studyMindPlan";
+    const CONFIG = {
+        STATUS_ENDPOINT: "/api/premium/status",
+        CHECKOUT_ENDPOINT: "/api/premium/create-checkout",
 
-/* =========================================================
-   ELEMENT SHORTCUT
-========================================================= */
+        STORAGE_KEY: "studyMindPremium",
+        THEME_KEY: "studyMindTheme",
 
-function $(id) {
-    return document.getElementById(id);
-}
+        CHANGE_EVENT: "studyMindPremiumChanged",
 
-/* =========================================================
-   PAGE ELEMENTS
-========================================================= */
+        PREMIUM_PAGE: "premium.html"
+    };
 
-let summarizeInput;
-let summarizeBtn;
-let summaryOutput;
-let summaryCountBadge;
-let summaryUsagePercent;
-let summaryUsageText;
-let summaryUsageProgressBar;
-let summaryStudyContext;
-let documentFile;
-let fileStatus;
-let inputInfo;
-let themeButton;
 
-/* =========================================================
-   AUTHENTICATION
-========================================================= */
+    /* =====================================================
+       INTERNAL STATE
+    ===================================================== */
 
-function getSupabaseClient() {
-    return (
-        window.supabaseClient ||
-        window.studyMindSupabase ||
-        null
-    );
-}
+    let premiumStatus = false;
+    let adminStatus = false;
+    let statusLoaded = false;
+    let statusPromise = null;
 
-async function getAuthenticatedSession() {
-    const supabase = getSupabaseClient();
+    let authListenerRegistered = false;
 
-    if (!supabase) {
-        throw new Error(
-            "Authentication service is unavailable. Please refresh the page."
+
+    /* =====================================================
+       SUPABASE CLIENT
+    ===================================================== */
+
+    function getSupabaseClient() {
+
+        return (
+            window.supabaseClient ||
+            window.studyMindSupabase ||
+            window.gameSupabase ||
+            null
         );
+
     }
 
-    const {
-        data,
-        error
-    } = await supabase.auth.getSession();
 
-    if (error) {
-        console.error("Session error:", error);
+    /* =====================================================
+       ACCESS TOKEN
+    ===================================================== */
 
-        throw new Error(
-            "Could not verify your login session. Please sign in again."
-        );
-    }
+    async function getAccessToken() {
 
-    if (!data || !data.session) {
-        throw new Error(
-            "Please sign in to use StudyMind AI."
-        );
-    }
+        const client = getSupabaseClient();
 
-    return data.session;
-}
+        if (!client || !client.auth) {
+            return null;
+        }
 
-/* =========================================================
-   PREMIUM STATUS
-========================================================= */
-
-/*
-   Never use localStorage as proof of Premium membership.
-
-   Premium status must come from the authenticated backend.
-   Until verified, the user receives FREE access.
-*/
-
-let premiumStatus = {
-    checked: false,
-    isPremium: false,
-    isAdmin: false
-};
-
-let premiumCheckPromise = null;
-
-async function refreshPremiumStatus() {
-    if (premiumCheckPromise) {
-        return premiumCheckPromise;
-    }
-
-    premiumCheckPromise = (async function () {
         try {
-            const session =
-                await getAuthenticatedSession();
 
-            const response = await fetch(
-                "/api/premium/status",
-                {
-                    method: "GET",
-                    headers: {
-                        "Authorization":
-                            `Bearer ${session.access_token}`,
-                        "Content-Type":
-                            "application/json"
-                    },
-                    cache: "no-store"
-                }
-            );
+            const {
+                data,
+                error
+            } = await client.auth.getSession();
 
-            if (!response.ok) {
-                throw new Error(
-                    "Premium verification failed."
+            if (error) {
+                console.error(
+                    "Premium: Could not retrieve session.",
+                    error
                 );
+
+                return null;
             }
 
-            const data = await response.json();
-
-            const verifiedPremium =
-                data.isPremium === true ||
-                data.premium === true ||
-                data.isAdmin === true ||
-                data.role === "admin";
-
-            premiumStatus = {
-                checked: true,
-                isPremium: verifiedPremium,
-                isAdmin:
-                    data.isAdmin === true ||
-                    data.role === "admin"
-            };
+            return data?.session?.access_token || null;
 
         } catch (error) {
+
             console.error(
-                "Premium verification error:",
+                "Premium: Session error.",
                 error
             );
 
-            premiumStatus = {
-                checked: true,
-                isPremium: false,
-                isAdmin: false
-            };
+            return null;
         }
 
-        return premiumStatus.isPremium;
-    })();
-
-    try {
-        return await premiumCheckPromise;
-    } finally {
-        premiumCheckPromise = null;
     }
-}
 
-function isPremiumUser() {
-    return (
-        premiumStatus.checked &&
-        premiumStatus.isPremium === true
-    );
-}
 
-/* =========================================================
-   INITIALIZATION
-========================================================= */
+    /* =====================================================
+       APPLY PREMIUM THEME
+    ===================================================== */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async function () {
+    function applyPremiumTheme() {
 
-        summarizeInput = $("summarizeInput");
-        summarizeBtn = $("summarizeBtn");
-        summaryOutput = $("summaryOutput");
+        const enabled =
+            statusLoaded && premiumStatus === true;
 
-        summaryCountBadge = $("summaryCountBadge");
-        summaryUsagePercent = $("summaryUsagePercent");
-        summaryUsageText = $("summaryUsageText");
-        summaryUsageProgressBar =
-            $("summaryUsageProgressBar");
+        const elements = [
+            document.documentElement,
+            document.body
+        ];
 
-        summaryStudyContext = $("summaryStudyContext");
+        elements.forEach(element => {
 
-        documentFile = $("documentFile");
-        fileStatus = $("fileStatus");
-        inputInfo = $("inputInfo");
-        themeButton = $("themeButton");
+            if (!element) return;
 
-        /* Summarize button */
-
-        if (summarizeBtn) {
-            summarizeBtn.addEventListener(
-                "click",
-                summarizeDocument
+            element.classList.toggle(
+                "study-mind-premium",
+                enabled
             );
-        }
 
-        /* File upload */
-
-        if (documentFile) {
-            documentFile.addEventListener(
-                "change",
-                handleDocumentUpload
+            element.classList.toggle(
+                "premium-user",
+                enabled
             );
-        }
 
-        /* Text counter */
-
-        if (summarizeInput) {
-            summarizeInput.addEventListener(
-                "input",
-                updateInputInfo
+            element.classList.toggle(
+                "premium-theme",
+                enabled
             );
-        }
 
-        /* Theme */
+            element.classList.toggle(
+                "admin-user",
+                enabled && adminStatus
+            );
 
-        setupTheme();
+            element.classList.toggle(
+                "free-user",
+                statusLoaded && !enabled
+            );
 
-        /* Study context */
+        });
 
-        loadStudyContext();
+    }
 
-        /* Input information */
 
-        updateInputInfo();
+    /* =====================================================
+       UPDATE PREMIUM CACHE
+       
+       The server is authoritative.
+       localStorage is only a display cache.
+    ===================================================== */
 
-        /* Verify authentication and Premium */
+    function updatePremiumState(
+        isPremium,
+        isAdmin
+    ) {
+
+        premiumStatus = isPremium === true;
+        adminStatus = isAdmin === true;
+
+        statusLoaded = true;
 
         try {
-            await getAuthenticatedSession();
-            await refreshPremiumStatus();
+
+            localStorage.setItem(
+                CONFIG.STORAGE_KEY,
+                premiumStatus ? "true" : "false"
+            );
+
         } catch (error) {
+
             console.warn(
-                "Summarizer authentication:",
-                error.message
+                "Premium: Could not update local cache.",
+                error
             );
+
         }
 
-        updateUsageUI();
-    }
-);
+        applyPremiumTheme();
 
-/* =========================================================
-   SUMMARY COUNT
-========================================================= */
-
-function getSummaryCount() {
-    const stored = localStorage.getItem(
-        SUMMARY_STORAGE_KEY
-    );
-
-    const count = Number.parseInt(
-        stored || "0",
-        10
-    );
-
-    if (!Number.isFinite(count)) {
-        return 0;
-    }
-
-    return Math.max(0, count);
-}
-
-/* =========================================================
-   SAVE SUMMARY COUNT
-========================================================= */
-
-function setSummaryCount(count) {
-    const safeCount = Math.max(
-        0,
-        Number(count) || 0
-    );
-
-    localStorage.setItem(
-        SUMMARY_STORAGE_KEY,
-        String(safeCount)
-    );
-}
-
-/* =========================================================
-   UPDATE USAGE UI
-========================================================= */
-
-function updateUsageUI() {
-    const premium = isPremiumUser();
-    const count = getSummaryCount();
-
-    if (premium) {
-        if (summaryCountBadge) {
-            summaryCountBadge.textContent = "Unlimited";
-        }
-
-        if (summaryUsagePercent) {
-            summaryUsagePercent.textContent = "∞";
-        }
-
-        if (summaryUsageText) {
-            summaryUsageText.textContent =
-                "Unlimited AI document summaries.";
-        }
-
-        if (summaryUsageProgressBar) {
-            summaryUsageProgressBar.style.width = "100%";
-        }
-
-        const ring = document.querySelector(".usage-ring");
-
-        if (ring) {
-            ring.style.setProperty(
-                "--usage-progress",
-                "100%"
-            );
-        }
-
-        return;
-    }
-
-    const percentage = Math.min(
-        100,
-        Math.round(
-            (count / FREE_SUMMARY_LIMIT) * 100
-        )
-    );
-
-    if (summaryCountBadge) {
-        summaryCountBadge.textContent =
-            `${Math.min(count, FREE_SUMMARY_LIMIT)}/${FREE_SUMMARY_LIMIT} used`;
-    }
-
-    if (summaryUsagePercent) {
-        summaryUsagePercent.textContent =
-            `${percentage}%`;
-    }
-
-    if (summaryUsageText) {
-        summaryUsageText.textContent =
-            `${Math.min(count, FREE_SUMMARY_LIMIT)} of ${FREE_SUMMARY_LIMIT} free summaries used.`;
-    }
-
-    if (summaryUsageProgressBar) {
-        summaryUsageProgressBar.style.width =
-            `${percentage}%`;
-    }
-
-    const ring = document.querySelector(".usage-ring");
-
-    if (ring) {
-        ring.style.setProperty(
-            "--usage-progress",
-            `${percentage}%`
-        );
-    }
-}
-
-/* =========================================================
-   CHECK LIMIT
-========================================================= */
-
-function hasReachedSummaryLimit() {
-    if (isPremiumUser()) {
-        return false;
-    }
-
-    return getSummaryCount() >= FREE_SUMMARY_LIMIT;
-}
-
-/* =========================================================
-   RECORD SUMMARY
-========================================================= */
-
-function recordSummary() {
-    if (!isPremiumUser()) {
-        setSummaryCount(
-            getSummaryCount() + 1
-        );
-    }
-
-    updateUsageUI();
-}
-
-/* =========================================================
-   HANDLE DOCUMENT UPLOAD
-========================================================= */
-
-async function handleDocumentUpload(event) {
-    const file =
-        event.target.files &&
-        event.target.files[0];
-
-    if (!file) {
-        return;
-    }
-
-    const fileName = file.name.toLowerCase();
-
-    if (file.size > 10 * 1024 * 1024) {
-        setFileStatus(
-            "❌ This file is too large. Please use a file under 10 MB.",
-            true
+        window.dispatchEvent(
+            new CustomEvent(CONFIG.CHANGE_EVENT, {
+                detail: {
+                    premium: premiumStatus,
+                    isPremium: premiumStatus,
+                    isAdmin: adminStatus,
+                    loaded: true
+                }
+            })
         );
 
-        documentFile.value = "";
-        return;
     }
 
-    setFileStatus(
-        `⏳ Reading ${file.name}...`,
-        false
-    );
 
-    try {
-        let extractedText = "";
+    /* =====================================================
+       LOAD VERIFIED PREMIUM STATUS
+    ===================================================== */
 
-        if (
-            file.type === "application/pdf" ||
-            fileName.endsWith(".pdf")
-        ) {
-            extractedText =
-                await extractPDFText(file);
+    async function loadStudyMindPremium(forceRefresh = false) {
+
+        if (statusPromise && !forceRefresh) {
+            return statusPromise;
         }
 
-        else if (
-            file.type === "text/plain" ||
-            file.type === "text/markdown" ||
-            fileName.endsWith(".txt") ||
-            fileName.endsWith(".md") ||
-            fileName.endsWith(".markdown")
-        ) {
-            extractedText = await file.text();
-        }
+        statusPromise = (async function () {
 
-        else {
-            throw new Error(
-                "Unsupported file type. Please upload TXT, MD or PDF."
-            );
-        }
+            /*
+             * Never grant Premium from localStorage.
+             */
 
-        extractedText = cleanDocumentText(
-            extractedText
-        );
+            premiumStatus = false;
+            adminStatus = false;
+            statusLoaded = false;
 
-        if (!extractedText) {
-            throw new Error(
-                "No readable text was found in this document."
-            );
-        }
+            applyPremiumTheme();
 
-        if (summarizeInput) {
-            summarizeInput.value = extractedText;
-        }
+            try {
 
-        updateInputInfo();
+                const token = await getAccessToken();
 
-        setFileStatus(
-            `✅ ${file.name} loaded successfully.`,
-            false
-        );
+                if (!token) {
 
-        if (summarizeInput) {
-            summarizeInput.focus();
-        }
+                    updatePremiumState(false, false);
 
-    } catch (error) {
-        console.error(
-            "Document upload error:",
-            error
-        );
+                    return false;
+                }
 
-        setFileStatus(
-            `❌ ${error.message || "Could not read the document."}`,
-            true
-        );
-    }
-}
+                const response = await fetch(
+                    CONFIG.STATUS_ENDPOINT,
+                    {
+                        method: "GET",
 
-/* =========================================================
-   EXTRACT PDF TEXT
-========================================================= */
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                            "Cache-Control": "no-cache"
+                        },
 
-async function extractPDFText(file) {
-    if (!window.pdfjsLib) {
-        throw new Error(
-            "PDF reader failed to load. Please refresh the page and try again."
-        );
-    }
-
-    const arrayBuffer =
-        await file.arrayBuffer();
-
-    const pdf =
-        await window.pdfjsLib.getDocument({
-            data: arrayBuffer
-        }).promise;
-
-    let fullText = "";
-
-    for (
-        let pageNumber = 1;
-        pageNumber <= pdf.numPages;
-        pageNumber++
-    ) {
-        const page =
-            await pdf.getPage(pageNumber);
-
-        const textContent =
-            await page.getTextContent();
-
-        const pageText =
-            textContent.items
-                .map(item => item.str || "")
-                .join(" ");
-
-        if (pageText.trim()) {
-            fullText +=
-                `\n\n--- Page ${pageNumber} ---\n\n`;
-
-            fullText += pageText;
-        }
-    }
-
-    return fullText;
-}
-
-/* =========================================================
-   CLEAN DOCUMENT TEXT
-========================================================= */
-
-function cleanDocumentText(text) {
-    return String(text || "")
-        .replace(/\u0000/g, "")
-        .replace(/\r\n/g, "\n")
-        .replace(/[ \t]+/g, " ")
-        .replace(/\n{4,}/g, "\n\n")
-        .trim();
-}
-
-/* =========================================================
-   FILE STATUS
-========================================================= */
-
-function setFileStatus(message, isError) {
-    if (!fileStatus) {
-        return;
-    }
-
-    fileStatus.textContent = message;
-    fileStatus.style.opacity = "0.9";
-
-    fileStatus.style.fontWeight =
-        isError ? "600" : "400";
-}
-
-/* =========================================================
-   INPUT INFORMATION
-========================================================= */
-
-function updateInputInfo() {
-    if (!summarizeInput || !inputInfo) {
-        return;
-    }
-
-    const text = summarizeInput.value || "";
-
-    const characters = text.length;
-
-    const words = text
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .length;
-
-    inputInfo.textContent =
-        `${characters.toLocaleString()} characters • ${words.toLocaleString()} words`;
-}
-
-/* =========================================================
-   LOAD STUDY CONTEXT
-========================================================= */
-
-function loadStudyContext() {
-    if (!summaryStudyContext) {
-        return;
-    }
-
-    let plan = null;
-
-    try {
-        const stored = localStorage.getItem(
-            PLAN_STORAGE_KEY
-        );
-
-        if (stored) {
-            plan = JSON.parse(stored);
-        }
-
-    } catch (error) {
-        console.warn(
-            "Could not read study plan:",
-            error
-        );
-    }
-
-    if (!plan) {
-        summaryStudyContext.innerHTML =
-            "<p>No active study plan was found. The summary will still be generated normally.</p>";
-
-        return;
-    }
-
-    const contextParts = [];
-
-    const examType = firstValue(
-        plan.examType,
-        plan.exam,
-        plan.examName,
-        plan.testType
-    );
-
-    if (examType) {
-        contextParts.push(
-            `<strong>Exam:</strong> ${escapeHTML(examType)}`
-        );
-    }
-
-    const subjects = extractSubjects(plan);
-
-    if (subjects.length) {
-        contextParts.push(
-            `<strong>Subjects:</strong> ${escapeHTML(subjects.join(", "))}`
-        );
-    }
-
-    const topics = extractTopics(plan);
-
-    if (topics.length) {
-        contextParts.push(
-            `<strong>Topics:</strong> ${escapeHTML(topics.slice(0, 8).join(", "))}`
-        );
-    }
-
-    if (!contextParts.length) {
-        summaryStudyContext.innerHTML =
-            "<p>Your study plan was found, but no readable exam or subject information is available.</p>";
-
-        return;
-    }
-
-    summaryStudyContext.innerHTML =
-        contextParts
-            .map(item =>
-                `<div style="margin-bottom:8px;">${item}</div>`
-            )
-            .join("");
-}
-
-/* =========================================================
-   FIRST VALUE
-========================================================= */
-
-function firstValue(...values) {
-    for (const value of values) {
-        if (
-            value !== undefined &&
-            value !== null &&
-            String(value).trim()
-        ) {
-            return String(value).trim();
-        }
-    }
-
-    return "";
-}
-
-/* =========================================================
-   EXTRACT SUBJECTS
-========================================================= */
-
-function extractSubjects(plan) {
-    const result = [];
-
-    if (Array.isArray(plan.subjects)) {
-        plan.subjects.forEach(subject => {
-            if (typeof subject === "string") {
-                result.push(subject);
-            }
-
-            else if (
-                subject &&
-                typeof subject === "object"
-            ) {
-                const name = firstValue(
-                    subject.name,
-                    subject.subject,
-                    subject.title
+                        cache: "no-store"
+                    }
                 );
 
-                if (name) {
-                    result.push(name);
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Premium status request failed: ${response.status}`
+                    );
+
                 }
-            }
-        });
-    }
 
-    if (typeof plan.subjects === "string") {
-        plan.subjects
-            .split(",")
-            .map(item => item.trim())
-            .filter(Boolean)
-            .forEach(item => result.push(item));
-    }
+                const data = await response.json();
 
-    if (typeof plan.subjectList === "string") {
-        plan.subjectList
-            .split(",")
-            .map(item => item.trim())
-            .filter(Boolean)
-            .forEach(item => result.push(item));
-    }
+                /*
+                 * The status API verifies the user.
+                 * Admin and Premium access come from
+                 * the verified server response.
+                 */
 
-    return [...new Set(result)];
-}
+                const isAdmin =
+                    data?.isAdmin === true;
 
-/* =========================================================
-   EXTRACT TOPICS
-========================================================= */
+                const isPremium =
+                    data?.premium === true ||
+                    isAdmin;
 
-function extractTopics(plan) {
-    const result = [];
-
-    if (Array.isArray(plan.topics)) {
-        plan.topics.forEach(topic => {
-            if (typeof topic === "string") {
-                result.push(topic);
-            }
-
-            else if (
-                topic &&
-                typeof topic === "object"
-            ) {
-                const name = firstValue(
-                    topic.name,
-                    topic.title,
-                    topic.topic
+                updatePremiumState(
+                    isPremium,
+                    isAdmin
                 );
 
-                if (name) {
-                    result.push(name);
-                }
-            }
-        });
-    }
-
-    if (Array.isArray(plan.subjects)) {
-        plan.subjects.forEach(subject => {
-            if (
-                subject &&
-                typeof subject === "object" &&
-                Array.isArray(subject.topics)
-            ) {
-                subject.topics.forEach(topic => {
-                    if (typeof topic === "string") {
-                        result.push(topic);
+                console.log(
+                    "StudyMind Premium status:",
+                    {
+                        premium: premiumStatus,
+                        admin: adminStatus
                     }
+                );
 
-                    else if (
-                        topic &&
-                        typeof topic === "object"
-                    ) {
-                        const name = firstValue(
-                            topic.name,
-                            topic.title,
-                            topic.topic
-                        );
+                return premiumStatus;
 
-                        if (name) {
-                            result.push(name);
-                        }
-                    }
-                });
+            } catch (error) {
+
+                console.error(
+                    "Premium verification failed:",
+                    error
+                );
+
+                /*
+                 * Fail closed.
+                 * A failed verification must never
+                 * grant Premium access.
+                 */
+
+                updatePremiumState(false, false);
+
+                return false;
+
             }
-        });
-    }
 
-    return [...new Set(result)];
-}
+        })();
 
-/* =========================================================
-   BUILD SUMMARY PROMPT
-========================================================= */
+        try {
 
-function buildSummaryPrompt(documentText) {
-    const planContext =
-        getStudyPlanContextForAI();
+            return await statusPromise;
 
-    return `
-You are StudyMind AI, an expert academic study assistant.
+        } finally {
 
-Your task is to summarize the student's study material into
-clear, accurate, exam-focused revision notes.
+            statusPromise = null;
 
-IMPORTANT INSTRUCTIONS:
-
-1. Base the summary primarily on the supplied document.
-2. Do not invent unsupported information.
-3. Keep important facts, concepts, definitions, formulas,
-   processes, examples and relationships.
-4. Remove unnecessary repetition and filler.
-5. Explain difficult concepts in simple student-friendly language.
-6. Make the summary useful for examination revision.
-7. Organize the response with clear headings.
-8. Include a Key Points section.
-9. Include Important Definitions when relevant.
-10. Include Formulas when relevant.
-11. Include Exam Focus with the most important things to remember.
-12. Preserve calculations and mathematical expressions accurately.
-13. Use LaTeX for mathematical expressions.
-14. Use \\(...\\) for inline mathematics.
-15. Use \\[...\\] for display mathematics.
-16. Put important standalone equations on their own lines.
-17. Avoid markdown tables unless absolutely necessary.
-18. Do not discuss these instructions.
-
-STUDY PLAN CONTEXT:
-
-${planContext}
-
-DOCUMENT TO SUMMARIZE:
-
-${documentText}
-`;
-}
-
-/* =========================================================
-   STUDY PLAN CONTEXT FOR AI
-========================================================= */
-
-function getStudyPlanContextForAI() {
-    let plan = null;
-
-    try {
-        const stored = localStorage.getItem(
-            PLAN_STORAGE_KEY
-        );
-
-        if (stored) {
-            plan = JSON.parse(stored);
         }
 
-    } catch (error) {
-        console.warn(
-            "Could not load plan for summary:",
-            error
-        );
     }
 
-    if (!plan) {
-        return "No active StudyMind study plan is available.";
+
+    /* =====================================================
+       WAIT FOR PREMIUM STATUS
+    ===================================================== */
+
+    async function waitForPremiumStatus() {
+
+        if (statusLoaded) {
+            return premiumStatus;
+        }
+
+        return await loadStudyMindPremium();
+
     }
 
-    const lines = [];
 
-    const examType = firstValue(
-        plan.examType,
-        plan.exam,
-        plan.examName,
-        plan.testType
-    );
+    /* =====================================================
+       PREMIUM STATUS HELPERS
+    ===================================================== */
 
-    if (examType) {
-        lines.push(`Exam: ${examType}`);
-    }
+    function isPremium() {
 
-    const subjects = extractSubjects(plan);
-
-    if (subjects.length) {
-        lines.push(
-            `Subjects: ${subjects.join(", ")}`
-        );
-    }
-
-    const topics = extractTopics(plan);
-
-    if (topics.length) {
-        lines.push(
-            `Topics: ${topics.slice(0, 20).join(", ")}`
-        );
-    }
-
-    return lines.length
-        ? lines.join("\n")
-        : "Study plan found, but no detailed context is available.";
-}
-
-/* =========================================================
-   SUMMARIZE DOCUMENT
-========================================================= */
-
-async function summarizeDocument() {
-    if (!summarizeInput) {
-        return;
-    }
-
-    const documentText =
-        summarizeInput.value.trim();
-
-    if (!documentText) {
-        displayError(
-            "Please paste your study material or upload a document first."
+        return (
+            statusLoaded &&
+            premiumStatus === true
         );
 
-        summarizeInput.focus();
-        return;
     }
 
-    if (
-        documentText.length > 100000
-    ) {
-        displayError(
-            "This document is too large to summarize in one request. Please shorten the material or split it into smaller sections."
+
+    function isStudyMindPremium() {
+
+        return isPremium();
+
+    }
+
+
+    function getStudyMindPremiumStatus() {
+
+        return {
+            premium: premiumStatus,
+            isPremium: premiumStatus,
+            isAdmin: adminStatus,
+            loaded: statusLoaded
+        };
+
+    }
+
+
+    /* =====================================================
+       PREMIUM OFFER MODAL
+    ===================================================== */
+
+    function openPremiumOffer() {
+
+        const modal = document.getElementById(
+            "premiumModal"
         );
 
-        return;
-    }
+        if (modal) {
 
-    setLoadingState(true);
+            modal.style.display = "flex";
 
-    try {
-        /* Verify current login */
+            modal.classList.add("active");
 
-        const session =
-            await getAuthenticatedSession();
+            modal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
 
-        /* Verify current Premium status */
-
-        await refreshPremiumStatus();
-
-        /* Enforce free summary limit */
-
-        if (hasReachedSummaryLimit()) {
-            displayLimitMessage();
             return;
         }
 
-        const prompt =
-            buildSummaryPrompt(documentText);
+        window.location.href =
+            CONFIG.PREMIUM_PAGE;
 
-        /* Send authenticated request */
+    }
 
-        const response = await fetch(
-            "/api/ask-ai",
-            {
-                method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json",
+    function closePremiumModal() {
 
-                    "Authorization":
-                        `Bearer ${session.access_token}`
-                },
-
-                body: JSON.stringify({
-                    message: prompt,
-                    mode: "summarizer"
-                })
-            }
+        const modal = document.getElementById(
+            "premiumModal"
         );
 
-        let data = null;
+        if (!modal) return;
+
+        modal.style.display = "none";
+
+        modal.classList.remove("active");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+    }
+
+
+    /* =====================================================
+       PREMIUM PAYMENT
+    ===================================================== */
+
+    async function beginPremiumPayment(provider) {
+
+        const allowedProviders = [
+            "paystack",
+            "flutterwave",
+            "stripe"
+        ];
+
+        const selectedProvider =
+            String(provider || "").toLowerCase();
+
+        if (!allowedProviders.includes(selectedProvider)) {
+
+            console.error(
+                "Premium: Invalid payment provider."
+            );
+
+            return false;
+        }
 
         try {
-            data = await response.json();
-        } catch (jsonError) {
-            throw new Error(
-                "The AI server returned an invalid response."
-            );
-        }
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error(
-                    "Your session has expired. Please sign in again."
+            const token = await getAccessToken();
+
+            if (!token) {
+
+                alert(
+                    "Please sign in before purchasing Premium."
                 );
+
+                return false;
             }
 
-            if (response.status === 403) {
+            const response = await fetch(
+                CONFIG.CHECKOUT_ENDPOINT,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        provider: selectedProvider
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+
                 throw new Error(
                     data?.error ||
-                    "You do not have permission to use this feature."
+                    data?.message ||
+                    "Could not start payment."
                 );
+
             }
 
-            if (response.status === 429) {
+            const checkoutUrl =
+                data?.checkoutUrl ||
+                data?.checkout_url ||
+                data?.authorization_url ||
+                data?.url;
+
+            if (!checkoutUrl) {
+
                 throw new Error(
-                    data?.error ||
-                    "You have reached your usage limit."
+                    "Payment link was not returned by the server."
                 );
+
             }
 
-            throw new Error(
-                data?.error ||
-                data?.message ||
-                `AI server error (${response.status}).`
-            );
-        }
+            window.location.href = checkoutUrl;
 
-        const answer =
-            extractAIAnswer(data);
+            return true;
 
-        if (!answer) {
-            throw new Error(
-                "The AI server returned an empty summary."
-            );
-        }
+        } catch (error) {
 
-        /* Record successful summary */
-
-        recordSummary();
-
-        /* Display */
-
-        displaySummary(answer);
-
-    } catch (error) {
-        console.error(
-            "Summarizer error:",
-            error
-        );
-
-        displayError(
-            error.message ||
-            "StudyMind AI could not generate the summary."
-        );
-
-    } finally {
-        setLoadingState(false);
-    }
-}
-
-/* =========================================================
-   EXTRACT AI ANSWER
-========================================================= */
-
-function extractAIAnswer(data) {
-    if (!data) {
-        return "";
-    }
-
-    const candidates = [
-        data.reply,
-        data.answer,
-        data.response,
-        data.output,
-        data.message,
-        data.data?.reply
-    ];
-
-    for (const candidate of candidates) {
-        if (
-            typeof candidate === "string" &&
-            candidate.trim()
-        ) {
-            return candidate.trim();
-        }
-    }
-
-    return "";
-}
-
-/* =========================================================
-   DISPLAY SUMMARY
-========================================================= */
-
-function displaySummary(answer) {
-    if (!summaryOutput) {
-        return;
-    }
-
-    summaryOutput.className = "ai-response";
-
-    summaryOutput.innerHTML =
-        formatAIResponse(answer);
-
-    renderMath(summaryOutput);
-
-    summaryOutput.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
-    });
-}
-
-/* =========================================================
-   FORMAT AI RESPONSE
-========================================================= */
-
-function formatAIResponse(text) {
-    const raw = String(text || "");
-
-    if (
-        window.marked &&
-        typeof window.marked.parse === "function" &&
-        window.DOMPurify
-    ) {
-        return window.DOMPurify.sanitize(
-            window.marked.parse(raw, {
-                breaks: true,
-                gfm: true
-            })
-        );
-    }
-
-    return escapeHTML(raw)
-        .replace(/\n/g, "<br>");
-}
-
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
-
-function escapeHTML(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-/* =========================================================
-   RENDER MATH
-========================================================= */
-
-function renderMath(element) {
-    if (!element || !window.MathJax) {
-        return;
-    }
-
-    if (
-        typeof window.MathJax.typesetPromise ===
-        "function"
-    ) {
-        window.MathJax.typesetPromise([
-            element
-        ]).catch(error => {
-            console.warn(
-                "MathJax rendering error:",
+            console.error(
+                "Premium payment error:",
                 error
             );
-        });
-    }
-}
 
-/* =========================================================
-   LOADING STATE
-========================================================= */
+            alert(
+                error.message ||
+                "Unable to start payment. Please try again."
+            );
 
-function setLoadingState(isLoading) {
-    if (!summarizeBtn) {
-        return;
-    }
-
-    if (isLoading) {
-        summarizeBtn.disabled = true;
-
-        summarizeBtn.dataset.originalText =
-            summarizeBtn.textContent;
-
-        summarizeBtn.textContent =
-            "⏳ StudyMind AI is summarizing...";
-
-        if (summaryOutput) {
-            summaryOutput.className = "ai-response";
-
-            summaryOutput.innerHTML = `
-                <div style="
-                    padding:20px 0;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:30px;
-                        margin-bottom:10px;
-                    ">
-                        🧠
-                    </div>
-
-                    <strong>
-                        StudyMind AI is analyzing your material...
-                    </strong>
-
-                    <p style="
-                        opacity:0.7;
-                        margin-top:8px;
-                    ">
-                        Extracting key concepts, definitions,
-                        formulas and exam-relevant points.
-                    </p>
-                </div>
-            `;
+            return false;
         }
 
-    } else {
-        summarizeBtn.disabled = false;
-
-        summarizeBtn.textContent =
-            summarizeBtn.dataset.originalText ||
-            "✨ Summarize Notes";
-    }
-}
-
-/* =========================================================
-   ERROR MESSAGE
-========================================================= */
-
-function displayError(message) {
-    if (!summaryOutput) {
-        return;
     }
 
-    summaryOutput.className = "ai-response";
 
-    summaryOutput.innerHTML = `
-        <div style="
-            padding:18px;
-            border-radius:12px;
-        ">
-            <strong>
-                ⚠️ Unable to summarize
-            </strong>
+    /* =====================================================
+       AUTHENTICATION LISTENER
+    ===================================================== */
 
-            <p style="
-                margin-top:8px;
-                margin-bottom:0;
-            ">
-                ${escapeHTML(message)}
-            </p>
-        </div>
-    `;
-}
+    function registerAuthListener() {
 
-/* =========================================================
-   LIMIT MESSAGE
-========================================================= */
+        if (authListenerRegistered) return;
 
-function displayLimitMessage() {
-    if (!summaryOutput) {
-        return;
-    }
+        const client = getSupabaseClient();
 
-    summaryOutput.innerHTML = `
-        <div style="
-            padding:20px;
-            text-align:center;
-        ">
-            <div style="
-                font-size:34px;
-                margin-bottom:10px;
-            ">
-                🔒
-            </div>
+        if (!client?.auth?.onAuthStateChange) {
+            return;
+        }
 
-            <h3>
-                Free summaries used
-            </h3>
+        authListenerRegistered = true;
 
-            <p>
-                You have used all
-                ${FREE_SUMMARY_LIMIT}
-                free document summaries.
-            </p>
+        client.auth.onAuthStateChange(
+            function (event) {
 
-            <p style="opacity:0.75;">
-                Upgrade to Premium to continue
-                summarizing study material.
-            </p>
+                if (
+                    event === "SIGNED_IN" ||
+                    event === "SIGNED_OUT" ||
+                    event === "TOKEN_REFRESHED" ||
+                    event === "USER_UPDATED"
+                ) {
 
-            <button
-                type="button"
-                onclick="openPremiumMessage()"
-                class="primary-button"
-                style="margin-top:10px;"
-            >
-                ⭐ Explore Premium
-            </button>
-        </div>
-    `;
-}
+                    /*
+                     * Run after the Supabase callback
+                     * finishes to avoid interfering
+                     * with its authentication process.
+                     */
 
-/* =========================================================
-   PREMIUM PAGE
-========================================================= */
+                    Promise.resolve().then(() => {
 
-function openPremiumMessage() {
-    window.location.href = "premium.html";
-}
+                        loadStudyMindPremium(true);
 
-/* =========================================================
-   THEME
-========================================================= */
+                    });
 
-function setupTheme() {
-    /*
-       Keep the page's existing theme styling.
-       Premium authorization and global theme selection
-       should be handled by the shared theme controller.
-    */
+                }
 
-    const savedTheme =
-        localStorage.getItem("studyMindTheme");
-
-    if (savedTheme === "light") {
-        document.body.classList.add("light-mode");
-    } else {
-        document.body.classList.remove("light-mode");
-    }
-
-    updateThemeButton();
-
-    if (themeButton) {
-        themeButton.addEventListener(
-            "click",
-            toggleTheme
+            }
         );
+
     }
-}
 
-/* =========================================================
-   TOGGLE THEME
-========================================================= */
 
-function toggleTheme() {
-    const isLight =
-        document.body.classList.toggle("light-mode");
+    /* =====================================================
+       MODAL BUTTONS
+    ===================================================== */
 
-    localStorage.setItem(
-        "studyMindTheme",
-        isLight ? "light" : "dark"
+    function setupModalButtons() {
+
+        const closeButton = document.getElementById(
+            "closePremiumModal"
+        );
+
+        if (
+            closeButton &&
+            !closeButton.dataset.premiumInitialized
+        ) {
+
+            closeButton.dataset.premiumInitialized =
+                "true";
+
+            closeButton.addEventListener(
+                "click",
+                closePremiumModal
+            );
+
+        }
+
+        document
+            .querySelectorAll("[data-premium-provider]")
+            .forEach(button => {
+
+                if (button.dataset.premiumInitialized) {
+                    return;
+                }
+
+                button.dataset.premiumInitialized =
+                    "true";
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        beginPremiumPayment(
+                            button.dataset.premiumProvider
+                        );
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    async function initializePremium() {
+
+        registerAuthListener();
+
+        setupModalButtons();
+
+        await loadStudyMindPremium();
+
+    }
+
+
+    /* =====================================================
+       PUBLIC GLOBAL FUNCTIONS
+    ===================================================== */
+
+    window.isPremium = isPremium;
+
+    window.isStudyMindPremium =
+        isStudyMindPremium;
+
+    window.loadStudyMindPremium =
+        loadStudyMindPremium;
+
+    window.waitForPremiumStatus =
+        waitForPremiumStatus;
+
+    window.getStudyMindPremiumStatus =
+        getStudyMindPremiumStatus;
+
+    window.applyPremiumTheme =
+        applyPremiumTheme;
+
+    window.openPremiumOffer =
+        openPremiumOffer;
+
+    window.openPremiumModal =
+        openPremiumOffer;
+
+    window.closePremiumModal =
+        closePremiumModal;
+
+    window.beginPremiumPayment =
+        beginPremiumPayment;
+
+
+    /* =====================================================
+       START
+    ===================================================== */
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializePremium,
+            { once: true }
+        );
+
+    } else {
+
+        initializePremium();
+
+    }
+
+
+    /*
+     * Retry auth listener registration if the
+     * Supabase client becomes available later.
+     */
+
+    window.addEventListener(
+        "load",
+        registerAuthListener,
+        { once: true }
     );
 
-    updateThemeButton();
-}
 
-/* =========================================================
-   UPDATE THEME BUTTON
-========================================================= */
-
-function updateThemeButton() {
-    if (!themeButton) {
-        return;
-    }
-
-    const isLight =
-        document.body.classList.contains("light-mode");
-
-    themeButton.textContent =
-        isLight
-            ? "☀️ Light Mode"
-            : "🌙 Dark Mode";
-}
-
-/* =========================================================
-   GLOBAL FUNCTIONS
-========================================================= */
-
-window.summarizeDocument = summarizeDocument;
-window.handleDocumentUpload = handleDocumentUpload;
-window.toggleTheme = toggleTheme;
-window.openPremiumMessage = openPremiumMessage;
-window.isPremiumUser = isPremiumUser;
-window.refreshPremiumStatus = refreshPremiumStatus;
+})();
