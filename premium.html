@@ -1221,7 +1221,14 @@
           larger knowledge checks, unlimited Game Mode battles and more.
         </p>
 
-        <div id="premiumStatusCard"></div>
+       <div id="premiumStatusCard">
+  <div class="premium-status-heading">
+    Checking your Premium status...
+  </div>
+  <div class="premium-status-description">
+    Please wait while we verify your account.
+  </div>
+</div>
 
       </section>
 
@@ -1724,6 +1731,333 @@
 
 
   <script src="premium.js"></script>
+
+  <script>
+"use strict";
+
+/* =========================================================
+   STUDYMIND PREMIUM PAGE STATUS
+   ========================================================= */
+
+(async function initializePremiumPageStatus() {
+
+    const statusCard =
+        document.getElementById("premiumStatusCard");
+
+    const navStatus =
+        document.getElementById("premiumNavStatus");
+
+    const premiumButtons =
+        document.querySelectorAll(
+            ".plan.premium [data-premium-button], " +
+            ".bottom-cta [data-premium-button]"
+        );
+
+    const freeButton =
+        document.querySelector(
+            ".plan:not(.premium) [data-premium-button]"
+        );
+
+
+    function updateStatus(label, description, type) {
+
+        if (statusCard) {
+
+            statusCard.innerHTML = `
+                <div class="premium-status-heading">
+                    ${label}
+                </div>
+
+                <div class="premium-status-description">
+                    ${description}
+                </div>
+            `;
+
+        }
+
+        if (navStatus) {
+
+            navStatus.textContent = label;
+
+            navStatus.className =
+                "premium-nav-status " + type;
+
+        }
+
+    }
+
+
+    function updatePremiumButtons(label, disabled) {
+
+        premiumButtons.forEach(button => {
+
+            button.textContent = label;
+
+            button.disabled = disabled;
+
+            button.classList.toggle(
+                "premium-active",
+                disabled
+            );
+
+        });
+
+    }
+
+
+    function showFreeAccount() {
+
+        updateStatus(
+            "Free Plan",
+            "You are currently using the Free StudyMind plan. Upgrade to unlock unlimited Premium features.",
+            "free"
+        );
+
+        updatePremiumButtons(
+            "Unlock Premium 👑",
+            false
+        );
+
+        if (freeButton) {
+
+            freeButton.textContent =
+                "Current Plan";
+
+            freeButton.disabled = true;
+
+        }
+
+    }
+
+
+    function showPremiumAccount() {
+
+        updateStatus(
+            "Premium Active 👑",
+            "Your Premium access has been verified. You already have unlimited access to Premium features. No additional purchase is required.",
+            "active"
+        );
+
+        updatePremiumButtons(
+            "Premium Active ✓",
+            true
+        );
+
+        if (freeButton) {
+
+            freeButton.textContent =
+                "Your Previous Plan";
+
+            freeButton.disabled = true;
+
+        }
+
+    }
+
+
+    function showAdminAccount() {
+
+        updateStatus(
+            "Admin Access 👑",
+            "Your administrator account has full Premium access to StudyMind AI.",
+            "active"
+        );
+
+        updatePremiumButtons(
+            "Admin Access ✓",
+            true
+        );
+
+        if (freeButton) {
+
+            freeButton.textContent =
+                "Admin Account";
+
+            freeButton.disabled = true;
+
+        }
+
+    }
+
+
+    function showPendingAccount() {
+
+        updateStatus(
+            "Payment Pending",
+            "Your payment is awaiting confirmation. Your Premium access will become active once the payment is verified.",
+            "pending"
+        );
+
+        updatePremiumButtons(
+            "Payment Pending...",
+            true
+        );
+
+        if (freeButton) {
+
+            freeButton.textContent =
+                "Payment Pending";
+
+            freeButton.disabled = true;
+
+        }
+
+    }
+
+
+    try {
+
+        const client =
+            window.supabaseClient ||
+            window.studyMindSupabase ||
+            window.gameSupabase;
+
+        if (!client?.auth) {
+
+            updateStatus(
+                "Login Required",
+                "Please log in to check your Premium account status.",
+                "free"
+            );
+
+            updatePremiumButtons(
+                "Log in to Upgrade",
+                false
+            );
+
+            return;
+
+        }
+
+
+        const {
+            data,
+            error
+        } = await client.auth.getSession();
+
+        if (error) {
+            throw error;
+        }
+
+        const token =
+            data?.session?.access_token;
+
+        if (!token) {
+
+            updateStatus(
+                "Login Required",
+                "Please log in to view your Premium status and purchase options.",
+                "free"
+            );
+
+            updatePremiumButtons(
+                "Log in to Upgrade",
+                false
+            );
+
+            premiumButtons.forEach(button => {
+
+                button.onclick = function () {
+
+                    window.location.href =
+                        "login.html";
+
+                };
+
+            });
+
+            return;
+
+        }
+
+
+        const response = await fetch(
+            "/api/premium/status",
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+
+                cache: "no-store"
+            }
+        );
+
+
+        if (!response.ok) {
+            throw new Error(
+                "Unable to verify Premium status."
+            );
+        }
+
+
+        const result =
+            await response.json();
+
+
+        // Admin access always includes Premium.
+        if (result.isAdmin === true) {
+
+            showAdminAccount();
+
+            return;
+
+        }
+
+
+        if (result.premium === true) {
+
+            showPremiumAccount();
+
+            return;
+
+        }
+
+
+        // Only show pending when the server explicitly
+        // reports that payment is awaiting confirmation.
+        const paymentPending =
+            result.pending === true ||
+            result.paymentPending === true ||
+            result.paymentStatus === "pending" ||
+            result.status === "pending";
+
+        if (paymentPending) {
+
+            showPendingAccount();
+
+            return;
+
+        }
+
+
+        showFreeAccount();
+
+
+    } catch (error) {
+
+        console.error(
+            "Premium page verification error:",
+            error
+        );
+
+        updateStatus(
+            "Verification Unavailable",
+            "We couldn't verify your Premium status. Please refresh the page or try again later. No purchase is necessary until your account status has been checked.",
+            "pending"
+        );
+
+        updatePremiumButtons(
+            "Status Unavailable",
+            true
+        );
+
+    }
+
+})();
+</script>
 
 </body>
 </html>
