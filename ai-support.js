@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================================
@@ -6,12 +7,13 @@
 
    CONNECTS TO:
    /api/ask-ai
+   /api/premium/status
 
    FEATURES:
-   - Real OpenAI-powered responses
+   - Authenticated AI requests
+   - Verified Premium/Admin unlimited access
+   - Free 5-question daily limit
    - Current study-plan context
-   - Free 5-question limit
-   - Premium unlimited access
    - Quick prompts
    - Typing indicator
    - Chat history during session
@@ -28,56 +30,41 @@
 const AI_LIMIT = 5;
 
 const STORAGE = {
-
-    AI_COUNT:
-        "aiQuestionCount",
-
-    AI_DATE:
-        "aiQuestionDate",
-
-    PREMIUM:
-        "studyMindPremium",
-
-    PLAN:
-        "studyMindPlan",
-
-    USERNAME:
-        "studyMindUsername"
-
+    AI_COUNT: "aiQuestionCount",
+    AI_DATE: "aiQuestionDate",
+    PREMIUM: "studyMindPremium",
+    PLAN: "studyMindPlan",
+    USERNAME: "studyMindUsername"
 };
-
-
-/* =========================================================
-   SUPABASE
-========================================================= */
-
-const SUPABASE_URL =
-    "https://bicnrbqqvucgpbwudmit.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
-
-
-const supabaseClient =
-    window.supabase?.createClient
-        ? window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        )
-        : null;
 
 
 /* =========================================================
    STATE
 ========================================================= */
 
-let studyPlan =
-    loadJSON(
-        STORAGE.PLAN,
+let studyPlan = loadJSON(STORAGE.PLAN, null);
+
+let isSending = false;
+
+let premiumStatus = false;
+
+let premiumStatusLoaded = false;
+
+
+/* =========================================================
+   SUPABASE CLIENT
+========================================================= */
+
+function getSupabaseClient() {
+
+    return (
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        window.gameSupabase ||
         null
     );
 
-let isSending = false;
+}
 
 
 /* =========================================================
@@ -87,6 +74,9 @@ let isSending = false;
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
+
+        // Verify Premium/Admin status first.
+        await refreshPremiumStatus();
 
         await loadUser();
 
@@ -102,10 +92,341 @@ document.addEventListener(
 
         setupPremiumModal();
 
-        checkPremium();
-
     }
 );
+
+
+/* =========================================================
+   PREMIUM STATUS HELPERS
+========================================================= */
+
+function normalizePremiumResult(result) {
+
+    if (typeof result === "boolean") {
+        return result;
+    }
+
+    if (!result || typeof result !== "object") {
+        return null;
+    }
+
+    if (
+        result.isAdmin === true ||
+        result.admin === true ||
+        result.isPremium === true ||
+        result.premium === true
+    ) {
+        return true;
+    }
+
+    if (
+        result.isAdmin === false &&
+        result.isPremium === false
+    ) {
+        return false;
+    }
+
+    if (
+        result.admin === false &&
+        result.premium === false
+    ) {
+        return false;
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+   READ PREMIUM MANAGER
+========================================================= */
+
+function readPremiumManagerStatus() {
+
+    try {
+
+        if (
+            typeof window.getStudyMindPremiumStatus ===
+            "function"
+        ) {
+
+            const result =
+                window.getStudyMindPremiumStatus();
+
+            const status =
+                normalizePremiumResult(result);
+
+            if (status !== null) {
+                return status;
+            }
+
+        }
+
+        if (
+            typeof window.isStudyMindPremium ===
+            "function"
+        ) {
+
+            const result =
+                window.isStudyMindPremium();
+
+            const status =
+                normalizePremiumResult(result);
+
+            if (status !== null) {
+                return status;
+            }
+
+        }
+
+        if (
+            typeof window.isPremium ===
+            "function"
+        ) {
+
+            const result =
+                window.isPremium();
+
+            const status =
+                normalizePremiumResult(result);
+
+            if (status !== null) {
+                return status;
+            }
+
+        }
+
+        if (
+            typeof window.isStudyMindPremium ===
+            "boolean"
+        ) {
+
+            return window.isStudyMindPremium;
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to read Premium manager status:",
+            error
+        );
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+   VERIFY PREMIUM STATUS
+========================================================= */
+
+async function refreshPremiumStatus() {
+
+    premiumStatusLoaded = false;
+
+    try {
+
+        /*
+           First, wait for the shared premium.js
+           manager to finish checking the account.
+        */
+
+        if (
+            typeof window.waitForPremiumStatus ===
+            "function"
+        ) {
+
+            await window.waitForPremiumStatus();
+
+        }
+
+
+        let managerStatus =
+            readPremiumManagerStatus();
+
+
+        /*
+           If the manager has not completed its
+           check, ask it to load the status.
+        */
+
+        if (
+            managerStatus === null &&
+            typeof window.loadStudyMindPremium ===
+            "function"
+        ) {
+
+            await window.loadStudyMindPremium();
+
+            managerStatus =
+                readPremiumManagerStatus();
+
+        }
+
+
+        /*
+           If premium.js provides a verified result,
+           use it.
+        */
+
+        if (managerStatus !== null) {
+
+            premiumStatus =
+                managerStatus;
+
+            premiumStatusLoaded = true;
+
+            renderUsage();
+
+            return premiumStatus;
+
+        }
+
+
+        /*
+           Fallback: independently check the
+           server using the authenticated session.
+        */
+
+        const client =
+            getSupabaseClient();
+
+
+        if (!client) {
+
+            throw new Error(
+                "Supabase client is unavailable."
+            );
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await client.auth.getSession();
+
+
+        if (
+            error ||
+            !data?.session?.access_token
+        ) {
+
+            throw new Error(
+                "No authenticated session is available."
+            );
+
+        }
+
+
+        const response =
+            await fetch(
+                "/api/premium/status",
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            `Bearer ${data.session.access_token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+
+        const result =
+            await response.json().catch(
+                () => ({})
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result?.error ||
+                "Unable to verify Premium status."
+            );
+
+        }
+
+
+        const serverStatus =
+            normalizePremiumResult(result);
+
+
+        if (serverStatus === null) {
+
+            throw new Error(
+                "The Premium status response was invalid."
+            );
+
+        }
+
+
+        premiumStatus =
+            serverStatus;
+
+        premiumStatusLoaded = true;
+
+
+        renderUsage();
+
+
+        return premiumStatus;
+
+    } catch (error) {
+
+        console.warn(
+            "Premium verification:",
+            error.message
+        );
+
+
+        /*
+           Do not trust localStorage as proof of
+           Premium access.
+
+           If verification fails, leave the status
+           unverified. The backend remains the
+           authority when an AI request is sent.
+        */
+
+        premiumStatus = false;
+
+        premiumStatusLoaded = false;
+
+
+        renderUsage();
+
+
+        return null;
+
+    }
+
+}
+
+
+/* =========================================================
+   PREMIUM ACCESS
+========================================================= */
+
+function isPremium() {
+
+    return (
+        premiumStatusLoaded &&
+        premiumStatus === true
+    );
+
+}
 
 
 /* =========================================================
@@ -120,20 +441,26 @@ async function loadUser() {
         ) || "Student";
 
 
-    if (supabaseClient) {
+    const client =
+        getSupabaseClient();
+
+
+    if (client) {
 
         try {
 
             const {
-                data
+                data,
+                error
             } =
-                await supabaseClient.auth.getUser();
+                await client.auth.getUser();
+
 
             const user =
                 data?.user;
 
 
-            if (user) {
+            if (!error && user) {
 
                 username =
                     user.user_metadata?.username ||
@@ -146,7 +473,8 @@ async function loadUser() {
         } catch (error) {
 
             console.warn(
-                "Unable to load Supabase user."
+                "Unable to load Supabase user:",
+                error
             );
 
         }
@@ -177,9 +505,7 @@ async function loadUser() {
     if (avatarElement) {
 
         avatarElement.textContent =
-            username
-                .charAt(0)
-                .toUpperCase();
+            username.charAt(0).toUpperCase();
 
     }
 
@@ -253,46 +579,32 @@ function getCurrentTopic() {
     }
 
 
-    /* -------------------------------------------------------
-       NEW SUBJECT STRUCTURE
-    ------------------------------------------------------- */
-
     if (
-        Array.isArray(
-            studyPlan.subjects
-        )
+        Array.isArray(studyPlan.subjects)
     ) {
 
         for (
-            const subject
-            of studyPlan.subjects
+            const subject of studyPlan.subjects
         ) {
 
             const topics =
-                Array.isArray(
-                    subject.topics
-                )
+                Array.isArray(subject.topics)
                     ? subject.topics
                     : [];
 
 
             const unfinished =
-                topics.find(
-                    topic => {
+                topics.find(topic => {
 
-                        if (
-                            typeof topic ===
-                            "string"
-                        ) {
-
-                            return true;
-
-                        }
-
-                        return !topic.completed;
-
+                    if (
+                        typeof topic === "string"
+                    ) {
+                        return true;
                     }
-                );
+
+                    return !topic.completed;
+
+                });
 
 
             if (unfinished) {
@@ -305,11 +617,8 @@ function getCurrentTopic() {
                         "Subject",
 
                     name:
-                        typeof unfinished ===
-                        "string"
-
+                        typeof unfinished === "string"
                             ? unfinished
-
                             : unfinished.name ||
                               unfinished.topic ||
                               "Current topic"
@@ -323,20 +632,13 @@ function getCurrentTopic() {
     }
 
 
-    /* -------------------------------------------------------
-       FLAT TOPICS STRUCTURE
-    ------------------------------------------------------- */
-
     if (
-        Array.isArray(
-            studyPlan.topics
-        )
+        Array.isArray(studyPlan.topics)
     ) {
 
         const topic =
             studyPlan.topics.find(
-                item =>
-                    !item.completed
+                item => !item.completed
             );
 
 
@@ -366,35 +668,26 @@ function getCurrentTopic() {
 
 
 /* =========================================================
-   PREMIUM
-========================================================= */
-
-function isPremium() {
-
-    const value =
-        localStorage.getItem(
-            STORAGE.PREMIUM
-        );
-
-
-    return (
-        value === "true" ||
-        value === "1" ||
-        value === "premium"
-    );
-
-}
-
-
-/* =========================================================
-   DATE
+   LOCAL DATE
 ========================================================= */
 
 function getToday() {
 
-    return new Date()
-        .toISOString()
-        .split("T")[0];
+    const date = new Date();
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(date.getMonth() + 1)
+            .padStart(2, "0");
+
+    const day =
+        String(date.getDate())
+            .padStart(2, "0");
+
+
+    return `${year}-${month}-${day}`;
 
 }
 
@@ -415,9 +708,7 @@ function getQuestionCount() {
         );
 
 
-    if (
-        savedDate !== today
-    ) {
+    if (savedDate !== today) {
 
         localStorage.setItem(
             STORAGE.AI_DATE,
@@ -434,11 +725,17 @@ function getQuestionCount() {
     }
 
 
-    return Number(
-        localStorage.getItem(
-            STORAGE.AI_COUNT
-        ) || 0
-    );
+    const count =
+        Number(
+            localStorage.getItem(
+                STORAGE.AI_COUNT
+            ) || 0
+        );
+
+
+    return Number.isFinite(count)
+        ? Math.max(0, count)
+        : 0;
 
 }
 
@@ -470,14 +767,6 @@ function incrementQuestionCount() {
 
 function renderUsage() {
 
-    const count =
-        getQuestionCount();
-
-
-    const premium =
-        isPremium();
-
-
     const usageText =
         document.getElementById(
             "usageText"
@@ -490,21 +779,15 @@ function renderUsage() {
         );
 
 
-    if (premium) {
+    if (isPremium()) {
 
         if (usageText) {
-
-            usageText.textContent =
-                "Unlimited";
-
+            usageText.textContent = "Unlimited";
         }
 
 
         if (usageProgress) {
-
-            usageProgress.style.width =
-                "100%";
-
+            usageProgress.style.width = "100%";
         }
 
 
@@ -513,13 +796,16 @@ function renderUsage() {
     }
 
 
+    const count =
+        getQuestionCount();
+
+
     if (usageText) {
 
         usageText.textContent =
-            `${Math.min(
-                count,
-                AI_LIMIT
-            )} / ${AI_LIMIT}`;
+            premiumStatusLoaded
+                ? `${Math.min(count, AI_LIMIT)} / ${AI_LIMIT}`
+                : "Checking...";
 
     }
 
@@ -527,10 +813,12 @@ function renderUsage() {
     if (usageProgress) {
 
         usageProgress.style.width =
-            `${Math.min(
-                (count / AI_LIMIT) * 100,
-                100
-            )}%`;
+            premiumStatusLoaded
+                ? `${Math.min(
+                    (count / AI_LIMIT) * 100,
+                    100
+                )}%`
+                : "0%";
 
     }
 
@@ -589,9 +877,7 @@ function setupComposer() {
         "input",
         () => {
 
-            input.style.height =
-                "auto";
-
+            input.style.height = "auto";
 
             input.style.height =
                 `${Math.min(
@@ -612,44 +898,38 @@ function setupComposer() {
 function setupQuickPrompts() {
 
     document
-        .querySelectorAll(
-            ".prompt-button"
-        )
-        .forEach(
-            button => {
+        .querySelectorAll(".prompt-button")
+        .forEach(button => {
 
-                button.addEventListener(
-                    "click",
-                    () => {
+            button.addEventListener(
+                "click",
+                () => {
 
-                        const prompt =
-                            button.dataset.prompt;
+                    const prompt =
+                        button.dataset.prompt;
 
 
-                        const input =
-                            document.getElementById(
-                                "messageInput"
-                            );
+                    const input =
+                        document.getElementById(
+                            "messageInput"
+                        );
 
 
-                        if (!input) {
-                            return;
-                        }
-
-
-                        input.value =
-                            personalizePrompt(
-                                prompt
-                            );
-
-
-                        input.focus();
-
+                    if (!input) {
+                        return;
                     }
-                );
 
-            }
-        );
+
+                    input.value =
+                        personalizePrompt(prompt);
+
+
+                    input.focus();
+
+                }
+            );
+
+        });
 
 }
 
@@ -658,9 +938,7 @@ function setupQuickPrompts() {
    PERSONALIZE PROMPT
 ========================================================= */
 
-function personalizePrompt(
-    prompt
-) {
+function personalizePrompt(prompt) {
 
     const topic =
         getCurrentTopic();
@@ -714,12 +992,29 @@ async function sendMessage() {
     }
 
 
-    /* -------------------------------------------------------
-       FREE LIMIT
-    ------------------------------------------------------- */
+    /*
+       Refresh status if it has not been verified.
+
+       A failed frontend status check must not
+       block a request. The backend will enforce
+       the actual Free-user limit.
+    */
+
+    if (!premiumStatusLoaded) {
+
+        await refreshPremiumStatus();
+
+    }
+
+
+    /*
+       Only block locally when the server has
+       positively confirmed this is a Free account.
+    */
 
     if (
-        !isPremium() &&
+        premiumStatusLoaded &&
+        !premiumStatus &&
         getQuestionCount() >= AI_LIMIT
     ) {
 
@@ -735,8 +1030,7 @@ async function sendMessage() {
 
     input.value = "";
 
-    input.style.height =
-        "auto";
+    input.style.height = "auto";
 
 
     addMessage(
@@ -755,9 +1049,7 @@ async function sendMessage() {
             await callAI(text);
 
 
-        removeTypingMessage(
-            typing
-        );
+        removeTypingMessage(typing);
 
 
         const aiMessage =
@@ -767,17 +1059,20 @@ async function sendMessage() {
             );
 
 
+        await renderMath(aiMessage);
+
+
         /*
-           Render equations after the
-           message has entered the DOM.
+           Only maintain the local display counter
+           for verified Free accounts.
+
+           The backend controls the actual limit.
         */
 
-        await renderMath(
-            aiMessage
-        );
-
-
-        if (!isPremium()) {
+        if (
+            premiumStatusLoaded &&
+            !premiumStatus
+        ) {
 
             incrementQuestionCount();
 
@@ -791,15 +1086,35 @@ async function sendMessage() {
         );
 
 
-        removeTypingMessage(
-            typing
-        );
+        removeTypingMessage(typing);
 
 
-        addMessage(
-            "ai",
-            "I couldn't connect to StudyMind AI right now. Please try again in a moment."
-        );
+        /*
+           Only the actual daily-limit error
+           should open the Premium modal.
+        */
+
+        if (
+            error.code === "DAILY_AI_LIMIT_REACHED"
+        ) {
+
+            premiumStatus = false;
+
+            premiumStatusLoaded = true;
+
+            openPremiumModal();
+
+            renderUsage();
+
+        } else {
+
+            addMessage(
+                "ai",
+                error.message ||
+                "I couldn't connect to StudyMind AI right now. Please try again in a moment."
+            );
+
+        }
 
     } finally {
 
@@ -810,71 +1125,150 @@ async function sendMessage() {
 }
 
 
-
 /* =========================================================
-   CALL STUDYMIND AI — AUTHENTICATED REQUEST
+   CALL STUDYMIND AI
 ========================================================= */
 
 async function callAI(userMessage) {
-    const topic = getCurrentTopic();
 
-    const client = window.supabaseClient;
+    const topic =
+        getCurrentTopic();
+
+
+    const client =
+        getSupabaseClient();
+
 
     if (!client) {
+
         throw new Error(
             "Supabase is not initialized. Please refresh the page and sign in again."
         );
+
     }
 
-    // Get the authenticated user's current session.
-    const {
-        data: { session },
-        error: sessionError
-    } = await client.auth.getSession();
 
-    if (sessionError || !session?.access_token) {
+    const {
+        data,
+        error: sessionError
+    } =
+        await client.auth.getSession();
+
+
+    const session =
+        data?.session;
+
+
+    if (
+        sessionError ||
+        !session?.access_token
+    ) {
+
         throw new Error(
             "Please sign in again before using StudyMind AI."
         );
+
     }
 
-    const response = await fetch("/api/ask-ai", {
-        method: "POST",
 
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`
-        },
+    const response =
+        await fetch(
+            "/api/ask-ai",
+            {
+                method: "POST",
 
-        body: JSON.stringify({
-            message: userMessage,
-            subject: topic?.subject || "",
-            topic: topic?.name || "",
-            difficulty: "mixed",
-            type: "normal",
-            requestType: "normal",
-            mode: "normal"
-        })
-    });
+                headers: {
 
-    const data = await response.json().catch(() => ({}));
+                    "Content-Type":
+                        "application/json",
 
-    if (!response.ok || data?.success === false) {
-        throw new Error(
-            data?.error ||
-            `AI request failed: ${response.status}`
+                    "Authorization":
+                        `Bearer ${session.access_token}`
+
+                },
+
+                body: JSON.stringify({
+
+                    message: userMessage,
+
+                    subject:
+                        topic?.subject || "",
+
+                    topic:
+                        topic?.name || "",
+
+                    difficulty: "mixed",
+
+                    type: "normal",
+
+                    requestType: "normal",
+
+                    mode: "normal"
+
+                })
+
+            }
         );
+
+
+    const result =
+        await response.json().catch(
+            () => ({})
+        );
+
+
+    if (
+        !response.ok ||
+        result?.success === false
+    ) {
+
+        const error =
+            new Error(
+                result?.error ||
+                `AI request failed: ${response.status}`
+            );
+
+
+        /*
+           Recognize only the backend's
+           actual daily-limit error.
+        */
+
+        if (
+            result?.code === "DAILY_AI_LIMIT_REACHED" ||
+            result?.errorCode === "DAILY_AI_LIMIT_REACHED" ||
+            result?.error === "DAILY_AI_LIMIT_REACHED"
+        ) {
+
+            error.code =
+                "DAILY_AI_LIMIT_REACHED";
+
+        }
+
+
+        throw error;
+
     }
 
-    const reply = data?.reply;
 
-    if (typeof reply !== "string" || !reply.trim()) {
+    const reply =
+        result?.reply;
+
+
+    if (
+        typeof reply !== "string" ||
+        !reply.trim()
+    ) {
+
         throw new Error(
             "StudyMind AI returned an empty response."
         );
+
     }
 
+
     return reply.trim();
+
 }
 
 
@@ -882,10 +1276,7 @@ async function callAI(userMessage) {
    ADD MESSAGE
 ========================================================= */
 
-function addMessage(
-    role,
-    text
-) {
+function addMessage(role, text) {
 
     const container =
         document.getElementById(
@@ -910,9 +1301,7 @@ function addMessage(
 
 
     const wrapper =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     wrapper.className =
@@ -920,9 +1309,7 @@ function addMessage(
 
 
     const avatar =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     avatar.className =
@@ -936,9 +1323,7 @@ function addMessage(
 
 
     const content =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     content.className =
@@ -946,33 +1331,19 @@ function addMessage(
 
 
     const bubble =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     bubble.className =
         "message-bubble";
 
 
-    /*
-       textContent is deliberately kept here.
-
-       This prevents raw AI output from becoming
-       executable HTML.
-
-       MathJax reads the text afterward and
-       renders LaTeX safely.
-    */
-
-    bubble.textContent =
-        text;
+    // Safe rendering: never interpret AI output as HTML.
+    bubble.textContent = text;
 
 
     const time =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     time.className =
@@ -980,39 +1351,24 @@ function addMessage(
 
 
     time.textContent =
-        new Date()
-            .toLocaleTimeString(
-                [],
-                {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
+        new Date().toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
 
 
-    content.appendChild(
-        bubble
-    );
+    content.appendChild(bubble);
 
+    content.appendChild(time);
 
-    content.appendChild(
-        time
-    );
+    wrapper.appendChild(avatar);
 
+    wrapper.appendChild(content);
 
-    wrapper.appendChild(
-        avatar
-    );
-
-
-    wrapper.appendChild(
-        content
-    );
-
-
-    container.appendChild(
-        wrapper
-    );
+    container.appendChild(wrapper);
 
 
     container.scrollTop =
@@ -1028,9 +1384,7 @@ function addMessage(
    MATHJAX RENDERING
 ========================================================= */
 
-async function renderMath(
-    element
-) {
+async function renderMath(element) {
 
     if (
         !element ||
@@ -1080,13 +1434,10 @@ function addTypingMessage() {
 
 
     const wrapper =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
-    wrapper.className =
-        "message ai";
+    wrapper.className = "message ai";
 
 
     wrapper.innerHTML = `
@@ -1112,9 +1463,7 @@ function addTypingMessage() {
     `;
 
 
-    container.appendChild(
-        wrapper
-    );
+    container.appendChild(wrapper);
 
 
     container.scrollTop =
@@ -1130,9 +1479,7 @@ function addTypingMessage() {
    REMOVE TYPING
 ========================================================= */
 
-function removeTypingMessage(
-    element
-) {
+function removeTypingMessage(element) {
 
     if (element) {
         element.remove();
@@ -1148,9 +1495,7 @@ function removeTypingMessage(
 function setupClearChat() {
 
     document
-        .getElementById(
-            "clearChat"
-        )
+        .getElementById("clearChat")
         ?.addEventListener(
             "click",
             () => {
@@ -1217,9 +1562,7 @@ function setupClearChat() {
 function setupPremiumModal() {
 
     document
-        .getElementById(
-            "closePremiumModal"
-        )
+        .getElementById("closePremiumModal")
         ?.addEventListener(
             "click",
             closePremiumModal
@@ -1227,9 +1570,7 @@ function setupPremiumModal() {
 
 
     document
-        .getElementById(
-            "premiumButton"
-        )
+        .getElementById("premiumButton")
         ?.addEventListener(
             "click",
             () => {
@@ -1250,12 +1591,8 @@ function setupPremiumModal() {
 function openPremiumModal() {
 
     document
-        .getElementById(
-            "premiumModal"
-        )
-        ?.classList.remove(
-            "hidden"
-        );
+        .getElementById("premiumModal")
+        ?.classList.remove("hidden");
 
 }
 
@@ -1267,48 +1604,52 @@ function openPremiumModal() {
 function closePremiumModal() {
 
     document
-        .getElementById(
-            "premiumModal"
-        )
-        ?.classList.add(
-            "hidden"
-        );
+        .getElementById("premiumModal")
+        ?.classList.add("hidden");
 
 }
 
 
 /* =========================================================
-   PREMIUM STATE
+   PREMIUM STATUS EVENTS
 ========================================================= */
 
-function checkPremium() {
+window.addEventListener(
+    "studyMindPremiumChanged",
+    async () => {
 
-    renderUsage();
+        await refreshPremiumStatus();
 
-}
+        renderUsage();
+
+    }
+);
 
 
 /* =========================================================
-   WATCH FOR CHANGES
+   STORAGE EVENTS
 ========================================================= */
 
 window.addEventListener(
     "storage",
-    event => {
+    async event => {
 
         if (
-            event.key ===
-            STORAGE.PREMIUM
+            event.key === STORAGE.PREMIUM
         ) {
 
-            renderUsage();
+            /*
+               Do not trust the localStorage value.
+               Recheck the server instead.
+            */
+
+            await refreshPremiumStatus();
 
         }
 
 
         if (
-            event.key ===
-            STORAGE.PLAN
+            event.key === STORAGE.PLAN
         ) {
 
             studyPlan =
@@ -1317,34 +1658,19 @@ window.addEventListener(
                     null
                 );
 
-
             renderStudyContext();
 
         }
 
 
         if (
-            event.key ===
-            STORAGE.AI_COUNT
+            event.key === STORAGE.AI_COUNT ||
+            event.key === STORAGE.AI_DATE
         ) {
 
             renderUsage();
 
         }
-
-    }
-);
-
-
-/* =========================================================
-   STUDYMIND PREMIUM EVENT
-========================================================= */
-
-window.addEventListener(
-    "studyMindPremiumChanged",
-    () => {
-
-        renderUsage();
 
     }
 );
@@ -1354,17 +1680,12 @@ window.addEventListener(
    UTILITIES
 ========================================================= */
 
-function loadJSON(
-    key,
-    fallback
-) {
+function loadJSON(key, fallback) {
 
     try {
 
         const value =
-            localStorage.getItem(
-                key
-            );
+            localStorage.getItem(key);
 
 
         return value
@@ -1380,32 +1701,18 @@ function loadJSON(
 }
 
 
-function escapeHTML(
-    value
-) {
+function escapeHTML(value) {
 
-    return String(
-        value ?? ""
-    )
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    return String(value ?? "")
+
+        .replaceAll("&", "&amp;")
+
+        .replaceAll("<", "&lt;")
+
+        .replaceAll(">", "&gt;")
+
+        .replaceAll('"', "&quot;")
+
+        .replaceAll("'", "&#039;");
 
 }
