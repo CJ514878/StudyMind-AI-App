@@ -2,40 +2,78 @@
 /* =========================================================
    STUDYMIND AI — PREMIUM CHECKOUT
    PLAN-AWARE PAYSTACK + FLUTTERWAVE
+
+   PLANS:
+   Weekly:  ₦1,000
+   Monthly: ₦3,900
+   Yearly:  ₦46,000
+
+   SECURITY:
+   - Server controls all prices.
+   - Stripe checkout is temporarily disabled.
+   - Admin Premium is preserved.
+   - Active subscriptions prevent duplicate purchases.
+   - Active trials prevent duplicate purchases.
+   - Expired subscriptions allow renewal.
    ========================================================= */
 
 "use strict";
 
 const crypto = require("crypto");
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-/*
- * Prices are controlled by the server.
- * Never accept payment amounts from the browser.
- */
+/* =========================================================
+   ENVIRONMENT
+========================================================= */
+
+const SUPABASE_URL =
+    process.env.SUPABASE_URL;
+
+const SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const ANON_KEY =
+    process.env.SUPABASE_ANON_KEY;
+
+const ADMIN_EMAIL =
+    String(process.env.ADMIN_EMAIL || "")
+        .trim()
+        .toLowerCase();
+
+
+/* =========================================================
+   SERVER-CONTROLLED PLANS
+
+   Never accept prices or durations from the browser.
+========================================================= */
 
 const PLANS = {
     weekly: {
         amount: 1000,
         currency: "NGN",
-        duration: "7 days"
+        description: "7-day Premium subscription"
     },
 
     monthly: {
         amount: 3900,
         currency: "NGN",
-        duration: "1 calendar month"
+        description: "1-month Premium subscription"
     },
 
     yearly: {
         amount: 46000,
         currency: "NGN",
-        duration: "1 calendar year"
+        description: "1-year Premium subscription"
     }
 };
+
+
+/* =========================================================
+   ALLOWED PAYMENT PROVIDERS
+
+   Stripe is intentionally disabled until USD pricing
+   has been decided.
+========================================================= */
 
 const ALLOWED_PROVIDERS = [
     "paystack",
@@ -44,11 +82,15 @@ const ALLOWED_PROVIDERS = [
 
 
 /* =========================================================
-   RESPONSE
+   RESPONSE HELPER
 ========================================================= */
 
 function send(res, status, data) {
-    return res.status(status).json(data);
+
+    return res
+        .status(status)
+        .json(data);
+
 }
 
 
@@ -62,10 +104,13 @@ async function getUser(token) {
         `${SUPABASE_URL}/auth/v1/user`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 apikey: ANON_KEY
-            }
+            },
+
+            cache: "no-store"
         }
     );
 
@@ -74,6 +119,25 @@ async function getUser(token) {
     }
 
     return await response.json();
+
+}
+
+
+/* =========================================================
+   CHECK ADMIN ACCOUNT
+========================================================= */
+
+function isAdminUser(user) {
+
+    if (!ADMIN_EMAIL || !user?.email) {
+        return false;
+    }
+
+    return (
+        user.email.trim().toLowerCase() ===
+        ADMIN_EMAIL
+    );
+
 }
 
 
@@ -99,13 +163,16 @@ async function insertPendingPayment(record) {
                 Prefer: "return=representation"
             },
 
-            body: JSON.stringify(record)
+            body: JSON.stringify(record),
+
+            cache: "no-store"
         }
     );
 
     if (!response.ok) {
 
-        const errorText = await response.text();
+        const errorText =
+            await response.text();
 
         console.error(
             "Premium subscription insert failed:",
@@ -113,18 +180,25 @@ async function insertPendingPayment(record) {
         );
 
         throw new Error(
-            "Could not create Premium payment record."
+            "Could not create the Premium payment record."
         );
+
     }
 
     const rows = await response.json();
 
     return rows?.[0] || null;
+
 }
 
 
 /* =========================================================
-   CHECK EXISTING ACTIVE SUBSCRIPTION
+   CHECK ACTIVE PAID SUBSCRIPTION
+
+   Expired subscriptions do not block renewal.
+
+   Null expiry is not treated as permanent for ordinary
+   accounts. Admin access is handled separately.
 ========================================================= */
 
 async function hasActiveSubscription(userId) {
@@ -134,9 +208,11 @@ async function hasActiveSubscription(userId) {
         `?user_id=eq.${encodeURIComponent(userId)}` +
         `&status=eq.active` +
         `&is_premium=eq.true` +
-        `&select=id,expires_at`,
+        `&select=id,plan_type,expires_at`,
 
         {
+            method: "GET",
+
             headers: {
                 apikey: SERVICE_ROLE_KEY,
 
@@ -149,9 +225,16 @@ async function hasActiveSubscription(userId) {
     );
 
     if (!response.ok) {
+
+        console.error(
+            "Active subscription check failed:",
+            await response.text()
+        );
+
         throw new Error(
             "Could not check existing Premium status."
         );
+
     }
 
     const rows = await response.json();
@@ -160,23 +243,74 @@ async function hasActiveSubscription(userId) {
 
     return rows.some(row => {
 
-        /*
-         * A null expiry is treated as permanent here
-         * for compatibility with existing legacy records.
-         *
-         * The status API will separately enforce
-         * the account's actual Premium eligibility.
-         */
-
         if (!row.expires_at) {
-            return true;
+            return false;
         }
 
+        const expiry =
+            new Date(row.expires_at).getTime();
+
         return (
-            new Date(row.expires_at).getTime() > now
+            Number.isFinite(expiry) &&
+            expiry > now
         );
 
     });
+
+}
+
+
+/* =========================================================
+   CHECK ACTIVE FREE TRIAL
+
+   The premium_trials table enforces one trial per user.
+   This function only checks whether a trial is currently
+   active and unexpired.
+========================================================= */
+
+async function getActiveTrial(userId) {
+
+    const now = new Date().toISOString();
+
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/premium_trials` +
+        `?user_id=eq.${encodeURIComponent(userId)}` +
+        `&status=eq.active` +
+        `&expires_at=gt.${encodeURIComponent(now)}` +
+        `&select=user_id,starts_at,expires_at` +
+        `&limit=1`,
+
+        {
+            method: "GET",
+
+            headers: {
+                apikey: SERVICE_ROLE_KEY,
+
+                Authorization:
+                    `Bearer ${SERVICE_ROLE_KEY}`
+            },
+
+            cache: "no-store"
+        }
+    );
+
+    if (!response.ok) {
+
+        console.error(
+            "Trial check failed:",
+            await response.text()
+        );
+
+        throw new Error(
+            "Could not check your Premium trial status."
+        );
+
+    }
+
+    const rows = await response.json();
+
+    return rows?.[0] || null;
+
 }
 
 
@@ -186,10 +320,15 @@ async function hasActiveSubscription(userId) {
 
 async function createPaystackCheckout(user, planType) {
 
-    if (!process.env.PAYSTACK_SECRET_KEY) {
+    const secretKey =
+        process.env.PAYSTACK_SECRET_KEY;
+
+    if (!secretKey) {
+
         throw new Error(
-            "Paystack Secret Key is not configured."
+            "Paystack is not configured."
         );
+
     }
 
     const plan = PLANS[planType];
@@ -201,8 +340,7 @@ async function createPaystackCheckout(user, planType) {
             method: "POST",
 
             headers: {
-                Authorization:
-                    `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                Authorization: `Bearer ${secretKey}`,
 
                 "Content-Type": "application/json"
             },
@@ -213,7 +351,7 @@ async function createPaystackCheckout(user, planType) {
 
                 amount: plan.amount * 100,
 
-                currency: "NGN",
+                currency: plan.currency,
 
                 callback_url:
                     `${getBaseUrl()}/premium-success.html?provider=paystack`
@@ -231,10 +369,16 @@ async function createPaystackCheckout(user, planType) {
         !data?.data?.reference
     ) {
 
+        console.error(
+            "Paystack checkout error:",
+            data
+        );
+
         throw new Error(
             data?.message ||
             "Paystack could not create checkout."
         );
+
     }
 
     await insertPendingPayment({
@@ -250,15 +394,20 @@ async function createPaystackCheckout(user, planType) {
 
         amount: plan.amount,
 
-        currency: "NGN",
+        currency: plan.currency,
 
         status: "pending",
 
-        is_premium: false
+        is_premium: false,
+
+        is_trial: false,
+
+        renewal_type: "manual"
 
     });
 
     return {
+
         checkoutUrl:
             data.data.authorization_url,
 
@@ -266,8 +415,10 @@ async function createPaystackCheckout(user, planType) {
 
         amount: plan.amount,
 
-        currency: "NGN"
+        currency: plan.currency
+
     };
+
 }
 
 
@@ -277,10 +428,15 @@ async function createPaystackCheckout(user, planType) {
 
 async function createFlutterwaveCheckout(user, planType) {
 
-    if (!process.env.FLW_SECRET_KEY) {
+    const secretKey =
+        process.env.FLW_SECRET_KEY;
+
+    if (!secretKey) {
+
         throw new Error(
-            "Flutterwave Secret Key is not configured."
+            "Flutterwave is not configured."
         );
+
     }
 
     const plan = PLANS[planType];
@@ -297,8 +453,7 @@ async function createFlutterwaveCheckout(user, planType) {
             method: "POST",
 
             headers: {
-                Authorization:
-                    `Bearer ${process.env.FLW_SECRET_KEY}`,
+                Authorization: `Bearer ${secretKey}`,
 
                 "Content-Type": "application/json"
             },
@@ -309,7 +464,7 @@ async function createFlutterwaveCheckout(user, planType) {
 
                 amount: plan.amount,
 
-                currency: "NGN",
+                currency: plan.currency,
 
                 redirect_url:
                     `${getBaseUrl()}/premium-success.html?provider=flutterwave`,
@@ -342,10 +497,16 @@ async function createFlutterwaveCheckout(user, planType) {
         !data?.data?.link
     ) {
 
+        console.error(
+            "Flutterwave checkout error:",
+            data
+        );
+
         throw new Error(
             data?.message ||
             "Flutterwave could not create checkout."
         );
+
     }
 
     await insertPendingPayment({
@@ -360,23 +521,30 @@ async function createFlutterwaveCheckout(user, planType) {
 
         amount: plan.amount,
 
-        currency: "NGN",
+        currency: plan.currency,
 
         status: "pending",
 
-        is_premium: false
+        is_premium: false,
+
+        is_trial: false,
+
+        renewal_type: "manual"
 
     });
 
     return {
+
         checkoutUrl: data.data.link,
 
         planType,
 
         amount: plan.amount,
 
-        currency: "NGN"
+        currency: plan.currency
+
     };
+
 }
 
 
@@ -394,28 +562,42 @@ function getBaseUrl() {
         return productionUrl.startsWith("http")
             ? productionUrl
             : `https://${productionUrl}`;
+
     }
 
     if (process.env.VERCEL_URL) {
+
         return `https://${process.env.VERCEL_URL}`;
+
     }
 
     return "http://localhost:3000";
+
 }
 
 
 /* =========================================================
-   MAIN HANDLER
+   MAIN API HANDLER
 ========================================================= */
 
 module.exports = async function handler(req, res) {
+
+    /* ---------------------------------------------
+       METHOD
+    --------------------------------------------- */
 
     if (req.method !== "POST") {
 
         return send(res, 405, {
             error: "Method not allowed."
         });
+
     }
+
+
+    /* ---------------------------------------------
+       ENVIRONMENT CHECK
+    --------------------------------------------- */
 
     if (
         !SUPABASE_URL ||
@@ -427,7 +609,13 @@ module.exports = async function handler(req, res) {
             error:
                 "Supabase environment variables are missing."
         });
+
     }
+
+
+    /* ---------------------------------------------
+       AUTHORIZATION HEADER
+    --------------------------------------------- */
 
     const authorization =
         req.headers.authorization || "";
@@ -438,15 +626,26 @@ module.exports = async function handler(req, res) {
             error:
                 "You must be logged in to purchase Premium."
         });
+
     }
 
-    const token = authorization.slice(7).trim();
+    const token =
+        authorization.slice(7).trim();
+
+    if (!token) {
+
+        return send(res, 401, {
+            error: "Invalid login session."
+        });
+
+    }
+
 
     try {
 
-        /* ---------------------------------------------
+        /* -----------------------------------------
            AUTHENTICATE USER
-        --------------------------------------------- */
+        ----------------------------------------- */
 
         const user = await getUser(token);
 
@@ -455,49 +654,83 @@ module.exports = async function handler(req, res) {
             return send(res, 401, {
                 error: "Invalid login session."
             });
+
         }
 
 
-        /* ---------------------------------------------
+        /* -----------------------------------------
+           ADMIN CHECK
+        ----------------------------------------- */
+
+        if (isAdminUser(user)) {
+
+            return send(res, 409, {
+
+                error:
+                    "This Admin account already has permanent Premium access.",
+
+                isAdmin: true,
+
+                premium: true
+
+            });
+
+        }
+
+
+        /* -----------------------------------------
            VALIDATE PLAN
-        --------------------------------------------- */
+        ----------------------------------------- */
 
         const planType = String(
             req.body?.plan_type || ""
-        ).toLowerCase().trim();
+        )
+            .toLowerCase()
+            .trim();
 
-        if (!Object.prototype.hasOwnProperty.call(
-            PLANS,
-            planType
-        )) {
+        if (
+            !Object.prototype.hasOwnProperty.call(
+                PLANS,
+                planType
+            )
+        ) {
 
             return send(res, 400, {
                 error:
                     "Invalid plan. Choose weekly, monthly or yearly."
             });
+
         }
 
 
-        /* ---------------------------------------------
+        /* -----------------------------------------
            VALIDATE PROVIDER
-        --------------------------------------------- */
+        ----------------------------------------- */
 
         const provider = String(
             req.body?.provider || ""
-        ).toLowerCase().trim();
+        )
+            .toLowerCase()
+            .trim();
 
         if (!ALLOWED_PROVIDERS.includes(provider)) {
 
             return send(res, 400, {
+
                 error:
-                    "This payment provider is not currently available."
+                    "This payment provider is not currently available.",
+
+                availableProviders:
+                    ALLOWED_PROVIDERS
+
             });
+
         }
 
 
-        /* ---------------------------------------------
-           CHECK EXISTING PREMIUM ACCESS
-        --------------------------------------------- */
+        /* -----------------------------------------
+           CHECK ACTIVE PAID SUBSCRIPTION
+        ----------------------------------------- */
 
         const alreadyPremium =
             await hasActiveSubscription(user.id);
@@ -505,36 +738,72 @@ module.exports = async function handler(req, res) {
         if (alreadyPremium) {
 
             return send(res, 409, {
+
                 error:
-                    "This account already has Premium."
+                    "Your account already has an active Premium subscription.",
+
+                premium: true
+
             });
+
         }
 
 
-        /* ---------------------------------------------
+        /* -----------------------------------------
+           CHECK ACTIVE FREE TRIAL
+        ----------------------------------------- */
+
+        const activeTrial =
+            await getActiveTrial(user.id);
+
+        if (activeTrial) {
+
+            return send(res, 409, {
+
+                error:
+                    "Your free Premium trial is still active. You can purchase a plan after it expires.",
+
+                isTrial: true,
+
+                trialExpiresAt:
+                    activeTrial.expires_at
+
+            });
+
+        }
+
+
+        /* -----------------------------------------
            CREATE CHECKOUT
-        --------------------------------------------- */
+        ----------------------------------------- */
 
         let checkout;
 
         if (provider === "paystack") {
 
-            checkout = await createPaystackCheckout(
-                user,
-                planType
-            );
+            checkout =
+                await createPaystackCheckout(
+                    user,
+                    planType
+                );
 
-        } else {
+        } else if (provider === "flutterwave") {
 
-            checkout = await createFlutterwaveCheckout(
-                user,
-                planType
-            );
+            checkout =
+                await createFlutterwaveCheckout(
+                    user,
+                    planType
+                );
 
         }
 
 
+        /* -----------------------------------------
+           SUCCESS
+        ----------------------------------------- */
+
         return send(res, 200, checkout);
+
 
     } catch (error) {
 
@@ -544,9 +813,11 @@ module.exports = async function handler(req, res) {
         );
 
         return send(res, 500, {
+
             error:
                 error.message ||
                 "Could not create Premium checkout."
+
         });
 
     }
