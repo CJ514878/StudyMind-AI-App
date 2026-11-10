@@ -2,859 +2,1891 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyMind AI Premium</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <title>StudyMind AI — Premium</title>
+  <style>
+    /* =========================================================
+       STUDYMIND AI — PREMIUM PAGE
+       GOLD PREMIUM THEME
+    ========================================================= */
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-            background:
-                radial-gradient(
-                    circle at top,
-                    #3a2a00 0%,
-                    #15110a 35%,
-                    #080808 75%
-                );
-            color: #ffffff;
-        }
+    body {
+      background: #fcfaf3 !important;
+    }
 
-        .success-card {
-            width: min(520px, 100%);
-            padding: 42px 30px;
-            text-align: center;
-            border-radius: 24px;
-            background: rgba(24, 24, 24, 0.94);
-            border: 1px solid rgba(255, 193, 7, 0.35);
-            box-shadow:
-                0 25px 80px rgba(0, 0, 0, 0.55);
-        }
+    .premium-page {
+      --premium-bg: #fcfaf3;
+      --premium-card: rgba(255,255,255,.96);
+      --premium-text: #1d1a12;
+      --premium-muted: #716b5d;
+      --premium-gold: #d5a52a;
+      --premium-gold-light: #fff1b8;
+      --premium-gold-mid: #e8bc45;
+      --premium-gold-dark: #9a6505;
+      --premium-border: rgba(184,132,18,.20);
+      --premium-shadow: rgba(120,79,5,.14);
 
-        .icon {
-            width: 82px;
-            height: 82px;
-            margin: 0 auto 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 42px;
-            background: rgba(255, 193, 7, 0.12);
-            border: 1px solid rgba(255, 193, 7, 0.35);
-        }
+      min-height: 100vh;
+      width: 100%;
+      color: var(--premium-text) !important;
+      background:
+        radial-gradient(circle at 50% -10%,rgba(232,188,69,.18),transparent 40%),
+        linear-gradient(180deg,#fffdf7 0%,#fcfaf3 45%,#f8f1df 100%) !important;
+      font-family: Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      box-sizing: border-box;
+      position: relative;
+      isolation: isolate;
+      overflow-x: hidden;
+    }
 
-        h1 {
-            margin: 0 0 12px;
-            font-size: 32px;
-        }
+    .premium-page *,
+    .premium-page *::before,
+    .premium-page *::after {
+      box-sizing: border-box;
+    }
 
-        p {
-            margin: 0;
-            color: #cfcfcf;
-            line-height: 1.6;
-        }
+    /* DARK MODE */
 
-        #status {
-            margin-top: 24px;
-            min-height: 28px;
-            font-weight: 600;
-            line-height: 1.5;
-        }
+    .premium-page.premium-dark {
+      --premium-bg: #070b12;
+      --premium-card: rgba(18,20,25,.96);
+      --premium-text: #faf8f1;
+      --premium-muted: #aaa696;
+      --premium-gold: #d3a438;
+      --premium-gold-light: #f0cb68;
+      --premium-gold-mid: #b98522;
+      --premium-gold-dark: #704807;
+      --premium-border: rgba(211,164,56,.24);
+      --premium-shadow: rgba(0,0,0,.45);
 
-        .loading {
-            color: #ffd54f;
-        }
+      background:
+        radial-gradient(circle at 50% -10%,rgba(211,164,56,.16),transparent 42%),
+        linear-gradient(180deg,#0d121c 0%,#070b12 55%,#05070b 100%) !important;
+    }
 
-        .success {
-            color: #66e26f;
-        }
+    .premium-page-inner {
+      width: min(1180px,calc(100% - 32px));
+      margin: 0 auto;
+      padding-bottom: 70px;
+    }
 
-        .pending {
-            color: #ffd54f;
-        }
+    /* NAVIGATION */
 
-        .error {
-            color: #ff6b6b;
-        }
+    .premium-nav {
+      width: 100%;
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--premium-border);
+    }
 
-        .button {
-            display: none;
-            margin-top: 28px;
-            width: 100%;
-            padding: 14px 20px;
-            border: 0;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            color: #111;
-            background: #ffc107;
-            transition: background 0.2s ease;
-        }
+    .brand {
+      display: flex !important;
+      align-items: center;
+      gap: 11px;
+      color: var(--premium-text) !important;
+      text-decoration: none !important;
+      font-weight: 800;
+      font-size: 20px;
+    }
 
-        .button:hover {
-            background: #ffd54f;
-        }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: linear-gradient(135deg,var(--premium-gold-light),var(--premium-gold-mid)) !important;
+      color: #5f3d00 !important;
+      box-shadow: 0 8px 24px var(--premium-shadow);
+    }
 
-        .button:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
+    .brand-name {
+      color: var(--premium-text) !important;
+    }
 
-        .small-note {
-            margin-top: 18px;
-            font-size: 13px;
-            color: #999;
-        }
+    .premium-nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+    }
 
-        @media (max-width: 480px) {
-            .success-card {
-                padding: 34px 22px;
-            }
+    .premium-nav-links a {
+      color: var(--premium-muted) !important;
+      text-decoration: none !important;
+      font-size: 14px;
+      font-weight: 700;
+      transition: color .2s ease;
+    }
 
-            h1 {
-                font-size: 26px;
-            }
-        }
-    </style>
+    .premium-nav-links a:hover,
+    .premium-nav-links a.nav-active {
+      color: var(--premium-gold-dark) !important;
+    }
+
+    .premium-dark .premium-nav-links a:hover,
+    .premium-dark .premium-nav-links a.nav-active {
+      color: var(--premium-gold-light) !important;
+    }
+
+    .premium-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .premium-nav-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--premium-border);
+      background: rgba(211,164,56,.10);
+      color: var(--premium-gold-dark);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .premium-dark .premium-nav-status {
+      color: var(--premium-gold-light);
+    }
+
+    .premium-nav-status.active {
+      background: rgba(211,164,56,.16);
+      border-color: var(--premium-gold);
+    }
+
+    .premium-nav-status.pending {
+      background: rgba(230,160,40,.12);
+      color: #a66b08;
+    }
+
+    .premium-nav-status.free {
+      background: rgba(120,120,120,.08);
+    }
+
+    .back-home {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 17px;
+      border-radius: 12px;
+      border: 1px solid var(--premium-border) !important;
+      color: var(--premium-gold-dark) !important;
+      background: rgba(255,255,255,.55) !important;
+      text-decoration: none !important;
+      font-weight: 700;
+      transition: transform .2s ease,background .2s ease;
+    }
+
+    .premium-dark .back-home {
+      color: var(--premium-gold-light) !important;
+      background: rgba(211,164,56,.08) !important;
+    }
+
+    .back-home:hover {
+      transform: translateY(-2px);
+      background: var(--premium-gold-light) !important;
+    }
+
+    /* HERO */
+
+    .hero {
+      text-align: center;
+      padding: 72px 0 55px;
+    }
+
+    .premium-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 15px;
+      border-radius: 999px;
+      background: linear-gradient(135deg,var(--premium-gold-light),rgba(232,188,69,.45)) !important;
+      border: 1px solid var(--premium-border) !important;
+      color: var(--premium-gold-dark) !important;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+
+    .premium-dark .premium-pill {
+      color: var(--premium-gold-light) !important;
+      background: rgba(211,164,56,.13) !important;
+    }
+
+    .hero h1 {
+      margin: 22px 0 14px;
+      color: var(--premium-text) !important;
+      font-size: clamp(40px,7vw,70px);
+      line-height: 1.03;
+      letter-spacing: -.045em;
+      font-weight: 900;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg,var(--premium-gold-dark),var(--premium-gold),var(--premium-gold-mid));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .premium-dark .hero h1 span {
+      background: linear-gradient(135deg,var(--premium-gold-light),var(--premium-gold),var(--premium-gold-mid));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 0 auto;
+      color: var(--premium-muted) !important;
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    /* STATUS CARD */
+
+    #premiumStatusCard {
+      max-width: 720px;
+      margin: 30px auto 0;
+      padding: 18px 22px;
+      border-radius: 18px;
+      border: 1px solid var(--premium-border) !important;
+      background: var(--premium-card) !important;
+      color: var(--premium-text) !important;
+      box-shadow: 0 15px 45px var(--premium-shadow);
+      text-align: left;
+    }
+
+    .premium-status-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 7px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .premium-status-description {
+      color: var(--premium-muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* PLANS */
+
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .plan {
+      position: relative;
+      padding: 32px;
+      border-radius: 25px;
+      border: 1px solid var(--premium-border) !important;
+      background: var(--premium-card) !important;
+      color: var(--premium-text) !important;
+      box-shadow: 0 20px 55px var(--premium-shadow);
+      overflow: hidden;
+    }
+
+    .plan.premium {
+      border: 2px solid var(--premium-gold) !important;
+      background: linear-gradient(145deg,rgba(255,247,208,.97),rgba(255,255,255,.97)) !important;
+      box-shadow: 0 22px 65px rgba(154,101,5,.18);
+    }
+
+    .premium-dark .plan.premium {
+      background: linear-gradient(145deg,rgba(47,38,19,.97),rgba(18,20,25,.98)) !important;
+      box-shadow: 0 22px 65px rgba(211,164,56,.12);
+    }
+
+    .popular {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg,var(--premium-gold-light),var(--premium-gold-mid)) !important;
+      color: #5b3b00 !important;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .plan-name {
+      margin-bottom: 12px;
+      color: var(--premium-muted) !important;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .plan h2 {
+      margin: 0 0 10px;
+      color: var(--premium-text) !important;
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .plan.premium h2 {
+      color: var(--premium-gold-dark) !important;
+    }
+
+    .premium-dark .plan.premium h2 {
+      color: var(--premium-gold-light) !important;
+    }
+
+    .plan-description {
+      margin-bottom: 24px;
+      color: var(--premium-muted) !important;
+      line-height: 1.6;
+    }
+
+    .plan-list {
+      list-style: none;
+      margin: 0 0 28px;
+      padding: 0;
+    }
+
+    .plan-list li {
+      display: flex;
+      gap: 10px;
+      margin: 13px 0;
+      color: var(--premium-text) !important;
+      line-height: 1.5;
+    }
+
+    .plan-list li::before {
+      content: "✓";
+      flex: 0 0 auto;
+      color: var(--premium-gold-dark) !important;
+      font-weight: 900;
+    }
+
+    .premium-dark .plan-list li::before {
+      color: var(--premium-gold-light) !important;
+    }
+
+    /* BUTTONS */
+
+    .premium-button {
+      width: 100%;
+      min-height: 52px;
+      padding: 13px 20px;
+      border: 0 !important;
+      border-radius: 15px;
+      background: linear-gradient(135deg,var(--premium-gold-light),var(--premium-gold-mid),var(--premium-gold-dark)) !important;
+      color: #4e3200 !important;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(154,101,5,.22);
+      transition: transform .2s ease,box-shadow .2s ease;
+    }
+
+    .premium-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(154,101,5,.30);
+    }
+
+    .premium-button:disabled {
+      opacity: .8;
+      cursor: default;
+      transform: none;
+    }
+
+    .premium-button.secondary {
+      margin-top: 12px;
+      border: 1px solid var(--premium-gold) !important;
+      background: transparent !important;
+      color: var(--premium-gold-dark) !important;
+      box-shadow: none;
+    }
+
+    .premium-dark .premium-button.secondary {
+      color: var(--premium-gold-light) !important;
+    }
+
+    /* SECTIONS */
+
+    .section {
+      margin-top: 80px;
+    }
+
+    .section-heading {
+      margin-bottom: 28px;
+      color: var(--premium-text) !important;
+      text-align: center;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+
+    .benefits {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 18px;
+    }
+
+    .benefit {
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid var(--premium-border) !important;
+      background: var(--premium-card) !important;
+      color: var(--premium-text) !important;
+      box-shadow: 0 14px 40px var(--premium-shadow);
+    }
+
+    .benefit-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 17px;
+      border-radius: 14px;
+      background: linear-gradient(135deg,var(--premium-gold-light),rgba(232,188,69,.55)) !important;
+      color: #654200 !important;
+      font-size: 23px;
+    }
+
+    .premium-dark .benefit-icon {
+      background: rgba(211,164,56,.15) !important;
+      color: var(--premium-gold-light) !important;
+    }
+
+    .benefit h3 {
+      margin: 0 0 9px;
+      color: var(--premium-text) !important;
+      font-size: 18px;
+    }
+
+    .benefit p {
+      margin: 0;
+      color: var(--premium-muted) !important;
+      line-height: 1.6;
+    }
+
+    /* COMPARISON */
+
+    .comparison {
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid var(--premium-border) !important;
+      background: var(--premium-card) !important;
+      box-shadow: 0 18px 50px var(--premium-shadow);
+    }
+
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      border-bottom: 1px solid var(--premium-border);
+    }
+
+    .comparison-row:last-child {
+      border-bottom: 0;
+    }
+
+    .comparison-row > div {
+      padding: 18px 20px;
+      color: var(--premium-text) !important;
+    }
+
+    .comparison-header {
+      font-weight: 900;
+      background: rgba(211,164,56,.08) !important;
+    }
+
+    .comparison-premium {
+      background: rgba(211,164,56,.08) !important;
+      color: var(--premium-gold-dark) !important;
+      font-weight: 900;
+    }
+
+    .premium-dark .comparison-premium {
+      color: var(--premium-gold-light) !important;
+    }
+
+    .comparison-check {
+      color: var(--premium-gold-dark) !important;
+      font-weight: 900;
+    }
+
+    .premium-dark .comparison-check {
+      color: var(--premium-gold-light) !important;
+    }
+
+    /* BOTTOM CTA */
+
+    .bottom-cta {
+      margin-top: 70px;
+      padding: 48px 25px;
+      border-radius: 28px;
+      text-align: center;
+      border: 1px solid var(--premium-border) !important;
+      background: linear-gradient(135deg,rgba(255,241,184,.65),rgba(232,188,69,.22)) !important;
+    }
+
+    .premium-dark .bottom-cta {
+      background: linear-gradient(135deg,rgba(112,72,7,.30),rgba(211,164,56,.10)) !important;
+    }
+
+    .bottom-cta h2 {
+      margin: 0 0 12px;
+      color: var(--premium-text) !important;
+      font-size: 32px;
+      font-weight: 900;
+    }
+
+    .bottom-cta p {
+      margin: 0 0 25px;
+      color: var(--premium-muted) !important;
+    }
+
+    /* PAYMENT MODAL */
+
+    .study-mind-premium-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 2147483000 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 20px !important;
+      background: rgba(0,0,0,.68) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .study-mind-premium-modal {
+      width: min(560px,100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 32px;
+      border-radius: 26px;
+      border: 1px solid var(--premium-gold) !important;
+      background: linear-gradient(145deg,#fffdf7,#f8f1df) !important;
+      color: #1d1a12 !important;
+      box-shadow: 0 30px 100px rgba(0,0,0,.38);
+    }
+
+    .premium-dark .study-mind-premium-modal {
+      background: linear-gradient(145deg,#17150f,#0e1015) !important;
+      color: #faf8f1 !important;
+    }
+
+    .premium-modal-close {
+      float: right;
+      width: 38px;
+      height: 38px;
+      border: 0 !important;
+      border-radius: 50%;
+      background: rgba(211,164,56,.10) !important;
+      color: var(--premium-gold-dark) !important;
+      font-size: 25px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .premium-modal-icon {
+      width: 65px;
+      height: 65px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 17px;
+      border-radius: 19px;
+      background: linear-gradient(135deg,var(--premium-gold-light),var(--premium-gold-mid)) !important;
+      font-size: 31px;
+    }
+
+    .premium-modal-label {
+      color: var(--premium-gold-dark) !important;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+
+    .study-mind-premium-modal h2 {
+      margin: 10px 0 12px;
+      color: inherit !important;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .premium-modal-description {
+      color: var(--premium-muted) !important;
+      line-height: 1.6;
+    }
+
+    .premium-benefits {
+      display: grid;
+      gap: 11px;
+      margin: 22px 0;
+    }
+
+    .premium-benefits > div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: inherit !important;
+    }
+
+    .premium-benefits span {
+      color: var(--premium-gold-dark) !important;
+      font-weight: 900;
+    }
+
+    .premium-payment-title {
+      margin: 25px 0 12px;
+      color: inherit !important;
+      font-weight: 900;
+    }
+
+    .premium-payment-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .premium-payment-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 16px;
+      border: 1px solid var(--premium-border) !important;
+      border-radius: 14px;
+      background: rgba(255,255,255,.72) !important;
+      color: #1d1a12 !important;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .premium-dark .premium-payment-button {
+      background: rgba(255,255,255,.04) !important;
+      color: #faf8f1 !important;
+    }
+
+    .premium-payment-button:hover {
+      border-color: var(--premium-gold) !important;
+      background: var(--premium-gold-light) !important;
+    }
+
+    .premium-payment-button > span:last-child {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .premium-payment-button small {
+      color: var(--premium-muted) !important;
+    }
+
+    .premium-secure-note {
+      margin-top: 17px;
+      color: var(--premium-muted) !important;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .premium-payment-status {
+      margin-top: 15px;
+      color: var(--premium-text) !important;
+      font-size: 14px;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 900px) {
+      .premium-nav {
+        justify-content: center;
+      }
+
+      .premium-nav-links {
+        order: 3;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 18px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .premium-page-inner {
+        width: min(100% - 22px,1180px);
+      }
+
+      .hero {
+        padding: 52px 0 40px;
+      }
+
+      .plans,
+      .benefits {
+        grid-template-columns: 1fr;
+      }
+
+      .plan {
+        padding: 25px;
+      }
+
+      .comparison {
+        overflow-x: auto;
+      }
+
+      .comparison-row {
+        min-width: 650px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .premium-nav {
+        gap: 14px;
+      }
+
+      .premium-nav-links {
+        gap: 12px 17px;
+      }
+
+      .premium-nav-links a {
+        font-size: 12px;
+      }
+
+      .premium-nav-right {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .premium-nav-status {
+        font-size: 10px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-    <main class="success-card">
+<div class="premium-page" id="premiumPage">
 
-        <div
-            class="icon"
-            id="statusIcon"
-        >
-            ⏳
+  <div class="premium-page-inner">
+
+    <!-- NAVIGATION -->
+
+    <nav class="premium-nav">
+
+      <a href="index.html" class="brand">
+        <span class="brand-icon">👑</span>
+        <span class="brand-name">StudyMind AI</span>
+      </a>
+
+      <div class="premium-nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="ai-support.html">AI Support</a>
+        <a href="score.html">Study Score</a>
+        <a href="premium.html" class="nav-active">Premium</a>
+      </div>
+
+      <div class="premium-nav-right">
+        <span id="premiumNavStatus" class="premium-nav-status">
+          Checking...
+        </span>
+
+        <a href="index.html" class="back-home">← Home</a>
+      </div>
+
+    </nav>
+
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+      <span class="premium-pill">
+        ✦ STUDYMIND AI PREMIUM
+      </span>
+
+      <h1>
+        Study smarter.<br>
+        <span>Go Premium.</span>
+      </h1>
+
+      <p>
+        Unlock the full StudyMind experience with unlimited AI assistance,
+        larger knowledge checks, unlimited Game Mode battles and more.
+      </p>
+
+      <div id="premiumStatusCard">
+        <div class="premium-status-heading">
+          Checking your Premium status...
         </div>
 
-        <h1 id="title">
-            Verifying your Premium payment...
-        </h1>
+        <div class="premium-status-description">
+          Please wait while we verify your account.
+        </div>
+      </div>
 
-        <p id="message">
-            Please wait while StudyMind AI securely
-            confirms your payment.
+    </section>
+
+
+    <!-- PLANS -->
+
+    <section class="plans">
+
+      <div class="plan">
+
+        <div class="plan-name">Free</div>
+
+        <h2>Free</h2>
+
+        <p class="plan-description">
+          Everything you need to get started with StudyMind AI.
         </p>
 
-        <div
-            id="status"
-            class="loading"
-            role="status"
-            aria-live="polite"
-        >
-            Verifying payment...
-        </div>
+        <ul class="plan-list">
+          <li>AI study assistance</li>
+          <li>Knowledge checks</li>
+          <li>Study plans</li>
+          <li>Game Mode</li>
+          <li>Study Timer</li>
+        </ul>
 
         <button
-            type="button"
-            id="continueButton"
-            class="button"
+          type="button"
+          class="premium-button"
+          data-premium-button
         >
-            Continue to Premium 👑
+          Current Plan
         </button>
 
-        <p class="small-note">
-            Your payment is checked securely by StudyMind AI.
+      </div>
+
+
+      <div class="plan premium">
+
+        <div class="popular">MOST POWERFUL</div>
+
+        <div class="plan-name">Premium</div>
+
+        <h2>Premium 👑</h2>
+
+        <p class="plan-description">
+          Unlock the complete StudyMind AI experience.
         </p>
 
-    </main>
+        <ul class="plan-list">
+          <li>Unlimited AI tools</li>
+          <li>5–60 question knowledge checks</li>
+          <li>Unlimited Game Mode battles</li>
+          <li>Premium 1v1 access</li>
+          <li>Premium gold experience</li>
+        </ul>
+
+        <button
+          type="button"
+          class="premium-button"
+          data-premium-trial
+        >
+          Start 7-Day Free Trial ✨
+        </button>
+
+        <button
+          type="button"
+          class="premium-button secondary"
+          data-premium-button
+        >
+          View Premium Options 👑
+        </button>
+
+        <p class="premium-secure-note">
+          One free trial per account. No automatic renewal.
+          Choose a paid plan separately when you're ready.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- BENEFITS -->
+
+    <section class="section">
+
+      <h2 class="section-heading">
+        Everything you need to study at your best
+      </h2>
 
+      <div class="benefits">
 
-    <!-- Supabase -->
+        <div class="benefit">
+          <div class="benefit-icon">🤖</div>
+          <h3>Unlimited AI</h3>
+          <p>Get unlimited access to StudyMind's AI-powered study tools.</p>
+        </div>
+
+        <div class="benefit">
+          <div class="benefit-icon">🧠</div>
+          <h3>Knowledge Checks</h3>
+          <p>Test yourself with larger knowledge checks from 5 to 60 questions.</p>
+        </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <div class="benefit">
+          <div class="benefit-icon">🎮</div>
+          <h3>Unlimited Game Mode</h3>
+          <p>Keep playing Game Mode battles without the Free-plan limit.</p>
+        </div>
 
-    <script src="supabase.js"></script>
+        <div class="benefit">
+          <div class="benefit-icon">⚔️</div>
+          <h3>Premium 1v1</h3>
+          <p>Access the Premium 1v1 experience and compete with other students.</p>
+        </div>
 
+        <div class="benefit">
+          <div class="benefit-icon">👑</div>
+          <h3>Premium Experience</h3>
+          <p>Enjoy the special gold Premium experience throughout StudyMind AI.</p>
+        </div>
 
-    <script>
-        "use strict";
+        <div class="benefit">
+          <div class="benefit-icon">📚</div>
+          <h3>Keep Studying</h3>
+          <p>Your existing study plans, progress and learning experience remain available.</p>
+        </div>
 
+      </div>
+
+    </section>
 
-        /* =====================================================
-           ELEMENTS
-        ===================================================== */
 
-        const title =
-            document.getElementById("title");
+    <!-- COMPARISON -->
 
-        const message =
-            document.getElementById("message");
+    <section class="section">
 
-        const status =
-            document.getElementById("status");
+      <h2 class="section-heading">Free vs Premium</h2>
 
-        const icon =
-            document.getElementById("statusIcon");
+      <div class="comparison">
 
-        const continueButton =
-            document.getElementById("continueButton");
+        <div class="comparison-row comparison-header">
+          <div>Feature</div>
+          <div>Free</div>
+          <div class="comparison-premium">Premium</div>
+        </div>
 
+        <div class="comparison-row">
+          <div>AI assistance</div>
+          <div>Limited</div>
+          <div class="comparison-premium comparison-check">✓ Unlimited</div>
+        </div>
 
-        /* =====================================================
-           URL PARAMETERS
-        ===================================================== */
+        <div class="comparison-row">
+          <div>Knowledge checks</div>
+          <div>5 questions</div>
+          <div class="comparison-premium comparison-check">✓ Up to 60</div>
+        </div>
 
-        const params =
-            new URLSearchParams(
-                window.location.search
-            );
-
-        const transactionId =
-            params.get("transaction_id") || "";
-
-        const stripeSessionId =
-            params.get("session_id") || "";
-
-        const flutterwaveReference =
-            params.get("tx_ref") || "";
-
-        const paystackReference =
-            params.get("reference") || "";
-
-
-        /*
-         * Identify the payment provider.
-         */
-
-        const provider =
-            (
-                params.get("provider") ||
-                (
-                    paystackReference
-                        ? "paystack"
-                        : transactionId || flutterwaveReference
-                            ? "flutterwave"
-                            : stripeSessionId
-                                ? "stripe"
-                                : ""
-                )
-            )
-            .toLowerCase()
-            .trim();
-
-
-        /*
-         * Select the appropriate payment reference.
-         */
-
-        const reference =
-            provider === "paystack"
-                ? paystackReference
-                : provider === "flutterwave"
-                    ? flutterwaveReference || transactionId
-                    : provider === "stripe"
-                        ? stripeSessionId
-                        : "";
-
-
-        /* =====================================================
-           STATE
-        ===================================================== */
-
-        let verificationInProgress = false;
-
-        let paymentVerified = false;
-
-        let paymentPending = false;
-
-        let retryCount = 0;
-
-        const MAX_AUTOMATIC_RETRIES = 5;
-
-        const RETRY_DELAY = 3000;
-
-
-        /* =====================================================
-           DISPLAY HELPERS
-        ===================================================== */
-
-        function showLoading(text) {
-
-            icon.textContent = "⏳";
-
-            title.textContent =
-                "Verifying your Premium payment...";
-
-            message.textContent =
-                "Please wait while StudyMind AI securely confirms your payment.";
-
-            status.textContent =
-                text || "Verifying payment...";
-
-            status.className = "loading";
-
-            continueButton.style.display = "none";
-
-        }
-
-
-        function showSuccess() {
-
-            paymentVerified = true;
-
-            paymentPending = false;
-
-            icon.textContent = "👑";
-
-            title.textContent =
-                "Premium Activated!";
-
-            message.textContent =
-                "Your StudyMind AI Premium access is now active.";
-
-            status.textContent =
-                "✓ Payment verified successfully.";
-
-            status.className = "success";
-
-            continueButton.textContent =
-                "Continue to Premium 👑";
-
-            continueButton.style.display =
-                "block";
-
-        }
-
-
-        function showPending(messageText) {
-
-            paymentPending = true;
-
-            icon.textContent = "⏳";
-
-            title.textContent =
-                "Payment is being confirmed";
-
-            message.textContent =
-                "Your payment may have been received, but confirmation is not complete yet. You do not need to pay again.";
-
-            status.textContent =
-                messageText ||
-                "Waiting for payment confirmation...";
-
-            status.className = "pending";
-
-            continueButton.textContent =
-                "Check Payment Again";
-
-            continueButton.style.display =
-                "block";
-
-        }
-
-
-        function showError(error) {
-
-            console.error(
-                "Premium verification failed:",
-                error
-            );
-
-            paymentPending = false;
-
-            icon.textContent = "⚠️";
-
-            title.textContent =
-                "We couldn't verify your payment";
-
-            message.textContent =
-                "Your payment may still be processing. Please check your payment status before attempting another purchase.";
-
-            status.textContent =
-                error?.message ||
-                "Payment verification could not be completed.";
-
-            status.className = "error";
-
-            continueButton.textContent =
-                "Return to Premium";
-
-            continueButton.style.display =
-                "block";
-
-        }
-
-
-        /* =====================================================
-           SUPABASE AUTHENTICATION
-        ===================================================== */
-
-        async function getAccessToken() {
-
-            if (!window.supabaseClient) {
-
-                throw new Error(
-                    "Supabase client is not available. Please refresh the page."
-                );
-
-            }
-
-            const {
-                data,
-                error
-            } = await window.supabaseClient
-                .auth
-                .getSession();
-
-
-            if (error) {
-
-                throw error;
-
-            }
-
-
-            const token =
-                data?.session?.access_token;
-
-
-            if (!token) {
-
-                throw new Error(
-                    "Your login session could not be found. Please sign in again."
-                );
-
-            }
-
-
-            return token;
-
-        }
-
-
-        /* =====================================================
-           VALIDATE PAYMENT PARAMETERS
-        ===================================================== */
-
-        function validatePaymentParameters() {
-
-            if (!provider) {
-
-                throw new Error(
-                    "Payment provider was not specified."
-                );
-
-            }
-
-
-            if (
-                ![
-                    "paystack",
-                    "flutterwave",
-                    "stripe"
-                ].includes(provider)
-            ) {
-
-                throw new Error(
-                    "Unsupported payment provider."
-                );
-
-            }
-
-
-            if (
-                provider === "paystack" &&
-                !paystackReference
-            ) {
-
-                throw new Error(
-                    "Paystack payment reference was not provided."
-                );
-
-            }
-
-
-            if (
-                provider === "flutterwave" &&
-                !transactionId
-            ) {
-
-                throw new Error(
-                    "Flutterwave transaction ID was not provided."
-                );
-
-            }
-
-
-            if (
-                provider === "stripe" &&
-                !stripeSessionId
-            ) {
-
-                throw new Error(
-                    "Stripe checkout session was not provided."
-                );
-
-            }
-
-        }
-
-
-        /* =====================================================
-           VERIFY PAYMENT WITH BACKEND
-        ===================================================== */
-
-        async function verifyPayment() {
-
-            validatePaymentParameters();
-
-
-            const token =
-                await getAccessToken();
-
-
-            /*
-             * The backend performs the actual verification
-             * with the payment provider.
-             */
-
-            const response =
-                await fetch(
-                    "/api/premium/verify",
-                    {
-                        method: "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json",
-
-                            "Authorization":
-                                `Bearer ${token}`
-
-                        },
-
-                        body: JSON.stringify({
-
-                            provider: provider,
-
-                            reference: reference,
-
-                            transaction_id:
-                                transactionId,
-
-                            session_id:
-                                stripeSessionId
-
-                        })
-
-                    }
-                );
-
-
-            let data;
-
-            try {
-
-                data = await response.json();
-
-            } catch {
-
-                throw new Error(
-                    "The verification server returned an invalid response."
-                );
-
-            }
-
-
-            /*
-             * A 202 response means the payment is still
-             * being processed. It is not a confirmed failure.
-             */
-
-            if (
-                response.status === 202 ||
-                data?.pending === true
-            ) {
-
-                return {
-                    verified: false,
-                    pending: true,
-                    message:
-                        data?.message ||
-                        data?.error ||
-                        "Your payment is still being confirmed."
-                };
-
-            }
-
-
-            /*
-             * Premium is only activated when the backend
-             * confirms it.
-             */
-
-            if (
-                response.ok &&
-                data?.premium === true
-            ) {
-
-                return {
-                    verified: true,
-                    pending: false,
-                    data: data
-                };
-
-            }
-
-
-            throw new Error(
-                data?.error ||
-                data?.message ||
-                "Payment could not be verified."
-            );
-
-        }
-
-
-        /* =====================================================
-           AUTOMATIC RETRY
-        ===================================================== */
-
-        function wait(milliseconds) {
-
-            return new Promise(resolve => {
-
-                setTimeout(resolve, milliseconds);
-
-            });
-
-        }
-
-
-        async function verifyWithRetries() {
-
-            for (
-                let attempt = 0;
-                attempt <= MAX_AUTOMATIC_RETRIES;
-                attempt++
-            ) {
-
-                try {
-
-                    showLoading(
-                        attempt === 0
-                            ? "Verifying payment..."
-                            : "Checking payment confirmation..."
-                    );
-
-
-                    const result =
-                        await verifyPayment();
-
-
-                    if (result.verified) {
-
-                        showSuccess();
-
-                        return;
-
-                    }
-
-
-                    if (result.pending) {
-
-                        showPending(
-                            result.message
-                        );
-
-
-                        if (
-                            attempt <
-                            MAX_AUTOMATIC_RETRIES
-                        ) {
-
-                            retryCount = attempt + 1;
-
-                            await wait(RETRY_DELAY);
-
-                            continue;
-
-                        }
-
-
-                        return;
-
-                    }
-
-                } catch (error) {
-
-                    /*
-                     * Do not automatically retry authentication
-                     * errors or invalid payment details.
-                     */
-
-                    showError(error);
-
-                    return;
-
-                }
-
-            }
-
-        }
-
-
-        /* =====================================================
-           MANUAL VERIFICATION
-        ===================================================== */
-
-        async function checkPaymentAgain() {
-
-            if (verificationInProgress) {
-
-                return;
-
-            }
-
-
-            verificationInProgress = true;
-
-            continueButton.disabled = true;
-
-
-            try {
-
-                showLoading(
-                    "Checking your payment again..."
-                );
-
-
-                const result =
-                    await verifyPayment();
-
-
-                if (result.verified) {
-
-                    showSuccess();
-
-                } else if (result.pending) {
-
-                    showPending(
-                        result.message
-                    );
-
-                }
-
-            } catch (error) {
-
-                showError(error);
-
-            } finally {
-
-                verificationInProgress = false;
-
-                continueButton.disabled = false;
-
-            }
-
-        }
-
-
-        /* =====================================================
-           CONTINUE BUTTON
-        ===================================================== */
-
-        continueButton.addEventListener(
-            "click",
-            async () => {
-
-                /*
-                 * Only verified payments can enter the
-                 * Premium application from this page.
-                 */
-
-                if (paymentVerified) {
-
-                    window.location.href =
-                        "premium-app.html";
-
-                    return;
-
-                }
-
-
-                /*
-                 * Pending payments can be checked again.
-                 */
-
-                if (paymentPending) {
-
-                    await checkPaymentAgain();
-
-                    return;
-
-                }
-
-
-                /*
-                 * Unverified payments return to the
-                 * Premium information page.
-                 */
-
-                window.location.href =
-                    "premium.html";
-
-            }
+        <div class="comparison-row">
+          <div>Game Mode</div>
+          <div>Limited battles</div>
+          <div class="comparison-premium comparison-check">✓ Unlimited</div>
+        </div>
+
+        <div class="comparison-row">
+          <div>1v1</div>
+          <div>Limited</div>
+          <div class="comparison-premium comparison-check">✓ Premium access</div>
+        </div>
+
+        <div class="comparison-row">
+          <div>Premium gold experience</div>
+          <div>—</div>
+          <div class="comparison-premium comparison-check">✓ Included</div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- BOTTOM CTA -->
+
+    <section class="bottom-cta">
+
+      <h2>Take your studying further. 👑</h2>
+
+      <p>Unlock the full StudyMind AI experience.</p>
+
+      <button
+        type="button"
+        class="premium-button"
+        data-premium-button
+      >
+        Unlock Premium 👑
+      </button>
+
+    </section>
+
+  </div>
+
+</div>
+
+
+<!-- PREMIUM PAYMENT MODAL -->
+
+<div
+  id="premiumModal"
+  class="study-mind-premium-overlay"
+  style="display:none;"
+  aria-hidden="true"
+>
+
+  <div
+    class="study-mind-premium-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="premiumModalTitle"
+  >
+
+    <button
+      type="button"
+      id="closePremiumModal"
+      class="premium-modal-close"
+      aria-label="Close"
+    >
+      ×
+    </button>
+
+    <div class="premium-modal-icon">👑</div>
+
+    <div class="premium-modal-label">
+      STUDYMIND AI PREMIUM
+    </div>
+
+    <h2 id="premiumModalTitle">Choose your Premium plan</h2>
+
+    <p class="premium-modal-description">
+      Select a subscription duration and payment provider.
+      Your subscription is manually renewed and will not
+      automatically charge you.
+    </p>
+
+    <div class="premium-benefits">
+      <div><span>✓</span> Unlimited AI assistance</div>
+      <div><span>✓</span> Knowledge checks up to 60 questions</div>
+      <div><span>✓</span> Unlimited Game Mode battles</div>
+      <div><span>✓</span> Premium gold experience</div>
+    </div>
+
+    <div class="premium-payment-title">Choose a subscription</div>
+
+    <div class="premium-payment-options">
+
+      <button
+        type="button"
+        class="premium-payment-button"
+        data-premium-plan="weekly"
+      >
+        <span>📅</span>
+        <span>
+          <strong>Weekly — ₦1,000</strong>
+          <small>7 days of Premium</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="premium-payment-button"
+        data-premium-plan="monthly"
+      >
+        <span>⭐</span>
+        <span>
+          <strong>Monthly — ₦3,900</strong>
+          <small>One calendar month of Premium</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="premium-payment-button"
+        data-premium-plan="yearly"
+      >
+        <span>👑</span>
+        <span>
+          <strong>Yearly — ₦46,000</strong>
+          <small>One calendar year of Premium</small>
+        </span>
+      </button>
+
+    </div>
+
+    <div class="premium-payment-title">Choose payment provider</div>
+
+    <div class="premium-payment-options">
+
+      <button
+        type="button"
+        class="premium-payment-button"
+        data-premium-provider="paystack"
+      >
+        <span>💳</span>
+        <span>
+          <strong>Paystack</strong>
+          <small>Pay securely with Paystack</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="premium-payment-button"
+        data-premium-provider="flutterwave"
+      >
+        <span>🌍</span>
+        <span>
+          <strong>Flutterwave</strong>
+          <small>Pay securely with Flutterwave</small>
+        </span>
+      </button>
+
+    </div>
+
+    <p class="premium-secure-note">
+      Stripe is currently unavailable. Your payment will be
+      verified before Premium access is activated.
+    </p>
+
+    <div
+      id="premiumPaymentStatus"
+      class="premium-payment-status"
+      aria-live="polite"
+    ></div>
+
+  </div>
+
+</div>
+
+
+<!-- SUPABASE INITIALIZATION -->
+
+<script>
+(function () {
+  "use strict";
+
+  const SUPABASE_URL =
+    "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+  if (
+    window.supabase &&
+    typeof window.supabase.createClient === "function"
+  ) {
+
+    if (!window.supabaseClient) {
+
+      window.supabaseClient =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
         );
 
+    }
 
-        /* =====================================================
-           START
-        ===================================================== */
+    window.studyMindSupabase =
+      window.studyMindSupabase || window.supabaseClient;
 
-        async function start() {
+  }
 
-            if (verificationInProgress) {
-
-                return;
-
-            }
+})();
+</script>
 
 
-            verificationInProgress = true;
+<!-- THEME -->
 
-            try {
+<script>
+(function () {
+  "use strict";
 
-                await verifyWithRetries();
+  function applyTheme() {
 
-            } finally {
+    let theme = null;
 
-                verificationInProgress = false;
+    try {
+      theme = localStorage.getItem("studyMindTheme");
+    } catch (error) {}
 
-            }
+    const isDark = theme === "dark" || theme === null;
+
+    document.body.classList.toggle("dark", isDark);
+
+    const page = document.getElementById("premiumPage");
+
+    if (page) {
+      page.classList.toggle("premium-dark", isDark);
+    }
+
+  }
+
+  applyTheme();
+
+  window.addEventListener("storage", function (event) {
+
+    if (event.key === "studyMindTheme") {
+      applyTheme();
+    }
+
+  });
+
+  window.addEventListener(
+    "studyMindPremiumChanged",
+    applyTheme
+  );
+
+})();
+</script>
+
+
+<!-- PREMIUM MANAGEMENT -->
+
+<script src="premium.js"></script>
+
+
+<!-- PREMIUM PAGE STATUS + BUTTONS -->
+
+<script>
+"use strict";
+
+(function initializePremiumPage() {
+
+  const statusCard =
+    document.getElementById("premiumStatusCard");
+
+  const navStatus =
+    document.getElementById("premiumNavStatus");
+
+  const trialButton =
+    document.querySelector("[data-premium-trial]");
+
+  const premiumButtons =
+    document.querySelectorAll(
+      ".plan.premium [data-premium-button], " +
+      ".bottom-cta [data-premium-button]"
+    );
+
+  const freeButton =
+    document.querySelector(
+      ".plan:not(.premium) [data-premium-button]"
+    );
+
+  let selectedPlan = "monthly";
+  let statusListenerRegistered = false;
+
+
+  function updateStatus(label, description, type) {
+
+    if (statusCard) {
+
+      const heading = document.createElement("div");
+      heading.className = "premium-status-heading";
+      heading.textContent = label;
+
+      const text = document.createElement("div");
+      text.className = "premium-status-description";
+      text.textContent = description;
+
+      statusCard.replaceChildren(heading, text);
+
+    }
+
+    if (navStatus) {
+
+      navStatus.textContent = label;
+
+      navStatus.className =
+        "premium-nav-status " + type;
+
+    }
+
+  }
+
+
+  function updatePremiumButtons(label, disabled) {
+
+    premiumButtons.forEach(button => {
+
+      button.textContent = label;
+      button.disabled = disabled;
+
+    });
+
+  }
+
+
+  function showFreeAccount() {
+
+    updateStatus(
+      "Free Plan",
+      "You are currently using the Free StudyMind plan. Start your one-time 7-day Premium trial or choose a paid plan.",
+      "free"
+    );
+
+    updatePremiumButtons(
+      "Unlock Premium 👑",
+      false
+    );
+
+    if (trialButton) {
+
+      trialButton.textContent =
+        "Start 7-Day Free Trial ✨";
+
+      trialButton.disabled = false;
+
+    }
+
+    if (freeButton) {
+
+      freeButton.textContent = "Current Plan";
+      freeButton.disabled = true;
+
+    }
+
+  }
+
+
+  function showTrialAccount(result) {
+
+    const expiry =
+      result.expiresAt ||
+      result.trialExpiresAt;
+
+    let expiryText = "7-day trial";
+
+    if (expiry) {
+
+      expiryText =
+        new Date(expiry).toLocaleString();
+
+    }
+
+    updateStatus(
+      "Free Trial Active ✨",
+      "Your 7-day Premium trial is active. It expires on " + expiryText + ".",
+      "active"
+    );
+
+    updatePremiumButtons(
+      "Trial Active ✓",
+      true
+    );
+
+    if (trialButton) {
+
+      trialButton.textContent =
+        "Trial Already Active ✓";
+
+      trialButton.disabled = true;
+
+    }
+
+    if (freeButton) {
+
+      freeButton.textContent = "Previous Plan";
+      freeButton.disabled = true;
+
+    }
+
+  }
+
+
+  function showPremiumAccount() {
+
+    updateStatus(
+      "Premium Active 👑",
+      "Your paid Premium subscription is active. You have access to Premium features.",
+      "active"
+    );
+
+    updatePremiumButtons(
+      "Premium Active ✓",
+      true
+    );
+
+    if (trialButton) {
+
+      trialButton.textContent =
+        "Premium Already Active ✓";
+
+      trialButton.disabled = true;
+
+    }
+
+    if (freeButton) {
+
+      freeButton.textContent = "Your Previous Plan";
+      freeButton.disabled = true;
+
+    }
+
+  }
+
+
+  function showAdminAccount() {
+
+    updateStatus(
+      "Admin Access 👑",
+      "Your administrator account has full Premium access to StudyMind AI.",
+      "active"
+    );
+
+    updatePremiumButtons(
+      "Admin Access ✓",
+      true
+    );
+
+    if (trialButton) {
+
+      trialButton.textContent = "Admin Access ✓";
+      trialButton.disabled = true;
+
+    }
+
+    if (freeButton) {
+
+      freeButton.textContent = "Admin Account";
+      freeButton.disabled = true;
+
+    }
+
+  }
+
+
+  function showPendingAccount() {
+
+    updateStatus(
+      "Payment Pending",
+      "Your payment is awaiting confirmation. Premium access will activate once payment is verified.",
+      "pending"
+    );
+
+    updatePremiumButtons(
+      "Payment Pending...",
+      true
+    );
+
+    if (trialButton) {
+      trialButton.disabled = true;
+    }
+
+    if (freeButton) {
+
+      freeButton.textContent = "Payment Pending";
+      freeButton.disabled = true;
+
+    }
+
+  }
+
+
+  function showVerificationError() {
+
+    updateStatus(
+      "Verification Unavailable",
+      "We couldn't verify your Premium status. Please refresh the page or try again later.",
+      "pending"
+    );
+
+    updatePremiumButtons(
+      "Status Unavailable",
+      true
+    );
+
+  }
+
+
+  async function refreshPremiumPageStatus() {
+
+    try {
+
+      const client =
+        window.supabaseClient ||
+        window.studyMindSupabase ||
+        window.gameSupabase;
+
+      if (!client?.auth) {
+
+        updateStatus(
+          "Login Required",
+          "Please log in to check your Premium status.",
+          "free"
+        );
+
+        updatePremiumButtons(
+          "Log in to Upgrade",
+          false
+        );
+
+        if (trialButton) {
+          trialButton.disabled = true;
+          trialButton.textContent = "Log in to Start Trial";
+        }
+
+        return;
+
+      }
+
+      const {
+        data,
+        error
+      } = await client.auth.getSession();
+
+      if (error) throw error;
+
+      const token =
+        data?.session?.access_token;
+
+      if (!token) {
+
+        updateStatus(
+          "Login Required",
+          "Please log in to view your Premium status and trial eligibility.",
+          "free"
+        );
+
+        updatePremiumButtons(
+          "Log in to Upgrade",
+          false
+        );
+
+        if (trialButton) {
+
+          trialButton.textContent =
+            "Log in to Start Trial";
+
+          trialButton.disabled = false;
+
+          trialButton.onclick = function () {
+            window.location.href = "login.html";
+          };
 
         }
 
+        premiumButtons.forEach(button => {
 
-        start();
+          button.onclick = function () {
+            window.location.href = "login.html";
+          };
 
-    </script>
+        });
+
+        return;
+
+      }
+
+
+      let result = null;
+
+      if (typeof window.loadStudyMindPremium === "function") {
+
+        await window.loadStudyMindPremium(true);
+
+        result =
+          window.getStudyMindPremiumStatus?.();
+
+      } else {
+
+        const response = await fetch(
+          "/api/premium/status",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to verify Premium status.");
+        }
+
+        result = await response.json();
+
+      }
+
+
+      if (result?.isAdmin === true) {
+
+        showAdminAccount();
+        return;
+
+      }
+
+      if (result?.premium === true || result?.isPremium === true) {
+
+        if (result?.isTrial === true) {
+
+          showTrialAccount(result);
+
+        } else {
+
+          showPremiumAccount();
+
+        }
+
+        return;
+
+      }
+
+
+      const paymentPending =
+        result?.pending === true ||
+        result?.paymentPending === true ||
+        result?.paymentStatus === "pending" ||
+        result?.status === "pending";
+
+      if (paymentPending) {
+
+        showPendingAccount();
+        return;
+
+      }
+
+      showFreeAccount();
+
+    } catch (error) {
+
+      console.error(
+        "Premium page verification error:",
+        error
+      );
+
+      showVerificationError();
+
+    }
+
+  }
+
+
+  /* PLAN SELECTION */
+
+  document
+    .querySelectorAll("[data-premium-plan]")
+    .forEach(button => {
+
+      button.addEventListener("click", function () {
+
+        selectedPlan =
+          button.dataset.premiumPlan;
+
+        document
+          .querySelectorAll("[data-premium-plan]")
+          .forEach(item => {
+
+            item.style.outline =
+              item === button
+                ? "2px solid var(--premium-gold)"
+                : "none";
+
+          });
+
+        const status =
+          document.getElementById("premiumPaymentStatus");
+
+        if (status) {
+
+          status.textContent =
+            "Selected plan: " +
+            selectedPlan.charAt(0).toUpperCase() +
+            selectedPlan.slice(1);
+
+        }
+
+      });
+
+    });
+
+
+  /* PAYMENT PROVIDER SELECTION */
+
+  document
+    .querySelectorAll("[data-premium-provider]")
+    .forEach(button => {
+
+      button.addEventListener("click", async function () {
+
+        const status =
+          document.getElementById("premiumPaymentStatus");
+
+        if (status) {
+          status.textContent = "Preparing secure checkout...";
+        }
+
+        try {
+
+          const client =
+            window.supabaseClient ||
+            window.studyMindSupabase;
+
+          const {
+            data,
+            error
+          } = await client.auth.getSession();
+
+          if (error) throw error;
+
+          const token =
+            data?.session?.access_token;
+
+          if (!token) {
+            throw new Error("Please sign in before purchasing.");
+          }
+
+          const response = await fetch(
+            "/api/premium/create-checkout",
+            {
+              method: "POST",
+
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+
+              body: JSON.stringify({
+                provider: button.dataset.premiumProvider,
+                planType: selectedPlan
+              })
+            }
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+
+            throw new Error(
+              result?.error ||
+              "Could not start payment."
+            );
+
+          }
+
+          const checkoutUrl =
+            result.checkoutUrl ||
+            result.checkout_url ||
+            result.authorization_url ||
+            result.url;
+
+          if (!checkoutUrl) {
+            throw new Error("Payment link was not returned.");
+          }
+
+          window.location.href = checkoutUrl;
+
+        } catch (error) {
+
+          console.error("Premium checkout error:", error);
+
+          if (status) {
+            status.textContent = error.message;
+          }
+
+          alert(error.message);
+
+        }
+
+      });
+
+    });
+
+
+  /* TRIAL BUTTON */
+
+  if (trialButton) {
+
+    trialButton.addEventListener("click", async function () {
+
+      if (typeof window.beginPremiumTrial !== "function") {
+
+        alert("Trial service is not ready. Please refresh the page.");
+        return;
+
+      }
+
+      const confirmed = window.confirm(
+        "Start your one-time 7-day Premium trial now? Your trial begins immediately and expires after seven days. It will not automatically renew."
+      );
+
+      if (!confirmed) return;
+
+      trialButton.disabled = true;
+      trialButton.textContent = "Starting your trial...";
+
+      const success =
+        await window.beginPremiumTrial();
+
+      await refreshPremiumPageStatus();
+
+      if (!success && !window.isPremium?.()) {
+
+        trialButton.disabled = false;
+        trialButton.textContent =
+          "Start 7-Day Free Trial ✨";
+
+      }
+
+    });
+
+  }
+
+
+  /* PREMIUM STATUS CHANGE LISTENER */
+
+  function registerStatusListener() {
+
+    if (statusListenerRegistered) return;
+
+    statusListenerRegistered = true;
+
+    window.addEventListener(
+      "studyMindPremiumChanged",
+      function () {
+
+        refreshPremiumPageStatus();
+
+      }
+    );
+
+  }
+
+
+  registerStatusListener();
+
+  refreshPremiumPageStatus();
+
+})();
+</script>
 
 </body>
 </html>
