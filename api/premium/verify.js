@@ -3,21 +3,54 @@
 
 /* =========================================================
    STUDYMIND AI — PREMIUM PAYMENT VERIFICATION
-   PAYSTACK + FLUTTERWAVE + STRIPE
+
+   PAYSTACK + FLUTTERWAVE
+   STRIPE VERIFICATION RETAINED FOR FUTURE USE
 
    SECURITY:
    - Authenticates the signed-in user.
-   - Finds the payment using the user's own database record.
-   - Verifies payment directly with the provider.
-   - Requires exact amount and currency matches.
-   - Does not activate pending or unsuccessful payments.
-   - Prevents duplicate activation.
+   - Finds payment using the user's own database record.
+   - Verifies directly with the payment provider.
+   - Checks exact amount and currency.
+   - Checks stored plan against server-controlled pricing.
+   - Calculates expiry on the server.
+   - Uses atomic activation to prevent duplicate activation.
    - Preserves manual Admin Premium records.
 ========================================================= */
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL =
+    process.env.SUPABASE_URL;
+
+const SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const ANON_KEY =
+    process.env.SUPABASE_ANON_KEY;
+
+
+/* =========================================================
+   SERVER-CONTROLLED PLANS
+========================================================= */
+
+const PLANS = {
+    weekly: {
+        amount: 1000,
+        currency: "NGN",
+        duration: "weekly"
+    },
+
+    monthly: {
+        amount: 3900,
+        currency: "NGN",
+        duration: "monthly"
+    },
+
+    yearly: {
+        amount: 46000,
+        currency: "NGN",
+        duration: "yearly"
+    }
+};
 
 
 /* =========================================================
@@ -30,18 +63,22 @@ function send(res, status, data) {
 
 
 /* =========================================================
-   SUPABASE AUTHENTICATION
+   GET AUTHENTICATED USER
 ========================================================= */
 
 async function getUser(token) {
+
     const response = await fetch(
         `${SUPABASE_URL}/auth/v1/user`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 apikey: ANON_KEY
-            }
+            },
+
+            cache: "no-store"
         }
     );
 
@@ -57,7 +94,12 @@ async function getUser(token) {
    FIND PAYMENT RECORD
 ========================================================= */
 
-async function getPaymentRecord(userId, provider, reference) {
+async function getPaymentRecord(
+    userId,
+    provider,
+    reference
+) {
+
     const url =
         `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
         `?user_id=eq.${encodeURIComponent(userId)}` +
@@ -67,18 +109,24 @@ async function getPaymentRecord(userId, provider, reference) {
         `&limit=1`;
 
     const response = await fetch(url, {
+
+        method: "GET",
+
         headers: {
             apikey: SERVICE_ROLE_KEY,
-            Authorization: `Bearer ${SERVICE_ROLE_KEY}`
-        }
+
+            Authorization:
+                `Bearer ${SERVICE_ROLE_KEY}`
+        },
+
+        cache: "no-store"
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
 
         console.error(
             "Premium payment lookup failed:",
-            errorText
+            await response.text()
         );
 
         throw new Error(
@@ -97,6 +145,7 @@ async function getPaymentRecord(userId, provider, reference) {
 ========================================================= */
 
 async function getPaymentById(userId, paymentId) {
+
     const url =
         `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
         `?id=eq.${encodeURIComponent(paymentId)}` +
@@ -105,13 +154,21 @@ async function getPaymentById(userId, paymentId) {
         `&limit=1`;
 
     const response = await fetch(url, {
+
+        method: "GET",
+
         headers: {
             apikey: SERVICE_ROLE_KEY,
-            Authorization: `Bearer ${SERVICE_ROLE_KEY}`
-        }
+
+            Authorization:
+                `Bearer ${SERVICE_ROLE_KEY}`
+        },
+
+        cache: "no-store"
     });
 
     if (!response.ok) {
+
         throw new Error(
             "Could not retrieve the Premium payment."
         );
@@ -128,9 +185,12 @@ async function getPaymentById(userId, paymentId) {
 ========================================================= */
 
 async function verifyPaystack(reference) {
-    const secret = process.env.PAYSTACK_SECRET_KEY;
+
+    const secret =
+        process.env.PAYSTACK_SECRET_KEY;
 
     if (!secret) {
+
         throw new Error(
             "Paystack Secret Key is not configured."
         );
@@ -138,11 +198,15 @@ async function verifyPaystack(reference) {
 
     const response = await fetch(
         `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
+
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${secret}`
-            }
+            },
+
+            cache: "no-store"
         }
     );
 
@@ -153,6 +217,7 @@ async function verifyPaystack(reference) {
         data?.status !== true ||
         !data?.data
     ) {
+
         throw new Error(
             data?.message ||
             "Could not verify the Paystack transaction."
@@ -168,9 +233,12 @@ async function verifyPaystack(reference) {
 ========================================================= */
 
 async function verifyFlutterwave(transactionId) {
-    const secret = process.env.FLW_SECRET_KEY;
+
+    const secret =
+        process.env.FLW_SECRET_KEY;
 
     if (!secret) {
+
         throw new Error(
             "Flutterwave Secret Key is not configured."
         );
@@ -178,12 +246,17 @@ async function verifyFlutterwave(transactionId) {
 
     const response = await fetch(
         `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`,
+
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${secret}`,
+
                 "Content-Type": "application/json"
-            }
+            },
+
+            cache: "no-store"
         }
     );
 
@@ -194,6 +267,7 @@ async function verifyFlutterwave(transactionId) {
         data?.status !== "success" ||
         !data?.data
     ) {
+
         throw new Error(
             data?.message ||
             "Could not verify the Flutterwave transaction."
@@ -206,12 +280,18 @@ async function verifyFlutterwave(transactionId) {
 
 /* =========================================================
    STRIPE VERIFICATION
+
+   Retained for future USD support.
+   Stripe checkout remains disabled.
 ========================================================= */
 
 async function verifyStripe(sessionId) {
-    const secret = process.env.STRIPE_SECRET_KEY;
+
+    const secret =
+        process.env.STRIPE_SECRET_KEY;
 
     if (!secret) {
+
         throw new Error(
             "Stripe Secret Key is not configured."
         );
@@ -219,17 +299,22 @@ async function verifyStripe(sessionId) {
 
     const response = await fetch(
         `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${secret}`
-            }
+            },
+
+            cache: "no-store"
         }
     );
 
     const data = await response.json();
 
     if (!response.ok || !data?.id) {
+
         throw new Error(
             data?.error?.message ||
             "Could not verify the Stripe transaction."
@@ -237,6 +322,189 @@ async function verifyStripe(sessionId) {
     }
 
     return data;
+}
+
+
+/* =========================================================
+   VALIDATE STORED PLAN
+
+   The database record must contain a valid plan.
+   The browser cannot choose the payment amount or expiry.
+========================================================= */
+
+function validateStoredPlan(payment) {
+
+    const planType = String(
+        payment?.plan_type || ""
+    )
+        .toLowerCase()
+        .trim();
+
+    const plan = PLANS[planType];
+
+    if (!plan) {
+
+        return {
+            valid: false,
+            reason: "The stored subscription plan is invalid."
+        };
+    }
+
+    const storedAmount =
+        Number(payment.amount);
+
+    const storedCurrency =
+        String(payment.currency || "")
+            .toUpperCase();
+
+    if (
+        !Number.isFinite(storedAmount) ||
+        storedAmount !== plan.amount
+    ) {
+
+        return {
+            valid: false,
+            reason: "The stored payment amount does not match the selected plan."
+        };
+    }
+
+    if (storedCurrency !== plan.currency) {
+
+        return {
+            valid: false,
+            reason: "The stored payment currency does not match the selected plan."
+        };
+    }
+
+    return {
+        valid: true,
+        planType,
+        plan
+    };
+}
+
+
+/* =========================================================
+   CALCULATE SUBSCRIPTION EXPIRY
+
+   Weekly:
+   Add exactly 7 calendar days.
+
+   Monthly:
+   Add one calendar month.
+   Clamp month-end dates correctly.
+
+   Yearly:
+   Add one calendar year.
+   Handle leap-year dates correctly.
+
+   All calculations use UTC to avoid server timezone
+   differences.
+========================================================= */
+
+function calculateSubscriptionDates(
+    planType,
+    startDate = new Date()
+) {
+
+    const plan = PLANS[planType];
+
+    if (!plan) {
+        throw new Error("Invalid subscription plan.");
+    }
+
+    const start = new Date(startDate);
+
+    if (!Number.isFinite(start.getTime())) {
+        throw new Error("Invalid subscription start date.");
+    }
+
+    const expiry = new Date(start);
+
+    if (plan.duration === "weekly") {
+
+        expiry.setUTCDate(
+            expiry.getUTCDate() + 7
+        );
+
+    }
+
+    else if (plan.duration === "monthly") {
+
+        const originalDay =
+            expiry.getUTCDate();
+
+        const targetMonth =
+            expiry.getUTCMonth() + 1;
+
+        const targetYear =
+            expiry.getUTCFullYear() +
+            Math.floor(targetMonth / 12);
+
+        const normalizedMonth =
+            targetMonth % 12;
+
+        // Move to the first day of the target month.
+        expiry.setUTCDate(1);
+
+        expiry.setUTCFullYear(
+            targetYear,
+            normalizedMonth,
+            1
+        );
+
+        // Find the last day of the target month.
+        const lastDay = new Date(
+            Date.UTC(
+                targetYear,
+                normalizedMonth + 1,
+                0
+            )
+        ).getUTCDate();
+
+        expiry.setUTCDate(
+            Math.min(originalDay, lastDay)
+        );
+
+    }
+
+    else if (plan.duration === "yearly") {
+
+        const originalMonth =
+            expiry.getUTCMonth();
+
+        const originalDay =
+            expiry.getUTCDate();
+
+        const targetYear =
+            expiry.getUTCFullYear() + 1;
+
+        expiry.setUTCDate(1);
+
+        expiry.setUTCFullYear(
+            targetYear,
+            originalMonth,
+            1
+        );
+
+        const lastDay = new Date(
+            Date.UTC(
+                targetYear,
+                originalMonth + 1,
+                0
+            )
+        ).getUTCDate();
+
+        expiry.setUTCDate(
+            Math.min(originalDay, lastDay)
+        );
+
+    }
+
+    return {
+        startsAt: start.toISOString(),
+        expiresAt: expiry.toISOString()
+    };
 }
 
 
@@ -251,7 +519,9 @@ function validatePayment(
     expectedCurrency,
     userEmail
 ) {
+
     if (!payment) {
+
         return {
             valid: false,
             pending: false,
@@ -262,11 +532,16 @@ function validatePayment(
     const expectedCurrencyUpper =
         String(expectedCurrency || "").toUpperCase();
 
-    if (!expectedCurrencyUpper || !Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+    if (
+        !expectedCurrencyUpper ||
+        !Number.isFinite(expectedAmount) ||
+        expectedAmount <= 0
+    ) {
+
         return {
             valid: false,
             pending: false,
-            reason: "The stored payment amount or currency is invalid."
+            reason: "The expected payment amount or currency is invalid."
         };
     }
 
@@ -275,100 +550,129 @@ function validatePayment(
     let paymentEmail;
     let successful = false;
 
+
     /* PAYSTACK */
 
     if (provider === "paystack") {
-        successful = payment.status === "success";
 
-        actualAmount = Number(payment.amount);
-        actualCurrency = payment.currency;
+        successful =
+            payment.status === "success";
 
-        paymentEmail = payment.customer?.email;
+        actualAmount =
+            Number(payment.amount);
 
-        // Paystack amounts are in the currency's subunit.
-        const expectedSubunit = Math.round(
-            expectedAmount * 100
-        );
+        actualCurrency =
+            payment.currency;
+
+        paymentEmail =
+            payment.customer?.email;
+
+        const expectedSubunit =
+            Math.round(expectedAmount * 100);
 
         if (!successful) {
+
             return {
                 valid: false,
                 pending: true,
-                reason: "Paystack has not confirmed successful payment yet."
+                reason:
+                    "Paystack has not confirmed successful payment yet."
             };
         }
 
         if (actualAmount !== expectedSubunit) {
+
             return {
                 valid: false,
                 pending: false,
-                reason: "Paystack payment amount does not match the expected amount."
+                reason:
+                    "Paystack payment amount does not match the expected amount."
             };
         }
     }
+
 
     /* FLUTTERWAVE */
 
     else if (provider === "flutterwave") {
-        successful = payment.status === "successful";
 
-        actualAmount = Number(payment.amount);
-        actualCurrency = payment.currency;
+        successful =
+            payment.status === "successful";
 
-        paymentEmail = payment.customer?.email;
+        actualAmount =
+            Number(payment.amount);
+
+        actualCurrency =
+            payment.currency;
+
+        paymentEmail =
+            payment.customer?.email;
 
         if (!successful) {
+
             return {
                 valid: false,
                 pending: true,
-                reason: "Flutterwave has not confirmed successful payment yet."
+                reason:
+                    "Flutterwave has not confirmed successful payment yet."
             };
         }
 
         if (actualAmount !== expectedAmount) {
+
             return {
                 valid: false,
                 pending: false,
-                reason: "Flutterwave payment amount does not match the expected amount."
+                reason:
+                    "Flutterwave payment amount does not match the expected amount."
             };
         }
     }
 
-    /* STRIPE */
+
+    /* STRIPE — RETAINED FOR FUTURE USE */
 
     else if (provider === "stripe") {
-        successful = payment.payment_status === "paid";
 
-        actualAmount = Number(payment.amount_total);
-        actualCurrency = payment.currency;
+        successful =
+            payment.payment_status === "paid";
+
+        actualAmount =
+            Number(payment.amount_total);
+
+        actualCurrency =
+            payment.currency;
 
         paymentEmail =
             payment.customer_details?.email ||
             payment.customer_email;
 
-        // Stripe amounts are in the currency's subunit.
-        const expectedSubunit = Math.round(
-            expectedAmount * 100
-        );
+        const expectedSubunit =
+            Math.round(expectedAmount * 100);
 
         if (!successful) {
+
             return {
                 valid: false,
                 pending: true,
-                reason: "Stripe has not confirmed successful payment yet."
+                reason:
+                    "Stripe has not confirmed successful payment yet."
             };
         }
 
         if (actualAmount !== expectedSubunit) {
+
             return {
                 valid: false,
                 pending: false,
-                reason: "Stripe payment amount does not match the expected amount."
+                reason:
+                    "Stripe payment amount does not match the expected amount."
             };
         }
     }
 
     else {
+
         return {
             valid: false,
             pending: false,
@@ -376,12 +680,14 @@ function validatePayment(
         };
     }
 
-    /* CURRENCY CHECK */
+
+    /* CURRENCY VALIDATION */
 
     if (
         String(actualCurrency || "").toUpperCase() !==
         expectedCurrencyUpper
     ) {
+
         return {
             valid: false,
             pending: false,
@@ -389,7 +695,8 @@ function validatePayment(
         };
     }
 
-    /* EMAIL CHECK */
+
+    /* EMAIL VALIDATION */
 
     if (
         userEmail &&
@@ -397,6 +704,7 @@ function validatePayment(
         String(paymentEmail).trim().toLowerCase() !==
         String(userEmail).trim().toLowerCase()
     ) {
+
         return {
             valid: false,
             pending: false,
@@ -413,10 +721,44 @@ function validatePayment(
 
 
 /* =========================================================
-   ATOMIC PREMIUM ACTIVATION
+   CHECK WHETHER AN ACTIVATED SUBSCRIPTION IS STILL VALID
 ========================================================= */
 
-async function activatePayment(payment) {
+function isSubscriptionUnexpired(payment) {
+
+    if (!payment?.expires_at) {
+        return false;
+    }
+
+    const expiry =
+        new Date(payment.expires_at).getTime();
+
+    return (
+        Number.isFinite(expiry) &&
+        expiry > Date.now()
+    );
+}
+
+
+/* =========================================================
+   ATOMIC PREMIUM ACTIVATION
+
+   Expiry is calculated here, on the server.
+
+   The update only succeeds if the original payment is
+   still pending and not already activated.
+========================================================= */
+
+async function activatePayment(payment, planType) {
+
+    const now = new Date();
+
+    const dates =
+        calculateSubscriptionDates(
+            planType,
+            now
+        );
+
     const url =
         `${SUPABASE_URL}/rest/v1/premium_subscriptions` +
         `?id=eq.${encodeURIComponent(payment.id)}` +
@@ -426,27 +768,50 @@ async function activatePayment(payment) {
         `&is_premium=eq.false`;
 
     const response = await fetch(url, {
+
         method: "PATCH",
+
         headers: {
             apikey: SERVICE_ROLE_KEY,
-            Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+
+            Authorization:
+                `Bearer ${SERVICE_ROLE_KEY}`,
+
             "Content-Type": "application/json",
+
             Prefer: "return=representation"
         },
+
         body: JSON.stringify({
+
             status: "active",
+
             is_premium: true,
-            activated_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        })
+
+            plan_type: planType,
+
+            starts_at: dates.startsAt,
+
+            expires_at: dates.expiresAt,
+
+            activated_at: dates.startsAt,
+
+            is_trial: false,
+
+            renewal_type: "manual",
+
+            updated_at: dates.startsAt
+
+        }),
+
+        cache: "no-store"
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
 
         console.error(
             "Premium activation failed:",
-            errorText
+            await response.text()
         );
 
         throw new Error(
@@ -466,12 +831,16 @@ async function activatePayment(payment) {
 
 module.exports = async function handler(req, res) {
 
+    /* METHOD CHECK */
+
     if (req.method !== "POST") {
+
         return send(res, 405, {
             success: false,
             error: "Method not allowed."
         });
     }
+
 
     /* ENVIRONMENT CHECK */
 
@@ -480,11 +849,14 @@ module.exports = async function handler(req, res) {
         !SERVICE_ROLE_KEY ||
         !ANON_KEY
     ) {
+
         return send(res, 500, {
             success: false,
-            error: "Supabase environment variables are missing."
+            error:
+                "Supabase environment variables are missing."
         });
     }
+
 
     /* AUTHENTICATION */
 
@@ -492,39 +864,51 @@ module.exports = async function handler(req, res) {
         req.headers.authorization || "";
 
     if (!authorization.startsWith("Bearer ")) {
+
         return send(res, 401, {
             success: false,
             error: "Authentication required."
         });
     }
 
-    const token = authorization.slice(7).trim();
+    const token =
+        authorization.slice(7).trim();
 
     if (!token) {
+
         return send(res, 401, {
             success: false,
             error: "Authentication required."
         });
     }
+
 
     try {
 
-        /* GET AUTHENTICATED USER */
+        /* -----------------------------------------
+           AUTHENTICATE USER
+        ----------------------------------------- */
 
         const user = await getUser(token);
 
         if (!user?.id) {
+
             return send(res, 401, {
                 success: false,
                 error: "Invalid login session."
             });
         }
 
-        /* READ REQUEST */
+
+        /* -----------------------------------------
+           READ REQUEST
+        ----------------------------------------- */
 
         const provider = String(
             req.body?.provider || ""
-        ).toLowerCase().trim();
+        )
+            .toLowerCase()
+            .trim();
 
         const reference = String(
             req.body?.reference || ""
@@ -542,26 +926,41 @@ module.exports = async function handler(req, res) {
             req.body?.tx_ref || ""
         ).trim();
 
+
         if (
-            !["paystack", "flutterwave", "stripe"].includes(provider)
+            ![
+                "paystack",
+                "flutterwave",
+                "stripe"
+            ].includes(provider)
         ) {
+
             return send(res, 400, {
                 success: false,
                 error: "Invalid payment provider."
             });
         }
 
-        /* FIND ORIGINAL PAYMENT */
+
+        /* -----------------------------------------
+           FIND ORIGINAL PAYMENT RECORD
+        ----------------------------------------- */
 
         let payment = null;
+
         let verifiedPayment = null;
+
+
+        /* PAYSTACK */
 
         if (provider === "paystack") {
 
             if (!reference) {
+
                 return send(res, 400, {
                     success: false,
-                    error: "Paystack payment reference is required."
+                    error:
+                        "Paystack payment reference is required."
                 });
             }
 
@@ -572,12 +971,17 @@ module.exports = async function handler(req, res) {
             );
         }
 
+
+        /* STRIPE */
+
         else if (provider === "stripe") {
 
             if (!sessionId) {
+
                 return send(res, 400, {
                     success: false,
-                    error: "Stripe session ID is required."
+                    error:
+                        "Stripe session ID is required."
                 });
             }
 
@@ -588,19 +992,28 @@ module.exports = async function handler(req, res) {
             );
         }
 
+
+        /* FLUTTERWAVE */
+
         else if (provider === "flutterwave") {
 
             const flutterwaveReference =
                 txRef || reference;
 
-            if (!transactionId && !flutterwaveReference) {
+            if (
+                !transactionId &&
+                !flutterwaveReference
+            ) {
+
                 return send(res, 400, {
                     success: false,
-                    error: "Flutterwave transaction information is required."
+                    error:
+                        "Flutterwave transaction information is required."
                 });
             }
 
             if (flutterwaveReference) {
+
                 payment = await getPaymentRecord(
                     user.id,
                     "flutterwave",
@@ -608,19 +1021,25 @@ module.exports = async function handler(req, res) {
                 );
             }
 
-            // If tx_ref was not supplied, verify the transaction
-            // first and retrieve its original tx_ref.
+            /*
+             * If the transaction reference was not supplied,
+             * verify the transaction first and retrieve its
+             * original tx_ref.
+             */
 
             if (!payment && transactionId) {
 
-                verifiedPayment = await verifyFlutterwave(
-                    transactionId
-                );
+                verifiedPayment =
+                    await verifyFlutterwave(
+                        transactionId
+                    );
 
                 if (!verifiedPayment?.tx_ref) {
+
                     return send(res, 400, {
                         success: false,
-                        error: "Flutterwave transaction reference was not returned."
+                        error:
+                            "Flutterwave transaction reference was not returned."
                     });
                 }
 
@@ -632,188 +1051,370 @@ module.exports = async function handler(req, res) {
             }
         }
 
+
         if (!payment) {
+
             return send(res, 404, {
                 success: false,
                 premium: false,
-                error: "Premium payment record was not found."
+                error:
+                    "Premium payment record was not found."
             });
         }
 
-        /* ALREADY ACTIVATED */
+
+        /* -----------------------------------------
+           ALREADY ACTIVATED
+        ----------------------------------------- */
 
         if (
             payment.status === "active" &&
             payment.is_premium === true
         ) {
+
+            if (!isSubscriptionUnexpired(payment)) {
+
+                return send(res, 409, {
+
+                    success: false,
+
+                    premium: false,
+
+                    expired: true,
+
+                    error:
+                        "This subscription has expired. Please choose a plan to renew."
+
+                });
+            }
+
             return send(res, 200, {
+
                 success: true,
+
                 premium: true,
-                alreadyActivated: true
+
+                alreadyActivated: true,
+
+                planType: payment.plan_type,
+
+                startsAt: payment.starts_at,
+
+                expiresAt: payment.expires_at
+
             });
         }
 
-        /* ONLY PENDING RECORDS CAN BE ACTIVATED */
+
+        /* -----------------------------------------
+           ONLY PENDING PAYMENTS CAN BE ACTIVATED
+        ----------------------------------------- */
 
         if (
             payment.status !== "pending" ||
             payment.is_premium !== false
         ) {
+
             return send(res, 409, {
+
                 success: false,
+
                 premium: false,
-                error: "This payment is not eligible for activation."
+
+                error:
+                    "This payment is not eligible for activation."
+
             });
         }
 
-        /* VERIFY WITH PAYMENT PROVIDER */
+
+        /* -----------------------------------------
+           VALIDATE STORED PLAN AND PRICE
+        ----------------------------------------- */
+
+        const storedPlan =
+            validateStoredPlan(payment);
+
+        if (!storedPlan.valid) {
+
+            console.error(
+                "Invalid stored Premium plan:",
+                payment.id,
+                storedPlan.reason
+            );
+
+            return send(res, 409, {
+
+                success: false,
+
+                premium: false,
+
+                error: storedPlan.reason
+
+            });
+        }
+
+        const planType =
+            storedPlan.planType;
+
+        const plan =
+            storedPlan.plan;
+
+
+        /* -----------------------------------------
+           VERIFY WITH PAYMENT PROVIDER
+        ----------------------------------------- */
 
         if (provider === "paystack") {
-            verifiedPayment = await verifyPaystack(
-                payment.provider_reference
-            );
+
+            verifiedPayment =
+                await verifyPaystack(
+                    payment.provider_reference
+                );
         }
 
         else if (provider === "flutterwave") {
 
             if (!transactionId) {
+
                 return send(res, 400, {
                     success: false,
-                    error: "Flutterwave transaction ID is required."
+                    error:
+                        "Flutterwave transaction ID is required."
                 });
             }
 
             if (!verifiedPayment) {
-                verifiedPayment = await verifyFlutterwave(
-                    transactionId
-                );
+
+                verifiedPayment =
+                    await verifyFlutterwave(
+                        transactionId
+                    );
             }
         }
 
         else if (provider === "stripe") {
-            verifiedPayment = await verifyStripe(
-                payment.provider_reference
-            );
+
+            verifiedPayment =
+                await verifyStripe(
+                    payment.provider_reference
+                );
         }
 
-        /* REFERENCE VALIDATION */
+
+        /* -----------------------------------------
+           PROVIDER REFERENCE VALIDATION
+        ----------------------------------------- */
 
         if (
             provider === "paystack" &&
-            verifiedPayment.reference !== payment.provider_reference
+            verifiedPayment.reference !==
+                payment.provider_reference
         ) {
+
             return send(res, 400, {
+
                 success: false,
+
                 premium: false,
-                error: "Paystack payment reference mismatch."
+
+                error:
+                    "Paystack payment reference mismatch."
+
             });
         }
 
+
         if (
             provider === "flutterwave" &&
-            verifiedPayment.tx_ref !== payment.provider_reference
+            verifiedPayment.tx_ref !==
+                payment.provider_reference
         ) {
+
             return send(res, 400, {
+
                 success: false,
+
                 premium: false,
-                error: "Flutterwave transaction reference mismatch."
+
+                error:
+                    "Flutterwave transaction reference mismatch."
+
             });
         }
+
 
         if (
             provider === "flutterwave" &&
             transactionId &&
-            String(verifiedPayment.id) !== String(transactionId)
+            String(verifiedPayment.id) !==
+                String(transactionId)
         ) {
+
             return send(res, 400, {
+
                 success: false,
+
                 premium: false,
-                error: "Flutterwave transaction ID mismatch."
+
+                error:
+                    "Flutterwave transaction ID mismatch."
+
             });
         }
+
 
         if (
             provider === "stripe" &&
-            verifiedPayment.id !== payment.provider_reference
+            verifiedPayment.id !==
+                payment.provider_reference
         ) {
+
             return send(res, 400, {
+
                 success: false,
+
                 premium: false,
-                error: "Stripe session mismatch."
+
+                error:
+                    "Stripe session mismatch."
+
             });
         }
 
-        /* VALIDATE PAYMENT */
+
+        /* -----------------------------------------
+           VALIDATE ACTUAL PAYMENT
+        ----------------------------------------- */
 
         const validation = validatePayment(
+
             verifiedPayment,
+
             provider,
-            Number(payment.amount),
-            payment.currency,
+
+            plan.amount,
+
+            plan.currency,
+
             user.email
+
         );
+
 
         if (!validation.valid) {
 
-            // Important: a payment that is still processing
-            // remains pending. We do not incorrectly mark it failed.
-
             if (validation.pending) {
+
                 return send(res, 202, {
+
                     success: false,
+
                     premium: false,
+
                     pending: true,
+
                     error: validation.reason
+
                 });
             }
 
             return send(res, 402, {
+
                 success: false,
+
                 premium: false,
+
                 error: validation.reason
+
             });
         }
 
-        /* ACTIVATE PREMIUM */
 
-        const activated = await activatePayment(payment);
+        /* -----------------------------------------
+           ACTIVATE SUBSCRIPTION
+        ----------------------------------------- */
+
+        const activated =
+            await activatePayment(
+                payment,
+                planType
+            );
+
 
         if (!activated) {
 
-            // Another verification request may have activated
-            // the same payment at almost the same time.
+            /*
+             * Another request may have activated this
+             * payment at almost the same time.
+             */
 
-            const latestPayment = await getPaymentById(
-                user.id,
-                payment.id
-            );
+            const latestPayment =
+                await getPaymentById(
+                    user.id,
+                    payment.id
+                );
+
 
             if (
                 latestPayment?.status === "active" &&
-                latestPayment?.is_premium === true
+                latestPayment?.is_premium === true &&
+                isSubscriptionUnexpired(latestPayment)
             ) {
+
                 return send(res, 200, {
+
                     success: true,
+
                     premium: true,
-                    alreadyActivated: true
+
+                    alreadyActivated: true,
+
+                    planType: latestPayment.plan_type,
+
+                    startsAt: latestPayment.starts_at,
+
+                    expiresAt: latestPayment.expires_at
+
                 });
             }
 
+
             return send(res, 409, {
+
                 success: false,
+
                 premium: false,
-                error: "Payment activation could not be completed. Please check your Premium status."
+
+                error:
+                    "Payment activation could not be completed. Please check your Premium status."
+
             });
         }
 
-        /* SUCCESS */
+
+        /* -----------------------------------------
+           SUCCESS
+        ----------------------------------------- */
 
         return send(res, 200, {
+
             success: true,
+
             premium: true,
+
             provider,
-            subscriptionId: activated.id
+
+            subscriptionId: activated.id,
+
+            planType: activated.plan_type,
+
+            startsAt: activated.starts_at,
+
+            expiresAt: activated.expires_at
+
         });
+
 
     } catch (error) {
 
@@ -823,11 +1424,16 @@ module.exports = async function handler(req, res) {
         );
 
         return send(res, 500, {
+
             success: false,
+
             premium: false,
+
             error:
                 error.message ||
                 "Premium verification failed."
+
         });
     }
+
 };
