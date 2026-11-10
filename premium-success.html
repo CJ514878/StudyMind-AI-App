@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,6 +79,7 @@
             margin-top: 24px;
             min-height: 28px;
             font-weight: 600;
+            line-height: 1.5;
         }
 
         .loading {
@@ -86,6 +88,10 @@
 
         .success {
             color: #66e26f;
+        }
+
+        .pending {
+            color: #ffd54f;
         }
 
         .error {
@@ -104,10 +110,32 @@
             font-weight: 700;
             color: #111;
             background: #ffc107;
+            transition: background 0.2s ease;
         }
 
         .button:hover {
             background: #ffd54f;
+        }
+
+        .button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .small-note {
+            margin-top: 18px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        @media (max-width: 480px) {
+            .success-card {
+                padding: 34px 22px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
         }
     </style>
 </head>
@@ -135,6 +163,8 @@
         <div
             id="status"
             class="loading"
+            role="status"
+            aria-live="polite"
         >
             Verifying payment...
         </div>
@@ -147,10 +177,15 @@
             Continue to Premium 👑
         </button>
 
+        <p class="small-note">
+            Your payment is checked securely by StudyMind AI.
+        </p>
+
     </main>
 
 
     <!-- Supabase -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script src="supabase.js"></script>
@@ -162,7 +197,7 @@
 
         /* =====================================================
            ELEMENTS
-           ===================================================== */
+        ===================================================== */
 
         const title =
             document.getElementById("title");
@@ -181,72 +216,210 @@
 
 
         /* =====================================================
-           GET URL PARAMETERS
-           ===================================================== */
+           URL PARAMETERS
+        ===================================================== */
 
         const params =
             new URLSearchParams(
                 window.location.search
             );
 
+        const transactionId =
+            params.get("transaction_id") || "";
+
+        const stripeSessionId =
+            params.get("session_id") || "";
+
+        const flutterwaveReference =
+            params.get("tx_ref") || "";
+
+        const paystackReference =
+            params.get("reference") || "";
+
+
+        /*
+         * Identify the payment provider.
+         */
 
         const provider =
             (
                 params.get("provider") ||
-                ""
+                (
+                    paystackReference
+                        ? "paystack"
+                        : transactionId || flutterwaveReference
+                            ? "flutterwave"
+                            : stripeSessionId
+                                ? "stripe"
+                                : ""
+                )
             )
             .toLowerCase()
             .trim();
 
 
         /*
-         * Paystack:
-         * ?reference=XXXX
-         *
-         * Flutterwave:
-         * ?transaction_id=XXXX
-         * ?tx_ref=XXXX
-         *
-         * Stripe:
-         * ?session_id=XXXX
+         * Select the appropriate payment reference.
          */
 
         const reference =
-            params.get("reference") ||
-            params.get("transaction_id") ||
-            params.get("session_id") ||
-            "";
-
-
-        const transactionId =
-            params.get("transaction_id") ||
-            "";
+            provider === "paystack"
+                ? paystackReference
+                : provider === "flutterwave"
+                    ? flutterwaveReference || transactionId
+                    : provider === "stripe"
+                        ? stripeSessionId
+                        : "";
 
 
         /* =====================================================
-           AUTH
-           ===================================================== */
+           STATE
+        ===================================================== */
+
+        let verificationInProgress = false;
+
+        let paymentVerified = false;
+
+        let paymentPending = false;
+
+        let retryCount = 0;
+
+        const MAX_AUTOMATIC_RETRIES = 5;
+
+        const RETRY_DELAY = 3000;
+
+
+        /* =====================================================
+           DISPLAY HELPERS
+        ===================================================== */
+
+        function showLoading(text) {
+
+            icon.textContent = "⏳";
+
+            title.textContent =
+                "Verifying your Premium payment...";
+
+            message.textContent =
+                "Please wait while StudyMind AI securely confirms your payment.";
+
+            status.textContent =
+                text || "Verifying payment...";
+
+            status.className = "loading";
+
+            continueButton.style.display = "none";
+
+        }
+
+
+        function showSuccess() {
+
+            paymentVerified = true;
+
+            paymentPending = false;
+
+            icon.textContent = "👑";
+
+            title.textContent =
+                "Premium Activated!";
+
+            message.textContent =
+                "Your StudyMind AI Premium access is now active.";
+
+            status.textContent =
+                "✓ Payment verified successfully.";
+
+            status.className = "success";
+
+            continueButton.textContent =
+                "Continue to Premium 👑";
+
+            continueButton.style.display =
+                "block";
+
+        }
+
+
+        function showPending(messageText) {
+
+            paymentPending = true;
+
+            icon.textContent = "⏳";
+
+            title.textContent =
+                "Payment is being confirmed";
+
+            message.textContent =
+                "Your payment may have been received, but confirmation is not complete yet. You do not need to pay again.";
+
+            status.textContent =
+                messageText ||
+                "Waiting for payment confirmation...";
+
+            status.className = "pending";
+
+            continueButton.textContent =
+                "Check Payment Again";
+
+            continueButton.style.display =
+                "block";
+
+        }
+
+
+        function showError(error) {
+
+            console.error(
+                "Premium verification failed:",
+                error
+            );
+
+            paymentPending = false;
+
+            icon.textContent = "⚠️";
+
+            title.textContent =
+                "We couldn't verify your payment";
+
+            message.textContent =
+                "Your payment may still be processing. Please check your payment status before attempting another purchase.";
+
+            status.textContent =
+                error?.message ||
+                "Payment verification could not be completed.";
+
+            status.className = "error";
+
+            continueButton.textContent =
+                "Return to Premium";
+
+            continueButton.style.display =
+                "block";
+
+        }
+
+
+        /* =====================================================
+           SUPABASE AUTHENTICATION
+        ===================================================== */
 
         async function getAccessToken() {
 
-            if (
-                !window.supabaseClient
-            ) {
+            if (!window.supabaseClient) {
 
                 throw new Error(
-                    "Supabase client is not available."
+                    "Supabase client is not available. Please refresh the page."
                 );
 
             }
 
-
             const {
                 data,
                 error
-            } =
-                await window.supabaseClient
-                    .auth
-                    .getSession();
+            } = await window.supabaseClient
+                .auth
+                .getSession();
 
 
             if (error) {
@@ -263,7 +436,7 @@
             if (!token) {
 
                 throw new Error(
-                    "Your login session could not be found."
+                    "Your login session could not be found. Please sign in again."
                 );
 
             }
@@ -275,14 +448,12 @@
 
 
         /* =====================================================
-           VERIFY PAYMENT
-           ===================================================== */
+           VALIDATE PAYMENT PARAMETERS
+        ===================================================== */
 
-        async function verifyPayment() {
+        function validatePaymentParameters() {
 
-            if (
-                !provider
-            ) {
+            if (!provider) {
 
                 throw new Error(
                     "Payment provider was not specified."
@@ -291,80 +462,82 @@
             }
 
 
-            /*
-             * Flutterwave needs transaction_id.
-             */
-
             if (
-                provider ===
-                "flutterwave"
+                ![
+                    "paystack",
+                    "flutterwave",
+                    "stripe"
+                ].includes(provider)
             ) {
 
-                if (!transactionId) {
-
-                    throw new Error(
-                        "Flutterwave transaction ID was not provided."
-                    );
-
-                }
+                throw new Error(
+                    "Unsupported payment provider."
+                );
 
             }
 
 
-            /*
-             * Paystack needs reference.
-             */
-
             if (
-                provider ===
-                "paystack"
+                provider === "paystack" &&
+                !paystackReference
             ) {
 
-                if (
-                    !params.get("reference")
-                ) {
-
-                    throw new Error(
-                        "Paystack payment reference was not provided."
-                    );
-
-                }
+                throw new Error(
+                    "Paystack payment reference was not provided."
+                );
 
             }
 
 
-            /*
-             * Stripe needs session_id.
-             */
-
             if (
-                provider ===
-                "stripe"
+                provider === "flutterwave" &&
+                !transactionId
             ) {
 
-                if (
-                    !params.get("session_id")
-                ) {
-
-                    throw new Error(
-                        "Stripe checkout session was not provided."
-                    );
-
-                }
+                throw new Error(
+                    "Flutterwave transaction ID was not provided."
+                );
 
             }
+
+
+            if (
+                provider === "stripe" &&
+                !stripeSessionId
+            ) {
+
+                throw new Error(
+                    "Stripe checkout session was not provided."
+                );
+
+            }
+
+        }
+
+
+        /* =====================================================
+           VERIFY PAYMENT WITH BACKEND
+        ===================================================== */
+
+        async function verifyPayment() {
+
+            validatePaymentParameters();
 
 
             const token =
                 await getAccessToken();
 
 
+            /*
+             * The backend performs the actual verification
+             * with the payment provider.
+             */
+
             const response =
                 await fetch(
                     "/api/premium/verify",
                     {
-                        method:
-                            "POST",
+                        method: "POST",
 
                         headers: {
 
@@ -376,130 +549,276 @@
 
                         },
 
-                        body:
-                            JSON.stringify({
+                        body: JSON.stringify({
 
-                                provider,
+                            provider: provider,
 
-                                reference:
-                                    provider ===
-                                    "flutterwave"
-                                        ? transactionId
-                                        : reference,
+                            reference: reference,
 
-                                transaction_id:
-                                    transactionId,
+                            transaction_id:
+                                transactionId,
 
-                                session_id:
-                                    params.get(
-                                        "session_id"
-                                    )
+                            session_id:
+                                stripeSessionId
 
-                            })
+                        })
+
                     }
                 );
 
 
-            const data =
-                await response.json();
+            let data;
 
+            try {
 
-            if (
-                !response.ok ||
-                data?.premium !== true
-            ) {
+                data = await response.json();
+
+            } catch {
 
                 throw new Error(
-                    data?.error ||
-                    "Payment could not be verified."
+                    "The verification server returned an invalid response."
                 );
 
             }
 
 
-            return data;
+            /*
+             * A 202 response means the payment is still
+             * being processed. It is not a confirmed failure.
+             */
 
-        }
+            if (
+                response.status === 202 ||
+                data?.pending === true
+            ) {
 
+                return {
+                    verified: false,
+                    pending: true,
+                    message:
+                        data?.message ||
+                        data?.error ||
+                        "Your payment is still being confirmed."
+                };
 
-        /* =====================================================
-           SUCCESS
-           ===================================================== */
-
-        function showSuccess() {
-
-            icon.textContent =
-                "👑";
-
-            title.textContent =
-                "Premium Activated!";
-
-            message.textContent =
-                "Your StudyMind AI Premium access is now active.";
-
-            status.textContent =
-                "✓ Payment verified successfully.";
-
-            status.className =
-                "success";
-
-            continueButton.style.display =
-                "block";
-
-        }
+            }
 
 
-        /* =====================================================
-           FAILURE
-           ===================================================== */
+            /*
+             * Premium is only activated when the backend
+             * confirms it.
+             */
 
-        function showError(error) {
+            if (
+                response.ok &&
+                data?.premium === true
+            ) {
 
-            console.error(
-                "Premium verification failed:",
-                error
+                return {
+                    verified: true,
+                    pending: false,
+                    data: data
+                };
+
+            }
+
+
+            throw new Error(
+                data?.error ||
+                data?.message ||
+                "Payment could not be verified."
             );
 
-            icon.textContent =
-                "⚠️";
+        }
 
-            title.textContent =
-                "We couldn't verify your payment";
 
-            message.textContent =
-                "Your payment may still be processing. Please don't pay again until you check your Premium status.";
+        /* =====================================================
+           AUTOMATIC RETRY
+        ===================================================== */
 
-            status.textContent =
-                error?.message ||
-                "Payment verification failed.";
+        function wait(milliseconds) {
 
-            status.className =
-                "error";
+            return new Promise(resolve => {
 
-            continueButton.textContent =
-                "Return to Premium";
+                setTimeout(resolve, milliseconds);
 
-            continueButton.style.display =
-                "block";
+            });
+
+        }
+
+
+        async function verifyWithRetries() {
+
+            for (
+                let attempt = 0;
+                attempt <= MAX_AUTOMATIC_RETRIES;
+                attempt++
+            ) {
+
+                try {
+
+                    showLoading(
+                        attempt === 0
+                            ? "Verifying payment..."
+                            : "Checking payment confirmation..."
+                    );
+
+
+                    const result =
+                        await verifyPayment();
+
+
+                    if (result.verified) {
+
+                        showSuccess();
+
+                        return;
+
+                    }
+
+
+                    if (result.pending) {
+
+                        showPending(
+                            result.message
+                        );
+
+
+                        if (
+                            attempt <
+                            MAX_AUTOMATIC_RETRIES
+                        ) {
+
+                            retryCount = attempt + 1;
+
+                            await wait(RETRY_DELAY);
+
+                            continue;
+
+                        }
+
+
+                        return;
+
+                    }
+
+                } catch (error) {
+
+                    /*
+                     * Do not automatically retry authentication
+                     * errors or invalid payment details.
+                     */
+
+                    showError(error);
+
+                    return;
+
+                }
+
+            }
 
         }
 
 
         /* =====================================================
-           CONTINUE
-           ===================================================== */
+           MANUAL VERIFICATION
+        ===================================================== */
+
+        async function checkPaymentAgain() {
+
+            if (verificationInProgress) {
+
+                return;
+
+            }
+
+
+            verificationInProgress = true;
+
+            continueButton.disabled = true;
+
+
+            try {
+
+                showLoading(
+                    "Checking your payment again..."
+                );
+
+
+                const result =
+                    await verifyPayment();
+
+
+                if (result.verified) {
+
+                    showSuccess();
+
+                } else if (result.pending) {
+
+                    showPending(
+                        result.message
+                    );
+
+                }
+
+            } catch (error) {
+
+                showError(error);
+
+            } finally {
+
+                verificationInProgress = false;
+
+                continueButton.disabled = false;
+
+            }
+
+        }
+
+
+        /* =====================================================
+           CONTINUE BUTTON
+        ===================================================== */
 
         continueButton.addEventListener(
             "click",
-            () => {
+            async () => {
 
                 /*
-                 * Premium has already been activated
-                 * server-side. Now open the Premium app.
+                 * Only verified payments can enter the
+                 * Premium application from this page.
+                 */
+
+                if (paymentVerified) {
+
+                    window.location.href =
+                        "premium-app.html";
+
+                    return;
+
+                }
+
+
+                /*
+                 * Pending payments can be checked again.
+                 */
+
+                if (paymentPending) {
+
+                    await checkPaymentAgain();
+
+                    return;
+
+                }
+
+
+                /*
+                 * Unverified payments return to the
+                 * Premium information page.
                  */
 
                 window.location.href =
-                    "premium-app.html";
+                    "premium.html";
 
             }
         );
@@ -507,19 +826,26 @@
 
         /* =====================================================
            START
-           ===================================================== */
+        ===================================================== */
 
         async function start() {
 
+            if (verificationInProgress) {
+
+                return;
+
+            }
+
+
+            verificationInProgress = true;
+
             try {
 
-                await verifyPayment();
+                await verifyWithRetries();
 
-                showSuccess();
+            } finally {
 
-            } catch (error) {
-
-                showError(error);
+                verificationInProgress = false;
 
             }
 
