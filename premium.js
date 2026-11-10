@@ -1,6 +1,17 @@
 
 /* =========================================================
    STUDYMIND AI — PREMIUM MANAGEMENT
+   COMPLETE REPLACEMENT
+
+   FEATURES:
+   - Server-authoritative Premium verification
+   - Admin Premium access
+   - 7-day free trial activation
+   - One trial per account
+   - Trial expiry information
+   - Paystack / Flutterwave / Stripe checkout support
+   - Premium theme management
+   - Supabase authentication listener
    ========================================================= */
 
 "use strict";
@@ -14,6 +25,7 @@
     const CONFIG = {
         STATUS_ENDPOINT: "/api/premium/status",
         CHECKOUT_ENDPOINT: "/api/premium/create-checkout",
+        TRIAL_ENDPOINT: "/api/premium/trial/start",
 
         STORAGE_KEY: "studyMindPremium",
         THEME_KEY: "studyMindTheme",
@@ -30,10 +42,16 @@
 
     let premiumStatus = false;
     let adminStatus = false;
+    let trialStatus = false;
+    let trialStartsAt = null;
+    let trialExpiresAt = null;
+    let planType = null;
+
     let statusLoaded = false;
     let statusPromise = null;
 
     let authListenerRegistered = false;
+    let trialRequestRunning = false;
 
 
     /* =====================================================
@@ -72,6 +90,7 @@
             } = await client.auth.getSession();
 
             if (error) {
+
                 console.error(
                     "Premium: Could not retrieve session.",
                     error
@@ -144,19 +163,34 @@
 
 
     /* =====================================================
-       UPDATE PREMIUM CACHE
-       
+       UPDATE PREMIUM STATE
+
        The server is authoritative.
        localStorage is only a display cache.
     ===================================================== */
 
     function updatePremiumState(
         isPremium,
-        isAdmin
+        isAdmin,
+        details = {}
     ) {
 
         premiumStatus = isPremium === true;
         adminStatus = isAdmin === true;
+
+        trialStatus =
+            details.isTrial === true;
+
+        trialStartsAt =
+            details.startsAt || null;
+
+        trialExpiresAt =
+            details.expiresAt ||
+            details.trialExpiresAt ||
+            null;
+
+        planType =
+            details.planType || null;
 
         statusLoaded = true;
 
@@ -184,6 +218,15 @@
                     premium: premiumStatus,
                     isPremium: premiumStatus,
                     isAdmin: adminStatus,
+
+                    isTrial: trialStatus,
+                    trial: trialStatus,
+
+                    startsAt: trialStartsAt,
+                    expiresAt: trialExpiresAt,
+
+                    planType: planType,
+
                     loaded: true
                 }
             })
@@ -210,6 +253,12 @@
 
             premiumStatus = false;
             adminStatus = false;
+            trialStatus = false;
+
+            trialStartsAt = null;
+            trialExpiresAt = null;
+            planType = null;
+
             statusLoaded = false;
 
             applyPremiumTheme();
@@ -220,7 +269,10 @@
 
                 if (!token) {
 
-                    updatePremiumState(false, false);
+                    updatePremiumState(
+                        false,
+                        false
+                    );
 
                     return false;
                 }
@@ -250,12 +302,6 @@
 
                 const data = await response.json();
 
-                /*
-                 * The status API verifies the user.
-                 * Admin and Premium access come from
-                 * the verified server response.
-                 */
-
                 const isAdmin =
                     data?.isAdmin === true;
 
@@ -265,14 +311,24 @@
 
                 updatePremiumState(
                     isPremium,
-                    isAdmin
+                    isAdmin,
+                    {
+                        isTrial: data?.isTrial === true,
+                        startsAt: data?.startsAt,
+                        expiresAt: data?.expiresAt,
+                        trialExpiresAt: data?.trialExpiresAt,
+                        planType: data?.planType
+                    }
                 );
 
                 console.log(
                     "StudyMind Premium status:",
                     {
                         premium: premiumStatus,
-                        admin: adminStatus
+                        admin: adminStatus,
+                        trial: trialStatus,
+                        planType: planType,
+                        expiresAt: trialExpiresAt
                     }
                 );
 
@@ -291,7 +347,10 @@
                  * grant Premium access.
                  */
 
-                updatePremiumState(false, false);
+                updatePremiumState(
+                    false,
+                    false
+                );
 
                 return false;
 
@@ -348,14 +407,177 @@
     }
 
 
+    function isPremiumTrial() {
+
+        return (
+            statusLoaded &&
+            premiumStatus === true &&
+            trialStatus === true
+        );
+
+    }
+
+
+    function getPremiumExpiry() {
+
+        return trialExpiresAt;
+
+    }
+
+
     function getStudyMindPremiumStatus() {
 
         return {
             premium: premiumStatus,
             isPremium: premiumStatus,
+
             isAdmin: adminStatus,
+
+            isTrial: trialStatus,
+            trial: trialStatus,
+
+            startsAt: trialStartsAt,
+            expiresAt: trialExpiresAt,
+
+            planType: planType,
+
             loaded: statusLoaded
         };
+
+    }
+
+
+    /* =====================================================
+       START FREE TRIAL
+    ===================================================== */
+
+    async function beginPremiumTrial() {
+
+        if (trialRequestRunning) {
+            return false;
+        }
+
+        if (isPremium()) {
+
+            alert(
+                "Your account already has Premium access."
+            );
+
+            return false;
+        }
+
+        trialRequestRunning = true;
+
+        const token = await getAccessToken();
+
+        if (!token) {
+
+            trialRequestRunning = false;
+
+            alert(
+                "Please sign in before starting your free trial."
+            );
+
+            return false;
+        }
+
+        const trialButtons = document.querySelectorAll(
+            "[data-premium-trial]"
+        );
+
+        trialButtons.forEach(button => {
+
+            button.disabled = true;
+            button.setAttribute("aria-busy", "true");
+
+        });
+
+        try {
+
+            const response = await fetch(
+                CONFIG.TRIAL_ENDPOINT,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || data?.success !== true) {
+
+                throw new Error(
+                    data?.error ||
+                    "Could not start your free trial."
+                );
+
+            }
+
+            /*
+             * Refresh from the server.
+             * Never grant Premium using only
+             * the trial-start response.
+             */
+
+            await loadStudyMindPremium(true);
+
+            if (!isPremium()) {
+
+                throw new Error(
+                    "Your trial was created, but Premium status could not be verified. Please refresh the page."
+                );
+
+            }
+
+            console.log(
+                "StudyMind free trial started:",
+                {
+                    startsAt: data.startsAt,
+                    expiresAt: data.expiresAt
+                }
+            );
+
+            alert(
+                "Your 7-day Premium trial has started!"
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "Premium trial error:",
+                error
+            );
+
+            alert(
+                error.message ||
+                "Unable to start your free trial. Please try again."
+            );
+
+            return false;
+
+        } finally {
+
+            trialRequestRunning = false;
+
+            trialButtons.forEach(button => {
+
+                button.disabled = false;
+
+                button.removeAttribute(
+                    "aria-busy"
+                );
+
+            });
+
+        }
 
     }
 
@@ -506,6 +728,7 @@
             );
 
             return false;
+
         }
 
     }
@@ -536,12 +759,6 @@
                     event === "TOKEN_REFRESHED" ||
                     event === "USER_UPDATED"
                 ) {
-
-                    /*
-                     * Run after the Supabase callback
-                     * finishes to avoid interfering
-                     * with its authentication process.
-                     */
 
                     Promise.resolve().then(() => {
 
@@ -606,6 +823,34 @@
 
             });
 
+
+        /*
+         * Any button with data-premium-trial
+         * starts the one-time free trial.
+         */
+
+        document
+            .querySelectorAll("[data-premium-trial]")
+            .forEach(button => {
+
+                if (button.dataset.premiumInitialized) {
+                    return;
+                }
+
+                button.dataset.premiumInitialized =
+                    "true";
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        beginPremiumTrial();
+
+                    }
+                );
+
+            });
+
     }
 
 
@@ -633,6 +878,12 @@
     window.isStudyMindPremium =
         isStudyMindPremium;
 
+    window.isPremiumTrial =
+        isPremiumTrial;
+
+    window.getPremiumExpiry =
+        getPremiumExpiry;
+
     window.loadStudyMindPremium =
         loadStudyMindPremium;
 
@@ -656,6 +907,9 @@
 
     window.beginPremiumPayment =
         beginPremiumPayment;
+
+    window.beginPremiumTrial =
+        beginPremiumTrial;
 
 
     /* =====================================================
