@@ -1,0 +1,941 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyMind AI — Admin Payments</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f8f6f0;
+      --card: #ffffff;
+      --text: #252525;
+      --muted: #77736a;
+      --gold: #c49a36;
+      --gold-light: #f4e8c6;
+      --border: #e8e1d1;
+      --green: #218653;
+      --red: #c74343;
+      --shadow: 0 8px 28px rgba(40, 30, 10, .06);
+    }
+
+    body.dark {
+      --bg: #171717;
+      --card: #222222;
+      --text: #f5f1e7;
+      --muted: #aaa49a;
+      --border: #39352d;
+      --gold-light: #3b321f;
+      --shadow: 0 8px 28px rgba(0, 0, 0, .2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      transition: background .2s, color .2s;
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    .topbar {
+      min-height: 75px;
+      padding: 16px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand span {
+      color: var(--gold);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 9px;
+      padding: 11px 15px;
+      font-weight: 700;
+    }
+
+    .gold-btn {
+      background: var(--gold);
+      color: #211a0c;
+    }
+
+    .secondary-btn {
+      background: var(--gold-light);
+      color: var(--text);
+    }
+
+    .danger-btn {
+      background: #f9e5e5;
+      color: #a82e2e;
+    }
+
+    main {
+      max-width: 1150px;
+      margin: 35px auto;
+      padding: 0 20px 50px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 0;
+      line-height: 1.6;
+    }
+
+    .login-card {
+      max-width: 450px;
+      margin: 65px auto;
+      padding: 28px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .login-card h2 {
+      margin-top: 0;
+    }
+
+    .field {
+      margin: 18px 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--gold);
+    }
+
+    .login-card button {
+      width: 100%;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 28px 0;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border-radius: 13px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 29px;
+      margin-top: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 25px 0 18px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .filter-btn.active {
+      background: var(--gold);
+      color: #211a0c;
+      border-color: var(--gold);
+    }
+
+    .requests {
+      display: grid;
+      gap: 15px;
+    }
+
+    .request-card {
+      padding: 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .request-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .student-name {
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .student-email {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      display: inline-block;
+      border-radius: 30px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .status.pending {
+      color: #966500;
+      background: #fff0c9;
+    }
+
+    .status.approved {
+      color: #176d42;
+      background: #dff5e8;
+    }
+
+    .status.rejected {
+      color: #a52d2d;
+      background: #f9e2e2;
+    }
+
+    .request-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin: 22px 0;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .detail-value {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .reference {
+      font-family: monospace;
+      background: var(--bg);
+      padding: 8px;
+      border-radius: 7px;
+      display: inline-block;
+    }
+
+    .request-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .review-note {
+      margin-top: 15px;
+    }
+
+    .reviewed-info {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .message {
+      padding: 13px;
+      margin: 15px 0;
+      border-radius: 9px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      display: block;
+      color: #a52d2d;
+      background: #f9e2e2;
+    }
+
+    .message.success {
+      display: block;
+      color: #176d42;
+      background: #dff5e8;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 45px 15px;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .warning {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--gold-light);
+      line-height: 1.6;
+      font-size: 13px;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 650px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .request-details {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      main {
+        margin-top: 25px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="brand">StudyMind <span>AI</span> · Admin</div>
+
+  <div class="top-actions">
+    <button class="secondary-btn" id="themeButton">Toggle theme</button>
+    <button class="secondary-btn hidden" id="logoutButton">Sign out</button>
+  </div>
+</header>
+
+<main>
+
+  <section id="loginSection" class="login-card hidden">
+    <h2>Admin sign in</h2>
+    <p class="subtitle">Sign in with your authorized StudyMind administrator account.</p>
+
+    <div id="loginMessage" class="message"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" type="email" required autocomplete="username">
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password">
+      </div>
+
+      <button class="gold-btn" type="submit" id="loginButton">
+        Sign in
+      </button>
+    </form>
+  </section>
+
+  <section id="adminSection" class="hidden">
+    <h1>Manual Payment Requests</h1>
+    <p class="subtitle">
+      Review bank transfer references and manage Premium activation.
+    </p>
+
+    <div id="pageMessage" class="message"></div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <span>Pending requests</span>
+        <strong id="pendingCount">0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Approved requests</span>
+        <strong id="approvedCount">0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Rejected requests</span>
+        <strong id="rejectedCount">0</strong>
+      </div>
+    </div>
+
+    <div class="warning">
+      <strong>Payment verification:</strong>
+      Only approve a request after independently confirming that the
+      exact amount has arrived in the authorized receiving account.
+      A payment reference or screenshot alone is not proof of payment.
+    </div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="approved">Approved</button>
+        <button class="filter-btn" data-filter="rejected">Rejected</button>
+      </div>
+
+      <button class="gold-btn" id="refreshButton">Refresh requests</button>
+    </div>
+
+    <div id="requestsContainer" class="requests">
+      <div class="empty">Loading payment requests...</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+/* =========================================================
+   STUDYMIND AI — ADMIN MANUAL PAYMENT REVIEW
+   ========================================================= */
+
+const SUPABASE_URL =
+  "https://bicnrbqqvucgpbwudmit.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
+
+const ADMIN_EMAIL = "studymindaiofficial@gmail.com";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const loginSection = document.getElementById("loginSection");
+const adminSection = document.getElementById("adminSection");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const logoutButton = document.getElementById("logoutButton");
+const requestsContainer = document.getElementById("requestsContainer");
+
+let allRequests = [];
+let currentFilter = "all";
+let currentSession = null;
+
+function showMessage(element, message, type = "error") {
+  element.textContent = message;
+  element.className = "message " + type;
+}
+
+function clearMessage(element) {
+  element.textContent = "";
+  element.className = "message";
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString();
+}
+
+function formatAmount(amount, currency = "NGN") {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency
+  }).format(Number(amount || 0));
+}
+
+function showLogin() {
+  loginSection.classList.remove("hidden");
+  adminSection.classList.add("hidden");
+  logoutButton.classList.add("hidden");
+}
+
+function showAdmin() {
+  loginSection.classList.add("hidden");
+  adminSection.classList.remove("hidden");
+  logoutButton.classList.remove("hidden");
+}
+
+async function getAdminSession() {
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) throw error;
+
+  return data.session;
+}
+
+async function verifyAdmin(session) {
+  const email = session?.user?.email?.toLowerCase();
+
+  if (email !== ADMIN_EMAIL.toLowerCase()) {
+    await supabaseClient.auth.signOut();
+    throw new Error("This account is not authorized to access the admin page.");
+  }
+}
+
+async function apiRequest(url, options = {}) {
+  if (!currentSession?.access_token) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + currentSession.access_token,
+      ...(options.headers || {})
+    }
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || result.success === false) {
+    throw new Error(result.error || "The request could not be completed.");
+  }
+
+  return result;
+}
+
+async function loadRequests() {
+  requestsContainer.innerHTML =
+    '<div class="empty">Loading payment requests...</div>';
+
+  clearMessage(document.getElementById("pageMessage"));
+
+  try {
+    const result = await apiRequest(
+      "/api/premium/manual/admin/list"
+    );
+
+    allRequests = Array.isArray(result.requests)
+      ? result.requests
+      : [];
+
+    updateStats();
+    renderRequests();
+
+  } catch (error) {
+    requestsContainer.innerHTML =
+      '<div class="empty">Could not load payment requests.</div>';
+
+    showMessage(
+      document.getElementById("pageMessage"),
+      error.message
+    );
+  }
+}
+
+function updateStats() {
+  document.getElementById("pendingCount").textContent =
+    allRequests.filter(item => item.status === "pending").length;
+
+  document.getElementById("approvedCount").textContent =
+    allRequests.filter(item => item.status === "approved").length;
+
+  document.getElementById("rejectedCount").textContent =
+    allRequests.filter(item => item.status === "rejected").length;
+}
+
+function renderRequests() {
+  const filtered = currentFilter === "all"
+    ? allRequests
+    : allRequests.filter(item => item.status === currentFilter);
+
+  if (!filtered.length) {
+    requestsContainer.innerHTML =
+      '<div class="empty">No payment requests found in this category.</div>';
+    return;
+  }
+
+  requestsContainer.innerHTML = filtered.map(request => {
+    const id = escapeHTML(request.id);
+    const status = escapeHTML(request.status);
+    const name = escapeHTML(request.student_name || "Student");
+    const email = escapeHTML(request.student_email || "—");
+    const plan = escapeHTML(request.plan_type);
+    const reference = escapeHTML(request.payment_reference);
+    const amount = escapeHTML(
+      formatAmount(request.amount, request.currency)
+    );
+
+    const actions = request.status === "pending"
+      ? `
+        <div class="review-note">
+          <label class="detail-label" for="note-${id}">
+            Admin note (optional)
+          </label>
+          <textarea
+            id="note-${id}"
+            maxlength="500"
+            placeholder="Add an internal review note..."
+          ></textarea>
+        </div>
+
+        <div class="request-actions">
+          <button class="gold-btn" data-action="approve" data-id="${id}">
+            Approve payment
+          </button>
+
+          <button class="danger-btn" data-action="reject" data-id="${id}">
+            Reject payment
+          </button>
+        </div>
+      `
+      : `
+        <div class="reviewed-info">
+          Reviewed: ${escapeHTML(formatDate(request.reviewed_at))}
+          ${request.admin_note
+            ? "<br>Admin note: " + escapeHTML(request.admin_note)
+            : ""}
+        </div>
+      `;
+
+    return `
+      <article class="request-card">
+        <div class="request-top">
+          <div>
+            <div class="student-name">${name}</div>
+            <div class="student-email">${email}</div>
+          </div>
+
+          <span class="status ${status}">${status}</span>
+        </div>
+
+        <div class="request-details">
+          <div>
+            <div class="detail-label">Premium plan</div>
+            <div class="detail-value">${plan}</div>
+          </div>
+
+          <div>
+            <div class="detail-label">Amount</div>
+            <div class="detail-value">${amount}</div>
+          </div>
+
+          <div>
+            <div class="detail-label">Payment reference</div>
+            <div class="detail-value">
+              <span class="reference">${reference}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="detail-label">Submitted</div>
+            <div class="detail-value">
+              ${escapeHTML(formatDate(request.created_at))}
+            </div>
+          </div>
+        </div>
+
+        ${actions}
+      </article>
+    `;
+  }).join("");
+}
+
+async function reviewRequest(requestId, decision) {
+  const request = allRequests.find(item => item.id === requestId);
+
+  if (!request || request.status !== "pending") {
+    showMessage(
+      document.getElementById("pageMessage"),
+      "This request is no longer pending. Refresh the page."
+    );
+    return;
+  }
+
+  const noteElement = document.getElementById("note-" + requestId);
+  const adminNote = noteElement?.value.trim() || "";
+
+  const actionLabel = decision === "approved"
+    ? "approve this payment and activate Premium"
+    : "reject this payment request";
+
+  if (!confirm("Are you sure you want to " + actionLabel + "?")) {
+    return;
+  }
+
+  if (decision === "approved") {
+    const confirmation = prompt(
+      "Before approval, confirm that the exact amount has arrived in the authorized receiving account.\n\nType VERIFIED to continue."
+    );
+
+    if (confirmation !== "VERIFIED") {
+      showMessage(
+        document.getElementById("pageMessage"),
+        "Approval cancelled. Payment verification is required."
+      );
+      return;
+    }
+  }
+
+  const buttons = document.querySelectorAll(
+    '[data-id="' + requestId + '"]'
+  );
+
+  buttons.forEach(button => button.disabled = true);
+
+  try {
+    const result = await apiRequest(
+      "/api/premium/manual/admin/review",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          request_id: requestId,
+          decision,
+          admin_note: adminNote
+        })
+      }
+    );
+
+    showMessage(
+      document.getElementById("pageMessage"),
+      result.message || (
+        decision === "approved"
+          ? "Payment approved. Premium has been activated."
+          : "Payment request rejected."
+      ),
+      "success"
+    );
+
+    await loadRequests();
+
+  } catch (error) {
+    showMessage(
+      document.getElementById("pageMessage"),
+      error.message
+    );
+
+    buttons.forEach(button => button.disabled = false);
+  }
+}
+
+/* Login */
+
+loginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  loginButton.disabled = true;
+  loginButton.textContent = "Signing in...";
+
+  clearMessage(document.getElementById("loginMessage"));
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    currentSession = data.session;
+
+    await verifyAdmin(currentSession);
+
+    showAdmin();
+    await loadRequests();
+
+  } catch (error) {
+    currentSession = null;
+
+    showMessage(
+      document.getElementById("loginMessage"),
+      error.message
+    );
+
+    showLogin();
+
+  } finally {
+    loginButton.disabled = false;
+    loginButton.textContent = "Sign in";
+  }
+});
+
+/* Request actions */
+
+requestsContainer.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+
+  if (!button || button.disabled) return;
+
+  reviewRequest(
+    button.dataset.id,
+    button.dataset.action === "approve"
+      ? "approved"
+      : "rejected"
+  );
+});
+
+/* Filters */
+
+document.querySelectorAll("[data-filter]").forEach(button => {
+  button.addEventListener("click", () => {
+    currentFilter = button.dataset.filter;
+
+    document.querySelectorAll("[data-filter]").forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
+
+    renderRequests();
+  });
+});
+
+/* Refresh */
+
+document.getElementById("refreshButton").addEventListener(
+  "click",
+  loadRequests
+);
+
+/* Logout */
+
+logoutButton.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  currentSession = null;
+  showLogin();
+});
+
+/* Theme */
+
+document.getElementById("themeButton").addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+
+  localStorage.setItem(
+    "studyMindAdminDarkMode",
+    document.body.classList.contains("dark") ? "true" : "false"
+  );
+});
+
+if (localStorage.getItem("studyMindAdminDarkMode") === "true") {
+  document.body.classList.add("dark");
+}
+
+/* Existing session */
+
+async function initializeAdminPage() {
+  try {
+    currentSession = await getAdminSession();
+
+    if (!currentSession) {
+      showLogin();
+      return;
+    }
+
+    await verifyAdmin(currentSession);
+
+    showAdmin();
+    await loadRequests();
+
+  } catch (error) {
+    currentSession = null;
+    showLogin();
+
+    showMessage(
+      document.getElementById("loginMessage"),
+      error.message
+    );
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    currentSession = null;
+    showLogin();
+  }
+});
+
+initializeAdminPage();
+</script>
+
+</body>
+</html>
