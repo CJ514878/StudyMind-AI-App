@@ -1083,6 +1083,14 @@ body.study-mind-premium .sidebar button:focus-visible {
 
             </a>
 
+            <a
+    href="admin-payments.html"
+    id="adminPaymentsLink"
+    style="display: none;"
+>
+    <span class="nav-icon">⚙</span>
+    Admin Payments
+</a>
         </div>
 
 
@@ -1795,6 +1803,51 @@ body.study-mind-premium .sidebar button:focus-visible {
 
 <script src="dashboard.js"></script>
 
+
+<script>
+(function () {
+    "use strict";
+
+    const ADMIN_EMAIL = "studymindaiofficial@gmail.com";
+    const adminLink = document.getElementById("adminPaymentsLink");
+
+    if (!adminLink) return;
+
+    const supabaseClient =
+        window.supabaseClient || window.studyMindSupabase;
+
+    if (!supabaseClient?.auth) {
+        console.warn("StudyMind: Supabase client unavailable for admin navigation.");
+        return;
+    }
+
+    function updateAdminLink(session) {
+        const email = session?.user?.email?.toLowerCase();
+
+        adminLink.style.display =
+            email === ADMIN_EMAIL.toLowerCase() ? "flex" : "none";
+    }
+
+    supabaseClient.auth.getSession()
+        .then(({ data, error }) => {
+            if (error) {
+                console.error("Admin navigation check failed:", error);
+                adminLink.style.display = "none";
+                return;
+            }
+
+            updateAdminLink(data.session);
+        })
+        .catch(error => {
+            console.error("Admin navigation error:", error);
+            adminLink.style.display = "none";
+        });
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        updateAdminLink(session);
+    });
+})();
+</script>
 
 </body>
 
