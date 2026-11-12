@@ -85,9 +85,9 @@
     ===================================================== */
 
     const BANK_TRANSFER_DETAILS = {
-        bankName: "ADD BANK NAME",
-        accountName: "ADD ACCOUNT NAME",
-        accountNumber: "ADD ACCOUNT NUMBER"
+        bankName: "Moniepoint",
+        accountName: "Chijindum Joshua Chukwumerije",
+        accountNumber: "8148165088"
     };
 
 
