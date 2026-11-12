@@ -1455,9 +1455,12 @@
   </div>
 
 
+ 
   <script>
+    "use strict";
+
     /* =========================================================
-       SUPABASE
+       STUDYMIND AI — PREMIUM PAGE INITIALIZATION
        ========================================================= */
 
     const SUPABASE_URL =
@@ -1467,16 +1470,15 @@
       "sb_publishable_70y0MPrj30-FimUSQK_HuA_Ng1a1qcB";
 
     if (
-      typeof window.supabase !== "undefined" &&
-      typeof window.supabase.createClient === "function"
+      window.supabase &&
+      typeof window.supabase.createClient === "function" &&
+      !window.supabaseClient
     ) {
-      if (!window.supabaseClient) {
-        window.supabaseClient =
-          window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-          );
-      }
+      window.supabaseClient =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
     }
 
 
@@ -1484,580 +1486,383 @@
        PREMIUM THEME
        ========================================================= */
 
-    (function syncPremiumPageTheme() {
-
-      "use strict";
+    (function () {
 
       function applyTheme() {
 
         let theme = null;
 
         try {
-          theme =
-            localStorage.getItem("studyMindTheme");
+          theme = localStorage.getItem("studyMindTheme");
         } catch (error) {
-          theme = null;
+          console.warn("Could not read theme preference.");
         }
 
         const isDark =
           theme === "dark" || theme === null;
 
-        document.body.classList.toggle(
-          "dark",
-          isDark
-        );
+        document.body.classList.toggle("dark", isDark);
 
-        const premiumPage =
-          document.querySelector(".premium-page");
+        const page =
+          document.getElementById("premiumPage");
 
-        if (premiumPage) {
-
-          premiumPage.classList.toggle(
-            "premium-dark",
-            isDark
-          );
-
+        if (page) {
+          page.classList.toggle("premium-dark", isDark);
         }
-
       }
 
       if (document.readyState === "loading") {
-
-        document.addEventListener(
-          "DOMContentLoaded",
-          applyTheme
-        );
-
+        document.addEventListener("DOMContentLoaded", applyTheme);
       } else {
-
         applyTheme();
-
       }
 
-      window.addEventListener(
-        "storage",
-        event => {
-
-          if (
-            event.key === "studyMindTheme"
-          ) {
-            applyTheme();
-          }
-
+      window.addEventListener("storage", function (event) {
+        if (event.key === "studyMindTheme") {
+          applyTheme();
         }
-      );
+      });
 
     })();
 
 
     /* =========================================================
-       ADMIN PREMIUM ACCESS
+       ADMIN PREMIUM APP ACCESS
        ========================================================= */
 
-    (function initialiseAdminPremiumAccess() {
+    window.openGoldenPremiumApp = async function () {
 
-      "use strict";
+      try {
 
-      async function openGoldenPremiumApp() {
+        const client =
+          window.supabaseClient ||
+          window.studyMindSupabase ||
+          window.gameSupabase;
 
-        try {
-
-          if (
-            !window.supabaseClient ||
-            !window.supabaseClient.auth
-          ) {
-
-            alert("Please log in first.");
-            return;
-
-          }
-
-          const {
-            data: { user }
-          } =
-            await window.supabaseClient.auth.getUser();
-
-          if (!user) {
-
-            alert("Please log in first.");
-            return;
-
-          }
-
-          const email =
-            String(user.email || "")
-              .trim()
-              .toLowerCase();
-
-          if (
-            email ===
-            "studymindaiofficial@gmail.com"
-          ) {
-
-            window.location.href =
-              "premium-app.html";
-
-            return;
-
-          }
-
-          if (
-            typeof window.openPremiumOffer ===
-            "function"
-          ) {
-
-            window.openPremiumOffer();
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            "Admin Premium access error:",
-            error
-          );
-
+        if (!client?.auth) {
           alert("Please log in first.");
-
+          return;
         }
+
+        const {
+          data,
+          error
+        } = await client.auth.getUser();
+
+        if (error || !data?.user) {
+          alert("Please log in first.");
+          return;
+        }
+
+        const email =
+          String(data.user.email || "")
+            .trim()
+            .toLowerCase();
+
+        if (email === "studymindaiofficial@gmail.com") {
+          window.location.href = "premium-app.html";
+          return;
+        }
+
+        if (typeof window.openPremiumOffer === "function") {
+          window.openPremiumOffer();
+        }
+
+      } catch (error) {
+
+        console.error("Admin access error:", error);
+        alert("Unable to verify your account. Please try again.");
 
       }
-
-      window.openGoldenPremiumApp =
-        openGoldenPremiumApp;
-
-      document.addEventListener(
-        "DOMContentLoaded",
-        function () {
-
-          document
-            .querySelectorAll(
-              "[data-golden-premium-admin]"
-            )
-            .forEach(element => {
-
-              element.addEventListener(
-                "click",
-                openGoldenPremiumApp
-              );
-
-            });
-
-        }
-      );
-
-    })();
+    };
 
 
     /* =========================================================
        PREMIUM BUTTONS
+       The Free plan button is deliberately excluded.
        ========================================================= */
 
-    document.addEventListener(
-      "DOMContentLoaded",
-      function () {
+    document.addEventListener("DOMContentLoaded", function () {
 
-        document
-          .querySelectorAll(
-            "[data-premium-button]"
-          )
-          .forEach(button => {
+      document
+        .querySelectorAll(
+          ".plan.premium [data-premium-button], " +
+          ".bottom-cta [data-premium-button]"
+        )
+        .forEach(function (button) {
 
-            button.addEventListener(
-              "click",
-              function () {
+          button.addEventListener("click", function () {
 
-                if (
-                  typeof window.openPremiumOffer ===
-                  "function"
-                ) {
-
-                  window.openPremiumOffer();
-
-                }
-
-              }
-            );
+            if (typeof window.openPremiumOffer === "function") {
+              window.openPremiumOffer();
+            } else {
+              alert("Premium options are still loading. Please try again.");
+            }
 
           });
 
-      }
-    );
+        });
 
 
-    /* =========================================================
-       IMPORTANT:
-       premium.js creates the payment modal on document.body.
-       Move that modal into .premium-page so its CSS remains
-       completely namespaced.
-       ========================================================= */
+      document
+        .querySelectorAll("[data-golden-premium-admin]")
+        .forEach(function (element) {
 
-    (function keepPremiumModalInsidePremiumPage() {
-
-      const observer =
-        new MutationObserver(function () {
-
-          const page =
-            document.querySelector(".premium-page");
-
-          const modal =
-            document.getElementById(
-              "studyMindPremiumModal"
-            );
-
-          if (
-            page &&
-            modal &&
-            modal.parentElement !== page
-          ) {
-
-            page.appendChild(modal);
-
-          }
+          element.addEventListener(
+            "click",
+            window.openGoldenPremiumApp
+          );
 
         });
 
-      observer.observe(
-        document.body,
-        {
-          childList: true,
-          subtree: true
-        }
-      );
-
-    })();
+    });
 
   </script>
 
 
+  <!-- PREMIUM PAYMENT AND SUBSCRIPTION LOGIC -->
   <script src="premium.js"></script>
 
+
+  <!-- =========================================================
+       PREMIUM ACCOUNT STATUS
+       ========================================================= -->
+
   <script>
-"use strict";
+    "use strict";
 
-/* =========================================================
-   STUDYMIND PREMIUM PAGE STATUS
-   ========================================================= */
+    (async function initializePremiumPageStatus() {
 
-(async function initializePremiumPageStatus() {
-
-    const statusCard =
+      const statusCard =
         document.getElementById("premiumStatusCard");
 
-    const navStatus =
+      const navStatus =
         document.getElementById("premiumNavStatus");
 
-    const premiumButtons =
+      const premiumButtons =
         document.querySelectorAll(
-            ".plan.premium [data-premium-button], " +
-            ".bottom-cta [data-premium-button]"
+          ".plan.premium [data-premium-button], " +
+          ".bottom-cta [data-premium-button]"
         );
 
-    const freeButton =
+      const freeButton =
         document.querySelector(
-            ".plan:not(.premium) [data-premium-button]"
+          ".plan:not(.premium) .premium-button"
         );
 
 
-    function updateStatus(label, description, type) {
+      function updateStatus(label, description, type) {
 
         if (statusCard) {
+          statusCard.innerHTML = `
+            <div class="premium-status-heading">
+              ${label}
+            </div>
 
-            statusCard.innerHTML = `
-                <div class="premium-status-heading">
-                    ${label}
-                </div>
-
-                <div class="premium-status-description">
-                    ${description}
-                </div>
-            `;
-
+            <div class="premium-status-description">
+              ${description}
+            </div>
+          `;
         }
 
         if (navStatus) {
-
-            navStatus.textContent = label;
-
-            navStatus.className =
-                "premium-nav-status " + type;
-
+          navStatus.textContent = label;
+          navStatus.className =
+            "premium-nav-status " + type;
         }
+      }
 
-    }
 
+      function updatePremiumButtons(label, disabled) {
 
-    function updatePremiumButtons(label, disabled) {
-
-        premiumButtons.forEach(button => {
-
-            button.textContent = label;
-
-            button.disabled = disabled;
-
-            button.classList.toggle(
-                "premium-active",
-                disabled
-            );
-
+        premiumButtons.forEach(function (button) {
+          button.textContent = label;
+          button.disabled = disabled;
+          button.classList.toggle("premium-active", disabled);
         });
-
-    }
-
-
-    function showFreeAccount() {
-
-        updateStatus(
-            "Free Plan",
-            "You are currently using the Free StudyMind plan. Upgrade to unlock unlimited Premium features.",
-            "free"
-        );
-
-        updatePremiumButtons(
-            "Unlock Premium 👑",
-            false
-        );
-
-        if (freeButton) {
-
-            freeButton.textContent =
-                "Current Plan";
-
-            freeButton.disabled = true;
-
-        }
-
-    }
+      }
 
 
-    function showPremiumAccount() {
+      function showFreeAccount() {
 
         updateStatus(
-            "Premium Active 👑",
-            "Your Premium access has been verified. You already have unlimited access to Premium features. No additional purchase is required.",
-            "active"
+          "Free Plan",
+          "You are currently using the Free StudyMind plan. Upgrade to unlock unlimited Premium features.",
+          "free"
         );
 
-        updatePremiumButtons(
-            "Premium Active ✓",
-            true
-        );
+        updatePremiumButtons("Unlock Premium 👑", false);
 
         if (freeButton) {
-
-            freeButton.textContent =
-                "Your Previous Plan";
-
-            freeButton.disabled = true;
-
+          freeButton.textContent = "Current Plan";
+          freeButton.disabled = true;
         }
+      }
 
-    }
 
-
-    function showAdminAccount() {
+      function showPremiumAccount() {
 
         updateStatus(
-            "Admin Access 👑",
-            "Your administrator account has full Premium access to StudyMind AI.",
-            "active"
+          "Premium Active 👑",
+          "Your Premium access has been verified. You already have access to Premium features.",
+          "active"
         );
 
-        updatePremiumButtons(
-            "Admin Access ✓",
-            true
-        );
+        updatePremiumButtons("Premium Active ✓", true);
 
         if (freeButton) {
-
-            freeButton.textContent =
-                "Admin Account";
-
-            freeButton.disabled = true;
-
+          freeButton.textContent = "Your Previous Plan";
+          freeButton.disabled = true;
         }
+      }
 
-    }
 
-
-    function showPendingAccount() {
+      function showAdminAccount() {
 
         updateStatus(
-            "Payment Pending",
-            "Your payment is awaiting confirmation. Your Premium access will become active once the payment is verified.",
-            "pending"
+          "Admin Access 👑",
+          "Your administrator account has full Premium access to StudyMind AI.",
+          "active"
         );
 
-        updatePremiumButtons(
-            "Payment Pending...",
-            true
-        );
+        updatePremiumButtons("Admin Access ✓", true);
 
         if (freeButton) {
-
-            freeButton.textContent =
-                "Payment Pending";
-
-            freeButton.disabled = true;
-
+          freeButton.textContent = "Admin Account";
+          freeButton.disabled = true;
         }
+      }
 
-    }
+
+      function showPendingAccount() {
+
+        updateStatus(
+          "Payment Pending",
+          "Your payment is awaiting confirmation. Premium access will become active after verification.",
+          "pending"
+        );
+
+        updatePremiumButtons("Payment Pending...", true);
+
+        if (freeButton) {
+          freeButton.textContent = "Payment Pending";
+          freeButton.disabled = true;
+        }
+      }
 
 
-    try {
+      try {
 
         const client =
-            window.supabaseClient ||
-            window.studyMindSupabase ||
-            window.gameSupabase;
+          window.supabaseClient ||
+          window.studyMindSupabase ||
+          window.gameSupabase;
 
         if (!client?.auth) {
+          updateStatus(
+            "Login Required",
+            "Please log in to check your Premium account status.",
+            "free"
+          );
 
-            updateStatus(
-                "Login Required",
-                "Please log in to check your Premium account status.",
-                "free"
-            );
-
-            updatePremiumButtons(
-                "Log in to Upgrade",
-                false
-            );
-
-            return;
-
+          updatePremiumButtons("Log in to Upgrade", false);
+          return;
         }
 
 
         const {
-            data,
-            error
+          data,
+          error
         } = await client.auth.getSession();
 
         if (error) {
-            throw error;
+          throw error;
         }
 
         const token =
-            data?.session?.access_token;
+          data?.session?.access_token;
 
         if (!token) {
 
-            updateStatus(
-                "Login Required",
-                "Please log in to view your Premium status and purchase options.",
-                "free"
-            );
+          updateStatus(
+            "Login Required",
+            "Please log in to view your Premium status and purchase options.",
+            "free"
+          );
 
-            updatePremiumButtons(
-                "Log in to Upgrade",
-                false
-            );
+          updatePremiumButtons("Log in to Upgrade", false);
 
-            premiumButtons.forEach(button => {
+          premiumButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+              window.location.href = "login.html";
+            }, { once: true });
+          });
 
-                button.onclick = function () {
-
-                    window.location.href =
-                        "login.html";
-
-                };
-
-            });
-
-            return;
-
+          return;
         }
 
 
         const response = await fetch(
-            "/api/premium/status",
-            {
-                method: "GET",
-
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-
-                cache: "no-store"
-            }
+          "/api/premium/status",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            cache: "no-store"
+          }
         );
 
-
         if (!response.ok) {
-            throw new Error(
-                "Unable to verify Premium status."
-            );
+          throw new Error("Unable to verify Premium status.");
         }
 
-
-        const result =
-            await response.json();
+        const result = await response.json();
 
 
-        // Admin access always includes Premium.
         if (result.isAdmin === true) {
-
-            showAdminAccount();
-
-            return;
-
+          showAdminAccount();
+          return;
         }
-
 
         if (result.premium === true) {
-
-            showPremiumAccount();
-
-            return;
-
+          showPremiumAccount();
+          return;
         }
 
-
-        // Only show pending when the server explicitly
-        // reports that payment is awaiting confirmation.
         const paymentPending =
-            result.pending === true ||
-            result.paymentPending === true ||
-            result.paymentStatus === "pending" ||
-            result.status === "pending";
+          result.pending === true ||
+          result.paymentPending === true ||
+          result.paymentStatus === "pending" ||
+          result.status === "pending";
 
         if (paymentPending) {
-
-            showPendingAccount();
-
-            return;
-
+          showPendingAccount();
+          return;
         }
-
 
         showFreeAccount();
 
-
-    } catch (error) {
+      } catch (error) {
 
         console.error(
-            "Premium page verification error:",
-            error
+          "Premium status verification error:",
+          error
         );
 
         updateStatus(
-            "Verification Unavailable",
-            "We couldn't verify your Premium status. Please refresh the page or try again later. No purchase is necessary until your account status has been checked.",
-            "pending"
+          "Verification Unavailable",
+          "We couldn't verify your Premium status. Please refresh the page or try again later. No purchase is necessary until your account status has been checked.",
+          "pending"
         );
 
-        updatePremiumButtons(
-            "Status Unavailable",
-            true
-        );
+        updatePremiumButtons("Status Unavailable", true);
 
-    }
+      }
 
-})();
-</script>
+    })();
+  </script>
 
 </body>
 </html>
