@@ -12,6 +12,7 @@
    - Monthly paid subscriptions
    - Yearly paid subscriptions
    - Seven-day free trials
+   - Pending manual bank transfers
    - Automatic expiry detection
 
    SECURITY:
@@ -88,7 +89,6 @@ async function getUserFromToken(token) {
 
     const response = await fetch(
         `${SUPABASE_URL}/auth/v1/user`,
-
         {
             method: "GET",
 
@@ -174,7 +174,6 @@ async function getActivePaidSubscription(userId) {
 
     const response = await fetch(
         url,
-
         {
             method: "GET",
 
@@ -238,7 +237,6 @@ async function getActiveTrial(userId) {
 
     const response = await fetch(
         url,
-
         {
             method: "GET",
 
@@ -261,6 +259,69 @@ async function getActiveTrial(userId) {
 
         throw new Error(
             "Could not check Premium trial status."
+        );
+
+    }
+
+
+    const rows =
+        await response.json();
+
+
+    return rows?.[0] || null;
+
+}
+
+
+/* =========================================================
+   CHECK PENDING MANUAL PAYMENT
+
+   This only detects a pending request.
+
+   It DOES NOT activate Premium.
+   Only the admin approval process can do that.
+========================================================= */
+
+async function getPendingManualPayment(userId) {
+
+    const url =
+        `${SUPABASE_URL}/rest/v1/manual_payment_requests` +
+
+        `?user_id=eq.${encodeURIComponent(userId)}` +
+
+        `&status=eq.pending` +
+
+        `&select=id,plan_type,amount,currency,status,created_at` +
+
+        `&order=created_at.desc` +
+
+        `&limit=1`;
+
+
+    const response = await fetch(
+        url,
+        {
+            method: "GET",
+
+            headers: getSupabaseHeaders(),
+
+            cache: "no-store"
+        }
+    );
+
+
+    if (!response.ok) {
+
+        const errorText =
+            await response.text();
+
+        console.error(
+            "Manual payment status database error:",
+            errorText
+        );
+
+        throw new Error(
+            "Could not check pending manual payment."
         );
 
     }
@@ -302,7 +363,6 @@ async function markExpiredTrials(userId) {
 
     const response = await fetch(
         url,
-
         {
             method: "PATCH",
 
@@ -486,6 +546,8 @@ module.exports = async function handler(req, res) {
 
                 trialExpiresAt: null,
 
+                pending: false,
+
                 userId: user.id
 
             });
@@ -524,6 +586,8 @@ module.exports = async function handler(req, res) {
 
                 trialExpiresAt: null,
 
+                pending: false,
+
                 userId: user.id
 
             });
@@ -560,6 +624,8 @@ module.exports = async function handler(req, res) {
                 trialExpiresAt:
                     trial.expires_at,
 
+                pending: false,
+
                 userId: user.id
 
             });
@@ -568,12 +634,78 @@ module.exports = async function handler(req, res) {
 
 
         /* -----------------------------------------
-           NO ACTIVE PAID SUBSCRIPTION OR TRIAL
-
-           Mark expired trials without deleting them.
+           MARK EXPIRED TRIALS
         ----------------------------------------- */
 
         await markExpiredTrials(user.id);
+
+
+        /* -----------------------------------------
+           CHECK PENDING MANUAL PAYMENT
+
+           Pending requests do not grant Premium.
+
+           They only change the account status
+           displayed on the Premium page.
+        ----------------------------------------- */
+
+        const pendingPayment =
+            await getPendingManualPayment(
+                user.id
+            );
+
+
+        if (pendingPayment) {
+
+            return send(res, 200, {
+
+                premium: false,
+
+                isAdmin: false,
+
+                isTrial: false,
+
+                pending: true,
+
+                paymentPending: true,
+
+                paymentStatus: "pending",
+
+                planType:
+                    pendingPayment.plan_type,
+
+                pendingRequest: {
+
+                    id: pendingPayment.id,
+
+                    planType:
+                        pendingPayment.plan_type,
+
+                    amount:
+                        pendingPayment.amount,
+
+                    currency:
+                        pendingPayment.currency,
+
+                    status:
+                        pendingPayment.status,
+
+                    createdAt:
+                        pendingPayment.created_at
+
+                },
+
+                startsAt: null,
+
+                expiresAt: null,
+
+                trialExpiresAt: null,
+
+                userId: user.id
+
+            });
+
+        }
 
 
         /* -----------------------------------------
@@ -587,6 +719,12 @@ module.exports = async function handler(req, res) {
             isAdmin: false,
 
             isTrial: false,
+
+            pending: false,
+
+            paymentPending: false,
+
+            paymentStatus: null,
 
             planType: null,
 
@@ -616,6 +754,8 @@ module.exports = async function handler(req, res) {
             isAdmin: false,
 
             isTrial: false,
+
+            pending: false,
 
             error:
                 "Premium status check failed."
