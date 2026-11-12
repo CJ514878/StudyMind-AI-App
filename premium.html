@@ -1792,11 +1792,17 @@
 
           updatePremiumButtons("Log in to Upgrade", false);
 
-          premiumButtons.forEach(function (button) {
-            button.addEventListener("click", function () {
-              window.location.href = "login.html";
-            }, { once: true });
-          });
+         premiumButtons.forEach(function (button) {
+    button.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        window.location.href = "login.html";
+    }, {
+        once: true,
+        capture: true
+    });
+});
 
           return;
         }
