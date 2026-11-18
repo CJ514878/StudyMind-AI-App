@@ -1544,6 +1544,16 @@ module.exports = async function handler(req, res) {
             user.id
         );
 
+        
+/* =============================================
+   LOAD LONG-TERM STUDENT MEMORY
+============================================= */
+
+const studentMemory = await loadStudentMemory(
+    user.id
+);
+
+
         /* =============================================
            PREPARE CONVERSATION CONTEXT
         ============================================= */
