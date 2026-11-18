@@ -1567,11 +1567,18 @@ const studentMemory = await loadStudentMemory(
            Previous messages are now included.
         ============================================= */
 
-        const response = await client.responses.create({
-            model: "gpt-5-mini",
-            instructions: NORMAL_AI_INSTRUCTIONS,
-            input: conversationInput
-        });
+       
+const response = await client.responses.create({
+    model: "gpt-5-mini",
+
+    instructions:
+        NORMAL_AI_INSTRUCTIONS +
+        "\n\n" +
+        buildStudentMemoryContext(studentMemory),
+
+    input: conversationInput
+});
+
 
         const reply =
             typeof response.output_text === "string"
