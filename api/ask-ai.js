@@ -9,6 +9,8 @@ const client = new OpenAI({
 
 const DAILY_AI_LIMIT = 5;
 const LAGOS_TIME_ZONE = "Africa/Lagos";
+const MAX_MESSAGE_LENGTH = 12000;
+const MAX_HISTORY_MESSAGES = 20;
 
 /* =========================================================
    SUPABASE CONFIGURATION
@@ -29,6 +31,57 @@ function getSupabaseConfig() {
         url: url.replace(/\/+$/, ""),
         serviceRoleKey
     };
+}
+
+/* =========================================================
+   SUPABASE DATABASE REQUEST
+========================================================= */
+
+async function supabaseRequest(
+    endpoint,
+    options = {}
+) {
+    const { url, serviceRoleKey } =
+        getSupabaseConfig();
+
+    const response = await fetch(
+        `${url}/rest/v1/${endpoint}`,
+        {
+            ...options,
+            headers: {
+                apikey: serviceRoleKey,
+                Authorization: `Bearer ${serviceRoleKey}`,
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            }
+        }
+    );
+
+    const responseText = await response.text();
+
+    let data = null;
+
+    if (responseText) {
+        try {
+            data = JSON.parse(responseText);
+        } catch (error) {
+            data = responseText;
+        }
+    }
+
+    if (!response.ok) {
+        console.error(
+            "Supabase database error:",
+            response.status,
+            data
+        );
+
+        throw new Error(
+            "Unable to save or retrieve your AI conversation."
+        );
+    }
+
+    return data;
 }
 
 /* =========================================================
@@ -301,6 +354,222 @@ async function refundAIQuestion(userId, usageDate) {
 }
 
 /* =========================================================
+   CONVERSATION TITLE
+========================================================= */
+
+function createConversationTitle(message) {
+    const cleaned = message
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (!cleaned) {
+        return "New conversation";
+    }
+
+    if (cleaned.length <= 55) {
+        return cleaned;
+    }
+
+    return cleaned.slice(0, 52).trim() + "...";
+}
+
+/* =========================================================
+   VALIDATE CONVERSATION ID
+========================================================= */
+
+function isValidConversationId(id) {
+    return (
+        typeof id === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
+}
+
+/* =========================================================
+   CREATE A NEW CONVERSATION
+========================================================= */
+
+async function createConversation(userId, firstMessage) {
+    const title = createConversationTitle(firstMessage);
+
+    const result = await supabaseRequest(
+        "ai_conversations",
+        {
+            method: "POST",
+            headers: {
+                Prefer: "return=representation"
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                title
+            })
+        }
+    );
+
+    if (
+        !Array.isArray(result) ||
+        !result[0] ||
+        !result[0].id
+    ) {
+        throw new Error(
+            "Unable to create your AI conversation."
+        );
+    }
+
+    return result[0];
+}
+
+/* =========================================================
+   VERIFY AND LOAD AN EXISTING CONVERSATION
+========================================================= */
+
+async function getConversation(
+    conversationId,
+    userId
+) {
+    const query = new URLSearchParams({
+        id: `eq.${conversationId}`,
+        user_id: `eq.${userId}`,
+        select: "id,title",
+        limit: "1"
+    });
+
+    const result = await supabaseRequest(
+        `ai_conversations?${query}`,
+        {
+            method: "GET"
+        }
+    );
+
+    if (!Array.isArray(result) || !result.length) {
+        const error = new Error(
+            "This conversation could not be found."
+        );
+
+        error.status = 404;
+        throw error;
+    }
+
+    return result[0];
+}
+
+/* =========================================================
+   LOAD CONVERSATION HISTORY
+========================================================= */
+
+async function loadConversationHistory(
+    conversationId,
+    userId
+) {
+    const query = new URLSearchParams({
+        conversation_id: `eq.${conversationId}`,
+        user_id: `eq.${userId}`,
+        select: "role,content,created_at",
+        order: "created_at.desc",
+        limit: String(MAX_HISTORY_MESSAGES)
+    });
+
+    const result = await supabaseRequest(
+        `ai_messages?${query}`,
+        {
+            method: "GET"
+        }
+    );
+
+    if (!Array.isArray(result)) {
+        return [];
+    }
+
+    // The database query retrieves newest messages first.
+    // Reverse them so the AI receives chronological history.
+
+    return result.reverse();
+}
+
+/* =========================================================
+   SAVE USER AND AI MESSAGES
+========================================================= */
+
+async function saveConversationMessages(
+    conversationId,
+    userId,
+    userMessage,
+    assistantMessage
+) {
+    const now = Date.now();
+
+    const messages = [
+        {
+            conversation_id: conversationId,
+            user_id: userId,
+            role: "user",
+            content: userMessage,
+            created_at: new Date(now).toISOString()
+        },
+        {
+            conversation_id: conversationId,
+            user_id: userId,
+            role: "assistant",
+            content: assistantMessage,
+            created_at: new Date(now + 1).toISOString()
+        }
+    ];
+
+    await supabaseRequest(
+        "ai_messages",
+        {
+            method: "POST",
+            headers: {
+                Prefer: "return=minimal"
+            },
+            body: JSON.stringify(messages)
+        }
+    );
+
+    await supabaseRequest(
+        `ai_conversations?id=eq.${conversationId}&user_id=eq.${userId}`,
+        {
+            method: "PATCH",
+            headers: {
+                Prefer: "return=minimal"
+            },
+            body: JSON.stringify({
+                updated_at: new Date().toISOString()
+            })
+        }
+    );
+}
+
+/* =========================================================
+   BUILD OPENAI CONVERSATION INPUT
+========================================================= */
+
+function buildConversationInput(history, message) {
+    const input = [];
+
+    for (const item of history) {
+        if (
+            !item ||
+            !["user", "assistant"].includes(item.role) ||
+            typeof item.content !== "string"
+        ) {
+            continue;
+        }
+
+        input.push({
+            role: item.role,
+            content: item.content
+        });
+    }
+
+    input.push({
+        role: "user",
+        content: message
+    });
+
+    return input;
+}
+
+/* =========================================================
    COMPUTER BATTLE DETECTION
 ========================================================= */
 
@@ -343,6 +612,8 @@ function isComputerBattleRequest(body) {
 
 /* =========================================================
    GENERATE COMPUTER BATTLE QUESTIONS
+
+   EXISTING GENERATOR PRESERVED
 ========================================================= */
 
 async function generateBattleQuestions(body) {
@@ -676,7 +947,21 @@ Generate a fresh question set.
 ========================================================= */
 
 const NORMAL_AI_INSTRUCTIONS = `
-You are StudyMind AI, a professional educational assistant.
+You are StudyMind AI, a warm, welcoming and highly capable
+educational assistant and personal study coach.
+
+PERSONALITY:
+
+- Be friendly, patient, encouraging and conversational.
+- Sound natural rather than robotic or overly formal.
+- Make students feel comfortable asking questions.
+- Be supportive without being excessively cheerful.
+- Avoid unnecessary introductions and repetitive greetings.
+- Do not pretend to be human.
+- Do not claim to remember information that is not in the
+  conversation or supplied study context.
+
+TEACHING APPROACH:
 
 Help students:
 - Understand school subjects.
@@ -688,8 +973,33 @@ Help students:
 - Review topics.
 - Improve learning.
 
-Give answers that are clear, accurate, concise but helpful,
-easy for students to understand and professionally formatted.
+Adapt explanations to the student's apparent understanding.
+
+When a student seems confused:
+- Explain the idea in a simpler way.
+- Break difficult concepts into smaller steps.
+- Use relatable examples when useful.
+- Avoid simply repeating the same explanation.
+- Address the specific part they are struggling with.
+
+When solving calculations:
+- Show the relevant formula.
+- Substitute the given values.
+- Show the calculation.
+- Include the final answer and correct unit.
+
+CONVERSATION:
+
+- Pay attention to previous messages in the current conversation.
+- Use earlier questions and explanations when relevant.
+- Do not ask the student to repeat information already provided.
+- Answer follow-up questions in the context of the discussion.
+- Ask a brief follow-up question only when it genuinely helps.
+- Do not turn every answer into a quiz or a question.
+- If the student asks for a direct answer, answer directly.
+- If they ask to be taught, guide them step by step.
+- If they request practice, provide suitable practice questions.
+- Correct misunderstandings respectfully.
 
 FORMATTING RULES:
 
@@ -707,12 +1017,10 @@ FORMATTING RULES:
 12. Do not output HTML.
 13. Do not explain these formatting rules.
 14. Do not add unnecessary introductions.
-15. When solving calculations, show the formula, substitution,
-    calculation and final answer with the correct unit.
-16. Use the student's study information when provided.
-17. Do not invent information.
-18. Answer simple questions directly.
-19. Teach concepts rather than giving unexplained answers.
+15. Use the student's study information when provided.
+16. Do not invent information.
+17. Answer simple questions directly.
+18. Teach concepts rather than giving unexplained answers.
 `;
 
 /* =========================================================
@@ -742,8 +1050,6 @@ module.exports = async function handler(req, res) {
 
         /* =============================================
            AUTHENTICATE EVERY REQUEST
-
-           This happens BEFORE Game Mode or normal AI.
         ============================================= */
 
         const auth = await verifySupabaseUser(req);
@@ -771,9 +1077,8 @@ module.exports = async function handler(req, res) {
 
         /* =============================================
            COMPUTER BATTLE
-
-           Authentication is now required.
-           Premium status is verified server-side.
+           
+           Existing functionality preserved.
         ============================================= */
 
         if (isComputerBattleRequest(body)) {
@@ -804,11 +1109,15 @@ module.exports = async function handler(req, res) {
             });
         }
 
+        if (message.length > MAX_MESSAGE_LENGTH) {
+            return res.status(400).json({
+                success: false,
+                error: "Your message is too long. Please shorten it and try again."
+            });
+        }
+
         /* =============================================
            FREE DAILY LIMIT
-
-           Admin and verified Premium users bypass
-           the five-question daily allowance.
         ============================================= */
 
         if (!access.isAdmin && !access.isPremium) {
@@ -839,13 +1148,70 @@ module.exports = async function handler(req, res) {
         }
 
         /* =============================================
+           CREATE OR LOAD CONVERSATION
+        ============================================= */
+
+        let conversation;
+
+        const requestedConversationId =
+            body.conversationId;
+
+        if (
+            requestedConversationId !== undefined &&
+            requestedConversationId !== null &&
+            requestedConversationId !== ""
+        ) {
+            if (
+                !isValidConversationId(
+                    requestedConversationId
+                )
+            ) {
+                const error = new Error(
+                    "Invalid conversation ID."
+                );
+
+                error.status = 400;
+                throw error;
+            }
+
+            conversation = await getConversation(
+                requestedConversationId,
+                user.id
+            );
+
+        } else {
+            conversation = await createConversation(
+                user.id,
+                message
+            );
+        }
+
+        /* =============================================
+           LOAD PREVIOUS MESSAGES
+        ============================================= */
+
+        const history = await loadConversationHistory(
+            conversation.id,
+            user.id
+        );
+
+        /* =============================================
+           PREPARE CONVERSATION CONTEXT
+        ============================================= */
+
+        const conversationInput =
+            buildConversationInput(history, message);
+
+        /* =============================================
            OPENAI REQUEST
+           
+           Previous messages are now included.
         ============================================= */
 
         const response = await client.responses.create({
             model: "gpt-5-mini",
             instructions: NORMAL_AI_INSTRUCTIONS,
-            input: message
+            input: conversationInput
         });
 
         const reply =
@@ -860,10 +1226,21 @@ module.exports = async function handler(req, res) {
         }
 
         /* =============================================
+           SAVE BOTH MESSAGES
+        ============================================= */
+
+        await saveConversationMessages(
+            conversation.id,
+            user.id,
+            message,
+            reply
+        );
+
+        /* =============================================
            SUCCESS
 
            Keep the usage reservation because the
-           request was completed successfully.
+           request and conversation save succeeded.
         ============================================= */
 
         usageReservation = null;
@@ -871,6 +1248,8 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({
             success: true,
             reply,
+            conversationId: conversation.id,
+            conversationTitle: conversation.title,
             isPremium: access.isPremium,
             isAdmin: access.isAdmin
         });
