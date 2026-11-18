@@ -3,11 +3,7 @@
 
 /* =========================================================
    STUDYMIND AI SUPPORT
-   COMPLETE REPLACEMENT
-
-   CONNECTS TO:
-   /api/ask-ai
-   /api/premium/status
+   CONVERSATION MEMORY VERSION
 
    FEATURES:
    - Authenticated AI requests
@@ -16,7 +12,10 @@
    - Current study-plan context
    - Quick prompts
    - Typing indicator
-   - Chat history during session
+   - Persistent conversations
+   - Conversation history
+   - Reopen previous conversations
+   - Start new conversations
    - Premium upgrade prompt
    - MathJax equation rendering
    - Safe text rendering
@@ -34,7 +33,8 @@ const STORAGE = {
     AI_DATE: "aiQuestionDate",
     PREMIUM: "studyMindPremium",
     PLAN: "studyMindPlan",
-    USERNAME: "studyMindUsername"
+    USERNAME: "studyMindUsername",
+    ACTIVE_CONVERSATION: "studyMindActiveConversation"
 };
 
 
@@ -49,6 +49,11 @@ let isSending = false;
 let premiumStatus = false;
 
 let premiumStatusLoaded = false;
+
+let activeConversationId =
+    localStorage.getItem(STORAGE.ACTIVE_CONVERSATION) || null;
+
+let conversationHistory = [];
 
 
 /* =========================================================
@@ -75,7 +80,6 @@ document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        // Verify Premium/Admin status first.
         await refreshPremiumStatus();
 
         await loadUser();
@@ -91,6 +95,24 @@ document.addEventListener(
         setupClearChat();
 
         setupPremiumModal();
+
+        setupConversationInterface();
+
+        await loadConversationHistory();
+
+        if (activeConversationId) {
+
+            const restored =
+                await openConversation(
+                    activeConversationId,
+                    false
+                );
+
+            if (!restored) {
+                startNewConversation(false);
+            }
+
+        }
 
     }
 );
@@ -151,15 +173,11 @@ function readPremiumManagerStatus() {
             "function"
         ) {
 
-            const result =
-                window.getStudyMindPremiumStatus();
+            const status = normalizePremiumResult(
+                window.getStudyMindPremiumStatus()
+            );
 
-            const status =
-                normalizePremiumResult(result);
-
-            if (status !== null) {
-                return status;
-            }
+            if (status !== null) return status;
 
         }
 
@@ -168,32 +186,21 @@ function readPremiumManagerStatus() {
             "function"
         ) {
 
-            const result =
-                window.isStudyMindPremium();
+            const status = normalizePremiumResult(
+                window.isStudyMindPremium()
+            );
 
-            const status =
-                normalizePremiumResult(result);
-
-            if (status !== null) {
-                return status;
-            }
+            if (status !== null) return status;
 
         }
 
-        if (
-            typeof window.isPremium ===
-            "function"
-        ) {
+        if (typeof window.isPremium === "function") {
 
-            const result =
-                window.isPremium();
+            const status = normalizePremiumResult(
+                window.isPremium()
+            );
 
-            const status =
-                normalizePremiumResult(result);
-
-            if (status !== null) {
-                return status;
-            }
+            if (status !== null) return status;
 
         }
 
@@ -201,9 +208,7 @@ function readPremiumManagerStatus() {
             typeof window.isStudyMindPremium ===
             "boolean"
         ) {
-
             return window.isStudyMindPremium;
-
         }
 
     } catch (error) {
@@ -230,29 +235,15 @@ async function refreshPremiumStatus() {
 
     try {
 
-        /*
-           First, wait for the shared premium.js
-           manager to finish checking the account.
-        */
-
         if (
             typeof window.waitForPremiumStatus ===
             "function"
         ) {
-
             await window.waitForPremiumStatus();
-
         }
-
 
         let managerStatus =
             readPremiumManagerStatus();
-
-
-        /*
-           If the manager has not completed its
-           check, ask it to load the status.
-        */
 
         if (
             managerStatus === null &&
@@ -267,16 +258,9 @@ async function refreshPremiumStatus() {
 
         }
 
-
-        /*
-           If premium.js provides a verified result,
-           use it.
-        */
-
         if (managerStatus !== null) {
 
-            premiumStatus =
-                managerStatus;
+            premiumStatus = managerStatus;
 
             premiumStatusLoaded = true;
 
@@ -286,100 +270,63 @@ async function refreshPremiumStatus() {
 
         }
 
-
-        /*
-           Fallback: independently check the
-           server using the authenticated session.
-        */
-
-        const client =
-            getSupabaseClient();
-
+        const client = getSupabaseClient();
 
         if (!client) {
-
             throw new Error(
                 "Supabase client is unavailable."
             );
-
         }
 
-
-        const {
-            data,
-            error
-        } =
+        const { data, error } =
             await client.auth.getSession();
-
 
         if (
             error ||
             !data?.session?.access_token
         ) {
-
             throw new Error(
                 "No authenticated session is available."
             );
-
         }
 
-
-        const response =
-            await fetch(
-                "/api/premium/status",
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            `Bearer ${data.session.access_token}`,
-
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    cache: "no-store"
-                }
-            );
-
+        const response = await fetch(
+            "/api/premium/status",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization":
+                        `Bearer ${data.session.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                cache: "no-store"
+            }
+        );
 
         const result =
-            await response.json().catch(
-                () => ({})
-            );
-
+            await response.json().catch(() => ({}));
 
         if (!response.ok) {
-
             throw new Error(
                 result?.error ||
                 "Unable to verify Premium status."
             );
-
         }
-
 
         const serverStatus =
             normalizePremiumResult(result);
 
-
         if (serverStatus === null) {
-
             throw new Error(
                 "The Premium status response was invalid."
             );
-
         }
 
-
-        premiumStatus =
-            serverStatus;
+        premiumStatus = serverStatus;
 
         premiumStatusLoaded = true;
 
-
         renderUsage();
-
 
         return premiumStatus;
 
@@ -390,23 +337,11 @@ async function refreshPremiumStatus() {
             error.message
         );
 
-
-        /*
-           Do not trust localStorage as proof of
-           Premium access.
-
-           If verification fails, leave the status
-           unverified. The backend remains the
-           authority when an AI request is sent.
-        */
-
         premiumStatus = false;
 
         premiumStatusLoaded = false;
 
-
         renderUsage();
-
 
         return null;
 
@@ -436,29 +371,19 @@ function isPremium() {
 async function loadUser() {
 
     let username =
-        localStorage.getItem(
-            STORAGE.USERNAME
-        ) || "Student";
+        localStorage.getItem(STORAGE.USERNAME) ||
+        "Student";
 
-
-    const client =
-        getSupabaseClient();
-
+    const client = getSupabaseClient();
 
     if (client) {
 
         try {
 
-            const {
-                data,
-                error
-            } =
+            const { data, error } =
                 await client.auth.getUser();
 
-
-            const user =
-                data?.user;
-
+            const user = data?.user;
 
             if (!error && user) {
 
@@ -481,34 +406,20 @@ async function loadUser() {
 
     }
 
-
     const usernameElement =
-        document.getElementById(
-            "username"
-        );
-
+        document.getElementById("username");
 
     const avatarElement =
-        document.getElementById(
-            "avatar"
-        );
-
+        document.getElementById("avatar");
 
     if (usernameElement) {
-
-        usernameElement.textContent =
-            username;
-
+        usernameElement.textContent = username;
     }
-
 
     if (avatarElement) {
-
         avatarElement.textContent =
             username.charAt(0).toUpperCase();
-
     }
-
 
     localStorage.setItem(
         STORAGE.USERNAME,
@@ -525,25 +436,16 @@ async function loadUser() {
 function renderStudyContext() {
 
     const element =
-        document.getElementById(
-            "currentStudy"
-        );
+        document.getElementById("currentStudy");
 
+    if (!element) return;
 
-    if (!element) {
-        return;
-    }
-
-
-    const topic =
-        getCurrentTopic();
-
+    const topic = getCurrentTopic();
 
     if (!topic) {
 
         element.innerHTML = `
             <strong>No active topic</strong>
-
             <span>
                 Create a study plan to personalize
                 your AI support.
@@ -554,15 +456,9 @@ function renderStudyContext() {
 
     }
 
-
     element.innerHTML = `
-        <strong>
-            ${escapeHTML(topic.subject)}
-        </strong>
-
-        <span>
-            ${escapeHTML(topic.name)}
-        </span>
+        <strong>${escapeHTML(topic.subject)}</strong>
+        <span>${escapeHTML(topic.name)}</span>
     `;
 
 }
@@ -574,43 +470,30 @@ function renderStudyContext() {
 
 function getCurrentTopic() {
 
-    if (!studyPlan) {
-        return null;
-    }
+    if (!studyPlan) return null;
 
+    if (Array.isArray(studyPlan.subjects)) {
 
-    if (
-        Array.isArray(studyPlan.subjects)
-    ) {
-
-        for (
-            const subject of studyPlan.subjects
-        ) {
+        for (const subject of studyPlan.subjects) {
 
             const topics =
                 Array.isArray(subject.topics)
                     ? subject.topics
                     : [];
 
+            const unfinished = topics.find(topic => {
 
-            const unfinished =
-                topics.find(topic => {
+                if (typeof topic === "string") {
+                    return true;
+                }
 
-                    if (
-                        typeof topic === "string"
-                    ) {
-                        return true;
-                    }
+                return !topic.completed;
 
-                    return !topic.completed;
-
-                });
-
+            });
 
             if (unfinished) {
 
                 return {
-
                     subject:
                         subject.name ||
                         subject.subject ||
@@ -622,7 +505,6 @@ function getCurrentTopic() {
                             : unfinished.name ||
                               unfinished.topic ||
                               "Current topic"
-
                 };
 
             }
@@ -631,36 +513,25 @@ function getCurrentTopic() {
 
     }
 
+    if (Array.isArray(studyPlan.topics)) {
 
-    if (
-        Array.isArray(studyPlan.topics)
-    ) {
-
-        const topic =
-            studyPlan.topics.find(
-                item => !item.completed
-            );
-
+        const topic = studyPlan.topics.find(
+            item => !item.completed
+        );
 
         if (topic) {
 
             return {
-
-                subject:
-                    topic.subject ||
-                    "Subject",
-
+                subject: topic.subject || "Subject",
                 name:
                     topic.name ||
                     topic.topic ||
                     "Current topic"
-
             };
 
         }
 
     }
-
 
     return null;
 
@@ -675,17 +546,15 @@ function getToday() {
 
     const date = new Date();
 
-    const year =
-        date.getFullYear();
+    const year = date.getFullYear();
 
-    const month =
-        String(date.getMonth() + 1)
-            .padStart(2, "0");
+    const month = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
 
-    const day =
-        String(date.getDate())
-            .padStart(2, "0");
-
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 
@@ -698,15 +567,10 @@ function getToday() {
 
 function getQuestionCount() {
 
-    const today =
-        getToday();
-
+    const today = getToday();
 
     const savedDate =
-        localStorage.getItem(
-            STORAGE.AI_DATE
-        );
-
+        localStorage.getItem(STORAGE.AI_DATE);
 
     if (savedDate !== today) {
 
@@ -724,14 +588,9 @@ function getQuestionCount() {
 
     }
 
-
-    const count =
-        Number(
-            localStorage.getItem(
-                STORAGE.AI_COUNT
-            ) || 0
-        );
-
+    const count = Number(
+        localStorage.getItem(STORAGE.AI_COUNT) || 0
+    );
 
     return Number.isFinite(count)
         ? Math.max(0, count)
@@ -746,15 +605,12 @@ function getQuestionCount() {
 
 function incrementQuestionCount() {
 
-    const count =
-        getQuestionCount() + 1;
-
+    const count = getQuestionCount() + 1;
 
     localStorage.setItem(
         STORAGE.AI_COUNT,
         String(count)
     );
-
 
     renderUsage();
 
@@ -768,16 +624,10 @@ function incrementQuestionCount() {
 function renderUsage() {
 
     const usageText =
-        document.getElementById(
-            "usageText"
-        );
-
+        document.getElementById("usageText");
 
     const usageProgress =
-        document.getElementById(
-            "usageProgress"
-        );
-
+        document.getElementById("usageProgress");
 
     if (isPremium()) {
 
@@ -785,20 +635,15 @@ function renderUsage() {
             usageText.textContent = "Unlimited";
         }
 
-
         if (usageProgress) {
             usageProgress.style.width = "100%";
         }
-
 
         return;
 
     }
 
-
-    const count =
-        getQuestionCount();
-
+    const count = getQuestionCount();
 
     if (usageText) {
 
@@ -808,7 +653,6 @@ function renderUsage() {
                 : "Checking...";
 
     }
-
 
     if (usageProgress) {
 
@@ -826,33 +670,477 @@ function renderUsage() {
 
 
 /* =========================================================
+   CONVERSATION INTERFACE
+========================================================= */
+
+function setupConversationInterface() {
+
+    const chatContainer =
+        document.getElementById("chatMessages");
+
+    if (!chatContainer) return;
+
+    if (
+        document.getElementById(
+            "conversationToolbar"
+        )
+    ) {
+        return;
+    }
+
+    const toolbar =
+        document.createElement("div");
+
+    toolbar.id = "conversationToolbar";
+
+    toolbar.style.cssText = `
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        margin-bottom:16px;
+        width:100%;
+    `;
+
+    const controls =
+        document.createElement("div");
+
+    controls.style.cssText = `
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        flex-wrap:wrap;
+    `;
+
+    const newChatButton =
+        document.createElement("button");
+
+    newChatButton.id = "newConversationButton";
+
+    newChatButton.type = "button";
+
+    newChatButton.textContent = "+ New Chat";
+
+    newChatButton.style.cssText = `
+        padding:9px 15px;
+        border-radius:9px;
+        border:1px solid var(--primary-color, #2563eb);
+        background:var(--primary-color, #2563eb);
+        color:white;
+        font-weight:600;
+        cursor:pointer;
+    `;
+
+    newChatButton.addEventListener(
+        "click",
+        () => startNewConversation(true)
+    );
+
+    const historyLabel =
+        document.createElement("strong");
+
+    historyLabel.textContent =
+        "Your conversations";
+
+    historyLabel.style.cssText = `
+        font-size:13px;
+        opacity:.8;
+    `;
+
+    controls.appendChild(newChatButton);
+
+    controls.appendChild(historyLabel);
+
+    const historyList =
+        document.createElement("div");
+
+    historyList.id = "conversationHistory";
+
+    historyList.style.cssText = `
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+        max-height:190px;
+        overflow-y:auto;
+        padding:2px;
+    `;
+
+    toolbar.appendChild(controls);
+
+    toolbar.appendChild(historyList);
+
+    chatContainer.parentNode.insertBefore(
+        toolbar,
+        chatContainer
+    );
+
+}
+
+
+/* =========================================================
+   LOAD CONVERSATION HISTORY
+========================================================= */
+
+async function loadConversationHistory() {
+
+    const client = getSupabaseClient();
+
+    const historyElement =
+        document.getElementById("conversationHistory");
+
+    if (!client || !historyElement) return;
+
+    historyElement.innerHTML = `
+        <div style="font-size:12px;opacity:.65;padding:6px;">
+            Loading conversations...
+        </div>
+    `;
+
+    try {
+
+        const { data: userData, error: userError } =
+            await client.auth.getUser();
+
+        const user = userData?.user;
+
+        if (userError || !user) {
+            throw new Error("Please sign in to view your conversations.");
+        }
+
+        const { data, error } = await client
+            .from("ai_conversations")
+            .select("id,title,updated_at")
+            .eq("user_id", user.id)
+            .order("updated_at", {
+                ascending: false
+            })
+            .limit(30);
+
+        if (error) throw error;
+
+        conversationHistory =
+            Array.isArray(data) ? data : [];
+
+        renderConversationHistory();
+
+    } catch (error) {
+
+        console.error(
+            "Conversation history error:",
+            error
+        );
+
+        historyElement.innerHTML = `
+            <div style="font-size:12px;opacity:.65;padding:6px;">
+                Unable to load conversation history.
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER CONVERSATION HISTORY
+========================================================= */
+
+function renderConversationHistory() {
+
+    const historyElement =
+        document.getElementById("conversationHistory");
+
+    if (!historyElement) return;
+
+    historyElement.innerHTML = "";
+
+    if (!conversationHistory.length) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.textContent =
+            "Your previous conversations will appear here.";
+
+        empty.style.cssText = `
+            font-size:12px;
+            opacity:.65;
+            padding:6px;
+        `;
+
+        historyElement.appendChild(empty);
+
+        return;
+
+    }
+
+    conversationHistory.forEach(conversation => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.textContent =
+            conversation.title || "New conversation";
+
+        button.title =
+            conversation.title || "New conversation";
+
+        button.style.cssText = `
+            width:100%;
+            text-align:left;
+            padding:10px 12px;
+            border-radius:8px;
+            border:1px solid var(--border-color, rgba(128,128,128,.2));
+            background:${
+                conversation.id === activeConversationId
+                    ? "var(--hover-background, rgba(128,128,128,.15))"
+                    : "transparent"
+            };
+            color:inherit;
+            cursor:pointer;
+            font-size:13px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        `;
+
+        button.addEventListener(
+            "click",
+            () => openConversation(
+                conversation.id,
+                true
+            )
+        );
+
+        historyElement.appendChild(button);
+
+    });
+
+}
+
+
+/* =========================================================
+   OPEN AN EXISTING CONVERSATION
+========================================================= */
+
+async function openConversation(
+    conversationId,
+    refreshList = true
+) {
+
+    if (isSending) return false;
+
+    const client = getSupabaseClient();
+
+    const container =
+        document.getElementById("chatMessages");
+
+    if (!client || !container) return false;
+
+    try {
+
+        const { data: userData, error: userError } =
+            await client.auth.getUser();
+
+        const user = userData?.user;
+
+        if (userError || !user) {
+            throw new Error("Please sign in again.");
+        }
+
+        const { data: conversation, error: conversationError } =
+            await client
+                .from("ai_conversations")
+                .select("id,title")
+                .eq("id", conversationId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+        if (conversationError) {
+            throw conversationError;
+        }
+
+        if (!conversation) {
+            throw new Error("Conversation not found.");
+        }
+
+        const { data: messages, error: messagesError } =
+            await client
+                .from("ai_messages")
+                .select("role,content,created_at")
+                .eq("conversation_id", conversationId)
+                .eq("user_id", user.id)
+                .order("created_at", {
+                    ascending: true
+                });
+
+        if (messagesError) {
+            throw messagesError;
+        }
+
+        activeConversationId = conversation.id;
+
+        localStorage.setItem(
+            STORAGE.ACTIVE_CONVERSATION,
+            activeConversationId
+        );
+
+        container.innerHTML = "";
+
+        if (!messages || !messages.length) {
+
+            showWelcomeMessage();
+
+        } else {
+
+            messages.forEach(message => {
+
+                addMessage(
+                    message.role === "assistant"
+                        ? "ai"
+                        : "user",
+                    message.content,
+                    message.created_at
+                );
+
+            });
+
+        }
+
+        renderConversationHistory();
+
+        if (refreshList) {
+            await loadConversationHistory();
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Unable to open conversation:",
+            error
+        );
+
+        if (refreshList) {
+            alert(
+                error.message ||
+                "Unable to open this conversation."
+            );
+        }
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
+   START A NEW CONVERSATION
+========================================================= */
+
+function startNewConversation(focusInput = true) {
+
+    if (isSending) return;
+
+    activeConversationId = null;
+
+    localStorage.removeItem(
+        STORAGE.ACTIVE_CONVERSATION
+    );
+
+    const container =
+        document.getElementById("chatMessages");
+
+    if (container) {
+        container.innerHTML = "";
+        showWelcomeMessage();
+    }
+
+    renderConversationHistory();
+
+    if (focusInput) {
+
+        document
+            .getElementById("messageInput")
+            ?.focus();
+
+    }
+
+}
+
+
+/* =========================================================
+   WELCOME MESSAGE
+========================================================= */
+
+function showWelcomeMessage() {
+
+    const container =
+        document.getElementById("chatMessages");
+
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="welcome-message">
+
+            <div class="welcome-icon">
+                ✦
+            </div>
+
+            <h3>
+                Welcome to AI Support
+            </h3>
+
+            <p>
+                I'm here to help you understand
+                your subjects, prepare for exams,
+                and study more effectively.
+            </p>
+
+            <div class="welcome-tags">
+
+                <span>
+                    Explain concepts
+                </span>
+
+                <span>
+                    Create quizzes
+                </span>
+
+                <span>
+                    Study strategies
+                </span>
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
    COMPOSER
 ========================================================= */
 
 function setupComposer() {
 
     const input =
-        document.getElementById(
-            "messageInput"
-        );
-
+        document.getElementById("messageInput");
 
     const button =
-        document.getElementById(
-            "sendButton"
-        );
+        document.getElementById("sendButton");
 
-
-    if (!input || !button) {
-        return;
-    }
-
+    if (!input || !button) return;
 
     button.addEventListener(
         "click",
         sendMessage
     );
-
 
     input.addEventListener(
         "keydown",
@@ -871,7 +1159,6 @@ function setupComposer() {
 
         }
     );
-
 
     input.addEventListener(
         "input",
@@ -908,21 +1195,15 @@ function setupQuickPrompts() {
                     const prompt =
                         button.dataset.prompt;
 
-
                     const input =
                         document.getElementById(
                             "messageInput"
                         );
 
-
-                    if (!input) {
-                        return;
-                    }
-
+                    if (!input) return;
 
                     input.value =
                         personalizePrompt(prompt);
-
 
                     input.focus();
 
@@ -940,14 +1221,9 @@ function setupQuickPrompts() {
 
 function personalizePrompt(prompt) {
 
-    const topic =
-        getCurrentTopic();
+    const topic = getCurrentTopic();
 
-
-    if (!topic) {
-        return prompt;
-    }
-
+    if (!topic) return prompt;
 
     return `${prompt}
 
@@ -967,50 +1243,20 @@ to this topic.`;
 
 async function sendMessage() {
 
-    if (isSending) {
-        return;
-    }
-
+    if (isSending) return;
 
     const input =
-        document.getElementById(
-            "messageInput"
-        );
+        document.getElementById("messageInput");
 
+    if (!input) return;
 
-    if (!input) {
-        return;
-    }
+    const text = input.value.trim();
 
-
-    const text =
-        input.value.trim();
-
-
-    if (!text) {
-        return;
-    }
-
-
-    /*
-       Refresh status if it has not been verified.
-
-       A failed frontend status check must not
-       block a request. The backend will enforce
-       the actual Free-user limit.
-    */
+    if (!text) return;
 
     if (!premiumStatusLoaded) {
-
         await refreshPremiumStatus();
-
     }
-
-
-    /*
-       Only block locally when the server has
-       positively confirmed this is a Free account.
-    */
 
     if (
         premiumStatusLoaded &&
@@ -1024,59 +1270,52 @@ async function sendMessage() {
 
     }
 
-
     isSending = true;
-
 
     input.value = "";
 
     input.style.height = "auto";
 
+    addMessage("user", text);
 
-    addMessage(
-        "user",
-        text
-    );
-
-
-    const typing =
-        addTypingMessage();
-
+    const typing = addTypingMessage();
 
     try {
 
-        const response =
-            await callAI(text);
-
+        const result = await callAI(text);
 
         removeTypingMessage(typing);
 
+        /*
+           Save the conversation ID returned by
+           the backend. Future messages use it.
+        */
 
-        const aiMessage =
-            addMessage(
-                "ai",
-                response
+        if (result.conversationId) {
+
+            activeConversationId =
+                result.conversationId;
+
+            localStorage.setItem(
+                STORAGE.ACTIVE_CONVERSATION,
+                activeConversationId
             );
 
+        }
+
+        const aiMessage =
+            addMessage("ai", result.reply);
 
         await renderMath(aiMessage);
-
-
-        /*
-           Only maintain the local display counter
-           for verified Free accounts.
-
-           The backend controls the actual limit.
-        */
 
         if (
             premiumStatusLoaded &&
             !premiumStatus
         ) {
-
             incrementQuestionCount();
-
         }
+
+        await loadConversationHistory();
 
     } catch (error) {
 
@@ -1085,14 +1324,7 @@ async function sendMessage() {
             error
         );
 
-
         removeTypingMessage(typing);
-
-
-        /*
-           Only the actual daily-limit error
-           should open the Premium modal.
-        */
 
         if (
             error.code === "DAILY_AI_LIMIT_REACHED"
@@ -1131,13 +1363,9 @@ async function sendMessage() {
 
 async function callAI(userMessage) {
 
-    const topic =
-        getCurrentTopic();
+    const topic = getCurrentTopic();
 
-
-    const client =
-        getSupabaseClient();
-
+    const client = getSupabaseClient();
 
     if (!client) {
 
@@ -1147,17 +1375,10 @@ async function callAI(userMessage) {
 
     }
 
-
-    const {
-        data,
-        error: sessionError
-    } =
+    const { data, error: sessionError } =
         await client.auth.getSession();
 
-
-    const session =
-        data?.session;
-
+    const session = data?.session;
 
     if (
         sessionError ||
@@ -1170,69 +1391,54 @@ async function callAI(userMessage) {
 
     }
 
+    const response = await fetch(
+        "/api/ask-ai",
+        {
+            method: "POST",
 
-    const response =
-        await fetch(
-            "/api/ask-ai",
-            {
-                method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization":
+                    `Bearer ${session.access_token}`
+            },
 
-                headers: {
+            body: JSON.stringify({
 
-                    "Content-Type":
-                        "application/json",
+                message: userMessage,
 
-                    "Authorization":
-                        `Bearer ${session.access_token}`
+                conversationId:
+                    activeConversationId || null,
 
-                },
+                subject:
+                    topic?.subject || "",
 
-                body: JSON.stringify({
+                topic:
+                    topic?.name || "",
 
-                    message: userMessage,
+                difficulty: "mixed",
 
-                    subject:
-                        topic?.subject || "",
+                type: "normal",
 
-                    topic:
-                        topic?.name || "",
+                requestType: "normal",
 
-                    difficulty: "mixed",
+                mode: "normal"
 
-                    type: "normal",
-
-                    requestType: "normal",
-
-                    mode: "normal"
-
-                })
-
-            }
-        );
-
+            })
+        }
+    );
 
     const result =
-        await response.json().catch(
-            () => ({})
-        );
-
+        await response.json().catch(() => ({}));
 
     if (
         !response.ok ||
         result?.success === false
     ) {
 
-        const error =
-            new Error(
-                result?.error ||
-                `AI request failed: ${response.status}`
-            );
-
-
-        /*
-           Recognize only the backend's
-           actual daily-limit error.
-        */
+        const error = new Error(
+            result?.error ||
+            `AI request failed: ${response.status}`
+        );
 
         if (
             result?.code === "DAILY_AI_LIMIT_REACHED" ||
@@ -1240,20 +1446,15 @@ async function callAI(userMessage) {
             result?.error === "DAILY_AI_LIMIT_REACHED"
         ) {
 
-            error.code =
-                "DAILY_AI_LIMIT_REACHED";
+            error.code = "DAILY_AI_LIMIT_REACHED";
 
         }
-
 
         throw error;
 
     }
 
-
-    const reply =
-        result?.reply;
-
+    const reply = result?.reply;
 
     if (
         typeof reply !== "string" ||
@@ -1266,8 +1467,21 @@ async function callAI(userMessage) {
 
     }
 
+    if (
+        typeof result.conversationId !== "string" ||
+        !result.conversationId
+    ) {
 
-    return reply.trim();
+        throw new Error(
+            "The conversation could not be saved. Please try again."
+        );
+
+    }
+
+    return {
+        reply: reply.trim(),
+        conversationId: result.conversationId
+    };
 
 }
 
@@ -1276,89 +1490,66 @@ async function callAI(userMessage) {
    ADD MESSAGE
 ========================================================= */
 
-function addMessage(role, text) {
+function addMessage(
+    role,
+    text,
+    timestamp = null
+) {
 
     const container =
-        document.getElementById(
-            "chatMessages"
-        );
+        document.getElementById("chatMessages");
 
-
-    if (!container) {
-        return null;
-    }
-
+    if (!container) return null;
 
     const welcome =
-        container.querySelector(
-            ".welcome-message"
-        );
-
+        container.querySelector(".welcome-message");
 
     if (welcome) {
         welcome.remove();
     }
 
-
     const wrapper =
         document.createElement("div");
-
 
     wrapper.className =
         `message ${role}`;
 
-
     const avatar =
         document.createElement("div");
 
-
-    avatar.className =
-        "message-avatar";
-
+    avatar.className = "message-avatar";
 
     avatar.textContent =
-        role === "ai"
-            ? "✦"
-            : "S";
-
+        role === "ai" ? "✦" : "S";
 
     const content =
         document.createElement("div");
 
-
-    content.className =
-        "message-content";
-
+    content.className = "message-content";
 
     const bubble =
         document.createElement("div");
 
+    bubble.className = "message-bubble";
 
-    bubble.className =
-        "message-bubble";
-
-
-    // Safe rendering: never interpret AI output as HTML.
+    // Safe rendering: never interpret message text as HTML.
     bubble.textContent = text;
-
 
     const time =
         document.createElement("div");
 
-
-    time.className =
-        "message-time";
-
+    time.className = "message-time";
 
     time.textContent =
-        new Date().toLocaleTimeString(
+        new Date(
+            timestamp || Date.now()
+        ).toLocaleTimeString(
             [],
             {
                 hour: "2-digit",
                 minute: "2-digit"
             }
         );
-
 
     content.appendChild(bubble);
 
@@ -1370,10 +1561,8 @@ function addMessage(role, text) {
 
     container.appendChild(wrapper);
 
-
     container.scrollTop =
         container.scrollHeight;
-
 
     return bubble;
 
@@ -1392,11 +1581,8 @@ async function renderMath(element) {
         typeof window.MathJax.typesetPromise !==
             "function"
     ) {
-
         return;
-
     }
-
 
     try {
 
@@ -1423,22 +1609,14 @@ async function renderMath(element) {
 function addTypingMessage() {
 
     const container =
-        document.getElementById(
-            "chatMessages"
-        );
+        document.getElementById("chatMessages");
 
-
-    if (!container) {
-        return null;
-    }
-
+    if (!container) return null;
 
     const wrapper =
         document.createElement("div");
 
-
     wrapper.className = "message ai";
-
 
     wrapper.innerHTML = `
         <div class="message-avatar">
@@ -1462,13 +1640,10 @@ function addTypingMessage() {
         </div>
     `;
 
-
     container.appendChild(wrapper);
-
 
     container.scrollTop =
         container.scrollHeight;
-
 
     return wrapper;
 
@@ -1498,58 +1673,7 @@ function setupClearChat() {
         .getElementById("clearChat")
         ?.addEventListener(
             "click",
-            () => {
-
-                const container =
-                    document.getElementById(
-                        "chatMessages"
-                    );
-
-
-                if (!container) {
-                    return;
-                }
-
-
-                container.innerHTML = `
-
-                    <div class="welcome-message">
-
-                        <div class="welcome-icon">
-                            ✦
-                        </div>
-
-                        <h3>
-                            Welcome to AI Support
-                        </h3>
-
-                        <p>
-                            I'm here to help you understand
-                            your subjects, prepare for exams,
-                            and study more effectively.
-                        </p>
-
-                        <div class="welcome-tags">
-
-                            <span>
-                                Explain concepts
-                            </span>
-
-                            <span>
-                                Create quizzes
-                            </span>
-
-                            <span>
-                                Study strategies
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }
+            () => startNewConversation(true)
         );
 
 }
@@ -1568,16 +1692,12 @@ function setupPremiumModal() {
             closePremiumModal
         );
 
-
     document
         .getElementById("premiumButton")
         ?.addEventListener(
             "click",
             () => {
-
-                window.location.href =
-                    "premium.html";
-
+                window.location.href = "premium.html";
             }
         );
 
@@ -1634,42 +1754,26 @@ window.addEventListener(
     "storage",
     async event => {
 
-        if (
-            event.key === STORAGE.PREMIUM
-        ) {
-
-            /*
-               Do not trust the localStorage value.
-               Recheck the server instead.
-            */
-
+        if (event.key === STORAGE.PREMIUM) {
             await refreshPremiumStatus();
-
         }
 
+        if (event.key === STORAGE.PLAN) {
 
-        if (
-            event.key === STORAGE.PLAN
-        ) {
-
-            studyPlan =
-                loadJSON(
-                    STORAGE.PLAN,
-                    null
-                );
+            studyPlan = loadJSON(
+                STORAGE.PLAN,
+                null
+            );
 
             renderStudyContext();
 
         }
 
-
         if (
             event.key === STORAGE.AI_COUNT ||
             event.key === STORAGE.AI_DATE
         ) {
-
             renderUsage();
-
         }
 
     }
@@ -1687,7 +1791,6 @@ function loadJSON(key, fallback) {
         const value =
             localStorage.getItem(key);
 
-
         return value
             ? JSON.parse(value)
             : fallback;
@@ -1704,15 +1807,10 @@ function loadJSON(key, fallback) {
 function escapeHTML(value) {
 
     return String(value ?? "")
-
         .replaceAll("&", "&amp;")
-
         .replaceAll("<", "&lt;")
-
         .replaceAll(">", "&gt;")
-
         .replaceAll('"', "&quot;")
-
         .replaceAll("'", "&#039;");
 
 }
