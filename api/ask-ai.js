@@ -1602,6 +1602,19 @@ const response = await client.responses.create({
             reply
         );
 
+        
+/* =============================================
+   UPDATE LONG-TERM STUDENT MEMORY
+============================================= */
+
+await updateStudentMemory(
+    user.id,
+    studentMemory,
+    message,
+    reply
+);
+
+
         /* =============================================
            SUCCESS
 
