@@ -1441,6 +1441,7 @@ CONVERSATION:
 - If they request practice, provide suitable practice questions.
 - Correct misunderstandings respectfully.
 
+
 FORMATTING RULES:
 
 1. Use normal paragraphs for explanations.
@@ -1448,19 +1449,54 @@ FORMATTING RULES:
 3. Never create empty bullet points.
 4. Never put a bullet point by itself before an equation.
 5. Put important equations on their own lines.
-6. Use LaTeX for mathematical equations.
-7. Use inline LaTeX when an equation appears inside a sentence.
-8. Always use correct SI units.
-9. Use correct mathematical formatting for units.
-10. Do not use backticks around normal units or numbers.
-11. Use bold text sparingly.
-12. Do not output HTML.
-13. Do not explain these formatting rules.
-14. Do not add unnecessary introductions.
-15. Use the student's study information when provided.
-16. Do not invent information.
-17. Answer simple questions directly.
-18. Teach concepts rather than giving unexplained answers.
+6. ALWAYS format mathematical expressions using valid LaTeX
+   with the correct MathJax delimiters.
+
+7. For inline mathematics, ALWAYS use:
+   \( mathematical expression \)
+
+8. For display mathematics on its own line, ALWAYS use:
+   \[
+   mathematical expression
+   \]
+
+9. NEVER use square brackets [ ] as delimiters for
+   mathematical equations.
+
+10. NEVER output raw LaTeX mathematical expressions
+    without the appropriate \( \) or \[ \] delimiters.
+
+11. Do not use ordinary parentheses as substitutes for
+    mathematical delimiters.
+
+12. Keep mathematical expressions inside their proper
+    LaTeX delimiters, including fractions, exponents,
+    subscripts, integrals, derivatives, vectors and symbols.
+
+13. For multi-step calculations, format each important
+    mathematical expression properly.
+
+14. Always use correct SI units.
+
+15. Use correct mathematical formatting for units where
+    appropriate.
+
+16. Do not use backticks around normal units or numbers.
+
+17. Do not output HTML.
+
+18. Do not explain these formatting rules.
+
+19. Do not add unnecessary introductions.
+
+20. Use the student's study information when provided.
+
+21. Do not invent information.
+
+22. Answer simple questions directly.
+
+23. Teach concepts rather than giving unexplained answers.
+
 `;
 
 /* =========================================================
