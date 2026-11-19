@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================================
@@ -498,7 +497,6 @@ function getCurrentTopic() {
                         subject.name ||
                         subject.subject ||
                         "Subject",
-
                     name:
                         typeof unfinished === "string"
                             ? unfinished
@@ -995,9 +993,11 @@ async function openConversation(
 
         } else {
 
+            const restoredAssistantMessages = [];
+
             messages.forEach(message => {
 
-                addMessage(
+                const messageElement = addMessage(
                     message.role === "assistant"
                         ? "ai"
                         : "user",
@@ -1005,7 +1005,23 @@ async function openConversation(
                     message.created_at
                 );
 
+                if (
+                    message.role === "assistant" &&
+                    messageElement
+                ) {
+                    restoredAssistantMessages.push(
+                        messageElement
+                    );
+                }
+
             });
+
+            // Render equations after restoring saved assistant messages.
+            await Promise.all(
+                restoredAssistantMessages.map(messageElement =>
+                    renderMath(messageElement)
+                )
+            );
 
         }
 
@@ -1532,8 +1548,14 @@ function addMessage(
 
     bubble.className = "message-bubble";
 
+    // Normalize equation delimiters for AI messages only.
+    const displayText =
+        role === "ai"
+            ? normalizeMathDelimiters(text)
+            : String(text ?? "");
+
     // Safe rendering: never interpret message text as HTML.
-    bubble.textContent = text;
+    bubble.textContent = displayText;
 
     const time =
         document.createElement("div");
@@ -1573,22 +1595,110 @@ function addMessage(
    MATHJAX RENDERING
 ========================================================= */
 
+function normalizeMathDelimiters(text) {
+
+    if (typeof text !== "string") {
+        return String(text ?? "");
+    }
+
+    /*
+       Convert standalone square-bracket equation blocks:
+
+       [
+       v(t)=u+at
+       ]
+
+       into valid MathJax display delimiters:
+
+       \\[ \\]
+
+       Only convert blocks that contain recognizable mathematical
+       notation, so ordinary bracketed text remains unchanged.
+    */
+
+    return text.replace(
+        /(^|\n)[ \t]*\[\s*\n([\s\S]*?)\n[ \t]*\](?=\n|$)/g,
+        (match, prefix, equation) => {
+
+            const mathContent = equation.trim();
+
+            const looksLikeMath =
+                /(?:=|\\(?:frac|sqrt|text|times|cdot|left|right|begin|sum|int|pi|theta)|[_^]\{?[-\w])/.test(
+                    mathContent
+                );
+
+            if (!looksLikeMath) {
+                return match;
+            }
+
+            return (
+                prefix +
+                "\\[\n" +
+                mathContent +
+                "\n\\]"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MATHJAX RENDERING
+========================================================= */
+
 async function renderMath(element) {
 
-    if (
-        !element ||
-        !window.MathJax ||
-        typeof window.MathJax.typesetPromise !==
-            "function"
-    ) {
-        return;
-    }
+    if (!element) return;
 
     try {
 
-        await window.MathJax.typesetPromise(
-            [element]
-        );
+        // MathJax is loaded asynchronously in ai-support.html.
+        // Wait briefly for its rendering API to become available.
+        let attempts = 0;
+
+        while (
+            (
+                !window.MathJax ||
+                typeof window.MathJax.typesetPromise !== "function"
+            ) &&
+            attempts < 100
+        ) {
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 50)
+            );
+
+            attempts++;
+
+        }
+
+        if (
+            !window.MathJax ||
+            typeof window.MathJax.typesetPromise !== "function"
+        ) {
+
+            console.warn(
+                "MathJax did not finish loading."
+            );
+
+            return;
+
+        }
+
+        if (
+            window.MathJax.startup &&
+            window.MathJax.startup.promise
+        ) {
+
+            await window.MathJax.startup.promise;
+
+        }
+
+        await window.MathJax.typesetPromise([
+            element
+        ]);
 
     } catch (error) {
 
