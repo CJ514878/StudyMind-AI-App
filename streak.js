@@ -1,30 +1,22 @@
-
 "use strict";
 
 /* =========================================================
    STUDYMIND AI — ACCOUNT-WIDE STREAK ENGINE
    ---------------------------------------------------------
-   ACCOUNT-WIDE DATA:
-       studyMindStreak
-       studyMindLongestStreak
-       studyMindStreakActivity
-       studyMindStreakFreezes
-       studyMindStreakFreezeDates
-
    FEATURES:
-       - Current and longest streak
-       - Automatic streak-freeze rewards
+       - Account-wide current and longest streak
+       - Streak freeze rewards every 49 days
        - Automatic freeze protection
-       - Streak increase/loss events
+       - Persistent streak increase notifications
+       - Persistent streak loss notifications
        - Study-day completion events
        - Daily and milestone XP
        - Weekly and calendar rendering
        - Existing StudyMind public API compatibility
 
-   Milo celebrations and loss animations are handled by:
+   Milo celebrations and loss animations:
        milo-celebrating.js
        milo-streak-loss.js
-       streak-celebration.js
 ========================================================= */
 
 
@@ -33,40 +25,17 @@
 ========================================================= */
 
 const STREAK_KEYS = {
-
-    COMPLETED:
-        "studyMindCompletedTopics",
-
-    ACTIVITY:
-        "studyMindStreakActivity",
-
-    CURRENT:
-        "studyMindStreak",
-
-    BEST:
-        "studyMindLongestStreak",
-
-    LAST_COMPLETED:
-        "studyMindLastCompletedPlanDate",
-
-    PLAN:
-        "studyMindPlan",
-
-    XP:
-        "studyMindXP",
-
-    USERNAME:
-        "studyMindUsername",
-
-    FREEZES:
-        "studyMindStreakFreezes",
-
-    FREEZE_DATES:
-        "studyMindStreakFreezeDates",
-
-    FREEZE_REWARDS:
-        "studyMindStreakFreezeRewards"
-
+    COMPLETED: "studyMindCompletedTopics",
+    ACTIVITY: "studyMindStreakActivity",
+    CURRENT: "studyMindStreak",
+    BEST: "studyMindLongestStreak",
+    LAST_COMPLETED: "studyMindLastCompletedPlanDate",
+    PLAN: "studyMindPlan",
+    XP: "studyMindXP",
+    USERNAME: "studyMindUsername",
+    FREEZES: "studyMindStreakFreezes",
+    FREEZE_DATES: "studyMindStreakFreezeDates",
+    FREEZE_REWARDS: "studyMindStreakFreezeRewards"
 };
 
 
@@ -75,23 +44,8 @@ const STREAK_KEYS = {
 ========================================================= */
 
 const STREAK_FREEZE_SETTINGS = {
-
-    /*
-       A freeze is awarded at 49 days.
-
-       Further rewards are given at 98, 147, 196, etc.
-    */
-
     REWARD_INTERVAL: 49,
-
-    /*
-       One freeze protects one missed calendar day.
-
-       A freeze is used automatically when eligible.
-    */
-
     AUTOMATIC_USE: true
-
 };
 
 
@@ -99,10 +53,7 @@ const STREAK_FREEZE_SETTINGS = {
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initStreak
-);
+document.addEventListener("DOMContentLoaded", initStreak);
 
 
 function initStreak() {
@@ -122,40 +73,29 @@ function initStreak() {
 
     /* Cross-tab synchronization. */
 
-    window.addEventListener(
-        "storage",
-        event => {
+    window.addEventListener("storage", event => {
 
-            const watchedKeys = [
+        const watchedKeys = [
+            STREAK_KEYS.COMPLETED,
+            STREAK_KEYS.ACTIVITY,
+            STREAK_KEYS.CURRENT,
+            STREAK_KEYS.BEST,
+            STREAK_KEYS.XP,
+            STREAK_KEYS.FREEZES,
+            STREAK_KEYS.FREEZE_DATES
+        ];
 
-                STREAK_KEYS.COMPLETED,
-                STREAK_KEYS.ACTIVITY,
-                STREAK_KEYS.CURRENT,
-                STREAK_KEYS.BEST,
-                STREAK_KEYS.XP,
-                STREAK_KEYS.FREEZES,
-                STREAK_KEYS.FREEZE_DATES
-
-            ];
-
-
-            if (
-                watchedKeys.includes(event.key) ||
-                event.key === null
-            ) {
-
-                migrateActivityFormat();
-
-                initializeFreezeStorage();
-
-                syncStreakFromActivity();
-
-                renderEverything();
-
-            }
-
+        if (
+            watchedKeys.includes(event.key) ||
+            event.key === null
+        ) {
+            migrateActivityFormat();
+            initializeFreezeStorage();
+            syncStreakFromActivity();
+            renderEverything();
         }
-    );
+
+    });
 
 
     /* Same-page synchronization. */
@@ -164,23 +104,14 @@ function initStreak() {
         "studyMindStreakUpdated",
         event => {
 
-            const detail =
-                event?.detail || {};
+            const detail = event?.detail || {};
 
-
-            if (
-                detail.source === "streak-engine"
-            ) {
-
+            if (detail.source === "streak-engine") {
                 renderEverything();
-
                 return;
-
             }
 
-
             syncStreakFromActivity();
-
             renderEverything();
 
         }
@@ -189,25 +120,20 @@ function initStreak() {
 
     /*
        Keep the streak display synchronized.
-
-       This does not award XP repeatedly because all
-       rewards use a unique event ledger.
+       XP rewards are protected by the unique event ledger.
     */
 
-    setInterval(
-        () => {
+    setInterval(() => {
 
-            migrateActivityFormat();
+        migrateActivityFormat();
 
-            initializeFreezeStorage();
+        initializeFreezeStorage();
 
-            syncStreakFromActivity();
+        syncStreakFromActivity();
 
-            renderEverything();
+        renderEverything();
 
-        },
-        2000
-    );
+    }, 2000);
 
 }
 
@@ -220,16 +146,11 @@ function readJSON(key, fallback) {
 
     try {
 
-        const value =
-            localStorage.getItem(key);
-
+        const value = localStorage.getItem(key);
 
         if (!value) {
-
             return fallback;
-
         }
-
 
         return JSON.parse(value);
 
@@ -280,58 +201,36 @@ function writeJSON(key, value) {
 
 function initializeFreezeStorage() {
 
-    const count =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.FREEZES
-            )
-        );
-
+    const count = Number(
+        localStorage.getItem(STREAK_KEYS.FREEZES)
+    );
 
     if (
         !Number.isFinite(count) ||
         count < 0
     ) {
-
         localStorage.setItem(
             STREAK_KEYS.FREEZES,
             "0"
         );
-
     }
 
-
-    const dates =
-        readJSON(
-            STREAK_KEYS.FREEZE_DATES,
-            []
-        );
-
+    const dates = readJSON(
+        STREAK_KEYS.FREEZE_DATES,
+        []
+    );
 
     if (!Array.isArray(dates)) {
-
-        writeJSON(
-            STREAK_KEYS.FREEZE_DATES,
-            []
-        );
-
+        writeJSON(STREAK_KEYS.FREEZE_DATES, []);
     }
 
-
-    const rewards =
-        readJSON(
-            STREAK_KEYS.FREEZE_REWARDS,
-            []
-        );
-
+    const rewards = readJSON(
+        STREAK_KEYS.FREEZE_REWARDS,
+        []
+    );
 
     if (!Array.isArray(rewards)) {
-
-        writeJSON(
-            STREAK_KEYS.FREEZE_REWARDS,
-            []
-        );
-
+        writeJSON(STREAK_KEYS.FREEZE_REWARDS, []);
     }
 
 }
@@ -357,20 +256,15 @@ function getStreakFreezeCount() {
 
 function setStreakFreezeCount(count) {
 
-    const safeCount =
-        Math.max(
-            0,
-            Math.floor(
-                Number(count) || 0
-            )
-        );
-
+    const safeCount = Math.max(
+        0,
+        Math.floor(Number(count) || 0)
+    );
 
     localStorage.setItem(
         STREAK_KEYS.FREEZES,
         String(safeCount)
     );
-
 
     window.dispatchEvent(
         new CustomEvent(
@@ -383,7 +277,6 @@ function setStreakFreezeCount(count) {
         )
     );
 
-
     return safeCount;
 
 }
@@ -391,16 +284,12 @@ function setStreakFreezeCount(count) {
 
 function getStreakFreezeDates() {
 
-    const dates =
-        readJSON(
-            STREAK_KEYS.FREEZE_DATES,
-            []
-        );
+    const dates = readJSON(
+        STREAK_KEYS.FREEZE_DATES,
+        []
+    );
 
-
-    return Array.isArray(dates)
-        ? dates
-        : [];
+    return Array.isArray(dates) ? dates : [];
 
 }
 
@@ -411,16 +300,12 @@ function getStreakFreezeDates() {
 
 function getFreezeRewardMilestones() {
 
-    const rewards =
-        readJSON(
-            STREAK_KEYS.FREEZE_REWARDS,
-            []
-        );
+    const rewards = readJSON(
+        STREAK_KEYS.FREEZE_REWARDS,
+        []
+    );
 
-
-    return Array.isArray(rewards)
-        ? rewards
-        : [];
+    return Array.isArray(rewards) ? rewards : [];
 
 }
 
@@ -430,34 +315,18 @@ function awardStreakFreeze(streak) {
     const interval =
         STREAK_FREEZE_SETTINGS.REWARD_INTERVAL;
 
-
-    if (
-        streak < interval
-    ) {
-
+    if (streak < interval) {
         return false;
-
     }
-
 
     const milestone =
-        Math.floor(
-            streak / interval
-        ) * interval;
+        Math.floor(streak / interval) * interval;
 
+    const rewards = getFreezeRewardMilestones();
 
-    const rewards =
-        getFreezeRewardMilestones();
-
-
-    if (
-        rewards.includes(milestone)
-    ) {
-
+    if (rewards.includes(milestone)) {
         return false;
-
     }
-
 
     /*
        Record the reward before dispatching events.
@@ -466,45 +335,33 @@ function awardStreakFreeze(streak) {
 
     rewards.push(milestone);
 
-
     writeJSON(
         STREAK_KEYS.FREEZE_REWARDS,
         rewards
     );
 
-
     const newCount =
         getStreakFreezeCount() + 1;
 
-
-    setStreakFreezeCount(
-        newCount
-    );
-
+    setStreakFreezeCount(newCount);
 
     window.dispatchEvent(
         new CustomEvent(
             "studyMindStreakFreezeEarned",
             {
                 detail: {
-
                     freezes: newCount,
-
                     milestone,
-
                     message:
                         `You earned a streak freeze for reaching ${milestone} days!`
-
                 }
             }
         )
     );
 
-
     console.log(
         `StudyMind: streak freeze earned at ${milestone} days.`
     );
-
 
     return true;
 
@@ -512,10 +369,10 @@ function awardStreakFreeze(streak) {
 
 
 /*
-   Check all milestones reached.
+   Check every milestone reached.
 
-   This also handles users who already had a long streak
-   before this updated streak engine was installed.
+   Also handles users who had a long streak before
+   this updated streak engine was installed.
 */
 
 function checkFreezeRewards(streak) {
@@ -523,16 +380,10 @@ function checkFreezeRewards(streak) {
     const interval =
         STREAK_FREEZE_SETTINGS.REWARD_INTERVAL;
 
-
-    const rewards =
-        getFreezeRewardMilestones();
-
+    const rewards = getFreezeRewardMilestones();
 
     const highestMilestone =
-        Math.floor(
-            Math.max(0, streak) / interval
-        ) * interval;
-
+        Math.floor(Math.max(0, streak) / interval) * interval;
 
     for (
         let milestone = interval;
@@ -540,18 +391,11 @@ function checkFreezeRewards(streak) {
         milestone += interval
     ) {
 
-        if (
-            rewards.includes(milestone)
-        ) {
-
+        if (rewards.includes(milestone)) {
             continue;
-
         }
 
-
-        awardStreakFreeze(
-            milestone
-        );
+        awardStreakFreeze(milestone);
 
     }
 
@@ -564,21 +408,15 @@ function checkFreezeRewards(streak) {
 
 function migrateActivityFormat() {
 
-    const raw =
-        localStorage.getItem(
-            STREAK_KEYS.ACTIVITY
-        );
-
+    const raw = localStorage.getItem(
+        STREAK_KEYS.ACTIVITY
+    );
 
     if (!raw) {
-
         return {};
-
     }
 
-
     let parsed;
-
 
     try {
 
@@ -591,20 +429,13 @@ function migrateActivityFormat() {
             error
         );
 
-
-        writeJSON(
-            STREAK_KEYS.ACTIVITY,
-            {}
-        );
-
+        writeJSON(STREAK_KEYS.ACTIVITY, {});
 
         return {};
 
     }
 
-
     const activity = {};
-
 
     /* Object format. */
 
@@ -614,118 +445,75 @@ function migrateActivityFormat() {
         !Array.isArray(parsed)
     ) {
 
-        Object.entries(parsed).forEach(
-            ([key, value]) => {
+        Object.entries(parsed).forEach(([key, value]) => {
 
-                if (
-                    value !== true &&
-                    value !== 1 &&
-                    value !== "true"
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    /^\d{4}-\d{2}-\d{2}$/.test(key)
-                ) {
-
-                    activity[key] = true;
-
-                }
-
+            if (
+                value !== true &&
+                value !== 1 &&
+                value !== "true"
+            ) {
+                return;
             }
-        );
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                activity[key] = true;
+            }
+
+        });
 
     }
-
 
     /* Older array format. */
 
     if (Array.isArray(parsed)) {
 
-        parsed.forEach(
-            item => {
+        parsed.forEach(item => {
 
-                if (
-                    typeof item === "string"
-                ) {
+            if (typeof item === "string") {
 
-                    const key =
-                        item.slice(0, 10);
+                const key = item.slice(0, 10);
 
-
-                    if (
-                        /^\d{4}-\d{2}-\d{2}$/.test(key)
-                    ) {
-
-                        activity[key] = true;
-
-                    }
-
-
-                    return;
-
+                if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                    activity[key] = true;
                 }
 
+                return;
 
-                if (
-                    item &&
-                    typeof item === "object"
-                ) {
+            }
 
-                    const possibleDate =
-                        item.date ||
-                        item.day ||
-                        item.completedDate ||
-                        item.completedAt ||
-                        item.timestamp;
+            if (
+                item &&
+                typeof item === "object"
+            ) {
 
+                const possibleDate =
+                    item.date ||
+                    item.day ||
+                    item.completedDate ||
+                    item.completedAt ||
+                    item.timestamp;
 
-                    if (!possibleDate) {
+                if (!possibleDate) {
+                    return;
+                }
 
-                        return;
+                const key = String(possibleDate).slice(0, 10);
 
-                    }
-
-
-                    const key =
-                        String(
-                            possibleDate
-                        ).slice(0, 10);
-
-
-                    if (
-                        /^\d{4}-\d{2}-\d{2}$/.test(key)
-                    ) {
-
-                        activity[key] = true;
-
-                    }
-
+                if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                    activity[key] = true;
                 }
 
             }
-        );
+
+        });
 
     }
 
-
-    const normalized =
-        JSON.stringify(activity);
-
+    const normalized = JSON.stringify(activity);
 
     if (normalized !== raw) {
-
-        writeJSON(
-            STREAK_KEYS.ACTIVITY,
-            activity
-        );
-
+        writeJSON(STREAK_KEYS.ACTIVITY, activity);
     }
-
 
     return activity;
 
@@ -738,21 +526,15 @@ function migrateActivityFormat() {
 
 function todayKey(date = new Date()) {
 
-    const year =
-        date.getFullYear();
+    const year = date.getFullYear();
 
+    const month = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
 
-    const month =
-        String(
-            date.getMonth() + 1
-        ).padStart(2, "0");
-
-
-    const day =
-        String(
-            date.getDate()
-        ).padStart(2, "0");
-
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 
@@ -765,19 +547,11 @@ function dateFromKey(key) {
         typeof key !== "string" ||
         !/^\d{4}-\d{2}-\d{2}$/.test(key)
     ) {
-
         return null;
-
     }
 
-
-    const [
-        year,
-        month,
-        day
-    ] =
+    const [year, month, day] =
         key.split("-").map(Number);
-
 
     return new Date(
         year,
@@ -790,22 +564,13 @@ function dateFromKey(key) {
 
 function addDays(date, amount) {
 
-    const result =
-        new Date(date);
+    const result = new Date(date);
 
-
-    result.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
+    result.setHours(0, 0, 0, 0);
 
     result.setDate(
         result.getDate() + amount
     );
-
 
     return result;
 
@@ -818,31 +583,21 @@ function addDays(date, amount) {
 
 function getCompletedTopics() {
 
-    const completed =
-        readJSON(
-            STREAK_KEYS.COMPLETED,
-            []
-        );
-
+    const completed = readJSON(
+        STREAK_KEYS.COMPLETED,
+        []
+    );
 
     if (Array.isArray(completed)) {
-
         return completed;
-
     }
-
 
     if (
         completed &&
         typeof completed === "object"
     ) {
-
-        return Object.values(
-            completed
-        ).flat();
-
+        return Object.values(completed).flat();
     }
-
 
     return [];
 
@@ -863,14 +618,8 @@ function getActivity() {
 function getActivityDays(activity = getActivity()) {
 
     return Object.keys(activity)
-        .filter(
-            date =>
-                activity[date] === true
-        )
-        .filter(
-            date =>
-                /^\d{4}-\d{2}-\d{2}$/.test(date)
-        )
+        .filter(date => activity[date] === true)
+        .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
         .sort();
 
 }
@@ -878,22 +627,13 @@ function getActivityDays(activity = getActivity()) {
 
 /* =========================================================
    COMBINED STREAK DAYS
-   ---------------------------------------------------------
-   Actual study days + protected freeze days.
-
-   Freeze days count towards streak continuity but are
-   NOT counted as actual study days.
 ========================================================= */
 
 function getCombinedStreakDays() {
 
-    const activityDays =
-        getActivityDays();
+    const activityDays = getActivityDays();
 
-
-    const freezeDates =
-        getStreakFreezeDates();
-
+    const freezeDates = getStreakFreezeDates();
 
     return [
         ...new Set([
@@ -911,131 +651,108 @@ function getCombinedStreakDays() {
 
 function applyPendingStreakFreeze() {
 
-    if (
-        !STREAK_FREEZE_SETTINGS.AUTOMATIC_USE
-    ) {
-
+    if (!STREAK_FREEZE_SETTINGS.AUTOMATIC_USE) {
         return false;
-
     }
 
-
-    const freezeCount =
-        getStreakFreezeCount();
-
+    const freezeCount = getStreakFreezeCount();
 
     if (freezeCount <= 0) {
-
         return false;
+    }
+
+    const activity = getActivity();
+
+    const freezeDates = getStreakFreezeDates();
+
+    const today = new Date();
+
+    const isProtected = dateKey =>
+        activity[dateKey] === true ||
+        freezeDates.includes(dateKey);
+
+    /*
+       Start with yesterday.
+       Never protect today.
+    */
+
+    const missingDates = [];
+
+    let checkDate = addDays(today, -1);
+
+    /*
+       Find consecutive missed days until we reach
+       an actual study day or an already protected day.
+    */
+
+    while (!isProtected(todayKey(checkDate))) {
+
+        missingDates.push(todayKey(checkDate));
+
+        checkDate = addDays(checkDate, -1);
+
+        /*
+           Safety limit.
+        */
+
+        if (missingDates.length >= 365) {
+            return false;
+        }
 
     }
 
-
-    const activity =
-        getActivity();
-
-
-    const freezeDates =
-        getStreakFreezeDates();
-
-
-    const today =
-        new Date();
-
-
-    const yesterday =
-        addDays(today, -1);
-
-
-    const dayBeforeYesterday =
-        addDays(today, -2);
-
-
-    const yesterdayKey =
-        todayKey(yesterday);
-
-
-    const previousKey =
-        todayKey(dayBeforeYesterday);
-
-
-    /*
-       Never use a freeze for today.
-
-       Today is still available for the user to study.
-    */
-
-    if (
-        activity[yesterdayKey] === true ||
-        freezeDates.includes(yesterdayKey)
-    ) {
-
+    if (missingDates.length === 0) {
         return false;
-
     }
 
-
     /*
-       A freeze is only useful when the previous day
-       was part of the existing streak.
+       Only protect the gap if enough freezes exist
+       to cover every missed day.
     */
 
-    const previousDayWasActive =
-        activity[previousKey] === true ||
-        freezeDates.includes(previousKey);
-
-
-    if (!previousDayWasActive) {
-
+    if (freezeCount < missingDates.length) {
         return false;
-
     }
 
-
-    /*
-       Consume exactly one freeze.
-    */
-
-    setStreakFreezeCount(
-        freezeCount - 1
-    );
-
-
-    freezeDates.push(
-        yesterdayKey
-    );
-
+    const updatedDates = [
+        ...new Set([
+            ...freezeDates,
+            ...missingDates
+        ])
+    ];
 
     writeJSON(
         STREAK_KEYS.FREEZE_DATES,
-        [...new Set(freezeDates)]
+        updatedDates
     );
 
+    setStreakFreezeCount(
+        freezeCount - missingDates.length
+    );
 
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakFreezeUsed",
-            {
-                detail: {
+    missingDates.forEach(date => {
 
-                    date: yesterdayKey,
-
-                    freezesRemaining:
-                        freezeCount - 1,
-
-                    message:
-                        "Your streak freeze protected your streak!"
-
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindStreakFreezeUsed",
+                {
+                    detail: {
+                        date,
+                        freezesRemaining:
+                            getStreakFreezeCount(),
+                        message:
+                            "Your streak freeze protected your streak!"
+                    }
                 }
-            }
-        )
-    );
+            )
+        );
 
+    });
 
     console.log(
-        `StudyMind: streak freeze used for ${yesterdayKey}.`
+        "StudyMind: protected missed days:",
+        missingDates
     );
-
 
     return true;
 
@@ -1048,28 +765,17 @@ function applyPendingStreakFreeze() {
 
 function calculateCurrentStreak() {
 
-    const days =
-        getCombinedStreakDays();
-
+    const days = getCombinedStreakDays();
 
     if (!days.length) {
-
         return 0;
-
     }
 
+    const daySet = new Set(days);
 
-    const daySet =
-        new Set(days);
+    const today = todayKey();
 
-
-    const today =
-        todayKey();
-
-
-    let currentDate =
-        new Date();
-
+    let currentDate = new Date();
 
     /*
        If today has not been completed, yesterday may
@@ -1077,36 +783,18 @@ function calculateCurrentStreak() {
     */
 
     if (!daySet.has(today)) {
-
-        currentDate =
-            addDays(
-                currentDate,
-                -1
-            );
-
+        currentDate = addDays(currentDate, -1);
     }
-
 
     let streak = 0;
 
-
-    while (
-        daySet.has(
-            todayKey(currentDate)
-        )
-    ) {
+    while (daySet.has(todayKey(currentDate))) {
 
         streak++;
 
-
-        currentDate =
-            addDays(
-                currentDate,
-                -1
-            );
+        currentDate = addDays(currentDate, -1);
 
     }
-
 
     return streak;
 
@@ -1119,77 +807,40 @@ function calculateCurrentStreak() {
 
 function calculateLongestStreak() {
 
-    const days =
-        getCombinedStreakDays();
-
+    const days = getCombinedStreakDays();
 
     if (!days.length) {
-
         return 0;
-
     }
-
 
     let longest = 1;
 
     let current = 1;
 
+    for (let i = 1; i < days.length; i++) {
 
-    for (
-        let i = 1;
-        i < days.length;
-        i++
-    ) {
+        const previous = dateFromKey(days[i - 1]);
 
-        const previous =
-            dateFromKey(
-                days[i - 1]
-            );
-
-
-        const currentDate =
-            dateFromKey(
-                days[i]
-            );
-
+        const currentDate = dateFromKey(days[i]);
 
         if (!previous || !currentDate) {
-
             current = 1;
-
             continue;
-
         }
 
-
-        const difference =
-            Math.round(
-                (
-                    currentDate -
-                    previous
-                ) / 86400000
-            );
-
+        const difference = Math.round(
+            (currentDate - previous) / 86400000
+        );
 
         if (difference === 1) {
-
             current++;
-
         } else {
-
             current = 1;
-
         }
 
-
-        longest =
-            Math.max(
-                longest,
-                current
-            );
+        longest = Math.max(longest, current);
 
     }
-
 
     return longest;
 
@@ -1197,7 +848,7 @@ function calculateLongestStreak() {
 
 
 /* =========================================================
-   STREAK EVENTS — PERSISTENT CROSS-PAGE NOTIFICATIONS
+   PERSISTENT STREAK NOTIFICATIONS
 ========================================================= */
 
 function savePendingStreakCelebration(
@@ -1215,6 +866,7 @@ function savePendingStreakCelebration(
     };
 
     try {
+
         localStorage.setItem(
             "studyMindPendingStreakCelebration",
             JSON.stringify(pending)
@@ -1230,7 +882,9 @@ function savePendingStreakCelebration(
         );
 
         return false;
+
     }
+
 }
 
 
@@ -1250,6 +904,7 @@ function savePendingStreakLoss(
     };
 
     try {
+
         localStorage.setItem(
             "studyMindPendingStreakLoss",
             JSON.stringify(pending)
@@ -1265,7 +920,9 @@ function savePendingStreakLoss(
         );
 
         return false;
+
     }
+
 }
 
 
@@ -1278,9 +935,7 @@ function dispatchStreakIncrease(
     currentStreak
 ) {
 
-    if (
-        currentStreak <= previousStreak
-    ) {
+    if (currentStreak <= previousStreak) {
         return;
     }
 
@@ -1290,10 +945,8 @@ function dispatchStreakIncrease(
         `streak-increase-${date}-${previousStreak}-${currentStreak}`;
 
     /*
-       Save the notification BEFORE dispatching it.
-
-       This allows Milo's celebration script to recover
-       the notification on another page.
+       Save before dispatching.
+       Milo can recover this notification on another page.
     */
 
     savePendingStreakCelebration(
@@ -1307,23 +960,17 @@ function dispatchStreakIncrease(
             "studyMindStreakIncreased",
             {
                 detail: {
-
                     eventId,
-
                     date,
-
                     previousStreak,
-
                     streak: currentStreak,
-
                     currentStreak,
-
                     source: "streak-engine"
-
                 }
             }
         )
     );
+
 }
 
 
@@ -1349,8 +996,7 @@ function dispatchStreakLoss(
         `streak-loss-${date}-${previousStreak}-${currentStreak}`;
 
     /*
-       Save the loss notification before dispatching it.
-
+       Save before dispatching.
        Milo can display the broken-heart notification
        when the user enters another page.
     */
@@ -1366,25 +1012,18 @@ function dispatchStreakLoss(
             "studyMindStreakLost",
             {
                 detail: {
-
                     eventId,
-
                     date,
-
                     previousStreak,
-
                     oldStreak: previousStreak,
-
                     streak: currentStreak,
-
                     currentStreak,
-
                     source: "streak-engine"
-
                 }
             }
         )
     );
+
 }
 
 
@@ -1399,23 +1038,17 @@ function dispatchStreakUpdated(date, stats) {
             "studyMindStreakUpdated",
             {
                 detail: {
-
                     date,
-
                     streak: stats.current,
-
                     currentStreak: stats.current,
-
                     longestStreak: stats.best,
-
                     freezes: getStreakFreezeCount(),
-
                     source: "streak-engine"
-
                 }
             }
         )
     );
+
 }
 
 
@@ -1430,123 +1063,12 @@ function dispatchStudyDayCompleted(streak) {
             "studyMindStudyDayCompleted",
             {
                 detail: {
-
                     streak,
-
                     currentStreak: streak,
-
                     dayCompleted: true,
-
                     studyDayCompleted: true,
-
                     date: todayKey(),
-
                     source: "study-day-complete"
-
-                }
-            }
-        )
-    );
-}
-
-
-function dispatchStreakLoss(
-    previousStreak,
-    currentStreak
-) {
-
-    if (
-        previousStreak <= 0 ||
-        currentStreak >= previousStreak
-    ) {
-
-        return;
-
-    }
-
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakLost",
-            {
-                detail: {
-
-                    previousStreak,
-
-                    oldStreak:
-                        previousStreak,
-
-                    streak:
-                        currentStreak,
-
-                    currentStreak,
-
-                    source:
-                        "streak-engine"
-
-                }
-            }
-        )
-    );
-
-}
-
-
-function dispatchStreakUpdated(date, stats) {
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStreakUpdated",
-            {
-                detail: {
-
-                    date,
-
-                    streak:
-                        stats.current,
-
-                    currentStreak:
-                        stats.current,
-
-                    longestStreak:
-                        stats.best,
-
-                    freezes:
-                        getStreakFreezeCount(),
-
-                    source:
-                        "streak-engine"
-
-                }
-            }
-        )
-    );
-
-}
-
-
-function dispatchStudyDayCompleted(streak) {
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "studyMindStudyDayCompleted",
-            {
-                detail: {
-
-                    streak,
-
-                    currentStreak:
-                        streak,
-
-                    dayCompleted:
-                        true,
-
-                    studyDayCompleted:
-                        true,
-
-                    source:
-                        "study-day-complete"
-
                 }
             }
         )
@@ -1562,45 +1084,31 @@ function dispatchStudyDayCompleted(streak) {
 function syncStreakFromActivity() {
 
     /*
-       Protect an eligible missed day BEFORE calculating
+       Protect eligible missed days BEFORE calculating
        the current streak or dispatching a loss event.
     */
 
     applyPendingStreakFreeze();
 
-
     const calculatedCurrent =
         calculateCurrentStreak();
-
 
     const calculatedBest =
         calculateLongestStreak();
 
+    const storedCurrent = Number(
+        localStorage.getItem(STREAK_KEYS.CURRENT) || 0
+    );
 
-    const storedCurrent =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.CURRENT
-            ) || 0
-        );
-
-
-    const storedBest =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.BEST
-            ) || 0
-        );
-
+    const storedBest = Number(
+        localStorage.getItem(STREAK_KEYS.BEST) || 0
+    );
 
     /*
        Detect changes before updating stored values.
     */
 
-    if (
-        calculatedCurrent >
-        storedCurrent
-    ) {
+    if (calculatedCurrent > storedCurrent) {
 
         dispatchStreakIncrease(
             storedCurrent,
@@ -1609,11 +1117,7 @@ function syncStreakFromActivity() {
 
     }
 
-
-    if (
-        calculatedCurrent <
-        storedCurrent
-    ) {
+    if (calculatedCurrent < storedCurrent) {
 
         dispatchStreakLoss(
             storedCurrent,
@@ -1622,30 +1126,23 @@ function syncStreakFromActivity() {
 
     }
 
-
-    const best =
-        Math.max(
-            calculatedBest,
-            storedBest
-        );
-
+    const best = Math.max(
+        calculatedBest,
+        storedBest
+    );
 
     localStorage.setItem(
         STREAK_KEYS.CURRENT,
         String(calculatedCurrent)
     );
 
-
     localStorage.setItem(
         STREAK_KEYS.BEST,
         String(best)
     );
 
-
     /*
        Check rewards against the longest streak too.
-       This prevents previously reached milestones
-       from being missed.
     */
 
     checkFreezeRewards(
@@ -1657,17 +1154,10 @@ function syncStreakFromActivity() {
         )
     );
 
-
     return {
-
-        current:
-            calculatedCurrent,
-
+        current: calculatedCurrent,
         best,
-
-        freezes:
-            getStreakFreezeCount()
-
+        freezes: getStreakFreezeCount()
     };
 
 }
@@ -1679,135 +1169,93 @@ function syncStreakFromActivity() {
 
 function getAllPlanTopics() {
 
-    const plan =
-        readJSON(
-            STREAK_KEYS.PLAN,
-            null
-        );
-
+    const plan = readJSON(
+        STREAK_KEYS.PLAN,
+        null
+    );
 
     if (!plan) {
-
         return [];
-
     }
-
 
     const topics = [];
 
-
     if (Array.isArray(plan.subjects)) {
 
-        plan.subjects.forEach(
-            subject => {
+        plan.subjects.forEach(subject => {
 
-                if (
-                    !Array.isArray(
-                        subject?.topics
-                    )
-                ) {
+            if (!Array.isArray(subject?.topics)) {
+                return;
+            }
 
-                    return;
+            subject.topics.forEach(topic => {
+
+                const name =
+                    typeof topic === "string"
+                        ? topic
+                        : (
+                            topic?.name ||
+                            topic?.title ||
+                            topic?.topic ||
+                            ""
+                        );
+
+                if (name) {
+
+                    topics.push({
+                        subject:
+                            subject.name ||
+                            subject.subject ||
+                            "",
+                        topic: String(name).trim()
+                    });
 
                 }
 
+            });
 
-                subject.topics.forEach(
-                    topic => {
-
-                        const name =
-                            typeof topic === "string"
-                                ? topic
-                                : (
-                                    topic?.name ||
-                                    topic?.title ||
-                                    topic?.topic ||
-                                    ""
-                                );
-
-
-                        if (name) {
-
-                            topics.push({
-
-                                subject:
-                                    subject.name ||
-                                    subject.subject ||
-                                    "",
-
-                                topic:
-                                    String(name).trim()
-
-                            });
-
-                        }
-
-                    }
-                );
-
-            }
-        );
+        });
 
     }
 
-
-    /*
-       Older compatibility format.
-    */
+    /* Older compatibility format. */
 
     if (
         !topics.length &&
         Array.isArray(plan.topics)
     ) {
 
-        plan.topics.forEach(
-            topic => {
+        plan.topics.forEach(topic => {
 
-                if (
-                    typeof topic === "string"
-                ) {
+            if (typeof topic === "string") {
 
-                    topics.push({
+                topics.push({
+                    subject: "",
+                    topic: topic.trim()
+                });
 
-                        subject: "",
-
-                        topic:
-                            topic.trim()
-
-                    });
-
-
-                    return;
-
-                }
-
-
-                const name =
-                    topic?.name ||
-                    topic?.title ||
-                    topic?.topic ||
-                    "";
-
-
-                if (name) {
-
-                    topics.push({
-
-                        subject:
-                            topic.subject || "",
-
-                        topic:
-                            String(name).trim()
-
-                    });
-
-                }
+                return;
 
             }
-        );
+
+            const name =
+                topic?.name ||
+                topic?.title ||
+                topic?.topic ||
+                "";
+
+            if (name) {
+
+                topics.push({
+                    subject: topic.subject || "",
+                    topic: String(name).trim()
+                });
+
+            }
+
+        });
 
     }
-
 
     return topics;
 
@@ -1824,59 +1272,45 @@ function topicMatchesCompleted(
     completed
 ) {
 
-    const exact =
-        `${subject}::${topic}`;
-
+    const exact = `${subject}::${topic}`;
 
     if (
         completed.includes(exact) ||
         completed.includes(topic)
     ) {
-
         return true;
-
     }
 
+    return completed.some(item => {
 
-    return completed.some(
-        item => {
-
-            if (
-                typeof item !== "object" ||
-                !item
-            ) {
-
-                return false;
-
-            }
-
-
-            const itemTopic =
-                String(
-                    item.topic ||
-                    item.name ||
-                    item.title ||
-                    ""
-                ).trim();
-
-
-            const itemSubject =
-                String(
-                    item.subject || ""
-                ).trim();
-
-
-            return (
-                itemTopic === topic &&
-                (
-                    !subject ||
-                    !itemSubject ||
-                    itemSubject === subject
-                )
-            );
-
+        if (
+            typeof item !== "object" ||
+            !item
+        ) {
+            return false;
         }
-    );
+
+        const itemTopic = String(
+            item.topic ||
+            item.name ||
+            item.title ||
+            ""
+        ).trim();
+
+        const itemSubject = String(
+            item.subject || ""
+        ).trim();
+
+        return (
+            itemTopic === topic &&
+            (
+                !subject ||
+                !itemSubject ||
+                itemSubject === subject
+            )
+        );
+
+    });
 
 }
 
@@ -1887,33 +1321,24 @@ function topicMatchesCompleted(
 
 function getTodaySchedule() {
 
-    const plan =
-        readJSON(
-            STREAK_KEYS.PLAN,
-            null
-        );
-
+    const plan = readJSON(
+        STREAK_KEYS.PLAN,
+        null
+    );
 
     if (
         !plan ||
         !Array.isArray(plan.schedule)
     ) {
-
         return null;
-
     }
 
-
-    const today =
-        todayKey();
-
+    const today = todayKey();
 
     return (
         plan.schedule.find(
             item =>
-                String(
-                    item?.date || ""
-                ).slice(0, 10) === today
+                String(item?.date || "").slice(0, 10) === today
         ) || null
     );
 
@@ -1926,73 +1351,52 @@ function getTodaySchedule() {
 
 function getTodaysRequiredTopics() {
 
-    const day =
-        getTodaySchedule();
-
+    const day = getTodaySchedule();
 
     if (day) {
 
         const topics = [];
 
-
         if (Array.isArray(day.sessions)) {
 
-            day.sessions.forEach(
-                session => {
+            day.sessions.forEach(session => {
 
-                    const type =
-                        String(
-                            session?.type || ""
-                        ).toLowerCase();
+                const type = String(
+                    session?.type || ""
+                ).toLowerCase();
 
-
-                    if (
-                        type === "break" ||
-                        type === "rest"
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const subject =
-                        String(
-                            session?.subject || ""
-                        ).trim();
-
-
-                    const topic =
-                        String(
-                            session?.topic ||
-                            session?.name ||
-                            session?.title ||
-                            ""
-                        ).trim();
-
-
-                    if (topic) {
-
-                        topics.push({
-
-                            subject,
-
-                            topic
-
-                        });
-
-                    }
-
+                if (
+                    type === "break" ||
+                    type === "rest"
+                ) {
+                    return;
                 }
-            );
+
+                const subject = String(
+                    session?.subject || ""
+                ).trim();
+
+                const topic = String(
+                    session?.topic ||
+                    session?.name ||
+                    session?.title ||
+                    ""
+                ).trim();
+
+                if (topic) {
+                    topics.push({
+                        subject,
+                        topic
+                    });
+                }
+
+            });
 
         }
-
 
         return topics;
 
     }
-
 
     return getAllPlanTopics();
 
@@ -2005,59 +1409,35 @@ function getTodaysRequiredTopics() {
 
 function getTodayProgressData() {
 
-    const required =
-        getTodaysRequiredTopics();
+    const required = getTodaysRequiredTopics();
 
+    const completed = getCompletedTopics();
 
-    const completed =
-        getCompletedTopics();
+    const completedToday = required.filter(item =>
+        topicMatchesCompleted(
+            item.subject,
+            item.topic,
+            completed
+        )
+    );
 
+    const total = required.length;
 
-    const completedToday =
-        required.filter(
-            item =>
-                topicMatchesCompleted(
-                    item.subject,
-                    item.topic,
-                    completed
-                )
-        );
+    const completedCount = completedToday.length;
 
-
-    const total =
-        required.length;
-
-
-    const completedCount =
-        completedToday.length;
-
-
-    const progress =
-        total > 0
-            ? Math.round(
-                completedCount / total * 100
-            )
-            : 0;
-
+    const progress = total > 0
+        ? Math.round(completedCount / total * 100)
+        : 0;
 
     return {
-
-        completed:
-            completedCount,
-
+        completed: completedCount,
         total,
-
         progress,
-
         complete:
             total > 0 &&
             completedCount >= total,
-
         required,
-
-        completedTopics:
-            completedToday
-
+        completedTopics: completedToday
     };
 
 }
@@ -2069,39 +1449,26 @@ function getTodayProgressData() {
 
 function checkTodayCompletion() {
 
-    const data =
-        getTodayProgressData();
-
+    const data = getTodayProgressData();
 
     console.log(
         "StudyMind today's completion:",
         data
     );
 
-
     if (!data.complete) {
-
         return false;
-
     }
 
+    const today = todayKey();
 
-    const today =
-        todayKey();
-
-
-    const lastCompleted =
-        localStorage.getItem(
-            STREAK_KEYS.LAST_COMPLETED
-        );
-
+    const lastCompleted = localStorage.getItem(
+        STREAK_KEYS.LAST_COMPLETED
+    );
 
     if (lastCompleted === today) {
-
         return true;
-
     }
-
 
     recordCompletedStudyDay();
 
@@ -2116,13 +1483,9 @@ function checkTodayCompletion() {
 
 function recordCompletedStudyDay() {
 
-    const today =
-        todayKey();
+    const today = todayKey();
 
-
-    const activity =
-        getActivity();
-
+    const activity = getActivity();
 
     /*
        Prevent duplicate daily rewards and celebrations.
@@ -2135,13 +1498,11 @@ function recordCompletedStudyDay() {
             today
         );
 
-
         syncStreakFromActivity();
 
         return false;
 
     }
-
 
     /*
        Record today's actual study activity.
@@ -2149,30 +1510,21 @@ function recordCompletedStudyDay() {
 
     activity[today] = true;
 
-
     writeJSON(
         STREAK_KEYS.ACTIVITY,
         activity
     );
-
 
     localStorage.setItem(
         STREAK_KEYS.LAST_COMPLETED,
         today
     );
 
+    const previousStreak = Number(
+        localStorage.getItem(STREAK_KEYS.CURRENT) || 0
+    );
 
-    const previousStreak =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.CURRENT
-            ) || 0
-        );
-
-
-    const stats =
-        syncStreakFromActivity();
-
+    const stats = syncStreakFromActivity();
 
     /* Daily XP. */
 
@@ -2181,7 +1533,6 @@ function recordCompletedStudyDay() {
         10,
         "completed study day"
     );
-
 
     /* Seven-day milestone XP. */
 
@@ -2198,7 +1549,6 @@ function recordCompletedStudyDay() {
 
     }
 
-
     /* Ten-day milestone XP. */
 
     if (
@@ -2214,15 +1564,9 @@ function recordCompletedStudyDay() {
 
     }
 
+    checkStreakGoal(stats.current);
 
-    checkStreakGoal(
-        stats.current
-    );
-
-
-    if (
-        stats.current > previousStreak
-    ) {
+    if (stats.current > previousStreak) {
 
         console.log(
             `StudyMind streak increased: ${previousStreak} → ${stats.current}`
@@ -2230,22 +1574,18 @@ function recordCompletedStudyDay() {
 
     }
 
-
     /*
-       This event can be used by the celebration system
-       on pages where its listener is installed.
+       Dispatch study-day completion.
+       Streak increase notifications are separately
+       persisted for Milo's cross-page celebration.
     */
 
-    dispatchStudyDayCompleted(
-        stats.current
-    );
-
+    dispatchStudyDayCompleted(stats.current);
 
     dispatchStreakUpdated(
         today,
         stats
     );
-
 
     return true;
 
@@ -2272,75 +1612,49 @@ function awardXPOnce(
     reason
 ) {
 
-    const events =
-        getXPEvents();
-
+    const events = getXPEvents();
 
     if (events[eventId]) {
-
         return false;
-
     }
 
-
     events[eventId] = {
-
         amount,
-
         reason,
-
-        date:
-            new Date().toISOString()
-
+        date: new Date().toISOString()
     };
-
 
     writeJSON(
         "studyMindXPEvents",
         events
     );
 
+    const currentXP = Number(
+        localStorage.getItem(STREAK_KEYS.XP) || 0
+    );
 
-    const currentXP =
-        Number(
-            localStorage.getItem(
-                STREAK_KEYS.XP
-            ) || 0
-        );
-
-
-    const newXP =
-        currentXP +
-        Math.max(
-            0,
-            Number(amount) || 0
-        );
-
+    const newXP = currentXP + Math.max(
+        0,
+        Number(amount) || 0
+    );
 
     localStorage.setItem(
         STREAK_KEYS.XP,
         String(newXP)
     );
 
-
     window.dispatchEvent(
         new CustomEvent(
             "studyMindXPUpdated",
             {
                 detail: {
-
                     amount,
-
-                    total:
-                        newXP,
-
+                    total: newXP,
                     reason
-
                 }
             }
         )
     );
-
 
     return true;
 
@@ -2364,38 +1678,28 @@ function getStreakGoal() {
 
 function checkStreakGoal(streak) {
 
-    const goal =
-        getStreakGoal();
-
+    const goal = getStreakGoal();
 
     if (
         !goal ||
         streak < goal
     ) {
-
         return;
-
     }
-
 
     const rewardKey =
         `studyMindStreakGoalRewarded:${goal}`;
 
-
     if (
         localStorage.getItem(rewardKey) === "true"
     ) {
-
         return;
-
     }
-
 
     localStorage.setItem(
         rewardKey,
         "true"
     );
-
 
     awardXPOnce(
         `goal-${goal}`,
@@ -2412,57 +1716,32 @@ function checkStreakGoal(streak) {
 
 function getWeeklyDays() {
 
-    const activity =
-        getActivity();
+    const activity = getActivity();
 
+    const today = new Date();
 
-    const today =
-        new Date();
+    const day = today.getDay();
 
+    const mondayOffset = day === 0
+        ? -6
+        : 1 - day;
 
-    const day =
-        today.getDay();
-
-
-    const mondayOffset =
-        day === 0
-            ? -6
-            : 1 - day;
-
-
-    const monday =
-        addDays(
-            today,
-            mondayOffset
-        );
-
+    const monday = addDays(
+        today,
+        mondayOffset
+    );
 
     let count = 0;
 
+    for (let i = 0; i < 7; i++) {
 
-    for (
-        let i = 0;
-        i < 7;
-        i++
-    ) {
+        const date = addDays(monday, i);
 
-        const date =
-            addDays(
-                monday,
-                i
-            );
-
-
-        if (
-            activity[todayKey(date)] === true
-        ) {
-
+        if (activity[todayKey(date)] === true) {
             count++;
-
         }
 
     }
-
 
     return count;
 
@@ -2475,72 +1754,34 @@ function getWeeklyDays() {
 
 function renderEverything() {
 
-    const stats =
-        syncStreakFromActivity();
+    const stats = syncStreakFromActivity();
 
+    const activity = getActivity();
 
-    const activity =
-        getActivity();
+    const days = getActivityDays(activity);
 
+    const weekly = getWeeklyDays();
 
-    const days =
-        getActivityDays(activity);
+    setText("currentStreak", stats.current);
 
+    setText("longestStreak", stats.best);
 
-    const weekly =
-        getWeeklyDays();
+    setText("totalStudyDays", days.length);
 
+    setText("weeklyStudyDays", weekly);
 
-    setText(
-        "currentStreak",
-        stats.current
-    );
-
-
-    setText(
-        "longestStreak",
-        stats.best
-    );
-
-
-    setText(
-        "totalStudyDays",
-        days.length
-    );
-
-
-    setText(
-        "weeklyStudyDays",
-        weekly
-    );
-
-
-    setText(
-        "weekProgress",
-        `${weekly} / 7`
-    );
-
+    setText("weekProgress", `${weekly} / 7`);
 
     setText(
         "streakFreezeCount",
         getStreakFreezeCount()
     );
 
+    renderMessages(stats.current);
 
-    renderMessages(
-        stats.current
-    );
+    renderWeek(activity);
 
-
-    renderWeek(
-        activity
-    );
-
-
-    renderCalendar(
-        activity
-    );
-
+    renderCalendar(activity);
 
     renderPlanStatus();
 
@@ -2555,39 +1796,20 @@ function renderEverything() {
 
 function renderTodayProgress() {
 
-    const data =
-        getTodayProgressData();
+    const data = getTodayProgressData();
 
+    setText("todayCompleted", data.completed);
 
-    setText(
-        "todayCompleted",
-        data.completed
+    setText("todayTotal", data.total);
+
+    setText("todayProgress", `${data.progress}%`);
+
+    const progressBar = document.getElementById(
+        "todayProgressBar"
     );
-
-
-    setText(
-        "todayTotal",
-        data.total
-    );
-
-
-    setText(
-        "todayProgress",
-        `${data.progress}%`
-    );
-
-
-    const progressBar =
-        document.getElementById(
-            "todayProgressBar"
-        );
-
 
     if (progressBar) {
-
-        progressBar.style.width =
-            `${data.progress}%`;
-
+        progressBar.style.width = `${data.progress}%`;
     }
 
 }
@@ -2602,44 +1824,30 @@ function renderMessages(streak) {
     let message =
         "Complete today's study work to start your streak.";
 
-
     let hero =
         "Every completed study day moves you forward.";
-
 
     if (streak === 1) {
 
         message =
             "Great start! 🔥 Come back tomorrow.";
 
-
         hero =
             "You've started your streak. Keep it going!";
 
-    }
-
-    else if (streak > 1) {
+    } else if (streak > 1) {
 
         message =
             `${streak} consecutive study days. Keep going! 🔥`;
-
 
         hero =
             `You're on a ${streak}-day streak!`;
 
     }
 
+    setText("streakMessage", message);
 
-    setText(
-        "streakMessage",
-        message
-    );
-
-
-    setText(
-        "heroMessage",
-        hero
-    );
+    setText("heroMessage", hero);
 
 }
 
@@ -2650,95 +1858,55 @@ function renderMessages(streak) {
 
 function renderWeek(activity = getActivity()) {
 
-    const container =
-        document.getElementById(
-            "weekGrid"
-        );
-
+    const container = document.getElementById("weekGrid");
 
     if (!container) {
-
         return;
-
     }
 
+    const freezeDates = getStreakFreezeDates();
 
-    const freezeDates =
-        getStreakFreezeDates();
+    const today = new Date();
 
+    const day = today.getDay();
 
-    const today =
-        new Date();
+    const mondayOffset = day === 0
+        ? -6
+        : 1 - day;
 
-
-    const day =
-        today.getDay();
-
-
-    const mondayOffset =
-        day === 0
-            ? -6
-            : 1 - day;
-
-
-    const monday =
-        addDays(
-            today,
-            mondayOffset
-        );
-
+    const monday = addDays(
+        today,
+        mondayOffset
+    );
 
     let html = "";
 
+    for (let i = 0; i < 7; i++) {
 
-    for (
-        let i = 0;
-        i < 7;
-        i++
-    ) {
+        const date = addDays(monday, i);
 
-        const date =
-            addDays(
-                monday,
-                i
-            );
+        const key = todayKey(date);
 
+        const studied = activity[key] === true;
 
-        const key =
-            todayKey(date);
+        const frozen = freezeDates.includes(key);
 
+        const isToday = key === todayKey();
 
-        const studied =
-            activity[key] === true;
+        const dayName = date.toLocaleDateString(
+            undefined,
+            {
+                weekday: "short"
+            }
+        );
 
-
-        const frozen =
-            freezeDates.includes(key);
-
-
-        const isToday =
-            key === todayKey();
-
-
-        const dayName =
-            date.toLocaleDateString(
-                undefined,
-                {
-                    weekday: "short"
-                }
-            );
-
-
-        const symbol =
-            studied
-                ? "🔥"
-                : frozen
-                    ? "❄️"
-                    : "•";
-
+        const symbol = studied
+            ? "🔥"
+            : frozen
+                ? "❄️"
+                : "•";
 
         html += `
-
             <div class="week-day">
 
                 <div class="week-name">
@@ -2768,14 +1936,11 @@ function renderWeek(activity = getActivity()) {
                 </div>
 
             </div>
-
         `;
 
     }
 
-
-    container.innerHTML =
-        html;
+    container.innerHTML = html;
 
 }
 
@@ -2786,58 +1951,37 @@ function renderWeek(activity = getActivity()) {
 
 function renderCalendar(activity = getActivity()) {
 
-    const container =
-        document.getElementById(
-            "calendarGrid"
-        );
-
+    const container = document.getElementById(
+        "calendarGrid"
+    );
 
     if (!container) {
-
         return;
-
     }
 
+    const freezeDates = getStreakFreezeDates();
 
-    const freezeDates =
-        getStreakFreezeDates();
+    const now = new Date();
 
+    const year = now.getFullYear();
 
-    const now =
-        new Date();
+    const month = now.getMonth();
 
+    const firstDay = new Date(
+        year,
+        month,
+        1
+    );
 
-    const year =
-        now.getFullYear();
+    const lastDay = new Date(
+        year,
+        month + 1,
+        0
+    );
 
+    const startingDay = firstDay.getDay();
 
-    const month =
-        now.getMonth();
-
-
-    const firstDay =
-        new Date(
-            year,
-            month,
-            1
-        );
-
-
-    const lastDay =
-        new Date(
-            year,
-            month + 1,
-            0
-        );
-
-
-    const startingDay =
-        firstDay.getDay();
-
-
-    const totalDays =
-        lastDay.getDate();
-
+    const totalDays = lastDay.getDate();
 
     setText(
         "calendarTitle",
@@ -2850,54 +1994,33 @@ function renderCalendar(activity = getActivity()) {
         )
     );
 
-
     let html = "";
 
+    for (let i = 0; i < startingDay; i++) {
 
-    for (
-        let i = 0;
-        i < startingDay;
-        i++
-    ) {
-
-        html +=
-            `<div class="calendar-day empty"></div>`;
+        html += `
+            <div class="calendar-day empty"></div>
+        `;
 
     }
 
+    for (let day = 1; day <= totalDays; day++) {
 
-    for (
-        let day = 1;
-        day <= totalDays;
-        day++
-    ) {
+        const date = new Date(
+            year,
+            month,
+            day
+        );
 
-        const date =
-            new Date(
-                year,
-                month,
-                day
-            );
+        const key = todayKey(date);
 
+        const studied = activity[key] === true;
 
-        const key =
-            todayKey(date);
+        const frozen = freezeDates.includes(key);
 
-
-        const studied =
-            activity[key] === true;
-
-
-        const frozen =
-            freezeDates.includes(key);
-
-
-        const isToday =
-            key === todayKey();
-
+        const isToday = key === todayKey();
 
         html += `
-
             <div
                 class="
                     calendar-day
@@ -2923,14 +2046,11 @@ function renderCalendar(activity = getActivity()) {
                 </div>
 
             </div>
-
         `;
 
     }
 
-
-    container.innerHTML =
-        html;
+    container.innerHTML = html;
 
 }
 
@@ -2941,62 +2061,39 @@ function renderCalendar(activity = getActivity()) {
 
 function renderPlanStatus() {
 
-    const plan =
-        readJSON(
-            STREAK_KEYS.PLAN,
-            null
-        );
+    const plan = readJSON(
+        STREAK_KEYS.PLAN,
+        null
+    );
 
-
-    const completed =
-        getCompletedTopics();
-
+    const completed = getCompletedTopics();
 
     let total = 0;
 
-
     if (Array.isArray(plan?.subjects)) {
 
-        plan.subjects.forEach(
-            subject => {
+        plan.subjects.forEach(subject => {
 
-                if (
-                    Array.isArray(
-                        subject?.topics
-                    )
-                ) {
-
-                    total +=
-                        subject.topics.length;
-
-                }
-
+            if (Array.isArray(subject?.topics)) {
+                total += subject.topics.length;
             }
-        );
+
+        });
 
     }
-
 
     if (
         total === 0 &&
         Array.isArray(plan?.topics)
     ) {
-
-        total =
-            plan.topics.length;
-
+        total = plan.topics.length;
     }
 
-
-    const completedCount =
-        completed.length;
-
+    const completedCount = completed.length;
 
     setText(
         "completionTitle",
-
-        total > 0 &&
-        completedCount >= total
+        total > 0 && completedCount >= total
             ? "Study plan completed! 🎉"
             : total
                 ? `${Math.max(
@@ -3010,10 +2107,8 @@ function renderPlanStatus() {
                 : "Keep pushing forward"
     );
 
-
     setText(
         "completionText",
-
         total
             ? `${completedCount} of ${total} topics completed.`
             : "Complete your study topics to make progress."
@@ -3028,30 +2123,20 @@ function renderPlanStatus() {
 
 async function loadUser() {
 
-    let name =
-        localStorage.getItem(
-            STREAK_KEYS.USERNAME
-        );
-
+    let name = localStorage.getItem(
+        STREAK_KEYS.USERNAME
+    );
 
     try {
 
-        if (
-            window.supabaseClient?.auth
-        ) {
+        if (window.supabaseClient?.auth) {
 
-            const {
-                data
-            } =
-                await window
-                    .supabaseClient
-                    .auth
-                    .getUser();
+            const { data } = await window
+                .supabaseClient
+                .auth
+                .getUser();
 
-
-            const user =
-                data?.user;
-
+            const user = data?.user;
 
             if (user) {
 
@@ -3076,22 +2161,14 @@ async function loadUser() {
 
     }
 
-
-    name =
-        name || "Student";
-
+    name = name || "Student";
 
     localStorage.setItem(
         STREAK_KEYS.USERNAME,
         name
     );
 
-
-    setText(
-        "usernameDisplay",
-        name
-    );
-
+    setText("usernameDisplay", name);
 
     setText(
         "userAvatar",
@@ -3115,9 +2192,7 @@ function setupLogout() {
 
                 try {
 
-                    if (
-                        window.supabaseClient?.auth
-                    ) {
+                    if (window.supabaseClient?.auth) {
 
                         await window
                             .supabaseClient
@@ -3135,9 +2210,7 @@ function setupLogout() {
 
                 }
 
-
-                window.location.href =
-                    "home.html";
+                window.location.href = "home.html";
 
             }
         );
@@ -3151,16 +2224,30 @@ function setupLogout() {
 
 function setText(id, value) {
 
-    const element =
-        document.getElementById(id);
-
+    const element = document.getElementById(id);
 
     if (element) {
-
-        element.textContent =
-            value;
-
+        element.textContent = value;
     }
+
+}
+
+
+/* =========================================================
+   COMPATIBILITY FUNCTION
+========================================================= */
+
+function recordStudyActivity() {
+
+    /*
+       Starting or running a timer does NOT automatically
+       complete the day's required study plan.
+
+       Today's required topics must be completed before
+       the study day is recorded.
+    */
+
+    return checkTodayCompletion();
 
 }
 
@@ -3201,26 +2288,6 @@ window.StudyMindStreak = {
 
     applyPendingStreakFreeze,
 
-    refresh:
-        renderEverything
+    refresh: renderEverything
 
 };
-
-
-/* =========================================================
-   COMPATIBILITY FUNCTION
-========================================================= */
-
-function recordStudyActivity() {
-
-    /*
-       Starting or running a timer does NOT automatically
-       complete the day's required study plan.
-
-       Today's required topics must be completed before
-       the study day is recorded.
-    */
-
-    return checkTodayCompletion();
-
-}
