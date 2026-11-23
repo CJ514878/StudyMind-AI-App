@@ -1,40 +1,50 @@
+
 "use strict";
 
 /* =========================================================
    STUDYMIND AI — MILO STREAK CELEBRATION
    ---------------------------------------------------------
-   Separate from milo.js.
+   Responsibilities:
+   - Celebrate genuine streak increases.
+   - Preserve Milo's existing sounds and animations.
+   - Display the streak celebration popup.
+   - Save pending celebrations across page navigation.
+   - Prevent duplicate celebrations.
+   - Allow celebrations again after a streak is rebuilt.
 
-   This file ONLY handles Milo's reaction when the streak
-   actually increases.
-
-   It does NOT:
-   - calculate the streak
-   - modify streak storage
-   - reset streaks
-   - manage study plans
-   - modify milo.js
-   - show the streak calendar
-
-   Those responsibilities belong to their own systems.
+   Streak calculation and storage remain in streak.js.
 ========================================================= */
 
 (function () {
 
+    /* =====================================================
+       STORAGE KEYS
+    ===================================================== */
+
     const LAST_CELEBRATED_KEY =
         "studyMindLastCelebratedStreak";
 
+    const LAST_EVENT_KEY =
+        "studyMindLastCelebratedEvent";
+
+    const PENDING_KEY =
+        "studyMindPendingStreakCelebration";
+
+
+    let retryTimer = null;
+    let retryAttempts = 0;
+
+    const MAX_RETRY_ATTEMPTS = 60;
+
 
     /* =====================================================
-       STORAGE
+       STORAGE HELPERS
     ===================================================== */
 
     function getCurrentStreak() {
 
         return Number(
-            localStorage.getItem(
-                "studyMindStreak"
-            )
+            localStorage.getItem("studyMindStreak")
         ) || 0;
 
     }
@@ -43,22 +53,132 @@
     function getLastCelebratedStreak() {
 
         return Number(
-            localStorage.getItem(
-                LAST_CELEBRATED_KEY
-            )
+            localStorage.getItem(LAST_CELEBRATED_KEY)
         ) || 0;
 
     }
 
 
-    function setLastCelebratedStreak(
-        value
-    ) {
+    function setLastCelebratedStreak(value) {
 
         localStorage.setItem(
             LAST_CELEBRATED_KEY,
             String(value)
         );
+
+    }
+
+
+    function getLocalDate() {
+
+        const now = new Date();
+
+        const year = now.getFullYear();
+
+        const month = String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+        const day = String(
+            now.getDate()
+        ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    function getPendingCelebration() {
+
+        try {
+
+            const stored =
+                localStorage.getItem(PENDING_KEY);
+
+            return stored
+                ? JSON.parse(stored)
+                : null;
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind: Could not read pending celebration.",
+                error
+            );
+
+            return null;
+
+        }
+
+    }
+
+
+    function savePendingCelebration(data) {
+
+        try {
+
+            localStorage.setItem(
+                PENDING_KEY,
+                JSON.stringify(data)
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind: Could not save pending celebration.",
+                error
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    function clearPendingCelebration() {
+
+        localStorage.removeItem(PENDING_KEY);
+
+    }
+
+
+    /* =====================================================
+       CELEBRATION EVENT ID
+    ===================================================== */
+
+    function createEventId(detail, streak, previousStreak) {
+
+        /*
+           Prefer an ID supplied by the streak engine.
+        */
+
+        if (detail.eventId) {
+
+            return String(detail.eventId);
+
+        }
+
+
+        /*
+           Otherwise use the study date and streak change.
+
+           This allows the same streak number to be
+           celebrated again after a future streak rebuild.
+        */
+
+        const date =
+            detail.date ||
+            detail.studyDate ||
+            getLocalDate();
+
+        return [
+            date,
+            previousStreak,
+            streak
+        ].join("-");
 
     }
 
@@ -76,10 +196,6 @@
             }
 
 
-            /*
-               Preferred celebration sound.
-            */
-
             if (
                 typeof window.Milo.playWoohoo ===
                 "function"
@@ -92,18 +208,12 @@
             }
 
 
-            /*
-               Compatibility.
-            */
-
             if (
                 typeof window.Milo.playSound ===
                 "function"
             ) {
 
-                window.Milo.playSound(
-                    "woohoo"
-                );
+                window.Milo.playSound("woohoo");
 
             }
 
@@ -123,9 +233,7 @@
        MILO ANIMATION
     ===================================================== */
 
-    function celebrateMilo(
-        streak
-    ) {
+    function celebrateMilo(streak) {
 
         try {
 
@@ -135,14 +243,10 @@
                     "StudyMind: Milo is not available yet."
                 );
 
-                return;
+                return false;
 
             }
 
-
-            /*
-               Main celebration.
-            */
 
             if (
                 typeof window.Milo.celebrate ===
@@ -154,10 +258,6 @@
             }
 
 
-            /*
-               Happy dance.
-            */
-
             if (
                 typeof window.Milo.dance ===
                 "function"
@@ -168,10 +268,6 @@
             }
 
 
-            /*
-               Happy state.
-            */
-
             if (
                 typeof window.Milo.happy ===
                 "function"
@@ -181,13 +277,6 @@
 
             }
 
-
-            /*
-               Existing StudyMind completion animation.
-
-               This is kept for compatibility with the
-               current Milo system.
-            */
 
             if (
                 typeof window.Milo.miloStudySessionComplete ===
@@ -200,6 +289,25 @@
 
             }
 
+
+            playCelebrationSound();
+
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "studyMindMiloCelebrating",
+                    {
+                        detail: {
+                            streak: streak,
+                            source: "milo-celebrating"
+                        }
+                    }
+                )
+            );
+
+
+            return true;
+
         } catch (error) {
 
             console.warn(
@@ -207,31 +315,9 @@
                 error
             );
 
+            return false;
+
         }
-
-
-        playCelebrationSound();
-
-
-        /*
-           Tell any other UI that Milo is celebrating.
-        */
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "studyMindMiloCelebrating",
-                {
-                    detail: {
-
-                        streak,
-
-                        source:
-                            "milo-celebrating"
-
-                    }
-                }
-            )
-        );
 
     }
 
@@ -240,9 +326,12 @@
        STREAK POPUP
     ===================================================== */
 
-    function showStreakPopup(
-        streak
-    ) {
+    function showStreakPopup(streak) {
+
+        if (!document.body) {
+            return;
+        }
+
 
         let popup =
             document.getElementById(
@@ -250,16 +339,10 @@
             );
 
 
-        /*
-           Create popup once.
-        */
-
         if (!popup) {
 
             popup =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
 
             popup.id =
@@ -268,9 +351,7 @@
 
             popup.innerHTML = `
 
-                <div
-                    class="milo-streak-increase-card"
-                >
+                <div class="milo-streak-increase-card">
 
                     <div
                         class="milo-streak-fire"
@@ -279,20 +360,13 @@
                         🔥
                     </div>
 
-
-                    <div
-                        class="milo-streak-title"
-                    >
+                    <div class="milo-streak-title">
                         ${streak}-Day Streak!
                     </div>
 
-
-                    <div
-                        class="milo-streak-message"
-                    >
+                    <div class="milo-streak-message">
                         Amazing! Keep your streak going!
                     </div>
-
 
                     <button
                         type="button"
@@ -306,9 +380,7 @@
             `;
 
 
-            document.body.appendChild(
-                popup
-            );
+            document.body.appendChild(popup);
 
 
             const closeButton =
@@ -323,9 +395,7 @@
                     "click",
                     function () {
 
-                        popup.classList.remove(
-                            "show"
-                        );
+                        popup.classList.remove("show");
 
                     }
                 );
@@ -334,10 +404,6 @@
 
         }
 
-
-        /*
-           Update the current streak number.
-        */
 
         const title =
             popup.querySelector(
@@ -353,26 +419,12 @@
         }
 
 
-        /*
-           Restart the animation cleanly.
-        */
-
-        popup.classList.remove(
-            "show"
-        );
-
+        popup.classList.remove("show");
 
         void popup.offsetWidth;
 
+        popup.classList.add("show");
 
-        popup.classList.add(
-            "show"
-        );
-
-
-        /*
-           Automatically close after 7 seconds.
-        */
 
         clearTimeout(
             popup._studyMindCloseTimer
@@ -383,9 +435,7 @@
             setTimeout(
                 function () {
 
-                    popup.classList.remove(
-                        "show"
-                    );
+                    popup.classList.remove("show");
 
                 },
                 7000
@@ -395,43 +445,126 @@
 
 
     /* =====================================================
-       HANDLE REAL STREAK INCREASE
+       COMPLETE A CELEBRATION
     ===================================================== */
 
-    function handleStreakIncrease(
-        event
-    ) {
+    function completeCelebration(data) {
 
-        const detail =
-            event &&
-            event.detail
-                ? event.detail
-                : {};
+        if (!data || !data.eventId) {
+            return false;
+        }
 
 
-        const streak =
-            Number(
-                detail.streak
-            ) ||
-            Number(
-                detail.currentStreak
-            ) ||
-            getCurrentStreak();
-
-
-        const previousStreak =
-            Number(
-                detail.previousStreak
-            );
+        const lastEvent =
+            localStorage.getItem(LAST_EVENT_KEY);
 
 
         /*
-           Invalid streak.
+           Prevent duplicate processing of the same event.
+
+           Notice that we do NOT compare the new streak
+           against the highest streak ever celebrated.
+           A rebuilt streak can therefore celebrate again.
         */
 
-        if (
-            streak <= 0
-        ) {
+        if (lastEvent === data.eventId) {
+
+            clearPendingCelebration();
+
+            return true;
+
+        }
+
+
+        /*
+           Wait until Milo is available.
+
+           Do not discard the pending celebration simply
+           because Milo's script has not loaded yet.
+        */
+
+        if (!window.Milo) {
+
+            return false;
+
+        }
+
+
+        if (!document.body) {
+
+            return false;
+
+        }
+
+
+        /*
+           Save the event ID before playing animations.
+        */
+
+        localStorage.setItem(
+            LAST_EVENT_KEY,
+            data.eventId
+        );
+
+
+        setLastCelebratedStreak(
+            data.streak
+        );
+
+
+        clearPendingCelebration();
+
+
+        console.log(
+            `StudyMind: Milo celebrating ${data.streak}-day streak.`
+        );
+
+
+        celebrateMilo(data.streak);
+
+        showStreakPopup(data.streak);
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindStreakCelebrationDisplayed",
+                {
+                    detail: {
+                        streak: data.streak,
+                        eventId: data.eventId
+                    }
+                }
+            )
+        );
+
+
+        return true;
+
+    }
+
+
+    /* =====================================================
+       PROCESS SAVED CELEBRATION
+    ===================================================== */
+
+    function processPendingCelebration() {
+
+        const pending =
+            getPendingCelebration();
+
+
+        if (!pending) {
+
+            stopRetrying();
+
+            return;
+
+        }
+
+
+        if (completeCelebration(pending)) {
+
+            stopRetrying();
 
             return;
 
@@ -439,14 +572,102 @@
 
 
         /*
-           If the streak engine tells us the previous
-           value, verify that this really is an increase.
+           Milo or the page body is not ready yet.
+           Keep the pending event and retry.
+        */
+
+        startRetrying();
+
+    }
+
+
+    /* =====================================================
+       RETRY WHEN MILO LOADS LATE
+    ===================================================== */
+
+    function startRetrying() {
+
+        if (retryTimer) {
+            return;
+        }
+
+
+        retryAttempts = 0;
+
+
+        retryTimer = setInterval(
+            function () {
+
+                retryAttempts++;
+
+
+                processPendingCelebration();
+
+
+                if (
+                    retryAttempts >= MAX_RETRY_ATTEMPTS
+                ) {
+
+                    stopRetrying();
+
+                }
+
+            },
+            500
+        );
+
+    }
+
+
+    function stopRetrying() {
+
+        if (retryTimer) {
+
+            clearInterval(retryTimer);
+
+            retryTimer = null;
+
+        }
+
+        retryAttempts = 0;
+
+    }
+
+
+    /* =====================================================
+       HANDLE REAL STREAK INCREASE
+    ===================================================== */
+
+    function handleStreakIncrease(event) {
+
+        const detail =
+            event && event.detail
+                ? event.detail
+                : {};
+
+
+        const streak =
+            Number(detail.streak) ||
+            Number(detail.currentStreak) ||
+            getCurrentStreak();
+
+
+        const previousStreak =
+            Number(detail.previousStreak);
+
+
+        if (streak <= 0) {
+            return;
+        }
+
+
+        /*
+           When previousStreak is supplied, verify that
+           the event represents a genuine increase.
         */
 
         if (
-            Number.isFinite(
-                previousStreak
-            ) &&
+            Number.isFinite(previousStreak) &&
             streak <= previousStreak
         ) {
 
@@ -455,60 +676,112 @@
         }
 
 
+        const eventId =
+            createEventId(
+                detail,
+                streak,
+                Number.isFinite(previousStreak)
+                    ? previousStreak
+                    : Math.max(0, streak - 1)
+            );
+
+
+        const celebration = {
+
+            eventId: eventId,
+
+            streak: streak,
+
+            previousStreak:
+                Number.isFinite(previousStreak)
+                    ? previousStreak
+                    : Math.max(0, streak - 1),
+
+            date:
+                detail.date ||
+                detail.studyDate ||
+                getLocalDate(),
+
+            createdAt: Date.now()
+
+        };
+
+
         /*
-           Prevent duplicate celebrations caused by:
-           - multiple pages
-           - repeated events
-           - timer refreshes
-           - duplicate script execution
+           Save BEFORE trying to display it.
+
+           If the user navigates to another page, the
+           next page can recover the pending celebration.
         */
 
-        const previousCelebrated =
-            getLastCelebratedStreak();
+        savePendingCelebration(celebration);
 
 
-        if (
-            streak <= previousCelebrated
-        ) {
-
-            return;
-
-        }
-
-
-        /*
-           Remember BEFORE starting the animation.
-        */
-
-        setLastCelebratedStreak(
-            streak
-        );
-
-
-        console.log(
-            `StudyMind: Milo celebrating ${streak}-day streak.`
-        );
-
-
-        celebrateMilo(
-            streak
-        );
-
-
-        showStreakPopup(
-            streak
-        );
+        processPendingCelebration();
 
     }
 
 
     /* =====================================================
-       ONLY LISTEN FOR THE DEDICATED INCREASE EVENT
+       LISTEN FOR STREAK EVENTS
     ===================================================== */
 
     window.addEventListener(
         "studyMindStreakIncreased",
         handleStreakIncrease
+    );
+
+
+    /*
+       Recover a pending celebration when another tab
+       or page updates the shared storage.
+    */
+
+    window.addEventListener(
+        "storage",
+        function (event) {
+
+            if (event.key === PENDING_KEY) {
+
+                processPendingCelebration();
+
+            }
+
+        }
+    );
+
+
+    /*
+       Retry when the page becomes visible or finishes
+       loading.
+    */
+
+    window.addEventListener(
+        "pageshow",
+        processPendingCelebration
+    );
+
+
+    window.addEventListener(
+        "load",
+        processPendingCelebration
+    );
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        processPendingCelebration
+    );
+
+
+    /*
+       Optional compatibility event for Milo systems
+       that announce when Milo becomes ready.
+    */
+
+    window.addEventListener(
+        "studyMindMiloReady",
+        processPendingCelebration
     );
 
 
@@ -518,72 +791,92 @@
 
     window.StudyMindMiloCelebration = {
 
-        celebrate:
-            function (
-                streak
-            ) {
+        celebrate: function (streak) {
 
-                streak =
-                    Number(streak) ||
-                    getCurrentStreak();
+            streak =
+                Number(streak) ||
+                getCurrentStreak();
 
 
-                if (
-                    streak <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                const previous =
-                    getLastCelebratedStreak();
-
-
-                if (
-                    streak <= previous
-                ) {
-
-                    return;
-
-                }
-
-
-                setLastCelebratedStreak(
-                    streak
-                );
-
-
-                celebrateMilo(
-                    streak
-                );
-
-
-                showStreakPopup(
-                    streak
-                );
-
-            },
-
-
-        resetCelebrationMemory:
-            function () {
-
-                localStorage.removeItem(
-                    LAST_CELEBRATED_KEY
-                );
-
-            },
-
-
-        getLastCelebratedStreak:
-            function () {
-
-                return getLastCelebratedStreak();
-
+            if (streak <= 0) {
+                return;
             }
 
+
+            const eventId =
+                [
+                    getLocalDate(),
+                    "manual",
+                    streak
+                ].join("-");
+
+
+            const celebration = {
+
+                eventId: eventId,
+
+                streak: streak,
+
+                previousStreak:
+                    Math.max(0, streak - 1),
+
+                date: getLocalDate(),
+
+                createdAt: Date.now()
+
+            };
+
+
+            savePendingCelebration(celebration);
+
+            processPendingCelebration();
+
+        },
+
+
+        resetCelebrationMemory: function () {
+
+            localStorage.removeItem(
+                LAST_CELEBRATED_KEY
+            );
+
+            localStorage.removeItem(
+                LAST_EVENT_KEY
+            );
+
+            clearPendingCelebration();
+
+        },
+
+
+        getLastCelebratedStreak: function () {
+
+            return getLastCelebratedStreak();
+
+        },
+
+
+        getPendingCelebration: function () {
+
+            return getPendingCelebration();
+
+        },
+
+
+        processPendingCelebration: function () {
+
+            processPendingCelebration();
+
+        }
+
     };
+
+
+    /* =====================================================
+       INITIAL RECOVERY
+    ===================================================== */
+
+    processPendingCelebration();
+
 
 })();
