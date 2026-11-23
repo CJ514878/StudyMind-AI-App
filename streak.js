@@ -1643,11 +1643,18 @@ function syncStreakFromActivity() {
 
 
     /*
-       Check freeze rewards after calculating the streak.
+       Check rewards against the longest streak too.
+       This prevents previously reached milestones
+       from being missed.
     */
 
     checkFreezeRewards(
-        calculatedCurrent
+        Math.max(
+            calculatedCurrent,
+            calculatedBest,
+            storedBest,
+            best
+        )
     );
 
 
