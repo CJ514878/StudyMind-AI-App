@@ -1197,7 +1197,80 @@ function calculateLongestStreak() {
 
 
 /* =========================================================
-   STREAK EVENTS
+   STREAK EVENTS — PERSISTENT CROSS-PAGE NOTIFICATIONS
+========================================================= */
+
+function savePendingStreakCelebration(
+    previousStreak,
+    currentStreak,
+    eventId
+) {
+
+    const pending = {
+        eventId,
+        previousStreak,
+        streak: currentStreak,
+        currentStreak,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        localStorage.setItem(
+            "studyMindPendingStreakCelebration",
+            JSON.stringify(pending)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Could not save pending streak celebration:",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+function savePendingStreakLoss(
+    previousStreak,
+    currentStreak,
+    eventId
+) {
+
+    const pending = {
+        eventId,
+        previousStreak,
+        oldStreak: previousStreak,
+        streak: currentStreak,
+        currentStreak,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        localStorage.setItem(
+            "studyMindPendingStreakLoss",
+            JSON.stringify(pending)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Could not save pending streak loss:",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   STREAK INCREASE
 ========================================================= */
 
 function dispatchStreakIncrease(
@@ -1208,11 +1281,26 @@ function dispatchStreakIncrease(
     if (
         currentStreak <= previousStreak
     ) {
-
         return;
-
     }
 
+    const date = todayKey();
+
+    const eventId =
+        `streak-increase-${date}-${previousStreak}-${currentStreak}`;
+
+    /*
+       Save the notification BEFORE dispatching it.
+
+       This allows Milo's celebration script to recover
+       the notification on another page.
+    */
+
+    savePendingStreakCelebration(
+        previousStreak,
+        currentStreak,
+        eventId
+    );
 
     window.dispatchEvent(
         new CustomEvent(
@@ -1220,21 +1308,145 @@ function dispatchStreakIncrease(
             {
                 detail: {
 
+                    eventId,
+
+                    date,
+
                     previousStreak,
 
-                    streak:
-                        currentStreak,
+                    streak: currentStreak,
 
                     currentStreak,
 
-                    source:
-                        "streak-engine"
+                    source: "streak-engine"
 
                 }
             }
         )
     );
+}
 
+
+/* =========================================================
+   STREAK LOSS
+========================================================= */
+
+function dispatchStreakLoss(
+    previousStreak,
+    currentStreak
+) {
+
+    if (
+        previousStreak <= 0 ||
+        currentStreak >= previousStreak
+    ) {
+        return;
+    }
+
+    const date = todayKey();
+
+    const eventId =
+        `streak-loss-${date}-${previousStreak}-${currentStreak}`;
+
+    /*
+       Save the loss notification before dispatching it.
+
+       Milo can display the broken-heart notification
+       when the user enters another page.
+    */
+
+    savePendingStreakLoss(
+        previousStreak,
+        currentStreak,
+        eventId
+    );
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakLost",
+            {
+                detail: {
+
+                    eventId,
+
+                    date,
+
+                    previousStreak,
+
+                    oldStreak: previousStreak,
+
+                    streak: currentStreak,
+
+                    currentStreak,
+
+                    source: "streak-engine"
+
+                }
+            }
+        )
+    );
+}
+
+
+/* =========================================================
+   STREAK UPDATED
+========================================================= */
+
+function dispatchStreakUpdated(date, stats) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStreakUpdated",
+            {
+                detail: {
+
+                    date,
+
+                    streak: stats.current,
+
+                    currentStreak: stats.current,
+
+                    longestStreak: stats.best,
+
+                    freezes: getStreakFreezeCount(),
+
+                    source: "streak-engine"
+
+                }
+            }
+        )
+    );
+}
+
+
+/* =========================================================
+   STUDY DAY COMPLETED
+========================================================= */
+
+function dispatchStudyDayCompleted(streak) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "studyMindStudyDayCompleted",
+            {
+                detail: {
+
+                    streak,
+
+                    currentStreak: streak,
+
+                    dayCompleted: true,
+
+                    studyDayCompleted: true,
+
+                    date: todayKey(),
+
+                    source: "study-day-complete"
+
+                }
+            }
+        )
+    );
 }
 
 
