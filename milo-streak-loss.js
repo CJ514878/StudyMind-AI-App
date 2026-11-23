@@ -4,15 +4,16 @@
 /* =========================================================
    STUDYMIND AI — MILO STREAK LOSS
    ---------------------------------------------------------
-   Responsibilities:
-   - React when a genuine streak loss occurs.
-   - Preserve Milo's sad animations and sounds.
-   - Display the broken-heart popup.
-   - Save pending loss notifications across page navigation.
-   - Recover notifications when the user returns.
-   - Prevent duplicate loss notifications.
+   - Reacts to genuine streak losses from streak.js.
+   - Preserves Milo's sad animations and sounds.
+   - Displays the broken-heart popup.
+   - Recovers pending notifications across page navigation.
+   - Prevents duplicate notifications.
+   - Does not independently calculate or modify streaks.
 
-   Streak calculation remains in streak.js.
+   IMPORTANT:
+   streak.js decides whether a streak is genuinely lost.
+   A successfully applied freeze must not dispatch a loss.
 ========================================================= */
 
 (function () {
@@ -29,7 +30,6 @@
 
     const PENDING_LOSS_KEY =
         "studyMindPendingStreakLoss";
-
 
     let retryTimer = null;
     let retryAttempts = 0;
@@ -114,7 +114,22 @@
     }
 
 
-    function clearPendingLoss() {
+    function clearPendingLoss(expectedEventId) {
+
+        const pending = getPendingLoss();
+
+        /*
+           Never clear a newer pending event accidentally.
+        */
+
+        if (
+            expectedEventId &&
+            pending?.eventId !== expectedEventId
+        ) {
+
+            return;
+
+        }
 
         localStorage.removeItem(
             PENDING_LOSS_KEY
@@ -127,7 +142,10 @@
        EVENT IDENTIFICATION
     ===================================================== */
 
-    function createLossEventId(detail, previousStreak) {
+    function createLossEventId(
+        detail,
+        previousStreak
+    ) {
 
         if (detail.eventId) {
 
@@ -135,12 +153,10 @@
 
         }
 
-
         const date =
             detail.date ||
             detail.lossDate ||
             todayKey();
-
 
         return [
             date,
@@ -163,7 +179,6 @@
                 return;
             }
 
-
             if (
                 typeof window.Milo.playSad ===
                 "function"
@@ -175,7 +190,6 @@
 
             }
 
-
             if (
                 typeof window.Milo.playWrong ===
                 "function"
@@ -186,7 +200,6 @@
                 return;
 
             }
-
 
             if (
                 typeof window.Milo.playSound ===
@@ -215,18 +228,11 @@
 
     function makeMiloSad() {
 
+        if (!window.Milo) {
+            return false;
+        }
+
         try {
-
-            if (!window.Milo) {
-
-                console.warn(
-                    "StudyMind: Milo is not available yet."
-                );
-
-                return false;
-
-            }
-
 
             if (
                 typeof window.Milo.cry ===
@@ -237,7 +243,6 @@
 
             }
 
-
             if (
                 typeof window.Milo.sad ===
                 "function"
@@ -246,7 +251,6 @@
                 window.Milo.sad();
 
             }
-
 
             if (
                 typeof window.Milo.shakeHead ===
@@ -257,9 +261,7 @@
 
             }
 
-
             playSadSound();
-
 
             window.dispatchEvent(
                 new CustomEvent(
@@ -271,7 +273,6 @@
                     }
                 )
             );
-
 
             return true;
 
@@ -296,25 +297,18 @@
     function showLossPopup(previousStreak) {
 
         if (!document.body) {
-            return;
+            return false;
         }
 
-
-        let popup =
-            document.getElementById(
-                "miloStreakLossPopup"
-            );
-
+        let popup = document.getElementById(
+            "miloStreakLossPopup"
+        );
 
         if (!popup) {
 
-            popup =
-                document.createElement("div");
+            popup = document.createElement("div");
 
-
-            popup.id =
-                "miloStreakLossPopup";
-
+            popup.id = "miloStreakLossPopup";
 
             popup.innerHTML = `
 
@@ -328,26 +322,21 @@
 
                     </div>
 
-
                     <div class="milo-loss-fire">
                         💔
                     </div>
-
 
                     <div class="milo-loss-title">
                         Streak Lost
                     </div>
 
-
                     <div class="milo-loss-message">
                         Your ${previousStreak}-day streak has ended.
                     </div>
 
-
                     <div class="milo-loss-encouragement">
                         Don't worry. Let's start a new streak today!
                     </div>
-
 
                     <button
                         type="button"
@@ -360,15 +349,11 @@
 
             `;
 
-
             document.body.appendChild(popup);
 
-
-            const closeButton =
-                popup.querySelector(
-                    "#miloStreakLossClose"
-                );
-
+            const closeButton = popup.querySelector(
+                "#miloStreakLossClose"
+            );
 
             if (closeButton) {
 
@@ -385,12 +370,9 @@
 
         }
 
-
-        const message =
-            popup.querySelector(
-                ".milo-loss-message"
-            );
-
+        const message = popup.querySelector(
+            ".milo-loss-message"
+        );
 
         if (message) {
 
@@ -399,28 +381,26 @@
 
         }
 
-
         popup.classList.remove("show");
 
         void popup.offsetWidth;
 
         popup.classList.add("show");
 
-
         clearTimeout(
             popup._studyMindCloseTimer
         );
 
+        popup._studyMindCloseTimer = setTimeout(
+            function () {
 
-        popup._studyMindCloseTimer =
-            setTimeout(
-                function () {
+                popup.classList.remove("show");
 
-                    popup.classList.remove("show");
+            },
+            8000
+        );
 
-                },
-                8000
-            );
+        return true;
 
     }
 
@@ -431,59 +411,72 @@
 
     function completeLoss(data) {
 
-        if (!data || !data.eventId) {
-            return false;
-        }
+        if (
+            !data ||
+            !data.eventId
+        ) {
 
+            return false;
+
+        }
 
         const previousStreak =
             Number(data.previousStreak) || 0;
 
-
         if (previousStreak <= 0) {
 
-            clearPendingLoss();
+            clearPendingLoss(data.eventId);
 
             return true;
 
         }
 
-
-        const lastEvent =
-            localStorage.getItem(
-                LAST_LOSS_EVENT_KEY
-            );
-
+        const lastEvent = localStorage.getItem(
+            LAST_LOSS_EVENT_KEY
+        );
 
         /*
-           Prevent the same event from being displayed twice.
+           Prevent duplicate processing.
         */
 
         if (lastEvent === data.eventId) {
 
-            clearPendingLoss();
+            clearPendingLoss(data.eventId);
 
             return true;
 
         }
 
-
         /*
-           Wait until Milo and the page are ready.
-
-           This ensures that the sad animation and sound
-           are not silently skipped because of script order.
+           Wait for Milo and the document.
         */
 
-        if (!window.Milo || !document.body) {
+        if (
+            !window.Milo ||
+            !document.body
+        ) {
 
             return false;
 
         }
 
+        /*
+           Display the popup first.
+           Keep the event pending if displaying fails.
+        */
+
+        if (!showLossPopup(previousStreak)) {
+            return false;
+        }
 
         /*
-           Save the event before triggering animations.
+           Trigger Milo's existing sad animation and sound.
+        */
+
+        makeMiloSad();
+
+        /*
+           Record this event after the popup appears.
         */
 
         localStorage.setItem(
@@ -496,32 +489,23 @@
             data.date || todayKey()
         );
 
-
-        clearPendingLoss();
-
+        clearPendingLoss(data.eventId);
 
         console.log(
-            `StudyMind: Milo reacting to the loss of a ${previousStreak}-day streak.`
+            `StudyMind: Milo reacted to the loss of a ${previousStreak}-day streak.`
         );
-
-
-        makeMiloSad();
-
-        showLossPopup(previousStreak);
-
 
         window.dispatchEvent(
             new CustomEvent(
                 "studyMindStreakLossDisplayed",
                 {
                     detail: {
-                        previousStreak: previousStreak,
+                        previousStreak,
                         eventId: data.eventId
                     }
                 }
             )
         );
-
 
         return true;
 
@@ -534,9 +518,7 @@
 
     function processPendingLoss() {
 
-        const pending =
-            getPendingLoss();
-
+        const pending = getPendingLoss();
 
         if (!pending) {
 
@@ -546,7 +528,6 @@
 
         }
 
-
         if (completeLoss(pending)) {
 
             stopRetrying();
@@ -554,12 +535,6 @@
             return;
 
         }
-
-
-        /*
-           Milo may not have loaded yet.
-           Keep the notification and retry.
-        */
 
         startRetrying();
 
@@ -576,30 +551,26 @@
             return;
         }
 
-
         retryAttempts = 0;
 
+        retryTimer = setInterval(
+            function () {
 
-        retryTimer =
-            setInterval(
-                function () {
+                retryAttempts++;
 
-                    retryAttempts++;
+                processPendingLoss();
 
-                    processPendingLoss();
+                if (
+                    retryAttempts >= MAX_RETRY_ATTEMPTS
+                ) {
 
+                    stopRetrying();
 
-                    if (
-                        retryAttempts >= MAX_RETRY_ATTEMPTS
-                    ) {
+                }
 
-                        stopRetrying();
-
-                    }
-
-                },
-                500
-            );
+            },
+            500
+        );
 
     }
 
@@ -620,16 +591,28 @@
 
 
     /* =====================================================
-       HANDLE STREAK LOSS EVENT
+       HANDLE GENUINE STREAK LOSS
     ===================================================== */
 
     function handleStreakLoss(event) {
 
         const detail =
-            event && event.detail
-                ? event.detail
-                : {};
+            event?.detail || {};
 
+        /*
+           A freeze-protected day must never create
+           a loss notification.
+        */
+
+        if (
+            detail.protected === true ||
+            detail.freezeApplied === true ||
+            detail.streakLost === false
+        ) {
+
+            return;
+
+        }
 
         const previousStreak =
             Number(detail.previousStreak) ||
@@ -637,22 +620,17 @@
             Number(detail.streak) ||
             0;
 
-
         if (previousStreak <= 0) {
             return;
         }
 
-
-        const eventId =
-            createLossEventId(
-                detail,
-                previousStreak
-            );
-
+        const eventId = createLossEventId(
+            detail,
+            previousStreak
+        );
 
         /*
-           Avoid saving an event that has already
-           been displayed.
+           Do not save an event already displayed.
         */
 
         if (
@@ -665,12 +643,11 @@
 
         }
 
-
         const lossData = {
 
-            eventId: eventId,
+            eventId,
 
-            previousStreak: previousStreak,
+            previousStreak,
 
             date:
                 detail.date ||
@@ -681,14 +658,13 @@
 
         };
 
-
         /*
-           Save immediately so navigation does not
-           destroy the notification.
+           Save immediately before attempting display.
         */
 
-        savePendingLoss(lossData);
-
+        if (!savePendingLoss(lossData)) {
+            return;
+        }
 
         processPendingLoss();
 
@@ -704,18 +680,13 @@
         handleStreakLoss
     );
 
-
-    /*
-       Recover pending loss if another page or tab
-       updates localStorage.
-    */
-
     window.addEventListener(
         "storage",
         function (event) {
 
             if (
-                event.key === PENDING_LOSS_KEY
+                event.key === PENDING_LOSS_KEY ||
+                event.key === null
             ) {
 
                 processPendingLoss();
@@ -725,28 +696,20 @@
         }
     );
 
-
     window.addEventListener(
         "pageshow",
         processPendingLoss
     );
-
 
     window.addEventListener(
         "load",
         processPendingLoss
     );
 
-
     document.addEventListener(
         "DOMContentLoaded",
         processPendingLoss
     );
-
-
-    /*
-       Compatibility with a Milo-ready event.
-    */
 
     window.addEventListener(
         "studyMindMiloReady",
@@ -765,32 +728,26 @@
             previousStreak =
                 Number(previousStreak) || 0;
 
-
             if (previousStreak <= 0) {
                 return;
             }
 
-
-            const eventId =
-                [
-                    todayKey(),
-                    "manual-streak-loss",
-                    previousStreak
-                ].join("-");
-
-
             const lossData = {
 
-                eventId: eventId,
+                eventId: [
+                    todayKey(),
+                    "manual-streak-loss",
+                    previousStreak,
+                    Date.now()
+                ].join("-"),
 
-                previousStreak: previousStreak,
+                previousStreak,
 
                 date: todayKey(),
 
                 createdAt: Date.now()
 
             };
-
 
             savePendingLoss(lossData);
 
@@ -814,18 +771,12 @@
         },
 
 
-        getPendingLoss: function () {
-
-            return getPendingLoss();
-
-        },
+        getPendingLoss:
+            getPendingLoss,
 
 
-        processPendingLoss: function () {
-
-            processPendingLoss();
-
-        }
+        processPendingLoss:
+            processPendingLoss
 
     };
 
@@ -835,6 +786,5 @@
     ===================================================== */
 
     processPendingLoss();
-
 
 })();
