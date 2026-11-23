@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================================
@@ -9,7 +10,7 @@
        - Automatic freeze protection
        - Persistent streak increase notifications
        - Persistent streak loss notifications
-       - Study-day completion events
+       - Persistent study-day completion notifications
        - Daily and milestone XP
        - Weekly and calendar rendering
        - Existing StudyMind public API compatibility
@@ -17,6 +18,9 @@
    Milo celebrations and loss animations:
        milo-celebrating.js
        milo-streak-loss.js
+
+   Calendar celebration:
+       streak-celebration.js
 ========================================================= */
 
 
@@ -35,7 +39,10 @@ const STREAK_KEYS = {
     USERNAME: "studyMindUsername",
     FREEZES: "studyMindStreakFreezes",
     FREEZE_DATES: "studyMindStreakFreezeDates",
-    FREEZE_REWARDS: "studyMindStreakFreezeRewards"
+    FREEZE_REWARDS: "studyMindStreakFreezeRewards",
+    PENDING_CELEBRATION: "studyMindPendingStreakCelebration",
+    PENDING_LOSS: "studyMindPendingStreakLoss",
+    PENDING_STUDY_DAY: "studyMindPendingStudyDayCelebration"
 };
 
 
@@ -868,7 +875,7 @@ function savePendingStreakCelebration(
     try {
 
         localStorage.setItem(
-            "studyMindPendingStreakCelebration",
+            STREAK_KEYS.PENDING_CELEBRATION,
             JSON.stringify(pending)
         );
 
@@ -906,7 +913,7 @@ function savePendingStreakLoss(
     try {
 
         localStorage.setItem(
-            "studyMindPendingStreakLoss",
+            STREAK_KEYS.PENDING_LOSS,
             JSON.stringify(pending)
         );
 
@@ -916,6 +923,45 @@ function savePendingStreakLoss(
 
         console.warn(
             "Could not save pending streak loss:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
+   PERSISTENT STUDY-DAY NOTIFICATION
+========================================================= */
+
+function savePendingStudyDayCelebration(streak, date, eventId) {
+
+    const pending = {
+        eventId,
+        date,
+        streak,
+        currentStreak: streak,
+        dayCompleted: true,
+        studyDayCompleted: true,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+
+        localStorage.setItem(
+            STREAK_KEYS.PENDING_STUDY_DAY,
+            JSON.stringify(pending)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Could not save pending study-day celebration:",
             error
         );
 
@@ -943,11 +989,6 @@ function dispatchStreakIncrease(
 
     const eventId =
         `streak-increase-${date}-${previousStreak}-${currentStreak}`;
-
-    /*
-       Save before dispatching.
-       Milo can recover this notification on another page.
-    */
 
     savePendingStreakCelebration(
         previousStreak,
@@ -994,12 +1035,6 @@ function dispatchStreakLoss(
 
     const eventId =
         `streak-loss-${date}-${previousStreak}-${currentStreak}`;
-
-    /*
-       Save before dispatching.
-       Milo can display the broken-heart notification
-       when the user enters another page.
-    */
 
     savePendingStreakLoss(
         previousStreak,
@@ -1058,16 +1093,36 @@ function dispatchStreakUpdated(date, stats) {
 
 function dispatchStudyDayCompleted(streak) {
 
+    const date = todayKey();
+
+    const eventId =
+        `study-day-completed-${date}`;
+
+    /*
+       Save the notification BEFORE dispatching the event.
+
+       This allows streak-celebration.js to recover the
+       calendar celebration after the user navigates
+       to another page.
+    */
+
+    savePendingStudyDayCelebration(
+        streak,
+        date,
+        eventId
+    );
+
     window.dispatchEvent(
         new CustomEvent(
             "studyMindStudyDayCompleted",
             {
                 detail: {
+                    eventId,
                     streak,
                     currentStreak: streak,
                     dayCompleted: true,
                     studyDayCompleted: true,
-                    date: todayKey(),
+                    date,
                     source: "study-day-complete"
                 }
             }
@@ -1140,10 +1195,6 @@ function syncStreakFromActivity() {
         STREAK_KEYS.BEST,
         String(best)
     );
-
-    /*
-       Check rewards against the longest streak too.
-    */
 
     checkFreezeRewards(
         Math.max(
@@ -1575,9 +1626,8 @@ function recordCompletedStudyDay() {
     }
 
     /*
-       Dispatch study-day completion.
-       Streak increase notifications are separately
-       persisted for Milo's cross-page celebration.
+       Dispatch the persistent study-day notification.
+       The calendar celebration can recover it on another page.
     */
 
     dispatchStudyDayCompleted(stats.current);
