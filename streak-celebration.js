@@ -1,13 +1,47 @@
+
 "use strict";
 
 /* =========================================================
    STUDYMIND AI — STREAK CALENDAR CELEBRATION
-   Separate celebration system
-   ========================================================= */
+   ---------------------------------------------------------
+   RESPONSIBILITY:
+   - Display the study-day completion overlay.
+   - Render the activity calendar.
+   - Animate the streak number.
+   - Recover pending study-day celebrations.
+   - Prevent duplicate calendar celebrations.
+
+   DOES NOT:
+   - Calculate streaks.
+   - Award XP.
+   - Play Milo sounds.
+   - Trigger Milo dances.
+   - Modify streak activity.
+
+   Milo's streak-increase handler owns those effects.
+========================================================= */
 
 (function () {
 
-    const OVERLAY_ID = "studyMindStreakCelebration";
+    const OVERLAY_ID =
+        "studyMindStreakCelebration";
+
+    const PENDING_KEY =
+        "studyMindPendingStudyDayCelebration";
+
+    const LAST_DISPLAYED_KEY =
+        "studyMindLastStudyDayCelebrationDisplayed";
+
+    let retryTimer = null;
+
+    let retryAttempts = 0;
+
+    const MAX_RETRY_ATTEMPTS = 60;
+
+
+    /* =====================================================
+       STORAGE
+    ===================================================== */
 
     function getActivity() {
 
@@ -20,69 +54,199 @@
             ) || {};
 
         } catch (error) {
+
             return {};
+
         }
+
     }
+
 
     function getCurrentStreak() {
 
         return Number(
-            localStorage.getItem("studyMindStreak")
+            localStorage.getItem(
+                "studyMindStreak"
+            )
         ) || 0;
+
     }
+
+
+    function getPendingStudyDay() {
+
+        try {
+
+            const stored =
+                localStorage.getItem(PENDING_KEY);
+
+            return stored
+                ? JSON.parse(stored)
+                : null;
+
+        } catch (error) {
+
+            console.warn(
+                "StudyMind: Could not read pending study-day celebration.",
+                error
+            );
+
+            return null;
+
+        }
+
+    }
+
+
+    function clearPendingStudyDay(expectedEventId) {
+
+        const pending =
+            getPendingStudyDay();
+
+        if (!pending) {
+            return;
+        }
+
+        /*
+           Only clear the event that was handled.
+        */
+
+        if (
+            expectedEventId &&
+            pending.eventId !== expectedEventId
+        ) {
+
+            return;
+
+        }
+
+        localStorage.removeItem(
+            PENDING_KEY
+        );
+
+    }
+
+
+    function getLastDisplayedEvent() {
+
+        return localStorage.getItem(
+            LAST_DISPLAYED_KEY
+        );
+
+    }
+
+
+    /* =====================================================
+       DATE HELPERS
+    ===================================================== */
 
     function getTodayKey() {
 
         const date = new Date();
 
         const year = date.getFullYear();
+
         const month =
-            String(date.getMonth() + 1).padStart(2, "0");
+            String(date.getMonth() + 1)
+                .padStart(2, "0");
 
         const day =
-            String(date.getDate()).padStart(2, "0");
+            String(date.getDate())
+                .padStart(2, "0");
 
         return `${year}-${month}-${day}`;
+
     }
+
 
     function formatDate(date) {
 
-        const year = date.getFullYear();
+        const year =
+            date.getFullYear();
 
         const month =
-            String(date.getMonth() + 1).padStart(2, "0");
+            String(date.getMonth() + 1)
+                .padStart(2, "0");
 
         const day =
-            String(date.getDate()).padStart(2, "0");
+            String(date.getDate())
+                .padStart(2, "0");
 
         return `${year}-${month}-${day}`;
+
     }
+
+
+    /* =====================================================
+       EVENT ID
+    ===================================================== */
+
+    function createEventId(detail) {
+
+        if (detail?.eventId) {
+
+            return String(
+                detail.eventId
+            );
+
+        }
+
+        return [
+            detail?.date ||
+            detail?.studyDate ||
+            getTodayKey(),
+
+            "study-day-completed"
+        ].join("-");
+
+    }
+
+
+    /* =====================================================
+       CALENDAR DATA
+    ===================================================== */
 
     function createCalendarDays() {
 
-        const activity = getActivity();
-        const today = new Date();
+        const activity =
+            getActivity();
 
-        const streak = getCurrentStreak();
+        const today =
+            new Date();
+
+        const streak =
+            getCurrentStreak();
 
         /*
-         * Show the current streak plus a few surrounding days.
-         */
+           Display between 7 and 14 days.
+        */
 
         const numberOfDays =
-            Math.max(7, Math.min(14, streak + 2));
+            Math.max(
+                7,
+                Math.min(
+                    14,
+                    streak + 2
+                )
+            );
 
         const days = [];
 
-        for (let i = numberOfDays - 1; i >= 0; i--) {
+        for (
+            let i = numberOfDays - 1;
+            i >= 0;
+            i--
+        ) {
 
-            const date = new Date(today);
+            const date =
+                new Date(today);
 
             date.setDate(
                 today.getDate() - i
             );
 
-            const key = formatDate(date);
+            const key =
+                formatDate(date);
 
             const completed =
                 activity[key] === true;
@@ -91,15 +255,23 @@
                 key === getTodayKey();
 
             days.push({
+
                 date,
+
                 key,
+
                 completed,
+
                 isToday
+
             });
+
         }
 
         return days;
+
     }
+
 
     function getDayName(date) {
 
@@ -109,27 +281,40 @@
                 weekday: "short"
             }
         );
+
     }
+
 
     function getDayNumber(date) {
 
         return date.getDate();
+
     }
+
+
+    /* =====================================================
+       CREATE OVERLAY
+    ===================================================== */
 
     function createOverlay() {
 
         let overlay =
-            document.getElementById(OVERLAY_ID);
+            document.getElementById(
+                OVERLAY_ID
+            );
 
         if (overlay) {
             return overlay;
         }
 
-        overlay = document.createElement("div");
+        overlay =
+            document.createElement("div");
 
-        overlay.id = OVERLAY_ID;
+        overlay.id =
+            OVERLAY_ID;
 
         overlay.innerHTML = `
+
             <div class="streak-celebration-backdrop">
 
                 <div class="streak-celebration-card">
@@ -201,9 +386,12 @@
                 </div>
 
             </div>
+
         `;
 
-        document.body.appendChild(overlay);
+        document.body.appendChild(
+            overlay
+        );
 
         const close =
             overlay.querySelector(
@@ -216,29 +404,61 @@
             );
 
         function closeCelebration() {
-            overlay.classList.remove("show");
 
-            setTimeout(function () {
-                overlay.remove();
-            }, 350);
+            overlay.classList.remove(
+                "show"
+            );
+
+            clearTimeout(
+                overlay._studyMindRemovalTimer
+            );
+
+            overlay._studyMindRemovalTimer =
+                setTimeout(
+                    function () {
+
+                        if (
+                            !overlay.classList.contains(
+                                "show"
+                            )
+                        ) {
+
+                            overlay.remove();
+
+                        }
+
+                    },
+                    350
+                );
+
         }
 
         if (close) {
+
             close.addEventListener(
                 "click",
                 closeCelebration
             );
+
         }
 
         if (continueButton) {
+
             continueButton.addEventListener(
                 "click",
                 closeCelebration
             );
+
         }
 
         return overlay;
+
     }
+
+
+    /* =====================================================
+       RENDER CALENDAR
+    ===================================================== */
 
     function renderCalendar(overlay) {
 
@@ -247,55 +467,68 @@
                 "#streakCelebrationCalendar"
             );
 
-        if (!calendar) return;
+        if (!calendar) {
+            return;
+        }
 
         calendar.innerHTML = "";
 
         const days =
             createCalendarDays();
 
-        days.forEach(function (day) {
+        days.forEach(
+            function (day) {
 
-            const tile =
-                document.createElement("div");
+                const tile =
+                    document.createElement(
+                        "div"
+                    );
 
-            tile.className =
-                "streak-calendar-day";
+                tile.className =
+                    "streak-calendar-day";
 
-            if (day.completed) {
-                tile.classList.add(
-                    "completed"
+                if (day.completed) {
+
+                    tile.classList.add(
+                        "completed"
+                    );
+
+                }
+
+                if (day.isToday) {
+
+                    tile.classList.add(
+                        "today"
+                    );
+
+                }
+
+                tile.innerHTML = `
+
+                    <div class="calendar-day-name">
+                        ${getDayName(day.date)}
+                    </div>
+
+                    <div class="calendar-day-number">
+                        ${getDayNumber(day.date)}
+                    </div>
+
+                    <div class="calendar-day-fire">
+                        ${day.completed ? "🔥" : ""}
+                    </div>
+
+                `;
+
+                calendar.appendChild(
+                    tile
                 );
+
             }
-
-            if (day.isToday) {
-                tile.classList.add(
-                    "today"
-                );
-            }
-
-            tile.innerHTML = `
-                <div class="calendar-day-name">
-                    ${getDayName(day.date)}
-                </div>
-
-                <div class="calendar-day-number">
-                    ${getDayNumber(day.date)}
-                </div>
-
-                <div class="calendar-day-fire">
-                    ${day.completed ? "🔥" : ""}
-                </div>
-            `;
-
-            calendar.appendChild(tile);
-
-        });
+        );
 
         /*
-         * Give today's completed tile the special
-         * fire animation.
-         */
+           Ignite today's completed tile.
+        */
 
         const todayTile =
             calendar.querySelector(
@@ -308,50 +541,89 @@
                 "catching-fire"
             );
 
-            setTimeout(function () {
+            clearTimeout(
+                todayTile._studyMindFireTimer
+            );
 
-                todayTile.classList.remove(
-                    "catching-fire"
+            todayTile._studyMindFireTimer =
+                setTimeout(
+                    function () {
+
+                        todayTile.classList.remove(
+                            "catching-fire"
+                        );
+
+                        todayTile.classList.add(
+                            "fully-lit"
+                        );
+
+                    },
+                    1800
                 );
 
-                todayTile.classList.add(
-                    "fully-lit"
-                );
-
-            }, 1800);
         }
+
     }
 
-    function animateStreakNumber(overlay, finalValue) {
+
+    /* =====================================================
+       ANIMATE STREAK NUMBER
+    ===================================================== */
+
+    function animateStreakNumber(
+        overlay,
+        finalValue
+    ) {
 
         const number =
             overlay.querySelector(
                 "#streakCelebrationNumber"
             );
 
-        if (!number) return;
+        if (!number) {
+            return;
+        }
 
         finalValue =
             Number(finalValue) || 0;
 
         let current = 0;
 
-        const duration = 1100;
+        const duration =
+            1100;
 
         const start =
             performance.now();
+
+        /*
+           Prevent overlapping number animations.
+        */
+
+        if (
+            overlay._studyMindAnimationFrame
+        ) {
+
+            cancelAnimationFrame(
+                overlay._studyMindAnimationFrame
+            );
+
+        }
 
         function animate(now) {
 
             const progress =
                 Math.min(
-                    (now - start) / duration,
+                    (now - start) /
+                    duration,
                     1
                 );
 
             const eased =
                 1 -
-                Math.pow(1 - progress, 3);
+                Math.pow(
+                    1 - progress,
+                    3
+                );
 
             current =
                 Math.round(
@@ -359,158 +631,445 @@
                 );
 
             number.textContent =
-                current;
+                String(current);
 
             if (progress < 1) {
-                requestAnimationFrame(
-                    animate
-                );
-            }
-        }
 
-        requestAnimationFrame(
-            animate
-        );
-    }
-
-    function playCelebrationSound() {
-
-        try {
-
-            if (window.Milo) {
-
-                if (
-                    typeof window.Milo.playWoohoo ===
-                    "function"
-                ) {
-                    window.Milo.playWoohoo();
-                    return;
-                }
-
-                if (
-                    typeof window.Milo.celebrate ===
-                    "function"
-                ) {
-                    window.Milo.celebrate();
-                    return;
-                }
-
-                if (
-                    typeof window.Milo.miloStudySessionComplete ===
-                    "function"
-                ) {
-                    window.Milo.miloStudySessionComplete(
-                        getCurrentStreak()
+                overlay._studyMindAnimationFrame =
+                    requestAnimationFrame(
+                        animate
                     );
-                }
+
             }
 
-        } catch (error) {
-            console.warn(
-                "Streak celebration sound failed:",
-                error
-            );
         }
+
+        overlay._studyMindAnimationFrame =
+            requestAnimationFrame(
+                animate
+            );
+
     }
 
-    function celebrate() {
+
+    /* =====================================================
+       DISPLAY CELEBRATION
+
+       This system only displays the calendar overlay.
+
+       It deliberately does NOT call:
+       - Milo.playWoohoo()
+       - Milo.celebrate()
+       - Milo.dance()
+       - Milo.miloStudySessionComplete()
+    ===================================================== */
+
+    function displayCelebration() {
 
         const streak =
             getCurrentStreak();
 
         if (streak <= 0) {
-            return;
+            return false;
+        }
+
+        if (!document.body) {
+            return false;
         }
 
         const overlay =
             createOverlay();
 
-        renderCalendar(overlay);
+        renderCalendar(
+            overlay
+        );
 
         animateStreakNumber(
             overlay,
             streak
         );
 
-        overlay.classList.remove("show");
+        overlay.classList.remove(
+            "show"
+        );
 
         void overlay.offsetWidth;
 
-        overlay.classList.add("show");
+        overlay.classList.add(
+            "show"
+        );
 
-        playCelebrationSound();
+        return true;
 
-        /*
-         * Give Milo's existing system a chance to
-         * perform its celebration without changing
-         * milo.js itself.
-         */
-
-        try {
-
-            if (
-                window.Milo &&
-                typeof window.Milo.dance ===
-                "function"
-            ) {
-                window.Milo.dance();
-            }
-
-        } catch (error) {
-            console.warn(
-                "Milo dance failed:",
-                error
-            );
-        }
     }
 
-    /*
-     * Main event:
-     *
-     * When the streak system announces that today's
-     * study day was completed, show the calendar.
-     */
+
+    /* =====================================================
+       COMPLETE STUDY-DAY CELEBRATION
+    ===================================================== */
+
+    function completeCelebration(data) {
+
+        if (
+            !data ||
+            !data.eventId
+        ) {
+
+            return false;
+
+        }
+
+        /*
+           Prevent duplicate calendar overlays.
+        */
+
+        const lastDisplayed =
+            getLastDisplayedEvent();
+
+        if (
+            lastDisplayed ===
+            data.eventId
+        ) {
+
+            clearPendingStudyDay(
+                data.eventId
+            );
+
+            return true;
+
+        }
+
+        /*
+           Wait for document readiness.
+        */
+
+        if (!document.body) {
+            return false;
+        }
+
+        /*
+           Display the overlay.
+        */
+
+        if (!displayCelebration()) {
+            return false;
+        }
+
+        /*
+           Mark this event as displayed.
+        */
+
+        localStorage.setItem(
+            LAST_DISPLAYED_KEY,
+            data.eventId
+        );
+
+        /*
+           Only clear the event we handled.
+        */
+
+        clearPendingStudyDay(
+            data.eventId
+        );
+
+        console.log(
+            "StudyMind: Study-day calendar celebration displayed."
+        );
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "studyMindStudyDayCelebrationDisplayed",
+                {
+                    detail: {
+                        eventId: data.eventId,
+                        date: data.date ||
+                            data.studyDate ||
+                            getTodayKey()
+                    }
+                }
+            )
+        );
+
+        return true;
+
+    }
+
+
+    /* =====================================================
+       PROCESS PENDING CELEBRATION
+    ===================================================== */
+
+    function processPendingCelebration() {
+
+        const pending =
+            getPendingStudyDay();
+
+        if (!pending) {
+
+            stopRetrying();
+
+            return;
+
+        }
+
+        if (
+            completeCelebration(
+                pending
+            )
+        ) {
+
+            stopRetrying();
+
+            return;
+
+        }
+
+        startRetrying();
+
+    }
+
+
+    /* =====================================================
+       RETRY
+    ===================================================== */
+
+    function startRetrying() {
+
+        if (retryTimer) {
+            return;
+        }
+
+        retryAttempts = 0;
+
+        retryTimer =
+            setInterval(
+                function () {
+
+                    retryAttempts++;
+
+                    processPendingCelebration();
+
+                    if (
+                        retryAttempts >=
+                        MAX_RETRY_ATTEMPTS
+                    ) {
+
+                        stopRetrying();
+
+                    }
+
+                },
+                500
+            );
+
+    }
+
+
+    function stopRetrying() {
+
+        if (retryTimer) {
+
+            clearInterval(
+                retryTimer
+            );
+
+            retryTimer = null;
+
+        }
+
+        retryAttempts = 0;
+
+    }
+
+
+    /* =====================================================
+       HANDLE LIVE COMPLETION EVENT
+    ===================================================== */
+
+    function handleStudyDayCompleted(event) {
+
+        const detail =
+            event?.detail || {};
+
+        const data = {
+
+            eventId:
+                createEventId(
+                    detail
+                ),
+
+            date:
+                detail.date ||
+                detail.studyDate ||
+                getTodayKey(),
+
+            streak:
+                Number(detail.streak) ||
+                getCurrentStreak(),
+
+            createdAt:
+                Date.now()
+
+        };
+
+        /*
+           Persist the event so it survives navigation.
+
+           The streak engine may already have saved
+           this event. This only writes the same event
+           if the storage record is absent.
+        */
+
+        const existing =
+            getPendingStudyDay();
+
+        if (
+            !existing ||
+            existing.eventId !==
+            data.eventId
+        ) {
+
+            try {
+
+                localStorage.setItem(
+                    PENDING_KEY,
+                    JSON.stringify(data)
+                );
+
+            } catch (error) {
+
+                console.warn(
+                    "StudyMind: Could not persist study-day celebration.",
+                    error
+                );
+
+            }
+
+        }
+
+        processPendingCelebration();
+
+    }
+
+
+    /* =====================================================
+       COMPATIBILITY EVENT
+    ===================================================== */
+
+    function handleStreakUpdated(event) {
+
+        const detail =
+            event?.detail || {};
+
+        if (
+            detail.dayCompleted === true ||
+            detail.studyDayCompleted === true ||
+            detail.source ===
+            "study-day-complete"
+        ) {
+
+            handleStudyDayCompleted(
+                event
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       EVENT LISTENERS
+    ===================================================== */
 
     window.addEventListener(
         "studyMindStudyDayCompleted",
-        function () {
-            celebrate();
-        }
+        handleStudyDayCompleted
     );
-
-    /*
-     * Also support the existing streak event.
-     * This only opens the calendar when the event
-     * explicitly says that a study day was completed.
-     */
 
     window.addEventListener(
         "studyMindStreakUpdated",
+        handleStreakUpdated
+    );
+
+
+    window.addEventListener(
+        "storage",
         function (event) {
 
-            const detail =
-                event && event.detail
-                    ? event.detail
-                    : {};
-
             if (
-                detail.dayCompleted === true ||
-                detail.studyDayCompleted === true ||
-                detail.source ===
-                "study-day-complete"
+                event.key === PENDING_KEY ||
+                event.key === null
             ) {
-                celebrate();
+
+                processPendingCelebration();
+
             }
 
         }
     );
+
+
+    window.addEventListener(
+        "pageshow",
+        processPendingCelebration
+    );
+
+    window.addEventListener(
+        "load",
+        processPendingCelebration
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        processPendingCelebration
+    );
+
+
+    /* =====================================================
+       PUBLIC API
+    ===================================================== */
 
     window.StudyMindStreakCelebration = {
 
         show: function () {
-            celebrate();
-        }
+
+            const manualEvent = {
+
+                eventId: [
+                    getTodayKey(),
+                    "manual-calendar",
+                    Date.now()
+                ].join("-"),
+
+                date:
+                    getTodayKey(),
+
+                createdAt:
+                    Date.now()
+
+            };
+
+            displayCelebration();
+
+            return manualEvent.eventId;
+
+        },
+
+
+        processPending:
+            processPendingCelebration,
+
+
+        getPending:
+            getPendingStudyDay
 
     };
+
+
+    /* =====================================================
+       INITIAL RECOVERY
+    ===================================================== */
+
+    processPendingCelebration();
 
 })();
