@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================================
@@ -42,7 +41,8 @@ const STREAK_KEYS = {
     FREEZE_REWARDS: "studyMindStreakFreezeRewards",
     PENDING_CELEBRATION: "studyMindPendingStreakCelebration",
     PENDING_LOSS: "studyMindPendingStreakLoss",
-    PENDING_STUDY_DAY: "studyMindPendingStudyDayCelebration"
+    PENDING_STUDY_DAY: "studyMindPendingStudyDayCelebration",
+    INITIALIZED: "studyMindStreakEngineInitialized"
 };
 
 
@@ -69,6 +69,16 @@ function initStreak() {
 
     initializeFreezeStorage();
 
+    /*
+       IMPORTANT:
+       Establish a baseline before synchronization.
+
+       This prevents existing users from receiving a false
+       streak-increase popup when the engine is first installed.
+    */
+
+    initializeStreakBaseline();
+
     syncStreakFromActivity();
 
     renderEverything();
@@ -89,17 +99,23 @@ function initStreak() {
             STREAK_KEYS.BEST,
             STREAK_KEYS.XP,
             STREAK_KEYS.FREEZES,
-            STREAK_KEYS.FREEZE_DATES
+            STREAK_KEYS.FREEZE_DATES,
+            STREAK_KEYS.FREEZE_REWARDS
         ];
 
         if (
             watchedKeys.includes(event.key) ||
             event.key === null
         ) {
+
             migrateActivityFormat();
+
             initializeFreezeStorage();
+
             syncStreakFromActivity();
+
             renderEverything();
+
         }
 
     });
@@ -119,6 +135,7 @@ function initStreak() {
             }
 
             syncStreakFromActivity();
+
             renderEverything();
 
         }
@@ -203,6 +220,73 @@ function writeJSON(key, value) {
 
 
 /* =========================================================
+   INITIAL STREAK BASELINE
+========================================================= */
+
+function initializeStreakBaseline() {
+
+    const initialized =
+        localStorage.getItem(STREAK_KEYS.INITIALIZED);
+
+    if (initialized === "true") {
+        return;
+    }
+
+    const currentExists =
+        localStorage.getItem(STREAK_KEYS.CURRENT) !== null;
+
+    const bestExists =
+        localStorage.getItem(STREAK_KEYS.BEST) !== null;
+
+    /*
+       Calculate existing streak data without generating
+       increase or loss notifications.
+    */
+
+    const current = calculateCurrentStreak();
+
+    const best = Math.max(
+        calculateLongestStreak(),
+        Number(
+            localStorage.getItem(STREAK_KEYS.BEST) || 0
+        )
+    );
+
+    if (!currentExists) {
+
+        localStorage.setItem(
+            STREAK_KEYS.CURRENT,
+            String(current)
+        );
+
+    }
+
+    if (!bestExists) {
+
+        localStorage.setItem(
+            STREAK_KEYS.BEST,
+            String(best)
+        );
+
+    }
+
+    localStorage.setItem(
+        STREAK_KEYS.INITIALIZED,
+        "true"
+    );
+
+    console.log(
+        "StudyMind streak baseline initialized:",
+        {
+            current,
+            best
+        }
+    );
+
+}
+
+
+/* =========================================================
    FREEZE STORAGE INITIALIZATION
 ========================================================= */
 
@@ -216,10 +300,12 @@ function initializeFreezeStorage() {
         !Number.isFinite(count) ||
         count < 0
     ) {
+
         localStorage.setItem(
             STREAK_KEYS.FREEZES,
             "0"
         );
+
     }
 
     const dates = readJSON(
@@ -715,6 +801,9 @@ function applyPendingStreakFreeze() {
     /*
        Only protect the gap if enough freezes exist
        to cover every missed day.
+
+       This avoids consuming freezes without actually
+       preserving the consecutive streak.
     */
 
     if (freezeCount < missingDates.length) {
@@ -937,7 +1026,11 @@ function savePendingStreakLoss(
    PERSISTENT STUDY-DAY NOTIFICATION
 ========================================================= */
 
-function savePendingStudyDayCelebration(streak, date, eventId) {
+function savePendingStudyDayCelebration(
+    streak,
+    date,
+    eventId
+) {
 
     const pending = {
         eventId,
@@ -1053,7 +1146,10 @@ function dispatchStreakLoss(
                     oldStreak: previousStreak,
                     streak: currentStreak,
                     currentStreak,
-                    source: "streak-engine"
+                    source: "streak-engine",
+                    protected: false,
+                    freezeApplied: false,
+                    streakLost: true
                 }
             }
         )
@@ -1435,10 +1531,12 @@ function getTodaysRequiredTopics() {
                 ).trim();
 
                 if (topic) {
+
                     topics.push({
                         subject,
                         topic
                     });
+
                 }
 
             });
@@ -2341,3 +2439,8 @@ window.StudyMindStreak = {
     refresh: renderEverything
 
 };
+
+
+console.log(
+    "StudyMind AI — Account-wide streak engine ready."
+);
