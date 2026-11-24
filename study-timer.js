@@ -11,8 +11,8 @@
    ✓ Completion
    ✓ Study-time recording
    ✓ XP
-   ✓ Streak activity
-   ✓ Milo celebration
+   ✓ Streak completion checks
+   ✓ Milo timer celebration
 
    Used by:
    ✓ study-timer.html
@@ -24,8 +24,17 @@
    dashboard.js MUST NOT control the timer directly.
    It only reads window.StudyMindTimer and displays state.
 
-   This prevents duplicate click handlers and competing
-   timer loops.
+   STREAK OWNERSHIP
+   ---------------------------------------------------------
+   streak.js owns:
+   ✓ Streak activity storage
+   ✓ Study-day completion
+   ✓ Streak calculation
+   ✓ Freeze protection
+   ✓ Streak increase/loss events
+
+   The timer only notifies the streak engine that
+   a study session has finished.
 ========================================================= */
 
 (function () {
@@ -701,7 +710,10 @@
 
     function getElapsedSeconds() {
 
-        if (!state.running) {
+        if (
+            !state.sessionStart ||
+            state.baseSeconds <= 0
+        ) {
 
             return 0;
         }
@@ -1365,36 +1377,18 @@
 
     /* =========================================================
        STREAK
+       ---------------------------------------------------------
+       streak.js is the ONLY owner of streak activity storage.
+
+       The timer notifies the streak engine after a completed
+       session. The streak engine checks whether the required
+       topics for the day have actually been completed.
     ========================================================= */
 
     function recordStudyActivity() {
 
         const today =
             todayKey();
-
-
-        const existing =
-            readJSON(
-                KEYS.STREAK_ACTIVITY,
-                {}
-            );
-
-
-        const activity =
-            existing &&
-            typeof existing === "object"
-                ? existing
-                : {};
-
-
-        activity[today] =
-            true;
-
-
-        writeJSON(
-            KEYS.STREAK_ACTIVITY,
-            activity
-        );
 
 
         if (
@@ -1846,6 +1840,16 @@
                 recordStudySession();
 
 
+            /*
+             * Notify streak.js.
+             *
+             * The streak engine decides whether
+             * today's required topics are complete.
+             *
+             * The timer does NOT directly mark
+             * today's streak activity as complete.
+             */
+
             recordStudyActivity();
 
 
@@ -2039,101 +2043,104 @@
        START
     ========================================================= */
 
-   function startTimer() {
+    function startTimer() {
 
-    if (state.running) {
-        return;
-    }
+        if (state.running) {
 
-    /*
-     * If timer reached zero, start a completely
-     * fresh session using the selected duration.
-     */
-    if (state.seconds <= 0) {
+            return;
+        }
 
-        state.seconds =
-            state.selectedSeconds;
-
-        state.baseSeconds =
-            state.selectedSeconds;
-
-        state.sessionStart =
-            Date.now();
-
-        state.awardedMinute =
-            0;
-
-        state.lastPersistedLiveMinute =
-            -1;
-    }
-
-    /*
-     * Fresh timer that has never been started.
-     */
-    else if (!state.sessionStart) {
-
-        state.sessionStart =
-            Date.now();
 
         /*
-         * The current remaining time is the amount
-         * we are starting from.
-         *
-         * For a fresh timer this equals selectedSeconds.
+         * If timer reached zero, start a completely
+         * fresh session using the selected duration.
          */
-        state.baseSeconds =
-            state.seconds;
+        if (state.seconds <= 0) {
 
-        state.awardedMinute =
-            0;
+            state.seconds =
+                state.selectedSeconds;
 
-        state.lastPersistedLiveMinute =
-            -1;
-    }
+            state.baseSeconds =
+                state.selectedSeconds;
 
-    /*
-     * RESUME
-     *
-     * If sessionStart already exists, this is a
-     * paused timer. DO NOT reset seconds or baseSeconds.
-     *
-     * Simply continue from the remaining seconds.
-     */
+            state.sessionStart =
+                Date.now();
 
-    state.running =
-        true;
+            state.awardedMinute =
+                0;
 
-    state.endTime =
-        Date.now() +
-        (
-            state.seconds *
-            1000
+            state.lastPersistedLiveMinute =
+                -1;
+        }
+
+        /*
+         * Fresh timer that has never been started.
+         */
+        else if (!state.sessionStart) {
+
+            state.sessionStart =
+                Date.now();
+
+            state.baseSeconds =
+                state.seconds;
+
+            state.awardedMinute =
+                0;
+
+            state.lastPersistedLiveMinute =
+                -1;
+        }
+
+        /*
+         * RESUME
+         *
+         * If sessionStart already exists, this is a
+         * paused timer. DO NOT reset seconds or baseSeconds.
+         */
+
+
+        state.running =
+            true;
+
+        state.endTime =
+            Date.now() +
+            (
+                state.seconds *
+                1000
+            );
+
+        state.completionLocked =
+            false;
+
+
+        persist();
+
+
+        startInterval();
+
+
+        updateDailyLiveTime(true);
+
+
+        refreshScore();
+
+
+        render();
+        renderStats();
+
+
+        dispatch(
+            "studyMindTimerChanged",
+            getState()
         );
 
-    state.completionLocked =
-        false;
 
-    persist();
+        console.log(
+            "StudyMind Timer: START/RESUME",
+            getState()
+        );
+    }
 
-    startInterval();
-
-    updateDailyLiveTime(true);
-
-    refreshScore();
-
-    render();
-    renderStats();
-
-    dispatch(
-        "studyMindTimerChanged",
-        getState()
-    );
-
-    console.log(
-        "StudyMind Timer: START/RESUME",
-        getState()
-    );
-}
 
     /* =========================================================
        PAUSE
@@ -2818,11 +2825,6 @@
         }
 
 
-        /*
-         * This prevents Dashboard.js and other
-         * initialization passes from creating
-         * duplicate timer controls.
-         */
         if (
             element.dataset.studyMindTimerBound ===
             "true"
@@ -3201,14 +3203,6 @@
         }
 
 
-        /*
-         * NO SECOND TIMER INTERVAL.
-         *
-         * updateRemaining() is controlled solely
-         * by startInterval().
-         */
-
-
         console.log(
             "StudyMind AI: Shared timer initialized.",
             getState()
@@ -3305,4 +3299,3 @@
     }
 
 })();
-
