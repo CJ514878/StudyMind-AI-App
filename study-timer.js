@@ -78,9 +78,6 @@
         TOTAL_XP:
             "studyMindTotalXP",
 
-        STREAK_ACTIVITY:
-            "studyMindStreakActivity",
-
         SESSION_START:
             "studyMindTimerSessionStart",
 
@@ -706,6 +703,14 @@
 
     /* =========================================================
        TIME
+       ---------------------------------------------------------
+       Elapsed time must remain available while paused.
+
+       state.seconds is updated before pausing, so subtracting
+       it from baseSeconds preserves the elapsed session time.
+
+       This also prevents paused study time from disappearing
+       from the dashboard and study statistics.
     ========================================================= */
 
     function getElapsedSeconds() {
@@ -719,10 +724,13 @@
         }
 
 
-        return Math.max(
-            0,
-            state.baseSeconds -
-            state.seconds
+        return Math.min(
+            state.baseSeconds,
+            Math.max(
+                0,
+                state.baseSeconds -
+                state.seconds
+            )
         );
     }
 
@@ -1383,6 +1391,10 @@
        The timer notifies the streak engine after a completed
        session. The streak engine checks whether the required
        topics for the day have actually been completed.
+
+       IMPORTANT:
+       This function must NEVER write directly to
+       studyMindStreakActivity.
     ========================================================= */
 
     function recordStudyActivity() {
@@ -2157,7 +2169,8 @@
 
 
         /*
-         * Capture current remaining time.
+         * Capture current remaining time BEFORE
+         * stopping the interval.
          */
         updateRemaining();
 
