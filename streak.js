@@ -221,7 +221,7 @@ function writeJSON(key, value) {
 
 /* =========================================================
    INITIAL STREAK BASELINE
-========================================================= */
+   ========================================================= */
 
 function initializeStreakBaseline() {
 
@@ -232,6 +232,18 @@ function initializeStreakBaseline() {
         return;
     }
 
+    /*
+       Apply eligible freeze protection BEFORE calculating
+       the initial streak.
+
+       This prevents returning users from losing their
+       existing streak during engine initialization.
+    */
+
+    initializeFreezeStorage();
+
+    applyPendingStreakFreeze();
+
     const currentExists =
         localStorage.getItem(STREAK_KEYS.CURRENT) !== null;
 
@@ -239,7 +251,7 @@ function initializeStreakBaseline() {
         localStorage.getItem(STREAK_KEYS.BEST) !== null;
 
     /*
-       Calculate existing streak data without generating
+       Calculate the existing streak without generating
        increase or loss notifications.
     */
 
@@ -279,7 +291,8 @@ function initializeStreakBaseline() {
         "StudyMind streak baseline initialized:",
         {
             current,
-            best
+            best,
+            freezes: getStreakFreezeCount()
         }
     );
 
