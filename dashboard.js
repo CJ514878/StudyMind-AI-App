@@ -1,41 +1,45 @@
+
 "use strict";
 
 /* =========================================================
-   STUDYMIND AI — PREMIUM THEME SYNC
-   Makes the Dashboard respond to the Premium state
+   STUDYMIND AI — DASHBOARD
+   FULL REPLACEMENT
+
+   OWNERSHIP:
+   - study-timer.js owns timer state, completion and timer XP.
+   - streak.js owns streak activity and streak rewards.
+   - StudyMindScore provides canonical study metrics.
+   - dashboard.js displays and synchronizes those values.
+
+   FIXES:
+   - Reads completed timer sessions even if Study Score is stale.
+   - Reads daily study time and study history.
+   - Prevents double-counting the same study minutes.
+   - Refreshes dashboard after a completed timer session.
+   - Refreshes today's goal and progress while the timer runs.
+   - Preserves existing dashboard IDs and public API.
+========================================================= */
+
+
+/* =========================================================
+   PREMIUM THEME
 ========================================================= */
 
 (function syncDashboardPremiumTheme() {
 
     function applyPremiumThemeToDashboard() {
-
         let premium = false;
 
         try {
-
-            if (
-                typeof window.isStudyMindPremium === "function"
-            ) {
-
-                premium =
-                    !!window.isStudyMindPremium();
-
+            if (typeof window.isStudyMindPremium === "function") {
+                premium = !!window.isStudyMindPremium();
             } else {
-
                 premium =
-                    localStorage.getItem(
-                        "studyMindPremium"
-                    ) === "true";
-
+                    localStorage.getItem("studyMindPremium") === "true";
             }
-
         } catch (error) {
-
             premium =
-                localStorage.getItem(
-                    "studyMindPremium"
-                ) === "true";
-
+                localStorage.getItem("studyMindPremium") === "true";
         }
 
         document.documentElement.classList.toggle(
@@ -44,19 +48,11 @@
         );
 
         if (document.body) {
-
             document.body.classList.toggle(
                 "study-mind-premium",
                 premium
             );
-
         }
-
-        console.log(
-            "StudyMind Premium Dashboard Theme:",
-            premium ? "GOLD" : "BLUE"
-        );
-
     }
 
     applyPremiumThemeToDashboard();
@@ -76,138 +72,46 @@
         applyPremiumThemeToDashboard
     );
 
-    window.addEventListener(
-        "storage",
-        function (event) {
-
-            if (
-                event.key ===
-                "studyMindPremium"
-            ) {
-
-                applyPremiumThemeToDashboard();
-
-            }
-
+    window.addEventListener("storage", event => {
+        if (event.key === "studyMindPremium") {
+            applyPremiumThemeToDashboard();
         }
-    );
+    });
 
 })();
-
-
-/* =========================================================
-   STUDYMIND AI — DASHBOARD
-   SHARED TIMER ARCHITECTURE
-
-   IMPORTANT
-   ---------------------------------------------------------
-   streak.js = SINGLE SOURCE OF TRUTH FOR STREAKS
-   study-timer.js = SINGLE SOURCE OF TRUTH FOR TIMER STATE
-                     AND TIMER COMPLETION
-
-   dashboard.js:
-   ✓ Displays timer
-   ✓ Starts / pauses / resets shared timer
-   ✓ Changes shared duration
-   ✓ Refreshes dashboard after timer completion
-   ✓ Displays live study progress
-
-   dashboard.js DOES NOT:
-   ✗ Run its own timer countdown
-   ✗ Complete timers
-   ✗ Award timer XP
-   ✗ Create timer streaks
-   ✗ Create timer sessions
-
-   STUDY TIME ARCHITECTURE
-   ---------------------------------------------------------
-   StudyMindScore = canonical source for study time.
-
-   Dashboard Study Progress =
-       today's study minutes
-       ÷
-       today's daily target
-       × 100
-
-   While the shared timer is running,
-   StudyMindScore includes the live timer seconds.
-========================================================= */
 
 
 /* =========================================================
    STORAGE KEYS
 ========================================================= */
 
-const PLAN_KEY =
-    "studyMindPlan";
+const PLAN_KEY = "studyMindPlan";
+const XP_KEY = "studyMindXP";
+const STREAK_KEY = "studyMindStreak";
+const SESSION_KEY = "studyMindStudySessions";
+const QUEST_KEY = "studyMindDailyQuests";
+const COMPLETED_TOPICS_KEY = "studyMindCompletedTopics";
+const LAST_COMPLETED_KEY = "studyMindLastCompletedPlanDate";
+const USERNAME_KEY = "studyMindUsername";
 
-const XP_KEY =
-    "studyMindXP";
+const TIMER_SECONDS_KEY = "studyMindTimerSeconds";
+const TIMER_END_KEY = "studyMindTimerEndTime";
+const TIMER_RUNNING_KEY = "studyMindTimerRunning";
+const TIMER_DURATION_KEY = "studyMindSelectedTimerSeconds";
 
-const STREAK_KEY =
-    "studyMindStreak";
-
-const SESSION_KEY =
-    "studyMindStudySessions";
-
-const QUEST_KEY =
-    "studyMindDailyQuests";
-
-const COMPLETED_TOPICS_KEY =
-    "studyMindCompletedTopics";
-
-const LAST_COMPLETED_KEY =
-    "studyMindLastCompletedPlanDate";
-
-const USERNAME_KEY =
-    "studyMindUsername";
-
-
-/* =========================================================
-   SHARED TIMER KEYS
-========================================================= */
-
-const TIMER_SECONDS_KEY =
-    "studyMindTimerSeconds";
-
-const TIMER_END_KEY =
-    "studyMindTimerEndTime";
-
-const TIMER_RUNNING_KEY =
-    "studyMindTimerRunning";
-
-const TIMER_DURATION_KEY =
-    "studyMindSelectedTimerSeconds";
+const DAILY_TIME_KEY = "studyMindDailyStudyTime";
+const STUDY_HISTORY_KEY = "studyMindStudyHistory";
 
 
 /* =========================================================
    DASHBOARD STATE
 ========================================================= */
 
-let studyPlan =
-    loadJSON(
-        PLAN_KEY,
-        null
-    );
+let studyPlan = loadJSON(PLAN_KEY, null);
 
-let xp =
-    Number(
-        localStorage.getItem(
-            XP_KEY
-        ) || 0
-    );
+let xp = Number(localStorage.getItem(XP_KEY) || 0);
 
-let streak =
-    Number(
-        localStorage.getItem(
-            STREAK_KEY
-        ) || 0
-    );
-
-
-/* =========================================================
-   AUTH — SHARED SUPABASE CLIENT
-========================================================= */
+let streak = Number(localStorage.getItem(STREAK_KEY) || 0);
 
 const supabaseClient =
     window.supabaseClient ||
@@ -219,484 +123,243 @@ const supabaseClient =
    INITIALIZATION
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-        loadUser().catch(error => {
+    loadUser().catch(error => {
+        console.warn("Dashboard username loading failed:", error);
+    });
 
-            console.warn(
-                "StudyMind Dashboard: background username loading failed:",
-                error
-            );
+    studyPlan = loadJSON(PLAN_KEY, null);
 
-        });
+    syncLocalStats();
 
-        studyPlan =
-            loadJSON(
-                PLAN_KEY,
-                null
-            );
+    checkStudyCompletion();
 
-        syncLocalStats();
+    renderStats();
+    renderToday();
+    renderExams();
+    renderQuests();
+    renderLevel();
+    renderRecommendation();
 
-        checkStudyCompletion();
+    setupLogout();
+    setupSharedDashboardTimer();
+    startDashboardTimerRefresh();
 
-        renderStats();
+    setupDashboardEventListeners();
 
-        renderToday();
+    ensureSharedTimerEngine();
 
-        renderExams();
-
-        renderQuests();
-
-        renderLevel();
-
-        renderRecommendation();
-
-        setupLogout();
-
-        setupSharedDashboardTimer();
-
-        startDashboardTimerRefresh();
-
-
-        /* =================================================
-           STORAGE SYNCHRONIZATION
-        ================================================= */
-
-        window.addEventListener(
-            "storage",
-            event => {
-
-                /* USERNAME */
-
-                if (
-                    event.key ===
-                    USERNAME_KEY
-                ) {
-
-                    const username =
-                        String(
-                            event.newValue ||
-                            "Student"
-                        ).trim();
-
-                    if (username) {
-
-                        updateDashboardUsername(
-                            username
-                        );
-
-                    }
-
-                }
-
-
-                /* COMPLETED TOPICS */
-
-                if (
-                    event.key ===
-                    COMPLETED_TOPICS_KEY
-                ) {
-
-                    studyPlan =
-                        loadJSON(
-                            PLAN_KEY,
-                            null
-                        );
-
-                    checkStudyCompletion();
-
-                    syncLocalStats();
-
-                    renderStats();
-
-                    renderQuests();
-
-                    renderRecommendation();
-
-                    renderToday();
-
-                }
-
-
-                /* STUDY PLAN */
-
-                if (
-                    event.key ===
-                    PLAN_KEY
-                ) {
-
-                    studyPlan =
-                        loadJSON(
-                            PLAN_KEY,
-                            null
-                        );
-
-                    checkStudyCompletion();
-
-                    renderStats();
-
-                    renderToday();
-
-                    renderExams();
-
-                    renderQuests();
-
-                    renderRecommendation();
-
-                }
-
-
-                /* XP */
-
-                if (
-                    event.key ===
-                    XP_KEY
-                ) {
-
-                    syncLocalStats();
-
-                    renderStats();
-
-                    renderLevel();
-
-                    renderQuests();
-
-                }
-
-
-                /* STREAK */
-
-                if (
-                    event.key ===
-                    STREAK_KEY
-                ) {
-
-                    syncLocalStats();
-
-                    renderStats();
-
-                }
-
-
-                /* SHARED TIMER */
-
-                if (
-                    [
-                        TIMER_SECONDS_KEY,
-                        TIMER_END_KEY,
-                        TIMER_RUNNING_KEY,
-                        TIMER_DURATION_KEY
-                    ].includes(
-                        event.key
-                    )
-                ) {
-
-                    renderSharedDashboardTimer();
-
-                    renderStats();
-
-                }
-
-            }
-        );
-
-
-        /* =================================================
-           CANONICAL PROGRESS EVENT
-           -------------------------------------------------
-           Study Score emits this while the timer is running.
-           This is important because localStorage "storage"
-           events do not fire in the same browser tab.
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindProgressUpdated",
-            event => {
-
-                renderStats();
-
-                renderQuests();
-
-                console.log(
-                    "StudyMind Dashboard: canonical progress updated.",
-                    event.detail || {}
-                );
-
-            }
-        );
-
-
-        /* =================================================
-           STREAK EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindStreakUpdated",
-            event => {
-
-                syncLocalStats();
-
-                renderStats();
-
-                renderLevel();
-
-                console.log(
-                    "StudyMind Dashboard: streak updated.",
-                    event.detail || {}
-                );
-
-            }
-        );
-
-
-        /* =================================================
-           XP EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindXPUpdated",
-            event => {
-
-                syncLocalStats();
-
-                renderStats();
-
-                renderLevel();
-
-                renderQuests();
-
-            }
-        );
-
-
-        /* =================================================
-           USERNAME EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindUsernameChanged",
-            event => {
-
-                const username =
-                    String(
-                        event.detail?.username ||
-                        localStorage.getItem(
-                            USERNAME_KEY
-                        ) ||
-                        "Student"
-                    ).trim();
-
-                if (!username) {
-                    return;
-                }
-
-                localStorage.setItem(
-                    USERNAME_KEY,
-                    username
-                );
-
-                updateDashboardUsername(
-                    username
-                );
-
-            }
-        );
-
-
-        /* =================================================
-           PROFILE UPDATE
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindProfileUpdated",
-            async () => {
-
-                try {
-
-                    await loadUser();
-
-                } catch (error) {
-
-                    console.warn(
-                        "StudyMind Dashboard: profile refresh failed:",
-                        error
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* =================================================
-           SHARED TIMER UI EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindTimerChanged",
-            () => {
-
-                renderSharedDashboardTimer();
-
-                renderStats();
-
-            }
-        );
-
-
-        /* =================================================
-           STUDY TIME EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindStudyTimeUpdated",
-            () => {
-
-                renderStats();
-
-                renderQuests();
-
-            }
-        );
-
-
-        /* =================================================
-           STUDY DATA EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindStudyDataUpdated",
-            () => {
-
-                renderStats();
-
-            }
-        );
-
-
-        /* =================================================
-           SCORE EVENT
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindScoreUpdated",
-            () => {
-
-                renderStats();
-
-            }
-        );
-
-
-        /* =================================================
-           TIMER COMPLETION
-        ================================================= */
-
-        window.addEventListener(
-            "studyMindTimerCompleted",
-            event => {
-
-                console.log(
-                    "StudyMind Dashboard: shared timer completed.",
-                    event.detail || {}
-                );
-
-                syncLocalStats();
-
-                renderStats();
-
-                renderLevel();
-
-                renderQuests();
-
-                renderRecommendation();
-
-                renderToday();
-
-                renderSharedDashboardTimer();
-
-            }
-        );
-
-
-        /* =================================================
-           STREAK / XP SYNCHRONIZATION
-        ================================================= */
-
-        if (
-            window.StudyMindStreak
-        ) {
-
-            window.setInterval(
-                () => {
-
-                    const oldStreak =
-                        streak;
-
-                    const oldXP =
-                        xp;
-
-                    syncLocalStats();
-
-                    if (
-                        oldStreak !== streak ||
-                        oldXP !== xp
-                    ) {
-
-                        renderStats();
-
-                        renderLevel();
-
-                        renderQuests();
-
-                    }
-
-                },
-                1500
-            );
-
-        }
-
-
-        ensureSharedTimerEngine();
-
-    }
-);
+});
 
 
 /* =========================================================
-   USERNAME REFRESH WHEN DASHBOARD BECOMES VISIBLE
+   EVENT LISTENERS
 ========================================================= */
 
-document.addEventListener(
-    "visibilitychange",
-    async () => {
+function setupDashboardEventListeners() {
+
+    window.addEventListener("storage", event => {
+
+        if (event.key === USERNAME_KEY) {
+            const username = String(event.newValue || "Student").trim();
+
+            if (username) {
+                updateDashboardUsername(username);
+            }
+        }
 
         if (
-            document.visibilityState !==
-            "visible"
+            event.key === COMPLETED_TOPICS_KEY ||
+            event.key === PLAN_KEY
         ) {
-            return;
+            studyPlan = loadJSON(PLAN_KEY, null);
+
+            checkStudyCompletion();
+            renderStats();
+            renderQuests();
+            renderRecommendation();
+            renderToday();
+            renderExams();
         }
+
+        if (
+            event.key === XP_KEY ||
+            event.key === STREAK_KEY
+        ) {
+            syncLocalStats();
+            renderStats();
+            renderLevel();
+            renderQuests();
+        }
+
+        if (
+            [
+                TIMER_SECONDS_KEY,
+                TIMER_END_KEY,
+                TIMER_RUNNING_KEY,
+                TIMER_DURATION_KEY
+            ].includes(event.key)
+        ) {
+            renderSharedDashboardTimer();
+            renderStats();
+        }
+
+        if (
+            event.key === SESSION_KEY ||
+            event.key === DAILY_TIME_KEY ||
+            event.key === STUDY_HISTORY_KEY
+        ) {
+            renderStats();
+            renderQuests();
+        }
+
+    });
+
+
+    window.addEventListener("studyMindProgressUpdated", () => {
+        renderStats();
+        renderQuests();
+    });
+
+
+    window.addEventListener("studyMindStreakUpdated", () => {
+        syncLocalStats();
+        renderStats();
+        renderLevel();
+    });
+
+
+    window.addEventListener("studyMindXPUpdated", () => {
+        syncLocalStats();
+        renderStats();
+        renderLevel();
+        renderQuests();
+    });
+
+
+    window.addEventListener("studyMindUsernameChanged", event => {
+
+        const username = String(
+            event.detail?.username ||
+            localStorage.getItem(USERNAME_KEY) ||
+            "Student"
+        ).trim();
+
+        if (!username) return;
+
+        localStorage.setItem(USERNAME_KEY, username);
+        updateDashboardUsername(username);
+
+    });
+
+
+    window.addEventListener("studyMindProfileUpdated", async () => {
+        try {
+            await loadUser();
+        } catch (error) {
+            console.warn("Dashboard profile refresh failed:", error);
+        }
+    });
+
+
+    window.addEventListener("studyMindTimerChanged", () => {
+        renderSharedDashboardTimer();
+        renderStats();
+    });
+
+
+    window.addEventListener("studyMindStudyTimeUpdated", () => {
+        renderStats();
+        renderQuests();
+    });
+
+
+    window.addEventListener("studyMindStudyDataUpdated", () => {
+        renderStats();
+    });
+
+
+    window.addEventListener("studyMindSessionRecorded", () => {
+        renderStats();
+        renderQuests();
+    });
+
+
+    window.addEventListener("studyMindScoreUpdated", () => {
+        renderStats();
+    });
+
+
+    window.addEventListener("studyMindTimerCompleted", event => {
+
+        console.log(
+            "StudyMind Dashboard: timer completed.",
+            event.detail || {}
+        );
+
+        /*
+           The timer records the session before dispatching
+           this event. Read the stored session records again.
+        */
+
+        syncLocalStats();
+
+        renderStats();
+        renderLevel();
+        renderQuests();
+        renderRecommendation();
+        renderToday();
+        renderSharedDashboardTimer();
+
+    });
+
+
+    window.addEventListener("studyMindStudyDayCompleted", () => {
+        syncLocalStats();
+        renderStats();
+        renderLevel();
+    });
+
+
+    window.addEventListener("studyMindStreakIncreased", () => {
+        syncLocalStats();
+        renderStats();
+        renderLevel();
+    });
+
+
+    document.addEventListener("visibilitychange", async () => {
+
+        if (document.visibilityState !== "visible") return;
 
         try {
-
             await loadUser();
-
         } catch (error) {
-
-            console.warn(
-                "StudyMind Dashboard: username refresh failed:",
-                error
-            );
-
+            console.warn("Dashboard username refresh failed:", error);
         }
 
-    }
-);
+        studyPlan = loadJSON(PLAN_KEY, null);
+
+        syncLocalStats();
+        renderStats();
+        renderSharedDashboardTimer();
+
+    });
+
+
+    /*
+       A light refresh keeps the dashboard synchronized
+       with the timer and streak engine.
+    */
+
+    window.setInterval(() => {
+        syncLocalStats();
+        renderStats();
+        renderSharedDashboardTimer();
+    }, 2000);
+
+}
 
 
 /* =========================================================
@@ -705,62 +368,40 @@ document.addEventListener(
 
 function syncLocalStats() {
 
-    xp =
-        Number(
-            localStorage.getItem(
-                XP_KEY
-            ) || 0
-        );
+    xp = Math.max(
+        0,
+        Number(localStorage.getItem(XP_KEY) || 0)
+    );
 
     if (
         window.StudyMindStreak &&
-        typeof
-            window.StudyMindStreak
-                .calculateCurrentStreak ===
-            "function"
+        typeof window.StudyMindStreak.calculateCurrentStreak === "function"
     ) {
-
         try {
-
-            streak =
+            streak = Math.max(
+                0,
                 Number(
-                    window.StudyMindStreak
-                        .calculateCurrentStreak() ||
-                    0
-                );
-
+                    window.StudyMindStreak.calculateCurrentStreak() || 0
+                )
+            );
         } catch (error) {
-
-            console.warn(
-                "StudyMind streak calculation failed:",
-                error
+            streak = Math.max(
+                0,
+                Number(localStorage.getItem(STREAK_KEY) || 0)
             );
-
-            streak =
-                Number(
-                    localStorage.getItem(
-                        STREAK_KEY
-                    ) || 0
-                );
-
         }
-
     } else {
-
-        streak =
-            Number(
-                localStorage.getItem(
-                    STREAK_KEY
-                ) || 0
-            );
-
+        streak = Math.max(
+            0,
+            Number(localStorage.getItem(STREAK_KEY) || 0)
+        );
     }
 
 }
 
 
 /* =========================================================
-   USER — PERMANENT CROSS-DEVICE VERSION
+   USER
 ========================================================= */
 
 async function loadUser() {
@@ -772,107 +413,50 @@ async function loadUser() {
         window.studyMindSupabase ||
         null;
 
-    if (client) {
+    if (client?.auth) {
 
         try {
 
-            const {
-                data,
-                error
-            } =
-                await client.auth.getUser();
+            const { data, error } = await client.auth.getUser();
 
-            if (error) {
-                throw error;
-            }
+            if (error) throw error;
 
-            const user =
-                data?.user;
+            const user = data?.user;
 
             if (user) {
 
-                const metadata =
-                    user.user_metadata ||
-                    {};
+                const metadata = user.user_metadata || {};
 
-                username =
-                    String(
-                        metadata.username ||
-                        metadata.display_name ||
-                        metadata.name ||
-                        metadata.full_name ||
-                        ""
-                    ).trim();
+                username = String(
+                    metadata.username ||
+                    metadata.display_name ||
+                    metadata.name ||
+                    metadata.full_name ||
+                    user.email?.split("@")[0] ||
+                    ""
+                ).trim();
 
                 if (username) {
-
-                    localStorage.setItem(
-                        USERNAME_KEY,
-                        username
-                    );
-
-                    updateDashboardUsername(
-                        username
-                    );
-
+                    localStorage.setItem(USERNAME_KEY, username);
+                    updateDashboardUsername(username);
                     return username;
-
-                }
-
-                const emailUsername =
-                    String(
-                        user.email?.split("@")[0] ||
-                        ""
-                    ).trim();
-
-                if (emailUsername) {
-
-                    username =
-                        emailUsername;
-
-                    localStorage.setItem(
-                        USERNAME_KEY,
-                        username
-                    );
-
-                    updateDashboardUsername(
-                        username
-                    );
-
-                    return username;
-
                 }
 
             }
 
         } catch (error) {
-
-            console.warn(
-                "StudyMind Dashboard: Supabase username lookup failed:",
-                error
-            );
-
+            console.warn("Supabase username lookup failed:", error);
         }
 
     }
 
-    username =
-        String(
-            localStorage.getItem(
-                USERNAME_KEY
-            ) || ""
-        ).trim();
+    username = String(
+        localStorage.getItem(USERNAME_KEY) || "Student"
+    ).trim();
 
-    if (!username) {
+    if (!username) username = "Student";
 
-        username =
-            "Student";
-
-    }
-
-    updateDashboardUsername(
-        username
-    );
+    updateDashboardUsername(username);
 
     return username;
 
@@ -880,493 +464,403 @@ async function loadUser() {
 
 
 /* =========================================================
-   UPDATE DASHBOARD USERNAME
+   UPDATE USERNAME
 ========================================================= */
 
-function updateDashboardUsername(
-    username
-) {
+function updateDashboardUsername(username) {
 
-    username =
-        String(
-            username ||
-            "Student"
-        ).trim();
+    username = String(username || "Student").trim() || "Student";
 
-    if (!username) {
-
-        username =
-            "Student";
-
-    }
-
-    const element =
-        document.getElementById(
-            "username"
-        );
+    const element = document.getElementById("username");
 
     if (element) {
-
-        element.textContent =
-            username;
-
+        element.textContent = username;
     }
 
-    const avatar =
-        document.getElementById(
-            "avatar"
-        );
+    const avatar = document.getElementById("avatar");
 
     if (avatar) {
-
-        avatar.textContent =
-            username
-                .charAt(0)
-                .toUpperCase();
-
+        avatar.textContent = username.charAt(0).toUpperCase();
     }
 
 }
 
 
 /* =========================================================
-   STATS
+   DASHBOARD STATS
 ========================================================= */
 
 function renderStats() {
 
-syncLocalStats();
+    syncLocalStats();
 
+    const todayMinutes = getTodayStudyMinutes();
 
-/* =====================================================
-   CANONICAL LIVE STUDY METRICS
-===================================================== */
+    const targetMinutes = getDailyTargetMinutes();
 
-const todayMinutes =
-    getTodayStudyMinutes();
+    const progress = getStudyProgress();
 
+    setText("totalXP", xp);
+    setText("headerXP", `${xp} XP`);
 
-const targetMinutes =
-    getDailyTargetMinutes();
+    setText("streak", `${streak} days`);
+    setText("headerStreak", streak);
 
+    setText("studyProgress", `${progress}%`);
+    setWidth("studyProgressBar", progress);
 
-const progress =
-    getStudyProgress();
+    setText("todayGoal", formatStudyMinutes(todayMinutes));
 
-
-/* =====================================================
-   BASIC DASHBOARD STATS
-===================================================== */
-
-setText(
-    "totalXP",
-    xp
-);
-
-
-setText(
-    "headerXP",
-    `${xp} XP`
-);
-
-
-setText(
-    "streak",
-    `${streak} days`
-);
-
-
-setText(
-    "headerStreak",
-    streak
-);
-
-
-/* =====================================================
-   STUDY PROGRESS
-===================================================== */
-
-setText(
-    "studyProgress",
-    `${progress}%`
-);
-
-
-setWidth(
-    "studyProgressBar",
-    progress
-);
-
-
-/* =====================================================
-   TODAY'S GOAL
-   -----------------------------------------------------
-   IMPORTANT:
-   This now uses the EXACT SAME live study-time
-   metric as Study Progress.
-
-   Example with a 2-hour target:
-
-   0 min  → 0 min
-   1 min  → 1 min
-   10 min → 10 min
-   22 min → 22 min
-   60 min → 60 min
-   120 min → 120 min
-===================================================== */
-
-setText(
-    "todayGoal",
-    formatStudyMinutes(
-        todayMinutes
-    )
-);
-
-
-/* =====================================================
-   TODAY'S GOAL PROGRESS BAR
-===================================================== */
-
-const goalPercentage =
-    targetMinutes > 0
+    const goalPercentage = targetMinutes > 0
         ? Math.round(
             Math.min(
                 100,
-                Math.max(
-                    0,
-                    (
-                        todayMinutes /
-                        targetMinutes
-                    ) * 100
-                )
+                Math.max(0, todayMinutes / targetMinutes * 100)
             )
         )
         : 0;
 
-
-setWidth(
-    "todayGoalProgress",
-    goalPercentage
-);
-
-
-/* =====================================================
-   OTHER STUDY-TIME DISPLAYS
-===================================================== */
-
-setText(
-    "todayStudyTime",
-    formatStudyMinutes(
-        todayMinutes
-    )
-);
-
-
-setText(
-    "studyMinutes",
-    formatStudyMinutes(
-        todayMinutes
-    )
-);
-
-
-/* =====================================================
-   STREAK MESSAGE
-===================================================== */
-
-setText(
-    "streakMessage",
-    streak > 0
-        ? "Keep your learning momentum."
-        : "Start studying today to build your streak."
-);
-
-
-}
-
-
-/* =========================================================
-   GET TODAY'S STUDY MINUTES
-   ---------------------------------------------------------
-   CANONICAL SOURCE:
-       StudyMindScore
-
-   LIVE FALLBACK:
-       Shared StudyMind timer
-
-   This guarantees that Dashboard Study Progress and
-   Today's Goal visibly increase while the timer runs,
-   even if the Score engine has not refreshed yet.
-========================================================= */
-
-function getTodayStudyMinutes() {
-
-    let scoreMinutes = 0;
-
-    /* =====================================================
-       1. READ CANONICAL STUDY SCORE METRIC
-    ===================================================== */
-
-    try {
-
-        if (
-            window.StudyMindScore &&
-            typeof window.StudyMindScore.getMetrics ===
-            "function"
-        ) {
-
-            const metrics =
-                window.StudyMindScore.getMetrics();
-
-            const value =
-                Number(
-                    metrics?.todayMinutes
-                );
-
-            if (
-                Number.isFinite(value) &&
-                value >= 0
-            ) {
-
-                scoreMinutes =
-                    value;
-
-            }
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind Dashboard: Score metric read failed:",
-            error
-        );
-
-    }
-
-
-    /* =====================================================
-       2. READ LIVE TIMER DIRECTLY
-       -----------------------------------------------------
-       This does NOT create another timer.
-
-       It simply calculates how much of the currently
-       running shared timer has already elapsed.
-    ===================================================== */
-
-    let liveMinutes = 0;
-
-    try {
-
-        const running =
-            localStorage.getItem(
-                TIMER_RUNNING_KEY
-            ) === "true";
-
-        if (running) {
-
-            const selectedSeconds =
-                Number(
-                    localStorage.getItem(
-                        TIMER_DURATION_KEY
-                    )
-                ) || 0;
-
-            const endTime =
-                Number(
-                    localStorage.getItem(
-                        TIMER_END_KEY
-                    )
-                );
-
-            const storedSeconds =
-                Number(
-                    localStorage.getItem(
-                        TIMER_SECONDS_KEY
-                    )
-                );
-
-            let elapsedSeconds = 0;
-
-
-            /* ---------------------------------------------
-               Preferred calculation:
-               selected duration - current remaining time
-            --------------------------------------------- */
-
-            if (
-                selectedSeconds > 0 &&
-                Number.isFinite(endTime) &&
-                endTime > 0
-            ) {
-
-                const remainingSeconds =
-                    Math.max(
-                        0,
-                        Math.ceil(
-                            (
-                                endTime -
-                                Date.now()
-                            ) / 1000
-                        )
-                    );
-
-                elapsedSeconds =
-                    Math.max(
-                        0,
-                        selectedSeconds -
-                        remainingSeconds
-                    );
-
-            }
-
-
-            /* ---------------------------------------------
-               Fallback:
-               use session start + base duration
-            --------------------------------------------- */
-
-            if (
-                elapsedSeconds <= 0
-            ) {
-
-                const sessionStart =
-                    Number(
-                        localStorage.getItem(
-                            "studyMindTimerSessionStart"
-                        )
-                    );
-
-                const baseSeconds =
-                    Number(
-                        localStorage.getItem(
-                            "studyMindTimerBaseSeconds"
-                        )
-                    ) ||
-                    selectedSeconds;
-
-
-                if (
-                    Number.isFinite(sessionStart) &&
-                    sessionStart > 0
-                ) {
-
-                    elapsedSeconds =
-                        Math.max(
-                            0,
-                            Math.min(
-                                baseSeconds,
-                                Math.floor(
-                                    (
-                                        Date.now() -
-                                        sessionStart
-                                    ) / 1000
-                                )
-                            )
-                        );
-
-                }
-
-            }
-
-
-            /* ---------------------------------------------
-               Final fallback from timer state
-            --------------------------------------------- */
-
-            if (
-                elapsedSeconds <= 0 &&
-                selectedSeconds > 0 &&
-                Number.isFinite(storedSeconds)
-            ) {
-
-                elapsedSeconds =
-                    Math.max(
-                        0,
-                        selectedSeconds -
-                        Math.max(
-                            0,
-                            storedSeconds
-                        )
-                    );
-
-            }
-
-
-            liveMinutes =
-                elapsedSeconds / 60;
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "StudyMind Dashboard: live timer calculation failed:",
-            error
-        );
-
-        liveMinutes = 0;
-
-    }
-
-
-    /* =====================================================
-       3. USE THE LARGER CANONICAL VALUE
-       -----------------------------------------------------
-       StudyMindScore normally already contains:
-
-           persisted minutes + live timer minutes
-
-       Therefore we do NOT add the two together here.
-
-       We simply use whichever value is currently ahead.
-    ===================================================== */
-
-    const canonicalMinutes =
-        Math.max(
-            scoreMinutes,
-            liveMinutes
-        );
-
-
-    if (
-        canonicalMinutes > 0
-    ) {
-
-        return canonicalMinutes;
-
-    }
-
-
-    /* =====================================================
-       4. PERSISTED DAILY FALLBACK
-    ===================================================== */
-
-    const dailyTime =
-        loadJSON(
-            "studyMindDailyStudyTime",
-            {}
-        );
-
-    const today =
-        getLocalDateKey();
-
-    return Math.max(
-        0,
-        Number(
-            dailyTime?.[today]?.minutes ??
-            dailyTime?.[today] ??
-            0
-        )
+    setWidth("todayGoalProgress", goalPercentage);
+
+    setText("todayStudyTime", formatStudyMinutes(todayMinutes));
+    setText("studyMinutes", formatStudyMinutes(todayMinutes));
+
+    setText(
+        "streakMessage",
+        streak > 0
+            ? "Keep your learning momentum."
+            : "Start studying today to build your streak."
     );
 
 }
 
 
 /* =========================================================
-   GET DAILY TARGET MINUTES
+   DATE HELPERS
+========================================================= */
+
+function getLocalDateKey(date = new Date()) {
+
+    const year = date.getFullYear();
+
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+/* =========================================================
+   NORMALIZE A STORED DAILY-TIME VALUE
+========================================================= */
+
+function extractMinutes(value) {
+
+    if (value === null || value === undefined) {
+        return 0;
+    }
+
+    if (typeof value === "number" || typeof value === "string") {
+        return Math.max(0, Number(value) || 0);
+    }
+
+    if (typeof value === "object") {
+
+        return Math.max(
+            0,
+            Number(
+                value.minutes ??
+                value.totalMinutes ??
+                value.studyMinutes ??
+                value.durationMinutes ??
+                0
+            ) || 0
+        );
+
+    }
+
+    return 0;
+
+}
+
+
+/* =========================================================
+   READ TODAY'S DAILY-TIME RECORD
+========================================================= */
+
+function getMinutesFromDateRecord(storageKey, today) {
+
+    const data = loadJSON(storageKey, {});
+
+    if (!data || typeof data !== "object") {
+        return 0;
+    }
+
+    return extractMinutes(data[today]);
+
+}
+
+
+/* =========================================================
+   READ TODAY'S COMPLETED TIMER SESSIONS
+========================================================= */
+
+function getTodayMinutesFromSessions() {
+
+    const sessions = loadJSON(SESSION_KEY, []);
+
+    if (!Array.isArray(sessions)) {
+        return 0;
+    }
+
+    const today = getLocalDateKey();
+
+    return sessions.reduce((total, session) => {
+
+        if (!session || !session.date) {
+            return total;
+        }
+
+        /*
+           Timer sessions use YYYY-MM-DD.
+           Also accept ISO date strings for older records.
+        */
+
+        const sessionDate = String(session.date).slice(0, 10);
+
+        if (sessionDate !== today) {
+            return total;
+        }
+
+        return total + Math.max(
+            0,
+            Number(
+                session.minutes ??
+                session.durationMinutes ??
+                0
+            ) || 0
+        );
+
+    }, 0);
+
+}
+
+
+/* =========================================================
+   GET LIVE TIMER MINUTES
+========================================================= */
+
+function getLiveTimerMinutes() {
+
+    try {
+
+        const running =
+            localStorage.getItem(TIMER_RUNNING_KEY) === "true";
+
+        if (!running) return 0;
+
+        const selectedSeconds = Math.max(
+            0,
+            Number(localStorage.getItem(TIMER_DURATION_KEY) || 0)
+        );
+
+        const endTime = Number(
+            localStorage.getItem(TIMER_END_KEY)
+        );
+
+        const storedSeconds = Number(
+            localStorage.getItem(TIMER_SECONDS_KEY)
+        );
+
+        let elapsedSeconds = 0;
+
+        if (
+            selectedSeconds > 0 &&
+            Number.isFinite(endTime) &&
+            endTime > 0
+        ) {
+
+            const remainingSeconds = Math.max(
+                0,
+                Math.ceil((endTime - Date.now()) / 1000)
+            );
+
+            elapsedSeconds = Math.max(
+                0,
+                selectedSeconds - remainingSeconds
+            );
+
+        }
+
+        if (elapsedSeconds <= 0) {
+
+            const sessionStart = Number(
+                localStorage.getItem("studyMindTimerSessionStart")
+            );
+
+            const baseSeconds = Math.max(
+                0,
+                Number(
+                    localStorage.getItem("studyMindTimerBaseSeconds") ||
+                    selectedSeconds
+                )
+            );
+
+            if (
+                Number.isFinite(sessionStart) &&
+                sessionStart > 0
+            ) {
+
+                elapsedSeconds = Math.max(
+                    0,
+                    Math.min(
+                        baseSeconds,
+                        Math.floor((Date.now() - sessionStart) / 1000)
+                    )
+                );
+
+            }
+
+        }
+
+        if (
+            elapsedSeconds <= 0 &&
+            selectedSeconds > 0 &&
+            Number.isFinite(storedSeconds)
+        ) {
+
+            elapsedSeconds = Math.max(
+                0,
+                selectedSeconds - Math.max(0, storedSeconds)
+            );
+
+        }
+
+        return elapsedSeconds / 60;
+
+    } catch (error) {
+
+        console.warn("Dashboard live timer read failed:", error);
+
+        return 0;
+
+    }
+
+}
+
+
+/* =========================================================
+   GET TODAY'S STUDY MINUTES — FIXED
    ---------------------------------------------------------
-   Supports every StudyMind plan format currently used.
+   IMPORTANT:
+
+   These are alternative records of the same study time.
+   We use the largest reliable total rather than adding
+   every source together.
+
+   Example:
+   - Study Score says 25 minutes.
+   - Timer sessions say 50 minutes.
+   - Daily history says 50 minutes.
+
+   Result = 50 minutes, NOT 125 minutes.
+========================================================= */
+
+function getTodayStudyMinutes() {
+
+    const today = getLocalDateKey();
+
+    let scoreMinutes = 0;
+
+    /*
+       1. Study Score canonical metric.
+    */
+
+    try {
+
+        if (
+            window.StudyMindScore &&
+            typeof window.StudyMindScore.getMetrics === "function"
+        ) {
+
+            const metrics = window.StudyMindScore.getMetrics();
+
+            scoreMinutes = Math.max(
+                0,
+                Number(metrics?.todayMinutes) || 0
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Dashboard Study Score metric read failed:",
+            error
+        );
+
+    }
+
+
+    /*
+       2. Completed timer sessions.
+    */
+
+    const sessionMinutes =
+        getTodayMinutesFromSessions();
+
+
+    /*
+       3. Daily time saved by study-timer.js.
+    */
+
+    const dailyMinutes =
+        getMinutesFromDateRecord(
+            DAILY_TIME_KEY,
+            today
+        );
+
+
+    /*
+       4. Study history saved by study-timer.js.
+    */
+
+    const historyMinutes =
+        getMinutesFromDateRecord(
+            STUDY_HISTORY_KEY,
+            today
+        );
+
+
+    /*
+       5. Live timer.
+    */
+
+    const liveMinutes =
+        getLiveTimerMinutes();
+
+
+    /*
+       All five values represent overlapping views of
+       today's study time. Never sum them together.
+    */
+
+    return Math.max(
+        0,
+        scoreMinutes,
+        sessionMinutes,
+        dailyMinutes,
+        historyMinutes,
+        liveMinutes
+    );
+
+}
+
+
+/* =========================================================
+   DAILY TARGET
 ========================================================= */
 
 function getDailyTargetMinutes() {
@@ -1374,190 +868,92 @@ function getDailyTargetMinutes() {
     const possibleHours = [
 
         studyPlan?.hoursPerDay,
-
         studyPlan?.studyHours,
-
         studyPlan?.dailyHours,
-
         studyPlan?.dailyStudyHours,
-
         studyPlan?.hoursPerDayTarget,
-
         studyPlan?.dailyStudyTime,
-
         studyPlan?.studyTimePerDay
 
     ];
 
-
     let targetHours = 0;
 
+    for (const value of possibleHours) {
 
-    for (
-        const value of possibleHours
-    ) {
+        const number = Number(value);
 
-        const number =
-            Number(value);
-
-
-        if (
-            Number.isFinite(number) &&
-            number > 0
-        ) {
-
-            targetHours =
-                number;
-
+        if (Number.isFinite(number) && number > 0) {
+            targetHours = number;
             break;
-
         }
 
     }
 
-
     /*
-     * If the plan does not expose a daily-hour field,
-     * try the actual schedule for today.
-     */
+       If no daily-hours value exists, derive the target
+       from today's scheduled study sessions.
+    */
 
     if (
         targetHours <= 0 &&
-        Array.isArray(
-            studyPlan?.schedule
-        )
+        Array.isArray(studyPlan?.schedule)
     ) {
 
-        const today =
-            getLocalDateKey();
+        const today = getLocalDateKey();
 
-        const day =
-            studyPlan.schedule.find(
-                item =>
-                    String(
-                        item?.date || ""
-                    ).slice(0, 10) ===
-                    today
-            );
-
-        const sessions =
-            Array.isArray(
-                day?.sessions
-            )
-                ? day.sessions
-                : [];
-
-
-        let scheduledMinutes =
-            0;
-
-
-        sessions.forEach(
-            session => {
-
-                const type =
-                    String(
-                        session?.type || ""
-                    ).toLowerCase();
-
-
-                if (
-                    type === "break" ||
-                    type === "rest"
-                ) {
-
-                    return;
-
-                }
-
-
-                /*
-                 * First try an explicit duration.
-                 */
-
-                const duration =
-                    Number(
-                        session?.durationMinutes ??
-                        session?.duration ??
-                        session?.minutes ??
-                        0
-                    );
-
-
-                if (
-                    Number.isFinite(duration) &&
-                    duration > 0
-                ) {
-
-                    scheduledMinutes +=
-                        duration;
-
-                    return;
-
-                }
-
-
-                /*
-                 * Otherwise calculate from start/end
-                 * where possible.
-                 */
-
-                const start =
-                    parseScheduleTime(
-                        session?.start
-                    );
-
-                const end =
-                    parseScheduleTime(
-                        session?.end
-                    );
-
-
-                if (
-                    start !== null &&
-                    end !== null &&
-                    end > start
-                ) {
-
-                    scheduledMinutes +=
-                        end - start;
-
-                }
-
-            }
+        const day = studyPlan.schedule.find(item =>
+            String(item?.date || "").slice(0, 10) === today
         );
 
+        const sessions = Array.isArray(day?.sessions)
+            ? day.sessions
+            : [];
 
-        if (
-            scheduledMinutes > 0
-        ) {
+        let scheduledMinutes = 0;
 
+        sessions.forEach(session => {
+
+            const type = String(
+                session?.type || ""
+            ).toLowerCase();
+
+            if (type === "break" || type === "rest") {
+                return;
+            }
+
+            const duration = Number(
+                session?.durationMinutes ??
+                session?.duration ??
+                session?.minutes ??
+                0
+            );
+
+            if (Number.isFinite(duration) && duration > 0) {
+                scheduledMinutes += duration;
+                return;
+            }
+
+            const start = parseScheduleTime(session?.start);
+            const end = parseScheduleTime(session?.end);
+
+            if (start !== null && end !== null && end > start) {
+                scheduledMinutes += end - start;
+            }
+
+        });
+
+        if (scheduledMinutes > 0) {
             return scheduledMinutes;
-
         }
 
     }
 
-
-    /*
-     * StudyMind's historical default:
-     * 2 hours/day.
-     */
-
-    if (
-        targetHours <= 0
-    ) {
-
-        targetHours =
-            2;
-
+    if (targetHours <= 0) {
+        targetHours = 2;
     }
 
-
-    return Math.max(
-        1,
-        targetHours * 60
-    );
+    return Math.max(1, targetHours * 60);
 
 }
 
@@ -1566,90 +962,38 @@ function getDailyTargetMinutes() {
    PARSE SCHEDULE TIME
 ========================================================= */
 
-function parseScheduleTime(
-    value
-) {
+function parseScheduleTime(value) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return null;
-
-    }
-
-
-    const text =
-        String(
-            value
-        ).trim();
-
-
-    if (!text) {
+    if (value === null || value === undefined) {
         return null;
     }
 
+    const text = String(value).trim();
 
-    /*
-     * HH:MM
-     */
+    if (!text) return null;
 
-    const match =
-        text.match(
-            /^(\d{1,2}):(\d{2})/
-        );
+    const match = text.match(/^(\d{1,2}):(\d{2})/);
 
+    if (!match) return null;
 
-    if (!match) {
-        return null;
-    }
+    let hours = Number(match[1]);
 
-
-    let hours =
-        Number(
-            match[1]
-        );
-
-    const minutes =
-        Number(
-            match[2]
-        );
-
+    const minutes = Number(match[2]);
 
     if (
         !Number.isFinite(hours) ||
         !Number.isFinite(minutes)
     ) {
-
         return null;
-
     }
 
-
-    /*
-     * Handle AM / PM if present.
-     */
-
-    if (
-        /\bpm\b/i.test(text) &&
-        hours < 12
-    ) {
-
+    if (/\bpm\b/i.test(text) && hours < 12) {
         hours += 12;
-
     }
 
-
-    if (
-        /\bam\b/i.test(text) &&
-        hours === 12
-    ) {
-
+    if (/\bam\b/i.test(text) && hours === 12) {
         hours = 0;
-
     }
-
 
     if (
         hours < 0 ||
@@ -1657,70 +1001,30 @@ function parseScheduleTime(
         minutes < 0 ||
         minutes > 59
     ) {
-
         return null;
-
     }
 
-
-    return (
-        hours * 60 +
-        minutes
-    );
+    return hours * 60 + minutes;
 
 }
 
 
 /* =========================================================
-   CALCULATE STUDY PROGRESS
-   ---------------------------------------------------------
-   Today's study time / today's target.
-
-   Example:
-   2-hour target = 120 minutes
-
-   0 min   = 0%
-   1 min   = 1%
-   30 min  = 25%
-   60 min  = 50%
-   90 min  = 75%
-   120 min = 100%
-
-   Never exceeds 100%.
+   STUDY PROGRESS
 ========================================================= */
 
 function getStudyProgress() {
 
-    const todayMinutes =
-        getTodayStudyMinutes();
+    const todayMinutes = getTodayStudyMinutes();
 
-    const targetMinutes =
-        getDailyTargetMinutes();
+    const targetMinutes = getDailyTargetMinutes();
 
-
-    if (
-        targetMinutes <= 0
-    ) {
-
-        return 0;
-
-    }
-
-
-    const percentage =
-        (
-            todayMinutes /
-            targetMinutes
-        ) * 100;
-
+    if (targetMinutes <= 0) return 0;
 
     return Math.round(
         Math.min(
             100,
-            Math.max(
-                0,
-                percentage
-            )
+            Math.max(0, todayMinutes / targetMinutes * 100)
         )
     );
 
@@ -1731,30 +1035,19 @@ function getStudyProgress() {
    FORMAT STUDY MINUTES
 ========================================================= */
 
-function formatStudyMinutes(
-    minutes
-) {
+function formatStudyMinutes(minutes) {
 
-    minutes =
-        Math.max(
-            0,
-            Math.floor(
-                Number(minutes) || 0
-            )
-        );
+    minutes = Math.max(
+        0,
+        Math.floor(Number(minutes) || 0)
+    );
 
-    const hours =
-        Math.floor(
-            minutes / 60
-        );
+    const hours = Math.floor(minutes / 60);
 
-    const remainingMinutes =
-        minutes % 60;
+    const remainingMinutes = minutes % 60;
 
     if (hours > 0) {
-
         return `${hours}h ${remainingMinutes}m`;
-
     }
 
     return `${remainingMinutes} min`;
@@ -1768,29 +1061,17 @@ function formatStudyMinutes(
 
 function renderToday() {
 
-    const container =
-        document.getElementById(
-            "todaySchedule"
-        );
+    const container = document.getElementById("todaySchedule");
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
-    if (
-        !studyPlan ||
-        !Array.isArray(
-            studyPlan.schedule
-        )
-    ) {
+    if (!studyPlan || !Array.isArray(studyPlan.schedule)) {
 
         container.innerHTML = `
             <div class="loading">
                 No AI study plan found.
                 <br><br>
-                <a href="home.html">
-                    Create your plan →
-                </a>
+                <a href="home.html">Create your plan →</a>
             </div>
         `;
 
@@ -1798,35 +1079,17 @@ function renderToday() {
 
     }
 
-    const today =
-        getLocalDateKey();
+    const today = getLocalDateKey();
 
-    const day =
-        studyPlan.schedule.find(
-            item =>
-                String(
-                    item?.date || ""
-                ).slice(0, 10) === today
-        );
+    const day = studyPlan.schedule.find(item =>
+        String(item?.date || "").slice(0, 10) === today
+    );
 
     if (!day) {
 
-        const firstDay =
-            studyPlan.schedule[0];
-
-        const isRest =
-            String(
-                firstDay?.dayType || ""
-            ).toLowerCase() ===
-            "rest";
-
         container.innerHTML = `
             <div class="loading">
-                ${
-                    isRest
-                        ? "Today is a planned recovery day."
-                        : "No session is scheduled today."
-                }
+                No session is scheduled today.
             </div>
         `;
 
@@ -1834,24 +1097,15 @@ function renderToday() {
 
     }
 
-    if (
-        String(
-            day.dayType || ""
-        ).toLowerCase() ===
-        "rest"
-    ) {
+    if (String(day.dayType || "").toLowerCase() === "rest") {
 
         container.innerHTML = `
             <div class="loading">
                 🧘
                 <br>
-                <strong>
-                    AI Recovery Day
-                </strong>
+                <strong>AI Recovery Day</strong>
                 <br>
-                <span>
-                    Recovery is part of your study strategy.
-                </span>
+                <span>Recovery is part of your study strategy.</span>
             </div>
         `;
 
@@ -1859,29 +1113,17 @@ function renderToday() {
 
     }
 
-    const sessions =
-        Array.isArray(
-            day.sessions
-        )
-            ? day.sessions
-            : [];
+    const sessions = Array.isArray(day.sessions)
+        ? day.sessions
+        : [];
 
-    const studySessions =
-        sessions.filter(
-            session => {
+    const studySessions = sessions.filter(session => {
 
-                const type =
-                    String(
-                        session?.type || ""
-                    ).toLowerCase();
+        const type = String(session?.type || "").toLowerCase();
 
-                return (
-                    type !== "break" &&
-                    type !== "rest"
-                );
+        return type !== "break" && type !== "rest";
 
-            }
-        );
+    });
 
     if (!studySessions.length) {
 
@@ -1895,108 +1137,63 @@ function renderToday() {
 
     }
 
-    container.innerHTML =
-        studySessions
-            .map(
-                session => `
+    container.innerHTML = studySessions.map(session => `
 
-                    <div class="study-session">
+        <div class="study-session">
 
-                        <div>
+            <div>
+                <div class="session-time">
+                    ${escapeHTML(session?.start || "")}
+                    —
+                    ${escapeHTML(session?.end || "")}
+                </div>
 
-                            <div class="session-time">
-                                ${escapeHTML(
-                                    session?.start ||
-                                    ""
-                                )}
-                                —
-                                ${escapeHTML(
-                                    session?.end ||
-                                    ""
-                                )}
-                            </div>
+                <div class="session-type">
+                    ${escapeHTML(session?.type || "Study")}
+                </div>
+            </div>
 
-                            <div class="session-type">
-                                ${escapeHTML(
-                                    session?.type ||
-                                    "Study"
-                                )}
-                            </div>
+            <div>
+                <strong>
+                    ${escapeHTML(session?.subject || "Study")}
+                </strong>
 
-                        </div>
+                <div class="session-type">
+                    ${escapeHTML(session?.topic || "")}
+                </div>
+            </div>
 
-                        <div>
+            <button
+                class="session-action"
+                data-session="${escapeAttribute(JSON.stringify(session))}"
+                type="button"
+            >
+                Start
+            </button>
 
-                            <strong>
-                                ${escapeHTML(
-                                    session?.subject ||
-                                    "Study"
-                                )}
-                            </strong>
+        </div>
 
-                            <div class="session-type">
-                                ${escapeHTML(
-                                    session?.topic ||
-                                    ""
-                                )}
-                            </div>
+    `).join("");
 
-                        </div>
+    container.querySelectorAll("[data-session]").forEach(button => {
 
-                        <button
-                            class="session-action"
-                            data-session="${escapeAttribute(
-                                JSON.stringify(
-                                    session
-                                )
-                            )}"
-                            type="button"
-                        >
-                            Start
-                        </button>
+        button.addEventListener("click", () => {
 
-                    </div>
+            try {
 
-                `
-            )
-            .join("");
+                const session = JSON.parse(button.dataset.session);
 
-    container
-        .querySelectorAll(
-            "[data-session]"
-        )
-        .forEach(
-            button => {
+                startStudySession(session);
 
-                button.addEventListener(
-                    "click",
-                    () => {
+            } catch (error) {
 
-                        try {
-
-                            const session =
-                                JSON.parse(
-                                    button.dataset.session
-                                );
-
-                            startStudySession(
-                                session
-                            );
-
-                        } catch (error) {
-
-                            console.error(
-                                "StudyMind session parsing failed:",
-                                error
-                            );
-
-                        }
-
-                    }
-                );
+                console.error("Study session parsing failed:", error);
 
             }
-        );
+
+        });
+
+    });
 
 }
 
@@ -2005,34 +1202,20 @@ function renderToday() {
    START STUDY SESSION
 ========================================================= */
 
-function startStudySession(
-    session
-) {
+function startStudySession(session) {
 
-    if (
-        !session ||
-        typeof session !== "object"
-    ) {
-        return;
-    }
+    if (!session || typeof session !== "object") return;
 
     localStorage.setItem(
         "studyMindCurrentStudySession",
         JSON.stringify({
-
             ...session,
-
-            startedAt:
-                Date.now(),
-
-            minimumMinutes:
-                25
-
+            startedAt: Date.now(),
+            minimumMinutes: 25
         })
     );
 
-    window.location.href =
-        "study-session.html";
+    window.location.href = "study-session.html";
 
 }
 
@@ -2045,13 +1228,9 @@ function getSharedTimerEngine() {
 
     if (
         window.StudyMindTimer &&
-        typeof
-            window.StudyMindTimer.getState ===
-            "function"
+        typeof window.StudyMindTimer.getState === "function"
     ) {
-
         return window.StudyMindTimer;
-
     }
 
     return null;
@@ -2059,32 +1238,19 @@ function getSharedTimerEngine() {
 }
 
 
-/* =========================================================
-   ENSURE SHARED TIMER ENGINE
-========================================================= */
-
 function ensureSharedTimerEngine() {
 
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
     if (
         engine &&
-        typeof engine.initialize ===
-        "function"
+        typeof engine.initialize === "function"
     ) {
 
         try {
-
             engine.initialize();
-
         } catch (error) {
-
-            console.warn(
-                "StudyMind shared timer initialization failed:",
-                error
-            );
-
+            console.warn("Shared timer initialization failed:", error);
         }
 
         renderSharedDashboardTimer();
@@ -2095,109 +1261,61 @@ function ensureSharedTimerEngine() {
 
     let attempts = 0;
 
-    const retry =
-        window.setInterval(
-            () => {
+    const retry = window.setInterval(() => {
 
-                attempts++;
+        attempts++;
 
-                const sharedEngine =
-                    getSharedTimerEngine();
+        const sharedEngine = getSharedTimerEngine();
 
-                if (
-                    sharedEngine &&
-                    typeof
-                        sharedEngine.initialize ===
-                    "function"
-                ) {
+        if (
+            sharedEngine &&
+            typeof sharedEngine.initialize === "function"
+        ) {
 
-                    window.clearInterval(
-                        retry
-                    );
+            window.clearInterval(retry);
 
-                    try {
+            try {
+                sharedEngine.initialize();
+            } catch (error) {
+                console.warn("Shared timer initialization failed:", error);
+            }
 
-                        sharedEngine.initialize();
+            renderSharedDashboardTimer();
 
-                    } catch (error) {
+            return;
 
-                        console.warn(
-                            "StudyMind shared timer initialization failed:",
-                            error
-                        );
+        }
 
-                    }
+        if (attempts >= 40) {
 
-                    renderSharedDashboardTimer();
+            window.clearInterval(retry);
 
-                    return;
+            console.warn("StudyMind: study-timer.js was not available.");
 
-                }
+        }
 
-                if (
-                    attempts >= 40
-                ) {
-
-                    window.clearInterval(
-                        retry
-                    );
-
-                    console.warn(
-                        "StudyMind: study-timer.js was not available."
-                    );
-
-                }
-
-            },
-            250
-        );
+    }, 250);
 
     return false;
 
 }
 
 
-/* =========================================================
-   SETUP DASHBOARD TIMER
-========================================================= */
-
 function setupSharedDashboardTimer() {
 
-    const display =
-        document.getElementById(
-            "dashboardTimerDisplay"
-        );
+    const display = document.getElementById("dashboardTimerDisplay");
 
-    if (!display) {
+    if (!display) return;
 
-        console.warn(
-            "StudyMind Dashboard: dashboard timer display not found."
-        );
-
-        return;
-
-    }
-
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
     if (!engine) {
-
-        console.warn(
-            "StudyMind Dashboard: shared timer engine unavailable."
-        );
-
+        console.warn("Dashboard shared timer engine unavailable.");
         return;
-
     }
 
-    if (
-        typeof engine.initialize ===
-        "function"
-    ) {
-
+    if (typeof engine.initialize === "function") {
         engine.initialize();
-
     }
 
     renderSharedDashboardTimer();
@@ -2205,253 +1323,116 @@ function setupSharedDashboardTimer() {
 }
 
 
-/* =========================================================
-   SELECT SHARED TIMER DURATION
-========================================================= */
+function selectSharedTimerDuration(duration) {
 
-function selectSharedTimerDuration(
-    duration
-) {
+    duration = Number(duration);
 
-    duration =
-        Number(duration);
+    if (!Number.isFinite(duration) || duration <= 0) return;
 
-    if (
-        !Number.isFinite(duration) ||
-        duration <= 0
-    ) {
+    const engine = getSharedTimerEngine();
 
-        return;
-
-    }
-
-    const engine =
-        getSharedTimerEngine();
-
-    if (
-        engine &&
-        typeof engine.selectDuration ===
-        "function"
-    ) {
+    if (engine && typeof engine.selectDuration === "function") {
 
         try {
-
-            engine.selectDuration(
-                duration
-            );
-
+            engine.selectDuration(duration);
         } catch (error) {
-
-            console.warn(
-                "StudyMind timer duration selection failed:",
-                error
-            );
-
+            console.warn("Timer duration selection failed:", error);
         }
 
         renderSharedDashboardTimer();
-
         renderStats();
 
         return;
 
     }
 
-    if (
-        isSharedTimerRunning()
-    ) {
+    if (isSharedTimerRunning()) return;
 
-        return;
+    localStorage.setItem(TIMER_DURATION_KEY, String(duration));
+    localStorage.setItem(TIMER_SECONDS_KEY, String(duration));
 
-    }
+    localStorage.removeItem(TIMER_END_KEY);
 
-    localStorage.setItem(
-        TIMER_DURATION_KEY,
-        String(duration)
-    );
+    localStorage.setItem(TIMER_RUNNING_KEY, "false");
 
-    localStorage.setItem(
-        TIMER_SECONDS_KEY,
-        String(duration)
-    );
-
-    localStorage.removeItem(
-        TIMER_END_KEY
-    );
-
-    localStorage.setItem(
-        TIMER_RUNNING_KEY,
-        "false"
-    );
-
-    window.dispatchEvent(
-        new Event(
-            "studyMindTimerChanged"
-        )
-    );
+    window.dispatchEvent(new Event("studyMindTimerChanged"));
 
     renderSharedDashboardTimer();
 
 }
 
 
-/* =========================================================
-   GET SHARED TIMER STATE
-========================================================= */
-
 function getSharedTimerState() {
 
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
     if (engine) {
 
         try {
-
             return engine.getState();
-
         } catch (error) {
-
-            console.warn(
-                "StudyMind timer state lookup failed:",
-                error
-            );
-
+            console.warn("Timer state lookup failed:", error);
         }
 
     }
 
     const running =
-        localStorage.getItem(
-            TIMER_RUNNING_KEY
-        ) === "true";
+        localStorage.getItem(TIMER_RUNNING_KEY) === "true";
 
-    const endTime =
-        Number(
-            localStorage.getItem(
-                TIMER_END_KEY
-            )
+    const endTime = Number(localStorage.getItem(TIMER_END_KEY));
+
+    const storedSeconds = Number(localStorage.getItem(TIMER_SECONDS_KEY));
+
+    let seconds = Number.isFinite(storedSeconds)
+        ? Math.max(0, Math.floor(storedSeconds))
+        : 0;
+
+    if (running && Number.isFinite(endTime)) {
+
+        seconds = Math.max(
+            0,
+            Math.ceil((endTime - Date.now()) / 1000)
         );
-
-    const storedSeconds =
-        Number(
-            localStorage.getItem(
-                TIMER_SECONDS_KEY
-            )
-        );
-
-    let seconds =
-        Number.isFinite(
-            storedSeconds
-        )
-            ? Math.max(
-                0,
-                Math.floor(
-                    storedSeconds
-                )
-            )
-            : 0;
-
-    if (
-        running &&
-        Number.isFinite(
-            endTime
-        )
-    ) {
-
-        seconds =
-            Math.max(
-                0,
-                Math.ceil(
-                    (
-                        endTime -
-                        Date.now()
-                    ) / 1000
-                )
-            );
 
     }
 
     return {
-
         running,
-
         seconds,
-
-        endTime:
-            Number.isFinite(
-                endTime
-            )
-                ? endTime
-                : null,
-
+        endTime: Number.isFinite(endTime) ? endTime : null,
         selectedSeconds:
-            Number(
-                localStorage.getItem(
-                    TIMER_DURATION_KEY
-                )
-            ) ||
+            Number(localStorage.getItem(TIMER_DURATION_KEY)) ||
             25 * 60
-
     };
 
 }
 
 
-/* =========================================================
-   GET REMAINING TIMER TIME
-========================================================= */
-
 function getSharedTimerRemaining() {
 
-    const state =
-        getSharedTimerState();
+    const state = getSharedTimerState();
 
-    return Math.max(
-        0,
-        Number(
-            state?.seconds
-        ) || 0
-    );
+    return Math.max(0, Number(state?.seconds) || 0);
 
 }
 
-
-/* =========================================================
-   CHECK TIMER RUNNING
-========================================================= */
 
 function isSharedTimerRunning() {
 
-    const state =
-        getSharedTimerState();
-
-    return (
-        state?.running === true
-    );
+    return getSharedTimerState()?.running === true;
 
 }
 
 
-/* =========================================================
-   START SHARED TIMER
-========================================================= */
-
 function startSharedTimer() {
 
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
-    if (
-        engine &&
-        typeof engine.start ===
-        "function"
-    ) {
+    if (engine && typeof engine.start === "function") {
 
         engine.start();
 
         renderSharedDashboardTimer();
-
         renderStats();
 
         return true;
@@ -2465,25 +1446,15 @@ function startSharedTimer() {
 }
 
 
-/* =========================================================
-   PAUSE SHARED TIMER
-========================================================= */
-
 function pauseSharedTimer() {
 
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
-    if (
-        engine &&
-        typeof engine.pause ===
-        "function"
-    ) {
+    if (engine && typeof engine.pause === "function") {
 
         engine.pause();
 
         renderSharedDashboardTimer();
-
         renderStats();
 
         return true;
@@ -2495,25 +1466,15 @@ function pauseSharedTimer() {
 }
 
 
-/* =========================================================
-   RESET SHARED TIMER
-========================================================= */
-
 function resetSharedTimer() {
 
-    const engine =
-        getSharedTimerEngine();
+    const engine = getSharedTimerEngine();
 
-    if (
-        engine &&
-        typeof engine.reset ===
-        "function"
-    ) {
+    if (engine && typeof engine.reset === "function") {
 
         engine.reset();
 
         renderSharedDashboardTimer();
-
         renderStats();
 
         return true;
@@ -2531,75 +1492,44 @@ function resetSharedTimer() {
 
 function renderSharedDashboardTimer() {
 
-    const display =
-        document.getElementById(
-            "dashboardTimerDisplay"
-        );
+    const display = document.getElementById("dashboardTimerDisplay");
 
-    if (!display) {
-        return;
-    }
+    if (!display) return;
 
-    const state =
-        getSharedTimerState();
+    const state = getSharedTimerState();
 
-    const remaining =
-        Math.max(
-            0,
-            Number(
-                state?.seconds
-            ) || 0
-        );
+    const remaining = Math.max(
+        0,
+        Number(state?.seconds) || 0
+    );
 
-    const running =
-        state?.running === true;
+    const running = state?.running === true;
 
-    display.textContent =
-        formatTimerSeconds(
-            remaining
-        );
+    display.textContent = formatTimerSeconds(remaining);
 
-    const status =
-        document.getElementById(
-            "dashboardTimerStatus"
-        );
+    const status = document.getElementById("dashboardTimerStatus");
 
     if (status) {
 
         if (running) {
-
-            status.textContent =
-                "Focus session in progress";
-
-        } else if (
-            remaining <= 0
-        ) {
-
-            status.textContent =
-                "Session complete";
-
+            status.textContent = "Focus session in progress";
+        } else if (remaining <= 0) {
+            status.textContent = "Session complete";
         } else {
-
-            status.textContent =
-                "Timer paused";
-
+            status.textContent = "Timer paused";
         }
 
     }
 
-    const startButton =
-        document.getElementById(
-            "dashboardTimerStart"
-        );
+    const startButton = document.getElementById("dashboardTimerStart");
 
     if (startButton) {
 
-        startButton.textContent =
-            running
-                ? "Pause"
-                : remaining <= 0
-                    ? "Start"
-                    : "Resume";
+        startButton.textContent = running
+            ? "Pause"
+            : remaining <= 0
+                ? "Start"
+                : "Resume";
 
     }
 
@@ -2608,657 +1538,355 @@ function renderSharedDashboardTimer() {
 }
 
 
-/* =========================================================
-   TIMER REFRESH LOOP
-========================================================= */
-
-let dashboardTimerRefreshStarted =
-    false;
+let dashboardTimerRefreshStarted = false;
 
 function startDashboardTimerRefresh() {
 
-    if (
-        dashboardTimerRefreshStarted
-    ) {
+    if (dashboardTimerRefreshStarted) return;
 
-        return;
+    dashboardTimerRefreshStarted = true;
 
-    }
+    window.setInterval(() => {
 
-    dashboardTimerRefreshStarted =
-        true;
+        renderSharedDashboardTimer();
 
-    window.setInterval(
-        () => {
+        if (isSharedTimerRunning()) {
+            renderStats();
+        }
 
-            renderSharedDashboardTimer();
-
-            /*
-             * This is NOT a second timer engine.
-             *
-             * It only refreshes the Dashboard UI.
-             *
-             * StudyMindScore remains responsible for
-             * calculating the canonical live study time.
-             */
-
-            if (
-                isSharedTimerRunning()
-            ) {
-
-                renderStats();
-
-            }
-
-        },
-        1000
-    );
+    }, 1000);
 
 }
 
 
-/* =========================================================
-   TIMER FORMAT
-========================================================= */
+function formatTimerSeconds(seconds) {
 
-function formatTimerSeconds(
-    seconds
-) {
+    seconds = Math.max(
+        0,
+        Math.floor(Number(seconds) || 0)
+    );
 
-    seconds =
-        Math.max(
-            0,
-            Math.floor(
-                Number(seconds) || 0
-            )
-        );
+    const minutes = Math.floor(seconds / 60);
 
-    const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
-    const remainingSeconds =
-        seconds % 60;
+    const remainingSeconds = seconds % 60;
 
     return (
-        String(
-            minutes
-        ).padStart(
-            2,
-            "0"
-        ) +
-
+        String(minutes).padStart(2, "0") +
         ":" +
-
-        String(
-            remainingSeconds
-        ).padStart(
-            2,
-            "0"
-        )
+        String(remainingSeconds).padStart(2, "0")
     );
 
 }
 
-
-/* =========================================================
-   TIMER PRESET VISUAL STATE
-========================================================= */
 
 function updateTimerPresetButtons() {
 
-    const selected =
-        Number(
-            localStorage.getItem(
-                TIMER_DURATION_KEY
-            )
-        );
-
-    document
-        .querySelectorAll(
-            ".timer-preset"
-        )
-        .forEach(
-            button => {
-
-                const duration =
-                    Number(
-                        button.dataset.duration
-                    );
-
-                button.classList.toggle(
-                    "active",
-                    duration === selected
-                );
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   DAILY STUDY TIME
-   Compatibility only.
-========================================================= */
-
-function updateDailyStudyTime(
-    minutes
-) {
-
-    const key =
-        "studyMindDailyStudyTime";
-
-    const data =
-        loadJSON(
-            key,
-            {}
-        );
-
-    const today =
-        getLocalDateKey();
-
-    data[today] =
-        Number(
-            data[today] || 0
-        ) +
-        Number(
-            minutes || 0
-        );
-
-    localStorage.setItem(
-        key,
-        JSON.stringify(
-            data
-        )
+    const selected = Number(
+        localStorage.getItem(TIMER_DURATION_KEY)
     );
 
+    document.querySelectorAll(".timer-preset").forEach(button => {
+
+        const duration = Number(button.dataset.duration);
+
+        button.classList.toggle("active", duration === selected);
+
+    });
+
 }
 
 
 /* =========================================================
-   GET ALL PLAN TOPICS
+   DAILY STUDY TIME — COMPATIBILITY
+========================================================= */
+
+function updateDailyStudyTime(minutes) {
+
+    const data = loadJSON(DAILY_TIME_KEY, {});
+
+    const today = getLocalDateKey();
+
+    const current = extractMinutes(data[today]);
+
+    data[today] = current + Math.max(
+        0,
+        Number(minutes) || 0
+    );
+
+    localStorage.setItem(DAILY_TIME_KEY, JSON.stringify(data));
+
+}
+
+
+/* =========================================================
+   PLAN TOPICS
 ========================================================= */
 
 function getAllStudyTopics() {
 
-    if (!studyPlan) {
-        return [];
-    }
+    if (!studyPlan) return [];
 
     const topics = [];
 
-    if (
-        Array.isArray(
-            studyPlan.subjects
-        )
-    ) {
+    if (Array.isArray(studyPlan.subjects)) {
 
-        studyPlan.subjects.forEach(
-            subject => {
+        studyPlan.subjects.forEach(subject => {
 
-                if (
-                    !Array.isArray(
-                        subject?.topics
-                    )
-                ) {
+            if (!Array.isArray(subject?.topics)) return;
 
-                    return;
+            subject.topics.forEach(topic => {
 
-                }
+                if (typeof topic === "string") {
 
-                subject.topics.forEach(
-                    topic => {
-
-                        if (
-                            typeof topic ===
-                            "string"
-                        ) {
-
-                            const name =
-                                topic.trim();
-
-                            if (name) {
-
-                                topics.push({
-
-                                    name,
-
-                                    subject:
-                                        String(
-                                            subject?.name ||
-                                            subject?.subject ||
-                                            ""
-                                        ).trim()
-
-                                });
-
-                            }
-
-                            return;
-
-                        }
-
-                        if (
-                            topic &&
-                            typeof topic ===
-                            "object"
-                        ) {
-
-                            const name =
-                                String(
-                                    topic.name ||
-                                    topic.title ||
-                                    topic.topic ||
-                                    ""
-                                ).trim();
-
-                            if (!name) {
-                                return;
-                            }
-
-                            topics.push({
-
-                                ...topic,
-
-                                name,
-
-                                subject:
-                                    String(
-                                        topic.subject ||
-                                        subject?.name ||
-                                        subject?.subject ||
-                                        ""
-                                    ).trim()
-
-                            });
-
-                        }
-
-                    }
-                );
-
-            }
-        );
-
-    }
-
-    if (
-        Array.isArray(
-            studyPlan.topics
-        )
-    ) {
-
-        studyPlan.topics.forEach(
-            topic => {
-
-                if (
-                    typeof topic ===
-                    "string"
-                ) {
-
-                    const name =
-                        topic.trim();
+                    const name = topic.trim();
 
                     if (name) {
-
                         topics.push({
-
                             name,
-
-                            subject: ""
-
+                            subject: String(
+                                subject?.name ||
+                                subject?.subject ||
+                                ""
+                            ).trim()
                         });
-
                     }
 
                     return;
 
                 }
 
-                if (
-                    topic &&
-                    typeof topic ===
-                    "object"
-                ) {
+                if (topic && typeof topic === "object") {
 
-                    const name =
-                        String(
-                            topic.name ||
-                            topic.title ||
-                            topic.topic ||
-                            ""
-                        ).trim();
+                    const name = String(
+                        topic.name ||
+                        topic.title ||
+                        topic.topic ||
+                        ""
+                    ).trim();
 
-                    if (!name) {
-                        return;
-                    }
+                    if (!name) return;
 
                     topics.push({
-
                         ...topic,
-
                         name,
-
-                        subject:
-                            String(
-                                topic.subject ||
-                                ""
-                            ).trim()
-
+                        subject: String(
+                            topic.subject ||
+                            subject?.name ||
+                            subject?.subject ||
+                            ""
+                        ).trim()
                     });
 
                 }
 
-            }
-        );
+            });
+
+        });
 
     }
 
-    const unique =
-        new Map();
+    if (Array.isArray(studyPlan.topics)) {
 
-    topics.forEach(
-        topic => {
+        studyPlan.topics.forEach(topic => {
 
-            const key =
-                `${topic.subject}::${topic.name}`;
+            if (typeof topic === "string") {
 
-            if (
-                !unique.has(key)
-            ) {
+                const name = topic.trim();
 
-                unique.set(
-                    key,
-                    topic
-                );
-
-            }
-
-        }
-    );
-
-    return [
-        ...unique.values()
-    ];
-
-}
-
-
-/* =========================================================
-   COMPLETED TOPIC NORMALIZATION
-========================================================= */
-
-function getCompletedTopicSet() {
-
-    const stored =
-        loadJSON(
-            COMPLETED_TOPICS_KEY,
-            []
-        );
-
-    const completed =
-        new Set();
-
-    if (
-        !Array.isArray(
-            stored
-        )
-    ) {
-
-        return completed;
-
-    }
-
-    stored.forEach(
-        item => {
-
-            if (
-                typeof item ===
-                "string"
-            ) {
-
-                const value =
-                    item.trim();
-
-                if (!value) {
-                    return;
-                }
-
-                completed.add(
-                    value
-                );
-
-                if (
-                    value.includes("::")
-                ) {
-
-                    const parts =
-                        value.split("::");
-
-                    const topic =
-                        parts
-                            .slice(1)
-                            .join("::")
-                            .trim();
-
-                    if (topic) {
-
-                        completed.add(
-                            topic
-                        );
-
-                    }
-
+                if (name) {
+                    topics.push({ name, subject: "" });
                 }
 
                 return;
 
             }
 
-            if (
-                item &&
-                typeof item ===
-                "object"
-            ) {
+            if (topic && typeof topic === "object") {
 
-                const subject =
-                    String(
-                        item.subject ||
-                        item.subjectName ||
-                        ""
-                    ).trim();
+                const name = String(
+                    topic.name ||
+                    topic.title ||
+                    topic.topic ||
+                    ""
+                ).trim();
 
-                const topic =
-                    String(
-                        item.topic ||
-                        item.name ||
-                        item.title ||
-                        ""
-                    ).trim();
+                if (!name) return;
 
-                if (topic) {
-
-                    completed.add(
-                        topic
-                    );
-
-                }
-
-                if (
-                    subject &&
-                    topic
-                ) {
-
-                    completed.add(
-                        `${subject}::${topic}`
-                    );
-
-                }
+                topics.push({
+                    ...topic,
+                    name,
+                    subject: String(topic.subject || "").trim()
+                });
 
             }
 
+        });
+
+    }
+
+    const unique = new Map();
+
+    topics.forEach(topic => {
+
+        const key = `${topic.subject}::${topic.name}`;
+
+        if (!unique.has(key)) {
+            unique.set(key, topic);
         }
-    );
+
+    });
+
+    return [...unique.values()];
+
+}
+
+
+/* =========================================================
+   COMPLETED TOPICS
+========================================================= */
+
+function getCompletedTopicSet() {
+
+    const stored = loadJSON(COMPLETED_TOPICS_KEY, []);
+
+    const completed = new Set();
+
+    if (!Array.isArray(stored)) return completed;
+
+    stored.forEach(item => {
+
+        if (typeof item === "string") {
+
+            const value = item.trim();
+
+            if (!value) return;
+
+            completed.add(value);
+
+            if (value.includes("::")) {
+
+                const topic = value.split("::").slice(1).join("::").trim();
+
+                if (topic) completed.add(topic);
+
+            }
+
+            return;
+
+        }
+
+        if (item && typeof item === "object") {
+
+            const subject = String(
+                item.subject ||
+                item.subjectName ||
+                ""
+            ).trim();
+
+            const topic = String(
+                item.topic ||
+                item.name ||
+                item.title ||
+                ""
+            ).trim();
+
+            if (topic) completed.add(topic);
+
+            if (subject && topic) {
+                completed.add(`${subject}::${topic}`);
+            }
+
+        }
+
+    });
 
     return completed;
 
 }
 
 
-/* =========================================================
-   TOPIC COMPLETION CHECK
-========================================================= */
+function isTopicCompleted(topic, completedSet) {
 
-function isTopicCompleted(
-    topic,
-    completedSet
-) {
+    if (!topic) return false;
 
-    if (!topic) {
-        return false;
-    }
+    const subject = String(
+        topic.subject ||
+        topic.subjectName ||
+        ""
+    ).trim();
 
-    const subject =
-        String(
-            topic.subject ||
-            topic.subjectName ||
-            ""
-        ).trim();
+    const name = String(
+        topic.name ||
+        topic.title ||
+        topic.topic ||
+        ""
+    ).trim();
 
-    const name =
-        String(
-            topic.name ||
-            topic.title ||
-            topic.topic ||
-            ""
-        ).trim();
+    if (!name) return false;
 
-    if (!name) {
-        return false;
-    }
+    const exact = subject ? `${subject}::${name}` : name;
 
-    const exact =
-        subject
-            ? `${subject}::${name}`
-            : name;
-
-    return (
-        completedSet.has(
-            exact
-        ) ||
-        completedSet.has(
-            name
-        )
-    );
+    return completedSet.has(exact) || completedSet.has(name);
 
 }
 
 
 /* =========================================================
-   GET TODAY'S REQUIRED TOPICS
+   TODAY'S REQUIRED TOPICS
 ========================================================= */
 
 function getTodaysRequiredTopics() {
 
     if (
         window.StudyMindStreak &&
-        typeof
-            window.StudyMindStreak
-                .getTodaysRequiredTopics ===
-            "function"
+        typeof window.StudyMindStreak.getTodaysRequiredTopics === "function"
     ) {
 
         try {
 
-            return (
-                window.StudyMindStreak
-                    .getTodaysRequiredTopics() ||
-                []
-            );
+            return window.StudyMindStreak.getTodaysRequiredTopics() || [];
 
         } catch (error) {
 
-            console.warn(
-                "StudyMind: streak schedule lookup failed:",
-                error
-            );
+            console.warn("Streak schedule lookup failed:", error);
 
         }
 
     }
 
-    const today =
-        getLocalDateKey();
+    const today = getLocalDateKey();
 
-    const day =
-        studyPlan?.schedule?.find(
-            item =>
-                String(
-                    item?.date || ""
-                ).slice(0, 10) ===
-                today
-        );
+    const day = studyPlan?.schedule?.find(item =>
+        String(item?.date || "").slice(0, 10) === today
+    );
 
-    if (!day) {
+    if (!day) return getAllStudyTopics();
 
-        return getAllStudyTopics();
-
-    }
-
-    const sessions =
-        Array.isArray(
-            day.sessions
-        )
-            ? day.sessions
-            : [];
+    const sessions = Array.isArray(day.sessions) ? day.sessions : [];
 
     const required = [];
 
-    sessions.forEach(
-        session => {
+    sessions.forEach(session => {
 
-            const type =
-                String(
-                    session?.type || ""
-                ).toLowerCase();
+        const type = String(session?.type || "").toLowerCase();
 
-            if (
-                type === "break" ||
-                type === "rest"
-            ) {
+        if (type === "break" || type === "rest") return;
 
-                return;
+        const topic = String(
+            session?.topic ||
+            session?.name ||
+            session?.title ||
+            ""
+        ).trim();
 
-            }
+        if (!topic) return;
 
-            const topic =
-                String(
-                    session?.topic ||
-                    session?.name ||
-                    session?.title ||
-                    ""
-                ).trim();
+        required.push({
+            subject: String(session?.subject || "").trim(),
+            topic
+        });
 
-            if (!topic) {
-                return;
-            }
-
-            required.push({
-
-                subject:
-                    String(
-                        session?.subject ||
-                        ""
-                    ).trim(),
-
-                topic
-
-            });
-
-        }
-    );
+    });
 
     return required;
 
@@ -3272,48 +1900,29 @@ function getTodaysRequiredTopics() {
 function checkStudyCompletion() {
 
     if (
-        !window.StudyMindStreak
+        !window.StudyMindStreak ||
+        typeof window.StudyMindStreak.checkTodayCompletion !== "function"
     ) {
-
         return false;
-
-    }
-
-    if (
-        typeof
-            window.StudyMindStreak
-                .checkTodayCompletion !==
-            "function"
-    ) {
-
-        return false;
-
     }
 
     try {
 
         const completed =
-            window.StudyMindStreak
-                .checkTodayCompletion();
+            window.StudyMindStreak.checkTodayCompletion();
 
         syncLocalStats();
 
         if (completed) {
-
             renderStats();
-
             renderLevel();
-
         }
 
         return completed;
 
     } catch (error) {
 
-        console.error(
-            "StudyMind completion check failed:",
-            error
-        );
+        console.error("Study completion check failed:", error);
 
         return false;
 
@@ -3328,152 +1937,81 @@ function checkStudyCompletion() {
 
 function renderQuests() {
 
-    const container =
-        document.getElementById(
-            "dailyQuests"
-        );
+    const container = document.getElementById("dailyQuests");
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
-    const quests =
-        getDailyQuests();
+    const quests = getDailyQuests();
 
-    container.innerHTML =
-        quests
-            .map(
-                quest => `
+    container.innerHTML = quests.map(quest => `
 
-                    <div class="quest">
+        <div class="quest">
 
-                        <div>
+            <div>
+                <strong>${escapeHTML(quest.title)}</strong>
+                <span>${escapeHTML(quest.description)}</span>
+            </div>
 
-                            <strong>
-                                ${escapeHTML(
-                                    quest.title
-                                )}
-                            </strong>
+            <div class="quest-xp">
+                +${quest.xp} XP
+            </div>
 
-                            <span>
-                                ${escapeHTML(
-                                    quest.description
-                                )}
-                            </span>
+        </div>
 
-                        </div>
-
-                        <div class="quest-xp">
-                            +${quest.xp} XP
-                        </div>
-
-                    </div>
-
-                `
-            )
-            .join("");
+    `).join("");
 
 }
 
 
-/* =========================================================
-   GET DAILY QUESTS
-========================================================= */
-
 function getDailyQuests() {
 
-    const date =
-        getLocalDateKey();
+    const date = getLocalDateKey();
 
-    const stored =
-        loadJSON(
-            QUEST_KEY,
-            null
-        );
+    const stored = loadJSON(QUEST_KEY, null);
 
     if (
         stored &&
         stored.date === date &&
-        Array.isArray(
-            stored.quests
-        )
+        Array.isArray(stored.quests)
     ) {
-
         return stored.quests;
-
     }
 
-    const allTopics =
-        getAllStudyTopics();
+    const allTopics = getAllStudyTopics();
 
-    const completed =
-        getCompletedTopicSet();
+    const completed = getCompletedTopicSet();
 
-    const topic =
-        allTopics.find(
-            item =>
-                !isTopicCompleted(
-                    item,
-                    completed
-                )
-        );
+    const topic = allTopics.find(item =>
+        !isTopicCompleted(item, completed)
+    );
 
-    const topicName =
-        topic?.name ||
-        "Review a topic";
+    const topicName = topic?.name || "Review a topic";
 
     const quests = [
 
         {
-
-            title:
-                "Start a study session",
-
-            description:
-                "Complete at least 25 minutes.",
-
-            xp:
-                20
-
+            title: "Start a study session",
+            description: "Complete at least 25 minutes.",
+            xp: 20
         },
 
         {
-
-            title:
-                "Complete one topic",
-
-            description:
-                topicName,
-
-            xp:
-                30
-
+            title: "Complete one topic",
+            description: topicName,
+            xp: 30
         },
 
         {
-
-            title:
-                "Ask StudyMind AI",
-
-            description:
-                "Use AI to improve your understanding.",
-
-            xp:
-                10
-
+            title: "Ask StudyMind AI",
+            description: "Use AI to improve your understanding.",
+            xp: 10
         }
 
     ];
 
     localStorage.setItem(
         QUEST_KEY,
-        JSON.stringify({
-
-            date,
-
-            quests
-
-        })
+        JSON.stringify({ date, quests })
     );
 
     return quests;
@@ -3489,102 +2027,57 @@ function renderLevel() {
 
     syncLocalStats();
 
-    const level =
-        Math.floor(
-            xp / 100
-        ) + 1;
+    const level = Math.floor(xp / 100) + 1;
 
-    const current =
-        xp % 100;
+    const current = xp % 100;
 
-    setText(
-        "level",
-        level
-    );
+    setText("level", level);
 
     setText(
         "levelText",
         `${current} / 100 XP to Level ${level + 1}`
     );
 
-    setWidth(
-        "levelProgress",
-        current
-    );
+    setWidth("levelProgress", current);
 
 }
 
 
-/* =========================================================
-   AWARD XP
-========================================================= */
+/*
+   Kept for compatibility with existing dashboard callers.
+   Timer XP must continue to be awarded by study-timer.js.
+*/
 
-function awardXP(
-    amount,
-    reason = ""
-) {
+function awardXP(amount, reason = "") {
 
-    amount =
-        Math.max(
-            0,
-            Number(amount) || 0
-        );
+    amount = Math.max(0, Number(amount) || 0);
 
-    if (
-        amount <= 0
-    ) {
+    if (amount <= 0) return;
 
-        return;
+    xp = Number(localStorage.getItem(XP_KEY) || 0) + amount;
 
-    }
-
-    xp =
-        Number(
-            localStorage.getItem(
-                XP_KEY
-            ) || 0
-        ) +
-        amount;
-
-    localStorage.setItem(
-        XP_KEY,
-        String(xp)
-    );
+    localStorage.setItem(XP_KEY, String(xp));
 
     localStorage.setItem(
         "studyMindLastXPEvent",
         JSON.stringify({
-
             amount,
-
             reason,
-
-            timestamp:
-                Date.now()
-
+            timestamp: Date.now()
         })
     );
 
     renderStats();
-
     renderLevel();
 
     window.dispatchEvent(
-        new CustomEvent(
-            "studyMindXPUpdated",
-            {
-                detail: {
-
-                    amount,
-
-                    total:
-                        xp,
-
-                    reason
-
-                }
+        new CustomEvent("studyMindXPUpdated", {
+            detail: {
+                amount,
+                total: xp,
+                reason
             }
-        )
+        })
     );
 
 }
@@ -3596,29 +2089,17 @@ function awardXP(
 
 function renderRecommendation() {
 
-    const element =
-        document.getElementById(
-            "aiRecommendation"
-        );
+    const element = document.getElementById("aiRecommendation");
 
-    if (!element) {
-        return;
-    }
+    if (!element) return;
 
-    const allTopics =
-        getAllStudyTopics();
+    const allTopics = getAllStudyTopics();
 
-    const completed =
-        getCompletedTopicSet();
+    const completed = getCompletedTopicSet();
 
-    const next =
-        allTopics.find(
-            topic =>
-                !isTopicCompleted(
-                    topic,
-                    completed
-                )
-        );
+    const next = allTopics.find(topic =>
+        !isTopicCompleted(topic, completed)
+    );
 
     if (!next) {
 
@@ -3629,15 +2110,9 @@ function renderRecommendation() {
 
     }
 
-    const subject =
-        next.subject ||
-        "your next subject";
+    const subject = next.subject || "your next subject";
 
-    const topic =
-        next.name ||
-        next.topic ||
-        next.title ||
-        "your next topic";
+    const topic = next.name || next.topic || next.title || "your next topic";
 
     element.textContent =
         `Your next priority is ${subject}: ${topic}. Focus on understanding it first, then use active recall before moving forward.`;
@@ -3646,23 +2121,16 @@ function renderRecommendation() {
 
 
 /* =========================================================
-   REFRESH / REBALANCE
+   REFRESH PLAN
 ========================================================= */
 
-document
-    .getElementById(
-        "refreshPlan"
-    )
-    ?.addEventListener(
-        "click",
-        async () => {
+document.getElementById("refreshPlan")?.addEventListener("click", async () => {
 
-            alert(
-                "StudyMind AI will rebalance your schedule using your latest progress."
-            );
-
-        }
+    alert(
+        "StudyMind AI will rebalance your schedule using your latest progress."
     );
+
+});
 
 
 /* =========================================================
@@ -3671,38 +2139,24 @@ document
 
 function setupLogout() {
 
-    document
-        .getElementById(
-            "logoutButton"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
+    document.getElementById("logoutButton")?.addEventListener(
+        "click",
+        async () => {
 
-                if (supabaseClient) {
+            if (supabaseClient?.auth) {
 
-                    try {
-
-                        await supabaseClient
-                            .auth
-                            .signOut();
-
-                    } catch (error) {
-
-                        console.warn(
-                            "StudyMind logout failed:",
-                            error
-                        );
-
-                    }
-
+                try {
+                    await supabaseClient.auth.signOut();
+                } catch (error) {
+                    console.warn("StudyMind logout failed:", error);
                 }
 
-                window.location.href =
-                    "home.html";
-
             }
-        );
+
+            window.location.href = "home.html";
+
+        }
+    );
 
 }
 
@@ -3713,137 +2167,57 @@ function setupLogout() {
 
 function renderExams() {
 
-    const container =
-        document.getElementById(
-            "examList"
-        );
+    const container = document.getElementById("examList");
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
-    const exams =
-        Array.isArray(
-            studyPlan?.exams
-        )
-            ? [
-                ...studyPlan.exams
-            ]
-            : [];
+    const exams = Array.isArray(studyPlan?.exams)
+        ? [...studyPlan.exams]
+        : [];
 
-    exams.sort(
-        (a, b) =>
-            new Date(
-                a?.date
-            ) -
-            new Date(
-                b?.date
-            )
+    exams.sort((a, b) =>
+        new Date(a?.date) - new Date(b?.date)
     );
 
     if (!exams.length) {
 
-        container.innerHTML =
-            "<p>No exams added.</p>";
+        container.innerHTML = "<p>No exams added.</p>";
 
         return;
 
     }
 
-    container.innerHTML =
-        exams
-            .slice(
-                0,
-                5
-            )
-            .map(
-                exam => {
+    container.innerHTML = exams.slice(0, 5).map(exam => {
 
-                    const examDate =
-                        new Date(
-                            exam?.date
-                        );
+        const examDate = new Date(exam?.date);
 
-                    const days =
-                        Math.ceil(
-                            (
-                                examDate -
-                                new Date()
-                            ) /
-                            86400000
-                        );
-
-                    return `
-
-                        <div class="exam-item">
-
-                            <div>
-
-                                <div class="exam-name">
-                                    ${escapeHTML(
-                                        exam?.name ||
-                                        "Exam"
-                                    )}
-                                </div>
-
-                                <div class="exam-date">
-                                    ${escapeHTML(
-                                        exam?.date ||
-                                        ""
-                                    )}
-                                </div>
-
-                            </div>
-
-                            <strong>
-                                ${
-                                    days >= 0
-                                        ? `${days} days`
-                                        : "Passed"
-                                }
-                            </strong>
-
-                        </div>
-
-                    `;
-
-                }
-            )
-            .join("");
-
-}
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function getLocalDateKey(
-    date = new Date()
-) {
-
-    const year =
-        date.getFullYear();
-
-    const month =
-        String(
-            date.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
+        const days = Math.ceil(
+            (examDate - new Date()) / 86400000
         );
 
-    const day =
-        String(
-            date.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
+        return `
 
-    return (
-        `${year}-${month}-${day}`
-    );
+            <div class="exam-item">
+
+                <div>
+                    <div class="exam-name">
+                        ${escapeHTML(exam?.name || "Exam")}
+                    </div>
+
+                    <div class="exam-date">
+                        ${escapeHTML(exam?.date || "")}
+                    </div>
+                </div>
+
+                <strong>
+                    ${days >= 0 ? `${days} days` : "Passed"}
+                </strong>
+
+            </div>
+
+        `;
+
+    }).join("");
 
 }
 
@@ -3852,35 +2226,19 @@ function getLocalDateKey(
    LOAD JSON
 ========================================================= */
 
-function loadJSON(
-    key,
-    fallback
-) {
+function loadJSON(key, fallback) {
 
     try {
 
-        const value =
-            localStorage.getItem(
-                key
-            );
+        const value = localStorage.getItem(key);
 
-        if (!value) {
+        if (!value) return fallback;
 
-            return fallback;
-
-        }
-
-        return JSON.parse(
-            value
-        );
+        return JSON.parse(value);
 
     } catch (error) {
 
-        console.warn(
-            "StudyMind JSON read failed:",
-            key,
-            error
-        );
+        console.warn("StudyMind JSON read failed:", key, error);
 
         return fallback;
 
@@ -3893,21 +2251,12 @@ function loadJSON(
    SET TEXT
 ========================================================= */
 
-function setText(
-    id,
-    value
-) {
+function setText(id, value) {
 
-    const element =
-        document.getElementById(
-            id
-        );
+    const element = document.getElementById(id);
 
     if (element) {
-
-        element.textContent =
-            value;
-
+        element.textContent = value;
     }
 
 }
@@ -3917,25 +2266,16 @@ function setText(
    SET WIDTH
 ========================================================= */
 
-function setWidth(
-    id,
-    percent
-) {
+function setWidth(id, percent) {
 
-    const element =
-        document.getElementById(
-            id
-        );
+    const element = document.getElementById(id);
 
     if (element) {
 
         element.style.width =
             `${Math.max(
                 0,
-                Math.min(
-                    100,
-                    Number(percent) || 0
-                )
+                Math.min(100, Number(percent) || 0)
             )}%`;
 
     }
@@ -3947,49 +2287,20 @@ function setWidth(
    ESCAPE HTML
 ========================================================= */
 
-function escapeHTML(
-    value
-) {
+function escapeHTML(value) {
 
-    return String(
-        value ?? ""
-    )
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
 }
 
 
-/* =========================================================
-   ESCAPE ATTRIBUTE
-========================================================= */
-
-function escapeAttribute(
-    value
-) {
-
-    return escapeHTML(
-        value
-    );
-
+function escapeAttribute(value) {
+    return escapeHTML(value);
 }
 
 
@@ -4040,3 +2351,6 @@ window.StudyMindDashboard = {
     loadUser
 
 };
+
+
+console.log("StudyMind AI — Dashboard ready.");
